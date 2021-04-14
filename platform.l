@@ -1,0 +1,212 @@
+enum EventStreamMode: Pause, Record, Play
+enum ScaleMode: Auto, FixedWidth, FixedHeight, TopWidth, NoScaling
+		
+unit Platform
+	public inline js string url := location.href
+	public inline js int version := version
+	public inline js int userAgent := navigator.userAgent.replace(/,/g," ")
+		
+	public userCount = 2
+	public Vector2 referenceSize = {1920, 1080}
+	public ScaleMode scaleMode = Auto, effectiveScaleMode
+	
+	private object canvas = null
+	internal object context = null
+	visible bool isDebug
+	visible Vector2 pixelSize, size
+	visible float pixelRatio
+	internal Matrix2D baseMatrix
+	private bool slideMode
+	private bool engineStarted
+	visible EventStreamMode mode
+	internal bool fastForward
+	public bool showSafeArea = true
+	visible bool isMobile = true
+	
+	private init
+		initHandlers
+			
+	private inline js void globalInit() 
+		init();
+		Platform_onResize();
+		
+	private js void initHandlers
+		Platform_isMobile = false;
+		if(/(android|bb\d+|meego).+mobile|avantgo|bada\/|blackberry|blazer|compal|elaine|fennec|hiptop|iemobile|ip(hone|od)|ipad|iris|kindle|Android|Silk|lge |maemo|midp|mmp|netfront|opera m(ob|in)i|palm( os)?|phone|p(ixi|re)\/|plucker|pocket|psp|series(4|6)0|symbian|treo|up\.(browser|link)|vodafone|wap|windows (ce|phone)|xda|xiino/i.test(navigator.userAgent) 
+			|| /1207|6310|6590|3gso|4thp|50[1-6]i|770s|802s|a wa|abac|ac(er|oo|s\-)|ai(ko|rn)|al(av|ca|co)|amoi|an(ex|ny|yw)|aptu|ar(ch|go)|as(te|us)|attw|au(di|\-m|r |s )|avan|be(ck|ll|nq)|bi(lb|rd)|bl(ac|az)|br(e|v)w|bumb|bw\-(n|u)|c55\/|capi|ccwa|cdm\-|cell|chtm|cldc|cmd\-|co(mp|nd)|craw|da(it|ll|ng)|dbte|dc\-s|devi|dica|dmob|do(c|p)o|ds(12|\-d)|el(49|ai)|em(l2|ul)|er(ic|k0)|esl8|ez([4-7]0|os|wa|ze)|fetc|fly(\-|_)|g1 u|g560|gene|gf\-5|g\-mo|go(\.w|od)|gr(ad|un)|haie|hcit|hd\-(m|p|t)|hei\-|hi(pt|ta)|hp( i|ip)|hs\-c|ht(c(\-| |_|a|g|p|s|t)|tp)|hu(aw|tc)|i\-(20|go|ma)|i230|iac( |\-|\/)|ibro|idea|ig01|ikom|im1k|inno|ipaq|iris|ja(t|v)a|jbro|jemu|jigs|kddi|keji|kgt( |\/)|klon|kpt |kwc\-|kyo(c|k)|le(no|xi)|lg( g|\/(k|l|u)|50|54|\-[a-w])|libw|lynx|m1\-w|m3ga|m50\/|ma(te|ui|xo)|mc(01|21|ca)|m\-cr|me(rc|ri)|mi(o8|oa|ts)|mmef|mo(01|02|bi|de|do|t(\-| |o|v)|zz)|mt(50|p1|v )|mwbp|mywa|n10[0-2]|n20[2-3]|n30(0|2)|n50(0|2|5)|n7(0(0|1)|10)|ne((c|m)\-|on|tf|wf|wg|wt)|nok(6|i)|nzph|o2im|op(ti|wv)|oran|owg1|p800|pan(a|d|t)|pdxg|pg(13|\-([1-8]|c))|phil|pire|pl(ay|uc)|pn\-2|po(ck|rt|se)|prox|psio|pt\-g|qa\-a|qc(07|12|21|32|60|\-[2-7]|i\-)|qtek|r380|r600|raks|rim9|ro(ve|zo)|s55\/|sa(ge|ma|mm|ms|ny|va)|sc(01|h\-|oo|p\-)|sdk\/|se(c(\-|0|1)|47|mc|nd|ri)|sgh\-|shar|sie(\-|m)|sk\-0|sl(45|id)|sm(al|ar|b3|it|t5)|so(ft|ny)|sp(01|h\-|v\-|v )|sy(01|mb)|t2(18|50)|t6(00|10|18)|ta(gt|lk)|tcl\-|tdg\-|tel(i|m)|tim\-|t\-mo|to(pl|sh)|ts(70|m\-|m3|m5)|tx\-9|up(\.b|g1|si)|utst|v400|v750|veri|vi(rg|te)|vk(40|5[0-3]|\-v)|vm40|voda|vulc|vx(52|53|60|61|70|80|81|83|85|98)|w3c(\-| )|webc|whit|wi(g |nc|nw)|wmlb|wonu|x700|yas\-|your|zeto|zte\-/i.test(navigator.userAgent.substr(0,4))) { 
+			Platform_isMobile = true;
+		}
+		if(!Platform_isMobile) window.onresize = Platform_onResize
+		
+	private js void onResize
+		// Scale canvas
+		Platform_canvas = document.getElementById("canvas");
+		Platform_context = Platform_canvas.getContext("2d");
+		// Platform_pixelRatio = window.devicePixelRatio || 1;
+		// alert("pixelSize.x:"+Platform_pixelSize.x+" pixelRatio"+Platform_pixelRatio+" -> "+(Platform_pixelSize.x * Platform_pixelRatio))
+		Platform_pixelRatio = 1;
+		// if(Platform_fixedCanvasSize.x != Number.POSITIVE_INFINITY) {
+		// 	Platform_pixelRatio = Platform_fixedCanvasSize.x/window.innerWidth;
+		// }
+		Platform_pixelSize = new Vector2(window.innerWidth*Platform_pixelRatio, window.innerHeight*Platform_pixelRatio)
+		Platform_canvas.style.width = window.innerWidth + "px";
+		Platform_canvas.style.height = window.innerHeight + "px";
+		Platform_canvas.width = Platform_pixelSize.x
+		Platform_canvas.height = Platform_pixelSize.y
+		Platform_canvas.imageSmoothingEnabled = true
+		Platform_canvas.imageSmoothingQuality = "high"
+		
+		// Create base matrix
+		// Platform_referenceSize = window.app_size ? window.app_size : new Vector2(1920, 1080);
+		let ratio = new Vector2(Platform_pixelSize.x / Platform_referenceSize.x, Platform_pixelSize.y / Platform_referenceSize.y);
+		let scale
+		switch(Platform_scaleMode) {
+			case 0:
+				if(ratio.x < ratio.y) { Platform_effectiveScaleMode = 1; scale = ratio.x; }
+				else                  { Platform_effectiveScaleMode = 2; scale = ratio.y; }
+				Platform_size = new Vector2(Platform_referenceSize.x, Platform_referenceSize.y)
+				break;
+			case 1:
+			case 3:
+				Platform_effectiveScaleMode = Platform_scaleMode
+				scale = ratio.x; 
+				Platform_size = new Vector2(Platform_referenceSize.x, Platform_pixelSize.y/scale)
+				break;
+			case 2:
+				Platform_effectiveScaleMode = Platform_scaleMode
+				scale = ratio.y; 
+				Platform_size = new Vector2(Platform_pixelSize.x/scale, Platform_referenceSize.y)
+				break;
+		}
+		
+		if(Platform_scaleMode < 3)
+			Platform_baseMatrix = new Matrix2D([scale,0,0,scale,Platform_pixelSize.x/2,Platform_pixelSize.y/2])
+		else
+			Platform_baseMatrix = new Matrix2D([scale,0,0,scale,Platform_pixelSize.x/2,0])
+		if(Platform_mode == 0 && Platform_engineStarted) Network_tick();
+		// alert("scale:"+scale+" x:"+Platform_pixelSize.x+" y:"+Platform_pixelSize.y)
+		
+	private startEngine: bool isDebug
+		init
+		this.isDebug = isDebug
+		if !isDebug: showSafeArea = false
+		this.engineStarted = true
+		sendEvaluateFinished
+		
+	private startApp
+		globalInit
+		mode = Pause
+		let param = url.split("/")[4]
+		if isDebug || !param || url.startsWith("file"): Network.startLocal userCount:userCount
+		else                                            Network.join roomId:param
+		sendPlayState
+		Network.tick
+		
+	private stop()           slideMode = false; startApp
+	private record()         mode = Record; slideMode = false; sendPlayState; Network.resetStartTime
+	private play()           mode = Play;   slideMode = false; sendPlayState
+	private enterSlideMode() stop;          slideMode = true;  sendPlayState
+	
+	private tick
+		if mode == Play || mode == Record: Network.tick 
+			
+	private inline js void sendPlayState
+		if(Platform_isDebug) _sendToEditor({type:"setPlayState", mode:Platform_mode, slideMode:Platform_slideMode, frame:Network_logicFrame})
+
+	private inline js void sendEvaluateFinished
+		if(Platform_isDebug) _sendToEditor({type:"evaluateFinished"})
+
+	js string generateRandomSeed:
+		if(window.crypto) {
+			let out = new Uint8Array(256);
+			crypto.getRandomValues(out);
+			return out.toString();
+		}
+		else {
+			return Date.now().toString()
+		}
+		
+	js void setTitle: string title
+		document.title = title
+		console.log(title)
+		
+	inline js void requestFullscreen
+		try   { document.body.requestFullscreen() }
+		catch { }
+		
+	// Return the number of milliseconds elapsed since January 1, 1970
+	inline js int now := Date.now()
+		
+	js string dateAndTimeString
+		let d = new Date()
+		let min = d.getMinutes()
+		return d.getDate()+"."+(d.getMonth()+1)+"."+d.getFullYear()+" "+d.getHours()+":"+(min < 10 ? "0"+min : min)
+		
+	js void createTextFile: string filename, string text
+		var element = document.createElement('a');
+		element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(text));
+		element.setAttribute('download', filename);
+		element.style.display = 'none';
+		document.body.appendChild(element);
+		element.click();
+		document.body.removeChild(element);
+		
+	inline js void setLocalStorageObject: string key, object value
+		localStorage.setItem(key, JSON.stringify(value))
+		
+	js object getLocalStorageObject: string key
+		let str = localStorage.getItem(key)
+		return str ? JSON.parse(str) : null 
+		
+	js string generateObjectId
+		var result = (Date.now() / 1000 | 0).toString(16)
+		for(let i=0; i<16; i++)
+			result += (Math.random() * 16 | 0).toString(16)
+		return result.toLowerCase()
+		
+	inline js void vibrate: int duration = 100
+		navigator.vibrate(duration)
+		
+	inline js void saveImage: string file
+		var url = Platform_canvas.toDataURL('image/png');
+		var base64Data = url.replace(/data:image\/png;base64,/, "");
+		var fs = require("fs")
+		fs.writeFile(file, base64Data, 'base64', function (err) {
+			if(err) log(err)
+		});
+		
+	js string[] showOpenDialog: FileFilter[] filters = null
+		const { remote } = require("electron")
+		return remote.dialog.showOpenDialogSync({ filters, properties: ['openFile'] })
+		
+struct FileFilter
+	string name
+	string[] extensions
+
+unit Http	
+	js void getJson: string url, void(object result) code
+		let response = await fetch(url)
+		code(await response.json())
+		
+	js void putText: string url 
+		             void(object result) code
+		             void(string error) else
+		try {
+			let response = await fetch(url, {method:"PUT"})
+			let result = await response.text()
+			code(result)
+		} catch(e) {
+			else(e.message)
+		}
+		
+	js void putJson: string url
+		             object body
+		             void(object result) code
+		             void(string error) else
+		try {
+			let response = await fetch(url, {method:"PUT", body:JSON.stringify(body)})
+			let result = await response.json()
+			code(result)
+		} catch(e) {
+			else(e.message)
+		}
