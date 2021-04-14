@@ -322,71 +322,75 @@ unit Math
 	js void init
 		Math_randomGenerator = Math.random
 		
+	js string generateRandomSeed:
+		if(window.crypto) {
+			let out = new Uint8Array(256);
+			crypto.getRandomValues(out);
+			return out.toString();
+		}
+		else {
+			return Date.now().toString()
+		}
+		
 	js void setRandomSeed: string seed
+		// Ported from an algorithm by Johannes Baagøe <baagoe@baagoe.com>
+		// https://github.com/nquinlan/better-random-numbers-for-javascript-mirror
 		function Alea(seed) {
-		  var me = this, mash = Mash();
-		
-		  me.next = function() {
-		    var t = 2091639 * me.s0 + me.c * 2.3283064365386963e-10; // 2^-32
-		    me.s0 = me.s1;
-		    me.s1 = me.s2;
-		    return me.s2 = t - (me.c = t | 0);
-		  };
-		
-		  // Apply the seeding algorithm from Baagoe.
-		  me.c = 1;
-		  me.s0 = mash(' ');
-		  me.s1 = mash(' ');
-		  me.s2 = mash(' ');
-		  me.s0 -= mash(seed);
-		  if (me.s0 < 0) { me.s0 += 1; }
-		  me.s1 -= mash(seed);
-		  if (me.s1 < 0) { me.s1 += 1; }
-		  me.s2 -= mash(seed);
-		  if (me.s2 < 0) { me.s2 += 1; }
-		  mash = null;
+			var me = this, mash = Mash();
+			var count = 0
+			me.next = function() {
+				var t = 2091639 * me.s0 + me.c * 2.3283064365386963e-10; // 2^-32
+				me.s0 = me.s1;
+				me.s1 = me.s2;
+				var value = me.s2 = t - (me.c = t | 0);
+				
+				// TEMP: Log every random number
+				Network_eventLog += " ["+count+"] "+value;
+				count++
+				return value
+			}
+			
+			// Apply the seeding algorithm from Baagoe.
+			me.c = 1;
+			me.s0 = mash(' ');
+			me.s1 = mash(' ');
+			me.s2 = mash(' ');
+			me.s0 -= mash(seed);
+			if (me.s0 < 0) { me.s0 += 1; }
+			me.s1 -= mash(seed);
+			if (me.s1 < 0) { me.s1 += 1; }
+			me.s2 -= mash(seed);
+			if (me.s2 < 0) { me.s2 += 1; }
+			mash = null;
 		}
 		
 		function copy(f, t) {
-		  t.c = f.c;
-		  t.s0 = f.s0;
-		  t.s1 = f.s1;
-		  t.s2 = f.s2;
-		  return t;
+			t.c = f.c;
+			t.s0 = f.s0;
+			t.s1 = f.s1;
+			t.s2 = f.s2;
+			return t;
 		}
 		
 		function Mash() {
-		  var n = 0xefc8249d;
-		
-		  var mash = function(data) {
-		    data = String(data);
-		    for (var i = 0; i < data.length; i++) {
-		      n += data.charCodeAt(i);
-		      var h = 0.02519603282416938 * n;
-		      n = h >>> 0;
-		      h -= n;
-		      h *= n;
-		      n = h >>> 0;
-		      h -= n;
-		      n += h * 0x100000000; // 2^32
-		    }
-		    return (n >>> 0) * 2.3283064365386963e-10; // 2^-32
-		  };
-		
-		  return mash;
+			var n = 0xefc8249d;
+			var mash = function(data) {
+				data = String(data);
+				for (var i = 0; i < data.length; i++) {
+					n += data.charCodeAt(i);
+					var h = 0.02519603282416938 * n;
+					n = h >>> 0;
+					h -= n;
+					h *= n;
+					n = h >>> 0;
+					h -= n;
+					n += h * 0x100000000; // 2^32
+				}
+				return (n >>> 0) * 2.3283064365386963e-10; // 2^-32
+			};
+			return mash;
 		}
 		Math_randomGenerator = new Alea(seed).next
-
-		// Math_randomGenerator = new alea(seed)
-		// TEMP: Log every random number
-		// let a = new alea(seed)
-		// let count = 0
-		// Math_randomGenerator = () => {
-		// 	let value = a()
-		// 	Network_eventLog += " ["+count+"] "+value;
-		// 	count++
-		// 	return value
-		// }
 	
 	// Generates a random integer
 	inline js int randomInteger: int max // The exclusive upper bound of the random integer to generate

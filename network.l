@@ -75,7 +75,7 @@ unit Network
 		
 	startLocal: userCount = 1
 		userId = 0
-		Math.setRandomSeed Platform.generateRandomSeed
+		Math.setRandomSeed Math.generateRandomSeed
 		Input.users.clear
 		for userCount: Input.users.add {id:i, local:true}
 		startTime = Platform.now

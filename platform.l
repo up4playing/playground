@@ -116,16 +116,6 @@ unit Platform
 	private inline js void sendEvaluateFinished
 		if(Platform_isDebug) _sendToEditor({type:"evaluateFinished"})
 
-	js string generateRandomSeed:
-		if(window.crypto) {
-			let out = new Uint8Array(256);
-			crypto.getRandomValues(out);
-			return out.toString();
-		}
-		else {
-			return Date.now().toString()
-		}
-		
 	js void setTitle: string title
 		document.title = title
 		console.log(title)
