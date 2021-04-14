@@ -46,7 +46,7 @@ unit Network
 	visible NetworkMode mode
 	visible bool inLobby = true
 	visible int userId = -1
-	public bool simulateConnection = false
+	public bool simulateConnection = true
 	
 	private VideoScreenInfo[] videoScreens
 	private object localVideo = null

@@ -372,25 +372,24 @@ unit Input
 				code t
 	
 	// Executes code when a touch or click moves
-	onTouchMove: int userId
-		         void(Touch touch) code // The code to execute when the given touch moves
-		NetworkUser user = users[userId]
-		for t -> user.movingTouches
-			if t.phase != Handled
-				t.position = t.referencePosition.getRelativeTo(graphics.appMatrix)
-				t.startPosition = t.referenceStartPosition.getRelativeTo(graphics.appMatrix)
-				Network.touchLog += " onTouchMove ref:{t.referencePosition} matrix:{graphics.appMatrix} pos:{t.position}"
-				code t
-	
-	// Executes code when a touch or click moves
 	onTouchMove: void(Touch touch) code // The code to execute when the given touch moves
-		for user -> users if user
+		         int userId = -1
+		if (Network.mode == Connected || Network.simulateConnection) && userId != -1
+			NetworkUser user = users[userId]
 			for t -> user.movingTouches
 				if t.phase != Handled
 					t.position = t.referencePosition.getRelativeTo(graphics.appMatrix)
 					t.startPosition = t.referenceStartPosition.getRelativeTo(graphics.appMatrix)
-					Network.touchLog += " onTouchMove "+t.position.x+" "+t.position.y
+					Network.touchLog += " onTouchMove ref:{t.referencePosition} matrix:{graphics.appMatrix} pos:{t.position}"
 					code t
+		else
+			for user -> users if user
+				for t -> user.movingTouches
+					if t.phase != Handled
+						t.position = t.referencePosition.getRelativeTo(graphics.appMatrix)
+						t.startPosition = t.referenceStartPosition.getRelativeTo(graphics.appMatrix)
+						Network.touchLog += " onTouchMove "+t.position.x+" "+t.position.y
+						code t
 					
 	onTouchUp: Touch touch
 		       void(Touch touch) code // The code to execute for each touch or click

@@ -95,6 +95,7 @@ unit Platform
 		
 	private startApp
 		globalInit
+		if !isDebug: Network.simulateConnection = false
 		mode = Pause
 		let param = url.split("/")[4]
 		if isDebug || !param || url.startsWith("file"): Network.startLocal userCount:userCount
