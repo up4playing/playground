@@ -9,7 +9,7 @@ class NetworkUser
 	Vector2 touchPos = {0,0}
 	Touch[] downTouches, movingTouches, upTouches
 	Touch[] startingTouches
-	int[] wheelEvents
+	WheelEvent[] wheelEvents
 	
 	string textComposition
 	string[] textInputs, textCompositions
@@ -54,6 +54,15 @@ class Touch
 	Vector2 startPosition
 	
 	markAsHandled() phase = Handled
+	
+class WheelEvent
+	NetworkUser user
+	int delta
+	Vector2 referencePosition
+	Vector2 position
+	bool handled
+	
+	markAsHandled() handled = true
 
 // A collection of methods to receive user input
 unit Input
@@ -92,7 +101,7 @@ unit Input
 		window.onwheel = e => {
 			e.preventDefault();
 			e.stopPropagation();
-			Input_handleWheelEvent(e.deltaY)
+			Input_handleWheelEvent(e.pageX, e.pageY, e.deltaY)
 			return false;			
 		}
 		window.onkeydown = e => {
@@ -173,13 +182,16 @@ unit Input
 		inputs.add Math.round(referencePos.x)
 		inputs.add Math.round(referencePos.y)
 		
-	private handleWheelEvent: float value
+	private handleWheelEvent: float x, float y, float delta
 		if Network.mode == None || Platform.mode != Record: return
 		let inputs = getInputList
 		
+		Vector2 referencePos = {x*Platform.pixelRatio, y*Platform.pixelRatio}.getRelativeTo(Platform.baseMatrix)
 		InputType type = Wheel
 		inputs.add cast type
-		inputs.add Math.round(value)
+		inputs.add Math.round(referencePos.x)
+		inputs.add Math.round(referencePos.y)
+		inputs.add Math.round(delta)
 		
 	private js void sendToEditor: int id, Vector2 pos, TouchPhase phase
 		if(Platform_slideMode) _sendToEditor({type:"touch", id, x:pos.x, y:pos.y, phase})
@@ -194,7 +206,7 @@ unit Input
 					Network.parseLog += " "+value
 					InputType type = cast value % 32
 					
-					if type >= TouchDown && type <= TouchUp
+					if type >= TouchDown && type <= Wheel
 						MouseButton button = cast Math.shiftRight(value, 5) % 8
 						int id = Math.shiftRight(value, 8)
 						Vector2 touchPos = {inputs[++i], inputs[++i]}
@@ -217,13 +229,15 @@ unit Input
 							user.movingTouches.add {id, user, cast type, button, touchPos, referenceStartPosition, isDown}
 							cursor = "auto"
 						else
+						if type == TouchUp
 							Network.parseLog += " touchUp "+touchPos.x+" "+touchPos.y
 							let startingTouch = user.startingTouches.removeWhere a.id == id
 							let referenceStartPosition = startingTouch ? startingTouch.referencePosition : Vector2.none
 							user.upTouches.add {id, user, cast type, button, user.touchPos, referenceStartPosition}
-					else
-					if type == Wheel
-						user.wheelEvents.add inputs[++i]
+						else
+						if type == Wheel
+							let delta = inputs[++i]
+							user.wheelEvents.add {user, delta, referencePosition:user.touchPos}
 					else
 					if type == TextComposition || type == TextInput
 						let length = inputs[++i]
@@ -400,10 +414,41 @@ unit Input
 					code t
 
 	// Executes code when a touch or click ends
-	onWheel: void(int value) code // The code to execute for each touch or click
+	onWheel: void(WheelEvent event) code // The code to execute for each touch or click
 		for user -> users if user
 			for value -> user.wheelEvents
 				code value
+	
+	// Executes code when a user moves the mouse wheel within a given rectangle
+	onWheelWithin: Vector2 position            // The center of the rectangle
+		           Vector2 size                // The size of the rectangle
+		           void(WheelEvent event) code // The code to execute
+		           int userId = -1             // Only consider wheel movments from this user
+		           Color fill = null
+		           bool markAsHandled = true
+		Vector2[] poly = [
+			{ position.x-size.x/2, position.y-size.y/2 }.transform(graphics.appMatrix),
+			{ position.x+size.x/2, position.y-size.y/2 }.transform(graphics.appMatrix),
+			{ position.x+size.x/2, position.y+size.y/2 }.transform(graphics.appMatrix),
+			{ position.x-size.x/2, position.y+size.y/2 }.transform(graphics.appMatrix),
+		]
+		if (Network.mode == Connected || Network.simulateConnection) && userId != -1
+			NetworkUser user = users[userId]
+			for event -> user.wheelEvents
+				if !event.handled && event.referencePosition.isInsidePoygon(poly)
+					event.position = event.referencePosition.getRelativeTo(graphics.appMatrix)
+					Network.touchLog += " onWheel {delta} {event.position}"
+					code event
+					if markAsHandled: event.markAsHandled
+		else
+			for user -> users if user
+				for event -> user.wheelEvents
+					if !event.handled && event.referencePosition.isInsidePoygon(poly)
+						event.position = event.referencePosition.getRelativeTo(graphics.appMatrix)
+						Network.touchLog += " onWheel {delta} {event.position}"
+						code event
+						if markAsHandled: event.markAsHandled
+		if fill: drawRectangle position, size, fill
 	
 	js void showKeyboard
 		if(!Platform_isMobile) return

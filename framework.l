@@ -272,6 +272,8 @@ Item Board
 	Color color = null
 	BoardVisiblity visibleForOthers = Always
 	int owner
+	bool panable
+	bool zoomable
 	
 	private Touch currentTouch = null
 	private Matrix2D downMatrix
@@ -292,21 +294,25 @@ Item Board
 	tick
 		graphics.multiply matrix
 			for <- items: tick
-				
-		Input.onTouchDownWithin position, size
-			currentTouch = touch
-			downMatrix = matrix
-		Input.onTouchMove currentTouch
-			matrix = downMatrix
-			matrix.move touch.position - currentTouch.position
-		Input.onTouchUp currentTouch
-			currentTouch = null
 			
-		Input.onWheel
-			float factor = zoomLookupTable[Math.limit value+40 min:0 max:zoomLookupTable.length-1]
-			Network.touchLog += "[{Network.logicFrame}] zoom value:{value} factor:{factor} matrix:{matrix}"
-			matrix.scale {factor, factor}
-			Network.touchLog += " -> {matrix}"
+		if panable	
+			Input.onTouchDownWithin position, size
+				currentTouch = touch
+				downMatrix = matrix
+			Input.onTouchMove currentTouch
+				matrix = downMatrix
+				matrix.move touch.position - currentTouch.position
+			Input.onTouchUp currentTouch
+				currentTouch = null
+				
+		if zoomable	
+			Input.onWheelWithin position, size
+				float factor = zoomLookupTable[Math.limit delta+40 min:0 max:zoomLookupTable.length-1]
+				Network.touchLog += "[{Network.logicFrame}] zoom value:{delta} factor:{factor} matrix:{matrix}"
+				matrix.move position
+				matrix.scale {factor, factor}
+				matrix.move position*{-1,-1}
+				Network.touchLog += " -> {matrix}"
 			
 	draw
 		if color: drawRectangle position, size, fill:color
@@ -326,6 +332,14 @@ Item Board
 		Vector2 iconPos = position+{size.x/2-32, -size.y/2+32}
 		if visibleForOthers == Off: drawButton hiddenIcon,  position:iconPos; else
 		if visibleForOthers == On:  drawButton visibleIcon, position:iconPos
+
+Item RectangleItem
+	Color color = White
+	Vector2 size
+	RectangleItem: Vector2 position, Vector2 size, Color color
+	draw
+		drawRectangle position, size, color
+	
 				
 struct Particle
 	Vector2 pos, speed

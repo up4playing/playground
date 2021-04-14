@@ -252,6 +252,9 @@ struct Matrix2D
 		a.matrix[4] = b.matrix[4]
 		a.matrix[5] = b.matrix[5]
 		return this
+		
+	Vector2 position := {matrix[4], matrix[5]}
+	Vector2 scale := {matrix[0], matrix[3]}
 
 	Matrix2D operator * (Matrix2D a, Matrix2D b) Matrix2D c; return multiply(a, b, c)
 	Matrix2D operator *= (Matrix2D a, Matrix2D b) return multiply(a, b, a)
