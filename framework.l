@@ -23,10 +23,7 @@ unit framework
 					
 			Input.onTouchUp: touch.user.selectedItem = null
 				
-		for user -> Input.users
-			if !local
-				drawImage finger, touchPos+{11,38}, frame:user.id
-				
+		Network.drawFingers
 		Network.updateVideoScreen
 		drawSafeArea
 		

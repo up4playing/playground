@@ -1,19 +1,20 @@
 class NetworkUser
 	int id
 	bool local
+	Color color = null
 	
 	int acknowledgedFrames
 	int frames
 	int[][] inputs = [[]]
 	
 	Vector2 touchPos = {0,0}
-	Touch[] downTouches, movingTouches, upTouches
-	Touch[] startingTouches
-	WheelEvent[] wheelEvents
+	visible Touch[] downTouches, movingTouches, upTouches
+	visible Touch[] startingTouches
+	visible WheelEvent[] wheelEvents
+	visible int[] downKeys, upKeys
 	
 	string textComposition
-	string[] textInputs, textCompositions
-	int[] downKeys, upKeys
+	visible string[] textInputs, textCompositions
 	
 	int lastTextInputIndex = -1
 	int[] lastTouchMoveIndex
