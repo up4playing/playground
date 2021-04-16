@@ -239,8 +239,8 @@ global unit System
 			
 	// Executes code depending on whether a given condition is true or false
 	global inline js void if: implicit bool condition // The condition to check
-		               void() then             // The code to execute if the condition is true
-		               void() else             // The code to execute if the condition is false
+		               void() then                    // The code to execute if the condition is true
+		               void() else                    // The code to execute if the condition is false
 		if(condition) then() @else else()
 			
 	// Executes code as long as a given condition is true
