@@ -55,6 +55,8 @@ struct string
 
 // A logical data type that can have the value true or false
 enum bool: false, true
+		
+enum SortingOrder: Ascending, Descending
 	
 // A data container that grows in size as needed
 class List<T>
@@ -126,9 +128,16 @@ class List<T>
 	
 	inline js void sort: float(T a, T b) comparer // A function returning 1 if "a" is larger, -1 if "b" is larger, 0 if they are equal
 		this.sort(comparer)
+	
+	// Sort the list by a given expression
+	orderBy: float(T a) expression // The expression to order by
+		this.sort(expression(a) - expression(b))
 		
-	orderBy: float(T a) selector
-		this.sort(selector(a) - selector(b))
+	// Sort the list by a given expression
+	orderBy: float(T a) expression // The expression to order by
+		     SortingOrder order    // Specifies if you want to sort in ascending or descending order
+		if order == Ascending: this.sort(expression(a) - expression(b))
+		else                   this.sort(expression(b) - expression(a))
 		
 	// Returns true if the given condition is true for any item in the list
 	inline js bool any: bool(T a) predicate // The condition to check
