@@ -127,6 +127,9 @@ class List<T>
 	inline js void sort: float(T a, T b) comparer // A function returning 1 if "a" is larger, -1 if "b" is larger, 0 if they are equal
 		this.sort(comparer)
 		
+	inline js void orderBy: float(T a) selector
+		this.sort((a,b) => selector(a) - selector(b))
+		
 	orderBy: int(T a) selector
 		this.sort(selector(a) - selector(b))
 		return this

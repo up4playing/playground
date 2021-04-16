@@ -76,6 +76,10 @@ struct Vector2
 		
 	abs := Vector2(Math.abs(x), Math.abs(y))
 		
+	max := x > y ? x : y
+	
+	min := x < y ? x : y
+		
 	// Returns the distance between two vectors
 	static distanceBetween: Vector2 a // The first vector 
 		                    Vector2 b // The second vector
@@ -163,6 +167,8 @@ struct Vector2
 		
 // A 2D vector comprised of an integer x and y coordinate
 struct IntVector2
+	static IntVector2 none = new IntVector2(int.minValue, int.minValue)
+		
 	int x // The x-coordinate of the vector
 	int y // The y-coordinate of the vector
 	
@@ -173,7 +179,7 @@ struct IntVector2
 	string toString := "("+x+", "+y+")" 
 	
 	// Returns true if any coordinates is not zero
-	bool toBool := (x != 0 || y != 0)
+	bool toBool := (x != int.minValue || y != int.minValue)
 	
 	implicit Vector2 toVector2 := Vector2(x,y)
 	
@@ -207,6 +213,10 @@ struct IntVector2
 		
 	// Returns a vector with the sign of each coordinate flipped
 	inverse := IntVector2(-x, -y)
+		
+	max := x > y ? x : y
+	
+	min := x < y ? x : y
 		
 	// Returns the distance between two vectors
 	static distanceBetween: IntVector2 a // The first vector 
@@ -327,26 +337,27 @@ struct Matrix2D
 		c[3] = b10 * a01 + b11 * a11
 		c[5] = b10 * a02 + b11 * a12 + b12
 		return result
+
+// Helper class for converting positions within an isomatic grid
+class IsometicGrid
+	IntVector2 size
+	Vector2 cellSize, topFaceOffset
+	
+	visible Vector2 xOffset = cellSize / 2
+	visible Vector2 yOffset = {xOffset.x, -xOffset.y}
+	visible Vector2 basePos = {-xOffset.x*(size.x-1)}
+	
+	// Convert from grid position to logical position
+	getPosition: IntVector2 gridPos // The grid position specifies which cell we want to get the position of
+		return basePos + xOffset*gridPos.x + yOffset*gridPos.y
 		
-		// let a = left.matrix
-		// let b = right.matrix
-		// let a00 = a[0], a01 = a[2], a02 = a[4]
-		// let a10 = a[1], a11 = a[3], a12 = a[5]
-		// let a20 = 0,    a21 = 0,    a22 = 1
-		
-		// let b00 = b[0], b01 = b[2], b02 = b[4]
-		// let b10 = b[1], b11 = b[3], b12 = b[5]
-		// let b20 = 0,    b21 = 0,    b22 = 1
-		
-		// let c = result.matrix
-		// c[0] = b00 * a00 + b01 * a10 + b02 * a20
-		// c[2] = b00 * a01 + b01 * a11 + b02 * a21
-		// c[4] = b00 * a02 + b01 * a12 + b02 * a22
-		
-		// c[1] = b10 * a00 + b11 * a10 + b12 * a20
-		// c[3] = b10 * a01 + b11 * a11 + b12 * a21
-		// c[5] = b10 * a02 + b11 * a12 + b12 * a22
-		// return result
+	// Convert from locgical position to grid position
+	getGridPosition: Vector2 pos // The logical position
+		Vector2 t = pos - basePos + topFaceOffset
+		let x = Math.round((xOffset.x*t.y + xOffset.y*t.x) / (2*xOffset.x*xOffset.y))
+		let y = Math.round((xOffset.y*t.x - xOffset.x*t.y) / (2*xOffset.x*xOffset.y))
+		if x >= 0 and x < size.x and y >= 0 and y < size.y: return IntVector2(x,y)
+		else                                                return IntVector2.none
 		
 // A texture that can be loaded into video memory
 struct Sound
