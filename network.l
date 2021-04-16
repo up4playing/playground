@@ -179,11 +179,7 @@ unit Network
 		if isInputFrame: Input.parseInputs(Math.floor(logicFrame / inputFrameEvery))
 		
 		// Tick
-		framework.tick
-		drawFingers
-		updateVideoScreen
-		graphics.drawSafeArea
-		Input.updateCursor
+		tickFrame
 		
 		// Checksum
 		let myChecksum = 0
@@ -208,6 +204,22 @@ unit Network
 				
 		logicFrame++
 		
+	private tickFrame
+		Physics.step
+		graphics.matrix = Platform.baseMatrix
+		graphics.appMatrix.clear
+		graphics.clearScreen
+		if Network.inLobby
+			lobby.tick
+		else
+			Timeline.tick
+			app.tick
+			framework.tick
+			drawFingers
+			updateVideoScreen
+			graphics.drawSafeArea
+			Input.updateCursor
+			
 	private onWrongChecksum
 		eventLog += "%%% OUT OF SYNC %%%"
 		if !alertShown

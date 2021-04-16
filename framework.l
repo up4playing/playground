@@ -5,23 +5,13 @@ unit framework
 		objects.clear
 		
 	tick
-		Physics.step
-		graphics.matrix = Platform.baseMatrix
-		graphics.appMatrix.clear
-		graphics.clearScreen
-		if Network.inLobby
-			lobby.tick
-		else
-			Timeline.tick
-			app.tick
-			
-			if objects.length
-				for <- objects: tickIcons
-				for <- objects: tick
-				for -> objects: draw 
-				for -> objects: drawIcons
-					
-			Input.onTouchUp: touch.user.selectedObject = null
+		if objects.length
+			for <- objects: tickIcons
+			for <- objects: tick
+			for -> objects: draw 
+			for -> objects: drawIcons
+				
+		Input.onTouchUp: touch.user.selectedObject = null
 		
 class NetworkUser
 	Object selectedObject = null

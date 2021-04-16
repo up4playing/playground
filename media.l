@@ -403,7 +403,7 @@ class Texture
 				this._htmlImage = image
 				window._htmlImageCache[this.file] = image
 				this.size = new Vector2(image.width, image.height)
-				if(Platform_mode == 0) framework_tick();
+				if(Platform_mode == 0) Network_tickFrame();
 			}
 		} else {
 			this._htmlImage = image
