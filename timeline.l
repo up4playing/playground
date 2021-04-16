@@ -5,37 +5,37 @@ unit Timeline
 	startTrack
 		lastEndTime = 0
 	
-	move: Item item
+	move: Object object
 		  Vector2 pos
 		  float speed = 1
 		
-		Vector2 startPos = item.targetPos != Vector2.none ? item.targetPos : item.position
+		Vector2 startPos = object.targetPos != Vector2.none ? object.targetPos : object.position
 		Vector2 delta = pos - startPos
-		item.targetPos = pos
+		object.targetPos = pos
 		
 		effects.add Effect startTime: lastEndTime || Platform.now, duration: Math.floor delta.length / speed
-			item.position = startPos + delta * f
-			if f >= 1: item.targetPos = Vector2.none
+			object.position = startPos + delta * f
+			if f >= 1: object.targetPos = Vector2.none
 	
-	moveAndScale: Item item
+	moveAndScale: Object object
 		  Vector2 pos
 		  float scale
 		  int duration = 1
 		
-		Vector2 startPos = item.targetPos != Vector2.none ? item.targetPos : item.position
+		Vector2 startPos = object.targetPos != Vector2.none ? object.targetPos : object.position
 		Vector2 deltaPos = pos - startPos
-		item.targetPos = pos
-		float startScale = item.scale
+		object.targetPos = pos
+		float startScale = object.scale
 		float deltaScale = scale - startScale
 		
 		effects.add Effect startTime: lastEndTime || Platform.now, duration
-			item.position = startPos + deltaPos * f
-			item.scale = startScale + deltaScale * f
-			if f >= 1: item.targetPos = Vector2.none
+			object.position = startPos + deltaPos * f
+			object.scale = startScale + deltaScale * f
+			if f >= 1: object.targetPos = Vector2.none
 				
-	remove: Item item
+	remove: Object object
 		effects.add Effect startTime: lastEndTime || Platform.now
-			item.remove
+			object.remove
 				
 	playSound: Sound sound
 		effects.add Effect startTime: lastEndTime || Platform.now

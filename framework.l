@@ -1,8 +1,8 @@
 unit framework
-	Item[] items
+	Object[] objects
 	
 	clear
-		items.clear
+		objects.clear
 		
 	tick
 		Physics.step
@@ -15,13 +15,13 @@ unit framework
 			Timeline.tick
 			app.tick
 			
-			if items.length
-				for <- items: tickIcons
-				for <- items: tick
-				for -> items: draw 
-				for -> items: drawIcons
+			if objects.length
+				for <- objects: tickIcons
+				for <- objects: tick
+				for -> objects: draw 
+				for -> objects: drawIcons
 					
-			Input.onTouchUp: touch.user.selectedItem = null
+			Input.onTouchUp: touch.user.selectedObject = null
 				
 		Network.drawFingers
 		Network.updateVideoScreen
@@ -47,13 +47,13 @@ unit framework
 		}
 		
 class NetworkUser
-	Item selectedItem = null
+	Object selectedObject = null
 		
 enum Side: Front, Back
 		
-class Spot: Vector2 pos; Item item = null
+class Spot: Vector2 pos; Object object = null
 
-class Item
+class Object
 	static Vector2 stackOffset = {8,8}
 	static minSize = 75
 	
@@ -86,10 +86,10 @@ class Item
 	
 	Vector2 targetPos = Vector2.none
 	
-	private parentItems := board ? board.items : framework.items
+	private parentObjects := board ? board.objects : framework.objects
 	
-	Item
-		framework.items.add this
+	Object
+		framework.objects.add this
 		if stackable: spots.add {{}, this}
 		size = image ? image.size * scale : {}
 		if size.x < minSize: size.x = minSize
@@ -97,12 +97,12 @@ class Item
 		this.targetAngle = angle
 	
 	remove
-		framework.items.remove this
+		framework.objects.remove this
 	
 	tickIcons
 		if rotatable
 			Input.onTouchDownWithin position+image.size/2*{1,-1}*scale+{8, -8}, {100,100}
-				if touch.user.selectedItem == this
+				if touch.user.selectedObject == this
 					rotateTouch = touch
 					rotateOffset = angle + Math.atan2(touch.position - this.position)
 					touch.markAsHandled
@@ -125,29 +125,29 @@ class Item
 			currentTouch = touch
 			touchOffset = this.position - touch.position
 			touch.markAsHandled
-			parentItems.moveToEnd this
+			parentObjects.moveToEnd this
 			
 		Input.onTouchMove currentTouch
 			this.position = touch.position + touchOffset
 			overSpot = getSpotAt position, threshold:size/2
-			if overSpot && (overSpot.item.type == Stack || overSpot.item.type == type || overSpot.item.spots.length > 1)
+			if overSpot && (overSpot.object.type == Stack || overSpot.object.type == type || overSpot.object.spots.length > 1)
 				Network.touchLog += " [over spot] "+touch.position.x+" "+touch.position.y
-				this.position = overSpot.item.position + overSpot.pos
-				if overSpot.item.stackable: this.position += stackOffset*2
+				this.position = overSpot.object.position + overSpot.pos
+				if overSpot.object.stackable: this.position += stackOffset*2
 			checkBoardsWhileMoving touch
 							
 		Input.onTouchUp currentTouch
 			if stackable && overSpot
-				if overSpot.item.type == Stack
+				if overSpot.object.type == Stack
 					Network.touchLog += " [create stack] "+touch.position.x+" "+touch.position.y
-					Stack stack = cast overSpot.item
+					Stack stack = cast overSpot.object
 					stack.add this
 				else
-				if overSpot.item.type == type && overSpot.item.stackable
+				if overSpot.object.type == type && overSpot.object.stackable
 					Network.touchLog += " [add to stack] "+touch.position.x+" "+touch.position.y
-					Stack.create overSpot.item, this
+					Stack.create overSpot.object, this
 				
-			touch.user.selectedItem = this
+			touch.user.selectedObject = this
 			// if touchId == 3 && backImage: side = side == Front ? Back : Front
 			currentTouch = null
 			touch.markAsHandled
@@ -157,24 +157,24 @@ class Item
 		if board
 			pos = position * board.matrix
 		Board overBoard = null
-		for framework.items
+		for framework.objects
 			if type == Board
-				Board b = cast i
+				Board b = cast o
 				if pos >= b.position - b.size/2 && pos < b.position + b.size/2
 					overBoard = b
 					break
 					
 		if overBoard != board
-			if board: board.items.remove this;    position = position * board.matrix; touchOffset = touchOffset * board.matrix.scaleVector
-			else      framework.items.remove this
+			if board: board.objects.remove this;    position = position * board.matrix; touchOffset = touchOffset * board.matrix.scaleVector
+			else      framework.objects.remove this
 			board = overBoard
-			if board: board.items.add this;       position = position / board.matrix; touchOffset = touchOffset / board.matrix.scaleVector
-			else      framework.items.add this
+			if board: board.objects.add this;       position = position / board.matrix; touchOffset = touchOffset / board.matrix.scaleVector
+			else      framework.objects.add this
 					
 	private getSpotAt: Vector2 position, Vector2 threshold
 		Spot closestSpot = null
 		float minDistance = int.maxValue
-		for obj <- parentItems if obj != this
+		for obj <- parentObjects if obj != this
 			for spot -> obj.spots
 				let delta = (obj.position + spot.pos - position).abs
 				let distance = delta.length
@@ -192,17 +192,17 @@ class Item
 				else                            drawImage backImage, scale
 				
 	drawIcons
-		if Input.users.any(selectedItem == this) && rotatable && !rotateTouch
+		if Input.users.any(selectedObject == this) && rotatable && !rotateTouch
 			graphics.move position
 				drawImage rotateIcon, image.size/2*{1,-1}*scale+{8, -8}
 		
-Item Stack
-	private Item[] items
+Object Stack
+	private Object[] objects
 	Side sideWhenRemoving = Front
 	
-	private int visibleItems
+	private int visibleObjects
 	private Vector2 basePosition
-	private int shownItemCount
+	private int shownObjectCount
 	
 	stackable = true
 	
@@ -211,44 +211,44 @@ Item Stack
 		// base position, stackable:true, side
 		basePosition = position
 	
-	static create: Item a, Item b, Side side = Front
+	static create: Object a, Object b, Side side = Front
 		Stack stack = {position:a.position, side:side}
 		stack.add a
 		stack.add b
 						
-	add: Item a
+	add: Object a
 		a.side = side
-		items.add a
-		framework.items.remove a
+		objects.add a
+		framework.objects.remove a
 		updatePositions
 		
 	private pop
-		let topItem = items.pop
-		framework.items.add topItem
-		topItem.position += stackOffset
-		topItem.side = sideWhenRemoving
-		if items.length == 0
-			framework.items.remove this
+		let topObject = objects.pop
+		framework.objects.add topObject
+		topObject.position += stackOffset
+		topObject.side = sideWhenRemoving
+		if objects.length == 0
+			framework.objects.remove this
 		else
 			updatePositions
-		return topItem
+		return topObject
 		
 	private updatePositions
-		if items.length == 0: return
-		shownItemCount = Math.min(3, items.length)
-		// spots[0].pos = stackOffset * (shownItemCount + 1)
-		// int offsetStartIndex = cast Math.max(0, items.length-3)
-		// for items: item.position = position + stackOffset * Math.max(0, i-offsetStartIndex)
-		position = basePosition + (shownItemCount-1)/2 * stackOffset
-		for shownItemCount: items[items.length-shownItemCount+i].position = basePosition + i * stackOffset
+		if objects.length == 0: return
+		shownObjectCount = Math.min(3, objects.length)
+		// spots[0].pos = stackOffset * (shownObjectCount + 1)
+		// int offsetStartIndex = cast Math.max(0, objects.length-3)
+		// for objects: object.position = position + stackOffset * Math.max(0, i-offsetStartIndex)
+		position = basePosition + (shownObjectCount-1)/2 * stackOffset
+		for shownObjectCount: objects[objects.length-shownObjectCount+i].position = basePosition + i * stackOffset
 			
-		let a = items[items.length-shownItemCount]
-		let b = items[items.length-1]
+		let a = objects[objects.length-shownObjectCount]
+		let b = objects[objects.length-1]
 		size = (b.position+{b.size.x/2, -b.image.size.y/2}) - (a.position-{a.size.x/2, -a.size.y/2})
-		// size = (topItem.image.size * topItem.scale) + (shownItemCount-1)*stackOffset.abs
+		// size = (topObject.image.size * topObject.scale) + (shownObjectCount-1)*stackOffset.abs
 	
 	draw
-		for i = (items.length-shownItemCount) -> items.length: items[i].draw
+		for i = (objects.length-shownObjectCount) -> objects.length: objects[i].draw
 	
 	tick
 		Input.onTouchDownWithin position, size
@@ -258,13 +258,13 @@ Item Stack
 			touch.markAsHandled
 	
 	shuffle
-		items.shuffle
+		objects.shuffle
 		updatePositions
 
 enum BoardVisiblity: Never, Off, On, Always		
 
-Item Board
-	Item[] items
+Object Board
+	Object[] objects
 	Matrix2D matrix
 	Color color = null
 	BoardVisiblity visibleForOthers = Always
@@ -283,14 +283,14 @@ Item Board
 	Board: Vector2 size
 		this.size = size
 		
-	add: Item item
-		items.add item
-		item.board = this
-		framework.items.remove item
+	add: Object object
+		objects.add object
+		object.board = this
+		framework.objects.remove object
 		
 	tick
 		graphics.multiply matrix
-			for <- items: tick
+			for <- objects: tick
 			
 		if panable	
 			Input.onTouchDownWithin position, size
@@ -315,25 +315,25 @@ Item Board
 		if color: drawRectangle position, size, fill:color
 		graphics.visibleFor visibleForOthers == Never or visibleForOthers == Off ? owner : -1
 			graphics.multiply matrix
-				for items: draw
+				for objects: draw
 				
 	tickIcons
 		graphics.multiply matrix
-			for items: tickIcons
+			for objects: tickIcons
 		Input.onTouchDownWithin position+{size.x/2-32, -size.y/2+32}, size:{50,50}, userId:owner
 			visibleForOthers = visibleForOthers == On ? Off : On
 			
 	drawIcons
 		graphics.multiply matrix
-			for items: drawIcons
+			for objects: drawIcons
 		Vector2 iconPos = position+{size.x/2-32, -size.y/2+32}
 		if visibleForOthers == Off: drawButton hiddenIcon,  position:iconPos; else
 		if visibleForOthers == On:  drawButton visibleIcon, position:iconPos
 
-Item RectangleItem
+Object RectangleObject
 	Color color = White
 	Vector2 size
-	RectangleItem: Vector2 position, Vector2 size, Color color
+	RectangleObject: Vector2 position, Vector2 size, Color color
 	draw
 		drawRectangle position, size, color
 	
@@ -344,7 +344,7 @@ struct Particle
 	int frame
 	float angle
 
-Item ParticleSystem
+Object ParticleSystem
 	private Particle[] particles
 	Image particleImage
 	
