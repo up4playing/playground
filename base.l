@@ -55,6 +55,8 @@ struct string
 
 // A logical data type that can have the value true or false
 enum bool: false, true
+		
+enum SortingOrder: Ascending, Descending
 	
 // A data container that grows in size as needed
 class List<T>
@@ -126,10 +128,16 @@ class List<T>
 	
 	inline js void sort: float(T a, T b) comparer // A function returning 1 if "a" is larger, -1 if "b" is larger, 0 if they are equal
 		this.sort(comparer)
+	
+	// Sort the list by a given expression
+	orderBy: float(T a) expression // The expression to order by
+		this.sort(expression(a) - expression(b))
 		
-	orderBy: int(T a) selector
-		this.sort(selector(a) - selector(b))
-		return this
+	// Sort the list by a given expression
+	orderBy: float(T a) expression // The expression to order by
+		     SortingOrder order    // Specifies if you want to sort in ascending or descending order
+		if order == Ascending: this.sort(expression(a) - expression(b))
+		else                   this.sort(expression(b) - expression(a))
 		
 	// Returns true if the given condition is true for any item in the list
 	inline js bool any: bool(T a) predicate // The condition to check
@@ -316,7 +324,7 @@ unit Math
 		Math.tan(angle)
 	
 	// Returns the arctangent of the quotient of the given values
-	inline js float atan2: Vector2 vector
+	inline js float atan2: float2 vector
 		Math.atan2(vector.y, vector.x)
 		
 	js void init
@@ -469,5 +477,3 @@ struct RollingList
 		
 	// Returns true if the rolling list is not empty
 	toBool := list.length > 0
-
-
