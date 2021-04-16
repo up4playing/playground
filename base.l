@@ -324,7 +324,7 @@ unit Math
 		Math.tan(angle)
 	
 	// Returns the arctangent of the quotient of the given values
-	inline js float atan2: Vector2 vector
+	inline js float atan2: float2 vector
 		Math.atan2(vector.y, vector.x)
 		
 	js void init
@@ -477,5 +477,3 @@ struct RollingList
 		
 	// Returns true if the rolling list is not empty
 	toBool := list.length > 0
-
-

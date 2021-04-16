@@ -18,14 +18,14 @@ class NetworkUser
 		
 enum Side: Front, Back
 		
-class Spot: Vector2 pos; Object object = null
+class Spot: float2 pos; Object object = null
 
 class Object
-	static Vector2 stackOffset = {8,8}
+	static float2 stackOffset = {8,8}
 	static minSize = 75
 	
 	Image image = null
-	Vector2 position
+	float2 position
 	float scale = 1
 	
 	bool stackable
@@ -39,7 +39,7 @@ class Object
 	float z
 	
 	Touch currentTouch = null
-	Vector2 touchOffset
+	float2 touchOffset
 	
 	private Touch rotateTouch = null
 	private float rotateOffset
@@ -47,11 +47,11 @@ class Object
 	
 	private Spot[] spots
 	private Spot overSpot = null
-	visible Vector2 size
+	visible float2 size
 	public float angle
 	public Board board = null
 	
-	Vector2 targetPos = Vector2.none
+	float2 targetPos = float2.none
 	
 	private parentObjects := board ? board.objects : framework.objects
 	
@@ -120,7 +120,7 @@ class Object
 			touch.markAsHandled
 		
 	private checkBoardsWhileMoving: Touch touch
-		Vector2 pos = position
+		float2 pos = position
 		if board
 			pos = position * board.matrix
 		Board overBoard = null
@@ -138,7 +138,7 @@ class Object
 			if board: board.objects.add this;       position = position / board.matrix; touchOffset = touchOffset / board.matrix.scaleVector
 			else      framework.objects.add this
 					
-	private getSpotAt: Vector2 position, Vector2 threshold
+	private getSpotAt: float2 position, float2 threshold
 		Spot closestSpot = null
 		float minDistance = int.maxValue
 		for obj <- parentObjects if obj != this
@@ -168,12 +168,12 @@ Object Stack
 	Side sideWhenRemoving = Front
 	
 	private int visibleObjects
-	private Vector2 basePosition
+	private float2 basePosition
 	private int shownObjectCount
 	
 	stackable = true
 	
-	Stack: Vector2 position, Side side = Back
+	Stack: float2 position, Side side = Back
 		// stackable = true
 		// base position, stackable:true, side
 		basePosition = position
@@ -247,7 +247,7 @@ Object Board
 		1,1.001,1.0020009999999997,1.0030030009999997,1.0040060040009995,1.0050100100050003,1.0060150200150053,1.0070210350350202,1.0080280560700552,1.009036084126125,1.0100451202102512,1.0110551653304611,1.0120662204957915,1.0130782867162873,1.0140913650030035,1.0151054563680064,1.0161205618243743,1.0171366823861985,1.0181538190685846,1.0191719728876532,
 		1.0201911448605405,1.021211336005401,1.0222325473414062,1.0232547798887477,1.0242780346686362,1.0253023127033047,1.0263276150160079,1.0273539426310239,1.0283812965736547,1.0294096778702282,1.0304390875480984,1.0314695266356464,1.032500996162282,1.033533497158444,1.0345670306556025,1.0356015976862578,1.036637199283944,1.0376738364832279,1.038711510319711,1.0397502218300305
 	]
-	Board: Vector2 size
+	Board: float2 size
 		this.size = size
 		
 	add: Object object
@@ -293,20 +293,20 @@ Object Board
 	drawIcons
 		graphics.multiply matrix
 			for objects: drawIcons
-		Vector2 iconPos = position+{size.x/2-32, -size.y/2+32}
+		float2 iconPos = position+{size.x/2-32, -size.y/2+32}
 		if visibleForOthers == Off: drawButton hiddenIcon,  position:iconPos; else
 		if visibleForOthers == On:  drawButton visibleIcon, position:iconPos
 
 Object RectangleObject
 	Color color = White
-	Vector2 size
-	RectangleObject: Vector2 position, Vector2 size, Color color
+	float2 size
+	RectangleObject: float2 position, float2 size, Color color
 	draw
 		drawRectangle position, size, color
 	
 				
 struct Particle
-	Vector2 pos, speed
+	float2 pos, speed
 	float size
 	int frame
 	float angle

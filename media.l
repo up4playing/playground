@@ -1,6 +1,6 @@
 // A 2D vector comprised of an x and y coordinate
-struct Vector2
-	static Vector2 none = new Vector2(float.infinity, float.infinity)
+struct float2
+	static float2 none = new float2(float.infinity, float.infinity)
 
 	float x // The x-coordinate of the vector
 	float y // The y-coordinate of the vector
@@ -8,103 +8,103 @@ struct Vector2
 	// Returns a string representation of the vector
 	string toString := "("+x+" "+y+")"
 	
-	// Returns true if the vector is not equal to Vector2.none
+	// Returns true if the vector is not equal to float2.none
 	bool toBool := (x != float.infinity || y != float.infinity)
 	
 	// Creates a copy of the vector with the same values
-	Vector2 clone := Vector2(x, y)
+	float2 clone := float2(x, y)
 		
-	Vector2 operator = (Vector2 a, Vector2 b) a.x = b.x; a.y = b.y; return a
+	float2 operator = (float2 a, float2 b) a.x = b.x; a.y = b.y; return a
 	
-	Vector2 operator + (Vector2 a, Vector2 b) return Vector2(a.x+b.x, a.y+b.y)
-	Vector2 operator - (Vector2 a, Vector2 b) return Vector2(a.x-b.x, a.y-b.y)
-	Vector2 operator * (Vector2 a, Vector2 b) return Vector2(a.x*b.x, a.y*b.y)
-	Vector2 operator / (Vector2 a, Vector2 b) return Vector2(a.x/b.x, a.y/b.y)
+	float2 operator + (float2 a, float2 b) return float2(a.x+b.x, a.y+b.y)
+	float2 operator - (float2 a, float2 b) return float2(a.x-b.x, a.y-b.y)
+	float2 operator * (float2 a, float2 b) return float2(a.x*b.x, a.y*b.y)
+	float2 operator / (float2 a, float2 b) return float2(a.x/b.x, a.y/b.y)
 	
-	Vector2 operator * (Vector2 a, float b) return Vector2(a.x*b, a.y*b)
-	Vector2 operator * (float a, Vector2 b) return Vector2(a*b.x, a*b.y)
-	Vector2 operator / (Vector2 a, float b) return Vector2(a.x/b, a.y/b)
+	float2 operator * (float2 a, float b) return float2(a.x*b, a.y*b)
+	float2 operator * (float a, float2 b) return float2(a*b.x, a*b.y)
+	float2 operator / (float2 a, float b) return float2(a.x/b, a.y/b)
 		
-	Vector2 operator * (Vector2 vector, Matrix2D matrix)
+	float2 operator * (float2 vector, Matrix2D matrix)
 		var m = matrix.matrix
-		return Vector2(
+		return float2(
 			m[0] * vector.x + m[2] * vector.y + m[4],
 			m[1] * vector.x + m[3] * vector.y + m[5]
 		)
 		
-	Vector2 operator / (Vector2 vector, Matrix2D matrix)
+	float2 operator / (float2 vector, Matrix2D matrix)
 		var a = matrix.matrix
 		var aa = a[0], ab = a[1], ac = a[2], ad = a[3], atx = a[4], aty = a[5]
 
 		var det = aa * ad - ab * ac
-		if(det == 0) return Vector2()
+		if(det == 0) return float2()
 		det = 1.0 / det
 		
-		return Vector2(
+		return float2(
 			( ad * det) * vector.x + (-ac * det) * vector.y + ((ac * aty - ad * atx) * det),
 			(-ab * det) * vector.x + ( aa * det) * vector.y + ((ab * atx - aa * aty) * det)
 		)			
 	
-	Vector2 operator += (Vector2 a, Vector2 b) a.x += b.x; a.y += b.y; return a
-	Vector2 operator -= (Vector2 a, Vector2 b) a.x -= b.x; a.y -= b.y; return a
-	Vector2 operator *= (Vector2 a, Vector2 b) a.x *= b.x; a.y *= b.y; return a
-	Vector2 operator /= (Vector2 a, Vector2 b) a.x /= b.x; a.y /= b.y; return a
+	float2 operator += (float2 a, float2 b) a.x += b.x; a.y += b.y; return a
+	float2 operator -= (float2 a, float2 b) a.x -= b.x; a.y -= b.y; return a
+	float2 operator *= (float2 a, float2 b) a.x *= b.x; a.y *= b.y; return a
+	float2 operator /= (float2 a, float2 b) a.x /= b.x; a.y /= b.y; return a
 	
-	bool operator == (Vector2 a, Vector2 b) return a.x == b.x && a.y == b.y
-	bool operator != (Vector2 a, Vector2 b) return a.x != b.x || a.y != b.y
-	bool operator >  (Vector2 a, Vector2 b) return a.x >  b.x && a.y >  b.y
-	bool operator >= (Vector2 a, Vector2 b) return a.x >= b.x && a.y >= b.y
-	bool operator <  (Vector2 a, Vector2 b) return a.x <  b.x && a.y <  b.y
-	bool operator <= (Vector2 a, Vector2 b) return a.x <= b.x && a.y <= b.y
+	bool operator == (float2 a, float2 b) return a.x == b.x && a.y == b.y
+	bool operator != (float2 a, float2 b) return a.x != b.x || a.y != b.y
+	bool operator >  (float2 a, float2 b) return a.x >  b.x && a.y >  b.y
+	bool operator >= (float2 a, float2 b) return a.x >= b.x && a.y >= b.y
+	bool operator <  (float2 a, float2 b) return a.x <  b.x && a.y <  b.y
+	bool operator <= (float2 a, float2 b) return a.x <= b.x && a.y <= b.y
 	
 	// Returns the length of the vector
 	length := Math.sqrt(x * x + y * y)
 		
 	// Returns a vector that is orthogonal to the existing vector
-	orthogonal := Vector2(-y, x)
+	orthogonal := float2(-y, x)
 		
 	// Returns a vector with the sign of each coordinate flipped
-	inverse := Vector2(-x, -y)
+	inverse := float2(-x, -y)
 		
 	// Returns a vector with each coordinate rounded to the closest integer value
-	rounded := IntVector2(Math.round(x), Math.round(y))
+	rounded := int2(Math.round(x), Math.round(y))
 	
 	// Returns a vector with each coordinate rounded down to an integer value
-	floor := IntVector2(Math.floor(x), Math.floor(y))
+	floor := int2(Math.floor(x), Math.floor(y))
 		
-	ceil := IntVector2(Math.ceil(x), Math.ceil(y))
+	ceil := int2(Math.ceil(x), Math.ceil(y))
 		
-	abs := Vector2(Math.abs(x), Math.abs(y))
+	abs := float2(Math.abs(x), Math.abs(y))
 		
 	max := x > y ? x : y
 	
 	min := x < y ? x : y
 		
 	// Returns the distance between two vectors
-	static distanceBetween: Vector2 a // The first vector 
-		                    Vector2 b // The second vector
+	static distanceBetween: float2 a // The first vector 
+		                    float2 b // The second vector
 		var x = a.x - b.x
 		var y = a.y - b.y
 		return Math.sqrt(x*x + y*y)
 
 	// Returns the angle between two vectors in radians
-	static angleBetween: Vector2 a // The first vector
-		                 Vector2 b // The second vector
+	static angleBetween: float2 a // The first vector
+		                 float2 b // The second vector
 		return Math.atan2(b-a)
 
 	// Interpolates linearly between two given vectors
-	static lerp: Vector2 a   // The first vector
-		         Vector2 b   // The second vector
+	static lerp: float2 a   // The first vector
+		         float2 b   // The second vector
 		         float value // The interpolation value, 0 returns the first vector, 1 returns the second vector
 		var ivalue = 1 - value
-		return new Vector2(a.x * ivalue + b.x * value, a.y * ivalue + b.y * value)
+		return new float2(a.x * ivalue + b.x * value, a.y * ivalue + b.y * value)
 
 	// Returns a vector that points in the same direction, but has a length of 1
 	normalized
 		let len = Math.sqrt(x * x + y * y)
-		return len != 0 ? Vector2(x / len, y / len) : Vector2(0, 0)
+		return len != 0 ? float2(x / len, y / len) : float2(0, 0)
 		
-	moveTowards: Vector2 targetPosition
+	moveTowards: float2 targetPosition
 		         float speed = 1
 		let delta = targetPosition - this
 		if delta.x != 0 || delta.y != 0
@@ -124,7 +124,7 @@ struct Vector2
 	// Returns a vector that is transformed by a given matrix
 	getTransformed: Matrix2D matrix // The matrix to transform the vector by
 		var m = matrix.matrix
-		return Vector2(
+		return float2(
 			m[0] * x + m[2] * y + m[4],
 			m[1] * x + m[3] * y + m[5]
 		)
@@ -135,22 +135,22 @@ struct Vector2
 		var aa = a[0], ab = a[1], ac = a[2], ad = a[3], atx = a[4], aty = a[5]
 
 		var det = aa * ad - ab * ac
-		if(det == 0) return Vector2()
+		if(det == 0) return float2()
 		det = 1.0 / det
 		
-		return Vector2(
+		return float2(
 			( ad * det) * x + (-ac * det) * y + ((ac * aty - ad * atx) * det),
 			(-ab * det) * x + ( aa * det) * y + ((ab * atx - aa * aty) * det)
 		)
 		
 	// Returns whether the vector is within a given rectangle
-	isWithinRectangle: Vector2 center, // The center of the rectangle
-		               Vector2 size,   // The size of the rectangle
+	isWithinRectangle: float2 center, // The center of the rectangle
+		               float2 size,   // The size of the rectangle
 		return x >= center.x - size.x && x < center.x + size.x
 		    && y >= center.y - size.y && y < center.y + size.y
 		
 	// Returns whether the vector is within a given polygon
-	isInsidePoygon: Vector2[] poly // A list of points that make up the polygon
+	isInsidePoygon: float2[] poly // A list of points that make up the polygon
 		let c = false, i = -1, l = poly.length, j = l - 1
 		while ++i < l
 			((poly[i].y <= this.y && this.y < poly[j].y) || (poly[j].y <= this.y && this.y < poly[i].y))
@@ -159,21 +159,21 @@ struct Vector2
 			j = i
 		return c
 		
-	dot: Vector2 value
+	dot: float2 value
 		return x * value.x + y * value.y
 		
-	cross: Vector2 value
+	cross: float2 value
 		return x*value.y - y*value.x
 		
 // A 2D vector comprised of an integer x and y coordinate
-struct IntVector2
-	static IntVector2 none = new IntVector2(int.minValue, int.minValue)
+struct int2
+	static int2 none = new int2(int.minValue, int.minValue)
 		
 	int x // The x-coordinate of the vector
 	int y // The y-coordinate of the vector
 	
 	// Creates a copy of the vector with the same values
-	IntVector2 clone := IntVector2(x, y)
+	int2 clone := int2(x, y)
 		
 	// Returns a string representation of the vector
 	string toString := "("+x+", "+y+")" 
@@ -181,53 +181,53 @@ struct IntVector2
 	// Returns true if any coordinates is not zero
 	bool toBool := (x != int.minValue || y != int.minValue)
 	
-	implicit Vector2 toVector2 := Vector2(x,y)
+	implicit float2 toFloat2 := float2(x,y)
 	
-	IntVector2 operator = (IntVector2 a, IntVector2 b) a.x = b.x; a.y = b.y; return a
+	int2 operator = (int2 a, int2 b) a.x = b.x; a.y = b.y; return a
 	
-	IntVector2 operator +  (IntVector2 a, IntVector2 b) return IntVector2(a.x+b.x, a.y+b.y)
-	IntVector2 operator -  (IntVector2 a, IntVector2 b) return IntVector2(a.x-b.x, a.y-b.y)
-	IntVector2 operator *  (IntVector2 a, IntVector2 b) return IntVector2(a.x*b.x, a.y*b.y)
-	IntVector2 operator /  (IntVector2 a, IntVector2 b) return IntVector2(a.x/b.x, a.y/b.y)
+	int2 operator +  (int2 a, int2 b) return int2(a.x+b.x, a.y+b.y)
+	int2 operator -  (int2 a, int2 b) return int2(a.x-b.x, a.y-b.y)
+	int2 operator *  (int2 a, int2 b) return int2(a.x*b.x, a.y*b.y)
+	int2 operator /  (int2 a, int2 b) return int2(a.x/b.x, a.y/b.y)
 	
-	IntVector2 operator *  (IntVector2 a, int b) return IntVector2(a.x*b, a.y*b)
-	Vector2 operator /  (IntVector2 a, float b) return Vector2(a.x/b, a.y/b)
+	int2 operator *  (int2 a, int b) return int2(a.x*b, a.y*b)
+	float2 operator /  (int2 a, float b) return float2(a.x/b, a.y/b)
 	
-	IntVector2 operator += (IntVector2 a, IntVector2 b) a.x += b.x; a.y += b.y; return a
-	IntVector2 operator -= (IntVector2 a, IntVector2 b) a.x -= b.x; a.y -= b.y; return a
-	IntVector2 operator *= (IntVector2 a, IntVector2 b) a.x *= b.x; a.y *= b.y; return a
-	IntVector2 operator /= (IntVector2 a, IntVector2 b) a.x /= b.x; a.y /= b.y; return a
+	int2 operator += (int2 a, int2 b) a.x += b.x; a.y += b.y; return a
+	int2 operator -= (int2 a, int2 b) a.x -= b.x; a.y -= b.y; return a
+	int2 operator *= (int2 a, int2 b) a.x *= b.x; a.y *= b.y; return a
+	int2 operator /= (int2 a, int2 b) a.x /= b.x; a.y /= b.y; return a
 	
-	bool operator == (IntVector2 a, IntVector2 b) return a.x == b.x && a.y == b.y
-	bool operator != (IntVector2 a, IntVector2 b) return a.x != b.x || a.y != b.y
-	bool operator >  (IntVector2 a, IntVector2 b) return a.x >  b.x && a.y >  b.y
-	bool operator >= (IntVector2 a, IntVector2 b) return a.x >= b.x && a.y >= b.y
-	bool operator <  (IntVector2 a, IntVector2 b) return a.x <  b.x && a.y <  b.y
-	bool operator <= (IntVector2 a, IntVector2 b) return a.x <= b.x && a.y <= b.y
+	bool operator == (int2 a, int2 b) return a.x == b.x && a.y == b.y
+	bool operator != (int2 a, int2 b) return a.x != b.x || a.y != b.y
+	bool operator >  (int2 a, int2 b) return a.x >  b.x && a.y >  b.y
+	bool operator >= (int2 a, int2 b) return a.x >= b.x && a.y >= b.y
+	bool operator <  (int2 a, int2 b) return a.x <  b.x && a.y <  b.y
+	bool operator <= (int2 a, int2 b) return a.x <= b.x && a.y <= b.y
 	
 	// Returns the length of the vector
 	length := Math.sqrt(x * x + y * y)
 		
 	// Returns a vector that is orthogonal to the existing vector
-	orthogonal := IntVector2(-y, x)
+	orthogonal := int2(-y, x)
 		
 	// Returns a vector with the sign of each coordinate flipped
-	inverse := IntVector2(-x, -y)
+	inverse := int2(-x, -y)
 		
 	max := x > y ? x : y
 	
 	min := x < y ? x : y
 		
 	// Returns the distance between two vectors
-	static distanceBetween: IntVector2 a // The first vector 
-		                    IntVector2 b // The second vector
+	static distanceBetween: int2 a // The first vector 
+		                    int2 b // The second vector
 		var x = a.x - b.x
 		var y = a.y - b.y
 		return Math.sqrt(x*x + y*y)
 
 	// Returns the angle between two vectors in radians
-	static angleBetween: IntVector2 a // The first vector
-		                 IntVector2 b // The second vector
+	static angleBetween: int2 a // The first vector
+		                 int2 b // The second vector
 		return Math.atan2(b-a)
 	
 // A 3x2 matrix used to transform vectors in 2D space
@@ -263,8 +263,8 @@ struct Matrix2D
 		a.matrix[5] = b.matrix[5]
 		return this
 		
-	Vector2 position := {matrix[4], matrix[5]}
-	Vector2 scale := {matrix[0], matrix[3]}
+	float2 position := {matrix[4], matrix[5]}
+	float2 scale := {matrix[0], matrix[3]}
 
 	Matrix2D operator * (Matrix2D a, Matrix2D b) Matrix2D c; return multiply(a, b, c)
 	Matrix2D operator *= (Matrix2D a, Matrix2D b) return multiply(a, b, a)
@@ -275,10 +275,10 @@ struct Matrix2D
 	// Returns true if the matrix isn't the identity matrix
 	bool toBool := (matrix[0] != 1 || matrix[1] != 0 || matrix[2] != 0 || matrix[3] != 1 || matrix[4] != 0 || matrix[5] != 0)
 		
-	Vector2 scaleVector := { matrix[0], matrix[3] }
+	float2 scaleVector := { matrix[0], matrix[3] }
 	
 	// Moves the matrix by a given vector
-	move: Vector2 vector // The matrix will be moved by this vector
+	move: float2 vector // The matrix will be moved by this vector
 		var a0 = matrix[0], a1 = matrix[1], a2 = matrix[2], a3 = matrix[3], a4 = matrix[4], a5 = matrix[5]
 		var v0 = vector.x, v1 = vector.y
 		
@@ -304,7 +304,7 @@ struct Matrix2D
 		return this	
 
 	// Scales the matrix by a given vector
-	scale: Vector2 vector // The vector to scale by
+	scale: float2 vector // The vector to scale by
 		var a0 = matrix[0], a1 = matrix[1], a2 = matrix[2], a3 = matrix[3], a4 = matrix[4], a5 = matrix[5]
 		var v0 = vector.x, v1 = vector.y
 		
@@ -340,24 +340,24 @@ struct Matrix2D
 
 // Helper class for converting positions within an isomatic grid
 class IsometicGrid
-	IntVector2 size
-	Vector2 cellSize, topFaceOffset
+	int2 size
+	float2 cellSize, topFaceOffset
 	
-	visible Vector2 xOffset = cellSize / 2
-	visible Vector2 yOffset = {xOffset.x, -xOffset.y}
-	visible Vector2 basePos = {-xOffset.x*(size.x-1)}
+	visible float2 xOffset = cellSize / 2
+	visible float2 yOffset = {xOffset.x, -xOffset.y}
+	visible float2 basePos = {-xOffset.x*(size.x-1)}
 	
 	// Convert from grid position to logical position
-	getPosition: IntVector2 gridPos // The grid position specifies which cell we want to get the position of
+	getPosition: int2 gridPos // The grid position specifies which cell we want to get the position of
 		return basePos + xOffset*gridPos.x + yOffset*gridPos.y
 		
 	// Convert from locgical position to grid position
-	getGridPosition: Vector2 pos // The logical position
-		Vector2 t = pos - basePos + topFaceOffset
+	getGridPosition: float2 pos // The logical position
+		float2 t = pos - basePos + topFaceOffset
 		let x = Math.round((xOffset.x*t.y + xOffset.y*t.x) / (2*xOffset.x*xOffset.y))
 		let y = Math.round((xOffset.y*t.x - xOffset.x*t.y) / (2*xOffset.x*xOffset.y))
-		if x >= 0 and x < size.x and y >= 0 and y < size.y: return IntVector2(x,y)
-		else                                                return IntVector2.none
+		if x >= 0 and x < size.x and y >= 0 and y < size.y: return int2(x,y)
+		else                                                return int2.none
 		
 // A texture that can be loaded into video memory
 struct Sound
@@ -401,7 +401,7 @@ class Color
 // A texture that can be loaded into video memory
 class Texture
 	string file
-	Vector2 size
+	float2 size
 	Texture() open
 	
 	js void open
@@ -413,12 +413,12 @@ class Texture
 			image.onload = e => {
 				this._htmlImage = image
 				window._htmlImageCache[this.file] = image
-				this.size = new Vector2(image.width, image.height)
+				this.size = new float2(image.width, image.height)
 				if(Platform_mode == 0) Network_tickFrame();
 			}
 		} else {
 			this._htmlImage = image
-			this.size = new Vector2(image.width, image.height)
+			this.size = new float2(image.width, image.height)
 		}
 
 // A single frame of an animated image
@@ -428,7 +428,7 @@ struct ImageFrame
 // An image that can be drawn on the screen and can have several frames of animation
 class Image
 	Texture texture
-	Vector2 size
+	float2 size
 	ImageFrame[] frames
 	string file
 	
@@ -470,12 +470,12 @@ global unit graphics
 		}
 		
 	// Moves all subsequent operations by a given vector						
-	move: Vector2 distance // The distance to move
+	move: float2 distance // The distance to move
 		appMatrix.move distance
 		matrix.move distance
 							
 	// Moves all operations in a block by a given vector						
-	move: Vector2 distance // The distance to move
+	move: float2 distance // The distance to move
 		  void() block     // All operations in this block will be moved
 		let a = appMatrix.matrix, b = matrix.matrix
 		let a0 = a[0], a1 = a[1], a2 = a[2], a3 = a[3], a4 = a[4], a5 = a[5]
@@ -541,7 +541,7 @@ global unit graphics
 		code(imageData.data)
 		Platform_context.putImageData(imageData, 0, 0)
 		
-	js void createImage: Vector2 size
+	js void createImage: float2 size
 		                 void() code
 		let prevCanvas = Platform_canvas
 		let prevContext = Platform_context
@@ -663,7 +663,7 @@ global unit graphics
 		
 	// Draws an image on the screen
 	global void drawImage: Image image           // The image to draw
-		                   Vector2 position = {} // The position where to draw the image
+		                   float2 position = {} // The position where to draw the image
 		                   framesPerSecond = 0   // Animate the image with this animation speed
 		                   scale = 1.0           // Scale the image by this factor
 		                   visibleFor = -1
@@ -672,7 +672,7 @@ global unit graphics
 		
 	// Draws an image on the screen
 	global js void drawImage: Image image           // The image to draw
-		                      Vector2 position = {} // The position where to draw the image
+		                      float2 position = {} // The position where to draw the image
 		                      frame = 0             // The frame to draw
 		                      scale = 1.0           // Scale the image by this factor
 		                      visibleFor = -1
@@ -688,9 +688,9 @@ global unit graphics
 	
 	// Draws an image on the screen
 	global js void drawTextureRegion: Texture texture
-		                              Vector2 sourcePosition = {}
-		                              Vector2 sourceSize = {}
-		                              Vector2 position = {}       // The position where to draw the image
+		                              float2 sourcePosition = {}
+		                              float2 sourceSize = {}
+		                              float2 position = {}       // The position where to draw the image
 		                              scale = 1.0                 // Scale the image by this factor
 		                              visibleFor = -1
 		if(Platform_fastForward || !texture || !texture._htmlImage) return
@@ -721,7 +721,7 @@ global unit graphics
 	
 	// Draws an image on the screen
 	global js void drawTexture: Texture texture       // The image to draw
-		                        Vector2 position = {} // The position where to draw the image
+		                        float2 position = {} // The position where to draw the image
 		                        scale = 1.0           // Scale the image by this factor
 		                        visibleFor = -1
 		if(Platform_fastForward || !texture || !texture._htmlImage) return
@@ -737,7 +737,7 @@ global unit graphics
 	// Draws an image on the screen
 	global void drawButton: Image image            // The image to draw
 		                    text = ""
-		                    Vector2 position = {}  // The position where to draw the image
+		                    float2 position = {}  // The position where to draw the image
 		                    Color textColor = null // The color of the text
 		                    frame = 0              // The frame to draw
 		                    scale = 1.0            // Scale the image by this factor
@@ -753,13 +753,13 @@ global unit graphics
 	// Draws an image on the screen
 	global void drawButton: Image image             // The image to draw
 		                    text = ""
-		                    Vector2 position = {}   // The position where to draw the image
+		                    float2 position = {}   // The position where to draw the image
 		                    Color textColor = null  // The color of the text
 		                    frame = 0               // The frame to draw
 		                    scale = 1.0             // Scale the image by this vector
 		                    fontSize = 18
 		                    owner = -1
-		                    touchMargin = Vector2(16,16)
+		                    touchMargin = float2(16,16)
 		                    showTouchArea = false
 		                    clickableBy = -1
 		                    visibleFor = -1
@@ -778,7 +778,7 @@ global unit graphics
 			
 	// Draws a text on the screen
 	global js void drawText: string text                        // The text to draw
-		                     position = Vector2()               // The position where to draw the text
+		                     position = float2()               // The position where to draw the text
 		                     size = 0                           // The size of the text in pixels
 		                     Color color = null                 // The color of the text
 		                     HorizontalAlignment align = Center // The horizontal alignment of the text
@@ -799,8 +799,8 @@ global unit graphics
 		Platform_context.fillText(text, position.x, position.y+(valign==1 ? size*0.07 : 0))
 		
 	// Draws a text on the screen
-	global js void drawRectangle: position = Vector2()
-		                          size = Vector2()
+	global js void drawRectangle: position = float2()
+		                          size = float2()
 		                          Color fill = null
 		                          Color stroke = null
 		                          lineWidth = 0
@@ -822,8 +822,8 @@ global unit graphics
 		}
 		
 	// Draws a text on the screen
-	global js void clearRectangle: position = Vector2()
-		                           size = Vector2()
+	global js void clearRectangle: position = float2()
+		                           size = float2()
 		                           visibleFor = -1
 		if(Platform_fastForward) return
 		if(visibleFor == -1) visibleFor = graphics_currentlyVisibleFor
@@ -834,7 +834,7 @@ global unit graphics
 		Platform_context.clearRect(position.x-size.x/2, position.y-size.y/2, size.x, size.y)
 		
 	// Draws a text on the screen
-	global js void drawPolygon: Vector2[] positions
+	global js void drawPolygon: float2[] positions
 		                        Color color = null
 		                        visibleFor = -1
 		if(Platform_fastForward) return
@@ -850,8 +850,8 @@ global unit graphics
 			Platform_context.lineTo(p.x, p.y)
 		Platform_context.fill()
 
-	global js void drawRoundedRectangle: position = Vector2()
-		                                 size = Vector2()
+	global js void drawRoundedRectangle: position = float2()
+		                                 size = float2()
 		                                 radius = 32
 		                                 Color fill = null
 		                                 Color stroke = null
@@ -885,4 +885,3 @@ global unit graphics
 			Platform_context.strokeStyle = stroke.hex
 			Platform_context.stroke()
 		}
-		

@@ -30,7 +30,7 @@ class RoomInfo: int time, userId
 		
 class VideoScreenInfo
 	object videoElement = null
-	Vector2 pos
+	float2 pos
 	float width
 
 unit Network
@@ -586,10 +586,10 @@ unit Network
 		el.muted = local
 		document.body.appendChild(el)
 		el.srcObject = stream;
-		let vs = Network_videoScreens[userId] || (Network_videoScreens[userId] = new VideoScreenInfo(null, new Vector2, new Vector2))
+		let vs = Network_videoScreens[userId] || (Network_videoScreens[userId] = new VideoScreenInfo(null, new float2, new float2))
 		vs.videoElement = el
 		
-	setUserVideoAndColor: int userId = 0, Vector2 pos = {}, float width = 440, Color color = null
+	setUserVideoAndColor: int userId = 0, float2 pos = {}, float width = 440, Color color = null
 		let vs = videoScreens[userId] || (videoScreens[userId] = VideoScreenInfo)
 		vs.pos = pos
 		vs.width = width

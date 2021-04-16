@@ -7,7 +7,7 @@ class NetworkUser
 	int frames
 	int[][] inputs = [[]]
 	
-	Vector2 touchPos = {0,0}
+	float2 touchPos = {0,0}
 	visible Touch[] downTouches, movingTouches, upTouches
 	visible Touch[] startingTouches
 	visible WheelEvent[] wheelEvents
@@ -48,19 +48,19 @@ class Touch
 	NetworkUser user
 	TouchPhase phase
 	MouseButton button
-	Vector2 referencePosition
-	Vector2 referenceStartPosition
+	float2 referencePosition
+	float2 referenceStartPosition
 	bool isDown
-	Vector2 position
-	Vector2 startPosition
+	float2 position
+	float2 startPosition
 	
 	markAsHandled() phase = Handled
 	
 class WheelEvent
 	NetworkUser user
 	int delta
-	Vector2 referencePosition
-	Vector2 position
+	float2 referencePosition
+	float2 position
 	bool handled
 	
 	markAsHandled() handled = true
@@ -73,9 +73,9 @@ unit Input
 	internal init
 		initHandlers
 	
-	private js Vector2 logicalToPixelPosition: Vector2 pos
+	private js float2 logicalToPixelPosition: float2 pos
 		let p = pos.getTransformed(graphics_matrix)
-		return new Vector2(p.x/Platform_pixelRatio, p.y/Platform_pixelRatio)
+		return new float2(p.x/Platform_pixelRatio, p.y/Platform_pixelRatio)
 
 	private js void initHandlers
 		window.onpointerdown = e => {
@@ -161,7 +161,7 @@ unit Input
 		inputs.add keyCode
 		
 	private handleTouchEvent: InputType type, float x, float y, int id, int button
-		Vector2 referencePos = {x*Platform.pixelRatio, y*Platform.pixelRatio}.getRelativeTo(Platform.baseMatrix)
+		float2 referencePos = {x*Platform.pixelRatio, y*Platform.pixelRatio}.getRelativeTo(Platform.baseMatrix)
 		sendToEditor id, referencePos, cast type
 		if Network.mode == None || Platform.mode != Record: return
 		let inputs = getInputList
@@ -187,14 +187,14 @@ unit Input
 		if Network.mode == None || Platform.mode != Record: return
 		let inputs = getInputList
 		
-		Vector2 referencePos = {x*Platform.pixelRatio, y*Platform.pixelRatio}.getRelativeTo(Platform.baseMatrix)
+		float2 referencePos = {x*Platform.pixelRatio, y*Platform.pixelRatio}.getRelativeTo(Platform.baseMatrix)
 		InputType type = Wheel
 		inputs.add cast type
 		inputs.add Math.round(referencePos.x)
 		inputs.add Math.round(referencePos.y)
 		inputs.add Math.round(delta)
 		
-	private js void sendToEditor: int id, Vector2 pos, TouchPhase phase
+	private js void sendToEditor: int id, float2 pos, TouchPhase phase
 		if(Platform_slideMode) _sendToEditor({type:"touch", id, x:pos.x, y:pos.y, phase})
 	
 	internal parseInputs(int frame)
@@ -210,7 +210,7 @@ unit Input
 					if type >= TouchDown && type <= Wheel
 						MouseButton button = cast Math.shiftRight(value, 5) % 8
 						int id = Math.shiftRight(value, 8)
-						Vector2 touchPos = {inputs[++i], inputs[++i]}
+						float2 touchPos = {inputs[++i], inputs[++i]}
 						user.touchPos = touchPos
 						
 						if type == TouchDown
@@ -223,17 +223,17 @@ unit Input
 							Network.parseLog += " touchMove "+touchPos.x+" "+touchPos.y
 							let startingTouch = user.startingTouches.find a.id == id
 							let isDown = startingTouch != null
-							Vector2 referenceStartPosition
+							float2 referenceStartPosition
 							if isDown: referenceStartPosition = startingTouch.referencePosition
-							else       referenceStartPosition = Vector2.none; id = 0
-							// let referenceStartPosition = isDown ? startingTouch.referencePosition : Vector2.none
+							else       referenceStartPosition = float2.none; id = 0
+							// let referenceStartPosition = isDown ? startingTouch.referencePosition : float2.none
 							user.movingTouches.add {id, user, cast type, button, touchPos, referenceStartPosition, isDown}
 							cursor = "auto"
 						else
 						if type == TouchUp
 							Network.parseLog += " touchUp "+touchPos.x+" "+touchPos.y
 							let startingTouch = user.startingTouches.removeWhere a.id == id
-							let referenceStartPosition = startingTouch ? startingTouch.referencePosition : Vector2.none
+							let referenceStartPosition = startingTouch ? startingTouch.referencePosition : float2.none
 							user.upTouches.add {id, user, cast type, button, user.touchPos, referenceStartPosition}
 						else
 						if type == Wheel
@@ -258,14 +258,14 @@ unit Input
 						user.upKeys.add inputs[++i]
 				
 	// Executes code when the user touches or clicks within a rectangle
-	onTouchDownWithin: Vector2 position       // The center of the rectangle
-		               Vector2 size           // The size of the rectangle
+	onTouchDownWithin: float2 position       // The center of the rectangle
+		               float2 size           // The size of the rectangle
 		               void(Touch touch) code // The code to execute for each touch or click
 		               int userId = -1        // Only consider touches or clicks from this user      
 		               string cursor = ""
 		               bool visualize = false
 		               bool markAsHandled = true
-		Vector2[] poly = [
+		float2[] poly = [
 			{ position.x-size.x/2, position.y-size.y/2 }.transform(graphics.appMatrix),
 			{ position.x+size.x/2, position.y-size.y/2 }.transform(graphics.appMatrix),
 			{ position.x+size.x/2, position.y+size.y/2 }.transform(graphics.appMatrix),
@@ -296,13 +296,13 @@ unit Input
 		if visualize: drawRectangle position, size, fill:{"ff000080"}
 
 	// Executes code when the user touches or clicks within a rectangle
-	onTouchUpWithin: Vector2 position       // The center of the rectangle
-		             Vector2 size           // The size of the rectangle
+	onTouchUpWithin: float2 position       // The center of the rectangle
+		             float2 size           // The size of the rectangle
 		             void(Touch touch) code // The code to execute for each touch or click
 		             int userId = -1        // Only consider touches or clicks from this user
 		             bool visualize = false
 		             bool markAsHandled = true
-		Vector2[] poly = [
+		float2[] poly = [
 			{ position.x-size.x/2, position.y-size.y/2 }.transform(graphics.appMatrix),
 			{ position.x+size.x/2, position.y-size.y/2 }.transform(graphics.appMatrix),
 			{ position.x+size.x/2, position.y+size.y/2 }.transform(graphics.appMatrix),
@@ -420,13 +420,13 @@ unit Input
 				code value
 	
 	// Executes code when a user moves the mouse wheel within a given rectangle
-	onWheelWithin: Vector2 position            // The center of the rectangle
-		           Vector2 size                // The size of the rectangle
+	onWheelWithin: float2 position            // The center of the rectangle
+		           float2 size                // The size of the rectangle
 		           void(WheelEvent event) code // The code to execute
 		           int userId = -1             // Only consider wheel movments from this user
 		           Color fill = null
 		           bool markAsHandled = true
-		Vector2[] poly = [
+		float2[] poly = [
 			{ position.x-size.x/2, position.y-size.y/2 }.transform(graphics.appMatrix),
 			{ position.x+size.x/2, position.y-size.y/2 }.transform(graphics.appMatrix),
 			{ position.x+size.x/2, position.y+size.y/2 }.transform(graphics.appMatrix),
@@ -520,4 +520,3 @@ unit Input
 		for user -> users if user
 			for key -> user.upKeys
 				code key
-
