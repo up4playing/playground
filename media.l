@@ -433,6 +433,31 @@ unit audio
 global unit graphics
 	internal Matrix2D matrix, appMatrix
 		
+	internal js void clearScreen
+		if(Platform_fastForward) return
+		Platform_context.setTransform(1,0,0,1,0,0)
+		Platform_context.clearRect(0,0,Platform_pixelSize.x, Platform_pixelSize.y)
+		graphics_currentlyVisibleFor = -1
+		
+	internal js void drawSafeArea
+		Platform_context.fillStyle = "#404040"
+		Platform_context.setTransform(1,0,0,1,0,0)
+		if(Platform_showSafeArea) {
+			if(Platform_effectiveScaleMode == 1) {
+				// Fixed width
+				let ratio = Platform_pixelSize.x / Platform_referenceSize.x
+				let margin = (Platform_pixelSize.y-Platform_referenceSize.y*ratio)/2
+				Platform_context.fillRect(0,0,Platform_pixelSize.x, margin)
+				Platform_context.fillRect(0,Platform_pixelSize.y-margin,Platform_pixelSize.x, margin)
+			} else if(Platform_effectiveScaleMode == 2) {
+				// Fixed height
+				let ratio = Platform_pixelSize.y / Platform_referenceSize.y
+				let margin = (Platform_pixelSize.x-Platform_referenceSize.x*ratio)/2
+				Platform_context.fillRect(0, 0, margin, Platform_pixelSize.y)
+				Platform_context.fillRect(Platform_pixelSize.x-margin, 0, margin, Platform_pixelSize.y)
+			}
+		}
+		
 	// Moves all subsequent operations by a given vector						
 	move: Vector2 distance // The distance to move
 		appMatrix.move distance
@@ -500,12 +525,6 @@ global unit graphics
 		a[0] = a0; a[1] = a1; a[2] = a2; a[3] = a3; a[4] = a4; a[5] = a5 
 		b[0] = b0; b[1] = b1; b[2] = b2; b[3] = b3; b[4] = b4; b[5] = b5
 	
-	js void clearScreen
-		if(Platform_fastForward) return
-		Platform_context.setTransform(1,0,0,1,0,0)
-		Platform_context.clearRect(0,0,Platform_pixelSize.x, Platform_pixelSize.y)
-		graphics_currentlyVisibleFor = -1
-		
 	js int[] manipulate: void(int[] pixels) code
 		let imageData = Platform_context.getImageData(0,0,Platform_pixelSize.x, Platform_pixelSize.y)
 		code(imageData.data)

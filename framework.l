@@ -22,29 +22,6 @@ unit framework
 				for -> objects: drawIcons
 					
 			Input.onTouchUp: touch.user.selectedObject = null
-				
-		Network.drawFingers
-		Network.updateVideoScreen
-		drawSafeArea
-		
-	private js void drawSafeArea
-		Platform_context.fillStyle = "#404040"
-		Platform_context.setTransform(1,0,0,1,0,0)
-		if(Platform_showSafeArea) {
-			if(Platform_effectiveScaleMode == 1) {
-				// Fixed width
-				let ratio = Platform_pixelSize.x / Platform_referenceSize.x
-				let margin = (Platform_pixelSize.y-Platform_referenceSize.y*ratio)/2
-				Platform_context.fillRect(0,0,Platform_pixelSize.x, margin)
-				Platform_context.fillRect(0,Platform_pixelSize.y-margin,Platform_pixelSize.x, margin)
-			} else if(Platform_effectiveScaleMode == 2) {
-				// Fixed height
-				let ratio = Platform_pixelSize.y / Platform_referenceSize.y
-				let margin = (Platform_pixelSize.x-Platform_referenceSize.x*ratio)/2
-				Platform_context.fillRect(0, 0, margin, Platform_pixelSize.y)
-				Platform_context.fillRect(Platform_pixelSize.x-margin, 0, margin, Platform_pixelSize.y)
-			}
-		}
 		
 class NetworkUser
 	Object selectedObject = null

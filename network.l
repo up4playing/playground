@@ -180,6 +180,9 @@ unit Network
 		
 		// Tick
 		framework.tick
+		drawFingers
+		updateVideoScreen
+		graphics.drawSafeArea
 		Input.updateCursor
 		
 		// Checksum
@@ -574,11 +577,11 @@ unit Network
 		let vs = Network_videoScreens[userId] || (Network_videoScreens[userId] = new VideoScreenInfo(null, new Vector2, new Vector2))
 		vs.videoElement = el
 		
-	setVideoScreen: int userId = 0, Vector2 pos = {}, float width = 440, Color color = null
+	setUserVideoAndColor: int userId = 0, Vector2 pos = {}, float width = 440, Color color = null
 		let vs = videoScreens[userId] || (videoScreens[userId] = VideoScreenInfo)
 		vs.pos = pos
 		vs.width = width
-		Input.users[userId].color = color
+		if color: Input.users[userId].color = color
 		
 	internal js void updateVideoScreen
 		if(Network_mode == 2/*Local*/) {
@@ -602,9 +605,9 @@ unit Network
 			}
 		}
 		
-	drawFingers
+	internal drawFingers
 		for user -> Input.users
-			// if !local
+			if !local
 				drawImage finger, touchPos+{11,34}, frame:user.id
 				if color: drawRectangle touchPos+{16,76}, size:{26,8}, color
 				
