@@ -234,7 +234,7 @@ struct iterable
 // Denotes a type that can be null
 struct Nullable<T>
 	
-class object
+interface object
 	inline js bool toBool() (this != null)
 	inline js string toString() JSON.stringify(this)
 	
