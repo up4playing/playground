@@ -187,8 +187,8 @@ unit Network
 			myChecksum += position.x + position.y + frame + cast side
 			if type == Board
 				Board board = cast o
-				float[] m = board.matrix.matrix
-				myChecksum += m[0] + m[1] + m[2] + m[3] + m[4] + m[5]
+				let m = board.matrix
+				myChecksum += m.m0 + m.m1 + m.m2 + m.m3 + m.m4 + m.m5
 				
 		let theirChecksum = checksums[logicFrame]
 		if !theirChecksum

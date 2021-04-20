@@ -79,9 +79,9 @@ unit Platform
 		}
 		
 		if(Platform_scaleMode < 3)
-			Platform_baseMatrix = new Matrix2D([scale,0,0,scale,Platform_pixelSize.x/2,Platform_pixelSize.y/2])
+			Platform_baseMatrix = new Matrix2D(scale,0,0,scale,Platform_pixelSize.x/2,Platform_pixelSize.y/2)
 		else
-			Platform_baseMatrix = new Matrix2D([scale,0,0,scale,Platform_pixelSize.x/2,0])
+			Platform_baseMatrix = new Matrix2D(scale,0,0,scale,Platform_pixelSize.x/2,0)
 		
 	private startEngine: bool isDebug
 		init

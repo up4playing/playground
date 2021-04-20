@@ -26,15 +26,13 @@ struct float2
 	float2 operator / (float2 a, float b) return float2(a.x/b, a.y/b)
 		
 	float2 operator * (float2 vector, Matrix2D matrix)
-		var m = matrix.matrix
 		return float2(
-			m[0] * vector.x + m[2] * vector.y + m[4],
-			m[1] * vector.x + m[3] * vector.y + m[5]
+			matrix.m0 * vector.x + matrix.m2 * vector.y + matrix.m4,
+			matrix.m1 * vector.x + matrix.m3 * vector.y + matrix.m5
 		)
 		
 	float2 operator / (float2 vector, Matrix2D matrix)
-		var a = matrix.matrix
-		var aa = a[0], ab = a[1], ac = a[2], ad = a[3], atx = a[4], aty = a[5]
+		var aa = matrix.m0, ab = matrix.m1, ac = matrix.m2, ad = matrix.m3, atx = matrix.m4, aty = matrix.m5
 
 		var det = aa * ad - ab * ac
 		if(det == 0) return float2()
@@ -116,23 +114,20 @@ struct float2
 		
 	// Transforms the vector by a given matrix
 	transform: Matrix2D matrix // The matrix to transform the vector by
-		var m = matrix.matrix
-		x = m[0] * x + m[2] * y + m[4]
-		y = m[1] * x + m[3] * y + m[5]
+		x = matrix.m0 * x + matrix.m2 * y + matrix.m4
+		y = matrix.m1 * x + matrix.m3 * y + matrix.m5
 		return this
 		
 	// Returns a vector that is transformed by a given matrix
 	getTransformed: Matrix2D matrix // The matrix to transform the vector by
-		var m = matrix.matrix
 		return float2(
-			m[0] * x + m[2] * y + m[4],
-			m[1] * x + m[3] * y + m[5]
+			matrix.m0 * x + matrix.m2 * y + matrix.m4,
+			matrix.m1 * x + matrix.m3 * y + matrix.m5
 		)
 
 	// Returns a vector that is transformed by the inverse of the given matrix
 	getRelativeTo: Matrix2D matrix // The vector will be transformed by the inverse of this matrix
-		var a = matrix.matrix
-		var aa = a[0], ab = a[1], ac = a[2], ad = a[3], atx = a[4], aty = a[5]
+		var aa = matrix.m0, ab = matrix.m1, ac = matrix.m2, ad = matrix.m3, atx = matrix.m4, aty = matrix.m5
 
 		var det = aa * ad - ab * ac
 		if(det == 0) return float2()
@@ -232,110 +227,111 @@ struct int2
 	
 // A 3x2 matrix used to transform vectors in 2D space
 struct Matrix2D
-	float[] matrix = [1, 0, 0, 1, 0, 0] // The values of the 3x2 matrix
+	float m0 // X Scaling
+	float m1 // Y Skewing
+	float m2 // X Skewing
+	float m3 // Y Scaling
+	float m4 // X Translation
+	float m5 // Y Translation
 	
 	clear
-		matrix[0] = 1
-		matrix[1] = 0
-		matrix[2] = 0
-		matrix[3] = 1
-		matrix[4] = 0
-		matrix[5] = 0
+		m0 = 1
+		m1 = 0
+		m2 = 0
+		m3 = 1
+		m4 = 0
+		m5 = 0
 	
-	set: float a, float b, float c, float d, float e, float f, 
-		matrix[0] = a
-		matrix[1] = b
-		matrix[2] = c
-		matrix[3] = d
-		matrix[4] = e
-		matrix[5] = f
+	set: float m0, float m1, float m2, float m3, float m4, float m5
+		this.m0 = m0
+		this.m1 = m1
+		this.m2 = m2
+		this.m3 = m3
+		this.m4 = m4
+		this.m5 = m5
 	
 	// Returns a copy of the matrix with the same values
 	Matrix2D clone
-		return Matrix2D([matrix[0], matrix[1], matrix[2], matrix[3], matrix[4], matrix[5]])
+		return Matrix2D(m0, m1, m2, m3, m4, m5)
 
 	Matrix2D operator = (Matrix2D a, Matrix2D b)
-		a.matrix[0] = b.matrix[0]
-		a.matrix[1] = b.matrix[1]
-		a.matrix[2] = b.matrix[2]
-		a.matrix[3] = b.matrix[3]
-		a.matrix[4] = b.matrix[4]
-		a.matrix[5] = b.matrix[5]
+		a.m0 = b.m0
+		a.m1 = b.m1
+		a.m2 = b.m2
+		a.m3 = b.m3
+		a.m4 = b.m4
+		a.m5 = b.m5
 		return this
 		
-	float2 position := {matrix[4], matrix[5]}
-	float2 scale := {matrix[0], matrix[3]}
+	float2 position := {m4, m5}
+	float2 scale := {m0, m3}
 
 	Matrix2D operator * (Matrix2D a, Matrix2D b) Matrix2D c; return multiply(a, b, c)
 	Matrix2D operator *= (Matrix2D a, Matrix2D b) return multiply(a, b, a)
 		
 	// Returns a string representation of the matrix
-	string toString := "("+matrix[0]+" "+matrix[1]+" "+matrix[2]+" "+matrix[3]+" "+matrix[4]+" "+matrix[5]+")" 
+	string toString := "("+m0+" "+m1+" "+m2+" "+m3+" "+m4+" "+m5+")" 
 	
 	// Returns true if the matrix isn't the identity matrix
-	bool toBool := (matrix[0] != 1 || matrix[1] != 0 || matrix[2] != 0 || matrix[3] != 1 || matrix[4] != 0 || matrix[5] != 0)
+	bool toBool := (m0 != 1 || m1 != 0 || m2 != 0 || m3 != 1 || m4 != 0 || m5 != 0)
 		
-	float2 scaleVector := { matrix[0], matrix[3] }
+	float2 scaleVector := { m0, m3 }
 	
 	// Moves the matrix by a given vector
 	move: float2 vector // The matrix will be moved by this vector
-		var a0 = matrix[0], a1 = matrix[1], a2 = matrix[2], a3 = matrix[3], a4 = matrix[4], a5 = matrix[5]
+		var a0 = m0, a1 = m1, a2 = m2, a3 = m3, a4 = m4, a5 = m5
 		var v0 = vector.x, v1 = vector.y
 		
-		matrix[0] = a0;
-		matrix[1] = a1;
-		matrix[2] = a2;
-		matrix[3] = a3;
-		matrix[4] = a0 * v0 + a2 * v1 + a4;
-		matrix[5] = a1 * v0 + a3 * v1 + a5;		
+		m0 = a0;
+		m1 = a1;
+		m2 = a2;
+		m3 = a3;
+		m4 = a0 * v0 + a2 * v1 + a4;
+		m5 = a1 * v0 + a3 * v1 + a5;		
 		return this	
 		
 	// Rotates the matrix by a given angle	
 	rotate: float angle // The angle in radians to rotate by
-		var a0 = matrix[0], a1 = matrix[1], a2 = matrix[2], a3 = matrix[3], a4 = matrix[4], a5 = matrix[5]
+		var a0 = m0, a1 = m1, a2 = m2, a3 = m3, a4 = m4, a5 = m5
 		var s = Math.sin(angle), c = Math.cos(angle)
 		
-		matrix[0] = a0 *  c + a2 * s;
-		matrix[1] = a1 *  c + a3 * s;
-		matrix[2] = a0 * -s + a2 * c;
-		matrix[3] = a1 * -s + a3 * c;
-		matrix[4] = a4;
-		matrix[5] = a5;
+		m0 = a0 *  c + a2 * s;
+		m1 = a1 *  c + a3 * s;
+		m2 = a0 * -s + a2 * c;
+		m3 = a1 * -s + a3 * c;
+		m4 = a4;
+		m5 = a5;
 		return this	
 
 	// Scales the matrix by a given vector
 	scale: float2 vector // The vector to scale by
-		var a0 = matrix[0], a1 = matrix[1], a2 = matrix[2], a3 = matrix[3], a4 = matrix[4], a5 = matrix[5]
+		var a0 = m0, a1 = m1, a2 = m2, a3 = m3, a4 = m4, a5 = m5
 		var v0 = vector.x, v1 = vector.y
 		
-		matrix[0] = a0 * v0;
-		matrix[1] = a1 * v0;
-		matrix[2] = a2 * v1;
-		matrix[3] = a3 * v1;
-		matrix[4] = a4;
-		matrix[5] = a5;	
+		m0 = a0 * v0;
+		m1 = a1 * v0;
+		m2 = a2 * v1;
+		m3 = a3 * v1;
+		m4 = a4;
+		m5 = a5;	
 		return this
 	
 	multiplyRight(Matrix2D value) return multiply(this, value, this)
 	multiplyLeft(Matrix2D value)  return multiply(value, this, this)
 		
 	static multiply(Matrix2D left, Matrix2D right, Matrix2D result)
-		let a = left.matrix
-		let a00 = a[0], a01 = a[2], a02 = a[4]
-		let a10 = a[1], a11 = a[3], a12 = a[5]
+		let a00 = left.m0, a01 = left.m2, a02 = left.m4
+		let a10 = left.m1, a11 = left.m3, a12 = left.m5
 		
-		let b = right.matrix
-		let b00 = b[0], b01 = b[2], b02 = b[4]
-		let b10 = b[1], b11 = b[3], b12 = b[5]
+		let b00 = right.m0, b01 = right.m2, b02 = right.m4
+		let b10 = right.m1, b11 = right.m3, b12 = right.m5
 		
-		let c = result.matrix
-		c[0] = b00 * a00 + b01 * a10
-		c[2] = b00 * a01 + b01 * a11
-		c[4] = b00 * a02 + b01 * a12 + b02
-		
-		c[1] = b10 * a00 + b11 * a10
-		c[3] = b10 * a01 + b11 * a11
-		c[5] = b10 * a02 + b11 * a12 + b12
+		result.m0 = b00 * a00 + b01 * a10
+		result.m2 = b00 * a01 + b01 * a11
+		result.m4 = b00 * a02 + b01 * a12 + b02
+		result.m1 = b10 * a00 + b11 * a10
+		result.m3 = b10 * a01 + b11 * a11
+		result.m5 = b10 * a02 + b11 * a12 + b12
 		return result
 
 // Helper class for converting positions within an isomatic grid
@@ -477,14 +473,13 @@ global unit graphics
 	// Moves all operations in a block by a given vector						
 	move: float2 distance // The distance to move
 		  void() block     // All operations in this block will be moved
-		let a = appMatrix.matrix, b = matrix.matrix
-		let a0 = a[0], a1 = a[1], a2 = a[2], a3 = a[3], a4 = a[4], a5 = a[5]
-		let b0 = b[0], b1 = b[1], b2 = b[2], b3 = b[3], b4 = b[4], b5 = b[5]
+		let a0 = appMatrix.m0, a1 = appMatrix.m1, a2 = appMatrix.m2, a3 = appMatrix.m3, a4 = appMatrix.m4, a5 = appMatrix.m5
+		let b0 = matrix.m0, b1 = matrix.m1, b2 = matrix.m2, b3 = matrix.m3, b4 = matrix.m4, b5 = matrix.m5
 		appMatrix.move distance
 		matrix.move distance
 		block
-		a[0] = a0; a[1] = a1; a[2] = a2; a[3] = a3; a[4] = a4; a[5] = a5 
-		b[0] = b0; b[1] = b1; b[2] = b2; b[3] = b3; b[4] = b4; b[5] = b5 
+		appMatrix.m0 = a0; appMatrix.m1 = a1; appMatrix.m2 = a2; appMatrix.m3 = a3; appMatrix.m4 = a4; appMatrix.m5 = a5 
+		matrix.m0 = b0; matrix.m1 = b1; matrix.m2 = b2; matrix.m3 = b3; matrix.m4 = b4; matrix.m5 = b5 
 							
 	// Rotates all subsequent operations by a given angle	
 	rotate: float angle // The angle in radians
@@ -495,14 +490,13 @@ global unit graphics
 	rotate: float angle  // The angle in radians
 		    void() block // All operations in this block will be rotated
 		if angle == 0: block; return
-		let a = appMatrix.matrix, b = matrix.matrix
-		let a0 = a[0], a1 = a[1], a2 = a[2], a3 = a[3], a4 = a[4], a5 = a[5]
-		let b0 = b[0], b1 = b[1], b2 = b[2], b3 = b[3], b4 = b[4], b5 = b[5]
+		let a0 = appMatrix.m0, a1 = appMatrix.m1, a2 = appMatrix.m2, a3 = appMatrix.m3, a4 = appMatrix.m4, a5 = appMatrix.m5
+		let b0 = matrix.m0, b1 = matrix.m1, b2 = matrix.m2, b3 = matrix.m3, b4 = matrix.m4, b5 = matrix.m5
 		appMatrix.rotate angle
 		matrix.rotate angle
 		block
-		a[0] = a0; a[1] = a1; a[2] = a2; a[3] = a3; a[4] = a4; a[5] = a5 
-		b[0] = b0; b[1] = b1; b[2] = b2; b[3] = b3; b[4] = b4; b[5] = b5 
+		appMatrix.m0 = a0; appMatrix.m1 = a1; appMatrix.m2 = a2; appMatrix.m3 = a3; appMatrix.m4 = a4; appMatrix.m5 = a5 
+		matrix.m0 = b0; matrix.m1 = b1; matrix.m2 = b2; matrix.m3 = b3; matrix.m4 = b4; matrix.m5 = b5 
 	
 	// Scales all subsequent operations by a given factor
 	scale: float factor // The factor to scale by
@@ -512,14 +506,13 @@ global unit graphics
 	// Scales all operation in a block by a given factor					
 	scale: float factor // The factor to scale by
 		   void() block // All operations in this block will be scaled
-		let a = appMatrix.matrix, b = matrix.matrix
-		let a0 = a[0], a1 = a[1], a2 = a[2], a3 = a[3], a4 = a[4], a5 = a[5]
-		let b0 = b[0], b1 = b[1], b2 = b[2], b3 = b[3], b4 = b[4], b5 = b[5]
+		let a0 = appMatrix.m0, a1 = appMatrix.m1, a2 = appMatrix.m2, a3 = appMatrix.m3, a4 = appMatrix.m4, a5 = appMatrix.m5
+		let b0 = matrix.m0, b1 = matrix.m1, b2 = matrix.m2, b3 = matrix.m3, b4 = matrix.m4, b5 = matrix.m5
 		appMatrix.scale {factor, factor}
 		matrix.scale {factor, factor}
 		block
-		a[0] = a0; a[1] = a1; a[2] = a2; a[3] = a3; a[4] = a4; a[5] = a5 
-		b[0] = b0; b[1] = b1; b[2] = b2; b[3] = b3; b[4] = b4; b[5] = b5 
+		appMatrix.m0 = a0; appMatrix.m1 = a1; appMatrix.m2 = a2; appMatrix.m3 = a3; appMatrix.m4 = a4; appMatrix.m5 = a5 
+		matrix.m0 = b0; matrix.m1 = b1; matrix.m2 = b2; matrix.m3 = b3; matrix.m4 = b4; matrix.m5 = b5 
 	
 	multiply: Matrix2D matrix
 		appMatrix.multiplyRight matrix
@@ -527,14 +520,13 @@ global unit graphics
 	
 	multiply: Matrix2D matrix
 		      void() block // All operations in this block will be scaled
-		let a = this.appMatrix.matrix, b = this.matrix.matrix
-		let a0 = a[0], a1 = a[1], a2 = a[2], a3 = a[3], a4 = a[4], a5 = a[5]
-		let b0 = b[0], b1 = b[1], b2 = b[2], b3 = b[3], b4 = b[4], b5 = b[5]
+		let a0 = appMatrix.m0, a1 = appMatrix.m1, a2 = appMatrix.m2, a3 = appMatrix.m3, a4 = appMatrix.m4, a5 = appMatrix.m5
+		let b0 = matrix.m0, b1 = matrix.m1, b2 = matrix.m2, b3 = matrix.m3, b4 = matrix.m4, b5 = matrix.m5
 		this.appMatrix.multiplyLeft matrix
 		this.matrix.multiplyLeft matrix
 		block
-		a[0] = a0; a[1] = a1; a[2] = a2; a[3] = a3; a[4] = a4; a[5] = a5 
-		b[0] = b0; b[1] = b1; b[2] = b2; b[3] = b3; b[4] = b4; b[5] = b5
+		appMatrix.m0 = a0; appMatrix.m1 = a1; appMatrix.m2 = a2; appMatrix.m3 = a3; appMatrix.m4 = a4; appMatrix.m5 = a5 
+		matrix.m0 = b0; matrix.m1 = b1; matrix.m2 = b2; matrix.m3 = b3; matrix.m4 = b4; matrix.m5 = b5
 	
 	js int[] manipulate: void(int[] pixels) code
 		let imageData = Platform_context.getImageData(0,0,Platform_pixelSize.x, Platform_pixelSize.y)
@@ -554,13 +546,13 @@ global unit graphics
 		Platform_pixelSize.x = size.x
 		Platform_pixelSize.y = size.y
 		let a = graphics_appMatrix.matrix, b = graphics_matrix.matrix
-		let a0 = a[0], a1 = a[1], a2 = a[2], a3 = a[3], a4 = a[4], a5 = a[5]
-		let b0 = b[0], b1 = b[1], b2 = b[2], b3 = b[3], b4 = b[4], b5 = b[5]
+		let a0 = appMatrix.m0, a1 = appMatrix.m1, a2 = appMatrix.m2, a3 = appMatrix.m3, a4 = appMatrix.m4, a5 = appMatrix.m5
+		let b0 = matrix.m0, b1 = matrix.m1, b2 = matrix.m2, b3 = matrix.m3, b4 = matrix.m4, b5 = matrix.m5
 		graphics_appMatrix.set(1, 0, 0, 1, -size.x/2, -size.y/2)
 		graphics_matrix.set(1, 0, 0, 1, size.x/2, size.y/2)
 		code()
-		a[0] = a0; a[1] = a1; a[2] = a2; a[3] = a3; a[4] = a4; a[5] = a5
-		b[0] = b0; b[1] = b1; b[2] = b2; b[3] = b3; b[4] = b4; b[5] = b5
+		appMatrix.m0 = a0; appMatrix.m1 = a1; appMatrix.m2 = a2; appMatrix.m3 = a3; appMatrix.m4 = a4; appMatrix.m5 = a5
+		matrix.m0 = b0; matrix.m1 = b1; matrix.m2 = b2; matrix.m3 = b3; matrix.m4 = b4; matrix.m5 = b5
 		Platform_context = prevContext
 		Platform_canvas = prevCanvas
 		Platform_pixelSize.x = prevPixelSizeX
@@ -841,7 +833,7 @@ global unit graphics
 		if(visibleFor == -1) visibleFor = graphics_currentlyVisibleFor
 		if(visibleFor != -1 && visibleFor != Network_userId) return
 		let m = graphics_matrix.matrix
-		Platform_context.setTransform(m[0], -m[1], -m[2], m[3], m[4], m[5])
+		Platform_context.setTransform(m0, -m[1], -m[2], m[3], m[4], m[5])
 		
 		Platform_context.fillStyle = (color || graphics_currentColor).hex
 		let firstPos = positions[positions.length-1]
@@ -861,7 +853,7 @@ global unit graphics
 		if(visibleFor == -1) visibleFor = graphics_currentlyVisibleFor
 		if(visibleFor != -1 && visibleFor != Network_userId) return
 		let m = graphics_matrix.matrix
-		Platform_context.setTransform(m[0], m[1], m[2], m[3], m[4], m[5])
+		Platform_context.setTransform(m0, m[1], m[2], m[3], m[4], m[5])
 		let sizeX = size.x, sizeY = size.y
 		let x = position.x - sizeX/2
 		let y = position.y - sizeY/2
