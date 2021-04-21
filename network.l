@@ -92,13 +92,12 @@ unit Network
 	internal tick
 		let now = Platform.now
 		if mode == None || mode == Ping || mode == Reconnecting
-			graphics.matrix = Platform.baseMatrix
-			graphics.appMatrix.clear
-			graphics.clearScreen
+			graphics.startFrame
 			if mode == Ping: ping
 			if mode == Reconnecting: reconnect
 			else                     lobby.tick
 			updateVideoScreen
+			graphics.finishFrame
 			return
 			
 		let targetFrame = Math.floor((now - startTime)/targetFrameTime)
@@ -206,9 +205,7 @@ unit Network
 		
 	private tickFrame
 		Physics.step
-		graphics.matrix = Platform.baseMatrix
-		graphics.appMatrix.clear
-		graphics.clearScreen
+		graphics.startFrame
 		if Network.inLobby
 			lobby.tick
 		else
@@ -219,6 +216,7 @@ unit Network
 			updateVideoScreen
 			graphics.drawSafeArea
 			Input.updateCursor
+		graphics.finishFrame
 			
 	private onWrongChecksum
 		eventLog += "%%% OUT OF SYNC %%%"

@@ -162,6 +162,11 @@ unit Input
 		
 	private handleTouchEvent: InputType type, float x, float y, int id, int button
 		float2 referencePos = {x*Platform.pixelRatio, y*Platform.pixelRatio}.getRelativeTo(Platform.baseMatrix)
+		if type == TouchDown
+			for graphics.items
+				if referencePos.isInsidePoygon poly
+					print name
+					
 		sendToEditor id, referencePos, cast type
 		if Network.mode == None || Platform.mode != Record: return
 		let inputs = getInputList

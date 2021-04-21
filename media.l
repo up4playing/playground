@@ -439,12 +439,27 @@ unit audio
 // A collection of methods for drawing on the screen
 global unit graphics
 	internal Matrix2D matrix, appMatrix
+	DisplayItem[] items
 		
-	internal js void clearScreen
+	internal js void startFrame
 		if(Platform_fastForward) return
+		Matrix2D_assign_Matrix2D(graphics_matrix, Platform_baseMatrix);
+		graphics_appMatrix.clear();
 		Platform_context.setTransform(1,0,0,1,0,0)
 		Platform_context.clearRect(0,0,Platform_pixelSize.x, Platform_pixelSize.y)
+		Platform_context.textBaseline = "hanging"
 		graphics_currentlyVisibleFor = -1
+		graphics_items.length = 0
+
+	finishFrame
+		items.sort b.layer - a.layer
+		for <- items: draw
+			
+	add: int visibleFor, DisplayImage item
+		if(Platform.fastForward) return
+		if(visibleFor == -1) visibleFor = currentlyVisibleFor
+		if(visibleFor != -1 && visibleFor != Network.userId) return
+		items.add item
 		
 	internal js void drawSafeArea
 		Platform_context.fillStyle = "#404040"
@@ -593,7 +608,7 @@ global unit graphics
 		return currentFont
 	
 	// Font size
-	private currentFontSize = 30
+	private currentFontSize = 20
 	fontSize
 		return currentFontSize
 	
@@ -659,24 +674,28 @@ global unit graphics
 		                   framesPerSecond = 0   // Animate the image with this animation speed
 		                   scale = 1.0           // Scale the image by this factor
 		                   visibleFor = -1
+		                   implicit int layer = 0
 		var frame = Math.floor(Network.logicFrame * Math.max(framesPerSecond, 0) / Network.targetFps) % image.frames.length;
-		drawImage image, position, frame, scale, visibleFor
-		
+		drawImage image, position, frame, scale, visibleFor, layer
+	
 	// Draws an image on the screen
 	global js void drawImage: Image image           // The image to draw
 		                      float2 position = {} // The position where to draw the image
 		                      frame = 0             // The frame to draw
 		                      scale = 1.0           // Scale the image by this factor
 		                      visibleFor = -1
-		if(Platform_fastForward || !image.texture || !image.texture._htmlImage) return
-		if(visibleFor == -1) visibleFor = graphics_currentlyVisibleFor
-		if(visibleFor != -1 && visibleFor != Network_userId) return
-			
+		                      implicit layer = 0
+		if(!image.texture || !image.texture._htmlImage) return
 		let f = image.frames[frame % image.frames.length]
-		let m = graphics_matrix.matrix
-		Platform_context.setTransform(m[0], -m[1], -m[2], m[3], m[4], m[5])
-		try{ Platform_context.drawImage(image.texture._htmlImage, f.x1, f.y1, f.w, f.h, position.x-f.w/2*scale, position.y-f.h/2*scale, f.w*scale, f.h*scale) }
-		catch(e) { log(image.file+": "+e.message) }
+		graphics_add(visibleFor, new DisplayImage(
+			position.x-f.w/2*scale,
+			position.y-f.h/2*scale,
+			f.w*scale,
+			f.h*scale,
+			
+			layer, image.file, image.texture._htmlImage,
+			f.x1, f.y1, f.w, f.h
+		))
 	
 	// Draws an image on the screen
 	global js void drawTextureRegion: Texture texture
@@ -685,29 +704,21 @@ global unit graphics
 		                              float2 position = {}       // The position where to draw the image
 		                              scale = 1.0                 // Scale the image by this factor
 		                              visibleFor = -1
-		if(Platform_fastForward || !texture || !texture._htmlImage) return
-		if(visibleFor == -1) visibleFor = graphics_currentlyVisibleFor
-		if(visibleFor != -1 && visibleFor != Network_userId) return
+		                              implicit int layer = 0
+		if(!texture || !texture._htmlImage) return
+		graphics_add(visibleFor, new DisplayImage(
+			position.x-texture.size.x/2*scale,
+			position.y-texture.size.y/2*scale,
+			texture.size.x*scale,
+			texture.size.y*scale,
 			
-		let m = graphics_matrix.matrix
-		Platform_context.setTransform(m[0], -m[1], -m[2], m[3], m[4], m[5])
-		// Platform_context.setTransform(1, 0, 0, 1, 0, 0)
-		
-		try { 
-			Platform_context.drawImage(texture._htmlImage, 
-				sourcePosition.x+texture.size.x/2-sourceSize.x/2,
-				sourcePosition.y+texture.size.y/2-sourceSize.y/2,
-				sourceSize.x, 
-				sourceSize.y, 
-				
-				position.x-sourceSize.x/2*scale,
-				position.y-sourceSize.y/2*scale, 
-				sourceSize.x*scale, 
-				sourceSize.y*scale,
-			)
-			log()
-		}
-		catch(e) { log(texture.file+": "+e.message) }
+			layer, texture.file, texture._htmlImage,
+			
+			sourcePosition.x+texture.size.x/2-sourceSize.x/2,
+			sourcePosition.y+texture.size.y/2-sourceSize.y/2,
+			sourceSize.x, 
+			sourceSize.y, 
+		))
 		
 		// try{ Platform_context.drawImage(texture._htmlImage, sourcePosition.x-sourceSize.x/2, sourcePosition.y-sourceSize.y/2, sourceSize.x, sourceSize.y, position.x, position.y, sourceSize.x*scale, sourceSize.y*scale) }
 	
@@ -716,16 +727,18 @@ global unit graphics
 		                        float2 position = {} // The position where to draw the image
 		                        scale = 1.0           // Scale the image by this factor
 		                        visibleFor = -1
-		if(Platform_fastForward || !texture || !texture._htmlImage) return
-		if(visibleFor == -1) visibleFor = graphics_currentlyVisibleFor
-		if(visibleFor != -1 && visibleFor != Network_userId) return
+		                        implicit int layer = 0
+		if(!texture || !texture._htmlImage) return
+		graphics_add(visibleFor, new DisplayImage(
+			position.x-texture.size.x/2*scale,
+			position.y-texture.size.y/2*scale,
+			texture.size.x*scale,
+			texture.size.y*scale,
 			
-		let m = graphics_matrix.matrix
-		Platform_context.setTransform(m[0], -m[1], -m[2], m[3], m[4], m[5])
-		
-		try{ Platform_context.drawImage(texture._htmlImage, position.x-texture.size.x/2*scale, position.y-texture.size.y/2*scale, texture.size.x*scale, texture.size.y*scale) }
-		catch(e) { log(texture.file+": "+e.message) }
-	
+			layer, texture.file, texture._htmlImage,
+			0, 0, texture.size.x, texture.size.y
+		))
+
 	// Draws an image on the screen
 	global void drawButton: Image image            // The image to draw
 		                    text = ""
@@ -735,12 +748,13 @@ global unit graphics
 		                    scale = 1.0            // Scale the image by this factor
 		                    fontSize = 18
 		                    visibleFor = -1
+		                    implicit layer = 0
 		if(Platform.fastForward) return
 		if(visibleFor == -1) visibleFor = currentlyVisibleFor
 		if(visibleFor != -1 && visibleFor != Network.userId) return
 		
-		drawImage(image, position, frame, scale, visibleFor)
-		if text: drawText(text, position, fontSize, textColor, visibleFor)
+		drawImage image, position, frame, scale, visibleFor, layer
+		if text: drawText text, position, fontSize, textColor, visibleFor, layer
 			
 	// Draws an image on the screen
 	global void drawButton: Image image             // The image to draw
@@ -755,13 +769,14 @@ global unit graphics
 		                    showTouchArea = false
 		                    clickableBy = -1
 		                    visibleFor = -1
+		                    implicit layer = 0
 		                    void(Touch touch) onClick = null
 		if(Platform.fastForward) return
 		if(visibleFor == -1) visibleFor = currentlyVisibleFor
 		if(visibleFor != -1 && visibleFor != Network.userId) return
 			
-		drawImage(image, position, frame, scale, visibleFor)
-		if text: drawText(text, position, fontSize, textColor, visibleFor)
+		drawImage image, position, frame, scale, visibleFor, layer
+		if text: drawText text, position, fontSize, textColor, visibleFor, layer
 		// drawImage image, position, scale:image.size*scale
 		// if showTouchArea: drawRectangle position, size:image.size*scale + touchMargin, visibleFor, fill:TransparentRed
 			
@@ -778,17 +793,16 @@ global unit graphics
 		                     FontStyle style = Normal
 		                     font = ""
 		                     visibleFor = -1
-		if(Platform_fastForward) return
-		if(visibleFor == -1) visibleFor = graphics_currentlyVisibleFor
-		if(visibleFor != -1 && visibleFor != Network_userId) return
-		
-		let m = graphics_matrix.matrix
-		Platform_context.setTransform(m[0], -m[1], -m[2], m[3], m[4], m[5])
-		Platform_context.fillStyle = (color || graphics_currentColor).hex
-		Platform_context.font = (style ? "bold ":"")+(size || graphics_currentFontSize)+"px "+(font || graphics_currentFont)
-		Platform_context.textBaseline = valign==0 ? "top" : valign ==1 ? "middle" : "alphabetic"
-		Platform_context.textAlign = align==0 ? "start" : align ==1 ? "center" : "end"
-		Platform_context.fillText(text, position.x, position.y+(valign==1 ? size*0.07 : 0))
+		                     implicit layer = 0
+		let contextFont = (style ? "bold ":"")+(size || graphics_currentFontSize)+"px "+(font || graphics_currentFont);
+		Platform_context.font = contextFont
+		let textSize = Platform_context.measureText(text)
+		let fillStyle = (color || graphics_currentColor).hex
+		let w = textSize.width
+		let h = size || graphics_currentFontSize
+		let x = align==0 ?  position.x-w : align  == 1 ? position.x-w*.5 : position.x
+		let y = valign==0 ? position.y-h : valign == 1 ? position.y-h*.365 : position.y
+		graphics_add(visibleFor, new DisplayText(x, y, w, h, layer, text, fillStyle, contextFont))
 		
 	// Draws a text on the screen
 	global js void drawRectangle: position = float2()
@@ -797,33 +811,23 @@ global unit graphics
 		                          Color stroke = null
 		                          lineWidth = 0
 		                          visibleFor = -1
-		if(Platform_fastForward) return
-		if(visibleFor == -1) visibleFor = graphics_currentlyVisibleFor
-		if(visibleFor != -1 && visibleFor != Network_userId) return
-			
-		let m = graphics_matrix.matrix
-		Platform_context.setTransform(m[0], -m[1], -m[2], m[3], m[4], m[5])
-		if(fill || !stroke) {
-			Platform_context.fillStyle = (fill || graphics_currentColor).hex
-			Platform_context.fillRect(position.x-size.x/2, position.y-size.y/2, size.x, size.y)
-		}
-		if(stroke) {
-			Platform_context.lineWidth = lineWidth || graphics_currentLineWidth
-			Platform_context.strokeStyle = stroke.hex
-			Platform_context.strokeRect(position.x-size.x/2, position.y-size.y/2, size.x, size.y)
-		}
+		                          implicit layer = 0
+		graphics_add(visibleFor, new DisplayRectangle(
+			position.x-size.x/2, position.y-size.y/2, size.x, size.y,
+			layer, "Rectangle",
+			fill || !stroke ? (fill || graphics_currentColor).hex : null,
+			stroke ? stroke.hex : null,
+			lineWidth || graphics_currentLineWidth
+		))
 		
 	// Draws a text on the screen
 	global js void clearRectangle: position = float2()
 		                           size = float2()
 		                           visibleFor = -1
-		if(Platform_fastForward) return
-		if(visibleFor == -1) visibleFor = graphics_currentlyVisibleFor
-		if(visibleFor != -1 && visibleFor != Network_userId) return
-			
-		let m = graphics_matrix.matrix
-		Platform_context.setTransform(m[0], -m[1], -m[2], m[3], m[4], m[5])
-		Platform_context.clearRect(position.x-size.x/2, position.y-size.y/2, size.x, size.y)
+		                           implicit layer = 0
+		graphics_add(visibleFor, new DisplayRectangle(
+			position.x-size.x/2, position.y-size.y/2, size.x, size.y, layer, "Rectangle", "clear", null, 0
+		))
 		
 	// Draws a text on the screen
 	global js void drawPolygon: float2[] positions
@@ -877,3 +881,61 @@ global unit graphics
 			Platform_context.strokeStyle = stroke.hex
 			Platform_context.stroke()
 		}
+
+class DisplayItem
+	float x, y, w, h
+	int layer
+	string name
+	
+	visible float m0, m1, m2, m3, m4, m5
+	visible float2[] poly
+	
+	DisplayItem
+		let m = graphics.matrix
+		m0 = m.m0; m1 = m.m1; m2 = m.m2; m3 = m.m3; m4 = m.m4; m5 = m.m5
+		if Platform.isDebug
+			poly = [
+				{ x,   y   }.transform(graphics.appMatrix),
+				{ x+w, y   }.transform(graphics.appMatrix),
+				{ x+w, y+h }.transform(graphics.appMatrix),
+				{ x,   y+h }.transform(graphics.appMatrix),
+			]
+	draw
+	
+DisplayItem DisplayImage
+	object htmlImage
+	float sx, sy, sw, sh
+	js void draw
+		Platform_context.setTransform(this.m0, this.m1, this.m2, this.m3, this.m4, this.m5)
+		try{ Platform_context.drawImage(this.htmlImage, this.sx, this.sy, this.sw, this.sh, this.x, this.y, this.w, this.h) }
+		catch(e) { log("DisplayImage: "+e.message) }
+
+DisplayItem DisplayText
+	string fillStyle, font
+	js void draw
+		Platform_context.setTransform(this.m0, this.m1, this.m2, this.m3, this.m4, this.m5)
+		// Platform_context.fillStyle = "#ff000080"
+		// Platform_context.fillRect(this.x, this.y, this.w, this.h)
+		Platform_context.font = this.font
+		Platform_context.fillStyle = this.fillStyle
+		Platform_context.fillText(this.name, this.x, this.y/*(this.textAlign=="center" ? size*0.07 : 0)*/)
+		
+DisplayItem DisplayRectangle
+	string fill, stroke, lineWidth
+	js void draw
+		Platform_context.setTransform(this.m0, this.m1, this.m2, this.m3, this.m4, this.m5)
+		if(this.fill == "clear") {
+			Platform_context.clearRect(this.x, this.y, this.w, this.h)
+		}
+		else
+		if(this.fill) {
+			Platform_context.fillStyle = this.fill
+			Platform_context.fillRect(this.x, this.y, this.w, this.h)
+		}
+		if(this.stroke) {
+			Platform_context.lineWidth = this.lineWidth
+			Platform_context.strokeStyle = this.stroke
+			Platform_context.strokeRect(this.x, this.y, this.w, this.h)
+		}
+		
+	
