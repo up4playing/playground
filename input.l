@@ -271,16 +271,16 @@ unit Input
 		               bool visualize = false
 		               bool markAsHandled = true
 		float2[] poly = [
-			{ position.x-size.x/2, position.y-size.y/2 }.transform(graphics.appMatrix),
-			{ position.x+size.x/2, position.y-size.y/2 }.transform(graphics.appMatrix),
-			{ position.x+size.x/2, position.y+size.y/2 }.transform(graphics.appMatrix),
-			{ position.x-size.x/2, position.y+size.y/2 }.transform(graphics.appMatrix),
+			{ position.x-size.x/2, position.y-size.y/2 }.transform(graphics.localMatrix),
+			{ position.x+size.x/2, position.y-size.y/2 }.transform(graphics.localMatrix),
+			{ position.x+size.x/2, position.y+size.y/2 }.transform(graphics.localMatrix),
+			{ position.x-size.x/2, position.y+size.y/2 }.transform(graphics.localMatrix),
 		]
 		if (Network.mode == Connected || Network.simulateConnection) && userId != -1
 			NetworkUser user = users[userId]
 			for touch -> user.downTouches
 				if touch.phase != Handled && touch.referencePosition.isInsidePoygon(poly)
-					touch.position = touch.referencePosition.getRelativeTo(graphics.appMatrix)
+					touch.position = touch.referencePosition.getRelativeTo(graphics.localMatrix)
 					Network.touchLog += " onTouchDownWithin "+touch.position.x+" "+touch.position.y
 					code touch
 					if markAsHandled: touch.markAsHandled
@@ -288,7 +288,7 @@ unit Input
 			for user -> users if user
 				for touch -> user.downTouches
 					if touch.phase != Handled && touch.referencePosition.isInsidePoygon(poly)
-						touch.position = touch.referencePosition.getRelativeTo(graphics.appMatrix)
+						touch.position = touch.referencePosition.getRelativeTo(graphics.localMatrix)
 						Network.touchLog += " onTouchDownWithin "+touch.position.x+" "+touch.position.y
 						code touch
 						if markAsHandled: touch.markAsHandled
@@ -308,16 +308,16 @@ unit Input
 		             bool visualize = false
 		             bool markAsHandled = true
 		float2[] poly = [
-			{ position.x-size.x/2, position.y-size.y/2 }.transform(graphics.appMatrix),
-			{ position.x+size.x/2, position.y-size.y/2 }.transform(graphics.appMatrix),
-			{ position.x+size.x/2, position.y+size.y/2 }.transform(graphics.appMatrix),
-			{ position.x-size.x/2, position.y+size.y/2 }.transform(graphics.appMatrix),
+			{ position.x-size.x/2, position.y-size.y/2 }.transform(graphics.localMatrix),
+			{ position.x+size.x/2, position.y-size.y/2 }.transform(graphics.localMatrix),
+			{ position.x+size.x/2, position.y+size.y/2 }.transform(graphics.localMatrix),
+			{ position.x-size.x/2, position.y+size.y/2 }.transform(graphics.localMatrix),
 		]
 		if (Network.mode == Connected || Network.simulateConnection) && userId != -1
 			NetworkUser user = users[userId]
 			for touch -> user.upTouches
 				if touch.phase != Handled && touch.referencePosition.isInsidePoygon(poly)
-					touch.position = touch.referencePosition.getRelativeTo(graphics.appMatrix)
+					touch.position = touch.referencePosition.getRelativeTo(graphics.localMatrix)
 					Network.touchLog += " onTouchDownWithin "+touch.position.x+" "+touch.position.y
 					code touch
 					if markAsHandled: touch.markAsHandled
@@ -325,7 +325,7 @@ unit Input
 			for user -> users if user
 				for touch -> user.upTouches
 					if touch.phase != Handled && touch.referencePosition.isInsidePoygon(poly)
-						touch.position = touch.referencePosition.getRelativeTo(graphics.appMatrix)
+						touch.position = touch.referencePosition.getRelativeTo(graphics.localMatrix)
 						Network.touchLog += " onTouchDownWithin "+touch.position.x+" "+touch.position.y
 						code touch
 						if markAsHandled: touch.markAsHandled
@@ -338,14 +338,14 @@ unit Input
 			NetworkUser user = users[userId]
 			for touch -> user.downTouches
 				if touch.phase != Handled
-					touch.position = touch.referencePosition.getRelativeTo(graphics.appMatrix)
+					touch.position = touch.referencePosition.getRelativeTo(graphics.localMatrix)
 					Network.touchLog += " onTouchDown "+touch.position.x+" "+touch.position.y
 					code touch
 		else
 			for user -> users if user
 				for touch -> user.downTouches
 					if touch.phase != Handled
-						touch.position = touch.referencePosition.getRelativeTo(graphics.appMatrix)
+						touch.position = touch.referencePosition.getRelativeTo(graphics.localMatrix)
 						Network.touchLog += " onTouchDown "+touch.position.x+" "+touch.position.y
 						code touch
 
@@ -355,13 +355,13 @@ unit Input
 		if (Network.mode == Connected || Network.simulateConnection) && userId != -1
 			NetworkUser user = users[userId]
 			for touch -> user.downTouches
-				touch.position = touch.referencePosition.getRelativeTo(graphics.appMatrix)
+				touch.position = touch.referencePosition.getRelativeTo(graphics.localMatrix)
 				Network.touchLog += " onTouchDown "+touch.position.x+" "+touch.position.y
 				code touch
 		else
 			for user -> users if user
 				for touch -> user.downTouches
-					touch.position = touch.referencePosition.getRelativeTo(graphics.appMatrix)
+					touch.position = touch.referencePosition.getRelativeTo(graphics.localMatrix)
 					Network.touchLog += " onTouchDown "+touch.position.x+" "+touch.position.y
 					code touch
 			
@@ -372,9 +372,9 @@ unit Input
 		let touchId = touch.id, user = touch.user
 		for t -> user.movingTouches
 			if t.id == touchId && t.phase != Handled
-				t.position = t.referencePosition.getRelativeTo(graphics.appMatrix)
-				t.startPosition = t.referenceStartPosition.getRelativeTo(graphics.appMatrix)
-				Network.touchLog += " onTouchMove ref:{t.referencePosition} matrix:{graphics.appMatrix} pos:{t.position}"
+				t.position = t.referencePosition.getRelativeTo(graphics.localMatrix)
+				t.startPosition = t.referenceStartPosition.getRelativeTo(graphics.localMatrix)
+				Network.touchLog += " onTouchMove ref:{t.referencePosition} matrix:{graphics.localMatrix} pos:{t.position}"
 				code t
 	
 	// Executes code when a touch or click moves
@@ -384,16 +384,16 @@ unit Input
 			NetworkUser user = users[userId]
 			for t -> user.movingTouches
 				if t.phase != Handled
-					t.position = t.referencePosition.getRelativeTo(graphics.appMatrix)
-					t.startPosition = t.referenceStartPosition.getRelativeTo(graphics.appMatrix)
-					Network.touchLog += " onTouchMove ref:{t.referencePosition} matrix:{graphics.appMatrix} pos:{t.position}"
+					t.position = t.referencePosition.getRelativeTo(graphics.localMatrix)
+					t.startPosition = t.referenceStartPosition.getRelativeTo(graphics.localMatrix)
+					Network.touchLog += " onTouchMove ref:{t.referencePosition} matrix:{graphics.localMatrix} pos:{t.position}"
 					code t
 		else
 			for user -> users if user
 				for t -> user.movingTouches
 					if t.phase != Handled
-						t.position = t.referencePosition.getRelativeTo(graphics.appMatrix)
-						t.startPosition = t.referenceStartPosition.getRelativeTo(graphics.appMatrix)
+						t.position = t.referencePosition.getRelativeTo(graphics.localMatrix)
+						t.startPosition = t.referenceStartPosition.getRelativeTo(graphics.localMatrix)
 						Network.touchLog += " onTouchMove "+t.position.x+" "+t.position.y
 						code t
 					
@@ -403,8 +403,8 @@ unit Input
 		let touchId = touch.id, user = touch.user
 		for t -> user.upTouches
 			if t.id == touchId && t.phase != Handled
-				t.position = t.referencePosition.getRelativeTo(graphics.appMatrix)
-				t.startPosition = t.referenceStartPosition.getRelativeTo(graphics.appMatrix)
+				t.position = t.referencePosition.getRelativeTo(graphics.localMatrix)
+				t.startPosition = t.referenceStartPosition.getRelativeTo(graphics.localMatrix)
 				Network.touchLog += " ### onTouchUp "+t.position.x+" "+t.position.y
 				code t
 				
@@ -413,8 +413,8 @@ unit Input
 		for user -> users if user
 			for t -> user.upTouches
 				if t.phase != Handled
-					t.position = t.referencePosition.getRelativeTo(graphics.appMatrix)
-					t.startPosition = t.referenceStartPosition.getRelativeTo(graphics.appMatrix)
+					t.position = t.referencePosition.getRelativeTo(graphics.localMatrix)
+					t.startPosition = t.referenceStartPosition.getRelativeTo(graphics.localMatrix)
 					Network.touchLog += " ### onTouchUp "+t.position.x+" "+t.position.y
 					code t
 
@@ -432,16 +432,16 @@ unit Input
 		           Color fill = null
 		           bool markAsHandled = true
 		float2[] poly = [
-			{ position.x-size.x/2, position.y-size.y/2 }.transform(graphics.appMatrix),
-			{ position.x+size.x/2, position.y-size.y/2 }.transform(graphics.appMatrix),
-			{ position.x+size.x/2, position.y+size.y/2 }.transform(graphics.appMatrix),
-			{ position.x-size.x/2, position.y+size.y/2 }.transform(graphics.appMatrix),
+			{ position.x-size.x/2, position.y-size.y/2 }.transform(graphics.localMatrix),
+			{ position.x+size.x/2, position.y-size.y/2 }.transform(graphics.localMatrix),
+			{ position.x+size.x/2, position.y+size.y/2 }.transform(graphics.localMatrix),
+			{ position.x-size.x/2, position.y+size.y/2 }.transform(graphics.localMatrix),
 		]
 		if (Network.mode == Connected || Network.simulateConnection) && userId != -1
 			NetworkUser user = users[userId]
 			for event -> user.wheelEvents
 				if !event.handled && event.referencePosition.isInsidePoygon(poly)
-					event.position = event.referencePosition.getRelativeTo(graphics.appMatrix)
+					event.position = event.referencePosition.getRelativeTo(graphics.localMatrix)
 					Network.touchLog += " onWheel {delta} {event.position}"
 					code event
 					if markAsHandled: event.markAsHandled
@@ -449,7 +449,7 @@ unit Input
 			for user -> users if user
 				for event -> user.wheelEvents
 					if !event.handled && event.referencePosition.isInsidePoygon(poly)
-						event.position = event.referencePosition.getRelativeTo(graphics.appMatrix)
+						event.position = event.referencePosition.getRelativeTo(graphics.localMatrix)
 						Network.touchLog += " onWheel {delta} {event.position}"
 						code event
 						if markAsHandled: event.markAsHandled

@@ -227,20 +227,20 @@ struct int2
 	
 // A 3x2 matrix used to transform vectors in 2D space
 struct Matrix2D
-	float m0 // X Scaling
-	float m1 // Y Skewing
-	float m2 // X Skewing
-	float m3 // Y Scaling
-	float m4 // X Translation
-	float m5 // Y Translation
+	m0 = 1.0 // X Scaling
+	m1 = 0.0 // Y Skewing
+	m2 = 0.0 // X Skewing
+	m3 = 1.0 // Y Scaling
+	m4 = 0.0 // X Translation
+	m5 = 0.0 // Y Translation
 	
 	clear
-		m0 = 1
-		m1 = 0
-		m2 = 0
-		m3 = 1
-		m4 = 0
-		m5 = 0
+		m0 = 1.0
+		m1 = 0.0
+		m2 = 0.0
+		m3 = 1.0
+		m4 = 0.0
+		m5 = 0.0
 	
 	set: float m0, float m1, float m2, float m3, float m4, float m5
 		this.m0 = m0
@@ -438,13 +438,13 @@ unit audio
 	
 // A collection of methods for drawing on the screen
 global unit graphics
-	internal Matrix2D matrix, appMatrix
+	internal Matrix2D totalMatrix, localMatrix
 	DisplayItem[] items
 		
 	internal js void startFrame
 		if(Platform_fastForward) return
-		Matrix2D_assign_Matrix2D(graphics_matrix, Platform_baseMatrix);
-		graphics_appMatrix.clear();
+		Matrix2D_assign_Matrix2D(graphics_totalMatrix, Platform_baseMatrix);
+		graphics_localMatrix.clear();
 		Platform_context.setTransform(1,0,0,1,0,0)
 		Platform_context.clearRect(0,0,Platform_pixelSize.x, Platform_pixelSize.y)
 		Platform_context.textBaseline = "hanging"
@@ -454,6 +454,7 @@ global unit graphics
 	finishFrame
 		items.sort b.layer - a.layer
 		for <- items: draw
+		drawSafeArea
 			
 	add: int visibleFor, DisplayImage item
 		if(Platform.fastForward) return
@@ -482,66 +483,66 @@ global unit graphics
 		
 	// Moves all subsequent operations by a given vector						
 	move: float2 distance // The distance to move
-		appMatrix.move distance
-		matrix.move distance
+		localMatrix.move distance
+		totalMatrix.move distance
 							
 	// Moves all operations in a block by a given vector						
 	move: float2 distance // The distance to move
 		  void() block     // All operations in this block will be moved
-		let a0 = appMatrix.m0, a1 = appMatrix.m1, a2 = appMatrix.m2, a3 = appMatrix.m3, a4 = appMatrix.m4, a5 = appMatrix.m5
-		let b0 = matrix.m0, b1 = matrix.m1, b2 = matrix.m2, b3 = matrix.m3, b4 = matrix.m4, b5 = matrix.m5
-		appMatrix.move distance
-		matrix.move distance
+		let a0 = localMatrix.m0, a1 = localMatrix.m1, a2 = localMatrix.m2, a3 = localMatrix.m3, a4 = localMatrix.m4, a5 = localMatrix.m5
+		let b0 = totalMatrix.m0, b1 = totalMatrix.m1, b2 = totalMatrix.m2, b3 = totalMatrix.m3, b4 = totalMatrix.m4, b5 = totalMatrix.m5
+		localMatrix.move distance
+		totalMatrix.move distance
 		block
-		appMatrix.m0 = a0; appMatrix.m1 = a1; appMatrix.m2 = a2; appMatrix.m3 = a3; appMatrix.m4 = a4; appMatrix.m5 = a5 
-		matrix.m0 = b0; matrix.m1 = b1; matrix.m2 = b2; matrix.m3 = b3; matrix.m4 = b4; matrix.m5 = b5 
+		localMatrix.m0 = a0; localMatrix.m1 = a1; localMatrix.m2 = a2; localMatrix.m3 = a3; localMatrix.m4 = a4; localMatrix.m5 = a5 
+		totalMatrix.m0 = b0; totalMatrix.m1 = b1; totalMatrix.m2 = b2; totalMatrix.m3 = b3; totalMatrix.m4 = b4; totalMatrix.m5 = b5 
 							
 	// Rotates all subsequent operations by a given angle	
 	rotate: float angle // The angle in radians
-		appMatrix.rotate angle
-		matrix.rotate angle
+		localMatrix.rotate angle
+		totalMatrix.rotate angle
 		
 	// Rotates all operation in a block by a given angle				
 	rotate: float angle  // The angle in radians
 		    void() block // All operations in this block will be rotated
 		if angle == 0: block; return
-		let a0 = appMatrix.m0, a1 = appMatrix.m1, a2 = appMatrix.m2, a3 = appMatrix.m3, a4 = appMatrix.m4, a5 = appMatrix.m5
-		let b0 = matrix.m0, b1 = matrix.m1, b2 = matrix.m2, b3 = matrix.m3, b4 = matrix.m4, b5 = matrix.m5
-		appMatrix.rotate angle
-		matrix.rotate angle
+		let a0 = localMatrix.m0, a1 = localMatrix.m1, a2 = localMatrix.m2, a3 = localMatrix.m3, a4 = localMatrix.m4, a5 = localMatrix.m5
+		let b0 = totalMatrix.m0, b1 = totalMatrix.m1, b2 = totalMatrix.m2, b3 = totalMatrix.m3, b4 = totalMatrix.m4, b5 = totalMatrix.m5
+		localMatrix.rotate angle
+		totalMatrix.rotate angle
 		block
-		appMatrix.m0 = a0; appMatrix.m1 = a1; appMatrix.m2 = a2; appMatrix.m3 = a3; appMatrix.m4 = a4; appMatrix.m5 = a5 
-		matrix.m0 = b0; matrix.m1 = b1; matrix.m2 = b2; matrix.m3 = b3; matrix.m4 = b4; matrix.m5 = b5 
+		localMatrix.m0 = a0; localMatrix.m1 = a1; localMatrix.m2 = a2; localMatrix.m3 = a3; localMatrix.m4 = a4; localMatrix.m5 = a5 
+		totalMatrix.m0 = b0; totalMatrix.m1 = b1; totalMatrix.m2 = b2; totalMatrix.m3 = b3; totalMatrix.m4 = b4; totalMatrix.m5 = b5 
 	
 	// Scales all subsequent operations by a given factor
 	scale: float factor // The factor to scale by
-		appMatrix.scale {factor, factor}
-		matrix.scale {factor, factor}
+		localMatrix.scale {factor, factor}
+		totalMatrix.scale {factor, factor}
 		
 	// Scales all operation in a block by a given factor					
 	scale: float factor // The factor to scale by
 		   void() block // All operations in this block will be scaled
-		let a0 = appMatrix.m0, a1 = appMatrix.m1, a2 = appMatrix.m2, a3 = appMatrix.m3, a4 = appMatrix.m4, a5 = appMatrix.m5
-		let b0 = matrix.m0, b1 = matrix.m1, b2 = matrix.m2, b3 = matrix.m3, b4 = matrix.m4, b5 = matrix.m5
-		appMatrix.scale {factor, factor}
-		matrix.scale {factor, factor}
+		let a0 = localMatrix.m0, a1 = localMatrix.m1, a2 = localMatrix.m2, a3 = localMatrix.m3, a4 = localMatrix.m4, a5 = localMatrix.m5
+		let b0 = totalMatrix.m0, b1 = totalMatrix.m1, b2 = totalMatrix.m2, b3 = totalMatrix.m3, b4 = totalMatrix.m4, b5 = totalMatrix.m5
+		localMatrix.scale {factor, factor}
+		totalMatrix.scale {factor, factor}
 		block
-		appMatrix.m0 = a0; appMatrix.m1 = a1; appMatrix.m2 = a2; appMatrix.m3 = a3; appMatrix.m4 = a4; appMatrix.m5 = a5 
-		matrix.m0 = b0; matrix.m1 = b1; matrix.m2 = b2; matrix.m3 = b3; matrix.m4 = b4; matrix.m5 = b5 
+		localMatrix.m0 = a0; localMatrix.m1 = a1; localMatrix.m2 = a2; localMatrix.m3 = a3; localMatrix.m4 = a4; localMatrix.m5 = a5 
+		totalMatrix.m0 = b0; totalMatrix.m1 = b1; totalMatrix.m2 = b2; totalMatrix.m3 = b3; totalMatrix.m4 = b4; totalMatrix.m5 = b5 
 	
 	multiply: Matrix2D matrix
-		appMatrix.multiplyRight matrix
+		localMatrix.multiplyRight matrix
 		matrix.multiplyRight matrix
 	
 	multiply: Matrix2D matrix
 		      void() block // All operations in this block will be scaled
-		let a0 = appMatrix.m0, a1 = appMatrix.m1, a2 = appMatrix.m2, a3 = appMatrix.m3, a4 = appMatrix.m4, a5 = appMatrix.m5
-		let b0 = matrix.m0, b1 = matrix.m1, b2 = matrix.m2, b3 = matrix.m3, b4 = matrix.m4, b5 = matrix.m5
-		this.appMatrix.multiplyLeft matrix
-		this.matrix.multiplyLeft matrix
+		let a0 = localMatrix.m0, a1 = localMatrix.m1, a2 = localMatrix.m2, a3 = localMatrix.m3, a4 = localMatrix.m4, a5 = localMatrix.m5
+		let b0 = totalMatrix.m0, b1 = totalMatrix.m1, b2 = totalMatrix.m2, b3 = totalMatrix.m3, b4 = totalMatrix.m4, b5 = totalMatrix.m5
+		this.localMatrix.multiplyLeft matrix
+		this.totalMatrix.multiplyLeft matrix
 		block
-		appMatrix.m0 = a0; appMatrix.m1 = a1; appMatrix.m2 = a2; appMatrix.m3 = a3; appMatrix.m4 = a4; appMatrix.m5 = a5 
-		matrix.m0 = b0; matrix.m1 = b1; matrix.m2 = b2; matrix.m3 = b3; matrix.m4 = b4; matrix.m5 = b5
+		localMatrix.m0 = a0; localMatrix.m1 = a1; localMatrix.m2 = a2; localMatrix.m3 = a3; localMatrix.m4 = a4; localMatrix.m5 = a5 
+		totalMatrix.m0 = b0; totalMatrix.m1 = b1; totalMatrix.m2 = b2; totalMatrix.m3 = b3; totalMatrix.m4 = b4; totalMatrix.m5 = b5
 	
 	js int[] manipulate: void(int[] pixels) code
 		let imageData = Platform_context.getImageData(0,0,Platform_pixelSize.x, Platform_pixelSize.y)
@@ -560,13 +561,13 @@ global unit graphics
 		Platform_context = Platform_canvas.getContext("2d")
 		Platform_pixelSize.x = size.x
 		Platform_pixelSize.y = size.y
-		let a = graphics_appMatrix.matrix, b = graphics_matrix.matrix
-		let a0 = appMatrix.m0, a1 = appMatrix.m1, a2 = appMatrix.m2, a3 = appMatrix.m3, a4 = appMatrix.m4, a5 = appMatrix.m5
+		let a = graphics_localMatrix.matrix, b = graphics_totalMatrix.matrix
+		let a0 = localMatrix.m0, a1 = localMatrix.m1, a2 = localMatrix.m2, a3 = localMatrix.m3, a4 = localMatrix.m4, a5 = localMatrix.m5
 		let b0 = matrix.m0, b1 = matrix.m1, b2 = matrix.m2, b3 = matrix.m3, b4 = matrix.m4, b5 = matrix.m5
-		graphics_appMatrix.set(1, 0, 0, 1, -size.x/2, -size.y/2)
-		graphics_matrix.set(1, 0, 0, 1, size.x/2, size.y/2)
+		graphics_localMatrix.set(1, 0, 0, 1, -size.x/2, -size.y/2)
+		graphics_totalMatrix.set(1, 0, 0, 1, size.x/2, size.y/2)
 		code()
-		appMatrix.m0 = a0; appMatrix.m1 = a1; appMatrix.m2 = a2; appMatrix.m3 = a3; appMatrix.m4 = a4; appMatrix.m5 = a5
+		localMatrix.m0 = a0; localMatrix.m1 = a1; localMatrix.m2 = a2; localMatrix.m3 = a3; localMatrix.m4 = a4; localMatrix.m5 = a5
 		matrix.m0 = b0; matrix.m1 = b1; matrix.m2 = b2; matrix.m3 = b3; matrix.m4 = b4; matrix.m5 = b5
 		Platform_context = prevContext
 		Platform_canvas = prevCanvas
@@ -836,7 +837,7 @@ global unit graphics
 		if(Platform_fastForward) return
 		if(visibleFor == -1) visibleFor = graphics_currentlyVisibleFor
 		if(visibleFor != -1 && visibleFor != Network_userId) return
-		let m = graphics_matrix.matrix
+		let m = graphics_totalMatrix.matrix
 		Platform_context.setTransform(m0, -m[1], -m[2], m[3], m[4], m[5])
 		
 		Platform_context.fillStyle = (color || graphics_currentColor).hex
@@ -856,7 +857,7 @@ global unit graphics
 		if(Platform_fastForward) return
 		if(visibleFor == -1) visibleFor = graphics_currentlyVisibleFor
 		if(visibleFor != -1 && visibleFor != Network_userId) return
-		let m = graphics_matrix.matrix
+		let m = graphics_totalMatrix.matrix
 		Platform_context.setTransform(m0, m[1], m[2], m[3], m[4], m[5])
 		let sizeX = size.x, sizeY = size.y
 		let x = position.x - sizeX/2
@@ -891,14 +892,14 @@ class DisplayItem
 	visible float2[] poly
 	
 	DisplayItem
-		let m = graphics.matrix
+		let m = graphics.totalMatrix
 		m0 = m.m0; m1 = m.m1; m2 = m.m2; m3 = m.m3; m4 = m.m4; m5 = m.m5
 		if Platform.isDebug
 			poly = [
-				{ x,   y   }.transform(graphics.appMatrix),
-				{ x+w, y   }.transform(graphics.appMatrix),
-				{ x+w, y+h }.transform(graphics.appMatrix),
-				{ x,   y+h }.transform(graphics.appMatrix),
+				{ x,   y   }.transform(graphics.localMatrix),
+				{ x+w, y   }.transform(graphics.localMatrix),
+				{ x+w, y+h }.transform(graphics.localMatrix),
+				{ x,   y+h }.transform(graphics.localMatrix),
 			]
 	draw
 	
