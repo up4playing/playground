@@ -336,8 +336,9 @@ struct Matrix2D
 
 // Helper class for converting positions within an isomatic grid
 class IsometicGrid
-	int2 size
-	float2 cellSize, topFaceOffset
+	int2 size            // The amount of cells in the grid
+	float2 cellSize      // The size of each cell
+	float2 topFaceOffset // The position of the top face within the cell
 	
 	visible float2 xOffset = cellSize / 2
 	visible float2 yOffset = {xOffset.x, -xOffset.y}
@@ -692,7 +693,29 @@ global unit graphics
 			position.y-f.h/2*scale,
 			f.w*scale,
 			f.h*scale,
-			
+			layer, image.file, image.texture._htmlImage,
+			f.x1, f.y1, f.w, f.h
+		))
+	
+	// Draws an image on the screen
+	global js void drawImage: Image image           // The image to draw
+		                      float2 position = {} // The position where to draw the image
+		                      frame = 0             // The frame to draw
+		                      scale = 1.0           // Scale the image by this factor
+		                      angle = 0.0
+		                      visibleFor = -1
+		                      implicit layer = 0
+		if(!image.texture || !image.texture._htmlImage) return
+		let f = image.frames[frame % image.frames.length]
+		let matrix = graphics_matrix.clone()
+		matrix.move(new float2(position.x, position.y))
+		matrix.rotate(angle)
+		graphics_add(visibleFor, new DisplayImage(
+			matrix,
+			-f.w/2*scale,
+			-f.h/2*scale,
+			f.w*scale,
+			f.h*scale,
 			layer, image.file, image.texture._htmlImage,
 			f.x1, f.y1, f.w, f.h
 		))
@@ -890,8 +913,7 @@ class DisplayItem
 	visible float m0, m1, m2, m3, m4, m5
 	visible float2[] poly
 	
-	DisplayItem
-		let m = graphics.matrix
+	DisplayItem: Matrix2D m
 		m0 = m.m0; m1 = m.m1; m2 = m.m2; m3 = m.m3; m4 = m.m4; m5 = m.m5
 		if Platform.isDebug
 			poly = [

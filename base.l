@@ -207,6 +207,16 @@ class List<T>
 				resultItem = item
 		return resultItem
 		
+	withMin: float(T a) selector, float threshold = float.infinity
+		float resultValue = threshold
+		T resultItem
+		for item -> this
+			let value = selector(item)
+			if value < resultValue
+				resultValue = value
+				resultItem = item
+		return resultItem
+		
 	withMax: int(T a) selector 
 		int resultValue = int.minValue
 		T resultItem
