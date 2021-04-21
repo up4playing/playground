@@ -209,12 +209,11 @@ unit Network
 		if Network.inLobby
 			lobby.tick
 		else
+			updateVideoScreen
 			Timeline.tick
 			app.tick
 			framework.tick
 			drawFingers
-			updateVideoScreen
-			graphics.drawSafeArea
 			Input.updateCursor
 		graphics.finishFrame
 			
