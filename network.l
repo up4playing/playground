@@ -206,14 +206,14 @@ unit Network
 	private tickFrame
 		Physics.step
 		graphics.startFrame
+		updateVideoScreen
+		drawFingers
 		if Network.inLobby
 			lobby.tick
 		else
-			updateVideoScreen
 			Timeline.tick
 			app.tick
 			Framework.tick
-			drawFingers
 			Input.updateCursor
 		graphics.finishFrame
 			
@@ -344,6 +344,9 @@ unit Network
 		}
 		Network_socket.onclose = function() {
 			log("Websocket closed")
+		}
+		Network_socket.onerror = ex => {
+			log(ex)
 		}
 		
 	private onConnectedToServer
@@ -603,9 +606,8 @@ unit Network
 				if(vs.videoElement) {
 					let el = vs.videoElement
 					let pixelPos = Input_logicalToPixelPosition(vs.pos)
-					let m = graphics_matrix.matrix
-					let pixelSizeX = vs.width*m[0]/Platform_pixelRatio
-					let pixelSizeY = (vs.width*3/4)*m[3]/Platform_pixelRatio
+					let pixelSizeX = vs.width*graphics_totalMatrix.m0/Platform_pixelRatio
+					let pixelSizeY = (vs.width*3/4)*graphics_totalMatrix.m3/Platform_pixelRatio
 					el.style.left = (pixelPos.x-pixelSizeX/2)+"px"
 					el.style.top = (pixelPos.y-pixelSizeY/2)+"px"
 					el.style.width = pixelSizeX+"px"

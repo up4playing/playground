@@ -74,7 +74,7 @@ unit Input
 		initHandlers
 	
 	private js float2 logicalToPixelPosition: float2 pos
-		let p = pos.getTransformed(graphics_matrix)
+		let p = pos.getTransformed(graphics_totalMatrix)
 		return new float2(p.x/Platform_pixelRatio, p.y/Platform_pixelRatio)
 
 	private js void initHandlers
