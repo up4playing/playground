@@ -828,8 +828,8 @@ global unit graphics
 		let fillStyle = (color || graphics_currentColor).hex
 		let w = textSize.width
 		let h = size || graphics_currentFontSize
-		let x = align==0 ?  position.x-w : align  == 1 ? position.x-w*.5 : position.x
-		let y = valign==0 ? position.y-h : valign == 1 ? position.y-h*.365 : position.y
+		let x = align  == 0 ? position.x : align  == 1 ? position.x-w*.5 : position.x-w
+		let y = valign == 0 ? position.y : valign == 1 ? position.y-h*.365 : position.y-h
 		graphics_add(visibleFor, new DisplayText(graphics_totalMatrix, x, y, w, h, layer, text, fillStyle, contextFont))
 		
 	// Draws a text on the screen
