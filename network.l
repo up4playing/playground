@@ -182,7 +182,7 @@ unit Network
 		
 		// Checksum
 		let myChecksum = 0
-		for framework.objects:
+		for Framework.objects:
 			myChecksum += position.x + position.y + frame + cast side
 			if type == Board
 				Board board = cast o
@@ -212,7 +212,7 @@ unit Network
 			updateVideoScreen
 			Timeline.tick
 			app.tick
-			framework.tick
+			Framework.tick
 			drawFingers
 			Input.updateCursor
 		graphics.finishFrame

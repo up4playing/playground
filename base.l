@@ -77,10 +77,20 @@ class List<T>
 	inline js void add: T item // The item to add
 		this.push(item)
 		
+	inline js void insert: T item // The item to add
+		                   int index
+		this.splice(index, 0, item)
+		
 	inline js void setList: T[] list
 		this.splice(0, this.length, ...list)
 		
 	inline js T pop := this.pop()
+		
+	js T popFront
+		if(this.length == 0) return null
+		let firstItem = this[0]
+		this.splice(0, 1)
+		return firstItem
 		
 	// Gets the number of items in the list
 	inline js int length() this.length
@@ -93,7 +103,6 @@ class List<T>
 		
 	// Gets a random item from the list
 	T random() := get(Math.randomInteger(length))
-		
 		
 	// Removes an item from the list
 	js T remove: T item // The item to remove
@@ -115,12 +124,21 @@ class List<T>
 	inline js bool toBool := (this != null && this.length != 0) 
 	
 	// Moves an item to the end of the list
-	js T moveToEnd: T item // The item to move to the end of the list
+	js T moveToBack: T item // The item to move to the end of the list
 		var index = this.indexOf(item);
-		if(index > -1) {
-			this.splice(index,1);
-			this.push(item);
+		let endIndex = this.length-1;
+		for(let i=index; i<endIndex; ++i) {
+			this[i] = this[i+1]
 		}
+		this[endIndex] = item
+		
+	// Moves an item to the end of the list
+	js T moveToFront: T item // The item to move to the end of the list
+		var index = this.indexOf(item);
+		for(let i=index; i>0; --i) {
+			this[i] = this[i-1]
+		}
+		this[0] = item
 		
 	// Sort the list
 	inline js void sort
@@ -246,7 +264,35 @@ struct Nullable<T>
 	
 interface object
 	inline js bool toBool() (this != null)
-	inline js string toString() JSON.stringify(this)
+	inline js string toString() object_stringify(this, 3)
+		
+	static js string stringify: object subject, int depth = 0 
+		switch(typeof subject)
+		{
+			case "object":
+				if(subject === null) return "null"
+				let result = "\{\"_type\":" + subject.constructor.name + "\""
+				if(depth > 0)
+					for(let name in subject)
+					{
+						let item = stringify(subject[name], depth-1)
+						if(item != "") result += ",\"" + name +"\":" + item
+					}
+				return result + "\}"
+				
+			case "string":
+				return "\"" + subject + "\""
+				
+			case "undefined":
+				return "\"undefined\""
+				
+			case "function":
+				return ""
+				
+			default:
+				return subject.toString()
+		}
+
 		
 // This struct is automatically filled with the source code location
 struct SourceCodeLocation

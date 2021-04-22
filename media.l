@@ -767,29 +767,32 @@ global unit graphics
 		))
 
 	// Draws an image on the screen
-	global void drawButton: Image image            // The image to draw
-		                    text = ""
-		                    float2 position = {}  // The position where to draw the image
-		                    Color textColor = null // The color of the text
-		                    frame = 0              // The frame to draw
-		                    scale = 1.0            // Scale the image by this factor
+	global void drawButton: Image image = null      // The image to draw
+		                    text = ""               // The text to draw
+		                    float2 position = {}    // The position where to draw the image
+		                    Color textColor = null  // The color of the text
+		                    frame = 0               // The frame to draw
+		                    scale = 1.0             // Scale the image by this factor
 		                    fontSize = 18
+		                    owner = -1
+		                    touchMargin = float2(16,16)
+		                    showTouchArea = false
 		                    visibleFor = -1
 		                    implicit layer = 0
 		if(Platform.fastForward) return
 		if(visibleFor == -1) visibleFor = currentlyVisibleFor
 		if(visibleFor != -1 && visibleFor != Network.userId) return
-		
-		drawImage image, position, frame, scale, visibleFor, layer
-		if text: drawText text, position, fontSize, textColor, visibleFor, layer
+			
+		if image: drawImage image, position, frame, scale, visibleFor, layer
+		if text:  drawText text, position, fontSize, textColor, visibleFor, layer
 			
 	// Draws an image on the screen
-	global void drawButton: Image image             // The image to draw
-		                    text = ""
-		                    float2 position = {}   // The position where to draw the image
+	global void drawButton: Image image = null      // The image to draw
+		                    text = ""               // The text to draw
+		                    float2 position = {}    // The position where to draw the image
 		                    Color textColor = null  // The color of the text
 		                    frame = 0               // The frame to draw
-		                    scale = 1.0             // Scale the image by this vector
+		                    scale = 1.0             // Scale the image by this factor
 		                    fontSize = 18
 		                    owner = -1
 		                    touchMargin = float2(16,16)
@@ -802,10 +805,8 @@ global unit graphics
 		if(visibleFor == -1) visibleFor = currentlyVisibleFor
 		if(visibleFor != -1 && visibleFor != Network.userId) return
 			
-		drawImage image, position, frame, scale, visibleFor, layer
-		if text: drawText text, position, fontSize, textColor, visibleFor, layer
-		// drawImage image, position, scale:image.size*scale
-		// if showTouchArea: drawRectangle position, size:image.size*scale + touchMargin, visibleFor, fill:TransparentRed
+		if image: drawImage image, position, frame, scale, visibleFor, layer
+		if text:  drawText text, position, fontSize, textColor, visibleFor, layer
 			
 		Input.onTouchDownWithin position, image.size*scale + touchMargin, userId:clickableBy, visualize:showTouchArea
 			onClick touch
