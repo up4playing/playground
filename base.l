@@ -247,6 +247,13 @@ struct Nullable<T>
 interface object
 	inline js bool toBool() (this != null)
 	inline js string toString() JSON.stringify(this)
+		
+// This struct is automatically filled with the source code location
+struct SourceCodeLocation
+	int row     // The row of the source code
+	int column  // The column of the source code
+	string file // The filename of the source code
+	SourceCodeLocation left, right
 	
 // A collection of basic system functions
 global unit System
@@ -267,8 +274,9 @@ global unit System
 		while(condition) block()
 	
 	// Prints a message to the console
-	global inline js void print: implicit string message // The message to print
-		log(message)
+	global js void print: logstring text // The text, variables or expressions to print
+		                  SourceCodeLocation location
+		log(text, location.row, location.column, location.file)
 	
 	// Shows a dialog box with a given message
 	global inline js void alert: implicit string message // The message to show
