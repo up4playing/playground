@@ -690,6 +690,7 @@ global unit graphics
 		if(!image.texture || !image.texture._htmlImage) return
 		let f = image.frames[frame % image.frames.length]
 		graphics_add(visibleFor, new DisplayImage(
+			graphics_totalMatrix,
 			position.x-f.w/2*scale,
 			position.y-f.h/2*scale,
 			f.w*scale,
@@ -708,8 +709,8 @@ global unit graphics
 		                      implicit layer = 0
 		if(!image.texture || !image.texture._htmlImage) return
 		let f = image.frames[frame % image.frames.length]
-		let matrix = graphics_matrix.clone()
-		matrix.move(new float2(position.x, position.y))
+		let matrix = graphics_totalMatrix.clone()
+		matrix.move(position)
 		matrix.rotate(angle)
 		graphics_add(visibleFor, new DisplayImage(
 			matrix,
@@ -731,6 +732,7 @@ global unit graphics
 		                              implicit int layer = 0
 		if(!texture || !texture._htmlImage) return
 		graphics_add(visibleFor, new DisplayImage(
+			graphics_totalMatrix,
 			position.x-texture.size.x/2*scale,
 			position.y-texture.size.y/2*scale,
 			texture.size.x*scale,
@@ -754,6 +756,7 @@ global unit graphics
 		                        implicit int layer = 0
 		if(!texture || !texture._htmlImage) return
 		graphics_add(visibleFor, new DisplayImage(
+			graphics_totalMatrix,
 			position.x-texture.size.x/2*scale,
 			position.y-texture.size.y/2*scale,
 			texture.size.x*scale,
@@ -826,7 +829,7 @@ global unit graphics
 		let h = size || graphics_currentFontSize
 		let x = align==0 ?  position.x-w : align  == 1 ? position.x-w*.5 : position.x
 		let y = valign==0 ? position.y-h : valign == 1 ? position.y-h*.365 : position.y
-		graphics_add(visibleFor, new DisplayText(x, y, w, h, layer, text, fillStyle, contextFont))
+		graphics_add(visibleFor, new DisplayText(graphics_totalMatrix, x, y, w, h, layer, text, fillStyle, contextFont))
 		
 	// Draws a text on the screen
 	global js void drawRectangle: position = float2()
@@ -837,6 +840,7 @@ global unit graphics
 		                          visibleFor = -1
 		                          implicit layer = 0
 		graphics_add(visibleFor, new DisplayRectangle(
+			graphics_totalMatrix, 
 			position.x-size.x/2, position.y-size.y/2, size.x, size.y,
 			layer, "Rectangle",
 			fill || !stroke ? (fill || graphics_currentColor).hex : null,
@@ -850,7 +854,7 @@ global unit graphics
 		                           visibleFor = -1
 		                           implicit layer = 0
 		graphics_add(visibleFor, new DisplayRectangle(
-			position.x-size.x/2, position.y-size.y/2, size.x, size.y, layer, "Rectangle", "clear", null, 0
+			graphics_totalMatrix, position.x-size.x/2, position.y-size.y/2, size.x, size.y, layer, "Rectangle", "clear", null, 0
 		))
 		
 	// Draws a text on the screen
