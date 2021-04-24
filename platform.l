@@ -16,7 +16,7 @@ unit Platform
 	visible float2 pixelSize, size
 	visible float pixelRatio
 	internal Matrix2D baseMatrix
-	private bool slideMode
+	public bool slideMode
 	private bool engineStarted
 	visible EventStreamMode mode
 	internal bool fastForward
@@ -46,7 +46,7 @@ unit Platform
 		Platform_canvas = document.getElementById("canvas");
 		Platform_context = Platform_canvas.getContext("2d");
 		Platform_pixelRatio = 1;
-		Platform_pixelSize = new float2(window.innerWidth*Platform_pixelRatio, window.innerHeight*Platform_pixelRatio)
+		Platform_pixelSize = new float2(window.innerWidth*Platform_pixelRatio, window.innerHeight*Platform_pixelRatio, null)
 		Platform_canvas.style.width = window.innerWidth + "px";
 		Platform_canvas.style.height = window.innerHeight + "px";
 		Platform_canvas.width = Platform_pixelSize.x
@@ -55,26 +55,26 @@ unit Platform
 		Platform_canvas.imageSmoothingQuality = "high"
 		
 		// Create base matrix
-		let ratio = new float2(Platform_pixelSize.x / Platform_referenceSize.x, Platform_pixelSize.y / Platform_referenceSize.y);
+		let ratio = new float2(Platform_pixelSize.x / Platform_referenceSize.x, Platform_pixelSize.y / Platform_referenceSize.y, null);
 		let scale
 		switch(Platform_scaleMode) {
 			case 0:
 				if(ratio.x < ratio.y) { Platform_effectiveScaleMode = 1; scale = ratio.x; }
 				else                  { Platform_effectiveScaleMode = 2; scale = ratio.y; }
-				Platform_size = new float2(Platform_referenceSize.x, Platform_referenceSize.y)
+				Platform_size = new float2(Platform_referenceSize.x, Platform_referenceSize.y, null)
 				break;
 				
 			case 1:
 			case 3:
 				Platform_effectiveScaleMode = Platform_scaleMode
 				scale = ratio.x; 
-				Platform_size = new float2(Platform_referenceSize.x, Platform_pixelSize.y/scale)
+				Platform_size = new float2(Platform_referenceSize.x, Platform_pixelSize.y/scale, null)
 				break;
 				
 			case 2:
 				Platform_effectiveScaleMode = Platform_scaleMode
 				scale = ratio.y; 
-				Platform_size = new float2(Platform_pixelSize.x/scale, Platform_referenceSize.y)
+				Platform_size = new float2(Platform_pixelSize.x/scale, Platform_referenceSize.y, null)
 				break;
 		}
 		

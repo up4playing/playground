@@ -586,7 +586,7 @@ unit Network
 		el.muted = local
 		document.body.appendChild(el)
 		el.srcObject = stream;
-		let vs = Network_videoScreens[userId] || (Network_videoScreens[userId] = new VideoScreenInfo(null, new float2, new float2))
+		let vs = Network_videoScreens[userId] || (Network_videoScreens[userId] = new VideoScreenInfo(null, new float2(0,0,null), new float2(0,0,null)))
 		vs.videoElement = el
 		
 	setUserVideoAndColor: int userId = 0, float2 pos = {}, float width = 440, Color color = null

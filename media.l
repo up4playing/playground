@@ -1,9 +1,10 @@
 // A 2D vector comprised of an x and y coordinate
 struct float2
-	static float2 none = new float2(float.infinity, float.infinity)
-
 	float x // The x-coordinate of the vector
 	float y // The y-coordinate of the vector
+	SourceCodeLocation location
+	
+	static float2 none = new float2(float.infinity, float.infinity)
 	
 	// Returns a string representation of the vector
 	string toString := "("+x+" "+y+")"
@@ -12,35 +13,46 @@ struct float2
 	bool toBool := (x != float.infinity || y != float.infinity)
 	
 	// Creates a copy of the vector with the same values
-	float2 clone := float2(x, y)
+	js float2 clone
+		return new float2(this.x, this.y, this.location ? this.location.clone() : null)
 		
-	float2 operator = (float2 a, float2 b) a.x = b.x; a.y = b.y; return a
+	float2 operator = (float2 a, float2 b)
+		a.x = b.x
+		a.y = b.y
+		a.location = b.location ? b.location.clone : null
+		return a
 	
-	float2 operator + (float2 a, float2 b) return float2(a.x+b.x, a.y+b.y)
-	float2 operator - (float2 a, float2 b) return float2(a.x-b.x, a.y-b.y)
-	float2 operator * (float2 a, float2 b) return float2(a.x*b.x, a.y*b.y)
-	float2 operator / (float2 a, float2 b) return float2(a.x/b.x, a.y/b.y)
-	
-	float2 operator * (float2 a, float b) return float2(a.x*b, a.y*b)
-	float2 operator * (float a, float2 b) return float2(a*b.x, a*b.y)
-	float2 operator / (float2 a, float b) return float2(a.x/b, a.y/b)
+	js float2 operator + (float2 a, float2 b)
+		let l = b.location || a.location
+		return new float2(a.x+b.x, a.y+b.y, l ? new SourceCodeLocation(l.row, l.column, l.file, l.generation+1, a.location, l) : null)
 		
-	float2 operator * (float2 vector, Matrix2D matrix)
-		return float2(
+	js float2 operator - (float2 a, float2 b)
+		let l = b.location || a.location
+		return new float2(a.x-b.x, a.y-b.y, l ? new SourceCodeLocation(l.row, l.column, l.file, l.generation+1, a.location, l) : null)
+	
+	js float2 operator * (float2 a, float2 b) return new float2(a.x*b.x, a.y*b.y, null)
+	js float2 operator * (float2 a, float b) return new float2(a.x*b, a.y*b, null)
+	js float2 operator * (float a, float2 b) return new float2(a*b.x, a*b.y, null)
+	js float2 operator * (float2 vector, Matrix2D matrix)
+		return new float2(
 			matrix.m0 * vector.x + matrix.m2 * vector.y + matrix.m4,
-			matrix.m1 * vector.x + matrix.m3 * vector.y + matrix.m5
+			matrix.m1 * vector.x + matrix.m3 * vector.y + matrix.m5,
+			null
 		)
 		
-	float2 operator / (float2 vector, Matrix2D matrix)
+	js float2 operator / (float2 a, float2 b) return new float2(a.x/b.x, a.y/b.y, null)
+	js float2 operator / (float2 a, float b) return new float2(a.x/b, a.y/b, null)
+	js float2 operator / (float2 vector, Matrix2D matrix)
 		var aa = matrix.m0, ab = matrix.m1, ac = matrix.m2, ad = matrix.m3, atx = matrix.m4, aty = matrix.m5
 
 		var det = aa * ad - ab * ac
-		if(det == 0) return float2()
+		if(det == 0) return new float2(0,0,null)
 		det = 1.0 / det
 		
-		return float2(
+		return new float2(
 			( ad * det) * vector.x + (-ac * det) * vector.y + ((ac * aty - ad * atx) * det),
-			(-ab * det) * vector.x + ( aa * det) * vector.y + ((ab * atx - aa * aty) * det)
+			(-ab * det) * vector.x + ( aa * det) * vector.y + ((ab * atx - aa * aty) * det),
+			null
 		)			
 	
 	float2 operator += (float2 a, float2 b) a.x += b.x; a.y += b.y; return a
@@ -410,12 +422,12 @@ class Texture
 			image.onload = e => {
 				this._htmlImage = image
 				window._htmlImageCache[this.file] = image
-				this.size = new float2(image.width, image.height)
+				this.size = new float2(image.width, image.height, null)
 				if(Platform_mode == 0) Network_tickFrame();
 			}
 		} else {
 			this._htmlImage = image
-			this.size = new float2(image.width, image.height)
+			this.size = new float2(image.width, image.height, null)
 		}
 
 // A single frame of an animated image
@@ -695,7 +707,8 @@ global unit graphics
 			position.y-f.h/2*scale,
 			f.w*scale,
 			f.h*scale,
-			layer, image.file, image.texture._htmlImage,
+			layer, image.file, position.location,
+			image.texture._htmlImage,
 			f.x1, f.y1, f.w, f.h
 		))
 	
@@ -718,7 +731,8 @@ global unit graphics
 			-f.h/2*scale,
 			f.w*scale,
 			f.h*scale,
-			layer, image.file, image.texture._htmlImage,
+			layer, image.file, position.location, 
+			image.texture._htmlImage,
 			f.x1, f.y1, f.w, f.h
 		))
 	
@@ -738,7 +752,8 @@ global unit graphics
 			texture.size.x*scale,
 			texture.size.y*scale,
 			
-			layer, texture.file, texture._htmlImage,
+			layer, texture.file, position.location, 
+			texture._htmlImage,
 			
 			sourcePosition.x+texture.size.x/2-sourceSize.x/2,
 			sourcePosition.y+texture.size.y/2-sourceSize.y/2,
@@ -762,7 +777,8 @@ global unit graphics
 			texture.size.x*scale,
 			texture.size.y*scale,
 			
-			layer, texture.file, texture._htmlImage,
+			layer, texture.file, position.location,
+			texture._htmlImage,
 			0, 0, texture.size.x, texture.size.y
 		))
 
@@ -830,7 +846,7 @@ global unit graphics
 		let h = size || graphics_currentFontSize
 		let x = align  == 0 ? position.x : align  == 1 ? position.x-w*.5 : position.x-w
 		let y = valign == 0 ? position.y : valign == 1 ? position.y-h*.365 : position.y-h
-		graphics_add(visibleFor, new DisplayText(graphics_totalMatrix, x, y, w, h, layer, text, fillStyle, contextFont))
+		graphics_add(visibleFor, new DisplayText(graphics_totalMatrix, x, y, w, h, layer, text, position.location, fillStyle, contextFont))
 		
 	// Draws a text on the screen
 	global js void drawRectangle: position = float2()
@@ -843,7 +859,7 @@ global unit graphics
 		graphics_add(visibleFor, new DisplayRectangle(
 			graphics_totalMatrix, 
 			position.x-size.x/2, position.y-size.y/2, size.x, size.y,
-			layer, "Rectangle",
+			layer, "Rectangle", position.location,
 			fill || !stroke ? (fill || graphics_currentColor).hex : null,
 			stroke ? stroke.hex : null,
 			lineWidth || graphics_currentLineWidth
@@ -855,7 +871,7 @@ global unit graphics
 		                           visibleFor = -1
 		                           implicit layer = 0
 		graphics_add(visibleFor, new DisplayRectangle(
-			graphics_totalMatrix, position.x-size.x/2, position.y-size.y/2, size.x, size.y, layer, "Rectangle", "clear", null, 0
+			graphics_totalMatrix, position.x-size.x/2, position.y-size.y/2, size.x, size.y, layer, "Rectangle", position.location, "clear", null, 0
 		))
 		
 	// Draws a text on the screen
@@ -915,6 +931,7 @@ class DisplayItem
 	float x, y, w, h
 	int layer
 	string name
+	SourceCodeLocation location
 	
 	visible float m0, m1, m2, m3, m4, m5
 	visible float2[] poly
@@ -923,10 +940,10 @@ class DisplayItem
 		m0 = m.m0; m1 = m.m1; m2 = m.m2; m3 = m.m3; m4 = m.m4; m5 = m.m5
 		if Platform.isDebug
 			poly = [
-				{ x,   y   }.transform(graphics.localMatrix),
-				{ x+w, y   }.transform(graphics.localMatrix),
-				{ x+w, y+h }.transform(graphics.localMatrix),
-				{ x,   y+h }.transform(graphics.localMatrix),
+				{ x,   y   }.transform(m),
+				{ x+w, y   }.transform(m),
+				{ x+w, y+h }.transform(m),
+				{ x,   y+h }.transform(m),
 			]
 	draw
 	
@@ -965,5 +982,3 @@ DisplayItem DisplayRectangle
 			Platform_context.strokeStyle = this.stroke
 			Platform_context.strokeRect(this.x, this.y, this.w, this.h)
 		}
-		
-	

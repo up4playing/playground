@@ -67,4 +67,4 @@ class PhysicsBody
 	object body = null
 	js float2 position:
 		let pos = this.body.GetPosition()
-		return new float2(pos.x*Physics_scale, pos.y*Physics_scale)
+		return new float2(pos.x*Physics_scale, pos.y*Physics_scale, null)

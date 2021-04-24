@@ -75,7 +75,7 @@ unit Input
 	
 	private js float2 logicalToPixelPosition: float2 pos
 		let p = pos.getTransformed(graphics_totalMatrix)
-		return new float2(p.x/Platform_pixelRatio, p.y/Platform_pixelRatio)
+		return new float2(p.x/Platform_pixelRatio, p.y/Platform_pixelRatio, null)
 
 	private js void initHandlers
 		window.onpointerdown = e => {
@@ -161,13 +161,19 @@ unit Input
 		inputs.add keyCode
 		
 	private handleTouchEvent: InputType type, float x, float y, int id, int button
-		float2 referencePos = {x*Platform.pixelRatio, y*Platform.pixelRatio}.getRelativeTo(Platform.baseMatrix)
-		// if type == TouchDown
-		// 	for graphics.items
-		// 		if referencePos.isInsidePoygon poly
-		// 			print name
-					
-		sendToEditor id, referencePos, cast type
+		float2 pixelPos = {x*Platform.pixelRatio, y*Platform.pixelRatio}
+		float2 referencePos = pixelPos.getRelativeTo(Platform.baseMatrix)
+		if Platform.slideMode
+			int row, column
+			string file
+			if type == TouchDown
+				for <- graphics.items
+					if pixelPos.isInsidePoygon poly
+						print location
+						row = location.row
+						column = location.column
+						file = location.file
+			sendToEditor id, referencePos, cast type, row, column, file
 		if Network.mode == None || Platform.mode != Record: return
 		let inputs = getInputList
 		
@@ -199,8 +205,8 @@ unit Input
 		inputs.add Math.round(referencePos.y)
 		inputs.add Math.round(delta)
 		
-	private js void sendToEditor: int id, float2 pos, TouchPhase phase
-		if(Platform_slideMode) _sendToEditor({type:"touch", id, x:pos.x, y:pos.y, phase})
+	private js void sendToEditor: int id, float2 pos, TouchPhase phase, int row, int column, string file
+		if(Platform_slideMode) _sendToEditor({type:"touch", id, x:pos.x, y:pos.y, phase, row, column, file})
 	
 	internal parseInputs(int frame)
 		for userIndex, user -> users if user

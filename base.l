@@ -295,11 +295,20 @@ interface object
 
 		
 // This struct is automatically filled with the source code location
-struct SourceCodeLocation
+class SourceCodeLocation
 	int row     // The row of the source code
 	int column  // The column of the source code
 	string file // The filename of the source code
-	SourceCodeLocation left, right
+	
+	int generation
+	SourceCodeLocation left = null
+	SourceCodeLocation right = null
+	
+	js SourceCodeLocation clone 
+		return new SourceCodeLocation(this.row, this.column, this.file, this.generation+1, this.left, this.right)
+		
+	string toString()
+		return "row:{row} column:{column} file:{file} generation:{generation}"
 	
 // A collection of basic system functions
 global unit System
