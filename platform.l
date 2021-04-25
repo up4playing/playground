@@ -107,8 +107,36 @@ unit Platform
 	private enterSlideMode() stop;          slideMode = true;  sendPlayState
 	
 	private tick
-		if mode == Play || mode == Record: Network.tick 
+		if mode == Play || mode == Record: Network.tick
+		
+	float2 touchUpPos
+	int locationIndex
+	
+	handleSider: InputType inputType, int id, float2 pixelPos, float2 referencePos	
+		if Platform.slideMode
+			int row, column
+			string file
+			let movedSinceTouchUp = float2.manhattanDistanceBetween(pixelPos, touchUpPos) > 5
+			if inputType == TouchUp: touchUpPos = pixelPos
+				
+			if (inputType == TouchDown and movedSinceTouchUp) or (inputType == TouchUp and !movedSinceTouchUp)
+				if !movedSinceTouchUp: locationIndex++
+				else                   locationIndex = 0
+				
+				for graphics.items
+					if pixelPos.isInsidePoygon poly
+						SourceCodeLocation[] locations
+						location.flatten locations
+						let selectedLocation = locations[locationIndex % locations.length]
+						row = selectedLocation.row
+						column = selectedLocation.column
+						file = selectedLocation.file
+						break
+			sendTouchToEditor id, referencePos, cast inputType, row, column, file
 			
+	private js void sendTouchToEditor: int id, float2 pos, TouchPhase phase, int row, int column, string file
+		_sendToEditor({type:"touch", id, x:pos.x, y:pos.y, phase, row, column, file})
+	
 	private inline js void sendPlayState
 		if(Platform_isDebug) _sendToEditor({type:"setPlayState", mode:Platform_mode, slideMode:Platform_slideMode, frame:Network_logicFrame})
 

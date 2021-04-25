@@ -309,6 +309,11 @@ class SourceCodeLocation
 		
 	string toString()
 		return "row:{row} column:{column} file:{file} generation:{generation}"
+		
+	void flatten: SourceCodeLocation[] result
+		if file:          result.add this
+		if left != null:  left.flatten result
+		if right != null: right.flatten result
 	
 // A collection of basic system functions
 global unit System

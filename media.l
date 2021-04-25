@@ -23,12 +23,10 @@ struct float2
 		return a
 	
 	js float2 operator + (float2 a, float2 b)
-		let l = b.location || a.location
-		return new float2(a.x+b.x, a.y+b.y, l ? new SourceCodeLocation(l.row, l.column, l.file, l.generation+1, a.location, l) : null)
+		return new float2(a.x+b.x, a.y+b.y, a.location || b.location ? new SourceCodeLocation(0, 0, null, 0, a.location, b.location) : null)
 		
 	js float2 operator - (float2 a, float2 b)
-		let l = b.location || a.location
-		return new float2(a.x-b.x, a.y-b.y, l ? new SourceCodeLocation(l.row, l.column, l.file, l.generation+1, a.location, l) : null)
+		return new float2(a.x-b.x, a.y-b.y, a.location || b.location ? new SourceCodeLocation(0, 0, null, 0, a.location, b.location) : null)
 	
 	js float2 operator * (float2 a, float2 b) return new float2(a.x*b.x, a.y*b.y, null)
 	js float2 operator * (float2 a, float b) return new float2(a.x*b, a.y*b, null)
@@ -97,6 +95,11 @@ struct float2
 		var y = a.y - b.y
 		return Math.sqrt(x*x + y*y)
 
+	// The distance between two vectors along axes at right angles
+	static manhattanDistanceBetween: float2 a // The first vector 
+		                             float2 b // The second vector
+		return Math.abs(a.x - b.x) + Math.abs(a.y - b.y)
+		
 	// Returns the angle between two vectors in radians
 	static angleBetween: float2 a // The first vector
 		                 float2 b // The second vector
@@ -231,6 +234,11 @@ struct int2
 		var x = a.x - b.x
 		var y = a.y - b.y
 		return Math.sqrt(x*x + y*y)
+
+	// The distance between two vectors along axes at right angles
+	static manhattanDistanceBetween: int2 a // The first vector 
+		                             int2 b // The second vector
+		return Math.abs(a.x - b.x) + Math.abs(a.y - b.y)
 
 	// Returns the angle between two vectors in radians
 	static angleBetween: int2 a // The first vector
