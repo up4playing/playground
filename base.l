@@ -52,6 +52,10 @@ struct string
 	inline js string substring: int start
 		                        int end
 		this.substring(start, end)
+		
+	// Returns 0 for an exact match, 1 if first is larger, -1 if second is larger
+	inline js int compareTo: string value // The string to compare to
+		this.localeCompare(value)
 
 // A logical data type that can have the value true or false
 enum bool: false, true

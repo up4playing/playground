@@ -116,7 +116,7 @@ unit Platform
 		if Platform.slideMode
 			int row, column
 			string file
-			let movedSinceTouchUp = float2.manhattanDistanceBetween(pixelPos, touchUpPos) > 5
+			let movedSinceTouchUp = float2.manhattanDistanceBetween(pixelPos, touchUpPos) > 8
 			if inputType == TouchUp: touchUpPos = pixelPos
 				
 			if (inputType == TouchDown and movedSinceTouchUp) or (inputType == TouchUp and !movedSinceTouchUp)
@@ -127,6 +127,7 @@ unit Platform
 					if pixelPos.isInsidePoygon poly
 						SourceCodeLocation[] locations
 						location.flatten locations
+						locations.sort (a.file compareTo b.file) || b.row - a.row || a.column - b.column
 						let selectedLocation = locations[locationIndex % locations.length]
 						row = selectedLocation.row
 						column = selectedLocation.column
