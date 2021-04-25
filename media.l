@@ -744,52 +744,27 @@ global unit graphics
 			f.x1, f.y1, f.w, f.h
 		))
 	
-	// Draws an image on the screen
-	global js void drawTextureRegion: Texture texture
-		                              float2 sourcePosition = {}
-		                              float2 sourceSize = {}
-		                              float2 position = {}       // The position where to draw the image
-		                              scale = 1.0                 // Scale the image by this factor
-		                              visibleFor = -1
-		                              implicit int layer = 0
-		if(!texture || !texture._htmlImage) return
-		graphics_add(visibleFor, new DisplayImage(
-			graphics_totalMatrix,
-			position.x-texture.size.x/2*scale,
-			position.y-texture.size.y/2*scale,
-			texture.size.x*scale,
-			texture.size.y*scale,
-			
-			layer, texture.file, position.location, 
-			texture._htmlImage,
-			
-			sourcePosition.x+texture.size.x/2-sourceSize.x/2,
-			sourcePosition.y+texture.size.y/2-sourceSize.y/2,
-			sourceSize.x, 
-			sourceSize.y, 
-		))
+	// Draws a text on the screen
+	global js void drawText: string text                        // The text to draw
+		                     position = float2()               // The position where to draw the text
+		                     size = 0                           // The size of the text in pixels
+		                     Color color = null                 // The color of the text
+		                     HorizontalAlignment align = Center // The horizontal alignment of the text
+		                     VerticalAlignment valign = Middle  // The vertical alignment of the text
+		                     FontStyle style = Normal
+		                     font = ""
+		                     visibleFor = -1
+		                     implicit layer = 0
+		let contextFont = (style ? "bold ":"")+(size || graphics_currentFontSize)+"px "+(font || graphics_currentFont);
+		Platform_context.font = contextFont
+		let textSize = Platform_context.measureText(text)
+		let fillStyle = (color || graphics_currentColor).hex
+		let w = textSize.width
+		let h = size || graphics_currentFontSize
+		let x = align  == 0 ? position.x : align  == 1 ? position.x-w*.5 : position.x-w
+		let y = valign == 0 ? position.y : valign == 1 ? position.y-h*.365 : position.y-h
+		graphics_add(visibleFor, new DisplayText(graphics_totalMatrix, x, y, w, h, layer, text, position.location, fillStyle, contextFont))
 		
-		// try{ Platform_context.drawImage(texture._htmlImage, sourcePosition.x-sourceSize.x/2, sourcePosition.y-sourceSize.y/2, sourceSize.x, sourceSize.y, position.x, position.y, sourceSize.x*scale, sourceSize.y*scale) }
-	
-	// Draws an image on the screen
-	global js void drawTexture: Texture texture       // The image to draw
-		                        float2 position = {} // The position where to draw the image
-		                        scale = 1.0           // Scale the image by this factor
-		                        visibleFor = -1
-		                        implicit int layer = 0
-		if(!texture || !texture._htmlImage) return
-		graphics_add(visibleFor, new DisplayImage(
-			graphics_totalMatrix,
-			position.x-texture.size.x/2*scale,
-			position.y-texture.size.y/2*scale,
-			texture.size.x*scale,
-			texture.size.y*scale,
-			
-			layer, texture.file, position.location,
-			texture._htmlImage,
-			0, 0, texture.size.x, texture.size.y
-		))
-
 	// Draws an image on the screen
 	global void drawButton: Image image = null      // The image to draw
 		                    text = ""               // The text to draw
@@ -836,27 +811,6 @@ global unit graphics
 			onClick touch
 			
 	// Draws a text on the screen
-	global js void drawText: string text                        // The text to draw
-		                     position = float2()               // The position where to draw the text
-		                     size = 0                           // The size of the text in pixels
-		                     Color color = null                 // The color of the text
-		                     HorizontalAlignment align = Center // The horizontal alignment of the text
-		                     VerticalAlignment valign = Middle  // The vertical alignment of the text
-		                     FontStyle style = Normal
-		                     font = ""
-		                     visibleFor = -1
-		                     implicit layer = 0
-		let contextFont = (style ? "bold ":"")+(size || graphics_currentFontSize)+"px "+(font || graphics_currentFont);
-		Platform_context.font = contextFont
-		let textSize = Platform_context.measureText(text)
-		let fillStyle = (color || graphics_currentColor).hex
-		let w = textSize.width
-		let h = size || graphics_currentFontSize
-		let x = align  == 0 ? position.x : align  == 1 ? position.x-w*.5 : position.x-w
-		let y = valign == 0 ? position.y : valign == 1 ? position.y-h*.365 : position.y-h
-		graphics_add(visibleFor, new DisplayText(graphics_totalMatrix, x, y, w, h, layer, text, position.location, fillStyle, contextFont))
-		
-	// Draws a text on the screen
 	global js void drawRectangle: position = float2()
 		                          size = float2()
 		                          Color fill = null
@@ -873,6 +827,52 @@ global unit graphics
 			lineWidth || graphics_currentLineWidth
 		))
 		
+	// Draws an image on the screen
+	global js void drawTextureRegion: Texture texture
+		                              float2 sourcePosition = {}
+		                              float2 sourceSize = {}
+		                              float2 position = {}       // The position where to draw the image
+		                              scale = 1.0                 // Scale the image by this factor
+		                              visibleFor = -1
+		                              implicit int layer = 0
+		if(!texture || !texture._htmlImage) return
+		graphics_add(visibleFor, new DisplayImage(
+			graphics_totalMatrix,
+			position.x-texture.size.x/2*scale,
+			position.y-texture.size.y/2*scale,
+			texture.size.x*scale,
+			texture.size.y*scale,
+			
+			layer, texture.file, position.location, 
+			texture._htmlImage,
+			
+			sourcePosition.x+texture.size.x/2-sourceSize.x/2,
+			sourcePosition.y+texture.size.y/2-sourceSize.y/2,
+			sourceSize.x, 
+			sourceSize.y, 
+		))
+		
+		// try{ Platform_context.drawImage(texture._htmlImage, sourcePosition.x-sourceSize.x/2, sourcePosition.y-sourceSize.y/2, sourceSize.x, sourceSize.y, position.x, position.y, sourceSize.x*scale, sourceSize.y*scale) }
+	
+	// Draws an image on the screen
+	global js void drawTexture: Texture texture       // The image to draw
+		                        float2 position = {} // The position where to draw the image
+		                        scale = 1.0           // Scale the image by this factor
+		                        visibleFor = -1
+		                        implicit int layer = 0
+		if(!texture || !texture._htmlImage) return
+		graphics_add(visibleFor, new DisplayImage(
+			graphics_totalMatrix,
+			position.x-texture.size.x/2*scale,
+			position.y-texture.size.y/2*scale,
+			texture.size.x*scale,
+			texture.size.y*scale,
+			
+			layer, texture.file, position.location,
+			texture._htmlImage,
+			0, 0, texture.size.x, texture.size.y
+		))
+
 	// Draws a text on the screen
 	global js void clearRectangle: position = float2()
 		                           size = float2()
