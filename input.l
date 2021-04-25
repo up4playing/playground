@@ -79,7 +79,7 @@ unit Input
 
 	private js void initHandlers
 		window.onpointerdown = e => {
-			if(e.button == 0 && Platform_mode == 0 && !Platform_slideMode)
+			if(e.button == 0 && Platform_mode == 0)
 				Platform_record()
 			Input_handleTouchEvent(1, e.pageX, e.pageY, e.pointerId, e.button);
 		}
@@ -90,8 +90,8 @@ unit Input
 		window.onpointerup = e => {
 			Input_handleTouchEvent(3, e.pageX, e.pageY, e.pointerId, e.button);
 			if(e.button == 2 && Platform_mode == 0) {
-				if(!Platform_slideMode) Platform_enterSlideMode()
-				else                    Platform_stop()
+				if(Platform_mode < 3/*Pointer*/) Platform_enterSlideMode(3/*Pointer*/)
+				else                             Platform_stop()
 			}
 		}
 		window.oncontextmenu = e => {
@@ -163,7 +163,7 @@ unit Input
 	private handleTouchEvent: InputType type, float x, float y, int id, int button
 		float2 pixelPos = {x*Platform.pixelRatio, y*Platform.pixelRatio}
 		float2 referencePos = pixelPos.getRelativeTo(Platform.baseMatrix)
-		Platform.handleSider type, id, pixelPos, referencePos
+		Platform.handleSide type, id, pixelPos, referencePos
 		
 		if Network.mode == None || Platform.mode != Record: return
 		let inputs = getInputList

@@ -1,4 +1,4 @@
-enum EventStreamMode: Pause, Record, Play
+enum PlatformMode: Pause, Record, Play, Pointer, Slide
 enum ScaleMode: Auto, FixedWidth, FixedHeight, TopWidth, NoScaling
 		
 unit Platform
@@ -16,9 +16,8 @@ unit Platform
 	visible float2 pixelSize, size
 	visible float pixelRatio
 	internal Matrix2D baseMatrix
-	public bool slideMode
 	private bool engineStarted
-	visible EventStreamMode mode
+	visible PlatformMode mode
 	internal bool fastForward
 	public bool showSafeArea = true
 	visible bool isMobile = true
@@ -94,17 +93,18 @@ unit Platform
 		initAll
 		resize
 		if !isDebug: Network.simulateConnection = false
-		mode = Pause
+		if mode <= Play: mode = Pause
 		let param = url.split("/")[4]
 		if isDebug || !param || url.startsWith("file"): Network.startLocal userCount:userCount
 		else                                            Network.join roomId:param
-		sendPlayState
+		sendMode
 		Network.tick
 		
-	private stop()           slideMode = false; startApp
-	private record()         mode = Record; slideMode = false; sendPlayState; Network.resetStartTime
-	private play()           mode = Play;   slideMode = false; sendPlayState
-	private enterSlideMode() stop;          slideMode = true;  sendPlayState
+	private stop()    mode = Pause;  startApp
+	private record()  mode = Record; sendMode; Network.resetStartTime
+	private play()    mode = Play;   sendMode; Network.resetStartTime
+	
+	private enterSlideMode(PlatformMode mode) startApp; this.mode = mode; sendMode
 	
 	private tick
 		if mode == Play || mode == Record: Network.tick
@@ -112,34 +112,35 @@ unit Platform
 	float2 touchUpPos
 	int locationIndex
 	
-	handleSider: InputType inputType, int id, float2 pixelPos, float2 referencePos	
-		if Platform.slideMode
+	handleSide: InputType inputType, int id, float2 pixelPos, float2 referencePos	
+		if Platform.mode == Pointer or Platform.mode == Slide
 			int row, column
 			string file
-			let movedSinceTouchUp = float2.manhattanDistanceBetween(pixelPos, touchUpPos) > 8
-			if inputType == TouchUp: touchUpPos = pixelPos
-				
-			if (inputType == TouchDown and movedSinceTouchUp) or (inputType == TouchUp and !movedSinceTouchUp)
-				if !movedSinceTouchUp: locationIndex++
-				else                   locationIndex = 0
-				
-				for graphics.items
-					if pixelPos.isInsidePoygon poly
-						SourceCodeLocation[] locations
-						location.flatten locations
-						locations.sort (a.file compareTo b.file) || b.row - a.row || a.column - b.column
-						let selectedLocation = locations[locationIndex % locations.length]
-						row = selectedLocation.row
-						column = selectedLocation.column
-						file = selectedLocation.file
-						break
+			if Platform.mode == Pointer
+				let movedSinceTouchUp = float2.manhattanDistanceBetween(pixelPos, touchUpPos) > 8
+				if inputType == TouchUp: touchUpPos = pixelPos
+					
+				if (inputType == TouchDown and movedSinceTouchUp) or (inputType == TouchUp and !movedSinceTouchUp)
+					if !movedSinceTouchUp: locationIndex++
+					else                   locationIndex = 0
+					
+					for graphics.items
+						if pixelPos.isInsidePoygon poly
+							SourceCodeLocation[] locations
+							location.flatten locations
+							locations.sort (a.file compareTo b.file) || b.row - a.row || a.column - b.column
+							let selectedLocation = locations[locationIndex % locations.length]
+							row = selectedLocation.row
+							column = selectedLocation.column
+							file = selectedLocation.file
+							break
 			sendTouchToEditor id, referencePos, cast inputType, row, column, file
 			
 	private js void sendTouchToEditor: int id, float2 pos, TouchPhase phase, int row, int column, string file
 		_sendToEditor({type:"touch", id, x:pos.x, y:pos.y, phase, row, column, file})
 	
-	private inline js void sendPlayState
-		if(Platform_isDebug) _sendToEditor({type:"setPlayState", mode:Platform_mode, slideMode:Platform_slideMode, frame:Network_logicFrame})
+	private js void sendMode
+		if(Platform_isDebug) _sendToEditor({type:"setPlatformMode", mode:Platform_mode, frame:Network_logicFrame})
 
 	private inline js void sendEvaluateFinished
 		if(Platform_isDebug) _sendToEditor({type:"evaluateFinished"})
