@@ -828,6 +828,25 @@ global unit graphics
 		))
 		
 	// Draws an image on the screen
+	global js void drawTexture: Texture texture       // The image to draw
+		                        float2 position = {} // The position where to draw the image
+		                        scale = 1.0           // Scale the image by this factor
+		                        visibleFor = -1
+		                        implicit int layer = 0
+		if(!texture || !texture._htmlImage) return
+		graphics_add(visibleFor, new DisplayImage(
+			graphics_totalMatrix,
+			position.x-texture.size.x/2*scale,
+			position.y-texture.size.y/2*scale,
+			texture.size.x*scale,
+			texture.size.y*scale,
+			
+			layer, texture.file, position.location,
+			texture._htmlImage,
+			0, 0, texture.size.x, texture.size.y
+		))
+
+	// Draws an image on the screen
 	global js void drawTextureRegion: Texture texture
 		                              float2 sourcePosition = {}
 		                              float2 sourceSize = {}
@@ -852,27 +871,6 @@ global unit graphics
 			sourceSize.y, 
 		))
 		
-		// try{ Platform_context.drawImage(texture._htmlImage, sourcePosition.x-sourceSize.x/2, sourcePosition.y-sourceSize.y/2, sourceSize.x, sourceSize.y, position.x, position.y, sourceSize.x*scale, sourceSize.y*scale) }
-	
-	// Draws an image on the screen
-	global js void drawTexture: Texture texture       // The image to draw
-		                        float2 position = {} // The position where to draw the image
-		                        scale = 1.0           // Scale the image by this factor
-		                        visibleFor = -1
-		                        implicit int layer = 0
-		if(!texture || !texture._htmlImage) return
-		graphics_add(visibleFor, new DisplayImage(
-			graphics_totalMatrix,
-			position.x-texture.size.x/2*scale,
-			position.y-texture.size.y/2*scale,
-			texture.size.x*scale,
-			texture.size.y*scale,
-			
-			layer, texture.file, position.location,
-			texture._htmlImage,
-			0, 0, texture.size.x, texture.size.y
-		))
-
 	// Draws a text on the screen
 	global js void clearRectangle: position = float2()
 		                           size = float2()
