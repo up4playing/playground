@@ -23,10 +23,10 @@ struct float2
 		return a
 	
 	js float2 operator + (float2 a, float2 b)
-		return new float2(a.x+b.x, a.y+b.y, a.location || b.location ? new SourceCodeLocation(0, 0, null, 0, a.location, b.location) : null)
+		return new float2(a.x+b.x, a.y+b.y, a.location || b.location ? new SourceCodeLocation(0, 0, null, a.location, b.location) : null)
 		
 	js float2 operator - (float2 a, float2 b)
-		return new float2(a.x-b.x, a.y-b.y, a.location || b.location ? new SourceCodeLocation(0, 0, null, 0, a.location, b.location) : null)
+		return new float2(a.x-b.x, a.y-b.y, a.location || b.location ? new SourceCodeLocation(0, 0, null, a.location, b.location) : null)
 	
 	js float2 operator * (float2 a, float2 b) return new float2(a.x*b.x, a.y*b.y, null)
 	js float2 operator * (float2 a, float b) return new float2(a.x*b, a.y*b, null)

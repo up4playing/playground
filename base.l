@@ -122,6 +122,10 @@ class List<T>
 		
 	// Returns true if the list is not null and not empty	
 	inline js bool toBool := (this != null && this.length != 0) 
+		
+	
+	// Reverses the order of the items of the list
+	inline js void reverse() this.reverse()
 	
 	// Moves an item to the end of the list
 	js T moveToBack: T item // The item to move to the end of the list
@@ -300,15 +304,11 @@ class SourceCodeLocation
 	int column  // The column of the source code
 	string file // The filename of the source code
 	
-	int generation
 	SourceCodeLocation left = null
 	SourceCodeLocation right = null
 	
 	js SourceCodeLocation clone 
-		return new SourceCodeLocation(this.row, this.column, this.file, this.generation+1, this.left, this.right)
-		
-	string toString()
-		return "row:{row} column:{column} file:{file} generation:{generation}"
+		return new SourceCodeLocation(this.row, this.column, this.file, this.left, this.right)
 		
 	void flatten: SourceCodeLocation[] result
 		if file:          result.add this
