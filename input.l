@@ -89,10 +89,10 @@ unit Input
 		}
 		window.onpointerup = e => {
 			Input_handleTouchEvent(3, e.pageX, e.pageY, e.pointerId, e.button);
-			if(e.button == 2 && Platform_mode == 0) {
-				if(Platform_mode < 3/*Pointer*/) Platform_enterSlideMode(3/*Pointer*/)
-				else                             Platform_stop()
-			}
+			// if(e.button == 2 && Platform_mode == 0) {
+			// 	if(Platform_mode < 3/*Pointer*/) Platform_enterSlideMode(3/*Pointer*/)
+			// 	else                             Platform_stop()
+			// }
 		}
 		window.oncontextmenu = e => {
 			e.preventDefault();
