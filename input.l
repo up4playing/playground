@@ -292,7 +292,7 @@ unit Input
 					if touch.phase != Handled && touch.referencePosition.isInsidePoygon(poly)
 						this.cursor = cursor
 				
-		if visualize: drawRectangle position, size, fill:{"ff000080"}
+		if visualize: drawRectangle position, size, fillColor:{"ff000080"}
 
 	// Executes code when the user touches or clicks within a rectangle
 	onTouchUpWithin: float2 position       // The center of the rectangle
@@ -323,7 +323,7 @@ unit Input
 						Network.touchLog += " onTouchDownWithin "+touch.position.x+" "+touch.position.y
 						code touch
 						if markAsHandled: touch.markAsHandled
-		if visualize: drawRectangle position, size, fill:{"ff000080"}
+		if visualize: drawRectangle position, size, fillColor:{"ff000080"}
 
 	// Executes code when the user touches or clicks
 	onTouchDown: void(Touch touch) code // The code to execute for each touch or click

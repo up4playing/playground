@@ -237,7 +237,7 @@ Object Board
 	tick
 		// Children
 		graphics.visibleFor visibleForOthers == Never or visibleForOthers == Off ? owner : -1
-			graphics.multiply matrix
+			graphics.applyMatrix matrix
 				for <- objects: tick
 		
 		// Pan
@@ -267,7 +267,7 @@ Object Board
 			drawButton icon, position:position+{size.x/2-32, -size.y/2+32}, clickableBy:owner
 				visibleForOthers = visibleForOthers == On ? Off : On
 				
-		if color: drawRectangle position, size, fill:color
+		if color: drawRectangle position, size, fillColor:color
 			
 Object RectangleObject
 	Color color = White

@@ -460,7 +460,7 @@ unit audio
 // A collection of methods for drawing on the screen
 global unit graphics
 	internal Matrix2D totalMatrix, localMatrix
-	DisplayItem[] items
+	internal DisplayItem[] items
 		
 	internal js void startFrame
 		if(Platform_fastForward) return
@@ -472,12 +472,12 @@ global unit graphics
 		graphics_currentlyVisibleFor = -1
 		graphics_items.length = 0
 
-	finishFrame
+	internal finishFrame
 		items.sort b.layer - a.layer
 		for <- items: draw
 		drawSafeArea
 			
-	add: int visibleFor, DisplayImage item
+	private add: int visibleFor, DisplayImage item
 		if(Platform.fastForward) return
 		if(visibleFor == -1) visibleFor = currentlyVisibleFor
 		if(visibleFor != -1 && visibleFor != Network.userId) return
@@ -509,7 +509,7 @@ global unit graphics
 							
 	// Moves all operations in a block by a given vector						
 	move: float2 distance // The distance to move
-		  void() block     // All operations in this block will be moved
+		  void() block    // All operations within this block will be moved
 		let a0 = localMatrix.m0, a1 = localMatrix.m1, a2 = localMatrix.m2, a3 = localMatrix.m3, a4 = localMatrix.m4, a5 = localMatrix.m5
 		let b0 = totalMatrix.m0, b1 = totalMatrix.m1, b2 = totalMatrix.m2, b3 = totalMatrix.m3, b4 = totalMatrix.m4, b5 = totalMatrix.m5
 		localMatrix.move distance
@@ -525,7 +525,7 @@ global unit graphics
 		
 	// Rotates all operation in a block by a given angle				
 	rotate: float angle  // The angle in radians
-		    void() block // All operations in this block will be rotated
+		    void() block // All operations within this block will be rotated
 		if angle == 0: block; return
 		let a0 = localMatrix.m0, a1 = localMatrix.m1, a2 = localMatrix.m2, a3 = localMatrix.m3, a4 = localMatrix.m4, a5 = localMatrix.m5
 		let b0 = totalMatrix.m0, b1 = totalMatrix.m1, b2 = totalMatrix.m2, b3 = totalMatrix.m3, b4 = totalMatrix.m4, b5 = totalMatrix.m5
@@ -540,9 +540,9 @@ global unit graphics
 		localMatrix.scale {factor, factor}
 		totalMatrix.scale {factor, factor}
 		
-	// Scales all operation in a block by a given factor					
+	// Scales all operation in a block by a given factor
 	scale: float factor // The factor to scale by
-		   void() block // All operations in this block will be scaled
+		   void() block // All operations within this block will be scaled
 		let a0 = localMatrix.m0, a1 = localMatrix.m1, a2 = localMatrix.m2, a3 = localMatrix.m3, a4 = localMatrix.m4, a5 = localMatrix.m5
 		let b0 = totalMatrix.m0, b1 = totalMatrix.m1, b2 = totalMatrix.m2, b3 = totalMatrix.m3, b4 = totalMatrix.m4, b5 = totalMatrix.m5
 		localMatrix.scale {factor, factor}
@@ -551,12 +551,14 @@ global unit graphics
 		localMatrix.m0 = a0; localMatrix.m1 = a1; localMatrix.m2 = a2; localMatrix.m3 = a3; localMatrix.m4 = a4; localMatrix.m5 = a5 
 		totalMatrix.m0 = b0; totalMatrix.m1 = b1; totalMatrix.m2 = b2; totalMatrix.m3 = b3; totalMatrix.m4 = b4; totalMatrix.m5 = b5 
 	
-	multiply: Matrix2D matrix
+	// Apply a matrix to all subsequent operation
+	applyMatrix: Matrix2D matrix
 		localMatrix.multiplyRight matrix
 		matrix.multiplyRight matrix
 	
-	multiply: Matrix2D matrix
-		      void() block // All operations in this block will be scaled
+	// Applies a matrix to all operations in a block
+	applyMatrix: Matrix2D matrix // The matrix to appy
+		         void() block    // All operations within this block will be scaled
 		let a0 = localMatrix.m0, a1 = localMatrix.m1, a2 = localMatrix.m2, a3 = localMatrix.m3, a4 = localMatrix.m4, a5 = localMatrix.m5
 		let b0 = totalMatrix.m0, b1 = totalMatrix.m1, b2 = totalMatrix.m2, b3 = totalMatrix.m3, b4 = totalMatrix.m4, b5 = totalMatrix.m5
 		this.localMatrix.multiplyLeft matrix
@@ -565,13 +567,15 @@ global unit graphics
 		localMatrix.m0 = a0; localMatrix.m1 = a1; localMatrix.m2 = a2; localMatrix.m3 = a3; localMatrix.m4 = a4; localMatrix.m5 = a5 
 		totalMatrix.m0 = b0; totalMatrix.m1 = b1; totalMatrix.m2 = b2; totalMatrix.m3 = b3; totalMatrix.m4 = b4; totalMatrix.m5 = b5
 	
-	js int[] manipulate: void(int[] pixels) code
+	// Directly manipulate the pixels on the screen or an image
+	js int[] manipulate: void(int[] pixels) code // This code can manipulate the pixels
 		let imageData = Platform_context.getImageData(0,0,Platform_pixelSize.x, Platform_pixelSize.y)
 		code(imageData.data)
 		Platform_context.putImageData(imageData, 0, 0)
 		
-	js void createImage: float2 size
-		                 void() code
+	// Creates an image to draw to
+	js void createImage: float2 size // The size of the image
+		                 void() code // This code will draw on the created image instead of drawing on the screen
 		let prevCanvas = Platform_canvas
 		let prevContext = Platform_context
 		let prevPixelSizeX = Platform_pixelSize.x
@@ -595,15 +599,12 @@ global unit graphics
 		Platform_pixelSize.x = prevPixelSizeX
 		Platform_pixelSize.y = prevPixelSizeY
 
-	// Color
-	private Color currentColor = White
+	// The default color for all draw operations
 	color
 		return currentColor
-	
 	color: Color color
 		currentColor = color
 		return currentColor
-		
 	color: Color color
 		   void() code
 		let prev = currentColor
@@ -611,16 +612,14 @@ global unit graphics
 		code()
 		currentColor = prev
 		return currentColor
+	private Color currentColor = White
 	
-	// Font
-	private currentFont = "Arial"
+	// The default font for all draw operations
 	font
 		return currentFont
-	
 	font: string font
 		currentFont = font
 		return currentFont
-		
 	font: string font
 		  void() code
 		let prev = currentFont
@@ -628,16 +627,14 @@ global unit graphics
 		code()
 		currentFont = prev
 		return currentFont
+	private currentFont = "Arial"
 	
-	// Font size
-	private currentFontSize = 20
+	// The default font size for all draw operations
 	fontSize
 		return currentFontSize
-	
 	fontSize: int fontSize
 		currentFontSize = fontSize
 		return currentFontSize
-		
 	fontSize: int fontSize
 		      void() code
 		let prev = currentFontSize
@@ -645,16 +642,14 @@ global unit graphics
 		code()
 		currentFontSize = prev
 		return currentFontSize
+	private currentFontSize = 20
 	
-	// Font size
-	private currentLineWidth = 8
+	// The default line width for all draw operations
 	lineWidth
 		return currentLineWidth
-	
 	lineWidth: int lineWidth
 		currentLineWidth = lineWidth
 		return currentLineWidth
-		
 	lineWidth: int lineWidth
 		      void() code
 		let prev = currentLineWidth
@@ -662,16 +657,14 @@ global unit graphics
 		code()
 		currentLineWidth = prev
 		return currentLineWidth
+	private currentLineWidth = 8
 	
-	// User
-	private currentlyVisibleFor = -1
+	// The default user for which all draw operations will be visible
 	visibleFor
 		return currentlyVisibleFor
-	
 	visibleFor: int user
 		currentlyVisibleFor = user
 		return currentlyVisibleFor
-		
 	visibleFor: int user
 		        void() code
 		let prev = currentlyVisibleFor
@@ -679,34 +672,34 @@ global unit graphics
 		code()
 		currentlyVisibleFor = prev
 		return currentlyVisibleFor
+	private currentlyVisibleFor = -1
 		
-	// Draws a text on the screen
-	global js int getTextWidth: string text              // The text
-		                        size = 18                // The size of the text in pixels
-		                        FontStyle style = Normal
-		                        font = ""
-		if(Platform_fastForward) return
+	// Returns the width of a string in pixels
+	global js int getTextWidth: string text              // The string to get the width of
+		                        size = 18                // The size of the font in pixels
+		                        font = ""                // The font of the text
+		                        FontStyle style = Normal // Whether the text should be bold or normal style
 		Platform_context.font = (style ? "bold ":"")+(size || graphics_currentFontSize)+"px "+(font || graphics_currentFont)
 		let textSize = Platform_context.measureText(text)
 		return textSize.width
 		
 	// Draws an image on the screen
-	global void drawImage: Image image           // The image to draw
-		                   float2 position = {} // The position where to draw the image
-		                   framesPerSecond = 0   // Animate the image with this animation speed
-		                   scale = 1.0           // Scale the image by this factor
-		                   visibleFor = -1
-		                   implicit int layer = 0
+	global void drawImage: Image image            // The image to draw
+		                   float2 position = {}   // The position to draw to
+		                   framesPerSecond = 0    // Animate the image with this speed
+		                   scale = 1.0            // Scale the image by this factor
+		                   visibleFor = -1        // Only this user will see the image
+		                   implicit int layer = 0 // Higher layers are drawn in front of lower layers
 		var frame = Math.floor(Network.logicFrame * Math.max(framesPerSecond, 0) / Network.targetFps) % image.frames.length;
 		drawImage image, position, frame, scale, visibleFor, layer
 	
 	// Draws an image on the screen
-	global js void drawImage: Image image           // The image to draw
-		                      float2 position = {} // The position where to draw the image
-		                      frame = 0             // The frame to draw
-		                      scale = 1.0           // Scale the image by this factor
-		                      visibleFor = -1
-		                      implicit layer = 0
+	global js void drawImage: Image image          // The image to draw
+		                      float2 position = {} // The position to draw to
+		                      frame = 0            // The frame of the image to draw
+		                      scale = 1.0          // Scale the image by this factor
+		                      visibleFor = -1      // Only this user will see the image
+		                      implicit layer = 0   // Higher layers are drawn in front of lower layers
 		if(!image.texture || !image.texture._htmlImage) return
 		let f = image.frames[frame % image.frames.length]
 		graphics_add(visibleFor, new DisplayImage(
@@ -721,13 +714,13 @@ global unit graphics
 		))
 	
 	// Draws an image on the screen
-	global js void drawImage: Image image           // The image to draw
-		                      float2 position = {} // The position where to draw the image
-		                      frame = 0             // The frame to draw
-		                      scale = 1.0           // Scale the image by this factor
-		                      angle = 0.0
-		                      visibleFor = -1
-		                      implicit layer = 0
+	global js void drawImage: Image image          // The image to draw
+		                      float2 position = {} // The position to draw to
+		                      frame = 0            // The frame of the image to draw
+		                      scale = 1.0          // Scale the image by this factor
+		                      angle = 0.0          // Rotate the image by this angle in radians
+		                      visibleFor = -1      // Only this user will see the image
+		                      implicit layer = 0   // Higher layers are drawn in front of lower layers
 		if(!image.texture || !image.texture._htmlImage) return
 		let f = image.frames[frame % image.frames.length]
 		let matrix = graphics_totalMatrix.clone()
@@ -744,17 +737,17 @@ global unit graphics
 			f.x1, f.y1, f.w, f.h
 		))
 	
-	// Draws a text on the screen
+	// Draws text on the screen
 	global js void drawText: string text                        // The text to draw
-		                     position = float2()               // The position where to draw the text
-		                     size = 0                           // The size of the text in pixels
+		                     position = float2()                // The position to draw to
+		                     size = 0                           // The font size in pixels
 		                     Color color = null                 // The color of the text
 		                     HorizontalAlignment align = Center // The horizontal alignment of the text
 		                     VerticalAlignment valign = Middle  // The vertical alignment of the text
-		                     FontStyle style = Normal
-		                     font = ""
-		                     visibleFor = -1
-		                     implicit layer = 0
+		                     FontStyle style = Normal           // Whether the text should be bold or normal style
+		                     font = ""                          // The font of the text
+		                     visibleFor = -1                    // Only this user will see the image
+		                     implicit layer = 0                 // Higher layers are drawn in front of lower layers
 		let contextFont = (style ? "bold ":"")+(size || graphics_currentFontSize)+"px "+(font || graphics_currentFont);
 		Platform_context.font = contextFont
 		let textSize = Platform_context.measureText(text)
@@ -766,18 +759,17 @@ global unit graphics
 		graphics_add(visibleFor, new DisplayText(graphics_totalMatrix, x, y, w, h, layer, text, position.location, fillStyle, contextFont))
 		
 	// Draws an image on the screen
-	global void drawButton: Image image = null      // The image to draw
-		                    text = ""               // The text to draw
-		                    float2 position = {}    // The position where to draw the image
-		                    Color textColor = null  // The color of the text
-		                    frame = 0               // The frame to draw
-		                    scale = 1.0             // Scale the image by this factor
-		                    fontSize = 18
-		                    owner = -1
-		                    touchMargin = float2(16,16)
-		                    showTouchArea = false
-		                    visibleFor = -1
-		                    implicit layer = 0
+	global void drawButton: Image image = null          // The image to draw
+		                    text = ""                   // The text to draw
+		                    float2 position = {}        // The position to draw to
+		                    Color textColor = null      // The color of the text
+		                    frame = 0                   // The frame of the image of the image to draw
+		                    scale = 1.0                 // Scale the image by this factor
+		                    fontSize = 18               // The font size in pixels
+		                    touchMargin = float2(16,16) // The margin around the button within which it is touchable
+		                    showTouchArea = false       // Show the area within which the button is touchable
+		                    visibleFor = -1             // Only this user will see the button
+		                    implicit layer = 0          // Higher layers are drawn in front of lower layers
 		if(Platform.fastForward) return
 		if(visibleFor == -1) visibleFor = currentlyVisibleFor
 		if(visibleFor != -1 && visibleFor != Network.userId) return
@@ -785,21 +777,20 @@ global unit graphics
 		if image: drawImage image, position, frame, scale, visibleFor, layer
 		if text:  drawText text, position, fontSize, textColor, visibleFor, layer
 			
-	// Draws an image on the screen
-	global void drawButton: Image image = null      // The image to draw
-		                    text = ""               // The text to draw
-		                    float2 position = {}    // The position where to draw the image
-		                    Color textColor = null  // The color of the text
-		                    frame = 0               // The frame to draw
-		                    scale = 1.0             // Scale the image by this factor
-		                    fontSize = 18
-		                    owner = -1
-		                    touchMargin = float2(16,16)
-		                    showTouchArea = false
-		                    clickableBy = -1
-		                    visibleFor = -1
-		                    implicit layer = 0
-		                    void(Touch touch) onClick = null
+	// Draws a button that consists of an image and a text
+	global void drawButton: Image image = null               // The image of the button
+		                    text = ""                        // The text of the button
+		                    float2 position = {}             // The position to draw to
+		                    Color textColor = null           // The color of the text
+		                    frame = 0                        // The frame of the image
+		                    scale = 1.0                      // Scale the image by this factor
+		                    fontSize = 18                    // The font size in pixels   
+		                    touchMargin = float2(16,16)      // The margin around the button within which it is touchable
+		                    showTouchArea = false            // Show the area within which the button is touchable
+		                    visibleFor = -1                  // Only this user will see the button
+		                    clickableBy = -1                 // Only this user can click the button
+		                    implicit layer = 0               // Higher layers are drawn in front of lower layers
+		                    void(Touch touch) onClick = null // Execute this code when the user clicks the button
 		if(Platform.fastForward) return
 		if(visibleFor == -1) visibleFor = currentlyVisibleFor
 		if(visibleFor != -1 && visibleFor != Network.userId) return
@@ -810,29 +801,29 @@ global unit graphics
 		Input.onTouchDownWithin position, image.size*scale + touchMargin, userId:clickableBy, visualize:showTouchArea
 			onClick touch
 			
-	// Draws a text on the screen
-	global js void drawRectangle: position = float2()
-		                          size = float2()
-		                          Color fill = null
-		                          Color stroke = null
-		                          lineWidth = 0
-		                          visibleFor = -1
-		                          implicit layer = 0
+	// Draws a rectangle on the screen
+	global js void drawRectangle: position = float2()       // The center of the rectangle
+		                          size = float2(32,32)      // The size of the rectangle
+		                          Color fillColor = null    // The color of the area within the rectangle
+		                          Color outlineColor = null // The color of the outline around the rectangle
+		                          outlineWidth = 0          // The width of the outline around the rectangle
+		                          visibleFor = -1           // Only this user will see the rectangle
+		                          implicit layer = 0        // Higher layers are drawn in front of lower layers
 		graphics_add(visibleFor, new DisplayRectangle(
 			graphics_totalMatrix, 
 			position.x-size.x/2, position.y-size.y/2, size.x, size.y,
 			layer, "Rectangle", position.location,
-			fill || !stroke ? (fill || graphics_currentColor).hex : null,
-			stroke ? stroke.hex : null,
-			lineWidth || graphics_currentLineWidth
+			fillColor || !outlineColor ? (fillColor || graphics_currentColor).hex : null,
+			outlineColor ? outlineColor.hex : null,
+			outlineWidth || graphics_currentLineWidth
 		))
 		
-	// Draws an image on the screen
-	global js void drawTexture: Texture texture       // The image to draw
-		                        float2 position = {} // The position where to draw the image
-		                        scale = 1.0           // Scale the image by this factor
-		                        visibleFor = -1
-		                        implicit int layer = 0
+	// Draws a texture on the screen
+	global js void drawTexture: Texture texture        // The texture to draw
+		                        float2 position = {}   // The position to draw to
+		                        scale = 1.0            // Scale the texture by this factor
+		                        visibleFor = -1        // Only this user will see the texture
+		                        implicit int layer = 0 // Higher layers are drawn in front of lower layers
 		if(!texture || !texture._htmlImage) return
 		graphics_add(visibleFor, new DisplayImage(
 			graphics_totalMatrix,
@@ -846,14 +837,14 @@ global unit graphics
 			0, 0, texture.size.x, texture.size.y
 		))
 
-	// Draws an image on the screen
-	global js void drawTextureRegion: Texture texture
-		                              float2 sourcePosition = {}
-		                              float2 sourceSize = {}
-		                              float2 position = {}       // The position where to draw the image
-		                              scale = 1.0                 // Scale the image by this factor
-		                              visibleFor = -1
-		                              implicit int layer = 0
+	// Draws a texture on the screen
+	global js void drawTexture: Texture texture            // The texture to draw
+		                        float2 position = {}       // The position to draw to
+		                        scale = 1.0                // Scale the texture by this factor
+		                        float2 sourcePosition = {} // The center of the area of the source texture to draw
+		                        float2 sourceSize = {}     // The size of the area of the source texture to draw
+		                        visibleFor = -1            // Only this user will see the texture
+		                        implicit int layer = 0     // Higher layers are drawn in front of lower layers
 		if(!texture || !texture._htmlImage) return
 		graphics_add(visibleFor, new DisplayImage(
 			graphics_totalMatrix,
@@ -871,39 +862,34 @@ global unit graphics
 			sourceSize.y, 
 		))
 		
-	// Draws a text on the screen
-	global js void clearRectangle: position = float2()
-		                           size = float2()
-		                           visibleFor = -1
-		                           implicit layer = 0
-		graphics_add(visibleFor, new DisplayRectangle(
-			graphics_totalMatrix, position.x-size.x/2, position.y-size.y/2, size.x, size.y, layer, "Rectangle", position.location, "clear", null, 0
-		))
-		
-	// Draws a text on the screen
-	global js void drawPolygon: float2[] positions
-		                        Color color = null
-		                        visibleFor = -1
+	// Draws a polygon on the screen
+	global js void drawPolygon: float2[] positions        // A list of points for the polygon
+		                        Color fillColor = null    // The color of the area within the polygon
+		                        Color outlineColor = null // The color of the outline around the polygon
+		                        visibleFor = -1           // Only this user will see the polygon
+		                        implicit int layer = 0    // Higher layers are drawn in front of lower layers
 		if(Platform_fastForward) return
 		if(visibleFor == -1) visibleFor = graphics_currentlyVisibleFor
 		if(visibleFor != -1 && visibleFor != Network_userId) return
 		let m = graphics_totalMatrix.matrix
 		Platform_context.setTransform(m0, -m[1], -m[2], m[3], m[4], m[5])
 		
-		Platform_context.fillStyle = (color || graphics_currentColor).hex
+		Platform_context.fillStyle = (fillColor || graphics_currentColor).hex
 		let firstPos = positions[positions.length-1]
 		Platform_context.moveTo(firstPos.x, firstPos.y)
 		for(let p of positions)
 			Platform_context.lineTo(p.x, p.y)
 		Platform_context.fill()
 
-	global js void drawRoundedRectangle: position = float2()
-		                                 size = float2()
-		                                 radius = 32
-		                                 Color fill = null
-		                                 Color stroke = null
-		                                 lineWidth = 0
-		                                 visibleFor = -1
+	// Draws a rectangle with rounded corners on the screen
+	global js void drawRoundedRectangle: position = float2()       // The center of the rectangle
+		                                 size = float2(32,32)      // The size of the rectangle
+		                                 radius = 32               // The radius of the rounded corners
+		                                 Color fillColor = null    // The color of the area within the rectangle
+		                                 Color outlineColor = null // The color of the outline around the rectangle
+		                                 outlineWidth = 0          // The width of the outline around the rectangle
+		                                 visibleFor = -1           // Only this user will see the rectangle
+		                                 implicit int layer = 0    // Higher layers are drawn in front of lower layers
 		if(Platform_fastForward) return
 		if(visibleFor == -1) visibleFor = graphics_currentlyVisibleFor
 		if(visibleFor != -1 && visibleFor != Network_userId) return
@@ -923,15 +909,24 @@ global unit graphics
 		Platform_context.lineTo(x, y + radius);
 		Platform_context.quadraticCurveTo(x, y, x + radius, y);
 		Platform_context.closePath();
-		if(fill || !stroke) {
-			Platform_context.fillStyle = (fill || graphics_currentColor).hex
+		if(fillColor || !outlineColor) {
+			Platform_context.fillStyle = (fillColor || graphics_currentColor).hex
 			Platform_context.fill()
 		}
-		if(stroke) {
-			Platform_context.lineWidth = lineWidth || graphics_currentLineWidth
-			Platform_context.strokeStyle = stroke.hex
+		if(outlineColor) {
+			Platform_context.lineWidth = outlineWidth || graphics_currentLineWidth
+			Platform_context.strokeStyle = outlineColor.hex
 			Platform_context.stroke()
 		}
+		
+	// Clears all pixels within a rectangle
+	global js void clearRectangle: position = float2()  // The position of the rectangle to clear
+		                           size = float2(32,32) // The size of the rectangle to clear
+		                           visibleFor = -1      // Only clear the rectangle for this user
+		                           implicit layer = 0   // Higher layers are process after lower layers
+		graphics_add(visibleFor, new DisplayRectangle(
+			graphics_totalMatrix, position.x-size.x/2, position.y-size.y/2, size.x, size.y, layer, "Rectangle", position.location, "clear", null, 0
+		))
 
 class DisplayItem
 	float x, y, w, h
@@ -972,19 +967,19 @@ DisplayItem DisplayText
 		Platform_context.fillText(this.name, this.x, this.y/*(this.textAlign=="center" ? size*0.07 : 0)*/)
 		
 DisplayItem DisplayRectangle
-	string fill, stroke, lineWidth
+	string fillColor, outlineColor, outlineWidth
 	js void draw
 		Platform_context.setTransform(this.m0, this.m1, this.m2, this.m3, this.m4, this.m5)
-		if(this.fill == "clear") {
+		if(this.fillColor == "clear") {
 			Platform_context.clearRect(this.x, this.y, this.w, this.h)
 		}
 		else
-		if(this.fill) {
-			Platform_context.fillStyle = this.fill
+		if(this.fillColor) {
+			Platform_context.fillStyle = this.fillColor
 			Platform_context.fillRect(this.x, this.y, this.w, this.h)
 		}
-		if(this.stroke) {
-			Platform_context.lineWidth = this.lineWidth
-			Platform_context.strokeStyle = this.stroke
+		if(this.outlineColor) {
+			Platform_context.lineWidth = this.outlineWidth
+			Platform_context.strokeStyle = this.outlineColor
 			Platform_context.strokeRect(this.x, this.y, this.w, this.h)
 		}
