@@ -129,8 +129,9 @@ struct float2
 		
 	// Transforms the vector by a given matrix
 	transform: Matrix2D matrix // The matrix to transform the vector by
-		x = matrix.m0 * x + matrix.m2 * y + matrix.m4
-		y = matrix.m1 * x + matrix.m3 * y + matrix.m5
+		let px = x, py = y
+		x = matrix.m0 * px + matrix.m2 * py + matrix.m4
+		y = matrix.m1 * px + matrix.m3 * py + matrix.m5
 		return this
 		
 	// Returns a vector that is transformed by a given matrix
@@ -880,7 +881,7 @@ global unit graphics
 		for(let p of positions)
 			Platform_context.lineTo(p.x, p.y)
 		Platform_context.fill()
-
+		
 	// Draws a rectangle with rounded corners on the screen
 	global js void drawRoundedRectangle: position = float2()       // The center of the rectangle
 		                                 size = float2(32,32)      // The size of the rectangle
