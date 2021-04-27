@@ -4,10 +4,11 @@ struct float2
 	float y // The y-coordinate of the vector
 	SourceCodeLocation location
 	
+	// Used to specify that the vector is not set or invalid
 	static float2 none = new float2(float.infinity, float.infinity)
 	
-	// Returns a string representation of the vector
-	string toString := "("+x+" "+y+")"
+	// A string representation of the vector
+	string toString := "({x} {y})"
 	
 	// Returns true if the vector is not equal to float2.none
 	bool toBool := (x != float.infinity || y != float.infinity)
@@ -65,30 +66,34 @@ struct float2
 	bool operator <  (float2 a, float2 b) return a.x <  b.x && a.y <  b.y
 	bool operator <= (float2 a, float2 b) return a.x <= b.x && a.y <= b.y
 	
-	// Returns the length of the vector
+	// The length of the vector
 	length := Math.sqrt(x * x + y * y)
 		
-	// Returns a vector that is orthogonal to the existing vector
+	// A vector that is orthogonal to the existing vector
 	orthogonal := float2(-y, x)
 		
-	// Returns a vector with the sign of each coordinate flipped
+	// A vector with the sign of each coordinate flipped
 	inverse := float2(-x, -y)
 		
-	// Returns a vector with each coordinate rounded to the closest integer value
+	// A vector with each coordinate rounded to the closest integer value
 	rounded := int2(Math.round(x), Math.round(y))
 	
-	// Returns a vector with each coordinate rounded down to an integer value
+	// A vector with each coordinate rounded down to an integer value
 	floor := int2(Math.floor(x), Math.floor(y))
 		
+	// A vector with each coordinate rounded up to an integer value
 	ceil := int2(Math.ceil(x), Math.ceil(y))
 		
+	// A vector with the absolute value of each coordinate
 	abs := float2(Math.abs(x), Math.abs(y))
 		
+	// The larger of the two coordinates
 	max := x > y ? x : y
 	
+	// The smaller of the two coordinates
 	min := x < y ? x : y
 		
-	// Returns the distance between two vectors
+	// The distance between two vectors
 	static distanceBetween: float2 a // The first vector 
 		                    float2 b // The second vector
 		var x = a.x - b.x
@@ -100,28 +105,29 @@ struct float2
 		                             float2 b // The second vector
 		return Math.abs(a.x - b.x) + Math.abs(a.y - b.y)
 		
-	// Returns the angle between two vectors in radians
+	// The angle between two vectors in radians
 	static angleBetween: float2 a // The first vector
 		                 float2 b // The second vector
 		return Math.atan2(b-a)
 
 	// Interpolates linearly between two given vectors
-	static lerp: float2 a   // The first vector
-		         float2 b   // The second vector
+	static lerp: float2 a    // The first vector
+		         float2 b    // The second vector
 		         float value // The interpolation value, 0 returns the first vector, 1 returns the second vector
 		var ivalue = 1 - value
 		return new float2(a.x * ivalue + b.x * value, a.y * ivalue + b.y * value)
 
-	// Returns a vector that points in the same direction, but has a length of 1
+	// A vector that points in the same direction, but has a length of 1
 	normalized
 		let len = Math.sqrt(x * x + y * y)
 		return len != 0 ? float2(x / len, y / len) : float2(0, 0)
-		
-	moveTowards: float2 targetPosition
-		         float speed = 1
+	
+	// Moves the vector towards the given target by the given distance	
+	moveTowards: float2 targetPosition // The target to move towards
+		         float distance = 1    // The distance to move by
 		let delta = targetPosition - this
 		if delta.x != 0 || delta.y != 0
-			delta = delta.normalized * speed
+			delta = delta.normalized * distance
 			if delta.x > 0: x = Math.min(x + delta.x, targetPosition.x)
 			else            x = Math.max(x + delta.x, targetPosition.x)
 			if delta.y > 0: y = Math.min(y + delta.y, targetPosition.y)
@@ -134,14 +140,14 @@ struct float2
 		y = matrix.m1 * px + matrix.m3 * py + matrix.m5
 		return this
 		
-	// Returns a vector that is transformed by a given matrix
+	// A vector that is transformed by a given matrix
 	getTransformed: Matrix2D matrix // The matrix to transform the vector by
 		return float2(
 			matrix.m0 * x + matrix.m2 * y + matrix.m4,
 			matrix.m1 * x + matrix.m3 * y + matrix.m5
 		)
 
-	// Returns a vector that is transformed by the inverse of the given matrix
+	// A vector that is transformed by the inverse of the given matrix
 	getRelativeTo: Matrix2D matrix // The vector will be transformed by the inverse of this matrix
 		var aa = matrix.m0, ab = matrix.m1, ac = matrix.m2, ad = matrix.m3, atx = matrix.m4, aty = matrix.m5
 
@@ -155,7 +161,7 @@ struct float2
 		)
 		
 	// Returns whether the vector is within a given rectangle
-	isWithinRectangle: float2 center, // The center of the rectangle
+	isInsideRectangle: float2 center, // The center of the rectangle
 		               float2 size,   // The size of the rectangle
 		return x >= center.x - size.x && x < center.x + size.x
 		    && y >= center.y - size.y && y < center.y + size.y
@@ -169,27 +175,30 @@ struct float2
 			&& (c = !c)
 			j = i
 		return c
-		
-	dot: float2 value
+	
+	// The dot product
+	dot: float2 value // The value to calculate the dot procut with
 		return x * value.x + y * value.y
 		
-	cross: float2 value
+	// The cross product
+	cross: float2 value // The value to calculate the cross procut with
 		return x*value.y - y*value.x
 		
 // A 2D vector comprised of an integer x and y coordinate
 struct int2
-	static int2 none = new int2(int.minValue, int.minValue)
-		
 	int x // The x-coordinate of the vector
 	int y // The y-coordinate of the vector
+	
+	// Used to specify that the vector is not set or invalid
+	static int2 none = new int2(int.minValue, int.minValue)
 	
 	// Creates a copy of the vector with the same values
 	int2 clone := int2(x, y)
 		
-	// Returns a string representation of the vector
-	string toString := "("+x+", "+y+")" 
+	// A string representation of the vector
+	string toString := "({x} {y})"
 	
-	// Returns true if any coordinates is not zero
+	// Returns true if the vector is not equal to int2.none
 	bool toBool := (x != int.minValue || y != int.minValue)
 	
 	implicit float2 toFloat2 := float2(x,y)
@@ -198,10 +207,11 @@ struct int2
 	
 	int2 operator +  (int2 a, int2 b) return int2(a.x+b.x, a.y+b.y)
 	int2 operator -  (int2 a, int2 b) return int2(a.x-b.x, a.y-b.y)
+		
 	int2 operator *  (int2 a, int2 b) return int2(a.x*b.x, a.y*b.y)
-	int2 operator /  (int2 a, int2 b) return int2(a.x/b.x, a.y/b.y)
-	
 	int2 operator *  (int2 a, int b) return int2(a.x*b, a.y*b)
+		
+	int2 operator /  (int2 a, int2 b) return int2(a.x/b.x, a.y/b.y)
 	float2 operator /  (int2 a, float b) return float2(a.x/b, a.y/b)
 	
 	int2 operator += (int2 a, int2 b) a.x += b.x; a.y += b.y; return a
@@ -216,20 +226,22 @@ struct int2
 	bool operator <  (int2 a, int2 b) return a.x <  b.x && a.y <  b.y
 	bool operator <= (int2 a, int2 b) return a.x <= b.x && a.y <= b.y
 	
-	// Returns the length of the vector
+	// The length of the vector
 	length := Math.sqrt(x * x + y * y)
 		
-	// Returns a vector that is orthogonal to the existing vector
+	// A vector that is orthogonal to the existing vector
 	orthogonal := int2(-y, x)
 		
-	// Returns a vector with the sign of each coordinate flipped
+	// A vector with the sign of each coordinate flipped
 	inverse := int2(-x, -y)
 		
+	// The larger of the two coordinates
 	max := x > y ? x : y
 	
+	// The smaller of the two coordinates
 	min := x < y ? x : y
 		
-	// Returns the distance between two vectors
+	// The distance between two vectors
 	static distanceBetween: int2 a // The first vector 
 		                    int2 b // The second vector
 		var x = a.x - b.x
@@ -241,7 +253,7 @@ struct int2
 		                             int2 b // The second vector
 		return Math.abs(a.x - b.x) + Math.abs(a.y - b.y)
 
-	// Returns the angle between two vectors in radians
+	// The angle between two vectors in radians
 	static angleBetween: int2 a // The first vector
 		                 int2 b // The second vector
 		return Math.atan2(b-a)
@@ -255,6 +267,7 @@ struct Matrix2D
 	m4 = 0.0 // X Translation
 	m5 = 0.0 // Y Translation
 	
+	// Set the matrix to the identity matrix
 	clear
 		m0 = 1.0
 		m1 = 0.0
@@ -263,6 +276,7 @@ struct Matrix2D
 		m4 = 0.0
 		m5 = 0.0
 	
+	// Set the matrix to the given values
 	set: float m0, float m1, float m2, float m3, float m4, float m5
 		this.m0 = m0
 		this.m1 = m1
@@ -284,20 +298,21 @@ struct Matrix2D
 		a.m5 = b.m5
 		return this
 		
-	float2 position := {m4, m5}
-	float2 scale := {m0, m3}
-
 	Matrix2D operator * (Matrix2D a, Matrix2D b) Matrix2D c; return multiply(a, b, c)
 	Matrix2D operator *= (Matrix2D a, Matrix2D b) return multiply(a, b, a)
 		
+	// Returns the position component of the matrix
+	float2 position := {m4, m5}
+	
+	// Return the scale component of the matrix
+	float2 scale := {m0, m3}
+
 	// Returns a string representation of the matrix
 	string toString := "("+m0+" "+m1+" "+m2+" "+m3+" "+m4+" "+m5+")" 
 	
 	// Returns true if the matrix isn't the identity matrix
 	bool toBool := (m0 != 1 || m1 != 0 || m2 != 0 || m3 != 1 || m4 != 0 || m5 != 0)
 		
-	float2 scaleVector := { m0, m3 }
-	
 	// Moves the matrix by a given vector
 	move: float2 vector // The matrix will be moved by this vector
 		var a0 = m0, a1 = m1, a2 = m2, a3 = m3, a4 = m4, a5 = m5
@@ -337,9 +352,13 @@ struct Matrix2D
 		m5 = a5;	
 		return this
 	
+	// Return the current matrix multipied with the given matrix
 	multiplyRight(Matrix2D value) return multiply(this, value, this)
+		
+	// Returns the given matrix multiplied with the current matrix
 	multiplyLeft(Matrix2D value)  return multiply(value, this, this)
 		
+	// Multipies two matrices
 	static multiply(Matrix2D left, Matrix2D right, Matrix2D result)
 		let a00 = left.m0, a01 = left.m2, a02 = left.m4
 		let a10 = left.m1, a11 = left.m3, a12 = left.m5
