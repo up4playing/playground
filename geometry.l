@@ -96,8 +96,8 @@ struct float2
 	// The distance between two vectors
 	static distanceBetween: float2 a // The first vector 
 		                    float2 b // The second vector
-		var x = a.x - b.x
-		var y = a.y - b.y
+		let x = a.x - b.x
+		let y = a.y - b.y
 		return Math.sqrt(x*x + y*y)
 
 	// The distance between two vectors along axes at right angles
@@ -114,7 +114,7 @@ struct float2
 	static lerp: float2 a    // The first vector
 		         float2 b    // The second vector
 		         float value // The interpolation value, 0 returns the first vector, 1 returns the second vector
-		var ivalue = 1 - value
+		let ivalue = 1 - value
 		return new float2(a.x * ivalue + b.x * value, a.y * ivalue + b.y * value)
 
 	// A vector that points in the same direction, but has a length of 1
@@ -135,9 +135,9 @@ struct float2
 		
 	// Transforms the vector by a given matrix
 	transform: Matrix2D matrix // The matrix to transform the vector by
-		let px = x, py = y
-		x = matrix.m0 * px + matrix.m2 * py + matrix.m4
-		y = matrix.m1 * px + matrix.m3 * py + matrix.m5
+		let ax = x, ay = y
+		x = matrix.m0 * ax + matrix.m2 * ay + matrix.m4
+		y = matrix.m1 * ax + matrix.m3 * ay + matrix.m5
 		return this
 		
 	// A vector that is transformed by a given matrix
@@ -244,8 +244,8 @@ struct int2
 	// The distance between two vectors
 	static distanceBetween: int2 a // The first vector 
 		                    int2 b // The second vector
-		var x = a.x - b.x
-		var y = a.y - b.y
+		let x = a.x - b.x
+		let y = a.y - b.y
 		return Math.sqrt(x*x + y*y)
 
 	// The distance between two vectors along axes at right angles
@@ -315,41 +315,28 @@ struct Matrix2D
 		
 	// Moves the matrix by a given vector
 	move: float2 vector // The matrix will be moved by this vector
-		var a0 = m0, a1 = m1, a2 = m2, a3 = m3, a4 = m4, a5 = m5
-		var v0 = vector.x, v1 = vector.y
-		
-		m0 = a0;
-		m1 = a1;
-		m2 = a2;
-		m3 = a3;
-		m4 = a0 * v0 + a2 * v1 + a4;
-		m5 = a1 * v0 + a3 * v1 + a5;		
+		let x = vector.x, y = vector.y
+		m4 += m0 * x + m2 * y
+		m5 += m1 * x + m3 * y		
 		return this	
 		
 	// Rotates the matrix by a given angle	
 	rotate: float angle // The angle in radians to rotate by
-		var a0 = m0, a1 = m1, a2 = m2, a3 = m3, a4 = m4, a5 = m5
-		var s = Math.sin(angle), c = Math.cos(angle)
-		
-		m0 = a0 *  c + a2 * s;
-		m1 = a1 *  c + a3 * s;
-		m2 = a0 * -s + a2 * c;
-		m3 = a1 * -s + a3 * c;
-		m4 = a4;
-		m5 = a5;
+		let a0 = m0, a1 = m1, a2 = m2, a3 = m3
+		let sin = Math.sin(angle), cos = Math.cos(angle)
+		m0 = a0 *  cos + a2 * sin
+		m1 = a1 *  cos + a3 * sin
+		m2 = a0 * -sin + a2 * cos
+		m3 = a1 * -sin + a3 * cos
 		return this	
 
 	// Scales the matrix by a given vector
 	scale: float2 vector // The vector to scale by
-		var a0 = m0, a1 = m1, a2 = m2, a3 = m3, a4 = m4, a5 = m5
-		var v0 = vector.x, v1 = vector.y
-		
-		m0 = a0 * v0;
-		m1 = a1 * v0;
-		m2 = a2 * v1;
-		m3 = a3 * v1;
-		m4 = a4;
-		m5 = a5;	
+		let x = vector.x, y = vector.y
+		m0 *= x
+		m1 *= x
+		m2 *= y
+		m3 *= y
 		return this
 	
 	// Return the current matrix multipied with the given matrix
@@ -360,18 +347,18 @@ struct Matrix2D
 		
 	// Multipies two matrices
 	static multiply(Matrix2D left, Matrix2D right, Matrix2D result)
-		let a00 = left.m0, a01 = left.m2, a02 = left.m4
-		let a10 = left.m1, a11 = left.m3, a12 = left.m5
+		let a0 = left.m0, a2 = left.m2, a4 = left.m4
+		let a1 = left.m1, a3 = left.m3, a5 = left.m5
 		
-		let b00 = right.m0, b01 = right.m2, b02 = right.m4
-		let b10 = right.m1, b11 = right.m3, b12 = right.m5
+		let b0 = right.m0, b2 = right.m2, b4 = right.m4
+		let b1 = right.m1, b3 = right.m3, b5 = right.m5
 		
-		result.m0 = b00 * a00 + b01 * a10
-		result.m2 = b00 * a01 + b01 * a11
-		result.m4 = b00 * a02 + b01 * a12 + b02
-		result.m1 = b10 * a00 + b11 * a10
-		result.m3 = b10 * a01 + b11 * a11
-		result.m5 = b10 * a02 + b11 * a12 + b12
+		result.m0 = b0 * a0 + b2 * a1
+		result.m2 = b0 * a2 + b2 * a3
+		result.m4 = b0 * a4 + b2 * a5 + b4
+		result.m1 = b1 * a0 + b3 * a1
+		result.m3 = b1 * a2 + b3 * a3
+		result.m5 = b1 * a4 + b3 * a5 + b5
 		return result
 
 // Helper class for converting positions within an isomatic grid
