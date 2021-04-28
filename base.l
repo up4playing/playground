@@ -88,6 +88,21 @@ class List<T>
 	inline js void setList: T[] list
 		this.splice(0, this.length, ...list)
 		
+	void setFilteredList: T[] list
+		                  bool(T a) condition
+		clear
+		for list: if condition(l): add l
+		
+	void setFilteredList: T[] list
+		                  bool(T a) condition
+		                  int maxCount
+		clear
+		int count = 0
+		for list
+			if condition(l)
+				add l
+				if ++count >= maxCount: break
+		
 	inline js T pop := this.pop()
 		
 	js T popFront

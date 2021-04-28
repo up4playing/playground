@@ -203,7 +203,7 @@ unit Network
 				
 		logicFrame++
 		
-	private tickFrame
+	internal tickFrame
 		Physics.step
 		graphics.startFrame
 		updateVideoScreen
