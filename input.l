@@ -494,7 +494,7 @@ unit Input
 
 	textComposition := users[Network.userId].textComposition
 	
-	onTextComposition: void(string text) code
+	onTextComposition: void(string characters) code
 		for user -> users if user
 			for text -> user.textCompositions
 				code text
