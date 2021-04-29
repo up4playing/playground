@@ -124,10 +124,10 @@ unit Platform
 					if !movedSinceTouchUp: locationIndex++
 					else                   locationIndex = 0
 					
-					for graphics.items
-						if pixelPos.isInsidePoygon poly
+					for item -> graphics.items
+						if pixelPos.isInsidePoygon item.poly
 							SourceCodeLocation[] locations
-							location.flatten locations
+							item.location.flatten locations
 							locations.sort (a.file compareTo b.file) || b.row - a.row || a.column - b.column
 							let selectedLocation = locations[locationIndex % locations.length]
 							row = selectedLocation.row

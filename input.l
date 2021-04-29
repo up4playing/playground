@@ -436,7 +436,7 @@ unit Input
 			for event -> user.wheelEvents
 				if !event.handled && event.referencePosition.isInsidePoygon(poly)
 					event.position = event.referencePosition.getRelativeTo(graphics.localMatrix)
-					Network.touchLog += " onWheel {delta} {event.position}"
+					Network.touchLog += " onWheel {event.delta} {event.position}"
 					code event
 					if markAsHandled: event.markAsHandled
 		else
@@ -444,7 +444,7 @@ unit Input
 				for event -> user.wheelEvents
 					if !event.handled && event.referencePosition.isInsidePoygon(poly)
 						event.position = event.referencePosition.getRelativeTo(graphics.localMatrix)
-						Network.touchLog += " onWheel {delta} {event.position}"
+						Network.touchLog += " onWheel {event.delta} {event.position}"
 						code event
 						if markAsHandled: event.markAsHandled
 		if fill: drawRectangle position, size, fill

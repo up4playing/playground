@@ -618,9 +618,9 @@ unit Network
 		
 	internal drawFingers
 		for user -> Input.users
-			if !local
-				drawImage finger, touchPos+{11,34}, frame:user.id
-				if color: drawRectangle touchPos+{16,76}, size:{26,8}, color
+			if !user.local
+				drawImage finger, user.touchPos+{11,34}, frame:user.id
+				if user.color: drawRectangle user.touchPos+{16,76}, size:{26,8}, user.color
 				
 	private js void logConnectionType(object peerConnection)
 		setTimeout(async () => {
