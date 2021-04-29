@@ -80,13 +80,12 @@ global unit graphics
 		items.sort b.layer - a.layer
 		for <- items: draw
 		drawSafeArea
-			
-	private add: int visibleFor, DisplayImage item
-		if(Platform.fastForward) return
-		if(visibleFor == -1) visibleFor = currentlyVisibleFor
-		if(visibleFor != -1 && visibleFor != Network.userId) return
-		items.add item
 		
+	private isVisibleFor: int user
+		if(Platform.fastForward) return false
+		let visibleFor = user != -1 ? user : currentlyVisibleFor
+		return visibleFor == -1 || visibleFor == Network.userId
+			
 	internal js void drawSafeArea
 		Platform_context.fillStyle = "#404040"
 		Platform_context.setTransform(1,0,0,1,0,0)
@@ -305,17 +304,19 @@ global unit graphics
 		                      visibleFor = -1      // Only this user will see the image
 		                      implicit layer = 0   // Higher layers are drawn in front of lower layers
 		if(!image.texture || !image.texture._htmlImage) return
-		let f = image.frames[frame % image.frames.length]
-		graphics_add(visibleFor, new DisplayImage(
-			graphics_totalMatrix,
-			position.x-f.w/2*scale,
-			position.y-f.h/2*scale,
-			f.w*scale,
-			f.h*scale,
-			layer, image.file, position.location,
-			image.texture._htmlImage,
-			f.x1, f.y1, f.w, f.h
-		))
+		if(graphics_isVisibleFor(visibleFor)) {
+			let f = image.frames[frame % image.frames.length]
+			graphics_items.push(new DisplayImage(
+				graphics_totalMatrix,
+				position.x-f.w/2*scale,
+				position.y-f.h/2*scale,
+				f.w*scale,
+				f.h*scale,
+				layer, image.file, position.location,
+				image.texture._htmlImage,
+				f.x1, f.y1, f.w, f.h
+			))
+		}
 	
 	// Draws an image on the screen
 	global js void drawImage: Image image          // The image to draw
@@ -326,20 +327,22 @@ global unit graphics
 		                      visibleFor = -1      // Only this user will see the image
 		                      implicit layer = 0   // Higher layers are drawn in front of lower layers
 		if(!image.texture || !image.texture._htmlImage) return
-		let f = image.frames[frame % image.frames.length]
-		let matrix = graphics_totalMatrix.clone()
-		matrix.move(position)
-		matrix.rotate(angle)
-		graphics_add(visibleFor, new DisplayImage(
-			matrix,
-			-f.w/2*scale,
-			-f.h/2*scale,
-			f.w*scale,
-			f.h*scale,
-			layer, image.file, position.location, 
-			image.texture._htmlImage,
-			f.x1, f.y1, f.w, f.h
-		))
+		if(graphics_isVisibleFor(visibleFor)) {
+			let f = image.frames[frame % image.frames.length]
+			let matrix = graphics_totalMatrix.clone()
+			matrix.move(position)
+			matrix.rotate(angle)
+			graphics_items.push(new DisplayImage(
+				matrix,
+				-f.w/2*scale,
+				-f.h/2*scale,
+				f.w*scale,
+				f.h*scale,
+				layer, image.file, position.location, 
+				image.texture._htmlImage,
+				f.x1, f.y1, f.w, f.h
+			))
+		}
 	
 	// Draws text on the screen
 	global js void drawText: string text                        // The text to draw
@@ -352,15 +355,17 @@ global unit graphics
 		                     font = ""                          // The font of the text
 		                     visibleFor = -1                    // Only this user will see the image
 		                     implicit layer = 0                 // Higher layers are drawn in front of lower layers
-		let contextFont = (style ? "bold ":"")+(size || graphics_currentFontSize)+"px "+(font || graphics_currentFont);
-		Platform_context.font = contextFont
-		let textSize = Platform_context.measureText(text)
-		let fillStyle = (color || graphics_currentColor).hex
-		let w = textSize.width
-		let h = size || graphics_currentFontSize
-		let x = align  == 0 ? position.x : align  == 1 ? position.x-w*.5 : position.x-w
-		let y = valign == 0 ? position.y : valign == 1 ? position.y-h*.365 : position.y-h
-		graphics_add(visibleFor, new DisplayText(graphics_totalMatrix, x, y, w, h, layer, text, position.location, fillStyle, contextFont))
+		if(graphics_isVisibleFor(visibleFor)) {
+			let contextFont = (style ? "bold ":"")+(size || graphics_currentFontSize)+"px "+(font || graphics_currentFont);
+			Platform_context.font = contextFont
+			let textSize = Platform_context.measureText(text)
+			let fillStyle = (color || graphics_currentColor).hex
+			let w = textSize.width
+			let h = size || graphics_currentFontSize
+			let x = align  == 0 ? position.x : align  == 1 ? position.x-w*.5 : position.x-w
+			let y = valign == 0 ? position.y : valign == 1 ? position.y-h*.365 : position.y-h
+			graphics_items.push(new DisplayText(graphics_totalMatrix, x, y, w, h, layer, text, position.location, fillStyle, contextFont))
+		}
 		
 	// Draws an image on the screen
 	global void drawButton: Image image = null          // The image to draw
@@ -374,12 +379,9 @@ global unit graphics
 		                    showTouchArea = false       // Show the area within which the button is touchable
 		                    visibleFor = -1             // Only this user will see the button
 		                    implicit layer = 0          // Higher layers are drawn in front of lower layers
-		if(Platform.fastForward) return
-		if(visibleFor == -1) visibleFor = currentlyVisibleFor
-		if(visibleFor != -1 && visibleFor != Network.userId) return
-			
-		if image: drawImage image, position, frame, scale, visibleFor, layer
-		if text:  drawText text, position, fontSize, textColor, visibleFor, layer
+		if isVisibleFor(visibleFor)
+			if image: drawImage image, position, frame, scale, visibleFor, layer
+			if text:  drawText text, position, fontSize, textColor, visibleFor, layer
 			
 	// Draws a button that consists of an image and a text
 	global void drawButton: Image image = null               // The image of the button
@@ -395,12 +397,9 @@ global unit graphics
 		                    clickableBy = -1                 // Only this user can click the button
 		                    implicit layer = 0               // Higher layers are drawn in front of lower layers
 		                    void(Touch touch) onClick = null // Execute this code when the user clicks the button
-		if(Platform.fastForward) return
-		if(visibleFor == -1) visibleFor = currentlyVisibleFor
-		if(visibleFor != -1 && visibleFor != Network.userId) return
-			
-		if image: drawImage image, position, frame, scale, visibleFor, layer
-		if text:  drawText text, position, fontSize, textColor, visibleFor, layer
+		if isVisibleFor(visibleFor)
+			if image: drawImage image, position, frame, scale, visibleFor, layer
+			if text:  drawText text, position, fontSize, textColor, visibleFor, layer
 			
 		Input.onTouchDownWithin position, image.size*scale + touchMargin, userId:clickableBy, visualize:showTouchArea
 			onClick touch
@@ -413,14 +412,16 @@ global unit graphics
 		                          outlineWidth = 0          // The width of the outline around the rectangle
 		                          visibleFor = -1           // Only this user will see the rectangle
 		                          implicit layer = 0        // Higher layers are drawn in front of lower layers
-		graphics_add(visibleFor, new DisplayRectangle(
-			graphics_totalMatrix, 
-			position.x-size.x/2, position.y-size.y/2, size.x, size.y,
-			layer, "Rectangle", position.location,
-			fillColor || !outlineColor ? (fillColor || graphics_currentColor).hex : null,
-			outlineColor ? outlineColor.hex : null,
-			outlineWidth || graphics_currentLineWidth
-		))
+		if(graphics_isVisibleFor(visibleFor)) {
+			graphics_items.push(new DisplayRectangle(
+				graphics_totalMatrix, 
+				position.x-size.x/2, position.y-size.y/2, size.x, size.y,
+				layer, "Rectangle", position.location,
+				fillColor || !outlineColor ? (fillColor || graphics_currentColor).hex : null,
+				outlineColor ? outlineColor.hex : null,
+				outlineWidth || graphics_currentLineWidth
+			))
+		}
 		
 	// Draws a texture on the screen
 	global js void drawTexture: Texture texture        // The texture to draw
@@ -429,17 +430,19 @@ global unit graphics
 		                        visibleFor = -1        // Only this user will see the texture
 		                        implicit int layer = 0 // Higher layers are drawn in front of lower layers
 		if(!texture || !texture._htmlImage) return
-		graphics_add(visibleFor, new DisplayImage(
-			graphics_totalMatrix,
-			position.x-texture.size.x/2*scale,
-			position.y-texture.size.y/2*scale,
-			texture.size.x*scale,
-			texture.size.y*scale,
-			
-			layer, texture.file, position.location,
-			texture._htmlImage,
-			0, 0, texture.size.x, texture.size.y
-		))
+		if(graphics_isVisibleFor(visibleFor)) {
+			graphics_items.push(new DisplayImage(
+				graphics_totalMatrix,
+				position.x-texture.size.x/2*scale,
+				position.y-texture.size.y/2*scale,
+				texture.size.x*scale,
+				texture.size.y*scale,
+				
+				layer, texture.file, position.location,
+				texture._htmlImage,
+				0, 0, texture.size.x, texture.size.y
+			))
+		}
 
 	// Draws a texture on the screen
 	global js void drawTexture: Texture texture            // The texture to draw
@@ -450,21 +453,23 @@ global unit graphics
 		                        visibleFor = -1            // Only this user will see the texture
 		                        implicit int layer = 0     // Higher layers are drawn in front of lower layers
 		if(!texture || !texture._htmlImage) return
-		graphics_add(visibleFor, new DisplayImage(
-			graphics_totalMatrix,
-			position.x-texture.size.x/2*scale,
-			position.y-texture.size.y/2*scale,
-			texture.size.x*scale,
-			texture.size.y*scale,
-			
-			layer, texture.file, position.location, 
-			texture._htmlImage,
-			
-			sourcePosition.x+texture.size.x/2-sourceSize.x/2,
-			sourcePosition.y+texture.size.y/2-sourceSize.y/2,
-			sourceSize.x, 
-			sourceSize.y, 
-		))
+		if(graphics_isVisibleFor(visibleFor)) {
+			graphics_items.push(new DisplayImage(
+				graphics_totalMatrix,
+				position.x-texture.size.x/2*scale,
+				position.y-texture.size.y/2*scale,
+				texture.size.x*scale,
+				texture.size.y*scale,
+				
+				layer, texture.file, position.location, 
+				texture._htmlImage,
+				
+				sourcePosition.x+texture.size.x/2-sourceSize.x/2,
+				sourcePosition.y+texture.size.y/2-sourceSize.y/2,
+				sourceSize.x, 
+				sourceSize.y, 
+			))
+		}
 		
 	// Draws a polygon on the screen
 	global js void drawPolygon: float2[] positions        // A list of points for the polygon
@@ -528,9 +533,11 @@ global unit graphics
 		                           size = float2(32,32) // The size of the rectangle to clear
 		                           visibleFor = -1      // Only clear the rectangle for this user
 		                           implicit layer = 0   // Higher layers are process after lower layers
-		graphics_add(visibleFor, new DisplayRectangle(
-			graphics_totalMatrix, position.x-size.x/2, position.y-size.y/2, size.x, size.y, layer, "Rectangle", position.location, "clear", null, 0
-		))
+		if(graphics_isVisibleFor(visibleFor)) {
+			graphics_items.push(new DisplayRectangle(
+				graphics_totalMatrix, position.x-size.x/2, position.y-size.y/2, size.x, size.y, layer, "Rectangle", position.location, "clear", null, 0
+			))
+		}
 
 class DisplayItem
 	float x, y, w, h

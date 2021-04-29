@@ -124,9 +124,9 @@ class Object
 		if board
 			pos = position * board.matrix
 		Board overBoard = null
-		for Framework.objects
-			if type == Board
-				Board b = cast o
+		for object -> Framework.objects
+			if object.type == Board
+				Board b = cast object
 				if pos >= b.position - b.size/2 && pos < b.position + b.size/2
 					overBoard = b
 					break
