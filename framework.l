@@ -67,16 +67,16 @@ class Object
 		if movable
 			Input.onTouchDownWithin position, size
 				moveTouch = touch
-				touchOffset = this.position - touch.position
+				touchOffset = position - touch.position
 				parentObjects.moveToBack this
 				
 			Input.onTouchMove moveTouch
-				this.position = touch.position + touchOffset
-				overSpot = getSpotAt position, threshold:size
+				position = touch.position + touchOffset
+				overSpot = getSpotAt touch.position, threshold:size
 				if overSpot && (overSpot.object.type == Stack || overSpot.object.type == type || overSpot.object.spots.length > 1)
 					Network.touchLog += " [over spot] "+touch.position.x+" "+touch.position.y
-					this.position = overSpot.object.position + overSpot.pos
-					if overSpot.object.stackable: this.position += stackOffset*3
+					position = overSpot.object.position + overSpot.pos
+					if overSpot.object.stackable: position += stackOffset*3
 				checkBoardsWhileMoving touch
 								
 			Input.onTouchUp moveTouch
@@ -99,12 +99,12 @@ class Object
 			if !rotateTouch || !rotatedOverThreshold
 				drawButton rotateIcon, position:position+image.size/2*{1,-1}*scale+{8, -8}, touchMargin:{50,50}
 					rotateTouch = touch
-					rotateOffset = angle - Math.atan2(touch.position - this.position)
+					rotateOffset = angle - Math.atan2(touch.position - position)
 					rotatedOverThreshold = false
 				
 			Input.onTouchMove rotateTouch
-				angle = targetAngle = Math.atan2(touch.position - this.position) + rotateOffset
-				if (position - startPosition).length > 4: rotatedOverThreshold = true
+				angle = targetAngle = Math.atan2(touch.position - position) + rotateOffset
+				if (touch.position - touch.startPosition).length > 4: rotatedOverThreshold = true
 				
 			Input.onTouchUp rotateTouch
 				targetAngle = Math.round(angle / (Math.PI/2)) * Math.PI/2
@@ -254,11 +254,11 @@ Object Board
 		// Zoom
 		if zoomable	
 			Input.onWheelWithin position, size
-				float factor = zoomLookupTable[Math.limit delta+40 min:0 max:zoomLookupTable.length-1]
-				Network.touchLog += "[{Network.logicFrame}] zoom value:{delta} factor:{factor} matrix:{matrix}"
-				matrix.move position
+				float factor = zoomLookupTable[Math.limit event.delta+40 min:0 max:zoomLookupTable.length-1]
+				Network.touchLog += "[{Network.logicFrame}] zoom value:{event.delta} factor:{factor} matrix:{matrix}"
+				matrix.move event.position
 				matrix.scale {factor, factor}
-				matrix.move position*{-1,-1}
+				matrix.move event.position*{-1,-1}
 				Network.touchLog += " -> {matrix}"
 			
 		// Visiblity icon
