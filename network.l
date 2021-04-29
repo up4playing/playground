@@ -618,7 +618,7 @@ unit Network
 		
 	internal drawFingers
 		for user -> Input.users
-			if !user.local
+			if !user.local and Framework.isVisibleFor user.touchPos, this.userId
 				drawImage finger, user.touchPos+{11,34}, frame:user.id
 				if user.color: drawRectangle user.touchPos+{16,76}, size:{26,8}, user.color
 				

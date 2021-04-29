@@ -8,6 +8,18 @@ unit Framework
 		for <- objects: tick
 		Input.onTouchUp: touch.user.selectedObject = null
 		
+	isVisibleFor: float2 pos, int userId
+		let board = getBoardAt pos
+		return !board or board.isVisibleFor userId
+			
+	getBoardAt: float2 pos
+		for object -> Framework.objects
+			if object.type == Board
+				Board b = cast object
+				if pos >= b.position - b.size/2 && pos < b.position + b.size/2
+					return b
+		return null
+			
 class NetworkUser
 	Object selectedObject = null
 		
@@ -123,14 +135,7 @@ class Object
 		float2 pos = position
 		if board
 			pos = position * board.matrix
-		Board overBoard = null
-		for object -> Framework.objects
-			if object.type == Board
-				Board b = cast object
-				if pos >= b.position - b.size/2 && pos < b.position + b.size/2
-					overBoard = b
-					break
-					
+		Board overBoard = Framework.getBoardAt pos
 		if overBoard != board
 			if board: board.objects.remove this;    position = position * board.matrix; touchOffset = touchOffset * board.matrix.scaleVector
 			else      Framework.objects.remove this
@@ -233,6 +238,9 @@ Object Board
 		objects.add object
 		object.board = this
 		Framework.objects.remove object
+		
+	isVisibleFor: int userId
+		return visibleForOthers == Always or visibleForOthers == On or owner == userId
 		
 	tick
 		// Children
