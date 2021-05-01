@@ -353,6 +353,8 @@ global unit graphics
 		                     VerticalAlignment valign = Middle  // The vertical alignment of the text
 		                     FontStyle style = Normal           // Whether the text should be bold or normal style
 		                     font = ""                          // The font of the text
+	                         Color outlineColor = null          // The color of the outline around the text
+	                         outlineWidth = 0                   // The width of the outline around the text
 		                     visibleFor = -1                    // Only this user will see the image
 		                     implicit layer = 0                 // Higher layers are drawn in front of lower layers
 		if(graphics_isVisibleFor(visibleFor)) {
@@ -364,7 +366,14 @@ global unit graphics
 			let h = size || graphics_currentFontSize
 			let x = align  == 0 ? position.x : align  == 1 ? position.x-w*.5 : position.x-w
 			let y = valign == 0 ? position.y : valign == 1 ? position.y-h*.365 : position.y-h
-			graphics_items.push(new DisplayText(graphics_totalMatrix, x, y, w, h, layer, text, position.location, fillStyle, contextFont))
+			graphics_items.push(new DisplayText(
+				graphics_totalMatrix, x, y, w, h, layer, text, 
+				position.location, 
+				fillStyle, 
+				outlineColor ? outlineColor.hex : null,
+				outlineWidth || graphics_currentLineWidth,
+				contextFont
+			))
 		}
 		
 	// Draws an image on the screen
@@ -401,7 +410,7 @@ global unit graphics
 			if image: drawImage image, position, frame, scale, visibleFor, layer
 			if text:  drawText text, position, fontSize, textColor, visibleFor, layer
 			
-		Input.onTouchDownWithin position, image.size*scale + touchMargin, userId:clickableBy, visualize:showTouchArea
+		Input.onTouchDownWithin position, image.size*scale + touchMargin, userId:clickableBy, showTouchArea
 			onClick touch
 			
 	// Draws a rectangle on the screen
@@ -593,14 +602,19 @@ DisplayItem DisplayImage
 		catch(e) { log("DisplayImage: "+e.message) }
 
 DisplayItem DisplayText
-	string fillStyle, font
+	string fillStyle, outlineColor, outlineWidth, font
 	js void draw
 		Platform_context.setTransform(this.m0, this.m1, this.m2, this.m3, this.m4, this.m5)
 		// Platform_context.fillStyle = "#ff000080"
 		// Platform_context.fillRect(this.x, this.y, this.w, this.h)
 		Platform_context.font = this.font
+		if(this.outlineColor) {
+			Platform_context.lineWidth = this.outlineWidth
+			Platform_context.strokeStyle = this.outlineColor
+			Platform_context.strokeText(this.name, this.x, this.y)
+		}
 		Platform_context.fillStyle = this.fillStyle
-		Platform_context.fillText(this.name, this.x, this.y/*(this.textAlign=="center" ? size*0.07 : 0)*/)
+		Platform_context.fillText(this.name, this.x, this.y)
 		
 DisplayItem DisplayRectangle
 	string fillColor, outlineColor, outlineWidth
