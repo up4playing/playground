@@ -423,6 +423,31 @@ global unit graphics
 			))
 		}
 		
+	// Draws a circle on the screen
+	global js void drawCircle: position = float2()       // The center of the circle
+		                       radius = 32.0             // The radius of the circle
+		                       Color fillColor = null    // The color of the area within the circle
+		                       Color outlineColor = null // The color of the outline around the circle
+		                       outlineWidth = 0          // The width of the outline around the circle
+		                       startAngle = 0            // Draws an arc with this start angle in radians, measured from the positive x-axis
+		                       endAngle = Math.PI * 2    // Draws an arc with this end angle in radians, measured from the positive x-axis
+		                       CircleDirection direction = Clockwise
+		                       visibleFor = -1           // Only this user will see the circle
+		                       implicit layer = 0        // Higher layers are drawn in front of lower layers
+		if(graphics_isVisibleFor(visibleFor)) {
+			let diameter = radius*2
+			graphics_items.push(new DisplayCircle(
+				graphics_totalMatrix, 
+				position.x, position.y, diameter, diameter,
+				layer, "Circle", position.location,
+				radius, startAngle, endAngle,
+				direction == 1,
+				fillColor || !outlineColor ? (fillColor || graphics_currentColor).hex : null,
+				outlineColor ? outlineColor.hex : null,
+				outlineWidth || graphics_currentLineWidth
+			))
+		}
+		
 	// Draws a texture on the screen
 	global js void drawTexture: Texture texture        // The texture to draw
 		                        float2 position = {}   // The position to draw to
@@ -593,6 +618,24 @@ DisplayItem DisplayRectangle
 			Platform_context.lineWidth = this.outlineWidth
 			Platform_context.strokeStyle = this.outlineColor
 			Platform_context.strokeRect(this.x, this.y, this.w, this.h)
+		}
+		
+enum CircleDirection: Clockwise, CounterClockwise
+		
+DisplayItem DisplayCircle
+	string radius, startAngle, endAngle, counterclockwise, fillColor, outlineColor, outlineWidth
+	js void draw
+		Platform_context.setTransform(this.m0, this.m1, this.m2, this.m3, this.m4, this.m5)
+		Platform_context.beginPath();
+		Platform_context.arc(this.x, this.y, this.radius, this.startAngle, this.endAngle, this.counterclockwise);
+		if(this.fillColor) {
+			Platform_context.fillStyle = this.fillColor
+			Platform_context.fill()
+		}
+		if(this.outlineColor) {
+			Platform_context.lineWidth = this.outlineWidth
+			Platform_context.strokeStyle = this.outlineColor
+			Platform_context.stroke()
 		}
 		
 // A sound
