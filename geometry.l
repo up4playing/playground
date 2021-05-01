@@ -66,6 +66,13 @@ struct float2
 	bool operator <  (float2 a, float2 b) return a.x <  b.x && a.y <  b.y
 	bool operator <= (float2 a, float2 b) return a.x <= b.x && a.y <= b.y
 	
+	bool operator == (float2 a, float length) let x = a.x, y = a.y; return Math.sqrt(x*x + y*y) == length
+	bool operator != (float2 a, float length) let x = a.x, y = a.y; return Math.sqrt(x*x + y*y) != length
+	bool operator >  (float2 a, float length) let x = a.x, y = a.y; return Math.sqrt(x*x + y*y) >  length
+	bool operator >= (float2 a, float length) let x = a.x, y = a.y; return Math.sqrt(x*x + y*y) >= length
+	bool operator <  (float2 a, float length) let x = a.x, y = a.y; return Math.sqrt(x*x + y*y) <  length
+	bool operator <= (float2 a, float length) let x = a.x, y = a.y; return Math.sqrt(x*x + y*y) <= length
+	
 	// The length of the vector
 	length := Math.sqrt(x * x + y * y)
 		
