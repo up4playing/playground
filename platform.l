@@ -125,7 +125,7 @@ unit Platform
 					else                   locationIndex = 0
 					
 					for item -> graphics.items
-						if pixelPos.isInsidePoygon item.poly
+						if item.location != null and pixelPos.isInsidePoygon item.poly
 							SourceCodeLocation[] locations
 							item.location.flatten locations
 							locations.sort (a.file compareTo b.file) || b.row - a.row || a.column - b.column

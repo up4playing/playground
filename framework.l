@@ -47,6 +47,7 @@ class Object
 	// Move
 	private Touch moveTouch = null
 	private float2 touchOffset
+	private bool isBeingMoved
 	
 	// Rotate
 	private Touch rotateTouch = null
@@ -61,10 +62,11 @@ class Object
 	public Board board = null
 	public float2 targetPos = float2.none
 	
-	private parentObjects := board ? board.objects : Framework.objects
+	private siblings := board ? board.objects : Framework.objects
+	onBoardChanged
 	
 	Object
-		Framework.objects.add this
+		siblings.add this
 		if stackable: spots.add {{}, this}
 		size = image ? image.size * scale : {}
 		if size.x < minSize: size.x = minSize
@@ -72,18 +74,20 @@ class Object
 		this.targetAngle = angle
 	
 	remove
-		Framework.objects.remove this
-	
+		siblings.remove this
+		
 	tick
 		// Move
 		if movable
 			Input.onTouchDownWithin position, size
 				moveTouch = touch
 				touchOffset = position - touch.position
-				parentObjects.moveToBack this
+				siblings.moveToBack this
+				isBeingMoved = false
 				
 			Input.onTouchMove moveTouch
 				position = touch.position + touchOffset
+				if touch.position - touch.startPosition > 8: isBeingMoved = true
 				overSpot = getSpotAt touch.position, threshold:size
 				if overSpot && (overSpot.object.type == Stack || overSpot.object.type == type || overSpot.object.spots.length > 1)
 					Network.touchLog += " [over spot] "+touch.position.x+" "+touch.position.y
@@ -104,7 +108,6 @@ class Object
 					
 				touch.user.selectedObject = this
 				moveTouch = null
-				touch.markAsHandled
 		
 		// Rotate	
 		if Input.users.any(selectedObject == this) && rotatable
@@ -121,7 +124,6 @@ class Object
 			Input.onTouchUp rotateTouch
 				targetAngle = Math.round(angle / (Math.PI/2)) * Math.PI/2
 				rotateTouch = null
-				touch.markAsHandled
 				if !rotatedOverThreshold: targetAngle -= Math.PI/2
 		
 		if angle != targetAngle: angle = Math.moveTowards(angle, targetAngle, .2)
@@ -137,16 +139,17 @@ class Object
 			pos = position * board.matrix
 		Board overBoard = Framework.getBoardAt pos
 		if overBoard != board
-			if board: board.objects.remove this;    position = position * board.matrix; touchOffset = touchOffset * board.matrix.scaleVector
+			if board: board.objects.remove this; position = position * board.matrix; touchOffset = touchOffset * board.matrix.scaleVector
 			else      Framework.objects.remove this
 			board = overBoard
-			if board: board.objects.add this;       position = position / board.matrix; touchOffset = touchOffset / board.matrix.scaleVector
+			if board: board.objects.add this;    position = position / board.matrix; touchOffset = touchOffset / board.matrix.scaleVector
 			else      Framework.objects.add this
+			onBoardChanged
 					
 	private getSpotAt: float2 position, float2 threshold
 		Spot closestSpot = null
 		float minDistance = int.maxValue
-		for obj <- parentObjects if obj != this
+		for obj <- siblings if obj != this
 			for spot -> obj.spots
 				let delta = (obj.position + spot.pos - position).abs
 				let distance = delta.length
@@ -204,7 +207,6 @@ Object Stack
 			let obj = pop
 			obj.moveTouch = touch
 			obj.touchOffset = obj.position - touch.position
-			touch.markAsHandled
 			
 		for i = (objects.length-shownObjectCount) <- objects.length: objects[i].tick
 	
@@ -318,3 +320,118 @@ Object ParticleSystem
 		
 		if particles.length == 0	
 			remove
+			
+enum closestCoinType: None, Neighbor, Over
+Object Coin
+	const Color darkColor = {"642C00"}
+	const Color lightColor = {"F7C947"}
+	
+	int value
+	bool isInfinate
+	bool allowZero
+	image = Coin
+	
+	private Coin closestCoin = null
+	private closestCoinType closestCoinType
+	private float distanceToClosest
+	
+	tick
+		if movable
+			Input.onTouchDownWithin position, radius:46
+				moveTouch = touch
+				touchOffset = position - touch.position
+				siblings.moveToBack this
+				isBeingMoved = false
+			
+			Input.onTouchMove moveTouch
+				position = touch.position + touchOffset
+				if touch.position - touch.startPosition > 8: isBeingMoved = true
+				updateNeighbors siblings, isBeingMoved
+				checkBoardsWhileMoving touch
+			
+			Input.onTouchUp moveTouch
+				touch.user.selectedObject = this
+				moveTouch = null
+				
+				if closestCoinType == Over: mergeWith closestCoin; else
+				if !isBeingMoved:           transferToNeighbor closestCoin
+		else
+			Input.onTouchUpWithin position, radius:64
+				transferToNeighbor closestCoin
+			
+		if isInfinate or value or allowZero
+			if closestCoinType == Neighbor 
+				drawCircle (position + closestCoin.position)/2, radius:6, fillColor:darkColor, outlineColor:lightColor, outlineWidth:5
+			if !isInfinate
+				if value < 10:  drawText cast value, position+{0, 3}, color:darkColor, size:42, style:Bold, font:"Shadowed Serif"; else
+				if value < 100: drawText cast value, position+{0, 2}, color:darkColor, size:34, style:Bold, font:"Shadowed Serif"; else
+				                drawText cast value, position+{0, 2}, color:darkColor, size:24, style:Bold, font:"Shadowed Serif"
+			
+			drawImage image, position, frame:closestCoinType == Over ? 1 : 0
+			
+	private static updateNeighbors: Object[] siblings, bool isBeingMoved
+		for object -> siblings
+			if object.type == Coin
+				Coin c = cast object
+				c.clearClosestCoin
+				
+		for object -> siblings
+			if object.type == Coin
+				Coin c = cast object
+				let closestCoin = getClosestCoin c, threshold:90
+				if closestCoin and c.closestCoin != closestCoin
+					let distance = float2.distanceBetween(closestCoin.position, object.position)
+					if distance < closestCoin.distanceToClosest
+						if c.closestCoin: c.closestCoin.clearClosestCoin
+						if closestCoin.closestCoin: closestCoin.closestCoin.clearClosestCoin
+							
+						c.distanceToClosest = distance
+						c.closestCoin = closestCoin
+						c.closestCoinType = distance > 65 ? Neighbor : isBeingMoved ? Over : None
+						
+						closestCoin.distanceToClosest = distance
+						closestCoin.closestCoin = c
+						closestCoin.closestCoinType = c.closestCoinType
+
+	private static getClosestCoin: Coin source, float threshold = float.infinity
+		Coin closestCoin = null
+		float minDistance = threshold
+		for object -> source.siblings
+			if object.type == Coin and object != source and object.image == source.image
+				Coin c = cast object
+				let distance = (c.position - source.position).length
+				if distance < minDistance
+					minDistance = distance
+					closestCoin = c
+					
+		return closestCoin
+		
+	onBoardChanged
+		if closestCoin: closestCoin.clearClosestCoin
+		clearClosestCoin		
+		
+	clearClosestCoin:
+		closestCoin = null
+		distanceToClosest = float.infinity
+		closestCoinType = None		
+		
+	private mergeWith: Coin coin
+		coin.value += value
+		remove
+		updateNeighbors siblings, isBeingMoved:false
+	
+	private transferToNeighbor: Coin coin, int amount = 1
+		Coin neighbor = coin
+		if !neighbor
+			if value <= amount and !isInfinate: return
+			neighbor = {position:position+{45,58}, board:board, image:image}
+		value -= amount
+		neighbor.value += amount
+		if !isInfinate and !allowZero and value <= 0: remove
+		updateNeighbors siblings, isBeingMoved:false
+			
+		
+		
+	
+
+
