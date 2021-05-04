@@ -29,18 +29,18 @@ struct float2
 	js float2 operator - (float2 a, float2 b)
 		return new float2(a.x-b.x, a.y-b.y, a.location || b.location ? new SourceCodeLocation(0, 0, null, a.location, b.location) : null)
 	
-	js float2 operator * (float2 a, float2 b) return new float2(a.x*b.x, a.y*b.y, null)
-	js float2 operator * (float2 a, float b) return new float2(a.x*b, a.y*b, null)
-	js float2 operator * (float a, float2 b) return new float2(a*b.x, a*b.y, null)
+	js float2 operator * (float2 a, float2 b) return new float2(a.x*b.x, a.y*b.y, a.location || b.location ? new SourceCodeLocation(0, 0, null, a.location, b.location) : null)
+	js float2 operator * (float2 a, float b) return new float2(a.x*b, a.y*b, a.location || b.location ? new SourceCodeLocation(0, 0, null, a.location, b.location) : null)
+	js float2 operator * (float a, float2 b) return new float2(a*b.x, a*b.y, a.location || b.location ? new SourceCodeLocation(0, 0, null, a.location, b.location) : null)
 	js float2 operator * (float2 vector, Matrix2D matrix)
 		return new float2(
 			matrix.m0 * vector.x + matrix.m2 * vector.y + matrix.m4,
 			matrix.m1 * vector.x + matrix.m3 * vector.y + matrix.m5,
-			null
+			vector.location
 		)
 		
-	js float2 operator / (float2 a, float2 b) return new float2(a.x/b.x, a.y/b.y, null)
-	js float2 operator / (float2 a, float b) return new float2(a.x/b, a.y/b, null)
+	js float2 operator / (float2 a, float2 b) return new float2(a.x/b.x, a.y/b.y, a.location || b.location ? new SourceCodeLocation(0, 0, null, a.location, b.location) : null)
+	js float2 operator / (float2 a, float b) return new float2(a.x/b, a.y/b, a.location || b.location ? new SourceCodeLocation(0, 0, null, a.location, b.location) : null)
 	js float2 operator / (float2 vector, Matrix2D matrix)
 		var aa = matrix.m0, ab = matrix.m1, ac = matrix.m2, ad = matrix.m3, atx = matrix.m4, aty = matrix.m5
 
@@ -51,7 +51,7 @@ struct float2
 		return new float2(
 			( ad * det) * vector.x + (-ac * det) * vector.y + ((ac * aty - ad * atx) * det),
 			(-ab * det) * vector.x + ( aa * det) * vector.y + ((ab * atx - aa * aty) * det),
-			null
+			vector.location
 		)			
 	
 	float2 operator += (float2 a, float2 b) a.x += b.x; a.y += b.y; return a
