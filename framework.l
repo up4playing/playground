@@ -25,7 +25,11 @@ class NetworkUser
 		
 enum Side: Front, Back
 class Spot: float2 pos; Object object = null
-
+		
+Spot SpotGrid
+	float2 cellSize
+	int2 cellCount
+	
 class Object
 	static float2 stackOffset = {8,8}
 	static minSize = 75
@@ -48,15 +52,13 @@ class Object
 	private Touch moveTouch = null
 	private float2 touchOffset
 	private bool isBeingMoved
+	private Object overStackable = null
 	
 	// Rotate
 	private Touch rotateTouch = null
 	private float rotateOffset
 	private float targetAngle
 	private bool rotatedOverThreshold
-	
-	private Spot[] spots
-	private Spot overSpot = null
 	
 	visible float2 size
 	public Board board = null
@@ -67,7 +69,6 @@ class Object
 	
 	Object
 		siblings.add this
-		if stackable: spots.add {{}, this}
 		size = image ? image.size * scale : {}
 		if size.x < minSize: size.x = minSize
 		if size.y < minSize: size.y = minSize
@@ -88,23 +89,23 @@ class Object
 			Input.onTouchMove moveTouch
 				position = touch.position + touchOffset
 				if touch.position - touch.startPosition > 8: isBeingMoved = true
-				overSpot = getSpotAt touch.position, threshold:size
-				if overSpot && (overSpot.object.type == Stack || overSpot.object.type == type || overSpot.object.spots.length > 1)
-					Network.touchLog += " [over spot] "+touch.position.x+" "+touch.position.y
-					position = overSpot.object.position + overSpot.pos
-					if overSpot.object.stackable: position += stackOffset*3
+				// overSpot = getSpotAt touch.position, threshold:size
+				// if overSpot && (overSpot.object.type == Stack || overSpot.object.type == type || overSpot.object.spots.length > 1)
+				// 	Network.touchLog += " [over spot] "+touch.position.x+" "+touch.position.y
+				// 	position = overSpot.object.position + overSpot.pos
+				// 	if overSpot.object.stackable: position += stackOffset*3
 				checkBoardsWhileMoving touch
 								
 			Input.onTouchUp moveTouch
-				if overSpot
-					if overSpot.object.type == Stack
-						Network.touchLog += " [add to stack] "+touch.position.x+" "+touch.position.y
-						Stack stack = cast overSpot.object
-						stack.add this
-					else
-					if stackable && overSpot.object.type == type && overSpot.object.stackable
-						Network.touchLog += " [create stack] "+touch.position.x+" "+touch.position.y
-						Stack.create overSpot.object, this
+				// if overSpot
+				// 	if overSpot.object.type == Stack
+				// 		Network.touchLog += " [add to stack] "+touch.position.x+" "+touch.position.y
+				// 		Stack stack = cast overSpot.object
+				// 		stack.add this
+				// 	else
+				// 	if stackable && overSpot.object.type == type && overSpot.object.stackable
+				// 		Network.touchLog += " [create stack] "+touch.position.x+" "+touch.position.y
+				// 		Stack.create overSpot.object, this
 					
 				touch.user.selectedObject = this
 				moveTouch = null
@@ -146,19 +147,6 @@ class Object
 			else      Framework.objects.add this
 			onBoardChanged
 					
-	private getSpotAt: float2 position, float2 threshold
-		Spot closestSpot = null
-		float minDistance = int.maxValue
-		for obj <- siblings if obj != this
-			for spot -> obj.spots
-				let delta = (obj.position + spot.pos - position).abs
-				let distance = delta.length
-				if delta < threshold && distance < minDistance
-					minDistance = distance
-					closestSpot = spot
-			if closestSpot: return closestSpot
-		return null
-		
 Object Stack
 	private Object[] objects
 	Side sideWhenRemoving = Front
@@ -225,6 +213,9 @@ Object Board
 	bool panable
 	bool zoomable
 	
+	private Spot[] spots
+	private Spot overSpot = null
+	
 	private Touch panTouch = null
 	private Matrix2D downMatrix
 	static zoomLookupTable = [
@@ -278,6 +269,18 @@ Object Board
 				visibleForOthers = visibleForOthers == On ? Off : On
 				
 		if color: drawRectangle position, size, fillColor:color
+			
+	getSpotAt: float2 position, float2 threshold
+		Spot closestSpot = null
+		float minDistance = int.maxValue
+		for spot -> spots
+			let delta = (this.position + spot.pos - position).abs
+			let distance = delta.length
+			if delta < threshold && distance < minDistance
+				minDistance = distance
+				closestSpot = spot
+			if closestSpot: return closestSpot
+		return null
 			
 Object RectangleObject
 	Color color = White
