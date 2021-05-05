@@ -25,12 +25,7 @@ class NetworkUser
 	Object selectedObject = null
 		
 enum Side: Front, Back
-class Spot: float2 pos; Object object = null
 		
-Spot SpotGrid
-	float2 cellSize
-	int2 cellCount
-	
 class Object
 	static float2 stackOffset = {8,8}
 	static minSize = 75
@@ -91,6 +86,10 @@ class Object
 			Input.onTouchMove moveTouch
 				position = touch.position + touchOffset
 				if touch.position - touch.startPosition > 8: isBeingMoved = true
+				if board
+					let closestSpotPos = board.getSpotAt touch.position, threshold:size
+					if closestSpotPos
+						position = closestSpotPos
 				// overSpot = getSpotAt touch.position, threshold:size
 				// if overSpot && (overSpot.object.type == Stack || overSpot.object.type == type || overSpot.object.spots.length > 1)
 				// 	Network.touchLog += " [over spot] "+touch.position.x+" "+touch.position.y
@@ -235,6 +234,9 @@ Object Board
 		object.board = object.nextBoard = this
 		Framework.objects.remove object
 		
+	addSpot: Spot spot
+		spots.add spot
+		
 	isVisibleFor: int userId
 		return visibleForOthers == Always or visibleForOthers == On or owner == userId
 		
@@ -277,17 +279,26 @@ Object Board
 		for objects: updateBoard
 			
 	getSpotAt: float2 position, float2 threshold
-		Spot closestSpot = null
+		float2 closestSpotPos = float2.none
 		float minDistance = int.maxValue
 		for spot -> spots
-			let delta = (this.position + spot.pos - position).abs
+			let spotPos = spot.getClosestPoint position, this.position
+			let delta = (spotPos - position).abs
 			let distance = delta.length
 			if delta < threshold && distance < minDistance
 				minDistance = distance
-				closestSpot = spot
-			if closestSpot: return closestSpot
-		return null
-			
+				closestSpotPos = spotPos
+		return closestSpotPos
+		
+class Spot
+	float2 pos
+	getClosestPoint(float2 touchPos, float2 boardPos) := pos
+	
+Spot SpotGrid
+	float2 cellSize
+	getClosestPoint: float2 touchPos, float2 boardPos
+		return ((touchPos-boardPos)/cellSize).rounded*cellSize + boardPos
+		
 Object RectangleObject
 	Color color = White
 	float2 size
