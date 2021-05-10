@@ -3,9 +3,7 @@ class NetworkUser
 	bool local
 	Color color = null
 	
-	int acknowledgedFrames
 	int frames
-	int[][] inputs = [[]]
 	
 	float2 touchPos = {0,0}
 	visible Touch[] downTouches, movingTouches, upTouches
@@ -19,8 +17,11 @@ class NetworkUser
 	int lastTextInputIndex = -1
 	int[] lastTouchMoveIndex
 	
+	Buffer inputs
+	int acknowledgedPos
+	int nextFrame = int.maxValue
+	
 	startInputFrame: int index
-		inputs[index] = []
 		lastTouchMoveIndex.clear
 		lastTextInputIndex = -1
 		frames = index
@@ -45,7 +46,7 @@ enum MouseButton: Left, Middle, Right
 // A touch or a click
 class Touch
 	int id
-	NetworkUser user
+	NetworkUser user = null
 	TouchPhase phase
 	MouseButton button
 	float2 referencePosition
@@ -120,10 +121,6 @@ unit Input
 			Input_handleTextInput(8, e.key)
 		}
 		
-	private getInputList
-		let user = users[Network.userId]
-		return user.inputs.getOrSet(Network.inputFrame, [])
-		
 	private setLastTouchMoveIndex: int id, int index
 		let lastMoveIndex = users[Network.userId].lastTouchMoveIndex
 		lastMoveIndex.add id
@@ -138,27 +135,29 @@ unit Input
 		return 0
 	
 	private handleTextCompositionEnd
-		if Network.mode == None || Platform.mode != Record: return
-		let inputs = getInputList
-		InputType type = TextInput
-		let user = users[Network.userId]
-		// alert user.lastTextInputIndex
-		if user.lastTextInputIndex > -1
-			inputs[user.lastTextInputIndex] = cast type
+	// TODO: Migrate to new event stream
+	// 	if Network.mode == None || Platform.mode != Record: return
+	// 	let inputs = getInputList
+	// 	InputType type = TextInput
+	// 	let user = users[Network.userId]
+	// 	if user.lastTextInputIndex > -1
+	// 		inputs[user.lastTextInputIndex] = cast type
 		
 	private handleTextInput: InputType type, string text
-		if Network.mode == None || Platform.mode != Record: return
-		let inputs = getInputList
-		users[Network.userId].lastTextInputIndex = inputs.length
-		inputs.add cast type
-		inputs.add text.length
-		for text.length: inputs.add text.getCharCodeAt(i)
+	// TODO: Migrate to new event stream
+	// 	if Network.mode == None || Platform.mode != Record: return
+	// 	let inputs = getInputList
+	// 	users[Network.userId].lastTextInputIndex = inputs.length
+	// 	inputs.add cast type
+	// 	inputs.add text.length
+	// 	for text.length: inputs.add text.getCharCodeAt(i)
 			
 	private handleKeyEvent: InputType type, int keyCode
-		if Network.mode == None || Platform.mode != Record: return
-		let inputs = getInputList
-		inputs.add cast type
-		inputs.add keyCode
+	// TODO: Migrate to new event stream
+	// 	if Network.mode == None || Platform.mode != Record: return
+	// 	let inputs = getInputList
+	// 	inputs.add cast type
+	// 	inputs.add keyCode
 		
 	private handleTouchEvent: InputType type, float x, float y, int id, int button
 		float2 pixelPos = {x*Platform.pixelRatio, y*Platform.pixelRatio}
@@ -166,50 +165,54 @@ unit Input
 		Platform.handleSide type, id, pixelPos, referencePos
 		
 		if Network.mode == None || Platform.mode != Record: return
-		let inputs = getInputList
-		
+		let inputs = users[Network.userId].inputs
+
 		if type == TouchMove
 			int index = getLastTouchMoveIndex id
 			if index
 				// We already moved the pointer this input frame, so just update the last move
-				inputs[index]   = Math.round(referencePos.x)
-				inputs[index+1] = Math.round(referencePos.y)
+				inputs.setInt16 index, Math.round(referencePos.x)
+				inputs.setInt16 index+2, Math.round(referencePos.y)
 				return
 			else
-				setLastTouchMoveIndex id, inputs.length+1
+				setLastTouchMoveIndex id, inputs.writePos+6
 			
-		int composite = cast(type)                                              // type:   0 -      32 ( 5 bit)
-		              + Math.shiftLeft(button < 0 ? 0 : button%8, 5)            // button: 0 -       8 ( 3 bit)
-		              + Math.shiftLeft(Math.floor(int Math.abs(id))%4194304, 8) // id:     0 - 4194304 (22 bit)
-		inputs.add composite
-		inputs.add Math.round(referencePos.x)
-		inputs.add Math.round(referencePos.y)
+		int composite = cast(type)                                          // type:   0 -  32 (5 bit)
+		              + Math.shiftLeft(button < 0 ? 0 : button%8, 5)        // button: 0 -   8 (3 bit)
+		              + Math.shiftLeft(Math.floor(int Math.abs(id))%256, 8) // id:     0 - 256 (8 bit)
+		inputs.writeInt32 Network.inputFrame
+		inputs.writeInt16 composite
+		inputs.writeInt16 Math.round(referencePos.x)
+		inputs.writeInt16 Math.round(referencePos.y)
 		
 	private handleWheelEvent: float x, float y, float delta
 		if Network.mode == None || Platform.mode != Record: return
-		let inputs = getInputList
+		let inputs = users[Network.userId].inputs
 		
 		float2 referencePos = {x*Platform.pixelRatio, y*Platform.pixelRatio}.getRelativeTo(Platform.baseMatrix)
 		InputType type = Wheel
-		inputs.add cast type
-		inputs.add Math.round(referencePos.x)
-		inputs.add Math.round(referencePos.y)
-		inputs.add Math.round(delta)
+		inputs.writeInt32 Network.inputFrame
+		inputs.writeInt16 cast type
+		inputs.writeInt16 Math.round(referencePos.x)
+		inputs.writeInt16 Math.round(referencePos.y)
+		inputs.writeInt16 Math.round(delta)
 		
 	internal parseInputs(int frame)
-		for userIndex, user -> users if user
-			Network.parseLog += " ["+frame+"]"
-			let inputs = user.inputs[frame]
-			if inputs
-				for i -> inputs.length
-					let value = inputs[i]
+		for userIndex, user -> users 
+			if user
+				Network.parseLog += " ["+frame+"]"
+				let inputs = user.inputs
+				
+				if user.nextFrame == int.maxValue and inputs.canRead: user.nextFrame = inputs.readInt32
+				while user.nextFrame <= frame
+					let value = inputs.readInt16
 					Network.parseLog += " "+value
 					InputType type = cast value % 32
 					
 					if type >= TouchDown && type <= Wheel
 						MouseButton button = cast Math.shiftRight(value, 5) % 8
 						int id = Math.shiftRight(value, 8)
-						float2 touchPos = {inputs[++i], inputs[++i]}
+						float2 touchPos = {inputs.readInt16, inputs.readInt16}
 						user.touchPos = touchPos
 						
 						if type == TouchDown
@@ -236,13 +239,13 @@ unit Input
 							user.upTouches.add {id, user, cast type, button, user.touchPos, referenceStartPosition}
 						else
 						if type == Wheel
-							let delta = inputs[++i]
+							let delta = inputs.readInt16
 							user.wheelEvents.add {user, delta, referencePosition:user.touchPos}
 					else
 					if type == TextComposition || type == TextInput
-						let length = inputs[++i]
+						let length = inputs.readInt32
 						let text = ""
-						for length: text += string.fromCharCode(inputs[++i])
+						for length: text += string.fromCharCode(inputs.readInt32)
 						if type == TextInput
 							user.textInputs.add text
 							user.textComposition = ""
@@ -251,10 +254,12 @@ unit Input
 							user.textComposition = text
 					else
 					if type == KeyDown
-						user.downKeys.add inputs[++i]
+						user.downKeys.add inputs.readInt32
 					else
 					if type == KeyUp
-						user.upKeys.add inputs[++i]
+						user.upKeys.add inputs.readInt32
+						
+					user.nextFrame = inputs.canRead ? inputs.readInt32 : int.maxValue
 				
 	// Executes code when the user touches or clicks within a given area
 	onTouchDownWithin: float2 position        // The center of the touch area
@@ -430,7 +435,7 @@ unit Input
 	// Executes code when a touch or click moves
 	onTouchMove: Touch touch 
 		         void(Touch touch) code // The code to execute when the given touch moves
-		if !touch: return
+		if !touch || !touch.user: return
 		let touchId = touch.id, user = touch.user
 		for t -> user.movingTouches
 			if t.id == touchId && t.phase != Handled
@@ -462,7 +467,7 @@ unit Input
 	onTouchUp: Touch touch
 		       void(Touch touch) code // The code to execute for each touch or click
 		       bool markAsHandled = true
-		if !touch: return
+		if !touch || !touch.user: return
 		let touchId = touch.id, user = touch.user
 		for t -> user.upTouches
 			if t.id == touchId && t.phase != Handled

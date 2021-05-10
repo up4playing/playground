@@ -198,6 +198,9 @@ unit Platform
 		const { remote } = require("electron")
 		return remote.dialog.showOpenDialogSync({ filters, properties: ['openFile'] })
 		
+	inline js void debugger
+		debugger
+		
 struct FileFilter
 	string name
 	string[] extensions

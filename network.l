@@ -1,20 +1,4 @@
-class Message
-	int senderId
-	
-Message TickMessage
-	int frames
-	int acknowledgeFrames
-	int[][] inputs
-	int checksumFor
-	float checksum
-	
-Message PingMessage
-	float pingTime
-	
-Message PongMessage
-	float timeSinceStart
-	float pingTime
-
+enum NetworkMessageType: Tick, Ping, Pong
 enum ConnectionState: Disconnected, WaitingForFirstTickMessage, Connected
 
 class Connection
@@ -32,6 +16,116 @@ class VideoScreenInfo
 	object videoElement = null
 	float2 pos
 	float width
+	
+class Buffer
+	visible int readPos, writePos
+	private object buffer = null
+	private object dataView = null
+	
+	Buffer: object buffer = null
+		    int size = 1024
+		setup(size)
+		
+	private js void setup: int size = 1024
+		if(!this.buffer) this.buffer = new ArrayBuffer(size)
+		else             this.writePos = this.buffer.byteLength
+		this.dataView = new DataView(this.buffer)
+		
+	canRead := readPos < writePos
+	setWritePos(int writePos) this.writePos = writePos
+	
+	reset
+		this.writePos = 0
+		this.readPos = 0   
+		
+	js void expandBuffer: int size
+		let prevLength = this.buffer.byteLength
+		this.buffer = new ArrayBuffer(Math.max(prevLength * 2, size))
+		let prevDataView = this.dataView
+		let newDataView = new DataView(this.buffer)
+		for(let i=0; i<prevLength; i+=2)
+			newDataView.setInt16(i, prevDataView.getInt16(i))
+		this.dataView = newDataView
+		
+	inline js void setInt16: int index, int value
+		this.dataView.setInt16(index, value)
+	
+	inline js void writeInt16: int value
+		if(this.writePos+2 > this.buffer.byteLength) this.expandBuffer((this.writePos+2)*2)
+		this.dataView.setInt16(this.writePos, value)
+		this.writePos += 2
+	
+	inline js void writeInt32: int value
+		if(this.writePos+4 > this.buffer.byteLength) this.expandBuffer((this.writePos+4)*2)
+		this.dataView.setInt32(this.writePos, value)
+		this.writePos += 4
+	
+	inline js void writeFloat64: float value
+		if(this.writePos+4 > this.buffer.byteLength) this.expandBuffer((this.writePos+4)*2)
+		this.dataView.setFloat64(this.writePos, value)
+		this.writePos += 8
+		
+	js void writeBuffer: Buffer source
+		                 int start
+		                 int length
+		let readPos = start
+		let writePos = this.writePos
+		
+		// Expand if neccessary
+		if(writePos+length+4 > this.buffer.byteLength) this.expandBuffer((writePos+length+4)*2)
+			
+		// Write length
+		this.dataView.setInt32(writePos, length)
+		writePos += 4
+		
+		// Write bytes
+		let readPosEnd = start + length
+		while(readPos < readPosEnd)
+			this.dataView.setUint8(writePos++, source.dataView.getUint8(readPos++))
+			
+		this.writePos = writePos
+	
+	js int readInt16
+		let value = this.dataView.getInt16(this.readPos)
+		this.readPos += 2
+		return value
+		
+	js int readInt32
+		let value = this.dataView.getInt32(this.readPos)
+		this.readPos += 4
+		return value
+
+	js float readFloat64
+		let value = this.dataView.getFloat64(this.readPos)
+		this.readPos += 8
+		return value
+		
+	js int readBuffer: Buffer writeBuffer
+		               int writeStart
+		let readPos = this.readPos
+		let writePos = writeStart
+		
+		// Read length
+		let length = this.dataView.getInt32(readPos)
+		readPos += 4
+		
+		// Expand writeBuffer if neccessary
+		if(writeStart+length > writeBuffer.buffer.byteLength) writeBuffer.expandBuffer((writeStart+length)*2)
+			
+		// Read bytes
+		let readPosEnd = readPos + length
+		while(readPos < readPosEnd)
+			writeBuffer.dataView.setUint8(writePos++, this.dataView.getUint8(readPos++))
+			
+		this.readPos = readPos
+		return length
+		
+	js string toString
+		let result = "readPos:" + this.readPos + " writePos:" + this.writePos
+		for(let i=0; i<this.writePos; i ++)
+			result += " " + this.dataView.getUint8(i)
+		return result
+		
 
 unit Network
 	// Logs
@@ -120,21 +214,24 @@ unit Network
 				if mode == Connected
 					for c -> connections
 						if c.state == Connected
-							let p = Input.users[c.userId]
-							TickMessage message = {
-								senderId:this.userId
-								frames:localPlayer.frames
-								acknowledgeFrames:p.frames
+							let receiver = Input.users[c.userId]
+							sendTickMessage
+								c
+								frames: localPlayer.frames
+								acknowledgePos: receiver.inputs.writePos
 								checksumFor: logicFrame-1
-								checksum: checksums[logicFrame-1]
-							}
-							int startFrame = cast Math.max(startInputFrame, p.acknowledgedFrames)
-							sentLog += " <"+c.userId+">"
-							for f = startFrame -> localPlayer.frames
-								message.inputs.add localPlayer.inputs[f]
-								sentLog += " ["+f+"]"
-								for input -> localPlayer.inputs[f]: sentLog += " "+input
-							send c, message
+								checksum: checksums[logicFrame-1] || 0
+								buffer:localPlayer.inputs
+								start:receiver.acknowledgedPos
+								end:localPlayer.inputs.writePos
+								
+							// int startFrame = Math.max(startInputFrame, p.acknowledgedFrames)
+							// sentLog += " <"+c.userId+">"
+							// for f = startFrame -> localPlayer.frames
+							// 	message.inputs.add localPlayer.inputs[f]
+							// 	sentLog += " ["+f+"]"
+							// 	for input -> localPlayer.inputs[f]: sentLog += " "+input
+							// send c, message
 			
 			int receivedFrames = getReceivedFrames * inputFrameEvery
 			if logicFrame < receivedFrames - maxAhead
@@ -223,32 +320,6 @@ unit Network
 			alert "Clients out of sync. Please click 'Save Logs' and send me the log file that will be created."
 			alertShown = true
 			
-	private onPeerMessage: Connection c, Message message
-		if message.type == TickMessage: onTickMessage c, cast message
-		if message.type == PingMessage: onPing c, cast message
-		if message.type == PongMessage: onPong c, cast message
-
-	private onTickMessage: Connection c, TickMessage message
-		let sender = Input.users[message.senderId]
-		if c.state != Connected: c.state = Connected
-
-		receivedLog += " <"+message.senderId+"> "+message.acknowledgeFrames
-		sender.frames = message.frames
-		sender.acknowledgedFrames = message.acknowledgeFrames
-		let startFrame = message.frames - message.inputs.length
-		for i, item -> message.inputs
-			sender.inputs[startFrame + i] = item
-			receivedLog += " ["+(startFrame + i)+"]"
-			for input -> item: receivedLog += " "+input
-				
-		// Checksum
-		let myChecksum = checksums[message.checksumFor] 
-		if !myChecksum
-			checksums[message.checksumFor] = message.checksum
-		else
-			if myChecksum != message.checksum: onWrongChecksum
-			eventLog += " ["+message.checksumFor+"] mine:"+myChecksum+" theirs:"+message.checksum
-			
 	private float nextPingTime
 	private float estimatedStartTimeTotal
 	private int pongCount
@@ -308,23 +379,9 @@ unit Network
 		if Platform.now >= nextPingTime
 			for c -> connections
 				if c.state != Disconnected
-					send c, PingMessage(this.userId, Platform.now)
+					sendPingMessage c, Platform.now
 			nextPingTime = Platform.now + 300
 		
-	private onPing: Connection c, PingMessage message
-		if c.state != Disconnected
-			send c, PongMessage(userId, Platform.now-startTime, message.pingTime)
-		
-	private onPong: Connection c, PongMessage message
-		float now = Platform.now
-		float pingPongTime = now - message.pingTime
-		float estimatedStartTime = now - pingPongTime/2 - message.timeSinceStart
-		print "user:"+message.senderId+" count:"+pongCount+" pingPongTime: "+pingPongTime+" estimatedStartTime:"+estimatedStartTime
-		eventLog += "user:"+message.senderId+" count:"+pongCount+" pingPongTime: "+pingPongTime+" estimatedStartTime:"+estimatedStartTime
-		if pongCount >= 2: estimatedStartTimeTotal += estimatedStartTime
-		if ++pongCount >= pingCount
-			startConnected startTime: estimatedStartTimeTotal / (pongCount - 2)
-			
 	private object socket = null
 	private string roomId = ""
 	private Connection[] connections
@@ -469,6 +526,7 @@ unit Network
 				
 				// Data channel
 				let dataChannel = peerConnection.createDataChannel("channel", {ordered: false, maxRetransmits: 0})
+				dataChannel.binaryType = "arraybuffer"
 				connection.dataChannel = dataChannel
 				dataChannel.onopen = e => {
 					log("createOffer: connection opened!")
@@ -481,7 +539,9 @@ unit Network
 					Network_onDisconnectFromPeer(connection)
 				}
 				dataChannel.onerror = e => console.log("onerror", e)
-				dataChannel.onmessage = e => Network_onPeerMessage(connection, JSON.parse(e.data));
+				dataChannel.onmessage = e => {
+					Network_onPeerMessage(connection, new Buffer(e.data))
+				}
 				console.log("createOffers: Created data channel")
 				
 				// Video
@@ -511,13 +571,16 @@ unit Network
 			peerConnection.addEventListener('datachannel', e => {
 				console.log("onReceivedOffer: received datachannel")
 				let dataChannel = e.channel
+				dataChannel.binaryType = "arraybuffer"
 				connection.dataChannel = dataChannel
 				dataChannel.onopen = e => {
 					log("onReceivedOffer: connection opened!")
 					Network_logConnectionType(peerConnection);
 					Network_onConnectedToPeer(connection, /*isNewUser*/false);
 				}
-				dataChannel.onmessage = e => Network_onPeerMessage(connection, JSON.parse(e.data));
+				dataChannel.onmessage = e => {
+					Network_onPeerMessage(connection, new Buffer(e.data))
+				}
 				dataChannel.onclose = e => console.log("onclose", e)
 				dataChannel.onclosing = e => {
 					console.log("onclosing -> disconnect", e)
@@ -551,9 +614,94 @@ unit Network
 		let connection = Network_connections.find(a => a.userId == partnerId)
 		if(connection) await connection.peerConnection.addIceCandidate(new RTCIceCandidate(message.iceCandidate));
 		
-	private js void send: Connection connection, Message message
-		// if(Math.random() < .5) setTimeout(() => Network_dataChannel.send(JSON.stringify(message)), Math.random()*250)
-		connection.dataChannel.send(JSON.stringify(message))
+	Buffer sendBuffer
+	
+	private onPeerMessage: Connection c, Buffer buffer
+		NetworkMessageType type = cast buffer.readInt16
+		if type == Tick: onTickMessage c, buffer; else
+		if type == Ping: onPingMessage c, buffer; else
+		if type == Pong: onPongMessage c, buffer;
+			
+	private void sendTickMessage: Connection c
+		                          int frames
+		                          int acknowledgePos
+		                          int checksumFor
+		                          float checksum
+		                          Buffer buffer
+		                          int start
+		                          int end
+		sendBuffer.reset
+		NetworkMessageType type = Tick
+		sendBuffer.writeInt16 cast type
+		sendBuffer.writeInt32 frames
+		sendBuffer.writeInt32 acknowledgePos
+		sendBuffer.writeInt32 checksumFor
+		sendBuffer.writeFloat64 checksum
+		sendBuffer.writeInt32 start
+		sendBuffer.writeBuffer buffer, start, end - start
+		send c, sendBuffer
+		
+	private onTickMessage: Connection c, Buffer buffer
+		let sender = Input.users[c.userId]
+		if c.state != Connected: c.state = Connected
+
+		sender.frames = buffer.readInt32
+		sender.acknowledgedPos = buffer.readInt32
+		receivedLog += " <"+c.userId+"> "+sender.acknowledgedPos
+		
+		// Checksum
+		let checksumFor = buffer.readInt32
+		let checksum = buffer.readFloat64
+		let myChecksum = checksums[checksumFor] 
+		if !myChecksum
+			checksums[checksumFor] = checksum
+		else
+			if myChecksum != checksum: onWrongChecksum
+			eventLog += " ["+checksumFor+"] mine:"+myChecksum+" theirs:"+checksum
+		
+		let writeStart = buffer.readInt32
+		let length = buffer.readBuffer sender.inputs, writeStart
+		sender.inputs.setWritePos writeStart + length
+		// let startFrame = message.frames - message.inputs.length
+		// for i, item -> message.inputs
+		// 	// sender.inputs[startFrame + i] = item
+		// 	receivedLog += " ["+(startFrame + i)+"]"
+		// 	for input -> item: receivedLog += " "+input
+				
+	private void sendPingMessage: Connection c, float pingTime
+		sendBuffer.reset
+		NetworkMessageType type = Ping
+		sendBuffer.writeInt16 cast type
+		sendBuffer.writeFloat64 pingTime
+		send c, sendBuffer
+			
+	private onPingMessage: Connection c, Buffer buffer
+		if c.state != Disconnected
+			let pingTime = buffer.readFloat64
+			sendPongMessage c, Platform.now-startTime, pingTime
+		
+	private void sendPongMessage: Connection c, float timeSinceStart, float pingTime
+		sendBuffer.reset
+		NetworkMessageType type = Pong
+		sendBuffer.writeInt16 cast type
+		sendBuffer.writeFloat64 timeSinceStart		
+		sendBuffer.writeFloat64 pingTime
+		send c, sendBuffer
+
+	private onPongMessage: Connection c, Buffer buffer
+		float now = Platform.now
+		float timeSinceStart = buffer.readFloat64
+		float pingTime = buffer.readFloat64
+		float pingPongTime = now - pingTime
+		float estimatedStartTime = now - pingPongTime/2 - timeSinceStart
+		eventLog += "user:"+c.userId+" count:"+pongCount+" pingPongTime: "+pingPongTime+" estimatedStartTime:"+estimatedStartTime
+		if pongCount >= 2: estimatedStartTimeTotal += estimatedStartTime
+		if ++pongCount >= pingCount
+			startConnected startTime: estimatedStartTimeTotal / (pongCount - 2)
+			
+	private js void send: Connection connection, Buffer buffer
+		// if(Math.random() < .5) setTimeout(() => connection.dataChannel.send(buffer.buffer), Math.random()*250)
+		connection.dataChannel.send(buffer.buffer)
 		
 	private js void setupLocalVideo: int userId
 		Network_localVideo = await navigator.mediaDevices.getUserMedia({video: true, audio: true});
