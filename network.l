@@ -155,16 +155,32 @@ unit Network
 	private float[] checksums
 	private bool alertShown
 	private int nextReconnect
+	private string randomSeed
 	
+	// init() initHandlers
+	
+	// js void initHandlers
+	// 	log("initHandlers")
+	// 	window.onbeforeunload = e => { Network_saveEventStream(); alert("onbeforeunload") }
+	// 	window.onunload = e => { alert("onunload") }
+
 	private startConnected: float startTime = 0
+		for Input.users: print "User {id}", id, frames, inputs
 		if mode == Connected: return
 		let now = Platform.now
 		this.startTime = startTime || now
 		networkFrame = Math.floor((now - this.startTime)/targetFrameTime)
 		startInputFrame = inputFrame = Math.floor(networkFrame / inputFrameEvery) + 1
 		Input.users[userId].startInputFrame startInputFrame
-		print "Start connected. startTime:"+this.startTime+" networkFrame:"+networkFrame+" startInputFrame:"+startInputFrame
-		eventLog += "Start connected"
+		for Input.users: print "User {id}", id, frames, inputs
+		int receivedFrames = getReceivedFrames * inputFrameEvery
+		print "Connected", userId, logicFrame, receivedFrames, networkFrame, startTime, startInputFrame
+		eventLog += "Connected."
+		for Input.users: print "User {id}", id, inputs
+		while logicFrame < receivedFrames - 1
+			step fastFordward:true
+		print "Replay done", logicFrame
+		for Input.users: print "User {id}", id, inputs.readPos, inputs.writePos
 		mode = Connected
 		
 	startLocal: userCount = 1
