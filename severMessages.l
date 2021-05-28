@@ -26,6 +26,7 @@ class Signal
 	int receiverId
 	string type
 	object sdp
+	int acknowledgePos
 	
 ServerMessage IceMessage
 	int receiverId

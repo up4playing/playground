@@ -98,7 +98,7 @@ unit Platform
 		if isDebug || !param || url.startsWith("file"): Network.startLocal userCount:userCount
 		else                                            Network.join roomId:param
 		sendMode
-		Network.tick
+		// Network.tick
 		
 	private stop()    mode = Pause;  startApp
 	private record()  mode = Record; sendMode; Network.resetStartTime
@@ -239,6 +239,18 @@ unit Http
 		try {
 			let response = await fetch(url, {method:"PUT", body:JSON.stringify(body)})
 			let result = await response.json()
+			code(result)
+		} catch(e) {
+			else(e.message)
+		}
+		
+	js void post: string url
+		          string body
+		          void(object result) code
+		          void(string error) else
+		try {
+			let response = await fetch(url, {method:"POST", body})
+			let result = await response.text()
 			code(result)
 		} catch(e) {
 			else(e.message)

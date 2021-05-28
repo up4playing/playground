@@ -10,6 +10,9 @@ struct int
 	inline js bool toBool := this
 	
 	inline js string toString := this.toString()
+		
+	inline js string formatWithSpaces := this.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ")
+	
 
 // A number stored as a double precision 64-bit floating point value
 struct float
@@ -302,12 +305,12 @@ interface object
 		{
 			case "object":
 				if(subject === null) return "null"
-				let result = "\{\"_type\":" + subject.constructor.name + "\""
+				let result = "\{_type:" + subject.constructor.name
 				if(depth > 0)
 					for(let name in subject)
 					{
-						let item = stringify(subject[name], depth-1)
-						if(item != "") result += ",\"" + name +"\":" + item
+						let item = object_stringify(subject[name], depth-1)
+						if(item != "") result += "," + name + ":" + item
 					}
 				return result + "\}"
 				

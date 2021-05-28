@@ -66,6 +66,18 @@ class WheelEvent
 	
 	markAsHandled() handled = true
 	
+class EventStreamUser
+	int id
+	bool local
+	int frames
+	object blob = null
+	Buffer inputs = null
+	
+class EventStream
+	string url
+	string randomSeed
+	EventStreamUser[] users
+	
 // A collection of methods to receive user input
 unit Input
 	NetworkUser[] users
@@ -108,8 +120,19 @@ unit Input
 		}
 		window.onkeydown = e => {
 			let keyCode = e.keyCode
-			if(window.require && e.key == "T" && e.ctrlKey && e.metaKey && e.shiftKey)
+			if(window.require && e.key == "t" && e.ctrlKey && e.metaKey && e.shiftKey)
 				require("electron").remote.getCurrentWindow().toggleDevTools()
+			else
+			if(e.key == "F9") {
+				Network_saveEventStream()
+			}
+			else
+			if(e.key == "F10") {
+				Network_saveLogs()
+			}
+			else
+			if(e.key == "q" && e.ctrlKey)
+				Platform_startApp()
 			else
 			if(keyCode >= 49 && keyCode <= 52 && Network_simulateConnection)
 				Network_userId = Math.min(keyCode-49, Input_users.length-1);
@@ -184,6 +207,7 @@ unit Input
 		inputs.writeInt16 composite
 		inputs.writeInt16 Math.round(referencePos.x)
 		inputs.writeInt16 Math.round(referencePos.y)
+		Network.writeLog += " [{Network.inputFrame}] {composite} {Math.round(referencePos.x)} {Math.round(referencePos.y)}"
 		
 	private handleWheelEvent: float x, float y, float delta
 		if Network.mode == None || Platform.mode != Record: return
@@ -196,13 +220,14 @@ unit Input
 		inputs.writeInt16 Math.round(referencePos.x)
 		inputs.writeInt16 Math.round(referencePos.y)
 		inputs.writeInt16 Math.round(delta)
+		Network.writeLog += " [{Network.inputFrame}] {type} {Math.round(referencePos.x)} {Math.round(referencePos.y)} {Math.round(delta)}"
 		
 	internal parseInputs(int frame)
 		for userIndex, user -> users 
 			if user
-				Network.parseLog += " ["+frame+"]"
 				let inputs = user.inputs
 				
+				Network.parseLog += " [{frame}]"
 				if user.nextFrame == int.maxValue and inputs.canRead: user.nextFrame = inputs.readInt32
 				while user.nextFrame <= frame
 					let value = inputs.readInt16
@@ -480,14 +505,23 @@ unit Input
 	// Executes code when a touch or click ends
 	onTouchUp: void(Touch touch) code // The code to execute for each touch or click
 		       bool markAsHandled = true
-		for user -> users if user
+		       int userId = -1
+		if (Network.mode == Connected || Network.simulateConnection) && userId != -1
+			NetworkUser user = users[userId]
 			for t -> user.upTouches
 				if t.phase != Handled
 					t.position = t.referencePosition.getRelativeTo(graphics.localMatrix)
 					t.startPosition = t.referenceStartPosition.getRelativeTo(graphics.localMatrix)
-					Network.touchLog += " ### onTouchUp "+t.position.x+" "+t.position.y
+					Network.touchLog += " onTouchUp ref:{t.referencePosition} matrix:{graphics.localMatrix} pos:{t.position}"
 					code t
-					if markAsHandled: t.markAsHandled
+		else
+			for user -> users if user
+				for t -> user.upTouches
+					if t.phase != Handled
+						t.position = t.referencePosition.getRelativeTo(graphics.localMatrix)
+						t.startPosition = t.referenceStartPosition.getRelativeTo(graphics.localMatrix)
+						Network.touchLog += " onTouchUp "+t.position.x+" "+t.position.y
+						code t
 
 	// Executes code when a touch or click ends
 	onWheel: void(WheelEvent event) code // The code to execute for each touch or click
