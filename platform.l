@@ -2,11 +2,14 @@ enum PlatformMode: Pause, Record, Play, Pointer, Slide
 enum ScaleMode: Auto, FixedWidth, FixedHeight, TopWidth, NoScaling
 		
 unit Platform
+	public userCount = 2
+	public bool showSafeArea = true
+	public bool showLocalPointer = false
+	
 	public inline js string url := location.href
 	public inline js int version := version
 	public inline js int userAgent := navigator.userAgent.replace(/,/g," ")
-		
-	public userCount = 2
+	
 	public float2 referenceSize = {1920, 1080}
 	public ScaleMode scaleMode = Auto, effectiveScaleMode
 	
@@ -19,7 +22,6 @@ unit Platform
 	private bool engineStarted
 	visible PlatformMode mode
 	internal bool fastForward
-	public bool showSafeArea = true
 	visible bool isMobile = true
 	
 	private init
