@@ -307,7 +307,7 @@ unit Network
 			// if logicFrame < receivedFrames
 			//	step
 			
-			step
+			step fastFordward:networkFrame <= targetFrame
 			
 			// Logs	
 			// string logTable = "Δtick,Δnetwork,networkFrame,user0,user1,user2,received,common,logic,Δreceived,checksums,events,send,receive,write,parse,touch\n"
