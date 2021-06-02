@@ -18,7 +18,7 @@ class VideoScreenInfo
 	float width
 	
 class Buffer
-	visible int readPos, writePos
+	int readPos, writePos
 	private object buffer = null
 	private object dataView = null
 	
@@ -32,7 +32,8 @@ class Buffer
 		this.dataView = new DataView(this.buffer)
 		
 	canRead := readPos < writePos
-	setWritePos(int writePos) this.writePos = writePos
+	// setWritePos(int writePos) this.writePos = writePos
+	// setReadPos(int readPos) this.readPos = readPos
 	
 	reset
 		this.writePos = 0
@@ -95,6 +96,9 @@ class Buffer
 		this.readPos += 4
 		return value
 
+	js int peekInt32
+		return this.dataView.getInt32(this.readPos)
+
 	js float readFloat64
 		let value = this.dataView.getFloat64(this.readPos)
 		this.readPos += 8
@@ -126,15 +130,14 @@ class Buffer
 			result += " " + this.dataView.getUint8(i)
 		return result
 		
-
 unit Network
 	// Logs
-	string logTable = "tickTime,networkTime,networkFrame,inputFrame,user0,user1,user2,logic,received,ahead,logicFrames,events,send,receive,write,parse,touch\n"
+	string logTable = "tickTime,networkTime,networkFrame,user0,user1,user2,received,common,logic,ahead,checksums,events,send,receive,write,parse,touch\n"
 	public string eventLog = ""; sentLog = "", receivedLog="", writeLog="", parseLog = "", touchLog = ""
 	private float lastNetworkFrame, lastTick
 	
 	internal targetFps = 30
-	private inputFrameEvery = 2, maxAhead = 10, pingCount = 6
+	private inputFrameEvery = 1, maxAhead = 10, pingCount = 6
 	private targetFrameTime = 1000/targetFps
 	
 	visible NetworkMode mode
@@ -177,11 +180,12 @@ unit Network
 			networkFrame = Math.floor((Platform.now - this.startTime)/targetFrameTime)
 		else
 			resetStartTime
-		startInputFrame = inputFrame = Math.floor(networkFrame / inputFrameEvery) + 1
-		Input.users[userId].startInputFrame startInputFrame
+		// startInputFrame = inputFrame = Math.floor(networkFrame / inputFrameEvery) + 1
+		inputFrame = networkFrame+1
+		Input.users[userId].startInputFrame inputFrame
 		// for Input.users: log "User {id}", id, frames, inputs
-		// int receivedFrames = getReceivedFrames * inputFrameEvery
-		log "Connected", userId, logicFrame, networkFrame, startTime, this.startTime, startInputFrame
+		int receivedFrames = getReceivedFrames
+		log "Connected", userId, logicFrame, networkFrame, startTime, this.startTime, inputFrame, receivedFrames
 		// for Input.users: log "User {id}", id, inputs
 		// while logicFrame < receivedFrames - 1
 		// 	step fastFordward:true
@@ -207,7 +211,7 @@ unit Network
 		// 	step
 		// 	// tick
 		// else
-		log "starting new session"
+		// log "starting new session"
 		randomSeed = Math.generateRandomSeed
 		Math.setRandomSeed randomSeed
 		for userCount: Input.users.add {id:i, local:true}
@@ -229,6 +233,9 @@ unit Network
 				if result: result += ", "
 				result += u.inputs.writePos.formatWithSpaces
 		return result
+		
+	Buffer commonState
+	int commonFrame
 		
 	internal tick
 		let now = Platform.now
@@ -253,60 +260,95 @@ unit Network
 			log "Paused {prevTargetFrame-networkFrame} frames, adjusting startTime. prevTargetTime:{prevTargetFrame} networkFrame:{networkFrame} targetFrame:{Math.floor((now - startTime)/targetFrameTime)}"
 			
 		while networkFrame <= targetFrame
+			networkFrame++
 			let localPlayer = Input.users[userId]
-			bool isInputFrame = (networkFrame % inputFrameEvery) == 0
-			inputFrame = Math.floor(networkFrame / inputFrameEvery) + 1
+			// bool isInputFrame = (networkFrame % inputFrameEvery) == 0
+			// bool isInputFrame = true
+			// inputFrame = Math.floor(networkFrame / inputFrameEvery) + 1
 			int startLogicFrame = logicFrame
 			
-			if isInputFrame
-				localPlayer.startInputFrame inputFrame
-				
-				if mode == Connected
-					for c -> connections
-						if c.state == Connected
-							let receiver = Input.users[c.userId]
-							sendTickMessage
-								c
-								frames: localPlayer.frames
-								acknowledgePos: receiver.inputs.writePos
-								checksumFor: logicFrame-1
-								checksum: checksums[logicFrame-1] || 0
-								buffer:localPlayer.inputs
-								start:receiver.acknowledgedPos
-								end:localPlayer.inputs.writePos
-								
-							// int startFrame = Math.max(startInputFrame, p.acknowledgedFrames)
-							// sentLog += " <"+c.userId+">"
-							// for f = startFrame -> localPlayer.frames
-							// 	message.inputs.add localPlayer.inputs[f]
-							// 	sentLog += " ["+f+"]"
-							// 	for input -> localPlayer.inputs[f]: sentLog += " "+input
-							// send c, message
+			// if isInputFrame
+			inputFrame = networkFrame + 1
+			localPlayer.startInputFrame networkFrame
+			
+			if mode == Connected
+				for c -> connections
+					if c.state == Connected
+						let receiver = Input.users[c.userId]
+						sendTickMessage
+							c
+							frames: networkFrame
+							acknowledgePos: receiver.inputs.writePos
+							checksumFor: logicFrame-1
+							checksum: checksums[logicFrame-1] || 0
+							buffer:localPlayer.inputs
+							start:receiver.acknowledgedPos
+							end:localPlayer.inputs.writePos
+							
+						// int startFrame = Math.max(startInputFrame, p.acknowledgedFrames)
+						// sentLog += " <"+c.userId+">"
+						// for f = startFrame -> localPlayer.frames
+						// 	message.inputs.add localPlayer.inputs[f]
+						// 	sentLog += " ["+f+"]"
+						// 	for input -> localPlayer.inputs[f]: sentLog += " "+input
+						// send c, message
 			
 			// for Input.users: log id, frames
-			int receivedFrames = getReceivedFrames * inputFrameEvery
+			int receivedFrames = getReceivedFrames
 			if logicFrame < receivedFrames - maxAhead
 				log " >>> catching up", logicFrame, receivedFrames
 				while logicFrame < receivedFrames - 1
 					step fastFordward:true
 					
-			if logicFrame < receivedFrames
-				step
+			// if logicFrame < receivedFrames
+			//	step
+			
+			step
 			
 			// Logs	
-			logTable += ""+(now - lastTick)+","+(now - lastNetworkFrame)+","+networkFrame+","+inputFrame
+			// string logTable = "Δtick,Δnetwork,networkFrame,user0,user1,user2,received,common,logic,Δreceived,checksums,events,send,receive,write,parse,touch\n"
+			logTable += ""+(now - lastTick)+","+(now - lastNetworkFrame)+","+networkFrame
 			logTable += ","+(Input.users[0] ? Input.users[0].frames : 0)
 			logTable += ","+(Input.users[1] ? Input.users[1].frames : 0)
 			logTable += ","+(Input.users[2] ? Input.users[2].frames : 0)
-			logTable += ","+logicFrame+","+receivedFrames+","+(receivedFrames-logicFrame)+","
+			logTable += ",{receivedFrames},{commonFrame},{logicFrame},{receivedFrames-logicFrame},"
 			for i = startLogicFrame -> logicFrame
 				logTable += "("+i+") "+checksums[i]
-			logTable += ",\"{eventLog}\",\"{sentLog}\",\"{receivedLog}\",\"{writeLog}\",\"{parseLog}\",\"{touchLog}\"\n"
+			logTable += ",\"{eventLog.trim}\",\"{sentLog.trim}\",\"{receivedLog.trim}\",\"{writeLog.trim}\",\"{parseLog.trim}\",\"{touchLog.trim}\"\n"
 			eventLog = ""; sentLog = ""; receivedLog = ""; writeLog = ""; parseLog = ""; touchLog = ""
 
-			networkFrame++
 			lastNetworkFrame = now
 		lastTick = now
+		
+	// inputFrame:     networkFrame + 1
+	// networkFrame:   will increase by 1 at the beginning of every {targetFrameTime} milliseconds
+	// user.frames:    for the localPlayer, user.frames will be the networkFrame
+	// receivedFrames: the lowest value of all user.frames
+	// commonFrame:    the last logic frame that has inputs from all players
+	// logicFrame:     the same as networkFrame, but adjusted during replay
+	saveCommonState
+		int receivedFrames = getReceivedFrames
+		// if logicFrame <= receivedFrames
+		// 	commonFrame = logicFrame
+		// else
+		if logicFrame == receivedFrames+1
+			for Input.users: commonReadPos = inputs.readPos
+			commonFrame = logicFrame-1
+			Serializer.serialize commonState
+			log "Save state", logicFrame, app.xPos[0], app.xPos[1], app.speed[0], app.speed[1]
+	
+	replayCommonState
+		int receivedFrames = getReceivedFrames
+		if commonFrame and receivedFrames > commonFrame
+			log "Replay state", receivedFrames, commonFrame, logicFrame, commonState
+			let currentLogicFrame = logicFrame
+			logicFrame = commonFrame
+			for Input.users: inputs.readPos = commonReadPos
+			Serializer.deserialize commonState
+			commonFrame = 0
+			log "Restore state", app.xPos[0], app.xPos[1], app.speed[0], app.speed[1]
+			while logicFrame < currentLogicFrame
+				step fastFordward:true
 		
 	private getReceivedFrames
 		if mode == Local: return Input.users[userId].frames
@@ -317,12 +359,18 @@ unit Network
 		return minFrames
 		
 	private step: bool fastFordward = false
+		logicFrame++
 		Platform.fastForward = fastFordward
 		parseLog += " #{logicFrame}"
+		if fastFordward
+			parseLog += "f"
+			log "Replay", logicFrame
+			
+		saveCommonState
 		
 		// Parse inputs
 		bool isInputFrame = logicFrame % inputFrameEvery == 0
-		if isInputFrame: Input.parseInputs(Math.floor(logicFrame / inputFrameEvery))
+		if isInputFrame: Input.parseInputs(logicFrame)
 		
 		// Tick
 		tickFrame
@@ -348,8 +396,6 @@ unit Network
 			for user -> Input.users if user
 				user.clearEvent
 				
-		logicFrame++
-		
 	internal tickFrame
 		Physics.step
 		graphics.startFrame
@@ -387,7 +433,7 @@ unit Network
 				if(eventStream) {
 					for(let user of eventStream.users) {
 						let arrayBuffer = await user.blob.arrayBuffer()
-						user.inputs = new Buffer(arrayBuffer)
+						user.inputs = new Buffer(arrayBuffer, 0, 0, 0)
 					}
 					then(eventStream)
 				} @else {
@@ -537,7 +583,6 @@ unit Network
 	
 	private ping
 		if Platform.now >= nextPingTime
-			log "ping"
 			for c -> connections
 				if c.state != Disconnected
 					sendPingMessage c, Platform.now
@@ -569,17 +614,18 @@ unit Network
 		
 	private onConnectedToServer
 		// Disabled rejoining with the same id to support testing in two browser tabs
-		if userId == -1
-			RoomInfo roomInfo = cast Platform.getLocalStorageObject "room"+roomId
-			userId = roomInfo && roomInfo.time > Platform.now - 3600000*24 ? roomInfo.userId : -1
-			log "Reconnect to session", roomInfo, userId
+		// Is this still needed if we have an eventStream?
+		// if userId == -1
+		// 	RoomInfo roomInfo = cast Platform.getLocalStorageObject "room"+roomId
+		// 	userId = roomInfo && roomInfo.time > Platform.now - 3600000*24 ? roomInfo.userId : -1
+		// 	log "Reconnect to session", roomInfo, userId
 		
 		openEventStream
 			Math.setRandomSeed eventStream.randomSeed
 			for eventStream.users
 				Input.users.add {id:u.id, local:u.local, frames:u.frames, inputs:u.inputs}
 			userId = Input.users.find(local).id
-			int receivedFrames = getReceivedFrames * inputFrameEvery
+			int receivedFrames = getReceivedFrames
 			networkFrame = receivedFrames
 			// resetStartTime
 			while logicFrame < receivedFrames - 1
@@ -618,6 +664,10 @@ unit Network
 			createOffers partnerIds
 		else
 			eventLog += Platform.dateAndTimeString + " local version:" + Platform.version + " user agent:"+Platform.userAgent+" "
+			if message.roomId != roomId
+				log "Received room id {message.roomId}"
+				let gameId = Platform.url.split("/")[3]
+				Platform.pushState null, "{gameId} {message.roomId}", "https://up4playing.com/{gameId}/{message.roomId}"
 			
 			roomId = message.roomId
 			userId = message.userId
@@ -727,7 +777,7 @@ unit Network
 					}
 					dataChannel.onerror = e => console.log("onerror", e)
 					dataChannel.onmessage = e => {
-						Network_onPeerMessage(connection, new Buffer(e.data))
+						Network_onPeerMessage(connection, new Buffer(e.data, 0, 0, 0))
 					}
 					
 					// Video
@@ -764,7 +814,7 @@ unit Network
 					Network_onConnectedToPeer(connection, /*isNewUser*/false);
 				}
 				dataChannel.onmessage = e => {
-					Network_onPeerMessage(connection, new Buffer(e.data))
+					Network_onPeerMessage(connection, new Buffer(e.data, 0, 0, 0))
 				}
 				dataChannel.onclose = e => console.log("onclose", e)
 				dataChannel.onclosing = e => {
@@ -853,10 +903,12 @@ unit Network
 		
 		let writeStart = buffer.readInt32
 		let length = buffer.readBuffer sender.inputs, writeStart
-		sender.inputs.setWritePos writeStart + length
+		sender.inputs.writePos = writeStart + length
 		
-		log sender.frames, writeStart, length, sender.acknowledgedPos
+		// log sender.frames, writeStart, length, sender.acknowledgedPos
 		receivedLog += " <{c.userId}> f:{sender.frames} a:{sender.acknowledgedPos} l:{length}"
+		
+		replayCommonState
 		
 		// if length: for Input.users: log "User {id}", id, inputs
 			
@@ -884,12 +936,11 @@ unit Network
 		log userId, localUser.id
 		localUser.frames = buffer.readInt32
 		let length = buffer.readBuffer localUser.inputs, writeStart:0
-		localUser.inputs.setWritePos length
+		localUser.inputs.writePos = length
 		log "Receiving own inputs from {c.userId}", localUser.frames, localUser.inputs.writePos, buffer, localUser.inputs
 		// for Input.users: log "User {id}", id, frames, inputs
 		
 	private void sendPingMessage: Connection c, float pingTime
-		log pingTime
 		sendBuffer.reset
 		NetworkMessageType type = Ping
 		sendBuffer.writeInt16 cast type
@@ -909,7 +960,6 @@ unit Network
 		sendBuffer.writeFloat64 timeSinceStart		
 		sendBuffer.writeFloat64 pingTime
 		send c, sendBuffer
-		log pingTime
 
 	private onPongMessage: Connection c, Buffer buffer
 		float now = Platform.now
@@ -917,9 +967,9 @@ unit Network
 		float pingTime = buffer.readFloat64
 		float pingPongTime = now - pingTime
 		float estimatedStartTime = now - pingPongTime/2 - timeSinceStart
-		eventLog += "user:"+c.userId+" count:"+pongCount+" pingPongTime: "+pingPongTime+" estimatedStartTime:"+estimatedStartTime
+		// eventLog += "user:"+c.userId+" count:"+pongCount+" pingPongTime: "+pingPongTime+" estimatedStartTime:"+estimatedStartTime
 		if pongCount >= 2: estimatedStartTimeTotal += estimatedStartTime
-		log pongCount, estimatedStartTime
+		log pongCount, pingPongTime, estimatedStartTime
 		if ++pongCount >= pingCount
 			startConnected startTime: estimatedStartTimeTotal / (pongCount - 2)
 			
@@ -928,7 +978,8 @@ unit Network
 		connection.dataChannel.send(buffer.buffer)
 		
 	private js void setupLocalVideo: int userId
-		Network_localVideo = await navigator.mediaDevices.getUserMedia({video: true, audio: true});
+		let audio = location.href.indexOf("/p/") == -1
+		Network_localVideo = await navigator.mediaDevices.getUserMedia({video: true, audio});
 		Network_createVideoElement(userId, Network_localVideo, /*local*/true)
 			
 	private js void setupRemoteVideo: int partnerId, object peerConnection
@@ -991,8 +1042,8 @@ unit Network
 		
 	internal drawFingers
 		for user -> Input.users
-			if !user.local and Framework.isVisibleFor user.touchPos, this.userId
-			// if Framework.isVisibleFor user.touchPos, this.userId
+			// if !user.local and Framework.isVisibleFor user.touchPos, this.userId
+			if Framework.isVisibleFor user.touchPos, this.userId
 				drawImage finger, user.touchPos+{11,34}, frame:user.id
 				if user.color: drawRectangle user.touchPos+{16,76}, size:{26,8}, user.color
 				

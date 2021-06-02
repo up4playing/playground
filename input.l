@@ -19,7 +19,7 @@ class NetworkUser
 	
 	Buffer inputs
 	int acknowledgedPos
-	int nextFrame = int.maxValue
+	int commonReadPos
 	
 	startInputFrame: int index
 		lastTouchMoveIndex.clear
@@ -207,7 +207,7 @@ unit Input
 		inputs.writeInt16 composite
 		inputs.writeInt16 Math.round(referencePos.x)
 		inputs.writeInt16 Math.round(referencePos.y)
-		Network.writeLog += " [{Network.inputFrame}] {composite} {Math.round(referencePos.x)} {Math.round(referencePos.y)}"
+		Network.writeLog += " [{Network.inputFrame}] {composite} {Math.round(referencePos.x)} {Math.round(referencePos.y)} \{r:{inputs.readPos} w:{inputs.writePos}\}"
 		
 	private handleWheelEvent: float x, float y, float delta
 		if Network.mode == None || Platform.mode != Record: return
@@ -220,16 +220,21 @@ unit Input
 		inputs.writeInt16 Math.round(referencePos.x)
 		inputs.writeInt16 Math.round(referencePos.y)
 		inputs.writeInt16 Math.round(delta)
-		Network.writeLog += " [{Network.inputFrame}] {type} {Math.round(referencePos.x)} {Math.round(referencePos.y)} {Math.round(delta)}"
+		Network.writeLog += " [{Network.inputFrame}] {type} {Math.round(referencePos.x)} {Math.round(referencePos.y)} {Math.round(delta)} \{r:{inputs.readPos} w:{inputs.writePos}\}"
 		
 	internal parseInputs(int frame)
+		Network.parseLog += " [{frame}]"
 		for userIndex, user -> users 
 			if user
+				Network.parseLog += " <{user.id}>"
 				let inputs = user.inputs
-				
-				Network.parseLog += " [{frame}]"
-				if user.nextFrame == int.maxValue and inputs.canRead: user.nextFrame = inputs.readInt32
-				while user.nextFrame <= frame
+					
+				while true
+					int nextFrame = inputs.canRead ? inputs.peekInt32 : int.maxValue
+						Network.parseLog += " \{r:{inputs.readPos} w:{inputs.writePos}\} *{nextFrame}"
+					if nextFrame > frame: break
+					inputs.readPos += 4
+					
 					let value = inputs.readInt16
 					Network.parseLog += " "+value
 					InputType type = cast value % 32
@@ -241,13 +246,13 @@ unit Input
 						user.touchPos = touchPos
 						
 						if type == TouchDown
-							Network.parseLog += " touchDown id:"+id+""+touchPos.x+" "+touchPos.y
+							Network.parseLog += " touchDown {touchPos.x} {touchPos.y}"
 							Touch touch = {id, user, cast type, button, touchPos, touchPos, isDown:true}
 							user.downTouches.add touch
 							user.startingTouches.add touch
 						else
 						if type == TouchMove
-							Network.parseLog += " touchMove "+touchPos.x+" "+touchPos.y
+							Network.parseLog += " touchMove {touchPos.x} {touchPos.y}"
 							let startingTouch = user.startingTouches.find a.id == id
 							let isDown = startingTouch != null
 							float2 referenceStartPosition
@@ -258,7 +263,7 @@ unit Input
 							cursor = "auto"
 						else
 						if type == TouchUp
-							Network.parseLog += " touchUp "+touchPos.x+" "+touchPos.y
+							Network.parseLog += " touchUp {touchPos.x} {touchPos.y}"
 							let startingTouch = user.startingTouches.removeWhere a.id == id
 							let referenceStartPosition = startingTouch ? startingTouch.referencePosition : float2.none
 							user.upTouches.add {id, user, cast type, button, user.touchPos, referenceStartPosition}
@@ -283,8 +288,6 @@ unit Input
 					else
 					if type == KeyUp
 						user.upKeys.add inputs.readInt32
-						
-					user.nextFrame = inputs.canRead ? inputs.readInt32 : int.maxValue
 				
 	// Executes code when the user touches or clicks within a given area
 	onTouchDownWithin: float2 position        // The center of the touch area

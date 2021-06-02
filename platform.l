@@ -95,8 +95,8 @@ unit Platform
 		if !isDebug: Network.simulateConnection = false
 		if mode <= Play: mode = Pause
 		let param = url.split("/")[4]
-		if isDebug || !param || url.startsWith("file"): Network.startLocal userCount:userCount
-		else                                            Network.join roomId:param
+		if isDebug || param == "local" || url.startsWith("file"): Network.startLocal userCount:userCount
+		else                                                      Network.join roomId:param
 		sendMode
 		// Network.tick
 		
@@ -200,6 +200,9 @@ unit Platform
 		
 	inline js void debugger
 		debugger
+		
+	inline js void pushState: object state, string title, string url = ""
+		history.pushState(state, title, url)
 		
 struct FileFilter
 	string name
