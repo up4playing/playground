@@ -27,6 +27,8 @@ struct string
 	// Returns the number of characters in the string
 	inline js int length := this.length
 	
+	inline js string get(int index) this[index]
+	
 	// Returns a string with each character converted to uppercase
 	inline js string toUpperCase := this.toUpperCase()
 		

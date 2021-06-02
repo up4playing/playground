@@ -302,10 +302,12 @@ unit Input
 		               string cursor = ""
 		               bool showTouchArea = false
 		               bool markAsHandled = true
+		let referencePosition = position.getTransformed(graphics.localMatrix)
+		let referenceRadius = radius * graphics.localMatrix.scaleVector.x
 		if (Network.mode == Connected || Network.simulateConnection) && userId != -1
 			NetworkUser user = users[userId]
 			for touch -> user.downTouches
-				if touch.phase != Handled && float2.distanceBetween(touch.referencePosition, position) <= radius
+				if touch.phase != Handled && float2.distanceBetween(touch.referencePosition, referencePosition) <= referenceRadius
 					touch.position = touch.referencePosition.getRelativeTo(graphics.localMatrix)
 					Network.touchLog += " onTouchDownWithin "+touch.position.x+" "+touch.position.y
 					code touch
@@ -313,7 +315,7 @@ unit Input
 		else
 			for user -> users if user
 				for touch -> user.downTouches
-					if touch.phase != Handled && float2.distanceBetween(touch.referencePosition, position) <= radius
+					if touch.phase != Handled && float2.distanceBetween(touch.referencePosition, referencePosition) <= referenceRadius
 						touch.position = touch.referencePosition.getRelativeTo(graphics.localMatrix)
 						Network.touchLog += " onTouchDownWithin "+touch.position.x+" "+touch.position.y
 						code touch
@@ -365,10 +367,12 @@ unit Input
 		             string cursor = ""
 		             bool showTouchArea = false
 		             bool markAsHandled = true
+		let referencePosition = position.transform(graphics.localMatrix)
+		let referenceRadius = radius * graphics.localMatrix.scaleVector.x
 		if (Network.mode == Connected || Network.simulateConnection) && userId != -1
 			NetworkUser user = users[userId]
 			for touch -> user.upTouches
-				if touch.phase != Handled && float2.distanceBetween(touch.referencePosition, position) <= radius
+				if touch.phase != Handled && float2.distanceBetween(touch.referencePosition, referencePosition) <= referenceRadius
 					touch.position = touch.referencePosition.getRelativeTo(graphics.localMatrix)
 					Network.touchLog += " onTouchUpWithin "+touch.position.x+" "+touch.position.y
 					code touch
@@ -376,7 +380,7 @@ unit Input
 		else
 			for user -> users if user
 				for touch -> user.upTouches
-					if touch.phase != Handled && float2.distanceBetween(touch.referencePosition, position) <= radius
+					if touch.phase != Handled && float2.distanceBetween(touch.referencePosition, referencePosition) <= referenceRadius
 						touch.position = touch.referencePosition.getRelativeTo(graphics.localMatrix)
 						Network.touchLog += " onTouchUpWithin "+touch.position.x+" "+touch.position.y
 						code touch

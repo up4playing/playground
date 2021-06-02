@@ -203,13 +203,24 @@ struct FileFilter
 	string[] extensions
 
 unit Http	
-	js void getJson: string url, void(object result) code
+	js void get: string url, void(object result) code
 		let response = await fetch(url)
 		code(await response.json())
 		
-	js void putText: string url 
-		             void(object result) code
-		             void(string error) else
+	js void delete: string url 
+		         void(object result) code
+		         void(string error) else
+		try {
+			let response = await fetch(url, {method:"DELETE"})
+			let result = await response.text()
+			code(result)
+		} catch(e) {
+			else(e.message)
+		}
+		
+	js void put: string url 
+		         void(object result) code
+		         void(string error) else
 		try {
 			let response = await fetch(url, {method:"PUT"})
 			let result = await response.text()
@@ -218,10 +229,10 @@ unit Http
 			else(e.message)
 		}
 		
-	js void putJson: string url
-		             object body
-		             void(object result) code
-		             void(string error) else
+	js void put: string url
+		         object body
+		         void(object result) code
+		         void(string error) else
 		try {
 			let response = await fetch(url, {method:"PUT", body:JSON.stringify(body)})
 			let result = await response.json()

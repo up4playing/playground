@@ -6,6 +6,7 @@ unit Framework
 		
 	tick
 		for <- objects: tick
+		for objects: updateBoard
 		Input.onTouchUp: touch.user.selectedObject = null
 		
 	isVisibleFor: float2 pos, int userId
@@ -59,7 +60,7 @@ class Object
 	private Spot overSpot = null
 	
 	visible float2 size
-	public Board board = null
+	public Board board = null, nextBoard = null
 	public float2 targetPos = float2.none
 	
 	private siblings := board ? board.objects : Framework.objects
@@ -72,6 +73,7 @@ class Object
 		if size.x < minSize: size.x = minSize
 		if size.y < minSize: size.y = minSize
 		this.targetAngle = angle
+		this.nextBoard = board
 	
 	remove
 		siblings.remove this
@@ -135,13 +137,14 @@ class Object
 		
 	private checkBoardsWhileMoving: Touch touch
 		float2 pos = position
-		if board
-			pos = position * board.matrix
-		Board overBoard = Framework.getBoardAt pos
-		if overBoard != board
+		if board: pos = position * board.matrix
+		nextBoard = Framework.getBoardAt pos
+		
+	updateBoard
+		if nextBoard != board
 			if board: board.objects.remove this; position = position * board.matrix; touchOffset = touchOffset * board.matrix.scaleVector
 			else      Framework.objects.remove this
-			board = overBoard
+			board = nextBoard
 			if board: board.objects.add this;    position = position / board.matrix; touchOffset = touchOffset / board.matrix.scaleVector
 			else      Framework.objects.add this
 			onBoardChanged
@@ -238,7 +241,7 @@ Object Board
 		
 	add: Object object
 		objects.add object
-		object.board = this
+		object.board = object.nextBoard = this
 		Framework.objects.remove object
 		
 	isVisibleFor: int userId
@@ -277,7 +280,10 @@ Object Board
 			drawButton icon, position:position+{size.x/2-32, -size.y/2+32}, clickableBy:owner
 				visibleForOthers = visibleForOthers == On ? Off : On
 				
-		if color: drawRectangle position, size, fillColor:color
+		if color: drawRectangle position, size, fillColor:color, layer:-1
+			
+	updateBoard
+		for objects: updateBoard
 			
 Object RectangleObject
 	Color color = White
@@ -337,7 +343,7 @@ Object Coin
 	
 	tick
 		if movable
-			Input.onTouchDownWithin position, radius:46
+			Input.onTouchDownWithin position, radius:40
 				moveTouch = touch
 				touchOffset = position - touch.position
 				siblings.moveToBack this
@@ -431,7 +437,5 @@ Object Coin
 		updateNeighbors siblings, isBeingMoved:false
 			
 		
-		
-	
 
 
