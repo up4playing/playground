@@ -279,6 +279,13 @@ class List<T>
 				resultItem = item
 		return resultItem
 		
+	count: bool(T a) predicate
+		int count = 0
+		for item -> this
+			if predicate(item)
+				count++
+		return count
+		
 	addRolling: T value
 		        int maxValues
 		add value
