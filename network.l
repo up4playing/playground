@@ -17,6 +17,10 @@ class VideoScreenInfo
 	float2 pos
 	float width
 	
+unit Serializer
+	void serialize: Buffer buffer
+	void deserialize: Buffer buffer
+	
 class Buffer
 	int readPos, writePos
 	private object buffer = null
@@ -335,7 +339,8 @@ unit Network
 			for Input.users: commonReadPos = inputs.readPos
 			commonFrame = logicFrame-1
 			Serializer.serialize commonState
-			log "Save state", logicFrame, app.xPos[0], app.xPos[1], app.speed[0], app.speed[1]
+			// log "Save state", logicFrame, app.xPos[0], app.xPos[1], app.speed[0], app.speed[1]
+			log "Save state", logicFrame
 	
 	replayCommonState
 		int receivedFrames = getReceivedFrames
@@ -346,7 +351,7 @@ unit Network
 			for Input.users: inputs.readPos = commonReadPos
 			Serializer.deserialize commonState
 			commonFrame = 0
-			log "Restore state", app.xPos[0], app.xPos[1], app.speed[0], app.speed[1]
+			// log "Restore state", app.xPos[0], app.xPos[1], app.speed[0], app.speed[1]
 			while logicFrame < currentLogicFrame
 				step fastFordward:true
 		
