@@ -594,3 +594,39 @@ struct RollingList
 		
 	// Returns true if the rolling list is not empty
 	toBool := list.length > 0
+	
+class Time
+	inline js int year := this.getFullYear()
+	inline js int month := (this.getMonth()+1)
+	inline js int date := this.getDate()
+	inline js int day := this.getDay()
+		
+	inline js int hour := this.getHours()
+	inline js int minute := this.getMinutes()
+	inline js int second := this.getSeconds()
+		
+	inline js int twoDigitMonth := (this.getMonth()+1).toLocaleString('en-US', {minimumIntegerDigits:2})
+	inline js int twoDigitDate := this.getDate().toLocaleString('en-US', {minimumIntegerDigits:2})
+	inline js int twoDigitDay := this.getDay().toLocaleString('en-US', {minimumIntegerDigits:2})
+	inline js int twoDigitHour := this.getHours().toLocaleString('en-US', {minimumIntegerDigits:2})
+	inline js int twoDigitMinute := this.getMinutes().toLocaleString('en-US', {minimumIntegerDigits:2})
+	inline js int twoDigitSecond := this.getSeconds().toLocaleString('en-US', {minimumIntegerDigits:2})
+		
+	inline js int time := this.getTime()
+		
+	static inline js Time current := new Date()
+		
+	// Return the number of milliseconds elapsed since January 1, 1970
+	static inline js int now := Date.now()
+	static inline js float preciseTime := performance.now()
+		
+	static measure: void() code
+		let startTime = preciseTime
+		code
+		return preciseTime - startTime
+		
+	static js string dateAndTimeString
+		let d = new Date()
+		let min = d.getMinutes()
+		return d.getDate()+"."+(d.getMonth()+1)+"."+d.getFullYear()+" "+d.getHours()+":"+(min < 10 ? "0"+min : min)
+

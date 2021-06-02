@@ -155,14 +155,6 @@ unit Platform
 		try   { document.body.requestFullscreen() }
 		catch { }
 		
-	// Return the number of milliseconds elapsed since January 1, 1970
-	inline js int now := Date.now()
-		
-	js string dateAndTimeString
-		let d = new Date()
-		let min = d.getMinutes()
-		return d.getDate()+"."+(d.getMonth()+1)+"."+d.getFullYear()+" "+d.getHours()+":"+(min < 10 ? "0"+min : min)
-		
 	js void createTextFile: string filename, string text
 		var element = document.createElement('a');
 		element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(text));

@@ -181,7 +181,7 @@ unit Network
 		if mode == Connected: return
 		if startTime
 			this.startTime = startTime
-			networkFrame = Math.floor((Platform.now - this.startTime)/targetFrameTime)
+			networkFrame = Math.floor((Time.now - this.startTime)/targetFrameTime)
 		else
 			resetStartTime
 		// startInputFrame = inputFrame = Math.floor(networkFrame / inputFrameEvery) + 1
@@ -219,7 +219,7 @@ unit Network
 		randomSeed = Math.generateRandomSeed
 		Math.setRandomSeed randomSeed
 		for userCount: Input.users.add {id:i, local:true}
-		startTime = Platform.now
+		startTime = Time.now
 		startApp
 		tick
 			
@@ -228,7 +228,7 @@ unit Network
 		if(window.app_start) app_start()
 		
 	resetStartTime
-		startTime = Platform.now - networkFrame*targetFrameTime// - (targetFrameTime-0.001)
+		startTime = Time.now - networkFrame*targetFrameTime// - (targetFrameTime-0.001)
 		
 	eventStreamSize
 		string result
@@ -531,7 +531,7 @@ unit Network
 		else
 		if mode == None
 			mode = Ping
-			nextPingTime = Platform.now + 300
+			nextPingTime = Time.now + 300
 			estimatedStartTimeTotal = 0
 			pongCount = 0
 			connection.state = Connected
@@ -545,7 +545,7 @@ unit Network
 		// ping the existing users to sync the startTime and calculate the networkFrame from it
 		// if mode == None
 		// 	mode = Ping
-		// 	nextPingTime = Platform.now + 300
+		// 	nextPingTime = Time.now + 300
 			
 		// New users will start sending tick messages as soon as they are done with pinging,
 		// existing users will wait for the new user to finish pinging
@@ -560,7 +560,7 @@ unit Network
 		closeConnection connection
 		connection.state = Disconnected
 		mode = Reconnecting
-		nextReconnect = Platform.now + 1000
+		nextReconnect = Time.now + 1000
 		removeVideoElement connection.userId
 		graphics.reset
 		drawText "Connection lost. Trying to reconnect...", {0,-Platform.size.y/2+32}
@@ -581,17 +581,17 @@ unit Network
 		}
 		
 	private reconnect
-		if Platform.now >= nextReconnect
+		if Time.now >= nextReconnect
 			log "Trying to reconnect"
 			join roomId
-			nextReconnect = Platform.now + 5000
+			nextReconnect = Time.now + 5000
 	
 	private ping
-		if Platform.now >= nextPingTime
+		if Time.now >= nextPingTime
 			for c -> connections
 				if c.state != Disconnected
-					sendPingMessage c, Platform.now
-			nextPingTime = Platform.now + 300
+					sendPingMessage c, Time.now
+			nextPingTime = Time.now + 300
 		
 	private object socket = null
 	private string roomId = ""
@@ -622,7 +622,7 @@ unit Network
 		// Is this still needed if we have an eventStream?
 		// if userId == -1
 		// 	RoomInfo roomInfo = cast Platform.getLocalStorageObject "room"+roomId
-		// 	userId = roomInfo && roomInfo.time > Platform.now - 3600000*24 ? roomInfo.userId : -1
+		// 	userId = roomInfo && roomInfo.time > Time.now - 3600000*24 ? roomInfo.userId : -1
 		// 	log "Reconnect to session", roomInfo, userId
 		
 		openEventStream
@@ -668,7 +668,7 @@ unit Network
 					partnerIds.add c.userId
 			createOffers partnerIds
 		else
-			eventLog += Platform.dateAndTimeString + " local version:" + Platform.version + " user agent:"+Platform.userAgent+" "
+			eventLog += Time.dateAndTimeString + " local version:" + Platform.version + " user agent:"+Platform.userAgent+" "
 			if message.roomId != roomId
 				log "Received room id {message.roomId}"
 				let gameId = Platform.url.split("/")[3]
@@ -677,7 +677,7 @@ unit Network
 			roomId = message.roomId
 			userId = message.userId
 			Input.users[message.userId] = {id:userId, local:true}
-			Platform.setLocalStorageObject "room"+roomId, RoomInfo(Platform.now, userId)
+			Platform.setLocalStorageObject "room"+roomId, RoomInfo(Time.now, userId)
 			
 			if message.version != Platform.version
 				alert "You are using an old version of this application. Please refresh your browser."
@@ -956,7 +956,7 @@ unit Network
 		log c.state
 		if c.state != Disconnected
 			let pingTime = buffer.readFloat64
-			sendPongMessage c, Platform.now-startTime, pingTime
+			sendPongMessage c, Time.now-startTime, pingTime
 		
 	private void sendPongMessage: Connection c, float timeSinceStart, float pingTime
 		sendBuffer.reset
@@ -967,7 +967,7 @@ unit Network
 		send c, sendBuffer
 
 	private onPongMessage: Connection c, Buffer buffer
-		float now = Platform.now
+		float now = Time.now
 		float timeSinceStart = buffer.readFloat64
 		float pingTime = buffer.readFloat64
 		float pingPongTime = now - pingTime
