@@ -136,9 +136,9 @@ class Buffer
 		
 unit Network
 	// Logs
-	string logTable = "tickTime,networkTime,networkFrame,user0,user1,user2,received,common,logic,ahead,checksums,events,send,receive,write,parse,touch\n"
+	string logTable = "animTime,networkTime,tickTime,drawTime,iteration,networkFrame,user0,user1,user2,received,common,logic,ahead,checksums,events,send,receive,write,parse,touch\n"
 	public string eventLog = ""; sentLog = "", receivedLog="", writeLog="", parseLog = "", touchLog = ""
-	private float lastNetworkFrame, lastTick
+	private float lastNetworkFrame, lastAnimationFrame, drawTime, tickTime
 	
 	internal targetFps = 30
 	private inputFrameEvery = 1, maxAhead = 10, pingCount = 6
@@ -221,7 +221,7 @@ unit Network
 		for userCount: Input.users.add {id:i, local:true}
 		startTime = Time.now
 		startApp
-		tick
+		animationFrame
 			
 	js void startApp
 		Network_inLobby = false
@@ -241,8 +241,9 @@ unit Network
 	Buffer commonState
 	int commonFrame
 		
-	internal tick
-		let now = Platform.now
+	internal animationFrame
+		let now = Time.now
+		
 		if mode == None || mode == Ping
 			graphics.startFrame
 			if mode == Ping: ping
@@ -262,7 +263,8 @@ unit Network
 			targetFrame = networkFrame
 			startTime = now - targetFrame*targetFrameTime - (targetFrameTime-0.001)
 			log "Paused {prevTargetFrame-networkFrame} frames, adjusting startTime. prevTargetTime:{prevTargetFrame} networkFrame:{networkFrame} targetFrame:{Math.floor((now - startTime)/targetFrameTime)}"
-			
+		
+		let startNetworkFrame = networkFrame
 		while networkFrame <= targetFrame
 			networkFrame++
 			let localPlayer = Input.users[userId]
@@ -310,8 +312,7 @@ unit Network
 			step fastFordward:networkFrame <= targetFrame
 			
 			// Logs	
-			// string logTable = "Δtick,Δnetwork,networkFrame,user0,user1,user2,received,common,logic,Δreceived,checksums,events,send,receive,write,parse,touch\n"
-			logTable += ""+(now - lastTick)+","+(now - lastNetworkFrame)+","+networkFrame
+			logTable += "{now - lastAnimationFrame},{now - lastNetworkFrame},{tickTime},{drawTime},{networkFrame-startNetworkFrame},{networkFrame}"
 			logTable += ","+(Input.users[0] ? Input.users[0].frames : 0)
 			logTable += ","+(Input.users[1] ? Input.users[1].frames : 0)
 			logTable += ","+(Input.users[2] ? Input.users[2].frames : 0)
@@ -322,7 +323,8 @@ unit Network
 			eventLog = ""; sentLog = ""; receivedLog = ""; writeLog = ""; parseLog = ""; touchLog = ""
 
 			lastNetworkFrame = now
-		lastTick = now
+		
+		lastAnimationFrame = now
 		
 	// inputFrame:     networkFrame + 1
 	// networkFrame:   will increase by 1 at the beginning of every {targetFrameTime} milliseconds
@@ -331,6 +333,7 @@ unit Network
 	// commonFrame:    the last logic frame that has inputs from all players
 	// logicFrame:     the same as networkFrame, but adjusted during replay
 	saveCommonState
+		if mode == Local: return
 		int receivedFrames = getReceivedFrames
 		// if logicFrame <= receivedFrames
 		// 	commonFrame = logicFrame
@@ -343,6 +346,7 @@ unit Network
 			log "Save state", logicFrame
 	
 	replayCommonState
+		if mode == Local: return
 		int receivedFrames = getReceivedFrames
 		if commonFrame and receivedFrames > commonFrame
 			log "Replay state", receivedFrames, commonFrame, logicFrame, commonState
@@ -367,9 +371,7 @@ unit Network
 		logicFrame++
 		Platform.fastForward = fastFordward
 		parseLog += " #{logicFrame}"
-		if fastFordward
-			parseLog += "f"
-			log "Replay", logicFrame
+		if fastFordward: parseLog += "f"
 			
 		saveCommonState
 		
@@ -378,7 +380,7 @@ unit Network
 		if isInputFrame: Input.parseInputs(logicFrame)
 		
 		// Tick
-		tickFrame
+		tick
 		
 		// Checksum
 		let myChecksum = 0
@@ -401,7 +403,7 @@ unit Network
 			for user -> Input.users if user
 				user.clearEvent
 				
-	internal tickFrame
+	internal tick
 		Physics.step
 		graphics.startFrame
 		updateVideoScreen
@@ -410,10 +412,12 @@ unit Network
 			lobby.tick
 		else
 			Timeline.tick
-			app.tick
+			tickTime = Time.measure
+				app.tick
 			Framework.tick
 			Input.updateCursor
-		graphics.finishFrame
+		drawTime = Time.measure
+			graphics.finishFrame
 			
 	private onWrongChecksum
 		eventLog += "%%% OUT OF SYNC %%%"

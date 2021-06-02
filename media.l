@@ -81,6 +81,7 @@ global unit graphics
 		graphics_items.length = 0
 
 	internal finishFrame
+		if(Platform.fastForward) return
 		items.sort b.layer - a.layer
 		for <- items: draw
 		drawSafeArea

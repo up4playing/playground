@@ -39,7 +39,7 @@ unit Platform
 		if(!Platform_isMobile) 
 			window.onresize = e => { 
 				Platform_resize();
-				if(Platform_mode == 0/*Pause*/) Network_tickFrame();
+				if(Platform_mode == 0/*Pause*/) Network_tick();
 			}
 		
 	private js void resize
@@ -109,7 +109,7 @@ unit Platform
 	private enterSlideMode(PlatformMode mode) startApp; this.mode = mode; sendMode
 	
 	private tick
-		if mode == Play || mode == Record: Network.tick
+		if mode == Play || mode == Record: Network.animationFrame
 		
 	float2 touchUpPos
 	int locationIndex
