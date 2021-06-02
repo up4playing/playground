@@ -368,6 +368,11 @@ struct Matrix2D
 		result.m5 = b1 * a4 + b3 * a5 + b5
 		return result
 
+unit Math
+	// Returns the arctangent of the quotient of the given values
+	inline js float atan2: float2 vector
+		Math.atan2(vector.y, vector.x)
+
 // Helper class for converting positions within an isomatic grid
 class IsometicGrid
 	int2 size            // The amount of cells in the grid

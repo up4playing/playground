@@ -12,6 +12,9 @@ struct int
 	inline js string toString := this.toString()
 		
 	inline js string formatWithSpaces := this.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ")
+		
+	inline js string format: int digits
+		this.toLocaleString('en-US', {minimumIntegerDigits:digits})
 	
 
 // A number stored as a double precision 64-bit floating point value
@@ -235,21 +238,24 @@ class List<T>
 		return resultValue
 		
 	max: int(T a) selector
-		int resultValue = int.minValue
+		 int threshold = int.maxValue
+		int resultValue = threshold
 		for item -> this
 			let value = selector(item)
 			if value > resultValue: resultValue = value
 		return resultValue
 		
 	max: int(T a) selector
+		 int threshold = int.maxValue
 		 bool(T a) where
-		int resultValue = int.minValue
+		int resultValue = threshold
 		for item -> this if where(item)
 			let value = selector(item)
 			if value > resultValue: resultValue = value
 		return resultValue
 		
-	withMin: int(T a) selector, int threshold = int.maxValue
+	withMin: int(T a) selector
+		     int threshold = int.maxValue
 		int resultValue = threshold
 		T resultItem
 		for item -> this
@@ -437,10 +443,6 @@ unit Math
 	// Returns the tangent of an angle in radians
 	inline js float tan: float angle // The angle in radians
 		Math.tan(angle)
-	
-	// Returns the arctangent of the quotient of the given values
-	inline js float atan2: float2 vector
-		Math.atan2(vector.y, vector.x)
 		
 	js void init
 		Math_randomGenerator = Math.random
