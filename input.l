@@ -97,11 +97,15 @@ unit Input
 			Input_handleTouchEvent(1, e.pageX, e.pageY, e.pointerId, e.button);
 		}
 		window.onpointermove = e => {
-			let id = e.pointerType == "mouse" && e.button == -1 ? e.pointerId : e.pointerId
-			Input_handleTouchEvent(2, e.pageX, e.pageY, id, e.button);
+			// TEMP
+			// let id = e.pointerType == "mouse" && e.button == -1 ? e.pointerId : e.pointerId
+			// Input_handleTouchEvent(2, e.pageX, e.pageY, id, e.button);
 		}
 		window.onpointerup = e => {
-			Input_handleTouchEvent(3, e.pageX, e.pageY, e.pointerId, e.button);
+			// TEMP
+			// Input_handleTouchEvent(3, e.pageX, e.pageY, e.pointerId, e.button);
+			
+			
 			// if(e.button == 2 && Platform_mode == 0) {
 			// 	if(Platform_mode < 3/*Pointer*/) Platform_enterSlideMode(3/*Pointer*/)
 			// 	else                             Platform_stop()

@@ -1,5 +1,6 @@
 unit lobby
 	float2[] dots
+	bool inLobby = true
 	
 	tick
 		int count = Input.users.length
@@ -16,3 +17,8 @@ unit lobby
 		Input.onTouchDown: dots.add touch.position
 		for dots: drawCircle d
 		
+	serialize: Buffer buffer
+		buffer.writeBool(inLobby)
+		
+	deserialize: Buffer buffer
+		inLobby = buffer.readBool()

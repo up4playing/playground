@@ -191,6 +191,14 @@ struct float2
 	cross: float2 value // The value to calculate the cross procut with
 		return x*value.y - y*value.x
 		
+	serialize: Buffer buffer
+		buffer.writeFloat64(x)
+		buffer.writeFloat64(y)
+		
+	deserialize: Buffer buffer
+		x = buffer.readFloat64
+		y = buffer.readFloat64
+		
 // A 2D vector comprised of an integer x and y coordinate
 struct int2
 	int x // The x-coordinate of the vector

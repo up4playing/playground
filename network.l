@@ -18,8 +18,14 @@ class VideoScreenInfo
 	float width
 	
 unit Serializer
-	void serialize: Buffer buffer
-	void deserialize: Buffer buffer
+	serialize: Buffer buffer
+		buffer.reset
+		lobby.serialize buffer
+		app.serialize buffer
+		
+	deserialize: Buffer buffer
+		lobby.deserialize buffer
+		app.deserialize buffer
 	
 class Buffer
 	int readPos, writePos
@@ -55,6 +61,11 @@ class Buffer
 	inline js void setInt16: int index, int value
 		this.dataView.setInt16(index, value)
 	
+	inline js void writeInt8: int value
+		if(this.writePos+1 > this.buffer.byteLength) this.expandBuffer((this.writePos+1)*2)
+		this.dataView.setInt8(this.writePos, value)
+		this.writePos += 1
+	
 	inline js void writeInt16: int value
 		if(this.writePos+2 > this.buffer.byteLength) this.expandBuffer((this.writePos+2)*2)
 		this.dataView.setInt16(this.writePos, value)
@@ -70,6 +81,11 @@ class Buffer
 		this.dataView.setFloat64(this.writePos, value)
 		this.writePos += 8
 		
+	inline js void writeBool: bool value
+		if(this.writePos+1 > this.buffer.byteLength) this.expandBuffer((this.writePos+1)*2)
+		this.dataView.setInt8(this.writePos, value ? 1 : 0)
+		this.writePos += 1
+	
 	js void writeBuffer: Buffer source
 		                 int start
 		                 int length
@@ -89,7 +105,14 @@ class Buffer
 			this.dataView.setUint8(writePos++, source.dataView.getUint8(readPos++))
 			
 		this.writePos = writePos
+		
+	inline js int peekInt8  := this.dataView.getInt8(this.readPos)
+	inline js int peekInt16 := this.dataView.getInt16(this.readPos)
+	inline js int peekInt32 := this.dataView.getInt32(this.readPos)
 	
+	js int readInt8
+		return this.dataView.getInt8(this.readPos++)
+		
 	js int readInt16
 		let value = this.dataView.getInt16(this.readPos)
 		this.readPos += 2
@@ -100,13 +123,13 @@ class Buffer
 		this.readPos += 4
 		return value
 
-	js int peekInt32
-		return this.dataView.getInt32(this.readPos)
-
 	js float readFloat64
 		let value = this.dataView.getFloat64(this.readPos)
 		this.readPos += 8
 		return value
+		
+	js bool readBool
+		return this.dataView.getInt8(this.readPos++) != 0
 		
 	js int readBuffer: Buffer writeBuffer
 		               int writeStart
@@ -134,6 +157,12 @@ class Buffer
 			result += " " + this.dataView.getUint8(i)
 		return result
 		
+	js string toRangeString: int start, int end
+		let result = ""
+		for(let i=start; i<end; i++)
+			result += " " + this.dataView.getUint8(i)
+		return result
+		
 unit Network
 	// Logs
 	string logTable = "animTime,networkTime,tickTime,drawTime,iteration,networkFrame,user0,user1,user2,received,common,logic,ahead,checksums,events,send,receive,write,parse,touch\n"
@@ -145,7 +174,6 @@ unit Network
 	private targetFrameTime = 1000/targetFps
 	
 	visible NetworkMode mode
-	visible bool inLobby = true
 	visible int userId = -1
 	public bool simulateConnection = true
 	
@@ -156,7 +184,7 @@ unit Network
 	private int startInputFrame
 	
 	internal int inputFrame
-	internal int logicFrame
+	visible int logicFrame
 	private int networkFrame
 	
 	private float[] checksums
@@ -224,7 +252,7 @@ unit Network
 		animationFrame
 			
 	js void startApp
-		Network_inLobby = false
+		lobby_inLobby = false
 		if(window.app_start) app_start()
 		
 	resetStartTime
@@ -238,8 +266,8 @@ unit Network
 				result += u.inputs.writePos.formatWithSpaces
 		return result
 		
-	Buffer commonState
-	int commonFrame
+	private Buffer commonState
+	private int commonFrame
 		
 	internal animationFrame
 		let now = Time.now
@@ -408,7 +436,7 @@ unit Network
 		graphics.startFrame
 		updateVideoScreen
 		drawFingers
-		if Network.inLobby
+		if lobby.inLobby
 			lobby.tick
 		else
 			Timeline.tick
@@ -869,7 +897,8 @@ unit Network
 	
 	private onPeerMessage: Connection c, Buffer buffer
 		NetworkMessageType type = cast buffer.readInt16
-		if type == Tick: onTickMessage c, buffer; else
+		// TEMP!!!
+		if type == Tick: onTickMessageDelayed c, buffer; else
 		if type == Ping: onPingMessage c, buffer; else
 		if type == Pong: onPongMessage c, buffer; else
 		if type == OwnInputsAfterReconnect: onOwnInputsAfterReconnect c, buffer;
@@ -893,11 +922,17 @@ unit Network
 		sendBuffer.writeBuffer buffer, start, end - start
 		send c, sendBuffer
 		
+		log "f:{frames} ack:{acknowledgePos} {buffer.toRangeString(start, end)}"
+		
+	
+	private js void onTickMessageDelayed: Connection c, Buffer buffer
+		setTimeout(() => Network_onTickMessage(c, buffer), 1000)
+	
 	private onTickMessage: Connection c, Buffer buffer
 		let sender = Input.users[c.userId]
 		if c.state != Connected: c.state = Connected
 
-		sender.frames = buffer.readInt32
+		sender.frames = buffer.readInt32 
 		sender.acknowledgedPos = buffer.readInt32
 		
 		// Checksum
@@ -983,9 +1018,9 @@ unit Network
 			startConnected startTime: estimatedStartTimeTotal / (pongCount - 2)
 			
 	private js void send: Connection connection, Buffer buffer
-		// if(Math.random() < .5) setTimeout(() => connection.dataChannel.send(buffer.buffer), Math.random()*250)
 		connection.dataChannel.send(buffer.buffer)
-		
+		// if(Math.random() < .5) setTimeout(() => connection.dataChannel.send(buffer.buffer), Math.random()*250)
+
 	private js void setupLocalVideo: int userId
 		let audio = location.href.indexOf("/p/") == -1
 		Network_localVideo = await navigator.mediaDevices.getUserMedia({video: true, audio});
