@@ -39,7 +39,7 @@ class Texture
 				this._htmlImage = image
 				window._htmlImageCache[this.file] = image
 				this.size = new float2(image.width, image.height, null)
-				if(Platform_mode == 0) Network_tickFrame();
+				if(Platform_mode == 0) Network_tick();
 			}
 		} else {
 			this._htmlImage = image
