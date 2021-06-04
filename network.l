@@ -165,7 +165,7 @@ class Buffer
 		
 unit Network
 	// Logs
-	string logTable = "animTime,networkTime,tickTime,drawTime,iteration,logicFrame,user0,user1,user2,received,common,logic,ahead,checksums,events,send,receive,write,parse,touch\n"
+	string logTable = "animTime,networkTime,tickTime,drawTime,iteration,logicFrame,user0,user1,user2,received,common,ahead,checksums,events,send,receive,write,parse,touch\n"
 	public string eventLog = ""; sentLog = "", receivedLog="", writeLog="", parseLog = "", touchLog = ""
 	private float lastNetworkFrame, lastAnimationFrame, drawTime, tickTime
 	
@@ -185,6 +185,7 @@ unit Network
 	
 	internal int inputFrame
 	visible int logicFrame
+	private int receivedFrames
 	
 	private float[] checksums
 	private bool alertShown
@@ -215,7 +216,7 @@ unit Network
 		inputFrame = logicFrame+1
 		Input.users[userId].startInputFrame inputFrame
 		// for Input.users: log "User {id}", id, frames, inputs
-		int receivedFrames = getReceivedFrames
+		// int receivedFrames = getReceivedFrames
 		log "Connected", userId, logicFrame, startTime, this.startTime, inputFrame, receivedFrames
 		// for Input.users: log "User {id}", id, inputs
 		// while logicFrame < receivedFrames - 1
@@ -298,7 +299,7 @@ unit Network
 		// inputFrame = Math.floor(logicFrame / inputFrameEvery) + 1
 		// int startLogicFrame = logicFrame
 		
-		if mode == Connected
+		if mode == Connected && logicFrame <= targetFrame
 			for c -> connections
 				if c.state == Connected
 					let receiver = Input.users[c.userId]
@@ -324,7 +325,7 @@ unit Network
 						// send c, message
 			
 			// for Input.users: log id, frames
-			int receivedFrames = getReceivedFrames
+			// int receivedFrames = getReceivedFrames
 			
 			// if logicFrame < receivedFrames - maxAhead
 			// 	log " >>> catching up", logicFrame, receivedFrames
@@ -341,7 +342,7 @@ unit Network
 			logTable += ","+(Input.users[0] ? Input.users[0].frames : 0)
 			logTable += ","+(Input.users[1] ? Input.users[1].frames : 0)
 			logTable += ","+(Input.users[2] ? Input.users[2].frames : 0)
-			logTable += ",{receivedFrames},{commonFrame},{logicFrame},{receivedFrames-logicFrame},{checksums[logicFrame]}"
+			logTable += ",{receivedFrames},{commonFrame},{receivedFrames-logicFrame},{checksums[logicFrame]}"
 			logTable += ",\"{eventLog.trim}\",\"{sentLog.trim}\",\"{receivedLog.trim}\",\"{writeLog.trim}\",\"{parseLog.trim}\",\"{touchLog.trim}\"\n"
 			eventLog = ""; sentLog = ""; receivedLog = ""; writeLog = ""; parseLog = ""; touchLog = ""
 
@@ -349,6 +350,7 @@ unit Network
 			// if isInputFrame
 			inputFrame = logicFrame + 1
 			localPlayer.startInputFrame logicFrame
+			receivedFrames = getReceivedFrames
 		
 		lastAnimationFrame = now
 		
@@ -359,7 +361,7 @@ unit Network
 	// commonFrame:    the last logic frame that has inputs from all players
 	saveCommonState
 		// if mode == Local: return
-		int receivedFrames = getReceivedFrames
+		// int receivedFrames = getReceivedFrames
 		// if logicFrame <= receivedFrames
 		// 	commonFrame = logicFrame
 		// else
@@ -372,7 +374,7 @@ unit Network
 	
 	replayCommonState
 		// if mode == Local: return
-		int receivedFrames = getReceivedFrames
+		// int receivedFrames = getReceivedFrames
 		if commonFrame != -1 and receivedFrames > commonFrame
 			log "Replay state", receivedFrames, commonFrame, logicFrame, commonState
 			let currentLogicFrame = logicFrame
@@ -401,8 +403,9 @@ unit Network
 		saveCommonState
 		
 		// Parse inputs
-		bool isInputFrame = logicFrame % inputFrameEvery == 0
-		if isInputFrame: Input.parseInputs(logicFrame)
+		// bool isInputFrame = logicFrame % inputFrameEvery == 0
+		// if isInputFrame: Input.parseInputs(logicFrame)
+		Input.parseInputs(logicFrame, isCertain:receivedFrames >= logicFrame)
 		
 		// Tick
 		tick
@@ -424,9 +427,9 @@ unit Network
 			eventLog += " ["+logicFrame+"] mine:"+myChecksum+" theirs:"+theirChecksum
 		
 		// Cleanup
-		if isInputFrame
-			for user -> Input.users if user
-				user.clearEvent
+		// if isInputFrame
+		for user -> Input.users if user
+			user.clearEvent
 				
 	internal tick
 		Physics.step
@@ -659,7 +662,7 @@ unit Network
 			for eventStream.users
 				Input.users.add {id:u.id, local:u.local, frames:u.frames, inputs:u.inputs}
 			userId = Input.users.find(local).id
-			int receivedFrames = getReceivedFrames
+			receivedFrames = getReceivedFrames
 			logicFrame = receivedFrames
 			// resetStartTime
 			while logicFrame < receivedFrames - 1
@@ -944,6 +947,7 @@ unit Network
 		let writeStart = buffer.readInt32
 		let length = buffer.readBuffer sender.inputs, writeStart
 		sender.inputs.writePos = writeStart + length
+		receivedFrames = getReceivedFrames
 		
 		// log sender.frames, writeStart, length, sender.acknowledgedPos
 		receivedLog += " <{c.userId}> f:{sender.frames} a:{sender.acknowledgedPos} l:{length}"

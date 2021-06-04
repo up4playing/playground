@@ -82,6 +82,7 @@ class EventStream
 unit Input
 	NetworkUser[] users
 	string cursor
+	visible bool isCertain
 
 	internal init
 		initHandlers
@@ -226,8 +227,9 @@ unit Input
 		inputs.writeInt16 Math.round(delta)
 		Network.writeLog += " [{Network.inputFrame}] {type} {Math.round(referencePos.x)} {Math.round(referencePos.y)} {Math.round(delta)} \{r:{inputs.readPos} w:{inputs.writePos}\}"
 		
-	internal parseInputs(int frame)
-		Network.parseLog += " [{frame}]"
+	internal parseInputs(int frame, bool isCertain)
+		this.isCertain = isCertain
+		if isCertain: Network.parseLog += " *certain*"
 		for userIndex, user -> users 
 			if user
 				Network.parseLog += " <{user.id}>"
@@ -235,7 +237,8 @@ unit Input
 					
 				while true
 					int nextFrame = inputs.canRead ? inputs.peekInt32 : int.maxValue
-						Network.parseLog += " \{r:{inputs.readPos} w:{inputs.writePos}\} *{nextFrame}"
+					Network.parseLog += " ({inputs.readPos}/{inputs.writePos})"
+					if inputs.canRead: Network.parseLog += " *{nextFrame}"
 					if nextFrame > frame: break
 					inputs.readPos += 4
 					
@@ -312,7 +315,7 @@ unit Input
 			for touch -> user.downTouches
 				if touch.phase != Handled && touch.referencePosition.isInsidePoygon(poly)
 					touch.position = touch.referencePosition.getRelativeTo(graphics.localMatrix)
-					Network.touchLog += " onTouchDownWithin "+touch.position.x+" "+touch.position.y
+					log "onTouchDownWithin", touch.position
 					code touch
 					if markAsHandled: touch.markAsHandled
 		else
@@ -320,7 +323,7 @@ unit Input
 				for touch -> user.downTouches
 					if touch.phase != Handled && touch.referencePosition.isInsidePoygon(poly)
 						touch.position = touch.referencePosition.getRelativeTo(graphics.localMatrix)
-						Network.touchLog += " onTouchDownWithin "+touch.position.x+" "+touch.position.y
+						log "onTouchDownWithin", touch.position
 						code touch
 						if markAsHandled: touch.markAsHandled
 			if cursor
@@ -346,7 +349,7 @@ unit Input
 			for touch -> user.downTouches
 				if touch.phase != Handled && float2.distanceBetween(touch.referencePosition, referencePosition) <= referenceRadius
 					touch.position = touch.referencePosition.getRelativeTo(graphics.localMatrix)
-					Network.touchLog += " onTouchDownWithin "+touch.position.x+" "+touch.position.y
+					log "onTouchDownWithin", touch.position
 					code touch
 					if markAsHandled: touch.markAsHandled
 		else
@@ -354,7 +357,7 @@ unit Input
 				for touch -> user.downTouches
 					if touch.phase != Handled && float2.distanceBetween(touch.referencePosition, referencePosition) <= referenceRadius
 						touch.position = touch.referencePosition.getRelativeTo(graphics.localMatrix)
-						Network.touchLog += " onTouchDownWithin "+touch.position.x+" "+touch.position.y
+						log "onTouchDownWithin", touch.position
 						code touch
 						if markAsHandled: touch.markAsHandled
 			if cursor
@@ -383,7 +386,7 @@ unit Input
 			for touch -> user.upTouches
 				if touch.phase != Handled && touch.referencePosition.isInsidePoygon(poly)
 					touch.position = touch.referencePosition.getRelativeTo(graphics.localMatrix)
-					Network.touchLog += " onTouchDownWithin "+touch.position.x+" "+touch.position.y
+					log "onTouchUpWithin", touch.position
 					code touch
 					if markAsHandled: touch.markAsHandled
 		else
@@ -391,7 +394,7 @@ unit Input
 				for touch -> user.upTouches
 					if touch.phase != Handled && touch.referencePosition.isInsidePoygon(poly)
 						touch.position = touch.referencePosition.getRelativeTo(graphics.localMatrix)
-						Network.touchLog += " onTouchDownWithin "+touch.position.x+" "+touch.position.y
+						log "onTouchUpWithin", touch.position
 						code touch
 						if markAsHandled: touch.markAsHandled
 		if showTouchArea: drawRectangle position, size, fillColor:{"ff000080"}
@@ -411,7 +414,7 @@ unit Input
 			for touch -> user.upTouches
 				if touch.phase != Handled && float2.distanceBetween(touch.referencePosition, referencePosition) <= referenceRadius
 					touch.position = touch.referencePosition.getRelativeTo(graphics.localMatrix)
-					Network.touchLog += " onTouchUpWithin "+touch.position.x+" "+touch.position.y
+					log "onTouchUpWithin", touch.position
 					code touch
 					if markAsHandled: touch.markAsHandled
 		else
@@ -419,7 +422,7 @@ unit Input
 				for touch -> user.upTouches
 					if touch.phase != Handled && float2.distanceBetween(touch.referencePosition, referencePosition) <= referenceRadius
 						touch.position = touch.referencePosition.getRelativeTo(graphics.localMatrix)
-						Network.touchLog += " onTouchUpWithin "+touch.position.x+" "+touch.position.y
+						log "onTouchUpWithin", touch.position
 						code touch
 						if markAsHandled: touch.markAsHandled
 			if cursor
@@ -438,14 +441,14 @@ unit Input
 			for touch -> user.downTouches
 				if touch.phase != Handled
 					touch.position = touch.referencePosition.getRelativeTo(graphics.localMatrix)
-					Network.touchLog += " onTouchDown "+touch.position.x+" "+touch.position.y
+					log "onTouchDown", touch.position
 					code touch
 		else
 			for user -> users if user
 				for touch -> user.downTouches
 					if touch.phase != Handled
 						touch.position = touch.referencePosition.getRelativeTo(graphics.localMatrix)
-						Network.touchLog += " onTouchDown "+touch.position.x+" "+touch.position.y
+						log "onTouchDown", touch.position
 						code touch
 
 	// Executes code when the user touches, even if the touch is already handled
@@ -455,13 +458,13 @@ unit Input
 			NetworkUser user = users[userId]
 			for touch -> user.downTouches
 				touch.position = touch.referencePosition.getRelativeTo(graphics.localMatrix)
-				Network.touchLog += " onTouchDown "+touch.position.x+" "+touch.position.y
+				log "onTouchDownAny", touch.position
 				code touch
 		else
 			for user -> users if user
 				for touch -> user.downTouches
 					touch.position = touch.referencePosition.getRelativeTo(graphics.localMatrix)
-					Network.touchLog += " onTouchDown "+touch.position.x+" "+touch.position.y
+					log "onTouchDownAny", touch.position
 					code touch
 			
 	// Executes code when a touch or click moves
@@ -473,7 +476,7 @@ unit Input
 			if t.id == touchId && t.phase != Handled
 				t.position = t.referencePosition.getRelativeTo(graphics.localMatrix)
 				t.startPosition = t.referenceStartPosition.getRelativeTo(graphics.localMatrix)
-				Network.touchLog += " onTouchMove ref:{t.referencePosition} matrix:{graphics.localMatrix} pos:{t.position}"
+				log "onTouchMove", touch.position
 				code t
 	
 	// Executes code when a touch or click moves
@@ -485,7 +488,7 @@ unit Input
 				if t.phase != Handled
 					t.position = t.referencePosition.getRelativeTo(graphics.localMatrix)
 					t.startPosition = t.referenceStartPosition.getRelativeTo(graphics.localMatrix)
-					Network.touchLog += " onTouchMove ref:{t.referencePosition} matrix:{graphics.localMatrix} pos:{t.position}"
+					log "onTouchMove", t.position
 					code t
 		else
 			for user -> users if user
@@ -493,7 +496,7 @@ unit Input
 					if t.phase != Handled
 						t.position = t.referencePosition.getRelativeTo(graphics.localMatrix)
 						t.startPosition = t.referenceStartPosition.getRelativeTo(graphics.localMatrix)
-						Network.touchLog += " onTouchMove "+t.position.x+" "+t.position.y
+						log "onTouchMove", t.position
 						code t
 					
 	onTouchUp: Touch touch
@@ -505,7 +508,7 @@ unit Input
 			if t.id == touchId && t.phase != Handled
 				t.position = t.referencePosition.getRelativeTo(graphics.localMatrix)
 				t.startPosition = t.referenceStartPosition.getRelativeTo(graphics.localMatrix)
-				Network.touchLog += " ### onTouchUp "+t.position.x+" "+t.position.y
+				log "onTouchUp", t.position
 				code t
 				if markAsHandled: t.markAsHandled
 				
@@ -519,7 +522,8 @@ unit Input
 				if t.phase != Handled
 					t.position = t.referencePosition.getRelativeTo(graphics.localMatrix)
 					t.startPosition = t.referenceStartPosition.getRelativeTo(graphics.localMatrix)
-					Network.touchLog += " onTouchUp ref:{t.referencePosition} matrix:{graphics.localMatrix} pos:{t.position}"
+					log "onTouchUp", t.position
+					// Network.touchLog += " onTouchUp ref:{t.referencePosition} matrix:{graphics.localMatrix} pos:{t.position}"
 					code t
 		else
 			for user -> users if user
@@ -527,8 +531,11 @@ unit Input
 					if t.phase != Handled
 						t.position = t.referencePosition.getRelativeTo(graphics.localMatrix)
 						t.startPosition = t.referenceStartPosition.getRelativeTo(graphics.localMatrix)
-						Network.touchLog += " onTouchUp "+t.position.x+" "+t.position.y
+						log "onTouchUp", t.position
 						code t
+						
+	private log: string text, float2 pos
+		Network.touchLog += " #{Network.logicFrame}{isCertain ? " *certain*" : ""} {text} {pos}"
 
 	// Executes code when a touch or click ends
 	onWheel: void(WheelEvent event) code // The code to execute for each touch or click
@@ -554,7 +561,7 @@ unit Input
 			for event -> user.wheelEvents
 				if !event.handled && event.referencePosition.isInsidePoygon(poly)
 					event.position = event.referencePosition.getRelativeTo(graphics.localMatrix)
-					Network.touchLog += " onWheel {event.delta} {event.position}"
+					log "onWheelWithin", event.position
 					code event
 					if markAsHandled: event.markAsHandled
 		else
@@ -562,7 +569,7 @@ unit Input
 				for event -> user.wheelEvents
 					if !event.handled && event.referencePosition.isInsidePoygon(poly)
 						event.position = event.referencePosition.getRelativeTo(graphics.localMatrix)
-						Network.touchLog += " onWheel {event.delta} {event.position}"
+						log "onWheelWithin", event.position
 						code event
 						if markAsHandled: event.markAsHandled
 		if fill: drawRectangle position, size, fill
