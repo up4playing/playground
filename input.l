@@ -3,7 +3,7 @@ class NetworkUser
 	bool local
 	Color color = null
 	
-	int frames
+	int frame
 	
 	float2 touchPos = {0,0}
 	visible Touch[] downTouches, movingTouches, upTouches
@@ -24,7 +24,7 @@ class NetworkUser
 	startInputFrame: int index
 		lastTouchMoveIndex.clear
 		lastTextInputIndex = -1
-		frames = index
+		frame = index
 	
 	clearEvent:
 		downTouches.clear
@@ -69,7 +69,7 @@ class WheelEvent
 class EventStreamUser
 	int id
 	bool local
-	int frames
+	int frame
 	object blob = null
 	Buffer inputs = null
 	
@@ -535,7 +535,7 @@ unit Input
 						code t
 						
 	private log: string text, float2 pos
-		Network.touchLog += " #{Network.logicFrame}{isCertain ? " *certain*" : ""} {text} {pos}"
+		Network.touchLog += " #{Network.frame}{isCertain ? " *certain*" : ""} {text} {pos}"
 
 	// Executes code when a touch or click ends
 	onWheel: void(WheelEvent event) code // The code to execute for each touch or click

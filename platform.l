@@ -142,7 +142,7 @@ unit Platform
 		_sendToEditor({type:"touch", id, x:pos.x, y:pos.y, phase, row, column, file})
 	
 	private js void sendMode
-		if(Platform_isDebug) _sendToEditor({type:"setPlatformMode", mode:Platform_mode, frame:Network_logicFrame})
+		if(Platform_isDebug) _sendToEditor({type:"setPlatformMode", mode:Platform_mode, frame:Network_frame})
 
 	private inline js void sendEvaluateFinished
 		if(Platform_isDebug) _sendToEditor({type:"evaluateFinished"})

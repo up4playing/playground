@@ -165,9 +165,10 @@ class Buffer
 		
 unit Network
 	// Logs
-	string logTable = "animTime,networkTime,tickTime,drawTime,iteration,logicFrame,user0,user1,user2,received,common,ahead,checksums,events,send,receive,write,parse,touch\n"
+	string logTable = "animTime,networkTime,tickTime,drawTime,iteration,restoreTime,replayFrames,replayTime,saveTime,frame,user0,user1,user2,received,common,ahead,checksums,events,send,receive,write,parse,touch\n"
 	public string eventLog = ""; sentLog = "", receivedLog="", writeLog="", parseLog = "", touchLog = ""
-	private float lastNetworkFrame, lastAnimationFrame, drawTime, tickTime
+	private float lastNetworkFrame, lastAnimationFrame, drawTime, tickTime, restoreTime, replayTime, saveTime
+	private int replayFrames
 	
 	internal targetFps = 30
 	private inputFrameEvery = 1, maxAhead = 10, pingCount = 6
@@ -184,7 +185,7 @@ unit Network
 	private int startInputFrame
 	
 	internal int inputFrame
-	visible int logicFrame
+	visible int frame
 	private int receivedFrames
 	
 	private float[] checksums
@@ -205,23 +206,23 @@ unit Network
 		print str
 
 	private startConnected: float startTime = 0
-		// for Input.users: log "User {id}", id, frames, inputs
+		// for Input.users: log "User {id}", id, frame, inputs
 		if mode == Connected: return
 		if startTime
 			this.startTime = startTime
-			// logicFrame = Math.floor((Time.now - this.startTime)/targetFrameTime)
+			// frame = Math.floor((Time.now - this.startTime)/targetFrameTime)
 		else
 			resetStartTime
-		// startInputFrame = inputFrame = Math.floor(logicFrame / inputFrameEvery) + 1
-		inputFrame = logicFrame+1
+		// startInputFrame = inputFrame = Math.floor(frame / inputFrameEvery) + 1
+		inputFrame = frame+1
 		Input.users[userId].startInputFrame inputFrame
-		// for Input.users: log "User {id}", id, frames, inputs
+		// for Input.users: log "User {id}", id, frame, inputs
 		// int receivedFrames = getReceivedFrames
-		log "Connected", userId, logicFrame, startTime, this.startTime, inputFrame, receivedFrames
+		log "Connected", userId, frame, startTime, this.startTime, inputFrame, receivedFrames
 		// for Input.users: log "User {id}", id, inputs
-		// while logicFrame < receivedFrames - 1
+		// while frame < receivedFrames - 1
 		// 	step fastFordward:true
-		// log "Replay done", logicFrame
+		// log "Replay done", frame
 		// for Input.users: log "User {id}", id, inputs.readPos, inputs.writePos
 		mode = Connected
 		
@@ -233,12 +234,12 @@ unit Network
 		// 	log "opening session from event stream"
 		// 	Math.setRandomSeed eventStream.randomSeed
 		// 	for eventStream.users
-		// 		Input.users.add {id:u.id, local:u.local, frames:u.frames, inputs:u.inputs}
+		// 		Input.users.add {id:u.id, local:u.local, frame:u.frame, inputs:u.inputs}
 		// 	int receivedFrames = getReceivedFrames * inputFrameEvery
-		// 	logicFrame = receivedFrames
+		// 	frame = receivedFrames
 		// 	resetStartTime
 		// 	startApp
-		// 	while logicFrame < receivedFrames - 1
+		// 	while frame < receivedFrames - 1
 		// 		step fastFordward:true
 		// 	step
 		// 	// tick
@@ -256,7 +257,7 @@ unit Network
 		if(window.app_start) app_start()
 		
 	resetStartTime
-		startTime = Time.now - logicFrame*targetFrameTime// - (targetFrameTime-0.001)
+		startTime = Time.now - frame*targetFrameTime// - (targetFrameTime-0.001)
 		
 	eventStreamSize
 		string result
@@ -284,128 +285,138 @@ unit Network
 			reconnect
 			return
 			
-		let targetFrame = Math.floor((now - startTime)/targetFrameTime)
-		if mode == Local && targetFrame > logicFrame + targetFps*2
+		let targetFrame = Math.floor((now - startTime)/targetFrameTime)+1
+		if mode == Local && targetFrame > frame + targetFps*2
 			// After a long pause in local mode, we do not want to process all missed frames, so we adjust the start time
 			let prevTargetFrame = targetFrame
-			targetFrame = logicFrame
-			startTime = now - targetFrame*targetFrameTime - (targetFrameTime-0.001)
-			log "Paused {prevTargetFrame-logicFrame} frames, adjusting startTime. prevTargetTime:{prevTargetFrame} logicFrame:{logicFrame} targetFrame:{Math.floor((now - startTime)/targetFrameTime)}"
+			targetFrame = frame
+			// startTime = now - targetFrame*targetFrameTime - (targetFrameTime-0.001)
+			startTime = now - targetFrame*targetFrameTime
+			log "Paused {prevTargetFrame-frame} frames, adjusting startTime. prevTargetTime:{prevTargetFrame} frame:{frame} targetFrame:{Math.floor((now - startTime)/targetFrameTime)}"
 		
-		let startNetworkFrame = logicFrame
-		let localPlayer = Input.users[userId]
-		// bool isInputFrame = (logicFrame % inputFrameEvery) == 0
-		// bool isInputFrame = true
-		// inputFrame = Math.floor(logicFrame / inputFrameEvery) + 1
-		// int startLogicFrame = logicFrame
-		
-		if mode == Connected && logicFrame <= targetFrame
-			for c -> connections
-				if c.state == Connected
-					let receiver = Input.users[c.userId]
-					sendTickMessage
-						c
-						frames: targetFrame+1
-						acknowledgePos: receiver.inputs.writePos
-						checksumFor: targetFrame-1
-						checksum: checksums[targetFrame-1] || 0
-						buffer:localPlayer.inputs
-						start:receiver.acknowledgedPos
-						end:localPlayer.inputs.writePos
-						
-		while logicFrame <= targetFrame
-
+		if frame < targetFrame
+			let startNetworkFrame = frame
+			let localPlayer = Input.users[userId]
+			// bool isInputFrame = (frame % inputFrameEvery) == 0
+			// bool isInputFrame = true
+			// inputFrame = Math.floor(frame / inputFrameEvery) + 1
+			// int startframe = frame
+			
+			if mode == Connected
+				for c -> connections
+					if c.state == Connected
+						let receiver = Input.users[c.userId]
+						sendTickMessage
+							c
+							frame: targetFrame
+							acknowledgePos: receiver.inputs.writePos
+							checksumFor: targetFrame-1
+							checksum: checksums[targetFrame-1] || 0
+							buffer:localPlayer.inputs
+							start:receiver.acknowledgedPos
+							end:localPlayer.inputs.writePos
 							
-						// int startFrame = Math.max(startInputFrame, p.acknowledgedFrames)
-						// sentLog += " <"+c.userId+">"
-						// for f = startFrame -> localPlayer.frames
-						// 	message.inputs.add localPlayer.inputs[f]
-						// 	sentLog += " ["+f+"]"
-						// 	for input -> localPlayer.inputs[f]: sentLog += " "+input
-						// send c, message
-			
-			// for Input.users: log id, frames
-			// int receivedFrames = getReceivedFrames
-			
-			// if logicFrame < receivedFrames - maxAhead
-			// 	log " >>> catching up", logicFrame, receivedFrames
-			// 	while logicFrame < receivedFrames - 1
-			// 		step fastFordward:true
-					
-			// if logicFrame < receivedFrames
-			//	step
-			
-			step fastFordward:logicFrame < targetFrame
-			
-			// Logs	
-			logTable += "{now - lastAnimationFrame},{now - lastNetworkFrame},{tickTime},{drawTime},{logicFrame-startNetworkFrame},{logicFrame}"
-			logTable += ","+(Input.users[0] ? Input.users[0].frames : 0)
-			logTable += ","+(Input.users[1] ? Input.users[1].frames : 0)
-			logTable += ","+(Input.users[2] ? Input.users[2].frames : 0)
-			logTable += ",{receivedFrames},{commonFrame},{receivedFrames-logicFrame},{checksums[logicFrame]}"
-			logTable += ",\"{eventLog.trim}\",\"{sentLog.trim}\",\"{receivedLog.trim}\",\"{writeLog.trim}\",\"{parseLog.trim}\",\"{touchLog.trim}\"\n"
-			eventLog = ""; sentLog = ""; receivedLog = ""; writeLog = ""; parseLog = ""; touchLog = ""
-
-			lastNetworkFrame = now
-			// if isInputFrame
-			inputFrame = logicFrame + 1
-			localPlayer.startInputFrame logicFrame
-			receivedFrames = getReceivedFrames
+			replayState
+							
+			while frame < targetFrame
+	
+								
+							// int startFrame = Math.max(startInputFrame, p.acknowledgedFrames)
+							// sentLog += " <"+c.userId+">"
+							// for f = startFrame -> localPlayer.frame
+							// 	message.inputs.add localPlayer.inputs[f]
+							// 	sentLog += " ["+f+"]"
+							// 	for input -> localPlayer.inputs[f]: sentLog += " "+input
+							// send c, message
+				
+				// for Input.users: log id, frame
+				// int receivedFrames = getReceivedFrames
+				
+				// if frame < receivedFrames - maxAhead
+				// 	log " >>> catching up", frame, receivedFrames
+				// 	while frame < receivedFrames - 1
+				// 		step fastFordward:true
+						
+				// if frame < receivedFrames
+				//	step
+				
+				step fastFordward:frame < targetFrame-1
+				
+				// Logs	
+				logTable += "{now - lastAnimationFrame},{now - lastNetworkFrame},{tickTime},{drawTime},{frame-startNetworkFrame}"
+				logTable += ",{restoreTime},{replayFrames},{replayTime},{saveTime},{frame}"
+				logTable += ","+(Input.users[0] ? Input.users[0].frame : 0)
+				logTable += ","+(Input.users[1] ? Input.users[1].frame : 0)
+				logTable += ","+(Input.users[2] ? Input.users[2].frame : 0)
+				logTable += ",{receivedFrames},{commonFrame},{receivedFrames-frame},{checksums[frame]}"
+				logTable += ",\"{eventLog.trim}\",\"{sentLog.trim}\",\"{receivedLog.trim}\",\"{writeLog.trim}\",\"{parseLog.trim}\",\"{touchLog.trim}\"\n"
+				eventLog = ""; sentLog = ""; receivedLog = ""; writeLog = ""; parseLog = ""; touchLog = ""
+	
+				lastNetworkFrame = now
+				// if isInputFrame
+				inputFrame = frame + 1
+				localPlayer.startInputFrame frame
+				receivedFrames = getReceivedFrames
 		
 		lastAnimationFrame = now
 		
-	// inputFrame:     logicFrame + 1
-	// logicFrame:     will increase by 1 at the beginning of every {targetFrameTime} milliseconds
-	// user.frames:    for the localPlayer, user.frames will be the logicFrame
-	// receivedFrames: the lowest value of all user.frames
+	// frame:          will increase by 1 at the beginning of every {targetFrameTime} milliseconds
+	// user.frame:     for the localPlayer, user.frame will be the frame
+	// receivedFrames: the lowest value of all user.frame
 	// commonFrame:    the last logic frame that has inputs from all players
-	saveCommonState
-		// if mode == Local: return
+	// inputFrame:     frame + 1
+		
+	saveState
+		if mode == Local: return
 		// int receivedFrames = getReceivedFrames
-		// if logicFrame <= receivedFrames
-		// 	commonFrame = logicFrame
+		// if frame <= receivedFrames
+		// 	commonFrame = frame
 		// else
-		if logicFrame == receivedFrames+1
+		if frame == receivedFrames+1
 			for Input.users: commonReadPos = inputs.readPos
-			commonFrame = logicFrame-1
-			Serializer.serialize commonState
-			log "Saving state", logicFrame, app.nextClickTime, app.dots.length, "dots:{app.dots.length > 0 ? app.dots[0].toString : ""}"
-			// log "Save state", logicFrame
+			commonFrame = frame-1
+			saveTime = Time.measure
+				Serializer.serialize commonState
+			log "Saving state", frame, app.nextClickTime, app.dots.length, "dots:{app.dots.length > 0 ? app.dots[0].toString : ""}"
+			// log "Save state", frame
 	
-	replayCommonState
-		// if mode == Local: return
+	replayState
+		if mode == Local: return
 		// int receivedFrames = getReceivedFrames
 		if commonFrame != -1 and receivedFrames > commonFrame
-			log "Replay state", receivedFrames, commonFrame, logicFrame, commonState
-			let currentLogicFrame = logicFrame
-			logicFrame = commonFrame
+			log "Replay state", receivedFrames, commonFrame, frame, commonState
+			let currentFrame = frame
+			frame = commonFrame
 			for Input.users: inputs.readPos = commonReadPos
-			Serializer.deserialize commonState
+			restoreTime = Time.measure
+				Serializer.deserialize commonState
 			commonFrame = -1
 			log "Restore state", app.nextClickTime, app.dots.length, "dots:{app.dots.length > 0 ? app.dots[0].toString : ""}"
-			while logicFrame < currentLogicFrame
-				step fastFordward:true
+			replayFrames = currentFrame - frame
+			replayTime = Time.measure
+				while frame < currentFrame
+					step fastFordward:true
 		
 	private getReceivedFrames
-		if mode == Local: return Input.users[userId].frames
+		if mode == Local: return Input.users[userId].frame
 		int minFrames = -1
 		for user -> Input.users
-			if user && (minFrames == -1 || user.frames < minFrames)
-				minFrames = user.frames
+			if user && (minFrames == -1 || user.frame < minFrames)
+				minFrames = user.frame
 		return minFrames
 		
 	private step: bool fastFordward = false
-		logicFrame++
+		frame++
 		Platform.fastForward = fastFordward
-		parseLog += " #{logicFrame}"
+		parseLog += " #{frame}"
 		if fastFordward: parseLog += "f"
 			
-		saveCommonState
+		saveState
 		
 		// Parse inputs
-		// bool isInputFrame = logicFrame % inputFrameEvery == 0
-		// if isInputFrame: Input.parseInputs(logicFrame)
-		Input.parseInputs(logicFrame, isCertain:receivedFrames >= logicFrame)
+		// bool isInputFrame = frame % inputFrameEvery == 0
+		// if isInputFrame: Input.parseInputs(frame)
+		Input.parseInputs(frame, isCertain:receivedFrames >= frame)
 		
 		// Tick
 		tick
@@ -419,12 +430,12 @@ unit Network
 				let m = board.matrix
 				myChecksum += m.m0 + m.m1 + m.m2 + m.m3 + m.m4 + m.m5
 				
-		let theirChecksum = checksums[logicFrame]
+		let theirChecksum = checksums[frame]
 		if !theirChecksum
-			checksums[logicFrame] = myChecksum
+			checksums[frame] = myChecksum
 		else
 			if theirChecksum != myChecksum: onWrongChecksum
-			eventLog += " ["+logicFrame+"] mine:"+myChecksum+" theirs:"+theirChecksum
+			eventLog += " ["+frame+"] mine:"+myChecksum+" theirs:"+theirChecksum
 		
 		// Cleanup
 		// if isInputFrame
@@ -508,7 +519,7 @@ unit Network
 			users.push({
 				id: user.id,
 				local: user.local,
-				frames: user.frames,
+				frame: user.frame,
 				blob: new Blob([dataView]),
 				inputs: null
 			})
@@ -531,7 +542,7 @@ unit Network
 	private onConnectedToPeer: Connection connection
 		                       bool isNewUser // Did this user just join the already exiting users (and make the offer)
 		
-		// for Input.users: log "User {id}", id, frames, inputs
+		// for Input.users: log "User {id}", id, frame, inputs
 			
 		// if mode == Reconnecting
 		// 	// mode = Connected
@@ -551,7 +562,7 @@ unit Network
 		// 	log "Reconnected", isHost
 		// 	if isHost
 		// 		let user = Input.users[connection.userId]
-		// 		sendOwnInputsAfterReconnectMessage connection, user.frames, user.inputs
+		// 		sendOwnInputsAfterReconnectMessage connection, user.frame, user.inputs
 				
 		// 	// return
 			
@@ -574,7 +585,7 @@ unit Network
 			log "Answering user, waiting for ping", connection.userId, userId, mode, connection.state
 		
 		// The first user will enter the "connected" state right away, all later uers will first 
-		// ping the existing users to sync the startTime and calculate the logicFrame from it
+		// ping the existing users to sync the startTime and calculate the frame from it
 		// if mode == None
 		// 	mode = Ping
 		// 	nextPingTime = Time.now + 300
@@ -585,7 +596,7 @@ unit Network
 		// connection.state = isNewUser ? Connected : WaitingForFirstTickMessage
 		
 		log connection.userId, isNewUser, mode, connection.state
-		// for Input.users: log "User {id}", id, frames, inputs
+		// for Input.users: log "User {id}", id, frame, inputs
 		
 	private onDisconnectFromPeer: Connection connection
 		log "onDisconnectFromPeer userId:"+connection.userId
@@ -660,18 +671,18 @@ unit Network
 		openEventStream
 			Math.setRandomSeed eventStream.randomSeed
 			for eventStream.users
-				Input.users.add {id:u.id, local:u.local, frames:u.frames, inputs:u.inputs}
+				Input.users.add {id:u.id, local:u.local, frame:u.frame, inputs:u.inputs}
 			userId = Input.users.find(local).id
 			receivedFrames = getReceivedFrames
-			logicFrame = receivedFrames
+			frame = receivedFrames
 			// resetStartTime
-			while logicFrame < receivedFrames - 1
+			while frame < receivedFrames - 1
 				step fastFordward:true
 			step
-			log "Opening saved eventstream", roomId, logicFrame, eventStreamSize
+			log "Opening saved eventstream", roomId, frame, eventStreamSize
 			sendToServer JoinMessage roomId, userId, version:Platform.version
 		else
-			logicFrame = 0
+			frame = 0
 			log "onConnectedToServer {roomId} connect as user {userId}"
 			sendToServer JoinMessage roomId, userId, version:Platform.version
 		
@@ -718,7 +729,7 @@ unit Network
 			createOffers message.partnerIds
 			
 			// The first user will enter the "connected" state right away, all later uers will first 
-			// ping the existing users to sync the startTime and calculate the logicFrame from it
+			// ping the existing users to sync the startTime and calculate the frame from it
 			if userId == 0: startConnected
 	
 	private onSignal: SignalMessage message
@@ -906,7 +917,7 @@ unit Network
 		if type == OwnInputsAfterReconnect: onOwnInputsAfterReconnect c, buffer;
 			
 	private void sendTickMessage: Connection c
-		                          int frames
+		                          int frame
 		                          int acknowledgePos
 		                          int checksumFor
 		                          float checksum
@@ -916,7 +927,7 @@ unit Network
 		sendBuffer.reset
 		NetworkMessageType type = Tick
 		sendBuffer.writeInt16 cast type
-		sendBuffer.writeInt32 frames
+		sendBuffer.writeInt32 frame
 		sendBuffer.writeInt32 acknowledgePos
 		sendBuffer.writeInt32 checksumFor
 		sendBuffer.writeFloat64 checksum
@@ -924,14 +935,14 @@ unit Network
 		sendBuffer.writeBuffer buffer, start, end - start
 		send c, sendBuffer
 		
-		sentLog += " f:{frames} ack:{acknowledgePos} {buffer.toRangeString(start, end)}"
+		sentLog += " f:{frame} ack:{acknowledgePos} {buffer.toRangeString(start, end)}"
 		
 	
 	private onTickMessage: Connection c, Buffer buffer
 		let sender = Input.users[c.userId]
 		if c.state != Connected: c.state = Connected
 
-		sender.frames = buffer.readInt32 
+		sender.frame = buffer.readInt32 
 		sender.acknowledgedPos = buffer.readInt32
 		
 		// Checksum
@@ -949,40 +960,40 @@ unit Network
 		sender.inputs.writePos = writeStart + length
 		receivedFrames = getReceivedFrames
 		
-		// log sender.frames, writeStart, length, sender.acknowledgedPos
-		receivedLog += " <{c.userId}> f:{sender.frames} a:{sender.acknowledgedPos} l:{length}"
+		// log sender.frame, writeStart, length, sender.acknowledgedPos
+		receivedLog += " <{c.userId}> f:{sender.frame} a:{sender.acknowledgedPos} l:{length} w:{sender.inputs.writePos}"
 		
-		replayCommonState
+		// replayState
 		
 		// if length: for Input.users: log "User {id}", id, inputs
 			
-		// let startFrame = message.frames - message.inputs.length
+		// let startFrame = message.frame - message.inputs.length
 		// for i, item -> message.inputs
 		// 	// sender.inputs[startFrame + i] = item
 		// 	receivedLog += " ["+(startFrame + i)+"]"
 		// 	for input -> item: receivedLog += " "+input
 				
 	private void sendOwnInputsAfterReconnectMessage: Connection c
-		                                int frames
+		                                int frame
 		                                Buffer buffer
 		// Platform.debugger
 		sendBuffer.reset
 		NetworkMessageType type = OwnInputsAfterReconnect
 		sendBuffer.writeInt16 cast type
-		sendBuffer.writeInt32 frames
+		sendBuffer.writeInt32 frame
 		sendBuffer.writeBuffer buffer, start:0, length:buffer.writePos
 		send c, sendBuffer
-		log "Sending own inputs to {c.userId}", frames, buffer, sendBuffer
+		log "Sending own inputs to {c.userId}", frame, buffer, sendBuffer
 		
 	private onOwnInputsAfterReconnect: Connection c, Buffer buffer
 		// Platform.debugger
 		let localUser = Input.users[userId]
 		log userId, localUser.id
-		localUser.frames = buffer.readInt32
+		localUser.frame = buffer.readInt32
 		let length = buffer.readBuffer localUser.inputs, writeStart:0
 		localUser.inputs.writePos = length
-		log "Receiving own inputs from {c.userId}", localUser.frames, localUser.inputs.writePos, buffer, localUser.inputs
-		// for Input.users: log "User {id}", id, frames, inputs
+		log "Receiving own inputs from {c.userId}", localUser.frame, localUser.inputs.writePos, buffer, localUser.inputs
+		// for Input.users: log "User {id}", id, frame, inputs
 		
 	private void sendPingMessage: Connection c, float pingTime
 		sendBuffer.reset

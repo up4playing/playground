@@ -261,7 +261,7 @@ Object Board
 		if zoomable	
 			Input.onWheelWithin position, size
 				float factor = zoomLookupTable[Math.limit event.delta+40 min:0 max:zoomLookupTable.length-1]
-				Network.touchLog += "[{Network.logicFrame}] zoom value:{event.delta} factor:{factor} matrix:{matrix}"
+				Network.touchLog += "[{Network.frame}] zoom value:{event.delta} factor:{factor} matrix:{matrix}"
 				matrix.move event.position
 				matrix.scale {factor, factor}
 				matrix.move event.position*{-1,-1}

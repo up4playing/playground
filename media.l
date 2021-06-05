@@ -298,7 +298,7 @@ global unit graphics
 		                   scale = 1.0            // Scale the image by this factor
 		                   visibleFor = -1        // Only this user will see the image
 		                   implicit int layer = 0 // Higher layers are drawn in front of lower layers
-		var frame = Math.floor(Network.logicFrame * Math.max(framesPerSecond, 0) / Network.targetFps) % image.frames.length;
+		var frame = Math.floor(Network.frame * Math.max(framesPerSecond, 0) / Network.targetFps) % image.frames.length;
 		drawImage image, position, frame, scale, visibleFor, layer
 	
 	// Draws an image on the screen
