@@ -21,7 +21,7 @@ transient unit Serializer
 	inline js void serialize(Buffer buffer) serialize(buffer)
 	inline js void deserialize(Buffer buffer) deserialize(buffer)
 	
-class Buffer
+transient class Buffer
 	int readPos, writePos
 	private object buffer = null
 	private object dataView = null
