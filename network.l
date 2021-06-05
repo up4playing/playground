@@ -1,7 +1,7 @@
 enum NetworkMessageType: Tick, Ping, Pong, OwnInputsAfterReconnect
 enum ConnectionState: Disconnected, Reconnecting, WaitingForFirstTickMessage, Connected
 
-class Connection
+transient class Connection
 	int userId
 	object peerConnection = null
 	object dataChannel = null
@@ -9,23 +9,17 @@ class Connection
 	bool offerByMe
 	
 enum NetworkMode: None, Ping, Local, Connected, Reconnecting
-class HTMLVideoElement: int id
-class RoomInfo: int time, userId
+transient class HTMLVideoElement: int id
+transient class RoomInfo: int time, userId
 		
-class VideoScreenInfo
+transient class VideoScreenInfo
 	object videoElement = null
 	float2 pos
 	float width
 	
-unit Serializer
-	serialize: Buffer buffer
-		buffer.reset
-		lobby.serialize buffer
-		app.serialize buffer
-		
-	deserialize: Buffer buffer
-		lobby.deserialize buffer
-		app.deserialize buffer
+transient unit Serializer
+	inline js void serialize(Buffer buffer) serialize(buffer)
+	inline js void deserialize(Buffer buffer) deserialize(buffer)
 	
 class Buffer
 	int readPos, writePos
@@ -61,27 +55,27 @@ class Buffer
 	inline js void setInt16: int index, int value
 		this.dataView.setInt16(index, value)
 	
-	inline js void writeInt8: int value
+	js void writeInt8: int value
 		if(this.writePos+1 > this.buffer.byteLength) this.expandBuffer((this.writePos+1)*2)
 		this.dataView.setInt8(this.writePos, value)
 		this.writePos += 1
 	
-	inline js void writeInt16: int value
+	js void writeInt16: int value
 		if(this.writePos+2 > this.buffer.byteLength) this.expandBuffer((this.writePos+2)*2)
 		this.dataView.setInt16(this.writePos, value)
 		this.writePos += 2
 	
-	inline js void writeInt32: int value
+	js void writeInt32: int value
 		if(this.writePos+4 > this.buffer.byteLength) this.expandBuffer((this.writePos+4)*2)
 		this.dataView.setInt32(this.writePos, value)
 		this.writePos += 4
 	
-	inline js void writeFloat64: float value
+	js void writeFloat64: float value
 		if(this.writePos+8 > this.buffer.byteLength) this.expandBuffer((this.writePos+8)*2)
 		this.dataView.setFloat64(this.writePos, value)
 		this.writePos += 8
 		
-	inline js void writeBool: bool value
+	js void writeBool: bool value
 		if(this.writePos+1 > this.buffer.byteLength) this.expandBuffer((this.writePos+1)*2)
 		this.dataView.setInt8(this.writePos, value ? 1 : 0)
 		this.writePos += 1
@@ -163,7 +157,7 @@ class Buffer
 			result += " " + this.dataView.getUint8(i)
 		return result
 		
-unit Network
+transient unit Network
 	// Logs
 	string logTable = "animTime,networkTime,tickTime,drawTime,iteration,restoreTime,replayFrames,replayTime,saveTime,frame,user0,user1,user2,received,common,ahead,checksums,events,send,receive,write,parse,touch\n"
 	public string eventLog = ""; sentLog = "", receivedLog="", writeLog="", parseLog = "", touchLog = ""

@@ -1,12 +1,12 @@
-class ServerMessage
+transient class ServerMessage
 	int senderId
 
-ServerMessage JoinMessage
+transient ServerMessage JoinMessage
 	string roomId
 	int userId = -1
 	int version
 
-ServerMessage JoinResponseMessage
+transient ServerMessage JoinResponseMessage
 	string roomId
 	int userId
 	int version
@@ -16,19 +16,19 @@ ServerMessage JoinResponseMessage
 // ServerMessage UserJoinedMessage
 // 	int userId
 	
-ServerMessage OffersMessage
+transient ServerMessage OffersMessage
 	Signal[] offers
 	
-ServerMessage SignalMessage
+transient ServerMessage SignalMessage
 	Signal signal
 	
-class Signal
+transient class Signal
 	int receiverId
 	string type
 	object sdp
 	int acknowledgePos
 	
-ServerMessage IceMessage
+transient ServerMessage IceMessage
 	int receiverId
 	object iceCandidate
 	

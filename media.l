@@ -1,13 +1,13 @@
 // A color comprised of a red, green, blue and alpha component
 class Color
-	global Color White   = {"ffffff"}
-	global Color Black   = {"000000"}
-	global Color Red     = {"ef476f"}
-	global Color Yellow  = {"ffd166"}
-	global Color Green   = {"06d6a0"}
-	global Color Blue    = {"118ab2"}
-	global Color Gray    = {"073b4c"}
-	global Color TransparentRed   = {"ef476f80"}
+	global const Color White   = {"ffffff"}
+	global const Color Black   = {"000000"}
+	global const Color Red     = {"ef476f"}
+	global const Color Yellow  = {"ffd166"}
+	global const Color Green   = {"06d6a0"}
+	global const Color Blue    = {"118ab2"}
+	global const Color Gray    = {"073b4c"}
+	global const Color TransparentRed   = {"ef476f80"}
 	string hex
 	
 	Color: string hex = ""
@@ -62,7 +62,7 @@ enum VerticalAlignment: Top, Middle, Bottom
 enum FontStyle: Normal, Bold
 		
 // A collection of functions for drawing on the screen
-global unit graphics
+transient global unit graphics
 	internal Matrix2D totalMatrix, localMatrix
 	internal DisplayItem[] items
 		
@@ -578,7 +578,7 @@ global unit graphics
 			))
 		}
 
-class DisplayItem
+transient class DisplayItem
 	float x, y, w, h
 	int layer
 	string name
@@ -598,7 +598,7 @@ class DisplayItem
 			]
 	draw
 	
-DisplayItem DisplayImage
+transient DisplayItem DisplayImage
 	object htmlImage
 	float sx, sy, sw, sh
 	js void draw
@@ -606,7 +606,7 @@ DisplayItem DisplayImage
 		try{ Platform_context.drawImage(this.htmlImage, this.sx, this.sy, this.sw, this.sh, this.x, this.y, this.w, this.h) }
 		catch(e) { log("DisplayImage: "+e.message) }
 
-DisplayItem DisplayText
+transient DisplayItem DisplayText
 	string fillStyle, outlineColor, outlineWidth, font
 	js void draw
 		Platform_context.setTransform(this.m0, this.m1, this.m2, this.m3, this.m4, this.m5)
@@ -621,7 +621,7 @@ DisplayItem DisplayText
 		Platform_context.fillStyle = this.fillStyle
 		Platform_context.fillText(this.name, this.x, this.y)
 		
-DisplayItem DisplayRectangle
+transient DisplayItem DisplayRectangle
 	string fillColor, outlineColor, outlineWidth
 	js void draw
 		Platform_context.setTransform(this.m0, this.m1, this.m2, this.m3, this.m4, this.m5)
@@ -641,7 +641,7 @@ DisplayItem DisplayRectangle
 		
 enum CircleDirection: Clockwise, CounterClockwise
 		
-DisplayItem DisplayCircle
+transient DisplayItem DisplayCircle
 	string radius, startAngle, endAngle, counterclockwise, fillColor, outlineColor, outlineWidth
 	js void draw
 		Platform_context.setTransform(this.m0, this.m1, this.m2, this.m3, this.m4, this.m5)
@@ -671,6 +671,6 @@ struct Sound
 		}
 
 // A collection of functions for playing audio 
-global unit audio
+transient global unit audio
 	global js void playSound: Sound sound
 		sound.audio.play()

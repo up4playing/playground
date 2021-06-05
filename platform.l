@@ -1,7 +1,7 @@
 enum PlatformMode: Pause, Record, Play, Pointer, Slide
 enum ScaleMode: Auto, FixedWidth, FixedHeight, TopWidth, NoScaling
 		
-unit Platform
+transient unit Platform
 	public userCount = 2
 	public bool showSafeArea = true
 	public bool showLocalPointer = false
@@ -202,7 +202,7 @@ struct FileFilter
 	string name
 	string[] extensions
 
-unit Http	
+transient unit Http	
 	js void get: string url, void(object result) code
 		let response = await fetch(url)
 		code(await response.json())

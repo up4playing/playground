@@ -1,10 +1,10 @@
 // A number stored as a 32-bit integer
 struct int
 	// The  largest possible value of an integer
-	static maxValue = 2147483647
+	const maxValue = 2147483647
 	
 	// The  smallest possible value of an integer
-	static minValue = -2147483648
+	const minValue = -2147483648
 	
 	// Returns true if the integer is not zero
 	inline js bool toBool := this
@@ -19,7 +19,7 @@ struct int
 
 // A number stored as a double precision 64-bit floating point value
 struct float
-	static inline js float infinity := Number.POSITIVE_INFINITY
+	const inline js float infinity := Number.POSITIVE_INFINITY
 	
 	// Returns true if the floot is not zero
 	inline js bool toBool := this != 0
@@ -342,7 +342,7 @@ interface object
 
 		
 // This struct is automatically filled with the source code location
-class SourceCodeLocation
+transient class SourceCodeLocation
 	int row     // The row of the source code
 	int column  // The column of the source code
 	string file // The filename of the source code
@@ -359,7 +359,7 @@ class SourceCodeLocation
 		if right != null: right.flatten result
 	
 // A collection of basic system functions
-global unit System
+global transient unit System
 	// Executes code depending on whether a given condition is true or false
 	global inline js void if: implicit bool condition // The condition to check
 	                   void() then             // The code to execute if the condition is true
@@ -389,7 +389,7 @@ global unit System
 	global inline js void continue() continue
 		
 // A collection of mathematical functions and constants
-unit Math
+transient unit Math
 	// Returns the absolute value
 	inline js float abs: float value // The value to return the absolute value of
 		Math.abs(value)
@@ -576,8 +576,7 @@ unit Math
 			            return value
 	
 struct RollingList
-	public int maxValues = 50
-	
+	int maxValues = 50
 	int[] list
 
 	add: int value
@@ -595,7 +594,7 @@ struct RollingList
 	// Returns true if the rolling list is not empty
 	toBool := list.length > 0
 	
-class Time
+transient class Time
 	inline js int year := this.getFullYear()
 	inline js int month := (this.getMonth()+1)
 	inline js int date := this.getDate()

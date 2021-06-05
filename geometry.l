@@ -5,7 +5,7 @@ struct float2
 	SourceCodeLocation location
 	
 	// Used to specify that the vector is not set or invalid
-	static float2 none = new float2(float.infinity, float.infinity)
+	const float2 none = new float2(float.infinity, float.infinity)
 	
 	// A string representation of the vector
 	string toString := "({x} {y})"
@@ -205,7 +205,7 @@ struct int2
 	int y // The y-coordinate of the vector
 	
 	// Used to specify that the vector is not set or invalid
-	static int2 none = new int2(int.minValue, int.minValue)
+	const int2 none = new int2(int.minValue, int.minValue)
 	
 	// Creates a copy of the vector with the same values
 	int2 clone := int2(x, y)

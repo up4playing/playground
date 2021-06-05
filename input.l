@@ -1,4 +1,4 @@
-class NetworkUser
+transient class NetworkUser
 	int id
 	bool local
 	Color color = null
@@ -44,7 +44,7 @@ enum TouchPhase: Stationary, Down, Move, Up, Handled
 enum MouseButton: Left, Middle, Right
 
 // A touch or a click
-class Touch
+transient class Touch
 	int id
 	NetworkUser user = null
 	TouchPhase phase
@@ -57,7 +57,7 @@ class Touch
 	
 	markAsHandled() phase = Handled
 	
-class WheelEvent
+transient class WheelEvent
 	NetworkUser user
 	int delta
 	float2 referencePosition
@@ -66,20 +66,20 @@ class WheelEvent
 	
 	markAsHandled() handled = true
 	
-class EventStreamUser
+transient class EventStreamUser
 	int id
 	bool local
 	int frame
 	object blob = null
 	Buffer inputs = null
 	
-class EventStream
+transient class EventStream
 	string url
 	string randomSeed
 	EventStreamUser[] users
 	
 // A collection of methods to receive user input
-unit Input
+transient unit Input
 	NetworkUser[] users
 	string cursor
 	visible bool isCertain
@@ -98,14 +98,11 @@ unit Input
 			Input_handleTouchEvent(1, e.pageX, e.pageY, e.pointerId, e.button);
 		}
 		window.onpointermove = e => {
-			// TEMP
-			// let id = e.pointerType == "mouse" && e.button == -1 ? e.pointerId : e.pointerId
-			// Input_handleTouchEvent(2, e.pageX, e.pageY, id, e.button);
+			let id = e.pointerType == "mouse" && e.button == -1 ? e.pointerId : e.pointerId
+			Input_handleTouchEvent(2, e.pageX, e.pageY, id, e.button);
 		}
 		window.onpointerup = e => {
-			// TEMP
-			// Input_handleTouchEvent(3, e.pageX, e.pageY, e.pointerId, e.button);
-			
+			Input_handleTouchEvent(3, e.pageX, e.pageY, e.pointerId, e.button);
 			
 			// if(e.button == 2 && Platform_mode == 0) {
 			// 	if(Platform_mode < 3/*Pointer*/) Platform_enterSlideMode(3/*Pointer*/)
