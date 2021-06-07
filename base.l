@@ -29,7 +29,7 @@ struct float
 	js float operator **(float a, float b) return Math.pow(a,b)
 
 // A sequence of characters
-struct string
+class string
 	// Returns the number of characters in the string
 	inline js int length := this.length
 	
@@ -52,6 +52,8 @@ struct string
 	inline js bool startsWith(string str) (this.indexOf(str) == 0)
 		
 	inline js int indexOf(string str) this.indexOf(str)
+		
+	inline js bool contains(string str) (this.indexOf(str) != -1)
 		
 	inline js int getCharCodeAt(int index) this.charCodeAt(index)
 		

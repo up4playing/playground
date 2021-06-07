@@ -186,13 +186,10 @@ transient unit Network
 	private bool alertShown
 	private int nextReconnect
 	private string randomSeed
+	private bool isLocalhost
 	
-	// init() initHandlers
-	
-	// js void initHandlers
-	// 	log("initHandlers")
-	// 	window.onbeforeunload = e => { Network_saveEventStream(); alert("onbeforeunload") }
-	// 	window.onunload = e => { alert("onunload") }
+	init
+		isLocalhost = Platform.url.contains("localhost")
 	
 	log: logstring text
 		string str = text
@@ -494,7 +491,7 @@ transient unit Network
 		
 	saveLogs
 		Platform.createTextFile "log.csv", logTable
-		Http.post "https://up4playing.com:3112/saveLog/{roomId}/{userId}", logTable
+		Http.post "/saveLog/{roomId}/{userId}", logTable
 			log "save logs"
 		else
 			print "save logs failed {error}"
@@ -638,7 +635,8 @@ transient unit Network
 		Network_roomId = roomId
 		console.log(location.href)
 		log("init websocket "+roomId)
-		Network_socket = new WebSocket("wss://up4playing.com:3111");
+		if(Network_isLocalhost) Network_socket = new WebSocket("ws://localhost:3111");
+		else                    Network_socket = new WebSocket("wss://"+location.host+":3111");
 		Network_socket.onopen = function() {
 			log("Websocket open");
 			Network_onConnectedToServer();
@@ -709,7 +707,7 @@ transient unit Network
 			if message.roomId != roomId
 				log "Received room id {message.roomId}"
 				let gameId = Platform.url.split("/")[3]
-				Platform.pushState null, "{gameId} {message.roomId}", "https://up4playing.com/{gameId}/{message.roomId}"
+				Platform.pushState null, "{gameId} {message.roomId}", "/{gameId}/{message.roomId}"
 			
 			roomId = message.roomId
 			userId = message.userId
@@ -744,8 +742,8 @@ transient unit Network
 				],
 			},{
 				urls: 'turn:81.169.197.127',
-	    		username: 'app',
-	    		credential: 'cyancircle'
+				username: 'app',
+				credential: 'cyancircle'
 			}
 			],
 			// iceCandidatePoolSize: 10,
@@ -1027,11 +1025,12 @@ transient unit Network
 		// if(Math.random() < .5) setTimeout(() => connection.dataChannel.send(buffer.buffer), Math.random()*250)
 
 	private js void setupLocalVideo: int userId
-		let audio = location.href.indexOf("/p/") == -1
-		Network_localVideo = await navigator.mediaDevices.getUserMedia({video: true, audio});
+		if(Network_isLocalhost) return 
+		Network_localVideo = await navigator.mediaDevices.getUserMedia({video: true, audio: true});
 		Network_createVideoElement(userId, Network_localVideo, /*local*/true)
 			
 	private js void setupRemoteVideo: int partnerId, object peerConnection
+		if(Network_isLocalhost) return 
 		for(let track of Network_localVideo.getTracks())
 			peerConnection.addTrack(track, Network_localVideo);
 		
@@ -1068,7 +1067,7 @@ transient unit Network
 		if color: Input.users[userId].color = color
 		
 	internal js void updateVideoScreen
-		if(Network_mode == 2/*Local*/) {
+		if(Network_mode == 2/*Local*/ || Network_isLocalhost) {
 			for(let vs of Network_videoScreens) {
 				graphics_drawImage(Image_VideoScreen, vs.pos, 0, vs.width/440, -1)
 			}
