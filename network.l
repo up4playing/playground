@@ -79,6 +79,18 @@ transient class Buffer
 		if(this.writePos+1 > this.buffer.byteLength) this.expandBuffer((this.writePos+1)*2)
 		this.dataView.setInt8(this.writePos, value ? 1 : 0)
 		this.writePos += 1
+		
+		
+	js void writeString: string value
+		let len = value.length
+		let size = 4+len*4
+		if(this.writePos+size > this.buffer.byteLength) this.expandBuffer((this.writePos+size)*2)
+		this.dataView.setInt32(this.writePos, value)
+		this.writePos += 4
+		for(let i=0; i<len; ++i) {
+			this.dataView.setInt32(this.writePos, value.getCharCodeAt(i))
+			this.writePos += 4
+		}
 	
 	js void writeBuffer: Buffer source
 		                 int start
@@ -125,6 +137,16 @@ transient class Buffer
 	js bool readBool
 		return this.dataView.getInt8(this.readPos++) != 0
 		
+	js string readString
+		let value = ""
+		let len = this.dataView.getInt32(this.readPos)
+		this.readPos += 4
+		for(let i=0; i<len; ++i) {
+			value += string.fromCharCode(this.dataView.getInt32(this.readPos))
+			this.readPos += 4
+		}
+		return value
+
 	js int readBuffer: Buffer writeBuffer
 		               int writeStart
 		let readPos = this.readPos
