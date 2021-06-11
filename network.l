@@ -17,9 +17,17 @@ transient class VideoScreenInfo
 	float2 pos
 	float width
 	
-transient unit Serializer
+transient unit Snapshot
 	inline js void serialize(Buffer buffer) serialize(buffer)
 	inline js void deserialize(Buffer buffer) deserialize(buffer)
+		
+	Buffer save
+		Buffer buffer
+		serialize(buffer)
+		return buffer
+		
+	void restore: Buffer buffer
+		deserialize(buffer)
 	
 transient class Buffer
 	int readPos, writePos
@@ -88,7 +96,7 @@ transient class Buffer
 		this.dataView.setInt32(this.writePos, value)
 		this.writePos += 4
 		for(let i=0; i<len; ++i) {
-			this.dataView.setInt32(this.writePos, value.getCharCodeAt(i))
+			this.dataView.setInt32(this.writePos, value.charCodeAt(i))
 			this.writePos += 4
 		}
 	
@@ -389,22 +397,24 @@ transient unit Network
 			for Input.users: commonReadPos = inputs.readPos
 			commonFrame = frame-1
 			saveTime = Time.measure
-				Serializer.serialize commonState
-			log "Saving state", frame, app.nextClickTime, app.dots.length, "dots:{app.dots.length > 0 ? app.dots[0].toString : ""}"
+				Snapshot.serialize commonState
+			// log "Saving state", frame, app.nextClickTime, app.dots.length, "dots:{app.dots.length > 0 ? app.dots[0].toString : ""}"
 			// log "Save state", frame
+			// log "Save state", frame, Framework.objects.length ? Framework.objects[0].position.x : 0
 	
 	replayState
 		if mode == Local: return
 		// int receivedFrames = getReceivedFrames
 		if commonFrame != -1 and receivedFrames > commonFrame
-			log "Replay state", receivedFrames, commonFrame, frame, commonState
+			// log "Replay state", receivedFrames, commonFrame, frame, commonState
 			let currentFrame = frame
 			frame = commonFrame
 			for Input.users: inputs.readPos = commonReadPos
 			restoreTime = Time.measure
-				Serializer.deserialize commonState
+				Snapshot.deserialize commonState
 			commonFrame = -1
-			log "Restore state", app.nextClickTime, app.dots.length, "dots:{app.dots.length > 0 ? app.dots[0].toString : ""}"
+			// log "Restore state", app.nextClickTime, app.dots.length, "dots:{app.dots.length > 0 ? app.dots[0].toString : ""}"
+			// log "Restore state", Framework.objects.length ? Framework.objects[0].position.x : 0
 			replayFrames = currentFrame - frame
 			replayTime = Time.measure
 				while frame < currentFrame
@@ -436,9 +446,9 @@ transient unit Network
 		
 		// Checksum
 		let myChecksum = 0
-		for Framework.objects:
-			myChecksum += position.x + position.y + frame + cast side
-			if type == Board
+		for Framework.objects
+			myChecksum += o.position.x + o.position.y + o.frame + cast o.side
+			if o.type == Board
 				Board board = cast o
 				let m = board.matrix
 				myChecksum += m.m0 + m.m1 + m.m2 + m.m3 + m.m4 + m.m5
@@ -463,7 +473,6 @@ transient unit Network
 		if lobby.inLobby
 			lobby.tick
 		else
-			Timeline.tick
 			tickTime = Time.measure
 				app.tick
 			Framework.tick
@@ -920,10 +929,12 @@ transient unit Network
 		
 	Buffer sendBuffer
 	
-	private js void onPeerMessage: Connection c, Buffer buffer
-		setTimeout(() => Network_onPeerMessageActual(c, buffer), 1000)
+	// Delay for debugging
+	// private js void onPeerMessage: Connection c, Buffer buffer
+	// 	setTimeout(() => Network_onPeerMessageActual(c, buffer), 1000)
+	// private onPeerMessageActual: Connection c, Buffer buffer
 	
-	private onPeerMessageActual: Connection c, Buffer buffer
+	private onPeerMessage: Connection c, Buffer buffer
 		NetworkMessageType type = cast buffer.readInt16
 		if type == Tick: onTickMessage c, buffer; else
 		if type == Ping: onPingMessage c, buffer; else
