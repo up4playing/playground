@@ -93,7 +93,7 @@ transient class Buffer
 		let len = value.length
 		let size = 4+len*4
 		if(this.writePos+size > this.buffer.byteLength) this.expandBuffer((this.writePos+size)*2)
-		this.dataView.setInt32(this.writePos, value)
+		this.dataView.setInt32(this.writePos, len)
 		this.writePos += 4
 		for(let i=0; i<len; ++i) {
 			this.dataView.setInt32(this.writePos, value.charCodeAt(i))
@@ -150,7 +150,7 @@ transient class Buffer
 		let len = this.dataView.getInt32(this.readPos)
 		this.readPos += 4
 		for(let i=0; i<len; ++i) {
-			value += string.fromCharCode(this.dataView.getInt32(this.readPos))
+			value += String.fromCharCode(this.dataView.getInt32(this.readPos))
 			this.readPos += 4
 		}
 		return value
