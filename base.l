@@ -240,7 +240,7 @@ class List<T>
 		return resultValue
 		
 	max: int(T a) selector
-		 int threshold = int.maxValue
+		 int threshold = int.minValue
 		int resultValue = threshold
 		for item -> this
 			let value = selector(item)
@@ -248,7 +248,7 @@ class List<T>
 		return resultValue
 		
 	max: int(T a) selector
-		 int threshold = int.maxValue
+		 int threshold = int.minValue
 		 bool(T a) where
 		int resultValue = threshold
 		for item -> this if where(item)
