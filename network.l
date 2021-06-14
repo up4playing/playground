@@ -225,13 +225,15 @@ transient unit Network
 		string str = text
 		eventLog += str + "\n"
 		print str
+		
+	inline js int currentTime := Date.now()
 
 	private startConnected: float startTime = 0
 		// for Input.users: log "User {id}", id, frame, inputs
 		if mode == Connected: return
 		if startTime
 			this.startTime = startTime
-			// frame = Math.floor((Time.now - this.startTime)/targetFrameTime)
+			// frame = Math.floor((currentTime - this.startTime)/targetFrameTime)
 		else
 			resetStartTime
 		// startInputFrame = inputFrame = Math.floor(frame / inputFrameEvery) + 1
@@ -269,7 +271,7 @@ transient unit Network
 		randomSeed = Math.generateRandomSeed
 		Math.setRandomSeed randomSeed
 		for userCount: Input.users.add {id:i, local:true}
-		startTime = Time.now
+		startTime = currentTime
 		startApp
 		animationFrame
 			
@@ -278,7 +280,7 @@ transient unit Network
 		if(window.app_start) app_start()
 		
 	resetStartTime
-		startTime = Time.now - frame*targetFrameTime// - (targetFrameTime-0.001)
+		startTime = currentTime - frame*targetFrameTime// - (targetFrameTime-0.001)
 		
 	eventStreamSize
 		string result
@@ -292,7 +294,7 @@ transient unit Network
 	private int commonFrame = -1
 		
 	internal animationFrame
-		let now = Time.now
+		let now = currentTime
 		
 		if mode == None || mode == Ping
 			graphics.startFrame
@@ -430,6 +432,7 @@ transient unit Network
 		
 	private step: bool fastFordward = false
 		frame++
+		Time.now = frame * targetFrameTime
 		Platform.fastForward = fastFordward
 		parseLog += " #{frame}"
 		if fastFordward: parseLog += "f"
@@ -596,7 +599,7 @@ transient unit Network
 		else
 		if mode == None
 			mode = Ping
-			nextPingTime = Time.now + 300
+			nextPingTime = currentTime + 300
 			estimatedStartTimeTotal = 0
 			pongCount = 0
 			connection.state = Connected
@@ -610,7 +613,7 @@ transient unit Network
 		// ping the existing users to sync the startTime and calculate the frame from it
 		// if mode == None
 		// 	mode = Ping
-		// 	nextPingTime = Time.now + 300
+		// 	nextPingTime = currentTime + 300
 			
 		// New users will start sending tick messages as soon as they are done with pinging,
 		// existing users will wait for the new user to finish pinging
@@ -625,7 +628,7 @@ transient unit Network
 		closeConnection connection
 		connection.state = Disconnected
 		mode = Reconnecting
-		nextReconnect = Time.now + 1000
+		nextReconnect = currentTime + 1000
 		removeVideoElement connection.userId
 		graphics.reset
 		drawText "Connection lost. Trying to reconnect...", {0,-Platform.size.y/2+32}
@@ -646,17 +649,17 @@ transient unit Network
 		}
 		
 	private reconnect
-		if Time.now >= nextReconnect
+		if currentTime >= nextReconnect
 			log "Trying to reconnect"
 			join roomId
-			nextReconnect = Time.now + 5000
+			nextReconnect = currentTime + 5000
 	
 	private ping
-		if Time.now >= nextPingTime
+		if currentTime >= nextPingTime
 			for c -> connections
 				if c.state != Disconnected
-					sendPingMessage c, Time.now
-			nextPingTime = Time.now + 300
+					sendPingMessage c, currentTime
+			nextPingTime = currentTime + 300
 		
 	private object socket = null
 	private string roomId = ""
@@ -688,7 +691,7 @@ transient unit Network
 		// Is this still needed if we have an eventStream?
 		// if userId == -1
 		// 	RoomInfo roomInfo = cast Platform.getLocalStorageObject "room"+roomId
-		// 	userId = roomInfo && roomInfo.time > Time.now - 3600000*24 ? roomInfo.userId : -1
+		// 	userId = roomInfo && roomInfo.time > currentTime - 3600000*24 ? roomInfo.userId : -1
 		// 	log "Reconnect to session", roomInfo, userId
 		
 		openEventStream
@@ -743,7 +746,7 @@ transient unit Network
 			roomId = message.roomId
 			userId = message.userId
 			Input.users[message.userId] = {id:userId, local:true}
-			Platform.setLocalStorageObject "room"+roomId, RoomInfo(Time.now, userId)
+			Platform.setLocalStorageObject "room"+roomId, RoomInfo(currentTime, userId)
 			
 			if message.version != Platform.version
 				alert "You are using an old version of this application. Please refresh your browser."
@@ -1031,7 +1034,7 @@ transient unit Network
 		log c.state
 		if c.state != Disconnected
 			let pingTime = buffer.readFloat64
-			sendPongMessage c, Time.now-startTime, pingTime
+			sendPongMessage c, currentTime-startTime, pingTime
 		
 	private void sendPongMessage: Connection c, float timeSinceStart, float pingTime
 		sendBuffer.reset
@@ -1042,7 +1045,7 @@ transient unit Network
 		send c, sendBuffer
 
 	private onPongMessage: Connection c, Buffer buffer
-		float now = Time.now
+		float now = currentTime
 		float timeSinceStart = buffer.readFloat64
 		float pingTime = buffer.readFloat64
 		float pingPongTime = now - pingTime
