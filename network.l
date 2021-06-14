@@ -88,7 +88,6 @@ transient class Buffer
 		this.dataView.setInt8(this.writePos, value ? 1 : 0)
 		this.writePos += 1
 		
-		
 	js void writeString: string value
 		let len = value.length
 		let size = 4+len*4
@@ -402,13 +401,13 @@ transient unit Network
 				Snapshot.serialize commonState
 			// log "Saving state", frame, app.nextClickTime, app.dots.length, "dots:{app.dots.length > 0 ? app.dots[0].toString : ""}"
 			// log "Save state", frame
-			// log "Save state", frame, Framework.objects.length ? Framework.objects[0].position.x : 0
+			log "Save state x:{Framework.objects.length ? Framework.objects[0].position.x : 0}", lobby.inLobby, frame
 	
 	replayState
 		if mode == Local: return
 		// int receivedFrames = getReceivedFrames
 		if commonFrame != -1 and receivedFrames > commonFrame
-			// log "Replay state", receivedFrames, commonFrame, frame, commonState
+			log "Replay state", receivedFrames, commonFrame, frame, commonState
 			let currentFrame = frame
 			frame = commonFrame
 			for Input.users: inputs.readPos = commonReadPos
@@ -416,7 +415,7 @@ transient unit Network
 				Snapshot.deserialize commonState
 			commonFrame = -1
 			// log "Restore state", app.nextClickTime, app.dots.length, "dots:{app.dots.length > 0 ? app.dots[0].toString : ""}"
-			// log "Restore state", Framework.objects.length ? Framework.objects[0].position.x : 0
+			log "Restore state x:{Framework.objects.length ? Framework.objects[0].position.x : 0}", lobby.inLobby, frame
 			replayFrames = currentFrame - frame
 			replayTime = Time.measure
 				while frame < currentFrame
