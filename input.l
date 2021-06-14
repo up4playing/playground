@@ -121,6 +121,7 @@ transient unit Input
 			return false;			
 		}
 		window.onkeydown = e => {
+			// app_eventLog.push("onkeydown code:"+e.keyCode+" key:"+e.key+" code:"+e.code)
 			let keyCode = e.keyCode
 			if(window.require && e.key == "t" && e.ctrlKey && e.metaKey && e.shiftKey)
 				require("electron").remote.getCurrentWindow().toggleDevTools()
@@ -160,29 +161,26 @@ transient unit Input
 		return 0
 	
 	private handleTextCompositionEnd
-	// TODO: Migrate to new event stream
-	// 	if Network.mode == None || Platform.mode != Record: return
-	// 	let inputs = getInputList
-	// 	InputType type = TextInput
-	// 	let user = users[Network.userId]
-	// 	if user.lastTextInputIndex > -1
-	// 		inputs[user.lastTextInputIndex] = cast type
+		if Network.mode == None || Platform.mode != Record: return
+		let user = users[Network.userId], inputs = user.inputs
+		if user.lastTextInputIndex > -1
+			InputType type = TextInput
+			inputs.setInt16 user.lastTextInputIndex, cast type
 		
 	private handleTextInput: InputType type, string text
-	// TODO: Migrate to new event stream
-	// 	if Network.mode == None || Platform.mode != Record: return
-	// 	let inputs = getInputList
-	// 	users[Network.userId].lastTextInputIndex = inputs.length
-	// 	inputs.add cast type
-	// 	inputs.add text.length
-	// 	for text.length: inputs.add text.getCharCodeAt(i)
+		if Network.mode == None || Platform.mode != Record: return
+		let user = users[Network.userId], inputs = user.inputs
+		inputs.writeInt32 Network.inputFrame
+		user.lastTextInputIndex = inputs.writePos
+		inputs.writeInt16 cast type
+		inputs.writeString text
 			
 	private handleKeyEvent: InputType type, int keyCode
-	// TODO: Migrate to new event stream
-	// 	if Network.mode == None || Platform.mode != Record: return
-	// 	let inputs = getInputList
-	// 	inputs.add cast type
-	// 	inputs.add keyCode
+		if Network.mode == None || Platform.mode != Record: return
+		let inputs = users[Network.userId].inputs
+		inputs.writeInt32 Network.inputFrame
+		inputs.writeInt16 cast type
+		inputs.writeInt32 keyCode
 		
 	private handleTouchEvent: InputType type, float x, float y, int id, int button
 		float2 pixelPos = {x*Platform.pixelRatio, y*Platform.pixelRatio}
@@ -277,18 +275,19 @@ transient unit Input
 							user.wheelEvents.add {user, delta, referencePosition:user.touchPos}
 					else
 					if type == TextComposition || type == TextInput
-						let length = inputs.readInt32
-						let text = ""
-						for length: text += string.fromCharCode(inputs.readInt32)
+						let text = inputs.readString
 						if type == TextInput
 							user.textInputs.add text
 							user.textComposition = ""
 						else
 							user.textCompositions.add text
 							user.textComposition = text
+						// app.eventLog.add("parseInput type:{type} text:{text} len:{text.length}")
 					else
 					if type == KeyDown
-						user.downKeys.add inputs.readInt32
+						let keyCode = inputs.readInt32
+						user.downKeys.add keyCode
+						// app.eventLog.add("parseInput KeyDown {keyCode}")
 					else
 					if type == KeyUp
 						user.upKeys.add inputs.readInt32
@@ -589,15 +588,18 @@ transient unit Input
 					// app_filter += "start~"+e.data+" "
 					// if(e.inputType == "insertCompositionText" || e.inputType == "insertText")
 						// Input_handleKeyPressEvent(7, e.data)
+					// app_eventLog.push("compositionstart")
 				})
 				_input.addEventListener('compositionend', e => {
 					Input_handleTextCompositionEnd()
 					// app_filter += "end~"+e.data+" "
 					// if(e.inputType == "insertCompositionText" || e.inputType == "insertText")
 						// Input_handleKeyPressEvent(7, e.data)
+					// app_eventLog.push("compositionend")
 				})
 				_input.oninput = e => {
 					// app_filter += e.inputType+"~"+e.data+" "
+					// app_eventLog.push("oninput "+e.inputType+" "+e.data)
 					let type = e.inputType == "insertCompositionText" ? 7 : 8
 					Input_handleTextInput(type, e.data || "")
 				}
