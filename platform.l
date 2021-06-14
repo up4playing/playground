@@ -1,5 +1,6 @@
 enum PlatformMode: Pause, Record, Play, Pointer, Slide
-enum ScaleMode: Auto, FixedWidth, FixedHeight, TopWidth, NoScaling
+enum ScaleMode: Auto, FixedWidth, FixedHeight, None
+enum AnchorMode: TopLeft, TopCenter, Center
 		
 transient unit Platform
 	public userCount = 2
@@ -12,6 +13,7 @@ transient unit Platform
 	
 	public float2 referenceSize = {1920, 1080}
 	public ScaleMode scaleMode = Auto, effectiveScaleMode
+	public AnchorMode anchor = Center
 	
 	private object canvas = null
 	internal object context = null
@@ -66,7 +68,6 @@ transient unit Platform
 				break;
 				
 			case 1:
-			case 3:
 				Platform_effectiveScaleMode = Platform_scaleMode
 				scale = ratio.x; 
 				Platform_size = new float2(Platform_referenceSize.x, Platform_pixelSize.y/scale, null)
@@ -78,11 +79,9 @@ transient unit Platform
 				Platform_size = new float2(Platform_pixelSize.x/scale, Platform_referenceSize.y, null)
 				break;
 		}
-		
-		if(Platform_scaleMode < 3)
-			Platform_baseMatrix = new Matrix2D(scale,0,0,scale,Platform_pixelSize.x/2,Platform_pixelSize.y/2)
-		else
-			Platform_baseMatrix = new Matrix2D(scale,0,0,scale,Platform_pixelSize.x/2,0)
+		let offsetX = Platform_anchor > 0 ? Platform_pixelSize.x/2 : 0
+		let offsetY = Platform_anchor > 1 ? Platform_pixelSize.y/2 : 0
+		Platform_baseMatrix = new Matrix2D(scale,0,0,scale,offsetX,offsetY)
 		
 	private startEngine: bool isDebug
 		init
