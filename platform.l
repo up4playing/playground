@@ -6,6 +6,7 @@ transient unit Platform
 	public userCount = 2
 	public bool showSafeArea = true
 	public bool showLocalPointer = false
+	public bool isLocal = false
 	
 	public inline js string url := location.href
 	public inline js int version := version
@@ -96,8 +97,8 @@ transient unit Platform
 		if !isDebug: Network.simulateConnection = false
 		if mode <= Play: mode = Pause
 		let param = url.split("/")[4]
-		if isDebug || param == "local" || url.startsWith("file"): Network.startLocal userCount:userCount
-		else                                                      Network.join roomId:param
+		if isDebug || isLocal || param == "local" || url.startsWith("file"): Network.startLocal userCount:userCount
+		else                                                                 Network.join roomId:param
 		sendMode
 		// Network.tick
 		
