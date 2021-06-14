@@ -406,6 +406,7 @@ transient global unit graphics
 		                    scale = 1.0                      // Scale the image by this factor
 		                    fontSize = 18                    // The font size in pixels   
 		                    touchMargin = float2(16,16)      // The margin around the button within which it is touchable
+		                    textOffset = float2()
 		                    showTouchArea = false            // Show the area within which the button is touchable
 		                    visibleFor = -1                  // Only this user will see the button
 		                    clickableBy = -1                 // Only this user can click the button
@@ -413,7 +414,7 @@ transient global unit graphics
 		                    void(Touch touch) onClick = null // Execute this code when the user clicks the button
 		if isVisibleFor(visibleFor)
 			if image: drawImage image, position, frame, scale, visibleFor, layer
-			if text:  drawText text, position, fontSize, textColor, visibleFor, layer
+			if text:  drawText text, position+textOffset, fontSize, textColor, visibleFor, layer
 			
 		Input.onTouchDownWithin position, image.size*scale + touchMargin, userId:clickableBy, showTouchArea
 			onClick touch
