@@ -222,24 +222,12 @@ transient unit Network
 		isLocalhost = Platform.url.contains("localhost")
 
 	private startConnected: float startTime = 0
-		// for Input.users: log "User {id}", id, frame, inputs
 		if mode == Connected: return
 		if startTime
 			this.startTime = startTime
-			// frame = Math.floor((currentTime - this.startTime)/targetFrameTime)
 		else
 			resetStartTime
-		// startInputFrame = inputFrame = Math.floor(frame / inputFrameEvery) + 1
-		// inputFrame = frame+1
-		// Input.users[userId].startInputFrame inputFrame
 		Input.users[userId].startFrame 0
-		// for Input.users: log "User {id}", id, frame, inputs
-		// int receivedFrames = getReceivedFrames
-		// for Input.users: log "User {id}", id, inputs
-		// while frame < receivedFrames - 1
-		// 	step fastFordward:true
-		// log "Replay done", frame
-		// for Input.users: log "User {id}", id, inputs.readPos, inputs.writePos
 		mode = Connected
 		receivedFrames = -1
 		log "Connected", userId, frame, startTime, this.startTime, receivedFrames
@@ -249,21 +237,6 @@ transient unit Network
 		userId = 0
 		mode = Local
 		Input.users.clear
-		// openEventStream
-		// 	log "opening session from event stream"
-		// 	Math.setRandomSeed eventStream.randomSeed
-		// 	for eventStream.users
-		// 		Input.users.add {id:u.id, local:u.local, frame:u.frame, inputs:u.inputs}
-		// 	int receivedFrames = getReceivedFrames * inputFrameEvery
-		// 	frame = receivedFrames
-		// 	resetStartTime
-		// 	startApp
-		// 	while frame < receivedFrames - 1
-		// 		step fastFordward:true
-		// 	step
-		// 	// tick
-		// else
-		// log "starting new session"
 		randomSeed = Math.generateRandomSeed
 		Math.setRandomSeed randomSeed
 		for userCount: Input.users.add {id:i, local:true}
@@ -291,6 +264,7 @@ transient unit Network
 			updateVideoScreen
 			graphics.finishFrame
 			return
+			
 		if mode == Reconnecting
 			reconnect
 			return
@@ -300,17 +274,12 @@ transient unit Network
 			// After a long pause in local mode, we do not want to process all missed frames, so we adjust the start time
 			let prevTargetFrame = targetFrame
 			targetFrame = frame
-			// startTime = now - targetFrame*targetFrameTime - (targetFrameTime-0.001)
 			startTime = now - targetFrame*targetFrameTime
 			log "Paused {prevTargetFrame-frame} frames, adjusting startTime. prevTargetTime:{prevTargetFrame} frame:{frame} targetFrame:{Math.floor((now - startTime)/targetFrameTime)}"
 		
 		if frame < targetFrame
 			let startNetworkFrame = frame
 			let localPlayer = Input.users[userId]
-			// bool isInputFrame = (frame % inputFrameEvery) == 0
-			// bool isInputFrame = true
-			// inputFrame = Math.floor(frame / inputFrameEvery) + 1
-			// int startframe = frame
 			
 			// Send each user the inputs that they haven't acknowleged yet
 			if mode == Connected
@@ -337,27 +306,7 @@ transient unit Network
 					
 			// Ensure that step is called every targetFrameTime milliseconds
 			while frame < targetFrame
-	
-								
-							// int startFrame = Math.max(startInputFrame, p.acknowledgedFrames)
-							// sentLog += " <"+c.userId+">"
-							// for f = startFrame -> localPlayer.frame
-							// 	message.inputs.add localPlayer.inputs[f]
-							// 	sentLog += " ["+f+"]"
-							// 	for input -> localPlayer.inputs[f]: sentLog += " "+input
-							// send c, message
-				
-				// for Input.users: log id, frame
-				// int receivedFrames = getReceivedFrames
-				
-				// if frame < receivedFrames - maxAhead
-				// 	log " >>> catching up", frame, receivedFrames
-				// 	while frame < receivedFrames - 1
-				// 		step fastFordward:true
-						
-				// if frame < receivedFrames
-				//	step
-				
+				// Step
 				step fastFordward:frame < targetFrame-1
 				
 				// Logs	
@@ -371,9 +320,6 @@ transient unit Network
 				eventLog = ""; sentLog = ""; receivedLog = ""; writeLog = ""; parseLog = ""; touchLog = ""; checksumLog = ""
 	
 				lastNetworkFrame = now
-				// if isInputFrame
-		
-			// inputFrame = frame
 			localPlayer.startFrame frame
 		lastAnimationFrame = now
 		
@@ -424,7 +370,6 @@ transient unit Network
 				checksumLog += " MISMATCH saved theirs:{theirChecksum}"
 		
 		// Cleanup
-		// if isInputFrame
 		for user -> Input.users if user
 			user.clearEvent
 			
@@ -452,18 +397,12 @@ transient unit Network
 	// before we start processing the frame.
 	private saveState
 		if mode != Connected: return
-		// int receivedFrames = getReceivedFrames
-		// if frame <= receivedFrames
-		// 	uncertainFrame = frame
-		// else
 		if frame == receivedFrames+1
 			for Input.users: uncertainReadPos = inputs.readPos
 			parseLog += " [saveState] r0:{Input.users[0]?.inputs.readPos} r1:{Input.users[1]?.inputs.readPos} u0:{Input.users[0]?.uncertainReadPos} u1:{Input.users[1]?.uncertainReadPos}"
 			uncertainFrame = frame
 			saveTime = Time.measure
 				Snapshot.serialize commonState
-			// log "Saving state", frame, app.nextClickTime, app.dots.length, "dots:{app.dots.length > 0 ? app.dots[0].toString : ""}"
-			// log "Save state", frame
 			log "Save state x:{Framework.objects.length ? Framework.objects[0].position.x : 0}", lobby.inLobby, frame, Input.users[0]?.uncertainReadPos, Input.users[1]?.uncertainReadPos
 	
 	// Replay all frames from the first uncertain frame until the current frame
@@ -471,7 +410,6 @@ transient unit Network
 	// This is called at the begining of animationFrame before we start stepping.
 	private replayState
 		if mode != Connected or Input.users.length == 1: return
-		// int receivedFrames = getReceivedFrames
 		if receivedFrames >= uncertainFrame
 			log "Replay state", receivedFrames, uncertainFrame, frame, commonState
 			let targetFrame = frame
@@ -479,8 +417,6 @@ transient unit Network
 			for Input.users: inputs.readPos = uncertainReadPos
 			restoreTime = Time.measure
 				Snapshot.deserialize commonState
-			// uncertainFrame = -1
-			// log "Restore state", app.nextClickTime, app.dots.length, "dots:{app.dots.length > 0 ? app.dots[0].toString : ""}"
 			log "Restore state x:{Framework.objects.length ? Framework.objects[0].position.x : 0}", lobby.inLobby, frame, Input.users[0].inputs.readPos, Input.users[1].inputs.readPos
 			replayFrames = targetFrame - frame
 			replayTime = Time.measure
@@ -604,30 +540,6 @@ transient unit Network
 	private onConnectedToPeer: Connection connection
 		                       bool isNewUser // Did this user just join the already exiting users (and make the offer)
 		
-		// for Input.users: log "User {id}", id, frame, inputs
-			
-		// if mode == Reconnecting
-		// 	// mode = Connected
-		// 	// let user = Input.users[connection.userId]
-		// 	// connection.state = user && user.acknowledgedPos > 0 ? Connected : WaitingForFirstTickMessage
-			
-		// 	// connection.state = WaitingForFirstTickMessage
-		// 	// showLocalVideo
-		// 	// Platform.debugger
-			
-			
-		// 	bool isHost
-		// 	for i -> Input.users.length
-		// 		if i == userId: isHost = true; break
-		// 		let c = connections.find userId == i
-		// 		if c && c != connection && c.state == Connected: isHost = false; break
-		// 	log "Reconnected", isHost
-		// 	if isHost
-		// 		let user = Input.users[connection.userId]
-		// 		sendOwnInputsAfterReconnectMessage connection, user.frame, user.inputs
-				
-		// 	// return
-			
 		let user = Input.users[connection.userId]
 		if mode == Reconnecting && user && user.acknowledgedPos > 0
 			mode = Connected
@@ -635,6 +547,7 @@ transient unit Network
 			log "Both users were already connected before", connection.userId, userId, mode, connection.state
 		else
 		if mode == None
+			// New users will send out ping messages to sync the startTime (and this way also the current frame)
 			mode = Ping
 			nextPingTime = currentTime + 300
 			estimatedStartTimeTotal = 0
@@ -642,23 +555,13 @@ transient unit Network
 			connection.state = Connected
 			log "New user, starting to ping", connection.userId, userId, mode, connection.state
 		else
+			// Existing users will wait for the new user to finish pinging
+			// to prevent sending the large initial message several times
 			if mode == Reconnecting: mode = Connected
 			connection.state = WaitingForFirstTickMessage
 			log "Answering user, waiting for ping", connection.userId, userId, mode, connection.state
 		
-		// The first user will enter the "connected" state right away, all later uers will first 
-		// ping the existing users to sync the startTime and calculate the frame from it
-		// if mode == None
-		// 	mode = Ping
-		// 	nextPingTime = currentTime + 300
-			
-		// New users will start sending tick messages as soon as they are done with pinging,
-		// existing users will wait for the new user to finish pinging
-		// to prevent sending the large initial message several times
-		// connection.state = isNewUser ? Connected : WaitingForFirstTickMessage
-		
 		log connection.userId, isNewUser, mode, connection.state
-		// for Input.users: log "User {id}", id, frame, inputs
 		
 	private onDisconnectFromPeer: Connection connection
 		log "onDisconnectFromPeer userId:"+connection.userId
@@ -1026,24 +929,11 @@ transient unit Network
 		let length = buffer.readBuffer sender.inputs, writeStart
 		sender.inputs.writePos = writeStart + length
 		receivedFrames = getReceivedFrames
-		
-		// log sender.frame, writeStart, length, sender.acknowledgedPos
 		receivedLog += " <{c.userId}> #{sender.frame} a:{sender.acknowledgedPos} l:{length} w:{sender.inputs.writePos}"
-		
-		// replayState
-		
-		// if length: for Input.users: log "User {id}", id, inputs
-			
-		// let startFrame = message.frame - message.inputs.length
-		// for i, item -> message.inputs
-		// 	// sender.inputs[startFrame + i] = item
-		// 	receivedLog += " ["+(startFrame + i)+"]"
-		// 	for input -> item: receivedLog += " "+input
 				
 	private void sendOwnInputsAfterReconnectMessage: Connection c
 		                                int frame
 		                                Buffer buffer
-		// Platform.debugger
 		sendBuffer.reset
 		NetworkMessageType type = OwnInputsAfterReconnect
 		sendBuffer.writeInt16 cast type
@@ -1060,7 +950,6 @@ transient unit Network
 		let length = buffer.readBuffer localUser.inputs, writeStart:0
 		localUser.inputs.writePos = length
 		log "Receiving own inputs from {c.userId}", localUser.frame, localUser.inputs.writePos, buffer, localUser.inputs
-		// for Input.users: log "User {id}", id, frame, inputs
 		
 	private void sendPingMessage: Connection c, float pingTime
 		sendBuffer.reset
@@ -1089,7 +978,6 @@ transient unit Network
 		float pingTime = buffer.readFloat64
 		float pingPongTime = now - pingTime
 		float estimatedStartTime = now - pingPongTime/2 - timeSinceStart
-		// eventLog += "user:"+c.userId+" count:"+pongCount+" pingPongTime: "+pingPongTime+" estimatedStartTime:"+estimatedStartTime
 		if pongCount >= 2: estimatedStartTimeTotal += estimatedStartTime
 		log pongCount, pingPongTime, estimatedStartTime
 		if ++pongCount >= pingCount
@@ -1097,7 +985,6 @@ transient unit Network
 			
 	private js void send: Connection connection, Buffer buffer
 		connection.dataChannel.send(buffer.buffer)
-		// if(Math.random() < .5) setTimeout(() => connection.dataChannel.send(buffer.buffer), Math.random()*250)
 
 	private js void setupLocalVideo: int userId
 		if(Network_isLocalhost) return 
