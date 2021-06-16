@@ -21,7 +21,7 @@ transient class NetworkUser
 	int acknowledgedPos
 	int uncertainReadPos
 	
-	startInputFrame: int index
+	startFrame: int index
 		lastTouchMoveIndex.clear
 		lastTextInputIndex = -1
 		frame = index
@@ -46,6 +46,7 @@ enum MouseButton: Left, Middle, Right
 // A touch or a click
 class Touch
 	int id
+	// NetworkUser user = null
 	int userId
 	TouchPhase phase
 	MouseButton button
@@ -170,7 +171,7 @@ transient unit Input
 	private handleTextInput: InputType type, string text
 		if Network.mode == None || Platform.mode != Record: return
 		let user = users[Network.userId], inputs = user.inputs
-		inputs.writeInt32 Network.inputFrame
+		inputs.writeInt32 Network.frame
 		user.lastTextInputIndex = inputs.writePos
 		inputs.writeInt16 cast type
 		inputs.writeString text
@@ -178,7 +179,7 @@ transient unit Input
 	private handleKeyEvent: InputType type, int keyCode
 		if Network.mode == None || Platform.mode != Record: return
 		let inputs = users[Network.userId].inputs
-		inputs.writeInt32 Network.inputFrame
+		inputs.writeInt32 Network.frame
 		inputs.writeInt16 cast type
 		inputs.writeInt32 keyCode
 		
@@ -203,11 +204,11 @@ transient unit Input
 		int composite = cast(type)                                          // type:   0 -  32 (5 bit)
 		              + Math.shiftLeft(button < 0 ? 0 : button%8, 5)        // button: 0 -   8 (3 bit)
 		              + Math.shiftLeft(Math.floor(int Math.abs(id))%256, 8) // id:     0 - 256 (8 bit)
-		inputs.writeInt32 Network.inputFrame
+		inputs.writeInt32 Network.frame
 		inputs.writeInt16 composite
 		inputs.writeInt16 Math.round(referencePos.x)
 		inputs.writeInt16 Math.round(referencePos.y)
-		Network.writeLog += " [{Network.inputFrame}] {composite} {Math.round(referencePos.x)} {Math.round(referencePos.y)} \{r:{inputs.readPos} w:{inputs.writePos}\}"
+		Network.writeLog += " [{Network.frame}] {composite} {Math.round(referencePos.x)} {Math.round(referencePos.y)} \{r:{inputs.readPos} w:{inputs.writePos}\}"
 		
 	private handleWheelEvent: float x, float y, float delta
 		if Network.mode == None || Platform.mode != Record: return
@@ -215,12 +216,12 @@ transient unit Input
 		
 		float2 referencePos = {x*Platform.pixelRatio, y*Platform.pixelRatio}.getRelativeTo(Platform.baseMatrix)
 		InputType type = Wheel
-		inputs.writeInt32 Network.inputFrame
+		inputs.writeInt32 Network.frame
 		inputs.writeInt16 cast type
 		inputs.writeInt16 Math.round(referencePos.x)
 		inputs.writeInt16 Math.round(referencePos.y)
 		inputs.writeInt16 Math.round(delta)
-		Network.writeLog += " [{Network.inputFrame}] {type} {Math.round(referencePos.x)} {Math.round(referencePos.y)} {Math.round(delta)} \{r:{inputs.readPos} w:{inputs.writePos}\}"
+		Network.writeLog += " [{Network.frame}] {type} {Math.round(referencePos.x)} {Math.round(referencePos.y)} {Math.round(delta)} \{r:{inputs.readPos} w:{inputs.writePos}\}"
 		
 	internal parseInputs(int frame, bool isCertain)
 		this.isCertain = isCertain

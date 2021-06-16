@@ -207,7 +207,7 @@ transient unit Network
 	private float startTime
 	private int startInputFrame
 	
-	internal int inputFrame
+	// internal int inputFrame
 	visible int frame
 	private int receivedFrames
 	
@@ -236,8 +236,9 @@ transient unit Network
 		else
 			resetStartTime
 		// startInputFrame = inputFrame = Math.floor(frame / inputFrameEvery) + 1
-		inputFrame = frame+1
-		Input.users[userId].startInputFrame inputFrame
+		// inputFrame = frame+1
+		// Input.users[userId].startInputFrame inputFrame
+		Input.users[userId].startFrame 0
 		// for Input.users: log "User {id}", id, frame, inputs
 		// int receivedFrames = getReceivedFrames
 		// for Input.users: log "User {id}", id, inputs
@@ -247,7 +248,7 @@ transient unit Network
 		// for Input.users: log "User {id}", id, inputs.readPos, inputs.writePos
 		mode = Connected
 		receivedFrames = -1
-		log "Connected", userId, frame, startTime, this.startTime, inputFrame, receivedFrames
+		log "Connected", userId, frame, startTime, this.startTime, receivedFrames
 		saveState
 		
 	startLocal: userCount = 1
@@ -382,15 +383,14 @@ transient unit Network
 				lastNetworkFrame = now
 				// if isInputFrame
 		
-			inputFrame = frame
-			localPlayer.startInputFrame frame
+			// inputFrame = frame
+			localPlayer.startFrame frame
 		lastAnimationFrame = now
 		
 	// frame:          will increase by 1 at the end of every step (so every targetFrameTime milliseconds)
-	// user.frame:     for the localPlayer, user.frame will be the frame
-	// receivedFrames: the lowest value of all remote user.frame
+	// user.frame:     we have all inputs from this player up to and including this frame
+	// receivedFrames: we received all remote inputs up to this frame, the lowest value of all remote user.frame
 	// uncertainFrame: the first frame the doesn't have the inputs from all players
-	// inputFrame:     frame + 1-
 		
 	saveState
 		if mode != Connected: return
