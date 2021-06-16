@@ -3,7 +3,7 @@ transient class NetworkUser
 	bool local
 	Color color = null
 	
-	int frame
+	int frame // We have all inputs from this player up to and including this frame
 	
 	float2 touchPos = {0,0}
 	visible Touch[] downTouches, movingTouches, upTouches
@@ -17,9 +17,9 @@ transient class NetworkUser
 	int lastTextInputIndex = -1
 	int[] lastTouchMoveIndex
 	
-	Buffer inputs
-	int acknowledgedPos
-	int uncertainReadPos
+	Buffer inputs         // The stream of inputs of this user
+	int acknowledgedPos   // The remote user has received the input buffer up to this buffer position
+	int uncertainReadPos  // The buffer position where we haven't received inputs from all users
 	
 	startFrame: int index
 		lastTouchMoveIndex.clear

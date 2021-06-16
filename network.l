@@ -207,24 +207,20 @@ transient unit Network
 	private float startTime
 	private int startInputFrame
 	
-	// internal int inputFrame
-	visible int frame
-	private int receivedFrames
-	
+	visible int frame               // Will increase by 1 at the end of every step (so every targetFrameTime milliseconds)
+	private int receivedFrames      // We received all remote inputs up to this frame (lowest of all user frames)
+	private int uncertainFrame = -1 // The first frame that doesn't have inputs from all players
+	private Buffer commonState      // A snapshot taken before the first uncertain frame
+		
 	private float[] checksums
 	private bool alertShown
 	private int nextReconnect
 	private string randomSeed
 	private bool isLocalhost
-	
+		
 	init
 		isLocalhost = Platform.url.contains("localhost")
 	
-	log: logstring text
-		string str = text
-		eventLog += str + "\n"
-		// print str
-		
 	inline js int currentTime := Date.now()
 
 	private startConnected: float startTime = 0
@@ -291,10 +287,16 @@ transient unit Network
 				if result: result += ", "
 				result += u.inputs.writePos.formatWithSpaces
 		return result
+	
+	// AnimationFrame --> Step --> Tick
+
+	// AnimationFrame  Send tick message, replay state, and call step
+	// Step            Save state, parse inputs, process tick, and calculate checksum
+	// Tick            Step physics, prepare graphics, process application tick, and draw all graphics
 		
-	private Buffer commonState
-	private int uncertainFrame = -1
-		
+	// Send tick message, replay state, and call step
+	// This is called by the requestAnimationFrame callback.
+	// We ensure that step is called every targetFrameTime milliseconds.
 	internal animationFrame
 		let now = currentTime
 		
@@ -328,24 +330,29 @@ transient unit Network
 			// int startframe = frame
 			
 			// Send each user the inputs that they haven't acknowleged yet
-			// We send "frame: targetFrame-1" to say: you have received all inputs up to and including this frame
-			// The next input we collect could be for "targetFrame" 
 			if mode == Connected
 				for c -> connections
 					if c.state == Connected
 						let receiver = Input.users[c.userId]
 						sendTickMessage
 							to: c
-							frame: targetFrame-1
-							acknowledgePos: receiver.inputs.writePos
-							checksumFor: uncertainFrame-1
-							checksum: checksums[uncertainFrame-1] || 0
-							buffer: localPlayer.inputs
+							frame: targetFrame-1               // You got all inputs up to and including this frame
+							                                   // The next input we collect could be for "targetFrame"
+							
+							checksumFor: uncertainFrame-1         // The last certain frame with inputs from everybody
+							checksum: checksums[uncertainFrame-1] // The checksum of the last certain frame
+							
+							acknowledgePos: receiver.inputs.writePos  // We ackledge that we received up to this input buffer pos
+							
+							buffer: localPlayer.inputs                // Send inputs that they haven't acknowleged yet
 							start: receiver.acknowledgedPos
 							end: localPlayer.inputs.writePos
 							
+			// Replay all frames from the first uncertain frame until the current frame
+			// when we received all inputs for frames that we were uncertain about before
 			replayState
-							
+					
+			// Ensure that step is called every targetFrameTime milliseconds
 			while frame < targetFrame
 	
 								
@@ -387,12 +394,10 @@ transient unit Network
 			localPlayer.startFrame frame
 		lastAnimationFrame = now
 		
-	// frame:          will increase by 1 at the end of every step (so every targetFrameTime milliseconds)
-	// user.frame:     we have all inputs from this player up to and including this frame
-	// receivedFrames: we received all remote inputs up to this frame, the lowest value of all remote user.frame
-	// uncertainFrame: the first frame the doesn't have the inputs from all players
-		
-	saveState
+	// Save a snapshot when we are about to start the frame after the last certain frame 
+	// where we received inputs from all users. This is called at the beginning of a step
+	// before we start processing the frame.
+	private saveState
 		if mode != Connected: return
 		// int receivedFrames = getReceivedFrames
 		// if frame <= receivedFrames
@@ -408,7 +413,10 @@ transient unit Network
 			// log "Save state", frame
 			log "Save state x:{Framework.objects.length ? Framework.objects[0].position.x : 0}", lobby.inLobby, frame, Input.users[0]?.uncertainReadPos, Input.users[1]?.uncertainReadPos
 	
-	replayState
+	// Replay all frames from the first uncertain frame until the current frame
+	// when we received all inputs for frames that we were uncertain about before.
+	// This is called at the begining of animationFrame before we start stepping.
+	private replayState
 		if mode != Connected or Input.users.length == 1: return
 		// int receivedFrames = getReceivedFrames
 		if receivedFrames >= uncertainFrame
@@ -426,22 +434,23 @@ transient unit Network
 				while frame < targetFrame
 					step fastFordward:true
 		
-	private getReceivedFrames
-		if mode == Local: return Input.users[userId].frame
-		int minFrames = -1
-		for user -> Input.users
-			if user && !user.local && (minFrames == -1 || user.frame < minFrames)
-				minFrames = user.frame
-		return minFrames
-		
-	private step: bool fastFordward = false
+	// Save state, parse inputs, process tick, and calculate checksum
+	// This is called in animationFrame and during replays. 
+	// All steps except the very last of an animation frame are fast forwared, which means that nothing is drawn.
+	// The frame is increment at the end of this function. This means that while processing the frame,
+	// frame will point to the current frame. After processing, frame will point to the next frame.
+	private step: bool fastFordward = false // If a step is fast forwarted nothing is drawn
+		// Set time
 		Time.now = frame * targetFrameTime
 		Platform.fastForward = fastFordward
+		
+		// Log
 		parseLog += " #{frame}"
 		bool isCertain = receivedFrames >= frame
 		if fastFordward: parseLog += "f"
 		if isCertain: parseLog += "c"
 			
+		// Save a snapshot when we are about to start the frame after the last certain frame where we got all inputs
 		saveState
 		
 		// Parse inputs
@@ -452,7 +461,7 @@ transient unit Network
 		// Tick
 		tick
 		
-		// Checksum
+		// Calculate checksum if we received all inputs for this frame
 		if isCertain
 			let myChecksum = 0
 			for Framework.objects
@@ -477,7 +486,9 @@ transient unit Network
 			user.clearEvent
 			
 		frame++
-				
+		
+	// Step physics, prepare graphics, process application tick, and draw all graphics
+	// This is called in step.
 	internal tick
 		Physics.step
 		graphics.startFrame
@@ -493,6 +504,20 @@ transient unit Network
 		drawTime = Time.measure
 			graphics.finishFrame
 			
+	// Calculate the frame we received all remote inputs for.
+	// The lowest of all user frames. Called in onTickMessage.
+	private getReceivedFrames
+		if mode == Local: return Input.users[userId].frame
+		int minFrames = -1
+		for user -> Input.users
+			if user && !user.local && (minFrames == -1 || user.frame < minFrames)
+				minFrames = user.frame
+		return minFrames
+	
+	log: logstring text
+		string str = text
+		eventLog += str + "\n"
+		
 	private onWrongChecksum
 		log "%%% OUT OF SYNC %%%"
 		Platform.setTitle "%%% OUT OF SYNC %%%"
@@ -970,7 +995,7 @@ transient unit Network
 		sendBuffer.writeInt32 frame
 		sendBuffer.writeInt32 acknowledgePos
 		sendBuffer.writeInt32 checksumFor
-		sendBuffer.writeFloat64 checksum
+		sendBuffer.writeFloat64 checksum || 0
 		sendBuffer.writeInt32 start
 		sendBuffer.writeBuffer buffer, start, end - start
 		send to, sendBuffer
