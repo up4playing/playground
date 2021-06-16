@@ -19,7 +19,7 @@ transient class NetworkUser
 	
 	Buffer inputs
 	int acknowledgedPos
-	int commonReadPos
+	int uncertainReadPos
 	
 	startInputFrame: int index
 		lastTouchMoveIndex.clear

@@ -188,8 +188,8 @@ transient class Buffer
 		
 transient unit Network
 	// Logs
-	string logTable = "animTime,networkTime,tickTime,drawTime,iteration,restoreTime,replayFrames,replayTime,saveTime,frame,user0,user1,user2,received,common,ahead,checksums,events,send,receive,write,parse,touch\n"
-	public string eventLog = ""; sentLog = "", receivedLog="", writeLog="", parseLog = "", touchLog = ""
+	string logTable = "frame,animTime,networkTime,tickTime,drawTime,iteration,restoreTime,replayFrames,replayTime,saveTime,user0,user1,user2,received,uncertain,ahead,checksums,events,send,receive,write,parse,touch\n"
+	public string eventLog = ""; sentLog = "", receivedLog="", writeLog="", parseLog = "", touchLog = "", checksumLog = ""
 	private float lastNetworkFrame, lastAnimationFrame, drawTime, tickTime, restoreTime, replayTime, saveTime
 	private int replayFrames
 	
@@ -223,7 +223,7 @@ transient unit Network
 	log: logstring text
 		string str = text
 		eventLog += str + "\n"
-		print str
+		// print str
 		
 	inline js int currentTime := Date.now()
 
@@ -240,13 +240,15 @@ transient unit Network
 		Input.users[userId].startInputFrame inputFrame
 		// for Input.users: log "User {id}", id, frame, inputs
 		// int receivedFrames = getReceivedFrames
-		log "Connected", userId, frame, startTime, this.startTime, inputFrame, receivedFrames
 		// for Input.users: log "User {id}", id, inputs
 		// while frame < receivedFrames - 1
 		// 	step fastFordward:true
 		// log "Replay done", frame
 		// for Input.users: log "User {id}", id, inputs.readPos, inputs.writePos
 		mode = Connected
+		receivedFrames = -1
+		log "Connected", userId, frame, startTime, this.startTime, inputFrame, receivedFrames
+		saveState
 		
 	startLocal: userCount = 1
 		userId = 0
@@ -290,7 +292,7 @@ transient unit Network
 		return result
 		
 	private Buffer commonState
-	private int commonFrame = -1
+	private int uncertainFrame = -1
 		
 	internal animationFrame
 		let now = currentTime
@@ -324,19 +326,22 @@ transient unit Network
 			// inputFrame = Math.floor(frame / inputFrameEvery) + 1
 			// int startframe = frame
 			
+			// Send each user the inputs that they haven't acknowleged yet
+			// We send "frame: targetFrame-1" to say: you have received all inputs up to and including this frame
+			// The next input we collect could be for "targetFrame" 
 			if mode == Connected
 				for c -> connections
 					if c.state == Connected
 						let receiver = Input.users[c.userId]
 						sendTickMessage
-							c
-							frame: targetFrame
+							to: c
+							frame: targetFrame-1
 							acknowledgePos: receiver.inputs.writePos
-							checksumFor: targetFrame-1
-							checksum: checksums[targetFrame-1] || 0
-							buffer:localPlayer.inputs
-							start:receiver.acknowledgedPos
-							end:localPlayer.inputs.writePos
+							checksumFor: uncertainFrame-1
+							checksum: checksums[uncertainFrame-1] || 0
+							buffer: localPlayer.inputs
+							start: receiver.acknowledgedPos
+							end: localPlayer.inputs.writePos
 							
 			replayState
 							
@@ -365,107 +370,113 @@ transient unit Network
 				step fastFordward:frame < targetFrame-1
 				
 				// Logs	
-				logTable += "{now - lastAnimationFrame},{now - lastNetworkFrame},{tickTime},{drawTime},{frame-startNetworkFrame}"
-				logTable += ",{restoreTime},{replayFrames},{replayTime},{saveTime},{frame}"
+				logTable += "{frame-1},{now - lastAnimationFrame},{now - lastNetworkFrame},{tickTime},{drawTime},{frame-startNetworkFrame}"
+				logTable += ",{restoreTime},{replayFrames},{replayTime},{saveTime}"
 				logTable += ","+(Input.users[0] ? Input.users[0].frame : 0)
 				logTable += ","+(Input.users[1] ? Input.users[1].frame : 0)
 				logTable += ","+(Input.users[2] ? Input.users[2].frame : 0)
-				logTable += ",{receivedFrames},{commonFrame},{receivedFrames-frame},{checksums[frame]}"
-				logTable += ",\"{eventLog.trim}\",\"{sentLog.trim}\",\"{receivedLog.trim}\",\"{writeLog.trim}\",\"{parseLog.trim}\",\"{touchLog.trim}\"\n"
-				eventLog = ""; sentLog = ""; receivedLog = ""; writeLog = ""; parseLog = ""; touchLog = ""
+				logTable += ",{receivedFrames},{uncertainFrame},{receivedFrames-frame}"
+				logTable += ",\"{checksumLog.trim}\",\"{eventLog.trim}\",\"{sentLog.trim}\",\"{receivedLog.trim}\",\"{writeLog.trim}\",\"{parseLog.trim}\",\"{touchLog.trim}\"\n"
+				eventLog = ""; sentLog = ""; receivedLog = ""; writeLog = ""; parseLog = ""; touchLog = ""; checksumLog = ""
 	
 				lastNetworkFrame = now
 				// if isInputFrame
-				inputFrame = frame + 1
-				localPlayer.startInputFrame frame
-				receivedFrames = getReceivedFrames
 		
+			inputFrame = frame
+			localPlayer.startInputFrame frame
 		lastAnimationFrame = now
 		
-	// frame:          will increase by 1 at the beginning of every {targetFrameTime} milliseconds
+	// frame:          will increase by 1 at the end of every step (so every targetFrameTime milliseconds)
 	// user.frame:     for the localPlayer, user.frame will be the frame
-	// receivedFrames: the lowest value of all user.frame
-	// commonFrame:    the last logic frame that has inputs from all players
-	// inputFrame:     frame + 1
+	// receivedFrames: the lowest value of all remote user.frame
+	// uncertainFrame: the first frame the doesn't have the inputs from all players
+	// inputFrame:     frame + 1-
 		
 	saveState
-		if mode == Local: return
+		if mode != Connected: return
 		// int receivedFrames = getReceivedFrames
 		// if frame <= receivedFrames
-		// 	commonFrame = frame
+		// 	uncertainFrame = frame
 		// else
 		if frame == receivedFrames+1
-			for Input.users: commonReadPos = inputs.readPos
-			commonFrame = frame-1
+			for Input.users: uncertainReadPos = inputs.readPos
+			parseLog += " [saveState] r0:{Input.users[0]?.inputs.readPos} r1:{Input.users[1]?.inputs.readPos} u0:{Input.users[0]?.uncertainReadPos} u1:{Input.users[1]?.uncertainReadPos}"
+			uncertainFrame = frame
 			saveTime = Time.measure
 				Snapshot.serialize commonState
 			// log "Saving state", frame, app.nextClickTime, app.dots.length, "dots:{app.dots.length > 0 ? app.dots[0].toString : ""}"
 			// log "Save state", frame
-			log "Save state x:{Framework.objects.length ? Framework.objects[0].position.x : 0}", lobby.inLobby, frame
+			log "Save state x:{Framework.objects.length ? Framework.objects[0].position.x : 0}", lobby.inLobby, frame, Input.users[0]?.uncertainReadPos, Input.users[1]?.uncertainReadPos
 	
 	replayState
-		if mode == Local: return
+		if mode != Connected or Input.users.length == 1: return
 		// int receivedFrames = getReceivedFrames
-		if commonFrame != -1 and receivedFrames > commonFrame
-			log "Replay state", receivedFrames, commonFrame, frame, commonState
-			let currentFrame = frame
-			frame = commonFrame
-			for Input.users: inputs.readPos = commonReadPos
+		if receivedFrames >= uncertainFrame
+			log "Replay state", receivedFrames, uncertainFrame, frame, commonState
+			let targetFrame = frame
+			frame = uncertainFrame
+			for Input.users: inputs.readPos = uncertainReadPos
 			restoreTime = Time.measure
 				Snapshot.deserialize commonState
-			commonFrame = -1
+			// uncertainFrame = -1
 			// log "Restore state", app.nextClickTime, app.dots.length, "dots:{app.dots.length > 0 ? app.dots[0].toString : ""}"
-			log "Restore state x:{Framework.objects.length ? Framework.objects[0].position.x : 0}", lobby.inLobby, frame
-			replayFrames = currentFrame - frame
+			log "Restore state x:{Framework.objects.length ? Framework.objects[0].position.x : 0}", lobby.inLobby, frame, Input.users[0].inputs.readPos, Input.users[1].inputs.readPos
+			replayFrames = targetFrame - frame
 			replayTime = Time.measure
-				while frame < currentFrame
+				while frame < targetFrame
 					step fastFordward:true
 		
 	private getReceivedFrames
 		if mode == Local: return Input.users[userId].frame
 		int minFrames = -1
 		for user -> Input.users
-			if user && (minFrames == -1 || user.frame < minFrames)
+			if user && !user.local && (minFrames == -1 || user.frame < minFrames)
 				minFrames = user.frame
 		return minFrames
 		
 	private step: bool fastFordward = false
-		frame++
 		Time.now = frame * targetFrameTime
 		Platform.fastForward = fastFordward
 		parseLog += " #{frame}"
+		bool isCertain = receivedFrames >= frame
 		if fastFordward: parseLog += "f"
+		if isCertain: parseLog += "c"
 			
 		saveState
 		
 		// Parse inputs
 		// bool isInputFrame = frame % inputFrameEvery == 0
 		// if isInputFrame: Input.parseInputs(frame)
-		Input.parseInputs(frame, isCertain:receivedFrames >= frame)
+		Input.parseInputs(frame, isCertain)
 		
 		// Tick
 		tick
 		
 		// Checksum
-		let myChecksum = 0
-		for Framework.objects
-			myChecksum += o.position.x + o.position.y + o.frame + cast o.side
-			if o.type == Board
-				Board board = cast o
-				let m = board.matrix
-				myChecksum += m.m0 + m.m1 + m.m2 + m.m3 + m.m4 + m.m5
-				
-		let theirChecksum = checksums[frame]
-		if !theirChecksum
-			checksums[frame] = myChecksum
-		else
-			if theirChecksum != myChecksum: onWrongChecksum
-			eventLog += " ["+frame+"] mine:"+myChecksum+" theirs:"+theirChecksum
+		if isCertain
+			let myChecksum = 0
+			for Framework.objects
+				myChecksum += o.position.x + o.position.y + o.frame + cast o.side
+				if o.type == Board
+					Board board = cast o
+					let m = board.matrix
+					myChecksum += m.m0 + m.m1 + m.m2 + m.m3 + m.m4 + m.m5
+					
+			let theirChecksum = checksums[frame]
+			checksumLog += " <mine> #{frame} {myChecksum}"
+			if !theirChecksum
+				checksums[frame] = myChecksum
+			else
+			if theirChecksum != myChecksum
+				onWrongChecksum
+				checksumLog += " MISMATCH saved theirs:{theirChecksum}"
 		
 		// Cleanup
 		// if isInputFrame
 		for user -> Input.users if user
 			user.clearEvent
+			
+		frame++
 				
 	internal tick
 		Physics.step
@@ -475,15 +486,17 @@ transient unit Network
 		if lobby.inLobby
 			lobby.tick
 		else
+			Framework.tick
 			tickTime = Time.measure
 				app.tick
-			Framework.tick
 			Input.updateCursor
 		drawTime = Time.measure
 			graphics.finishFrame
 			
 	private onWrongChecksum
-		eventLog += "%%% OUT OF SYNC %%%"
+		log "%%% OUT OF SYNC %%%"
+		Platform.setTitle "%%% OUT OF SYNC %%%"
+		
 		if !alertShown
 			alert "Clients out of sync. Please click 'Save Logs' and send me the log file that will be created."
 			alertShown = true
@@ -698,7 +711,6 @@ transient unit Network
 			for eventStream.users
 				Input.users.add {id:u.id, local:u.local, frame:u.frame, inputs:u.inputs}
 			userId = Input.users.find(local).id
-			receivedFrames = getReceivedFrames
 			// receivedFrames = getReceivedFrames
 			frame = receivedFrames
 			// resetStartTime
@@ -737,7 +749,7 @@ transient unit Network
 					partnerIds.add c.userId
 			createOffers partnerIds
 		else
-			eventLog += Time.dateAndTimeString + " local version:" + Platform.version + " user agent:"+Platform.userAgent+" "
+			log Time.dateAndTimeString + " local version:" + Platform.version + " user agent:"+Platform.userAgent+" "
 			if message.roomId != roomId
 				log "Received room id {message.roomId}"
 				let gameId = Platform.url.split("/")[3]
@@ -933,18 +945,18 @@ transient unit Network
 	Buffer sendBuffer
 	
 	// Delay for debugging
-	// private js void onPeerMessage: Connection c, Buffer buffer
-	// 	setTimeout(() => Network_onPeerMessageActual(c, buffer), 1000)
-	// private onPeerMessageActual: Connection c, Buffer buffer
-	
-	private onPeerMessage: Connection c, Buffer buffer
+	private js void onPeerMessage: Connection c, Buffer buffer
+		setTimeout(() => Network_onPeerMessageActual(c, buffer), 500)
+		
+	private onPeerMessageActual: Connection c, Buffer buffer
+	// private onPeerMessage: Connection c, Buffer buffer
 		NetworkMessageType type = cast buffer.readInt16
 		if type == Tick: onTickMessage c, buffer; else
 		if type == Ping: onPingMessage c, buffer; else
 		if type == Pong: onPongMessage c, buffer; else
 		if type == OwnInputsAfterReconnect: onOwnInputsAfterReconnect c, buffer;
 			
-	private void sendTickMessage: Connection c
+	private void sendTickMessage: Connection to
 		                          int frame
 		                          int acknowledgePos
 		                          int checksumFor
@@ -961,9 +973,9 @@ transient unit Network
 		sendBuffer.writeFloat64 checksum
 		sendBuffer.writeInt32 start
 		sendBuffer.writeBuffer buffer, start, end - start
-		send c, sendBuffer
+		send to, sendBuffer
 		
-		sentLog += " f:{frame} ack:{acknowledgePos} {buffer.toRangeString(start, end)}"
+		sentLog += " #{frame} ack:{acknowledgePos} csFor:{checksumFor} cs:{checksum} {buffer.toRangeString(start, end)}"
 		
 	
 	private onTickMessage: Connection c, Buffer buffer
@@ -977,11 +989,13 @@ transient unit Network
 		let checksumFor = buffer.readInt32
 		let checksum = buffer.readFloat64
 		let myChecksum = checksums[checksumFor] 
+		checksumLog += " <{c.userId}> #{checksumFor} {checksum}"
 		if !myChecksum
 			checksums[checksumFor] = checksum
 		else
-			if myChecksum != checksum: onWrongChecksum
-			eventLog += " ["+checksumFor+"] mine:"+myChecksum+" theirs:"+checksum
+		if myChecksum != checksum
+			onWrongChecksum
+			checksumLog += " MISMATCH mine:{myChecksum}"
 		
 		let writeStart = buffer.readInt32
 		let length = buffer.readBuffer sender.inputs, writeStart
@@ -989,7 +1003,7 @@ transient unit Network
 		receivedFrames = getReceivedFrames
 		
 		// log sender.frame, writeStart, length, sender.acknowledgedPos
-		receivedLog += " <{c.userId}> f:{sender.frame} a:{sender.acknowledgedPos} l:{length} w:{sender.inputs.writePos}"
+		receivedLog += " <{c.userId}> #{sender.frame} a:{sender.acknowledgedPos} l:{length} w:{sender.inputs.writePos}"
 		
 		// replayState
 		
