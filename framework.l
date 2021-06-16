@@ -7,7 +7,7 @@ unit Framework
 	tick
 		for <- objects: tick
 		for objects: updateBoard
-		Input.onTouchUp: touch.user.selectedObject = null
+		// Input.onTouchUp: touch.user.selectedObject = null
 		
 	isVisibleFor: float2 pos, int userId
 		let board = getBoardAt pos
@@ -108,7 +108,7 @@ class Object
 				// 		Network.touchLog += " [create stack] "+touch.position.x+" "+touch.position.y
 				// 		Stack.create overSpot.object, this
 					
-				touch.user.selectedObject = this
+				// touch.user.selectedObject = this
 				moveTouch = null
 		
 		// Rotate	
@@ -371,7 +371,7 @@ Object Coin
 				checkBoardsWhileMoving touch
 			
 			Input.onTouchUp moveTouch
-				touch.user.selectedObject = this
+				// touch.user.selectedObject = this
 				moveTouch = null
 				
 				if closestCoinType == Over: mergeWith closestCoin; else

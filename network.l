@@ -220,8 +220,6 @@ transient unit Network
 		
 	init
 		isLocalhost = Platform.url.contains("localhost")
-	
-	inline js int currentTime := Date.now()
 
 	private startConnected: float startTime = 0
 		// for Input.users: log "User {id}", id, frame, inputs
@@ -273,28 +271,13 @@ transient unit Network
 		startApp
 		animationFrame
 			
-	js void startApp
-		lobby_inLobby = false
-		if(window.app_start) app_start()
-		
-	resetStartTime
-		startTime = currentTime - frame*targetFrameTime// - (targetFrameTime-0.001)
-		
-	eventStreamSize
-		string result
-		for Input.users
-			if u
-				if result: result += ", "
-				result += u.inputs.writePos.formatWithSpaces
-		return result
-	
 	// AnimationFrame --> Step --> Tick
 
 	// AnimationFrame  Send tick message, replay state, and call step
 	// Step            Save state, parse inputs, process tick, and calculate checksum
 	// Tick            Step physics, prepare graphics, process application tick, and draw all graphics
 		
-	// Send tick message, replay state, and call step
+	// Send tick message, replay state, call step, and logging
 	// This is called by the requestAnimationFrame callback.
 	// We ensure that step is called every targetFrameTime milliseconds.
 	internal animationFrame
@@ -394,46 +377,6 @@ transient unit Network
 			localPlayer.startFrame frame
 		lastAnimationFrame = now
 		
-	// Save a snapshot when we are about to start the frame after the last certain frame 
-	// where we received inputs from all users. This is called at the beginning of a step
-	// before we start processing the frame.
-	private saveState
-		if mode != Connected: return
-		// int receivedFrames = getReceivedFrames
-		// if frame <= receivedFrames
-		// 	uncertainFrame = frame
-		// else
-		if frame == receivedFrames+1
-			for Input.users: uncertainReadPos = inputs.readPos
-			parseLog += " [saveState] r0:{Input.users[0]?.inputs.readPos} r1:{Input.users[1]?.inputs.readPos} u0:{Input.users[0]?.uncertainReadPos} u1:{Input.users[1]?.uncertainReadPos}"
-			uncertainFrame = frame
-			saveTime = Time.measure
-				Snapshot.serialize commonState
-			// log "Saving state", frame, app.nextClickTime, app.dots.length, "dots:{app.dots.length > 0 ? app.dots[0].toString : ""}"
-			// log "Save state", frame
-			log "Save state x:{Framework.objects.length ? Framework.objects[0].position.x : 0}", lobby.inLobby, frame, Input.users[0]?.uncertainReadPos, Input.users[1]?.uncertainReadPos
-	
-	// Replay all frames from the first uncertain frame until the current frame
-	// when we received all inputs for frames that we were uncertain about before.
-	// This is called at the begining of animationFrame before we start stepping.
-	private replayState
-		if mode != Connected or Input.users.length == 1: return
-		// int receivedFrames = getReceivedFrames
-		if receivedFrames >= uncertainFrame
-			log "Replay state", receivedFrames, uncertainFrame, frame, commonState
-			let targetFrame = frame
-			frame = uncertainFrame
-			for Input.users: inputs.readPos = uncertainReadPos
-			restoreTime = Time.measure
-				Snapshot.deserialize commonState
-			// uncertainFrame = -1
-			// log "Restore state", app.nextClickTime, app.dots.length, "dots:{app.dots.length > 0 ? app.dots[0].toString : ""}"
-			log "Restore state x:{Framework.objects.length ? Framework.objects[0].position.x : 0}", lobby.inLobby, frame, Input.users[0].inputs.readPos, Input.users[1].inputs.readPos
-			replayFrames = targetFrame - frame
-			replayTime = Time.measure
-				while frame < targetFrame
-					step fastFordward:true
-		
 	// Save state, parse inputs, process tick, and calculate checksum
 	// This is called in animationFrame and during replays. 
 	// All steps except the very last of an animation frame are fast forwared, which means that nothing is drawn.
@@ -504,6 +447,46 @@ transient unit Network
 		drawTime = Time.measure
 			graphics.finishFrame
 			
+	// Save a snapshot when we are about to start the frame after the last certain frame 
+	// where we received inputs from all users. This is called at the beginning of a step
+	// before we start processing the frame.
+	private saveState
+		if mode != Connected: return
+		// int receivedFrames = getReceivedFrames
+		// if frame <= receivedFrames
+		// 	uncertainFrame = frame
+		// else
+		if frame == receivedFrames+1
+			for Input.users: uncertainReadPos = inputs.readPos
+			parseLog += " [saveState] r0:{Input.users[0]?.inputs.readPos} r1:{Input.users[1]?.inputs.readPos} u0:{Input.users[0]?.uncertainReadPos} u1:{Input.users[1]?.uncertainReadPos}"
+			uncertainFrame = frame
+			saveTime = Time.measure
+				Snapshot.serialize commonState
+			// log "Saving state", frame, app.nextClickTime, app.dots.length, "dots:{app.dots.length > 0 ? app.dots[0].toString : ""}"
+			// log "Save state", frame
+			log "Save state x:{Framework.objects.length ? Framework.objects[0].position.x : 0}", lobby.inLobby, frame, Input.users[0]?.uncertainReadPos, Input.users[1]?.uncertainReadPos
+	
+	// Replay all frames from the first uncertain frame until the current frame
+	// when we received all inputs for frames that we were uncertain about before.
+	// This is called at the begining of animationFrame before we start stepping.
+	private replayState
+		if mode != Connected or Input.users.length == 1: return
+		// int receivedFrames = getReceivedFrames
+		if receivedFrames >= uncertainFrame
+			log "Replay state", receivedFrames, uncertainFrame, frame, commonState
+			let targetFrame = frame
+			frame = uncertainFrame
+			for Input.users: inputs.readPos = uncertainReadPos
+			restoreTime = Time.measure
+				Snapshot.deserialize commonState
+			// uncertainFrame = -1
+			// log "Restore state", app.nextClickTime, app.dots.length, "dots:{app.dots.length > 0 ? app.dots[0].toString : ""}"
+			log "Restore state x:{Framework.objects.length ? Framework.objects[0].position.x : 0}", lobby.inLobby, frame, Input.users[0].inputs.readPos, Input.users[1].inputs.readPos
+			replayFrames = targetFrame - frame
+			replayTime = Time.measure
+				while frame < targetFrame
+					step fastFordward:true
+		
 	// Calculate the frame we received all remote inputs for.
 	// The lowest of all user frames. Called in onTickMessage.
 	private getReceivedFrames
@@ -514,10 +497,6 @@ transient unit Network
 				minFrames = user.frame
 		return minFrames
 	
-	log: logstring text
-		string str = text
-		eventLog += str + "\n"
-		
 	private onWrongChecksum
 		log "%%% OUT OF SYNC %%%"
 		Platform.setTitle "%%% OUT OF SYNC %%%"
@@ -526,6 +505,27 @@ transient unit Network
 			alert "Clients out of sync. Please click 'Save Logs' and send me the log file that will be created."
 			alertShown = true
 			
+	log: logstring text
+		string str = text
+		eventLog += str + "\n"
+		
+	inline js int currentTime := Date.now()
+	
+	js void startApp
+		lobby_inLobby = false
+		if(window.app_start) app_start()
+		
+	resetStartTime
+		startTime = currentTime - frame*targetFrameTime// - (targetFrameTime-0.001)
+		
+	eventStreamSize
+		string result
+		for Input.users
+			if u
+				if result: result += ", "
+				result += u.inputs.writePos.formatWithSpaces
+		return result
+		
 	object db = null
 	
 	js void openEventStream: void(EventStream eventStream) then, void() else
