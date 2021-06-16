@@ -44,9 +44,9 @@ enum TouchPhase: Stationary, Down, Move, Up, Handled
 enum MouseButton: Left, Middle, Right
 
 // A touch or a click
-transient class Touch
+class Touch
 	int id
-	NetworkUser user = null
+	int userId
 	TouchPhase phase
 	MouseButton button
 	float2 referencePosition
@@ -249,7 +249,7 @@ transient unit Input
 						
 						if type == TouchDown
 							Network.parseLog += " touchDown {touchPos.x} {touchPos.y}"
-							Touch touch = {id, user, cast type, button, touchPos, touchPos, isDown:true}
+							Touch touch = {id, user.id, cast type, button, touchPos, touchPos, isDown:true}
 							user.downTouches.add touch
 							user.startingTouches.add touch
 						else
@@ -261,14 +261,14 @@ transient unit Input
 							if isDown: referenceStartPosition = startingTouch.referencePosition
 							else       referenceStartPosition = float2.none; id = 0
 							// let referenceStartPosition = isDown ? startingTouch.referencePosition : float2.none
-							user.movingTouches.add {id, user, cast type, button, touchPos, referenceStartPosition, isDown}
+							user.movingTouches.add {id, user.id, cast type, button, touchPos, referenceStartPosition, isDown}
 							cursor = "auto"
 						else
 						if type == TouchUp
 							Network.parseLog += " touchUp {touchPos.x} {touchPos.y}"
 							let startingTouch = user.startingTouches.removeWhere a.id == id
 							let referenceStartPosition = startingTouch ? startingTouch.referencePosition : float2.none
-							user.upTouches.add {id, user, cast type, button, user.touchPos, referenceStartPosition}
+							user.upTouches.add {id, user.id, cast type, button, user.touchPos, referenceStartPosition}
 						else
 						if type == Wheel
 							let delta = inputs.readInt16
@@ -466,8 +466,9 @@ transient unit Input
 	// Executes code when a touch or click moves
 	onTouchMove: Touch touch 
 		         void(Touch touch) code // The code to execute when the given touch moves
-		if !touch || !touch.user: return
-		let touchId = touch.id, user = touch.user
+		Network.touchLog += " #{Network.frame} check user:{touch?.userId} id:{touch?.id}"
+		if !touch: return
+		let touchId = touch.id, user = users[touch.userId]
 		for t -> user.movingTouches
 			if t.id == touchId && t.phase != Handled
 				t.position = t.referencePosition.getRelativeTo(graphics.localMatrix)
@@ -498,8 +499,8 @@ transient unit Input
 	onTouchUp: Touch touch
 		       void(Touch touch) code // The code to execute for each touch or click
 		       bool markAsHandled = true
-		if !touch || !touch.user: return
-		let touchId = touch.id, user = touch.user
+		if !touch: return
+		let touchId = touch.id, user = users[touch.userId]
 		for t -> user.upTouches
 			if t.id == touchId && t.phase != Handled
 				t.position = t.referencePosition.getRelativeTo(graphics.localMatrix)
