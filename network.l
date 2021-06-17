@@ -881,11 +881,11 @@ transient unit Network
 	Buffer sendBuffer
 	
 	// Delay for debugging
-	private js void onPeerMessage: Connection c, Buffer buffer
-		setTimeout(() => Network_onPeerMessageActual(c, buffer), 500)
+	// private js void onPeerMessage: Connection c, Buffer buffer
+	// 	setTimeout(() => Network_onPeerMessageActual(c, buffer), 500)
 		
-	private onPeerMessageActual: Connection c, Buffer buffer
-	// private onPeerMessage: Connection c, Buffer buffer
+	// private onPeerMessageActual: Connection c, Buffer buffer
+	private onPeerMessage: Connection c, Buffer buffer
 		NetworkMessageType type = cast buffer.readInt16
 		if type == Tick: onTickMessage c, buffer; else
 		if type == Ping: onPingMessage c, buffer; else
