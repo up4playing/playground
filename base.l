@@ -101,6 +101,12 @@ class List<T>
 		                   int index
 		this.splice(index, 0, item)
 		
+	inline js bool contains: T item
+		(this.indexOf(item) != -1)
+		
+	inline js bool indexOf: T item
+		this.indexOf(item)
+		
 	inline js void setList: T[] list
 		this.splice(0, this.length, ...list)
 		

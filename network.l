@@ -410,14 +410,22 @@ transient unit Network
 	// This is called at the begining of animationFrame before we start stepping.
 	private replayState
 		if mode != Connected or Input.users.length == 1: return
-		if receivedFrames >= uncertainFrame
-			log "Replay state", receivedFrames, uncertainFrame, frame, commonState
-			let targetFrame = frame
-			frame = uncertainFrame
+		if uncertainFrame != -1 and receivedFrames >= uncertainFrame
+			// Restore state
 			for Input.users: inputs.readPos = uncertainReadPos
 			restoreTime = Time.measure
 				Snapshot.deserialize commonState
 			log "Restore state x:{Framework.objects.length ? Framework.objects[0].position.x : 0}", lobby.inLobby, frame, Input.users[0].inputs.readPos, Input.users[1].inputs.readPos
+				
+			log "Replay state", receivedFrames, uncertainFrame, frame, commonState
+			let targetFrame = frame
+			frame = uncertainFrame
+			// We set uncertainFrame to -1 because we currently have no uncertainty. If we process frames beyond 
+			// the received frame during replay, we save a new state and set the uncertainFrame.
+			// If not, uncertainFrame stays -1,  which means we are certain about every frame.
+			uncertainFrame = -1
+			
+			// Replay from uncertainFrame to frame
 			replayFrames = targetFrame - frame
 			replayTime = Time.measure
 				while frame < targetFrame
