@@ -15,7 +15,39 @@ struct int
 		
 	inline js string format: int digits
 		this.toLocaleString('en-US', {minimumIntegerDigits:digits})
+		
+	// Returns the absolute value
+	inline js int abs
+		Math.abs(this)
+		
+	// Returns the smallest integer greater than or equal to the given value 
+	inline js int ceil
+		Math.ceil(this)
+		
+	// Returns the largest integer less than or equal to the given value
+	inline js int floor
+		Math.floor(this)
+		
+	// Returns the given value rounded to the nearest integer
+	inline js int round
+		Math.round(this)
+		
+	inline js int shiftLeft: int count
+		(this << count)
 	
+	inline js int shiftRight: int count
+		(this >> count)
+		
+	inline js int limit: int min
+		(this < min ? min : this)
+	
+	inline js int limit: int max
+		(this > max ? max : this)
+	
+	inline js int limit: int min
+		                 int max
+		(this < min ? min : this > max ? max : this)
+
 
 // A number stored as a double precision 64-bit floating point value
 struct float
@@ -97,9 +129,20 @@ class List<T>
 	inline js void add: T item // The item to add
 		this.push(item)
 		
+	void add: T item
+		      int maxLength
+		add item
+		if length > maxLength: removeAt 0
+			
 	inline js void insert: T item // The item to add
 		                   int index
 		this.splice(index, 0, item)
+		
+	inline js bool contains: T item
+		(this.indexOf(item) != -1)
+		
+	inline js bool indexOf: T item
+		this.indexOf(item)
 		
 	inline js void setList: T[] list
 		this.splice(0, this.length, ...list)
@@ -216,6 +259,15 @@ class List<T>
 			sum += selector(this[i])
 		return sum
 		
+	js int sum
+		let sum = 0;
+		for(let i=0; i<this.length; i++)
+			sum += this[i];
+		return sum;
+	
+	average
+		return length > 0 ? sum() / length : 0
+		
 	shuffle
 		for i = 1 <- length
 			var j = Math.floor(Math.randomFloat * (i + 1))
@@ -294,11 +346,6 @@ class List<T>
 				count++
 		return count
 		
-	addRolling: T value
-		        int maxValues
-		add value
-		if length > maxValues: removeAt 0
-	
 // A data container that stores key-value pairs
 class Map<T>
 
@@ -392,6 +439,10 @@ global transient unit System
 		
 // A collection of mathematical functions and constants
 transient unit Math
+	// Returns the absolute value
+	inline js int abs: int value // The value to return the absolute value of
+		Math.abs(value)
+		
 	// Returns the absolute value
 	inline js float abs: float value // The value to return the absolute value of
 		Math.abs(value)
@@ -577,25 +628,6 @@ transient unit Math
 		if value > max: return max
 			            return value
 	
-struct RollingList
-	int maxValues = 50
-	int[] list
-
-	add: int value
-		list.add value
-		if list.length > maxValues: list.removeAt 0
-	
-	sum
-		let result = 0
-		for list: result += l
-		return result
-	
-	average
-		return list.length > 0 ? sum / list.length : 0
-		
-	// Returns true if the rolling list is not empty
-	toBool := list.length > 0
-	
 transient class Time
 	inline js int year := this.getFullYear()
 	inline js int month := (this.getMonth()+1)
@@ -618,7 +650,8 @@ transient class Time
 	static inline js Time current := new Date()
 		
 	// Return the number of milliseconds elapsed since January 1, 1970
-	static inline js int now := Date.now()
+	static int now
+	
 	static inline js float preciseTime := performance.now()
 		
 	static measure: void() code

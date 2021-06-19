@@ -1,5 +1,6 @@
 unit Framework
 	Object[] objects
+	Object[] selectedObjects
 	
 	clear
 		objects.clear
@@ -7,7 +8,8 @@ unit Framework
 	tick
 		for <- objects: tick
 		for objects: updateBoard
-		Input.onTouchUp: touch.user.selectedObject = null
+		// Input.onTouchUp: touch.user.selectedObject = null
+		Input.onTouchUp: selectedObjects[touch.userId] = null
 		
 	isVisibleFor: float2 pos, int userId
 		let board = getBoardAt pos
@@ -21,8 +23,8 @@ unit Framework
 					return b
 		return null
 			
-class NetworkUser
-	Object selectedObject = null
+// class NetworkUser
+// 	Object selectedObject = null
 		
 enum Side: Front, Back
 		
@@ -108,11 +110,13 @@ class Object
 				// 		Network.touchLog += " [create stack] "+touch.position.x+" "+touch.position.y
 				// 		Stack.create overSpot.object, this
 					
-				touch.user.selectedObject = this
+				// touch.user.selectedObject = this
+				Framework.selectedObjects[touch.userId] = this
 				moveTouch = null
 		
 		// Rotate	
-		if Input.users.any(selectedObject == this) && rotatable
+		// if Input.users.any(selectedObject == this) && rotatable
+		if Framework.selectedObjects.contains(this) && rotatable
 			if !rotateTouch || !rotatedOverThreshold
 				drawButton rotateIcon, position:position+image.size/2*{1,-1}*scale+{8, -8}, touchMargin:{50,50}
 					rotateTouch = touch
@@ -371,7 +375,8 @@ Object Coin
 				checkBoardsWhileMoving touch
 			
 			Input.onTouchUp moveTouch
-				touch.user.selectedObject = this
+				// touch.user.selectedObject = this
+				Framework.selectedObjects[touch.userId] = this
 				moveTouch = null
 				
 				if closestCoinType == Over: mergeWith closestCoin; else
