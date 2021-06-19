@@ -97,6 +97,11 @@ class List<T>
 	inline js void add: T item // The item to add
 		this.push(item)
 		
+	void add: T item
+		      int maxLength
+		add item
+		if length > maxLength: removeAt 0
+			
 	inline js void insert: T item // The item to add
 		                   int index
 		this.splice(index, 0, item)
@@ -222,6 +227,15 @@ class List<T>
 			sum += selector(this[i])
 		return sum
 		
+	js int sum
+		let sum = 0;
+		for(let i=0; i<this.length; i++)
+			sum += this[i];
+		return sum;
+	
+	average
+		return length > 0 ? sum() / length : 0
+		
 	shuffle
 		for i = 1 <- length
 			var j = Math.floor(Math.randomFloat * (i + 1))
@@ -300,11 +314,6 @@ class List<T>
 				count++
 		return count
 		
-	addRolling: T value
-		        int maxValues
-		add value
-		if length > maxValues: removeAt 0
-	
 // A data container that stores key-value pairs
 class Map<T>
 
@@ -582,25 +591,6 @@ transient unit Math
 		if value < min: return min
 		if value > max: return max
 			            return value
-	
-struct RollingList
-	int maxValues = 50
-	int[] list
-
-	add: int value
-		list.add value
-		if list.length > maxValues: list.removeAt 0
-	
-	sum
-		let result = 0
-		for list: result += l
-		return result
-	
-	average
-		return list.length > 0 ? sum / list.length : 0
-		
-	// Returns true if the rolling list is not empty
-	toBool := list.length > 0
 	
 transient class Time
 	inline js int year := this.getFullYear()
