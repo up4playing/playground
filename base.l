@@ -15,7 +15,39 @@ struct int
 		
 	inline js string format: int digits
 		this.toLocaleString('en-US', {minimumIntegerDigits:digits})
+		
+	// Returns the absolute value
+	inline js int abs
+		Math.abs(this)
+		
+	// Returns the smallest integer greater than or equal to the given value 
+	inline js int ceil
+		Math.ceil(this)
+		
+	// Returns the largest integer less than or equal to the given value
+	inline js int floor
+		Math.floor(this)
+		
+	// Returns the given value rounded to the nearest integer
+	inline js int round
+		Math.round(this)
+		
+	inline js int shiftLeft: int count
+		(this << count)
 	
+	inline js int shiftRight: int count
+		(this >> count)
+		
+	inline js int limit: int min
+		(this < min ? min : this)
+	
+	inline js int limit: int max
+		(this > max ? max : this)
+	
+	inline js int limit: int min
+		                 int max
+		(this < min ? min : this > max ? max : this)
+
 
 // A number stored as a double precision 64-bit floating point value
 struct float
@@ -407,6 +439,10 @@ global transient unit System
 		
 // A collection of mathematical functions and constants
 transient unit Math
+	// Returns the absolute value
+	inline js int abs: int value // The value to return the absolute value of
+		Math.abs(value)
+		
 	// Returns the absolute value
 	inline js float abs: float value // The value to return the absolute value of
 		Math.abs(value)
