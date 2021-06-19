@@ -143,9 +143,9 @@ transient unit Input
 				Input_handleKeyEvent(5, keyCode)
 		}
 		window.onkeyup = e => Input_handleKeyEvent(6, e.keyCode)
-		window.onkeypress = e => {
-			Input_handleTextInput(8, e.key)
-		}
+		// window.onkeypress = e => {
+		// 	Input_handleTextInput(8, e.key)
+		// }
 		
 	private setLastTouchMoveIndex: int id, int index
 		let lastMoveIndex = users[Network.userId].lastTouchMoveIndex
@@ -160,12 +160,12 @@ transient unit Input
 			i += 2
 		return 0
 	
-	private handleTextCompositionEnd
-		if Network.mode == None || Platform.mode != Record: return
-		let user = users[Network.userId], inputs = user.inputs
-		if user.lastTextInputIndex > -1
-			InputType type = TextInput
-			inputs.setInt16 user.lastTextInputIndex, cast type
+	// private handleTextCompositionEnd
+	// 	if Network.mode == None || Platform.mode != Record: return
+	// 	let user = users[Network.userId], inputs = user.inputs
+	// 	if user.lastTextInputIndex > -1
+	// 		InputType type = TextInput
+	// 		inputs.setInt16 user.lastTextInputIndex, cast type
 		
 	private handleTextInput: InputType type, string text
 		if Network.mode == None || Platform.mode != Record: return
@@ -570,8 +570,7 @@ transient unit Input
 						if markAsHandled: event.markAsHandled
 		if fill: drawRectangle position, size, fill
 	
-	js void showKeyboard
-		if(!Platform_isMobile) return
+	private js object getOrCreateInputField
 		if(!window._input) {
 			window._input = document.createElement("input")
 			_input.type = "text"
@@ -582,42 +581,51 @@ transient unit Input
 			_input.style.width = "0px"
 			_input.style.height = "0px"
 			_input.style.backgroundColor = "#000000"
-			if(Platform_isMobile) {
+			// if(Platform_isMobile) {
 				
-				_input.addEventListener('compositionstart',e => {
-					// app_filter += "start~"+e.data+" "
-					// if(e.inputType == "insertCompositionText" || e.inputType == "insertText")
-						// Input_handleKeyPressEvent(7, e.data)
-					// app_eventLog.push("compositionstart")
-				})
-				_input.addEventListener('compositionend', e => {
-					Input_handleTextCompositionEnd()
-					// app_filter += "end~"+e.data+" "
-					// if(e.inputType == "insertCompositionText" || e.inputType == "insertText")
-						// Input_handleKeyPressEvent(7, e.data)
-					// app_eventLog.push("compositionend")
-				})
-				_input.oninput = e => {
-					// app_filter += e.inputType+"~"+e.data+" "
-					// app_eventLog.push("oninput "+e.inputType+" "+e.data)
-					let type = e.inputType == "insertCompositionText" ? 7 : 8
-					Input_handleTextInput(type, e.data || "")
-				}
-				_input.addEventListener("blur", e => {
-					Input_handleTextInput(7, "")
-				})
+			// _input.addEventListener('compositionstart',e => {
+			// 	// app_filter += "start~"+e.data+" "
+			// 	// if(e.inputType == "insertCompositionText" || e.inputType == "insertText")
+			// 		// Input_handleKeyPressEvent(7, e.data)
+			// 	// app_eventLog.push("compositionstart")
+			// })
+			// _input.addEventListener('compositionend', e => {
+			// 	Input_handleTextCompositionEnd()
+			// 	// app_filter += "end~"+e.data+" "
+			// 	// if(e.inputType == "insertCompositionText" || e.inputType == "insertText")
+			// 		// Input_handleKeyPressEvent(7, e.data)
+			// 	// app_eventLog.push("compositionend")
+			// })
+			_input.oninput = e => {
+				// app_filter += e.inputType+"~"+e.data+" "
+				// app_eventLog.push("oninput "+e.inputType+" "+e.data)
+				// let type = e.inputType == "insertCompositionText" ? 7 : 8
+				// Input_handleTextInput(type, e.data || "")
+				Input_handleTextInput(8, _input.value)
 			}
+			// _input.addEventListener("blur", e => {
+			// 	// Input_handleTextInput(7, "")
+			// })
+			// }
 			document.body.appendChild(_input)
+		}
+		return _input
+				
+	js void showKeyboard
+		if(!window._input) {
+			Input_getOrCreateInputField()
 			setTimeout(() => _input.focus(), 100)
 		} else {
 			_input.focus()
 		}
 		
+	js void setInput: string value
+		let input = Input_getOrCreateInputField()
+		input.value = value
+		
 	js void updateCursor
 		document.body.style.cursor = Input_cursor
 
-	textComposition := users[Network.userId].textComposition
-	
 	onTextComposition: void(string characters) code
 		for user -> users if user
 			for text -> user.textCompositions
