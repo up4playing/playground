@@ -227,7 +227,15 @@ transient unit Network
 			this.startTime = startTime
 		else
 			resetStartTime
-		Input.users[userId].startFrame 0
+		let user = Input.internalUsers[userId]
+		user.startFrame 0
+		
+		int joinFrame = Math.floor(currentTime - this.startTime)/targetFrameTime
+		InputType type = Join
+		user.inputs.writeInt32 joinFrame
+		user.inputs.writeInt16 cast type
+		user.collectInputs = true
+		
 		mode = Connected
 		receivedFrames = -1
 		log "Connected", userId, frame, startTime, this.startTime, receivedFrames
@@ -236,10 +244,10 @@ transient unit Network
 	startLocal: userCount = 1
 		userId = 0
 		mode = Local
-		Input.users.clear
+		Input.internalUsers.clear
 		randomSeed = Math.generateRandomSeed
 		Math.setRandomSeed randomSeed
-		for userCount: Input.users.add {id:i, local:true}
+		for userCount: Input.internalUsers.add {id:i, local:true}
 		startTime = currentTime
 		startApp
 		animationFrame
@@ -279,13 +287,13 @@ transient unit Network
 		
 		if frame < targetFrame
 			let startNetworkFrame = frame
-			let localPlayer = Input.users[userId]
+			let localPlayer = Input.internalUsers[userId]
 			
 			// Send each user the inputs that they haven't acknowleged yet
 			if mode == Connected
 				for c -> connections
 					if c.state == Connected
-						let receiver = Input.users[c.userId]
+						let receiver = Input.internalUsers[c.userId]
 						sendTickMessage
 							to: c
 							frame: targetFrame-1               // You got all inputs up to and including this frame
@@ -312,9 +320,9 @@ transient unit Network
 				// Logs	
 				logTable += "{frame-1},{now - lastAnimationFrame},{now - lastNetworkFrame},{tickTime},{drawTime},{frame-startNetworkFrame}"
 				logTable += ",{restoreTime},{replayFrames},{replayTime},{saveTime}"
-				logTable += ","+(Input.users[0] ? Input.users[0].frame : 0)
-				logTable += ","+(Input.users[1] ? Input.users[1].frame : 0)
-				logTable += ","+(Input.users[2] ? Input.users[2].frame : 0)
+				logTable += ","+(Input.internalUsers[0] ? Input.internalUsers[0].frame : 0)
+				logTable += ","+(Input.internalUsers[1] ? Input.internalUsers[1].frame : 0)
+				logTable += ","+(Input.internalUsers[2] ? Input.internalUsers[2].frame : 0)
 				logTable += ",{receivedFrames},{uncertainFrame},{receivedFrames-frame}"
 				logTable += ",\"{checksumLog.trim}\",\"{eventLog.trim}\",\"{sentLog.trim}\",\"{receivedLog.trim}\",\"{writeLog.trim}\",\"{parseLog.trim}\",\"{touchLog.trim}\"\n"
 				eventLog = ""; sentLog = ""; receivedLog = ""; writeLog = ""; parseLog = ""; touchLog = ""; checksumLog = ""
@@ -370,7 +378,7 @@ transient unit Network
 				checksumLog += " MISMATCH saved theirs:{theirChecksum}"
 		
 		// Cleanup
-		for user -> Input.users if user
+		for user -> Input.internalUsers if user
 			user.clearEvent
 			
 		frame++
@@ -398,26 +406,25 @@ transient unit Network
 	private saveState
 		if mode != Connected: return
 		if frame == receivedFrames+1
-			for Input.users: uncertainReadPos = inputs.readPos
-			parseLog += " [saveState] r0:{Input.users[0]?.inputs.readPos} r1:{Input.users[1]?.inputs.readPos} u0:{Input.users[0]?.uncertainReadPos} u1:{Input.users[1]?.uncertainReadPos}"
+			for Input.internalUsers: uncertainReadPos = inputs.readPos
+			parseLog += " [saveState] r0:{Input.internalUsers[0]?.inputs.readPos} r1:{Input.internalUsers[1]?.inputs.readPos} u0:{Input.internalUsers[0]?.uncertainReadPos} u1:{Input.internalUsers[1]?.uncertainReadPos}"
 			uncertainFrame = frame
 			saveTime = Time.measure
 				Snapshot.serialize commonState
-			log "Save state x:{Framework.objects.length ? Framework.objects[0].position.x : 0}", lobby.inLobby, frame, Input.users[0]?.uncertainReadPos, Input.users[1]?.uncertainReadPos
+			log "Save x:{Framework.objects.length ? Framework.objects[0].position.x : 0}", lobby.inLobby, frame, Input.internalUsers[0]?.uncertainReadPos, Input.internalUsers[1]?.uncertainReadPos
 	
 	// Replay all frames from the first uncertain frame until the current frame
 	// when we received all inputs for frames that we were uncertain about before.
 	// This is called at the begining of animationFrame before we start stepping.
 	private replayState
-		if mode != Connected or Input.users.length == 1: return
+		if mode != Connected or Input.internalUsers.length == 1: return
 		if uncertainFrame != -1 and receivedFrames >= uncertainFrame
 			// Restore state
-			for Input.users: inputs.readPos = uncertainReadPos
+			for Input.internalUsers: inputs.readPos = uncertainReadPos
 			restoreTime = Time.measure
 				Snapshot.deserialize commonState
-			log "Restore state x:{Framework.objects.length ? Framework.objects[0].position.x : 0}", lobby.inLobby, frame, Input.users[0].inputs.readPos, Input.users[1].inputs.readPos
+			log "Replay x:{Framework.objects.length ? Framework.objects[0].position.x : 0}", lobby.inLobby, frame, Input.internalUsers[0].inputs.readPos, Input.internalUsers[1].inputs.readPos, receivedFrames, uncertainFrame, frame
 				
-			log "Replay state", receivedFrames, uncertainFrame, frame, commonState
 			let targetFrame = frame
 			frame = uncertainFrame
 			// We set uncertainFrame to -1 because we currently have no uncertainty. If we process frames beyond 
@@ -434,9 +441,9 @@ transient unit Network
 	// Calculate the frame we received all remote inputs for.
 	// The lowest of all user frames. Called in onTickMessage.
 	private getReceivedFrames
-		if mode == Local: return Input.users[userId].frame
+		if mode == Local: return Input.internalUsers[userId].frame
 		int minFrames = -1
-		for user -> Input.users
+		for user -> Input.internalUsers
 			if user && !user.local && (minFrames == -1 || user.frame < minFrames)
 				minFrames = user.frame
 		return minFrames
@@ -445,9 +452,9 @@ transient unit Network
 		log "%%% OUT OF SYNC %%%"
 		Platform.setTitle "%%% OUT OF SYNC %%%"
 		
-		if !alertShown
-			alert "Clients out of sync. Please click 'Save Logs' and send me the log file that will be created."
-			alertShown = true
+		// if !alertShown
+		// 	alert "Clients out of sync. Please click 'Save Logs' and send me the log file that will be created."
+		// 	alertShown = true
 			
 	log: logstring text
 		string str = text
@@ -464,10 +471,10 @@ transient unit Network
 		
 	eventStreamSize
 		string result
-		for Input.users
-			if u
+		for user -> Input.internalUsers
+			if user
 				if result: result += ", "
-				result += u.inputs.writePos.formatWithSpaces
+				result += user.inputs.writePos.formatWithSpaces
 		return result
 		
 	object db = null
@@ -485,7 +492,7 @@ transient unit Network
 			req.onsuccess = async e => {
 				let eventStream = req.result
 				if(eventStream) {
-					for(let user of eventStream.users) {
+					for(let user of eventStream.internalUsers) {
 						let arrayBuffer = await user.blob.arrayBuffer()
 						user.inputs = new Buffer(arrayBuffer, 0, 0, 0)
 					}
@@ -548,7 +555,7 @@ transient unit Network
 	private onConnectedToPeer: Connection connection
 		                       bool isNewUser // Did this user just join the already exiting users (and make the offer)
 		
-		let user = Input.users[connection.userId]
+		let user = Input.internalUsers[connection.userId]
 		if mode == Reconnecting && user && user.acknowledgedPos > 0
 			mode = Connected
 			connection.state = Connected
@@ -645,8 +652,8 @@ transient unit Network
 		openEventStream
 			Math.setRandomSeed eventStream.randomSeed
 			for eventStream.users
-				Input.users.add {id:u.id, local:u.local, frame:u.frame, inputs:u.inputs}
-			userId = Input.users.find(local).id
+				Input.internalUsers.add {id:u.id, local:u.local, frame:u.frame, inputs:u.inputs}
+			userId = Input.internalUsers.find(local).id
 			// receivedFrames = getReceivedFrames
 			frame = receivedFrames
 			// resetStartTime
@@ -693,7 +700,7 @@ transient unit Network
 			
 			roomId = message.roomId
 			userId = message.userId
-			Input.users[message.userId] = {id:userId, local:true}
+			Input.internalUsers[message.userId] = {id:userId, local:true}
 			Platform.setLocalStorageObject "room"+roomId, RoomInfo(currentTime, userId)
 			
 			if message.version != Platform.version
@@ -761,7 +768,7 @@ transient unit Network
 			connections.add connection = Connection(partnerId)
 		connection.peerConnection = setupPeerConnection(connection)
 		connection.offerByMe = offerByMe
-		let user = Input.users[partnerId] || (Input.users[partnerId] = {id:partnerId, local:false})
+		let user = Input.internalUsers[partnerId] || (Input.internalUsers[partnerId] = {id:partnerId, local:false})
 		user.acknowledgedPos = acknowledgePos
 		log partnerId, offerByMe, acknowledgePos, connection.state, connection.dataChannel
 		return connection
@@ -915,7 +922,7 @@ transient unit Network
 		
 	
 	private onTickMessage: Connection c, Buffer buffer
-		let sender = Input.users[c.userId]
+		let sender = Input.internalUsers[c.userId]
 		if c.state != Connected: c.state = Connected
 
 		sender.frame = buffer.readInt32 
@@ -952,7 +959,7 @@ transient unit Network
 		
 	private onOwnInputsAfterReconnect: Connection c, Buffer buffer
 		// Platform.debugger
-		let localUser = Input.users[userId]
+		let localUser = Input.internalUsers[userId]
 		log userId, localUser.id
 		localUser.frame = buffer.readInt32
 		let length = buffer.readBuffer localUser.inputs, writeStart:0
@@ -1034,7 +1041,8 @@ transient unit Network
 		let vs = videoScreens[userId] || (videoScreens[userId] = VideoScreenInfo)
 		vs.pos = pos
 		vs.width = width
-		if color: Input.users[userId].color = color
+		let user = Input.users[userId]
+		if color and user: user.color = color
 		
 	internal js void updateVideoScreen
 		if(Network_mode == 2/*Local*/ || Network_isLocalhost) {
@@ -1060,9 +1068,11 @@ transient unit Network
 		
 	internal drawFingers
 		for user -> Input.users
-			if (!user.local or Platform.showLocalPointer) and Framework.isVisibleFor user.touchPos, this.userId
-				drawImage finger, user.touchPos+{11,34}, frame:user.id
-				if user.color: drawRectangle user.touchPos+{16,76}, size:{26,8}, user.color
+			if user
+				let internalUser = Input.internalUsers[user.id]
+				if (!internalUser.local or Platform.showLocalPointer) and Framework.isVisibleFor user.touchPos, this.userId
+					drawImage finger, user.touchPos+{11,34}, frame:user.id
+					if user.color: drawRectangle user.touchPos+{16,76}, size:{26,8}, user.color
 				
 	private js void logConnectionType(object peerConnection)
 		setTimeout(async () => {
