@@ -249,7 +249,14 @@ transient unit Network
 		Input.internalUsers.clear
 		randomSeed = Math.generateRandomSeed
 		Math.setRandomSeed randomSeed
-		for userCount: Input.internalUsers.add {id:i, local:true}
+		for userCount
+			InternalUser internalUser = {id:i, local:true}
+			Input.internalUsers.add internalUser
+			InputType type = Join
+			internalUser.inputs.writeInt32 0
+			internalUser.inputs.writeInt16 cast type
+			internalUser.collectInputs = true
+		
 		startTime = currentTime
 		startApp
 		animationFrame
