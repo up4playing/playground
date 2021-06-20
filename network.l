@@ -195,7 +195,7 @@ transient unit Network
 	
 	internal const targetFps = 30
 	private const pingCount = 6
-	private const bufferFrames = 2
+	private const bufferFrames = 1
 	private const targetFrameTime = 1000/targetFps
 	
 	visible NetworkMode mode
@@ -250,12 +250,8 @@ transient unit Network
 		randomSeed = Math.generateRandomSeed
 		Math.setRandomSeed randomSeed
 		for userCount
-			InternalUser internalUser = {id:i, local:true}
-			Input.internalUsers.add internalUser
-			InputType type = Join
-			internalUser.inputs.writeInt32 0
-			internalUser.inputs.writeInt16 cast type
-			internalUser.collectInputs = true
+			Input.internalUsers.add {id:i, local:true}
+			Input.users.add {id:i}
 		
 		startTime = currentTime
 		startApp
