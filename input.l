@@ -39,9 +39,9 @@ class NetworkUser
 	Color color = null
 	float2 touchPos
 	visible Touch[] startingTouches
-	string textComposition
+	string textInput
 	
-enum InputType: None, TouchDown, TouchMove, TouchUp, Wheel, KeyDown, KeyUp, TextComposition, TextInput, Stick, Trigger, Grip, ButtonDown, ButtonUp, ControllerTransform, HeadTransform, DeviceRotation, Join, Leave
+enum InputType: None, TouchDown, TouchMove, TouchUp, Wheel, KeyDown, KeyUp, TextInput, Stick, Trigger, Grip, ButtonDown, ButtonUp, ControllerTransform, HeadTransform, DeviceRotation, Join, Leave
 		
 // Phase of a touch or a click
 enum TouchPhase: Stationary, Down, Move, Up, Handled
@@ -92,7 +92,7 @@ unit Input
 	NetworkUser[] users
 	string cursor
 	
-	string textComposition := users[Network.userId].textComposition
+	string textInput := users[Network.userId]?.textInput
 	
 	internal init
 		initHandlers
@@ -153,9 +153,7 @@ unit Input
 				Input_handleKeyEvent(5, keyCode)
 		}
 		window.onkeyup = e => Input_handleKeyEvent(6, e.keyCode)
-		// window.onkeypress = e => {
-		// 	Input_handleTextInput(8, e.key)
-		// }
+		if(window._input) window._input.value = ""
 		
 	private setLastTouchMoveIndex: int id, int index
 		let lastMoveIndex = internalUsers[Network.userId].lastTouchMoveIndex
@@ -169,13 +167,6 @@ unit Input
 			if lastMoveIndex[i] == id: return lastMoveIndex[i+1]
 			i += 2
 		return 0
-	
-	private handleTextCompositionEnd
-		if Network.mode == None || Platform.mode != Record: return
-		let user = internalUsers[Network.userId], inputs = user.inputs
-		if user.lastTextInputIndex > -1
-			InputType type = TextInput
-			inputs.setInt16 user.lastTextInputIndex, cast type
 		
 	private handleTextInput: InputType type, string text
 		if Network.mode == None || Platform.mode != Record: return
@@ -287,15 +278,11 @@ unit Input
 							let delta = inputs.readInt16
 							internalUser.wheelEvents.add {user, delta, referencePosition:touchPos}
 					else
-					if type == TextComposition || type == TextInput
+					if type == TextInput
 						let user = users[internalUser.id]
-						let text = inputs.readString
-						if type == TextInput
-							internalUser.textInputs.add text
-							user.textComposition = ""
-						else
-							internalUser.textCompositions.add text
-							user.textComposition = text
+						let textInput = inputs.readString
+						user.textInput = textInput
+						internalUser.textInputs.add textInput
 						// app.eventLog.add("parseInput type:{type} text:{text} len:{text.length}")
 					else
 					if type == KeyDown
@@ -600,38 +587,15 @@ unit Input
 			window._input = document.createElement("input")
 			_input.type = "text"
 			_input.style.position = "absolute"
-			_input.style.left = -10000
-			_input.width = 0
-			_input.height = 0
-			_input.style.width = "0px"
-			_input.style.height = "0px"
+			_input.style.left = "-10000px" 
+			_input.style.width = "1px"
+			_input.style.height = "1px"
+			_input.style.fontSize = "1px"
 			_input.style.backgroundColor = "#000000"
-			// if(Platform_isMobile) {
-				
-			// _input.addEventListener('compositionstart',e => {
-			// 	// app_filter += "start~"+e.data+" "
-			// 	// if(e.inputType == "insertCompositionText" || e.inputType == "insertText")
-			// 		// Input_handleKeyPressEvent(7, e.data)
-			// 	// app_eventLog.push("compositionstart")
-			// })
-			// _input.addEventListener('compositionend', e => {
-			// 	Input_handleTextCompositionEnd()
-			// 	// app_filter += "end~"+e.data+" "
-			// 	// if(e.inputType == "insertCompositionText" || e.inputType == "insertText")
-			// 		// Input_handleKeyPressEvent(7, e.data)
-			// 	// app_eventLog.push("compositionend")
-			// })
 			_input.oninput = e => {
-				// app_filter += e.inputType+"~"+e.data+" "
-				// app_eventLog.push("oninput "+e.inputType+" "+e.data)
-				// let type = e.inputType == "insertCompositionText" ? 7 : 8
-				// Input_handleTextInput(type, e.data || "")
+				// app_eventLog.push("oninput "+_input.value)
 				Input_handleTextInput(8, _input.value)
 			}
-			// _input.addEventListener("blur", e => {
-			// 	// Input_handleTextInput(7, "")
-			// })
-			// }
 			document.body.appendChild(_input)
 		}
 		return _input
@@ -644,9 +608,10 @@ unit Input
 			_input.focus()
 		}
 		
-	js void setInput: string value
+	js void setTextInput: string value
 		let input = Input_getOrCreateInputField()
 		input.value = value
+		Input_handleTextInput(8, value)
 		
 	js void updateCursor
 		document.body.style.cursor = Input_cursor
