@@ -601,12 +601,12 @@ transient unit Network
 
 	private js void closeConnection: Connection connection
 		if(connection.peerConnection) {
-			console.log("closeConnection: peerConnection")
+			Network_log("closeConnection: peerConnection")
 			connection.peerConnection.close();
 			connection.peerConnection = null;
 		}
 		if(connection.dataChannel) {
-			console.log("closeConnection: dataChannel")
+			Network_log("closeConnection: dataChannel")
 			connection.dataChannel.close();
 			connection.dataChannel = null;
 		}
@@ -631,8 +631,7 @@ transient unit Network
 	js void join: string gameId, string roomId
 		Network_gameId = gameId
 		Network_roomId = roomId
-		console.log(location.href)
-		log("init websocket "+roomId)
+		Network_log("Network.join "+location.href)
 		if(Network_isLocalhost) Network_socket = new WebSocket("ws://localhost:3111");
 		else                    Network_socket = new WebSocket("wss://"+location.host+":3111");
 		Network_socket.onopen = function() {
@@ -686,7 +685,7 @@ transient unit Network
 			let messageString = JSON.stringify(message)
 			Network_socket.send(messageString)
 		} catch(e) {
-			console.log(e)
+			Network_log(e)
 		}
 	
 	private onJoinResponse: JoinResponseMessage message
@@ -748,21 +747,21 @@ transient unit Network
 		
 		// Event handlers
 		peerConnection.onconnectionstatechange = e => {
-			console.log("onconnectionstatechange", peerConnection.connectionState)
+			Network_log("onconnectionstatechange", peerConnection.connectionState)
 			if(peerConnection.connectionState == "disconnected")
 				Network_onDisconnectFromPeer(c)
 		}
-		peerConnection.oniceconnectionstatechange = e => console.log("oniceconnectionstatechange", peerConnection.iceConnectionState)
-		peerConnection.onicegatheringstatechange = e => console.log("onicegatheringstatechange", peerConnection.iceGatheringState)
-		peerConnection.onsignalingstatechange  = e => console.log("onsignalingstatechange", peerConnection.signalingState)
-		peerConnection.onnegotiationneeded = () => console.log("onnegotiationneeded")
-		console.log("createOfferFor: setup event handlers")
+		peerConnection.oniceconnectionstatechange = e => Network_log("oniceconnectionstatechange", peerConnection.iceConnectionState)
+		peerConnection.onicegatheringstatechange = e => Network_log("onicegatheringstatechange", peerConnection.iceGatheringState)
+		peerConnection.onsignalingstatechange  = e => Network_log("onsignalingstatechange", peerConnection.signalingState)
+		peerConnection.onnegotiationneeded = () => Network_log("onnegotiationneeded")
+		Network_log("createOfferFor: setup event handlers")
 		
 		peerConnection.onicecandidate = async event => {
 			if (event.candidate)
 				Network_sendToServer(new IceMessage(Network_userId, c.userId, event.candidate))
 			else
-				console.log('Got final candidate!');
+				Network_log('Got final candidate!');
 		}
 		return peerConnection
 	
@@ -796,7 +795,7 @@ transient unit Network
 					// Peer connection
 					let connection = Network_createConnection(partnerId, /*offerByMe*/true, acknowledgePos)
 					let peerConnection = connection.peerConnection
-					console.log("createOffers: Created peer connection for partner "+partnerId)
+					Network_log("createOffers: Created peer connection for partner "+partnerId)
 					
 					// Data channel
 					let dataChannel = peerConnection.createDataChannel("channel", {ordered: false, maxRetransmits: 0})
@@ -807,12 +806,12 @@ transient unit Network
 						Network_logConnectionType(peerConnection);
 						Network_onConnectedToPeer(connection, /*isNewUser*/true);
 					}
-					dataChannel.onclose = e => console.log("onclose", e)
+					dataChannel.onclose = e => Network_log("onclose", e)
 					dataChannel.onclosing = e => {
-						console.log("onclosing -> disconnect", e)
+						Network_log("onclosing -> disconnect", e)
 						Network_onDisconnectFromPeer(connection)
 					}
-					dataChannel.onerror = e => console.log("onerror", e)
+					dataChannel.onerror = e => Network_log("onerror", e)
 					dataChannel.onmessage = e => {
 						Network_onPeerMessage(connection, new Buffer(e.data, 0, 0, 0))
 					}
@@ -841,7 +840,7 @@ transient unit Network
 			
 			// Data channel
 			peerConnection.addEventListener('datachannel', e => {
-				console.log("onReceivedOffer: received datachannel")
+				Network_log("onReceivedOffer: received datachannel")
 				let dataChannel = e.channel
 				dataChannel.binaryType = "arraybuffer"
 				connection.dataChannel = dataChannel
@@ -853,14 +852,14 @@ transient unit Network
 				dataChannel.onmessage = e => {
 					Network_onPeerMessage(connection, new Buffer(e.data, 0, 0, 0))
 				}
-				dataChannel.onclose = e => console.log("onclose", e)
+				dataChannel.onclose = e => Network_log("onclose", e)
 				dataChannel.onclosing = e => {
-					console.log("onclosing -> disconnect", e)
+					Network_log("onclosing -> disconnect", e)
 					Network_onDisconnectFromPeer(connection)
 				}
-				dataChannel.onerror = e => console.log("onerror", e)
+				dataChannel.onerror = e => Network_log("onerror", e)
 			})
-			console.log("onReceivedOffer: data channel listeners")
+			Network_log("onReceivedOffer: data channel listeners")
 						
 			// Video
 			Network_setupRemoteVideo(partnerId, peerConnection)
@@ -879,7 +878,7 @@ transient unit Network
 	private js void onReceivedAnswer: int partnerId, Signal answer
 		let connection = Network_connections.find(a => a.userId == partnerId)
 		await connection.peerConnection.setRemoteDescription(new RTCSessionDescription(answer));
-		console.log("onReceivedAnswer: Received answer, set remote description")
+		Network_log("onReceivedAnswer: Received answer, set remote description")
 		
 	private js void onIce: IceMessage message
 		let partnerId = message.senderId
@@ -1031,9 +1030,9 @@ transient unit Network
 		var remoteStream = new MediaStream();
 		Network_createVideoElement(partnerId, remoteStream, /*local*/false)
 		peerConnection.addEventListener('track', event => {
-			console.log('Got remote track:', event.streams[0]);
+			Network_log('Got remote track:', event.streams[0]);
 			event.streams[0].getTracks().forEach(track => {
-				console.log('Add a track to the remoteStream:', track);
+				Network_log('Add a track to the remoteStream:', track);
 				remoteStream.addTrack(track);
 			});
 		});
@@ -1100,10 +1099,10 @@ transient unit Network
 				let candidate = stats.get(candidatePair.localCandidateId);
 				let type = candidate.candidateType
 				let ip = candidate.ip || candidate.address
-				console.log(">>> Connection", type, ip, candidate)
+				Network_log(">>> Connection", type, ip, candidate)
 				if(Network_userId == 0) Platform_setTitle(candidate.candidateType+" "+ip) 
 			} else {
 				window.stats = [...stats.values()]
-				console.log("Can't access stats", window.stats)
+				Network_log("Can't access stats", window.stats)
 			}
 		}, 5000)
