@@ -138,6 +138,9 @@ class List<T>
 		add item
 		if length > maxLength: removeAt 0
 			
+	inline js void addRange: T[] items
+		this.push(...items)
+			
 	inline js void insert: T item // The item to add
 		                   int index
 		this.splice(index, 0, item)
@@ -281,19 +284,22 @@ class List<T>
 		return this
 		
 	min: int(T a) selector 
-		int resultValue = int.maxValue
+		 int threshold = int.maxValue
+		int resultValue = threshold
 		for item -> this
 			let value = selector(item)
 			if value < resultValue: resultValue = value
-		return resultValue
+		return resultValue != threshold ? resultValue : 0
 		
 	min: int(T a) selector 
+		 int threshold = int.maxValue
 		 bool(T a) where
-		int resultValue = int.maxValue
-		for item -> this if where(item)
-			let value = selector(item)
-			if value < resultValue: resultValue = value
-		return resultValue
+		int resultValue = threshold
+		for item -> this
+			if where(item)
+				let value = selector(item)
+				if value < resultValue: resultValue = value
+		return resultValue != threshold ? resultValue : 0
 		
 	max: int(T a) selector
 		 int threshold = int.minValue
@@ -301,7 +307,7 @@ class List<T>
 		for item -> this
 			let value = selector(item)
 			if value > resultValue: resultValue = value
-		return resultValue
+		return resultValue != threshold ? resultValue : 0
 		
 	max: int(T a) selector
 		 int threshold = int.minValue
@@ -310,7 +316,7 @@ class List<T>
 		for item -> this if where(item)
 			let value = selector(item)
 			if value > resultValue: resultValue = value
-		return resultValue
+		return resultValue != threshold ? resultValue : 0
 		
 	withMin: int(T a) selector
 		     int threshold = int.maxValue
@@ -321,9 +327,10 @@ class List<T>
 			if value < resultValue
 				resultValue = value
 				resultItem = item
-		return resultItem
+		return resultValue != threshold ? resultItem : null
 		
-	withMin: float(T a) selector, float threshold = float.infinity
+	withMin: float(T a) selector
+		     float threshold = float.infinity
 		float resultValue = threshold
 		T resultItem
 		for item -> this
@@ -331,17 +338,18 @@ class List<T>
 			if value < resultValue
 				resultValue = value
 				resultItem = item
-		return resultItem
+		return resultValue != threshold ? resultItem : null
 		
-	withMax: int(T a) selector 
-		int resultValue = int.minValue
+	withMax: int(T a) selector
+		     int threshold = int.minValue
+		int resultValue = threshold
 		T resultItem
 		for item -> this
 			let value = selector(item)
 			if value > resultValue
 				resultValue = value
 				resultItem = item
-		return resultItem
+		return resultValue != threshold ? resultItem : null
 		
 	count: bool(T a) predicate
 		int count = 0
