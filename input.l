@@ -295,7 +295,6 @@ unit Input
 					else
 					if type == Join
 						Network.parseLog += " join {internalUser.id}"
-						print "join {internalUser.id}"
 						users[internalUser.id] = {id:internalUser.id}
 					else
 					if type == Leave
