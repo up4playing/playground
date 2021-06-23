@@ -427,10 +427,14 @@ transient global unit graphics
 		                          outlineWidth = 0          // The width of the outline around the rectangle
 		                          visibleFor = -1           // Only this user will see the rectangle
 		                          implicit layer = 0        // Higher layers are drawn in front of lower layers
+		                          HorizontalAlignment align = Center // The horizontal alignment of the text
+		                          VerticalAlignment valign = Middle  // The vertical alignment of the text
 		if(graphics_isVisibleFor(visibleFor)) {
 			graphics_items.push(new DisplayRectangle(
-				graphics_totalMatrix, 
-				position.x-size.x/2, position.y-size.y/2, size.x, size.y,
+				graphics_totalMatrix,
+				align == 0  ? position.x : align  == 1 ? position.x-size.x*.5 : position.x-size.x,
+				valign == 0 ? position.y : valign == 1 ? position.y-size.y*.5 : position.y-size.y,
+				size.x, size.y,
 				layer, "Rectangle", position.location,
 				fillColor || !outlineColor ? (fillColor || graphics_currentColor).hex : null,
 				outlineColor ? outlineColor.hex : null,

@@ -13,8 +13,12 @@ struct int
 		
 	inline js string formatWithSpaces := this.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ")
 		
-	inline js string format: int digits
-		this.toLocaleString('en-US', {minimumIntegerDigits:digits})
+	inline js string format: int minIntegerDigits
+		this.toLocaleString('en-US', {minimumIntegerDigits:minIntegerDigits})
+		
+	inline js string format: int maxFractionDigits
+		                     int minFractionDigits = 0
+		this.toLocaleString('en-US', {maximumFractionDigits:maxFractionDigits, minimumFractionDigits:minFractionDigits})
 		
 	// Returns the absolute value
 	inline js int abs
@@ -136,6 +140,9 @@ class List<T>
 		      int maxLength
 		add item
 		if length > maxLength: removeAt 0
+			
+	inline js void addRange: T[] items
+		this.push(...items)
 			
 	inline js void insert: T item // The item to add
 		                   int index
@@ -284,19 +291,22 @@ class List<T>
 		return this
 		
 	min: int(T a) selector 
-		int resultValue = int.maxValue
+		 int threshold = int.maxValue
+		int resultValue = threshold
 		for item -> this
 			let value = selector(item)
 			if value < resultValue: resultValue = value
-		return resultValue
+		return resultValue != threshold ? resultValue : 0
 		
 	min: int(T a) selector 
+		 int threshold = int.maxValue
 		 bool(T a) where
-		int resultValue = int.maxValue
-		for item -> this if where(item)
-			let value = selector(item)
-			if value < resultValue: resultValue = value
-		return resultValue
+		int resultValue = threshold
+		for item -> this
+			if where(item)
+				let value = selector(item)
+				if value < resultValue: resultValue = value
+		return resultValue != threshold ? resultValue : 0
 		
 	max: int(T a) selector
 		 int threshold = int.minValue
@@ -304,7 +314,7 @@ class List<T>
 		for item -> this
 			let value = selector(item)
 			if value > resultValue: resultValue = value
-		return resultValue
+		return resultValue != threshold ? resultValue : 0
 		
 	max: int(T a) selector
 		 int threshold = int.minValue
@@ -313,7 +323,7 @@ class List<T>
 		for item -> this if where(item)
 			let value = selector(item)
 			if value > resultValue: resultValue = value
-		return resultValue
+		return resultValue != threshold ? resultValue : 0
 		
 	withMin: int(T a) selector
 		     int threshold = int.maxValue
@@ -324,9 +334,10 @@ class List<T>
 			if value < resultValue
 				resultValue = value
 				resultItem = item
-		return resultItem
+		return resultValue != threshold ? resultItem : null
 		
-	withMin: float(T a) selector, float threshold = float.infinity
+	withMin: float(T a) selector
+		     float threshold = float.infinity
 		float resultValue = threshold
 		T resultItem
 		for item -> this
@@ -334,17 +345,18 @@ class List<T>
 			if value < resultValue
 				resultValue = value
 				resultItem = item
-		return resultItem
+		return resultValue != threshold ? resultItem : null
 		
-	withMax: int(T a) selector 
-		int resultValue = int.minValue
+	withMax: int(T a) selector
+		     int threshold = int.minValue
+		int resultValue = threshold
 		T resultItem
 		for item -> this
 			let value = selector(item)
 			if value > resultValue
 				resultValue = value
 				resultItem = item
-		return resultItem
+		return resultValue != threshold ? resultItem : null
 		
 	count: bool(T a) predicate
 		int count = 0
@@ -645,13 +657,15 @@ transient class Time
 	inline js int minute := this.getMinutes()
 	inline js int second := this.getSeconds()
 		
-	inline js int twoDigitMonth := (this.getMonth()+1).toLocaleString('en-US', {minimumIntegerDigits:2})
-	inline js int twoDigitDate := this.getDate().toLocaleString('en-US', {minimumIntegerDigits:2})
-	inline js int twoDigitDay := this.getDay().toLocaleString('en-US', {minimumIntegerDigits:2})
-	inline js int twoDigitHour := this.getHours().toLocaleString('en-US', {minimumIntegerDigits:2})
-	inline js int twoDigitMinute := this.getMinutes().toLocaleString('en-US', {minimumIntegerDigits:2})
-	inline js int twoDigitSecond := this.getSeconds().toLocaleString('en-US', {minimumIntegerDigits:2})
-		
+	inline js string twoDigitMonth := (this.getMonth()+1).toLocaleString('en-US', {minimumIntegerDigits:2})
+	inline js string twoDigitDate := this.getDate().toLocaleString('en-US', {minimumIntegerDigits:2})
+	inline js string twoDigitDay := this.getDay().toLocaleString('en-US', {minimumIntegerDigits:2})
+	inline js string twoDigitHour := this.getHours().toLocaleString('en-US', {minimumIntegerDigits:2})
+	inline js string twoDigitMinute := this.getMinutes().toLocaleString('en-US', {minimumIntegerDigits:2})
+	inline js string twoDigitSecond := this.getSeconds().toLocaleString('en-US', {minimumIntegerDigits:2})
+	
+	inline js string dayMonthYearString := (this.getDate().toLocaleString('en-US', {minimumIntegerDigits:2})+"."+(this.getMonth()+1).toLocaleString('en-US', {minimumIntegerDigits:2})+"."+this.getFullYear())
+	
 	inline js int time := this.getTime()
 		
 	static inline js Time current := new Date()
