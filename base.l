@@ -208,19 +208,23 @@ class List<T>
 	// Moves an item to the end of the list
 	js T moveToBack: T item // The item to move to the end of the list
 		var index = this.indexOf(item);
-		let endIndex = this.length-1;
-		for(let i=index; i<endIndex; ++i) {
-			this[i] = this[i+1]
+		if(index != -1) {
+			let endIndex = this.length-1;
+			for(let i=index; i<endIndex; ++i) {
+				this[i] = this[i+1]
+			}
+			this[endIndex] = item
 		}
-		this[endIndex] = item
 		
 	// Moves an item to the end of the list
 	js T moveToFront: T item // The item to move to the end of the list
 		var index = this.indexOf(item);
-		for(let i=index; i>0; --i) {
-			this[i] = this[i-1]
+		if(index != -1) {
+			for(let i=index; i>0; --i) {
+				this[i] = this[i-1]
+			}
+			this[0] = item
 		}
-		this[0] = item
 		
 	// Sort the list
 	inline js void sort
