@@ -47,6 +47,9 @@ struct int
 	inline js int limit: int min
 		                 int max
 		(this < min ? min : this > max ? max : this)
+		
+	inline js int setIfLarger: int newValue
+		(this = Math.max(newValue, this))
 
 
 // A number stored as a double precision 64-bit floating point value
