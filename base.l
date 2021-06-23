@@ -642,13 +642,15 @@ transient class Time
 	inline js int minute := this.getMinutes()
 	inline js int second := this.getSeconds()
 		
-	inline js int twoDigitMonth := (this.getMonth()+1).toLocaleString('en-US', {minimumIntegerDigits:2})
-	inline js int twoDigitDate := this.getDate().toLocaleString('en-US', {minimumIntegerDigits:2})
-	inline js int twoDigitDay := this.getDay().toLocaleString('en-US', {minimumIntegerDigits:2})
-	inline js int twoDigitHour := this.getHours().toLocaleString('en-US', {minimumIntegerDigits:2})
-	inline js int twoDigitMinute := this.getMinutes().toLocaleString('en-US', {minimumIntegerDigits:2})
-	inline js int twoDigitSecond := this.getSeconds().toLocaleString('en-US', {minimumIntegerDigits:2})
-		
+	inline js string twoDigitMonth := (this.getMonth()+1).toLocaleString('en-US', {minimumIntegerDigits:2})
+	inline js string twoDigitDate := this.getDate().toLocaleString('en-US', {minimumIntegerDigits:2})
+	inline js string twoDigitDay := this.getDay().toLocaleString('en-US', {minimumIntegerDigits:2})
+	inline js string twoDigitHour := this.getHours().toLocaleString('en-US', {minimumIntegerDigits:2})
+	inline js string twoDigitMinute := this.getMinutes().toLocaleString('en-US', {minimumIntegerDigits:2})
+	inline js string twoDigitSecond := this.getSeconds().toLocaleString('en-US', {minimumIntegerDigits:2})
+	
+	inline js string dayMonthYearString := (this.getDate().toLocaleString('en-US', {minimumIntegerDigits:2})+"."+(this.getMonth()+1).toLocaleString('en-US', {minimumIntegerDigits:2})+"."+this.getFullYear())
+	
 	inline js int time := this.getTime()
 		
 	static inline js Time current := new Date()
