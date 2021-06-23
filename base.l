@@ -13,8 +13,12 @@ struct int
 		
 	inline js string formatWithSpaces := this.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ")
 		
-	inline js string format: int digits
-		this.toLocaleString('en-US', {minimumIntegerDigits:digits})
+	inline js string format: int minIntegerDigits
+		this.toLocaleString('en-US', {minimumIntegerDigits:minIntegerDigits})
+		
+	inline js string format: int maxFractionDigits
+		                     int minFractionDigits = 0
+		this.toLocaleString('en-US', {maximumFractionDigits:maxFractionDigits, minimumFractionDigits:minFractionDigits})
 		
 	// Returns the absolute value
 	inline js int abs
