@@ -96,9 +96,12 @@ transient unit Platform
 		resize
 		if !isDebug: Network.simulateConnection = false
 		if mode <= Play: mode = Pause
-		let param = url.split("/")[4]
-		if isDebug || isLocal || param == "local" || url.startsWith("file"): Network.startLocal userCount:userCount
-		else                                                                 Network.join roomId:param
+		let path = url.split("/")
+		let gameId = path[3]
+		let roomId = path[4]
+
+		if isDebug || isLocal || roomId == "local" || url.startsWith("file"): Network.startLocal userCount:userCount
+		else                                                                  Network.join gameId, roomId
 		sendMode
 		// Network.tick
 		
@@ -149,7 +152,6 @@ transient unit Platform
 
 	js void setTitle: string title
 		document.title = title
-		console.log(title)
 		
 	inline js void requestFullscreen
 		try   { document.body.requestFullscreen() }
