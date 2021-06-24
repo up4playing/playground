@@ -307,8 +307,8 @@ transient unit Network
 						let checksumFor = uncertainFrame>1 ? uncertainFrame-1 : frame-1
 						sendTickMessage
 							to: c
-							inputFrame: nextInputFrame            // You got all inputs up to and including this frame
-							currentFrame: targetFrame-1           // The currently processed frame, used to calculate "ahead" 
+							inputFrame: nextInputFrame-1     // You got all inputs up to and including this frame
+							currentFrame: targetFrame-1      // The currently processed frame, used to calculate "ahead" 
 							
 							checksumFor: checksumFor         // The last certain frame with inputs from everybody
 							checksum: checksums[checksumFor] // The checksum of the last certain frame
