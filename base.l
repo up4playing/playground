@@ -16,9 +16,11 @@ struct int
 	inline js string format: int minIntegerDigits
 		this.toLocaleString('en-US', {minimumIntegerDigits:minIntegerDigits})
 		
-	inline js string format: int maxFractionDigits
-		                     int minFractionDigits = 0
-		this.toLocaleString('en-US', {maximumFractionDigits:maxFractionDigits, minimumFractionDigits:minFractionDigits})
+	inline js string format: int fractionDigits
+		this.toLocaleString('en-US', {maximumFractionDigits:fractionDigits, minimumFractionDigits:fractionDigits})
+		
+	inline js string format: bool grouping
+		this.toLocaleString('en-US', {useGrouping:grouping})
 		
 	// Returns the absolute value
 	inline js int abs
