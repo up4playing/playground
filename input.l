@@ -137,16 +137,16 @@ unit Input
 			if(window.require && e.key == "t" && e.ctrlKey && e.metaKey && e.shiftKey)
 				require("electron").remote.getCurrentWindow().toggleDevTools()
 			else
-			if(e.key == "F9") {
-				Network_saveEventStream()
+			if(e.key == "F8") {
+				Network_saveLogs();
 			}
 			else
-			if(e.key == "F10") {
-				Network_saveLogs()
+			if(e.key == "F9") {
+				Network_showDebugString = !Network_showDebugString;
 			}
 			else
 			if(e.key == "q" && e.ctrlKey)
-				Platform_startApp()
+				Platform_startApp();
 			else
 			if(keyCode >= 49 && keyCode <= 52 && Network_simulateConnection)
 				Network_userId = Math.min(keyCode-49, Input_users.length-1);

@@ -11,8 +11,7 @@ unit lobby
 		drawButton Button, "Start", {0, 450} onClick: Network.startApp
 		// drawButton Button, "Save Logs", {0, 500} onClick: Platform.createTextFile "log.csv", Network.log
 		drawButton Button, "Save Logs", {0, 500} onClick: Network.saveLogs
-		drawText "Version "+Platform.version, {0, -540}
-		drawText cast Network.eventStreamSize, {0, -516}
+		if Network.showDebugString: drawText Network.debugString, {0, -516}
 		
 		Input.onTouchDown: dots.add touch.position
 		for dots: drawCircle d

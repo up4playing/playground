@@ -188,8 +188,9 @@ transient class Buffer
 		
 transient unit Network
 	// Logs
-	string logTable = "frame,animTime,networkTime,tickTime,drawTime,iteration,restoreTime,replayFrames,replayTime,saveTime,user0,user1,user2,received,uncertain,ahead,avarage,checksums,events,send,receive,write,parse,touch\n"
-	public string eventLog = ""; sentLog = "", receivedLog="", writeLog="", parseLog = "", touchLog = "", checksumLog = ""
+	string logTable = "frame,animTime,networkTime,tickTime,drawTime,iteration,restoreTime,replayFrames,replayTime,saveTime,user0,user1,user2,received,uncertain,offset,ahead,avarage,checksums,events,send,receive,write,parse,touch\n"
+	public string eventLog = ""; sentLog = "", receivedLog="", writeLog="", parseLog = "", touchLog = "", checksumLog = "", debugString = ""
+	public bool showDebugString
 	private float lastNetworkFrame, lastAnimationFrame, drawTime, tickTime, restoreTime, replayTime, saveTime
 	private int replayFrames
 	
@@ -221,7 +222,7 @@ transient unit Network
 	private int[] aheads
 		
 	init
-		isLocalhost = Platform.url.contains("localhost")
+		showDebugString = isLocalhost = Platform.url.contains("localhost")
 
 	private startConnected: float startTime = 0
 		if mode == Connected: return
@@ -333,7 +334,14 @@ transient unit Network
 				logTable += ",{receivedFrames},{uncertainFrame},{frame - receivedFrames},{aheadAverage}"
 				logTable += ",\"{checksumLog.trim}\",\"{eventLog.trim}\",\"{sentLog.trim}\",\"{receivedLog.trim}\",\"{writeLog.trim}\",\"{parseLog.trim}\",\"{touchLog.trim}\"\n"
 				eventLog = ""; sentLog = ""; receivedLog = ""; writeLog = ""; parseLog = ""; touchLog = ""; checksumLog = ""
-				Platform.setTitle cast aheadAverage
+				
+				// Debug string
+				debugString = "v{Platform.version} a:{ahead} av:{aheadAverageRaw.format(fractionDigits:1)} "
+				for user -> Input.internalUsers
+					if user
+						if debugString: debugString += " "
+						debugString += user.inputs.writePos.format(grouping:true)
+						
 				lastNetworkFrame = now
 				
 		localPlayer.startInputFrame nextInputFrame
@@ -480,14 +488,6 @@ transient unit Network
 		
 	resetStartTime
 		startTime = currentTime - frame*targetFrameTime// - (targetFrameTime-0.001)
-		
-	eventStreamSize
-		string result
-		for user -> Input.internalUsers
-			if user
-				if result: result += ", "
-				result += user.inputs.writePos.formatWithSpaces
-		return result
 		
 	object db = null
 	
