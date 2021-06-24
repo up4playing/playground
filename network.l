@@ -219,6 +219,7 @@ transient unit Network
 	private int nextReconnect
 	private string randomSeed
 	private bool isLocalhost
+	private int ahead
 	private int[] aheads
 		
 	init
@@ -283,7 +284,8 @@ transient unit Network
 			
 		let now = currentTime
 		let localPlayer = Input.internalUsers[userId]
-		let aheadAverage = aheads.average.limit(min:0).round
+		let aheadAverageRaw = aheads.average
+		let aheadAverage = aheadAverageRaw.limit(min:0).round
 		let targetFrame = Math.floor((now - startTime)/targetFrameTime)+1
 		let nextInputFrame = targetFrame + aheadAverage + bufferFrames
 		
@@ -331,7 +333,7 @@ transient unit Network
 				logTable += ","+(Input.internalUsers[0] ? Input.internalUsers[0].inputFrame : 0)
 				logTable += ","+(Input.internalUsers[1] ? Input.internalUsers[1].inputFrame : 0)
 				logTable += ","+(Input.internalUsers[2] ? Input.internalUsers[2].inputFrame : 0)
-				logTable += ",{receivedFrames},{uncertainFrame},{frame - receivedFrames},{aheadAverage}"
+				logTable += ",{receivedFrames},{uncertainFrame},{frame - receivedFrames},{ahead},{aheadAverage}"
 				logTable += ",\"{checksumLog.trim}\",\"{eventLog.trim}\",\"{sentLog.trim}\",\"{receivedLog.trim}\",\"{writeLog.trim}\",\"{parseLog.trim}\",\"{touchLog.trim}\"\n"
 				eventLog = ""; sentLog = ""; receivedLog = ""; writeLog = ""; parseLog = ""; touchLog = ""; checksumLog = ""
 				
@@ -425,7 +427,7 @@ transient unit Network
 			uncertainFrame = frame
 			saveTime = Time.measure
 				Snapshot.serialize commonState
-			log "Save angle:{Framework.objects.length ? Framework.objects[0].angle : 0}", lobby.inLobby, frame, Input.internalUsers[0]?.uncertainReadPos, Input.internalUsers[1]?.uncertainReadPos
+			log "Save x:{Framework.objects.length ? Framework.objects[0].position.x : 0}", lobby.inLobby, frame, Input.internalUsers[0]?.uncertainReadPos, Input.internalUsers[1]?.uncertainReadPos
 	
 	// Replay all frames from the first uncertain frame until the current frame
 	// when we received all inputs for frames that we were uncertain about before.
@@ -437,8 +439,8 @@ transient unit Network
 			for Input.internalUsers: inputs.readPos = uncertainReadPos
 			restoreTime = Time.measure
 				Snapshot.deserialize commonState
-			log "Replay angle:{Framework.objects.length ? Framework.objects[0].angle : 0}", lobby.inLobby, frame, Input.internalUsers[0].inputs.readPos, Input.internalUsers[1].inputs.readPos, receivedFrames, uncertainFrame, frame
 				
+			log "Replay x:{Framework.objects.length ? Framework.objects[0].position.x : 0}", lobby.inLobby, frame, Input.internalUsers[0].inputs.readPos, Input.internalUsers[1].inputs.readPos, receivedFrames, uncertainFrame, frame
 			let targetFrame = frame
 			frame = uncertainFrame
 			// We set uncertainFrame to -1 because we currently have no uncertainty. If we process frames beyond 
@@ -671,7 +673,7 @@ transient unit Network
 			while frame < receivedFrames - 1
 				step fastFordward:true
 			step
-			log "Opening saved eventstream", roomId, frame, eventStreamSize
+			log "Opening saved eventstream", roomId, frame
 			sendToServer JoinMessage roomId, userId, version:Platform.version
 		else
 			frame = 0
@@ -930,7 +932,7 @@ transient unit Network
 		sendBuffer.writeBuffer buffer, start, end - start
 		send to, sendBuffer
 		
-		sentLog += " #{frame} ack:{acknowledgePos} csFor:{checksumFor} cs:{checksum} {buffer.toRangeString(start, end)}"
+		sentLog += " #{inputFrame} ack:{acknowledgePos} csFor:{checksumFor} cs:{checksum} cf:{currentFrame} start:{start} l:{end-start}  end:{end} {buffer.toRangeString(start, end)}"
 		
 	
 	private onTickMessage: Connection c, Buffer buffer
