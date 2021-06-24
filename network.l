@@ -924,11 +924,11 @@ transient unit Network
 		sendBuffer.reset
 		NetworkMessageType type = Tick
 		sendBuffer.writeInt16 cast type
+		sendBuffer.writeInt32 checksumFor
+		sendBuffer.writeFloat64 checksum || 0
 		sendBuffer.writeInt32 inputFrame
 		sendBuffer.writeInt32 currentFrame
 		sendBuffer.writeInt32 acknowledgePos
-		sendBuffer.writeInt32 checksumFor
-		sendBuffer.writeFloat64 checksum || 0
 		sendBuffer.writeInt32 start
 		sendBuffer.writeBuffer buffer, start, end - start
 		send to, sendBuffer
@@ -940,10 +940,6 @@ transient unit Network
 		let sender = Input.internalUsers[c.userId]
 		if c.state != Connected: c.state = Connected
 
-		sender.inputFrame = buffer.readInt32 
-		sender.currentFrame = buffer.readInt32 
-		sender.acknowledgedPos = buffer.readInt32
-		
 		// Checksum
 		let checksumFor = buffer.readInt32
 		let checksum = buffer.readFloat64
@@ -956,18 +952,35 @@ transient unit Network
 			onWrongChecksum
 			checksumLog += " MISMATCH mine:{myChecksum}"
 		
-		let writeStart = buffer.readInt32
-		let length = buffer.readBuffer sender.inputs, writeStart
-		sender.inputs.writePos = writeStart + length
-		receivedFrames = getReceivedInputFrames
-		
-		// Calculate "ahead"
-		let receivedCurrentFrames = getReceivedCurrentFrames
-		let ahead = frame - receivedCurrentFrames
-		if ahead >= 0 and ahead < 60: aheads.add ahead, maxLength:900
-
-		receivedLog += " <{c.userId}> #{sender.inputFrame} a:{sender.acknowledgedPos} l:{length} w:{sender.inputs.writePos}"
-				
+		int inputFrame = buffer.readInt32 
+		if inputFrame > sender.inputFrame
+			sender.inputFrame = inputFrame
+			sender.currentFrame = buffer.readInt32 
+			sender.acknowledgedPos = buffer.readInt32
+			
+			let writeStart = buffer.readInt32
+			let length = buffer.readBuffer sender.inputs, writeStart
+			sender.inputs.writePos = writeStart + length
+			receivedFrames = getReceivedInputFrames
+			
+			// Calculate "ahead"
+			let receivedCurrentFrames = getReceivedCurrentFrames
+			ahead = frame - receivedCurrentFrames
+			if ahead >= 0 and ahead < 60: aheads.add ahead, maxLength:900
+	
+			receivedLog += " <{c.userId}> #{sender.inputFrame} a:{sender.acknowledgedPos} cf:{sender.currentFrame} start:{writeStart} l:{length} end:{sender.inputs.writePos} {sender.inputs.toRangeString(writeStart, sender.inputs.writePos)}"
+		else
+			// Ignore this frame because we already received a later frame
+			// Later frames start from the pos we acknowleged (everything before that we definately already received)
+			// until the latest available pos, so later frames contain the maximum available information
+			
+			// This is just for logging and debugging
+			let currentFrame = buffer.readInt32 
+			let acknowledgedPos = buffer.readInt32
+			let writeStart = buffer.readInt32
+			let length = buffer.readInt32
+			receivedLog += " <{c.userId}> irgnoring #{inputFrame} (already at {sender.inputFrame}) a:{acknowledgedPos} start:{writeStart} l:{length} end:{writeStart+length}"
+			
 	private void sendOwnInputsAfterReconnectMessage: Connection c
 		                                int frame
 		                                Buffer buffer
