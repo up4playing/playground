@@ -417,6 +417,8 @@ transient unit Network
 		drawTime = Time.measure
 			graphics.finishFrame
 			
+		// log "#{frame}", app.tile.position.x
+			
 	// Save a snapshot when we are about to start the frame after the last certain frame 
 	// where we received inputs from all users. This is called at the beginning of a step
 	// before we start processing the frame.
@@ -901,11 +903,11 @@ transient unit Network
 	Buffer sendBuffer
 	
 	// Delay for debugging
-	// private js void onPeerMessage: Connection c, Buffer buffer
-	// 	setTimeout(() => Network_onPeerMessageActual(c, buffer), 500)
+	private js void onPeerMessage: Connection c, Buffer buffer
+		if(Math.random() < .75) setTimeout(() => Network_onPeerMessageActual(c, buffer), Math.random()*500)
 		
-	// private onPeerMessageActual: Connection c, Buffer buffer
-	private onPeerMessage: Connection c, Buffer buffer
+	private onPeerMessageActual: Connection c, Buffer buffer
+	// private onPeerMessage: Connection c, Buffer buffer
 		NetworkMessageType type = cast buffer.readInt16
 		if type == Tick: onTickMessage c, buffer; else
 		if type == Ping: onPingMessage c, buffer; else
