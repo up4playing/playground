@@ -252,7 +252,7 @@ transient unit Network
 		randomSeed = Math.generateRandomSeed
 		Math.setRandomSeed randomSeed
 		for userCount
-			Input.internalUsers.add {id:i, local:true}
+			Input.internalUsers.add {id:i, local:true, collectInputs:true}
 			Input.users.add {id:i}
 		
 		startTime = currentTime
