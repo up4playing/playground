@@ -417,7 +417,7 @@ transient unit Network
 		drawTime = Time.measure
 			graphics.finishFrame
 			
-		// log "#{frame}", app.tile.position.x
+		log "#{frame}{Input.isCertain ? "c":""} {Framework.debugString}"
 			
 	// Save a snapshot when we are about to start the frame after the last certain frame 
 	// where we received inputs from all users. This is called at the beginning of a step
@@ -430,7 +430,7 @@ transient unit Network
 			uncertainFrame = frame
 			saveTime = Time.measure
 				Snapshot.serialize commonState
-			log "Save x:{Framework.objects.length ? Framework.objects[0].position.x : 0}", lobby.inLobby, frame, Input.internalUsers[0]?.uncertainReadPos, Input.internalUsers[1]?.uncertainReadPos
+			log "Save {Framework.debugString}"
 	
 	// Replay all frames from the first uncertain frame until the current frame
 	// when we received all inputs for frames that we were uncertain about before.
@@ -439,11 +439,12 @@ transient unit Network
 		if mode != Connected or Input.internalUsers.length == 1: return
 		if uncertainFrame != -1 and receivedFrames >= uncertainFrame
 			// Restore state
+			log "Restore before {Framework.debugString}"
 			for Input.internalUsers: inputs.readPos = uncertainReadPos
 			restoreTime = Time.measure
 				Snapshot.deserialize commonState
-				
-			log "Replay x:{Framework.objects.length ? Framework.objects[0].position.x : 0}", lobby.inLobby, frame, Input.internalUsers[0].inputs.readPos, Input.internalUsers[1].inputs.readPos, receivedFrames, uncertainFrame, frame
+			log "Restore after {Framework.debugString}"
+	
 			let targetFrame = frame
 			frame = uncertainFrame
 			// We set uncertainFrame to -1 because we currently have no uncertainty. If we process frames beyond 

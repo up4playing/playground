@@ -22,6 +22,11 @@ unit Framework
 				if pos >= b.position - b.size/2 && pos < b.position + b.size/2
 					return b
 		return null
+		
+	debugString
+		let result = ""
+		for objects: result+= o.debugString
+		return result
 			
 // class NetworkUser
 // 	Object selectedObject = null
@@ -72,6 +77,9 @@ class Object
 		if size.y < minSize: size.y = minSize
 		this.targetAngle = angle
 		this.nextBoard = board
+		
+	debugString
+		return "(Object pos:{position.x} {position.y} board:{board.toBool})"
 	
 	remove
 		siblings.remove this
@@ -233,6 +241,11 @@ Object Board
 	]
 	Board: float2 size
 		this.size = size
+		
+	debugString
+		string children
+		for objects: children += o.debugString
+		return "(Board pos:{position.x} {position.y} children:{children})"
 		
 	add: Object object
 		objects.add object
