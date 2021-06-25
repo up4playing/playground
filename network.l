@@ -287,7 +287,10 @@ transient unit Network
 		let aheadAverageRaw = aheads.average
 		let aheadAverage = aheadAverageRaw.limit(min:0).round
 		let targetFrame = Math.floor((now - startTime)/targetFrameTime)+1
-		let nextInputFrame = targetFrame + aheadAverage + bufferFrames
+		
+		// TEMP
+		// let nextInputFrame = targetFrame + aheadAverage + bufferFrames
+		let nextInputFrame = targetFrame
 		
 		if mode == Local && targetFrame > frame + targetFps*2
 			// After a long pause in local mode, we do not want to process all missed frames, so we adjust the start time
@@ -905,7 +908,9 @@ transient unit Network
 	
 	// Delay for debugging
 	private js void onPeerMessage: Connection c, Buffer buffer
-		if(Math.random() < .75) setTimeout(() => Network_onPeerMessageActual(c, buffer), Math.random()*500)
+		// TEMP
+		// if(Math.random() < .75) setTimeout(() => Network_onPeerMessageActual(c, buffer), Math.random()*500)
+		Network_onPeerMessageActual(c, buffer)
 		
 	private onPeerMessageActual: Connection c, Buffer buffer
 	// private onPeerMessage: Connection c, Buffer buffer
