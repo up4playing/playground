@@ -385,6 +385,8 @@ transient unit Network
 					Board board = cast o
 					let m = board.matrix
 					myChecksum += m.m0 + m.m1 + m.m2 + m.m3 + m.m4 + m.m5
+					for boardObj -> board.objects
+						myChecksum += boardObj.position.x + boardObj.position.y + boardObj.frame + cast boardObj.side
 					
 			let theirChecksum = checksums[frame]
 			checksumLog += " <mine> #{frame} {myChecksum}"
@@ -477,11 +479,11 @@ transient unit Network
 	
 	private onWrongChecksum
 		log "%%% OUT OF SYNC %%%"
-		Platform.setTitle "%%% OUT OF SYNC %%%"
+		// Platform.setTitle "%%% OUT OF SYNC %%%"
 		
-		// if !alertShown
-		// 	alert "Clients out of sync. Please click 'Save Logs' and send me the log file that will be created."
-		// 	alertShown = true
+		if !alertShown
+			alert "Clients out of sync. Please click 'Save Logs' and send me the log file that will be created."
+			alertShown = true
 			
 	log: logstring text
 		string str = text
