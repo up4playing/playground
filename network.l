@@ -20,7 +20,6 @@ transient class VideoScreenInfo
 transient unit Snapshot
 	inline js void serialize(Buffer buffer) serialize(buffer)
 	inline js void deserialize(Buffer buffer) deserialize(buffer)
-		
 	Buffer save
 		Buffer buffer
 		serialize(buffer)
@@ -221,7 +220,8 @@ transient unit Network
 	private bool isLocalhost
 	private int ahead
 	private int[] aheads
-		
+	private Buffer sendBuffer
+	
 	init
 		showDebugString = isLocalhost = Platform.url.contains("localhost")
 
@@ -234,7 +234,7 @@ transient unit Network
 		let user = Input.internalUsers[userId]
 		user.startInputFrame 0
 		
-		int joinFrame = Math.floor(currentTime - this.startTime)/targetFrameTime
+		int joinFrame = Math.floor((currentTime - this.startTime)/targetFrameTime)
 		InputType type = Join
 		user.inputs.writeInt32 joinFrame
 		user.inputs.writeInt16 cast type
@@ -284,13 +284,11 @@ transient unit Network
 			
 		let now = currentTime
 		let localPlayer = Input.internalUsers[userId]
-		let aheadAverageRaw = aheads.average
-		let aheadAverage = aheadAverageRaw.limit(min:0).round
+		let aheadAverage = aheads.average
+		let aheadAverageString = aheadAverage.format(fractionDigits:1)
 		let targetFrame = Math.floor((now - startTime)/targetFrameTime)+1
-		
-		// TEMP
-		// let nextInputFrame = targetFrame + aheadAverage + bufferFrames
-		let nextInputFrame = targetFrame
+		int nextInputFrame = targetFrame + aheadAverage.round + bufferFrames
+		// let nextInputFrame = targetFrame
 		
 		if mode == Local && targetFrame > frame + targetFps*2
 			// After a long pause in local mode, we do not want to process all missed frames, so we adjust the start time
@@ -337,12 +335,12 @@ transient unit Network
 				logTable += ","+(Input.internalUsers[0] ? Input.internalUsers[0].inputFrame : 0)
 				logTable += ","+(Input.internalUsers[1] ? Input.internalUsers[1].inputFrame : 0)
 				logTable += ","+(Input.internalUsers[2] ? Input.internalUsers[2].inputFrame : 0)
-				logTable += ",{receivedFrames},{uncertainFrame},{frame - receivedFrames},{ahead},{aheadAverage}"
+				logTable += ",{receivedFrames},{uncertainFrame},{frame - receivedFrames},{ahead},{aheadAverageString}"
 				logTable += ",\"{checksumLog.trim}\",\"{eventLog.trim}\",\"{sentLog.trim}\",\"{receivedLog.trim}\",\"{writeLog.trim}\",\"{parseLog.trim}\",\"{touchLog.trim}\"\n"
 				eventLog = ""; sentLog = ""; receivedLog = ""; writeLog = ""; parseLog = ""; touchLog = ""; checksumLog = ""
 				
 				// Debug string
-				debugString = "v{Platform.version} a:{ahead} av:{aheadAverageRaw.format(fractionDigits:1)} "
+				debugString = "v{Platform.version} a:{ahead} av:{aheadAverageString} "
 				for user -> Input.internalUsers
 					if user
 						if debugString: debugString += " "
@@ -360,7 +358,7 @@ transient unit Network
 	// frame will point to the current frame. After processing, frame will point to the next frame.
 	private step: bool fastFordward = false // If a step is fast forwarted nothing is drawn
 		// Set time
-		Time.now = frame * targetFrameTime
+		Time.now = Math.round(frame * targetFrameTime)
 		Platform.fastForward = fastFordward
 		
 		// Log
@@ -904,16 +902,7 @@ transient unit Network
 			}
 		}
 		
-	Buffer sendBuffer
-	
-	// Delay for debugging
-	private js void onPeerMessage: Connection c, Buffer buffer
-		// TEMP
-		// if(Math.random() < .75) setTimeout(() => Network_onPeerMessageActual(c, buffer), Math.random()*500)
-		Network_onPeerMessageActual(c, buffer)
-		
-	private onPeerMessageActual: Connection c, Buffer buffer
-	// private onPeerMessage: Connection c, Buffer buffer
+	private onPeerMessage: Connection c, Buffer buffer
 		NetworkMessageType type = cast buffer.readInt16
 		if type == Tick: onTickMessage c, buffer; else
 		if type == Ping: onPingMessage c, buffer; else
@@ -944,7 +933,12 @@ transient unit Network
 		sentLog += " #{inputFrame} ack:{acknowledgePos} csFor:{checksumFor} cs:{checksum} cf:{currentFrame} start:{start} l:{end-start}  end:{end} {buffer.toRangeString(start, end)}"
 		
 	
-	private onTickMessage: Connection c, Buffer buffer
+	private js void onTickMessage: Connection c, Buffer buffer
+		if(Math.random() < .75) setTimeout(() => Network_onTickMessageActual(c, buffer), Math.random()*500)
+		// setTimeout(() => Network_onTickMessageActual(c, buffer), 500)
+		// Network_onPeerMessageActual(c, buffer)
+		
+	private onTickMessageActual: Connection c, Buffer buffer
 		let sender = Input.internalUsers[c.userId]
 		if c.state != Connected: c.state = Connected
 

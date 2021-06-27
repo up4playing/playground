@@ -13,30 +13,12 @@ struct int
 		
 	inline js string formatWithSpaces := this.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ")
 		
-	inline js string format: int minIntegerDigits
-		this.toLocaleString('en-US', {minimumIntegerDigits:minIntegerDigits})
-		
-	inline js string format: int fractionDigits
-		this.toLocaleString('en-US', {maximumFractionDigits:fractionDigits, minimumFractionDigits:fractionDigits})
-		
-	inline js string format: bool grouping
-		this.toLocaleString('en-US', {useGrouping:grouping})
+	inline js string format: int minIntegerDigits = 1, bool grouping = false
+		this.toLocaleString('en-US', {minimumIntegerDigits:minIntegerDigits, useGrouping:grouping})
 		
 	// Returns the absolute value
 	inline js int abs
 		Math.abs(this)
-		
-	// Returns the smallest integer greater than or equal to the given value 
-	inline js int ceil
-		Math.ceil(this)
-		
-	// Returns the largest integer less than or equal to the given value
-	inline js int floor
-		Math.floor(this)
-		
-	// Returns the given value rounded to the nearest integer
-	inline js int round
-		Math.round(this)
 		
 	inline js int shiftLeft: int count
 		(this << count)
@@ -68,7 +50,39 @@ struct float
 	inline js string toString := this.toString()
 		
 	js float operator **(float a, float b) return Math.pow(a,b)
-
+		
+	inline js string format: int minIntegerDigits = 1, bool grouping = false
+		this.toLocaleString('en-US', {minimumIntegerDigits:minIntegerDigits, useGrouping:grouping})
+		
+	inline js string format: int fractionDigits
+		this.toLocaleString('en-US', {maximumFractionDigits:fractionDigits, minimumFractionDigits:fractionDigits})
+		
+	// Returns the absolute value
+	inline js float abs
+		Math.abs(this)
+		
+	// Returns the smallest integer greater than or equal to the given value 
+	inline js int ceil
+		Math.ceil(this)
+		
+	// Returns the largest integer less than or equal to the given value
+	inline js int floor
+		Math.floor(this)
+		
+	// Returns the given value rounded to the nearest integer
+	inline js int round
+		Math.round(this)
+		
+	inline js float limit: float min
+		(this < min ? min : this)
+	
+	inline js float limit: float max
+		(this > max ? max : this)
+	
+	inline js float limit: float min
+		                   float max
+		(this < min ? min : this > max ? max : this)
+		
 // A sequence of characters
 class string
 	// Returns the number of characters in the string
