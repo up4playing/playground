@@ -373,6 +373,9 @@ Object Coin
 	private closestCoinType closestCoinType
 	private float distanceToClosest
 	
+	debugString
+		return "(Coin {value} pos:{position.x} {position.y} dis:{distanceToClosest})"
+	
 	tick
 		if movable
 			Input.onTouchDownWithin position, radius:40

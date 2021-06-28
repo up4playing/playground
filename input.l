@@ -198,9 +198,11 @@ unit Input
 				// We already moved the pointer this input frame, so just update the last move
 				inputs.setInt16 index, Math.round(referencePos.x)
 				inputs.setInt16 index+2, Math.round(referencePos.y)
+				Network.log "#{user.inputFrame} override move {id} at {index} to {Math.round(referencePos.x)} {Math.round(referencePos.y)}", user.lastTouchMoveIndex
 				return
 			else
 				setLastTouchMoveIndex id, inputs.writePos+6
+				Network.log "#{user.inputFrame} save move {id} at {inputs.writePos+6} original {Math.round(referencePos.x)} {Math.round(referencePos.y)}", user.lastTouchMoveIndex
 			
 		int composite = cast(type)                                          // type:   0 -  32 (5 bit)
 		              + Math.shiftLeft(button < 0 ? 0 : button%8, 5)        // button: 0 -   8 (3 bit)

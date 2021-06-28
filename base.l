@@ -204,6 +204,14 @@ class List<T>
 	
 	// Removes all items from the list
 	inline js void clear := this.length = 0
+	
+	js string toString()
+		let result = "";
+		for(let item of this) {
+			if(result) result += ", ";
+			result += item;
+		}
+		return "["+result+"]"
 		
 	// Gets a random item from the list
 	T random() := get(Math.randomInteger(length))
