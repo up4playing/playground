@@ -348,7 +348,8 @@ transient unit Network
 						
 				lastNetworkFrame = now
 				
-		localPlayer.startInputFrame nextInputFrame
+			localPlayer.startInputFrame nextInputFrame
+			
 		lastAnimationFrame = now
 		
 	// Save state, parse inputs, process tick, and calculate checksum
