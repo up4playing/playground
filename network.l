@@ -405,6 +405,10 @@ transient unit Network
 					myChecksum += m.m0 + m.m1 + m.m2 + m.m3 + m.m4 + m.m5
 					for boardObj -> board.objects
 						myChecksum += boardObj.position.x + boardObj.position.y + boardObj.frame + cast boardObj.side
+				else
+				if o.type == Coin
+					Coin coin = cast o
+					myChecksum += coin.value
 					
 			let theirChecksum = checksums[frame]
 			checksumLog += " <mine> #{frame} {myChecksum}"
