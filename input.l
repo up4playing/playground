@@ -174,14 +174,14 @@ unit Input
 		let user = internalUsers[Network.userId], inputs = user.inputs
 		inputs.writeInt32 user.inputFrame
 		user.lastTextInputIndex = inputs.writePos
-		inputs.writeInt16 cast type
+		inputs.writeUnsignedInt16 cast type
 		inputs.writeString text
 			
 	private handleKeyEvent: InputType type, int keyCode
 		if Network.mode == None || Platform.mode != Record: return
 		let user = internalUsers[Network.userId], inputs = user.inputs
 		inputs.writeInt32 user.inputFrame
-		inputs.writeInt16 cast type
+		inputs.writeUnsignedInt16 cast type
 		inputs.writeInt32 keyCode
 		
 	private handleTouchEvent: InputType type, float x, float y, int id, int button
@@ -204,11 +204,11 @@ unit Input
 				setLastTouchMoveIndex id, inputs.writePos+6
 				Network.log "#{user.inputFrame} save move {id} at {inputs.writePos+6} original {Math.round(referencePos.x)} {Math.round(referencePos.y)}", user.lastTouchMoveIndex
 			
-		int composite = cast(type)                                          // type:   0 -  32 (5 bit)
-		              + Math.shiftLeft(button < 0 ? 0 : button%8, 5)        // button: 0 -   8 (3 bit)
-		              + Math.shiftLeft(Math.floor(int Math.abs(id))%256, 8) // id:     0 - 256 (8 bit)
+		int composite = cast(type)                                      // type:   0 -  32 (5 bit)
+		              + Math.shiftLeft(button.limit(min:0, max:3), 5)   // button: 0 -   4 (2 bit)
+		              + Math.shiftLeft(Math.floor(Math.abs(id))%256, 7) // id:     0 - 256 (8 bit)
 		inputs.writeInt32 user.inputFrame
-		inputs.writeInt16 composite
+		inputs.writeUnsignedInt16 composite
 		inputs.writeInt16 Math.round(referencePos.x)
 		inputs.writeInt16 Math.round(referencePos.y)
 		Network.writeLog += " [{user.inputFrame}] {composite} {Math.round(referencePos.x)} {Math.round(referencePos.y)} \{r:{inputs.readPos} w:{inputs.writePos}\}"
@@ -220,7 +220,7 @@ unit Input
 		float2 referencePos = {x*Platform.pixelRatio, y*Platform.pixelRatio}.getRelativeTo(Platform.baseMatrix)
 		InputType type = Wheel
 		inputs.writeInt32 user.inputFrame
-		inputs.writeInt16 cast type
+		inputs.writeUnsignedInt16 cast type
 		inputs.writeInt16 Math.round(referencePos.x)
 		inputs.writeInt16 Math.round(referencePos.y)
 		inputs.writeInt16 Math.round(delta)
@@ -241,13 +241,13 @@ unit Input
 					if nextFrame > frame: break
 					inputs.readPos += 4
 					
-					let value = inputs.readInt16
+					let value = inputs.readUnsignedInt16
 					Network.parseLog += " "+value
 					InputType type = cast value % 32
 					
 					if type >= TouchDown && type <= Wheel
-						MouseButton button = cast Math.shiftRight(value, 5) % 8
-						int id = Math.shiftRight(value, 8)
+						MouseButton button = cast Math.shiftRight(value, 5) % 4
+						int id = Math.shiftRight(value, 7)
 						float2 touchPos = {inputs.readInt16, inputs.readInt16}
 						let user = users[internalUser.id]
 						user.touchPos = touchPos

@@ -77,10 +77,22 @@ transient class Buffer
 		this.dataView.setInt8(this.writePos, value)
 		this.writePos += 1
 	
+	js void writeUnsignedInt8: int value
+		if(this.writePos+1 > this.buffer.byteLength)
+			this.expandBuffer(this.writePos+1)
+		this.dataView.setUint8(this.writePos, value)
+		this.writePos += 1
+	
 	js void writeInt16: int value
 		if(this.writePos+2 > this.buffer.byteLength)
 			this.expandBuffer(this.writePos+2)
 		this.dataView.setInt16(this.writePos, value)
+		this.writePos += 2
+	
+	js void writeUnsignedInt16: int value
+		if(this.writePos+2 > this.buffer.byteLength)
+			this.expandBuffer(this.writePos+2)
+		this.dataView.setUint16(this.writePos, value)
 		this.writePos += 2
 	
 	js void writeInt32: int value
@@ -141,8 +153,16 @@ transient class Buffer
 	js int readInt8
 		return this.dataView.getInt8(this.readPos++)
 		
+	js int readUnsignedInt8
+		return this.dataView.getUint8(this.readPos++)
+		
 	js int readInt16
 		let value = this.dataView.getInt16(this.readPos)
+		this.readPos += 2
+		return value
+		
+	js int readUnsignedInt16
+		let value = this.dataView.getUint16(this.readPos)
 		this.readPos += 2
 		return value
 		
