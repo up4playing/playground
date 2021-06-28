@@ -33,8 +33,9 @@ transient class Buffer
 	private object buffer = null
 	private object dataView = null
 	
+	// TEMP: Small buffer size for testing
 	Buffer: object buffer = null
-		    int size = 1024
+		    int size = 4
 		setup(size)
 		
 	private js void setup: int size = 1024
@@ -43,54 +44,68 @@ transient class Buffer
 		this.dataView = new DataView(this.buffer)
 		
 	canRead := readPos < writePos
-	// setWritePos(int writePos) this.writePos = writePos
-	// setReadPos(int readPos) this.readPos = readPos
-	
+
 	reset
 		this.writePos = 0
 		this.readPos = 0   
 		
 	js void expandBuffer: int size
 		let prevLength = this.buffer.byteLength
-		this.buffer = new ArrayBuffer(Math.max(prevLength * 2, size))
+		let len = Math.max(prevLength*2, size)
+		this.buffer = new ArrayBuffer(len)
 		let prevDataView = this.dataView
 		let newDataView = new DataView(this.buffer)
-		for(let i=0; i<prevLength; i+=2)
-			newDataView.setInt16(i, prevDataView.getInt16(i))
+		for(let i=0; i<prevLength; i++)
+			newDataView.setInt8(i, prevDataView.getInt8(i))
+			
+		// TEMP: Check if data is still the same after expanding
+		Network_log("expand buffer from "+prevLength+" to "+len)
+		for(let i=0; i<prevLength; i++)
+			if(prevDataView.getInt8(i) != newDataView.getInt8(i))
+				Network_log("expand failed at " + i 
+				+" expected "+prevDataView.getInt8(i)
+				+" got "+newDataView.getInt8(i))
+				
 		this.dataView = newDataView
 		
 	inline js void setInt16: int index, int value
 		this.dataView.setInt16(index, value)
 	
 	js void writeInt8: int value
-		if(this.writePos+1 > this.buffer.byteLength) this.expandBuffer((this.writePos+1)*2)
+		if(this.writePos+1 > this.buffer.byteLength)
+			this.expandBuffer(this.writePos+1)
 		this.dataView.setInt8(this.writePos, value)
 		this.writePos += 1
 	
 	js void writeInt16: int value
-		if(this.writePos+2 > this.buffer.byteLength) this.expandBuffer((this.writePos+2)*2)
+		if(this.writePos+2 > this.buffer.byteLength)
+			this.expandBuffer(this.writePos+2)
 		this.dataView.setInt16(this.writePos, value)
 		this.writePos += 2
 	
 	js void writeInt32: int value
-		if(this.writePos+4 > this.buffer.byteLength) this.expandBuffer((this.writePos+4)*2)
+		if(this.writePos+4 > this.buffer.byteLength)
+			this.expandBuffer(this.writePos+4)
 		this.dataView.setInt32(this.writePos, value)
 		this.writePos += 4
 	
 	js void writeFloat64: float value
-		if(this.writePos+8 > this.buffer.byteLength) this.expandBuffer((this.writePos+8)*2)
+		if(this.writePos+8 > this.buffer.byteLength)
+			this.expandBuffer(this.writePos+8)
 		this.dataView.setFloat64(this.writePos, value)
 		this.writePos += 8
 		
 	js void writeBool: bool value
-		if(this.writePos+1 > this.buffer.byteLength) this.expandBuffer((this.writePos+1)*2)
+		if(this.writePos+1 > this.buffer.byteLength)
+			this.expandBuffer(this.writePos+1)
 		this.dataView.setInt8(this.writePos, value ? 1 : 0)
 		this.writePos += 1
 		
 	js void writeString: string value
 		let len = value.length
 		let size = 4+len*4
-		if(this.writePos+size > this.buffer.byteLength) this.expandBuffer((this.writePos+size)*2)
+		if(this.writePos+size > this.buffer.byteLength)
+			this.expandBuffer(this.writePos+size)
 		this.dataView.setInt32(this.writePos, len)
 		this.writePos += 4
 		for(let i=0; i<len; ++i) {
@@ -105,7 +120,8 @@ transient class Buffer
 		let writePos = this.writePos
 		
 		// Expand if neccessary
-		if(writePos+length+4 > this.buffer.byteLength) this.expandBuffer((writePos+length+4)*2)
+		if(writePos+length+4 > this.buffer.byteLength)
+			this.expandBuffer(writePos+length+4)
 			
 		// Write length
 		this.dataView.setInt32(writePos, length)
@@ -163,7 +179,8 @@ transient class Buffer
 		readPos += 4
 		
 		// Expand writeBuffer if neccessary
-		if(writeStart+length > writeBuffer.buffer.byteLength) writeBuffer.expandBuffer((writeStart+length)*2)
+		if(writeStart+length > writeBuffer.buffer.byteLength)
+			writeBuffer.expandBuffer(writeStart+length)
 			
 		// Read bytes
 		let readPosEnd = readPos + length
@@ -172,7 +189,7 @@ transient class Buffer
 			
 		this.readPos = readPos
 		return length
-		
+			
 	js string toString
 		let result = "readPos:" + this.readPos + " writePos:" + this.writePos
 		for(let i=0; i<this.writePos; i ++)
