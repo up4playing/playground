@@ -339,23 +339,7 @@ transient unit Network
 			
 			// Send each user the inputs that they haven't acknowleged yet
 			if mode == Connected
-				for c -> connections
-					if c.state == Connected
-						let receiver = Input.internalUsers[c.userId]
-						let checksumFor = uncertainFrame>1 ? uncertainFrame-1 : frame-1
-						sendTickMessage
-							to: c
-							inputFrame: nextInputFrame-1     // You got all inputs up to and including this frame
-							currentFrame: targetFrame-1      // The currently processed frame, used to calculate "ahead" 
-							
-							checksumFor: checksumFor         // The last certain frame with inputs from everybody
-							checksum: checksums[checksumFor] // The checksum of the last certain frame
-							
-							acknowledgePos: receiver.inputs.writePos  // We ackledge that we received up to this input buffer pos
-							
-							buffer: localPlayer.inputs                // Send inputs that they haven't acknowleged yet
-							start: receiver.acknowledgedPos
-							end: localPlayer.inputs.writePos
+				sendInputs nextInputFrame, targetFrame
 							
 			// Replay all frames from the first uncertain frame until the current frame
 			// when we received all inputs for frames that we were uncertain about before
@@ -452,6 +436,28 @@ transient unit Network
 			graphics.finishFrame
 			
 		log "#{frame}{Input.isCertain ? "c":""} {Framework.debugString}"
+		
+	// Send each user the inputs that they haven't acknowleged yet
+	// This is called in animationFrame.
+	private sendInputs: int nextInputFrame, int targetFrame
+		let localPlayer = Input.internalUsers[userId]
+		for c -> connections
+			if c.state == Connected
+				let receiver = Input.internalUsers[c.userId]
+				let checksumFor = uncertainFrame>1 ? uncertainFrame-1 : frame-1
+				sendTickMessage
+					to: c
+					inputFrame: nextInputFrame-1     // You got all inputs up to and including this frame
+					currentFrame: targetFrame-1      // The currently processed frame, used to calculate "ahead" 
+					
+					checksumFor: checksumFor         // The last certain frame with inputs from everybody
+					checksum: checksums[checksumFor] // The checksum of the last certain frame
+					
+					acknowledgePos: receiver.inputs.writePos  // We ackledge that we received up to this input buffer pos
+					
+					buffer: localPlayer.inputs                // Send inputs that they haven't acknowleged yet
+					start: receiver.acknowledgedPos
+					end: localPlayer.inputs.writePos
 		
 	// Save a snapshot when we are about to start the frame after the last certain frame 
 	// where we received inputs from all users. This is called at the beginning of a step

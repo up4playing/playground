@@ -558,8 +558,8 @@ transient unit Math
 		}
 		
 	private float[] randomValues
-	int randomValueIndex
-	int uncertainRandomValueIndex
+	internal int randomValueIndex
+	internal int uncertainRandomValueIndex
 	
 	js void setRandomSeed: string seed
 		// Ported from an algorithm by Johannes Baagøe <baagoe@baagoe.com>
