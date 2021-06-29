@@ -993,12 +993,13 @@ transient unit Network
 		sentLog += " #{inputFrame} ack:{acknowledgePos} csFor:{checksumFor} cs:{checksum} cf:{currentFrame} start:{start} l:{end-start}  end:{end} {buffer.toRangeString(start, end)}"
 		
 	
-	private js void onTickMessage: Connection c, Buffer buffer
-		if(Math.random() < .75) setTimeout(() => Network_onTickMessageActual(c, buffer), Math.random()*500)
+	// private js void onTickMessage: Connection c, Buffer buffer
+		// if(Math.random() < .75) setTimeout(() => Network_onTickMessageActual(c, buffer), Math.random()*500)
 		// setTimeout(() => Network_onTickMessageActual(c, buffer), 500)
 		// Network_onPeerMessageActual(c, buffer)
 		
-	private onTickMessageActual: Connection c, Buffer buffer
+	// private onTickMessageActual: Connection c, Buffer buffer
+	private onTickMessage: Connection c, Buffer buffer
 		let sender = Input.internalUsers[c.userId]
 		if c.state != Connected: c.state = Connected
 
