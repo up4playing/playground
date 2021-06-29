@@ -228,7 +228,7 @@ transient unit Network
 	public string eventLog = ""; sentLog = "", receivedLog="", writeLog="", parseLog = "", touchLog = "", checksumLog = "", debugString = ""
 	public bool showDebugString
 	private float lastNetworkFrame, lastAnimationFrame, drawTime, tickTime, restoreTime, replayTime, saveTime
-	private int replayFrames
+	private int replayFrames, checkedChecksums
 	
 	internal const targetFps = 30
 	private const pingCount = 6
@@ -377,12 +377,11 @@ transient unit Network
 				eventLog = ""; sentLog = ""; receivedLog = ""; writeLog = ""; parseLog = ""; touchLog = ""; checksumLog = ""
 				
 				// Debug string
-				debugString = "v{Platform.version} a:{ahead} av:{aheadAverageString} "
+				debugString = "v{Platform.version} checks:{checkedChecksums} inputs:"
 				for user -> Input.internalUsers
 					if user
-						if debugString: debugString += " "
-						debugString += user.inputs.writePos.format(grouping:true)
-						
+						debugString += user.inputs.writePos.format(grouping:true) + " "
+				debugString += "a:{ahead} av:{aheadAverageString}"
 				lastNetworkFrame = now
 				
 			localPlayer.startInputFrame nextInputFrame
@@ -416,27 +415,17 @@ transient unit Network
 		
 		// Calculate checksum if we received all inputs for this frame
 		if isCertain
-			let myChecksum = 0
-			for Framework.objects
-				myChecksum += o.position.x + o.position.y + o.frame + cast o.side
-				if o.type == Board
-					Board board = cast o
-					let m = board.matrix
-					myChecksum += m.m0 + m.m1 + m.m2 + m.m3 + m.m4 + m.m5
-					for boardObj -> board.objects
-						myChecksum += boardObj.position.x + boardObj.position.y + boardObj.frame + cast boardObj.side
-				else
-				if o.type == Coin
-					Coin coin = cast o
-					myChecksum += coin.value
-					
+			int myChecksum = calculateChecksum					
 			let theirChecksum = checksums[frame]
 			checksumLog += " <mine> #{frame} {myChecksum}"
 			if !theirChecksum
 				checksums[frame] = myChecksum
 			else
-			if theirChecksum != myChecksum
+			if theirChecksum == myChecksum
+				checkedChecksums++
+			else
 				onWrongChecksum
+				checkedChecksums = 0
 				checksumLog += " MISMATCH saved theirs:{theirChecksum}"
 		
 		// Cleanup
@@ -463,7 +452,7 @@ transient unit Network
 			graphics.finishFrame
 			
 		log "#{frame}{Input.isCertain ? "c":""} {Framework.debugString}"
-			
+		
 	// Save a snapshot when we are about to start the frame after the last certain frame 
 	// where we received inputs from all users. This is called at the beginning of a step
 	// before we start processing the frame.
@@ -521,6 +510,25 @@ transient unit Network
 				minFrames = user.currentFrame
 		return minFrames
 	
+	private calculateChecksum
+		let checksum = 0
+		for Framework.objects
+			checksum += o.position.x + o.position.y + o.frame + cast o.side
+			if o.type == Board
+				Board board = cast o
+				let m = board.matrix
+				checksum += m.m0 + m.m1 + m.m2 + m.m3 + m.m4 + m.m5
+				for boardObj -> board.objects
+					checksum += boardObj.position.x + boardObj.position.y + boardObj.frame + cast boardObj.side
+			else
+			if o.type == Coin
+				Coin coin = cast o
+				checksum += coin.value
+		// We ensure that we never return 0
+		// because a checksum of 0 is used to indicate that we don't have a checksum for this frame yet
+		if checksum == 0: return 1
+		return checksum
+			
 	private onWrongChecksum
 		log "%%% OUT OF SYNC %%%"
 		// Platform.setTitle "%%% OUT OF SYNC %%%"
@@ -991,14 +999,18 @@ transient unit Network
 		// Checksum
 		let checksumFor = buffer.readInt32
 		let checksum = buffer.readFloat64
-		let myChecksum = checksums[checksumFor] 
 		checksumLog += " <{c.userId}> #{checksumFor} {checksum}"
-		if !myChecksum
-			checksums[checksumFor] = checksum
-		else
-		if myChecksum != checksum
-			onWrongChecksum
-			checksumLog += " MISMATCH mine:{myChecksum}"
+		if checksum
+			let myChecksum = checksums[checksumFor] 
+			if !myChecksum
+				checksums[checksumFor] = checksum
+			else
+			if myChecksum == checksum
+				checkedChecksums++
+			else
+				onWrongChecksum
+				checkedChecksums = 0
+				checksumLog += " MISMATCH mine:{myChecksum}"
 		
 		int inputFrame = buffer.readInt32 
 		if inputFrame > sender.inputFrame
