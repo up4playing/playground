@@ -351,8 +351,8 @@ transient unit Network
 				step fastFordward:frame < targetFrame-1
 				
 				// Logs
-				logTable += "{frame-1},{now - lastAnimationFrame},{now - lastNetworkFrame},{tickTime},{drawTime},{frame-startFrame}"
-				logTable += ",{restoreTime},{replayFrames},{replayTime},{saveTime}"
+				logTable += "{frame-1},{now - lastAnimationFrame},{now - lastNetworkFrame},{tickTime.format(fractionDigits:2)},{drawTime.format(fractionDigits:2)},{frame-startFrame}"
+				logTable += ",{restoreTime.format(fractionDigits:2)},{replayFrames},{replayTime.format(fractionDigits:2)},{saveTime.format(fractionDigits:2)}"
 				logTable += ","+(Input.internalUsers[0] ? Input.internalUsers[0].inputFrame : 0)
 				logTable += ","+(Input.internalUsers[1] ? Input.internalUsers[1].inputFrame : 0)
 				logTable += ","+(Input.internalUsers[2] ? Input.internalUsers[2].inputFrame : 0)
@@ -401,7 +401,7 @@ transient unit Network
 		if isCertain
 			int myChecksum = calculateChecksum					
 			let theirChecksum = checksums[frame]
-			checksumLog += " <mine> #{frame} {myChecksum}"
+			checksumLog += " <> #{frame} {myChecksum}"
 			if !theirChecksum
 				checksums[frame] = myChecksum
 			else
@@ -434,8 +434,6 @@ transient unit Network
 			Input.updateCursor
 		drawTime = Time.measure
 			graphics.finishFrame
-			
-		log "#{frame}{Input.isCertain ? "c":""} {Framework.debugString}"
 		
 	// Send each user the inputs that they haven't acknowleged yet
 	// This is called in animationFrame.
@@ -467,11 +465,10 @@ transient unit Network
 		if frame == receivedFrames+1
 			for Input.internalUsers: uncertainReadPos = inputs.readPos
 			Math.uncertainRandomValueIndex = Math.randomValueIndex
-			parseLog += " [saveState] r0:{Input.internalUsers[0]?.inputs.readPos} r1:{Input.internalUsers[1]?.inputs.readPos} u0:{Input.internalUsers[0]?.uncertainReadPos} u1:{Input.internalUsers[1]?.uncertainReadPos}"
 			uncertainFrame = frame
 			saveTime = Time.measure
 				Snapshot.serialize commonState
-			log "Save {Framework.debugString}"
+			parseLog += " save u:{uncertainFrame} c:{calculateChecksum}"
 	
 	// Replay all frames from the first uncertain frame until the current frame
 	// when we received all inputs for frames that we were uncertain about before.
@@ -480,12 +477,11 @@ transient unit Network
 		if mode != Connected or Input.internalUsers.length == 1: return
 		if uncertainFrame != -1 and receivedFrames >= uncertainFrame
 			// Restore state
-			log "Restore before {Framework.debugString}"
 			for Input.internalUsers: inputs.readPos = uncertainReadPos
 			Math.randomValueIndex = Math.uncertainRandomValueIndex
 			restoreTime = Time.measure
 				Snapshot.deserialize commonState
-			log "Restore after {Framework.debugString}"
+			parseLog +=  " restore u:{uncertainFrame} c:{calculateChecksum}"
 	
 			let targetFrame = frame
 			frame = uncertainFrame
@@ -536,7 +532,7 @@ transient unit Network
 		return checksum
 			
 	private onWrongChecksum
-		log "%%% OUT OF SYNC %%%"
+		log "##### OUT OF SYNC #####"
 		// Platform.setTitle "%%% OUT OF SYNC %%%"
 		
 		if !alertShown
@@ -990,7 +986,7 @@ transient unit Network
 		sendBuffer.writeBuffer buffer, start, end - start
 		send to, sendBuffer
 		
-		sentLog += " #{inputFrame} ack:{acknowledgePos} csFor:{checksumFor} cs:{checksum} cf:{currentFrame} start:{start} l:{end-start}  end:{end} {buffer.toRangeString(start, end)}"
+		sentLog += " #{inputFrame} ack:{acknowledgePos} cf:{currentFrame} s:{start} e:{end}"
 		
 	
 	// private js void onTickMessage: Connection c, Buffer buffer
@@ -1035,7 +1031,7 @@ transient unit Network
 			ahead = frame - receivedCurrentFrames
 			if ahead >= 0 and ahead < 60: aheads.add ahead, maxLength:900
 	
-			receivedLog += " <{c.userId}> #{sender.inputFrame} a:{sender.acknowledgedPos} cf:{sender.currentFrame} start:{writeStart} l:{length} end:{sender.inputs.writePos} {sender.inputs.toRangeString(writeStart, sender.inputs.writePos)}"
+			receivedLog += " <{c.userId}> #{sender.inputFrame} a:{sender.acknowledgedPos} cf:{sender.currentFrame} s:{writeStart} e:{sender.inputs.writePos}"
 		else
 			// Ignore this frame because we already received a later frame
 			// Later frames start from the pos we acknowleged (everything before that we definately already received)
@@ -1046,7 +1042,7 @@ transient unit Network
 			let acknowledgedPos = buffer.readInt32
 			let writeStart = buffer.readInt32
 			let length = buffer.readInt32
-			receivedLog += " <{c.userId}> irgnoring #{inputFrame} (already at {sender.inputFrame}) a:{acknowledgedPos} start:{writeStart} l:{length} end:{writeStart+length}"
+			receivedLog += " <{c.userId}> irgnoring #{inputFrame} (already at {sender.inputFrame}) a:{acknowledgedPos} s:{writeStart} e:{writeStart+length}"
 			
 	private void sendOwnInputsAfterReconnectMessage: Connection c
 		                                int frame
