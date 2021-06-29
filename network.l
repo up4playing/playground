@@ -228,7 +228,7 @@ transient unit Network
 	public string eventLog = ""; sentLog = "", receivedLog="", writeLog="", parseLog = "", touchLog = "", checksumLog = "", debugString = ""
 	public bool showDebugString
 	private float lastNetworkFrame, lastAnimationFrame, drawTime, tickTime, restoreTime, replayTime, saveTime
-	private int replayFrames
+	private int replayFrames, checkedChecksums
 	
 	internal const targetFps = 30
 	private const pingCount = 6
@@ -339,23 +339,7 @@ transient unit Network
 			
 			// Send each user the inputs that they haven't acknowleged yet
 			if mode == Connected
-				for c -> connections
-					if c.state == Connected
-						let receiver = Input.internalUsers[c.userId]
-						let checksumFor = uncertainFrame>1 ? uncertainFrame-1 : frame-1
-						sendTickMessage
-							to: c
-							inputFrame: nextInputFrame-1     // You got all inputs up to and including this frame
-							currentFrame: targetFrame-1      // The currently processed frame, used to calculate "ahead" 
-							
-							checksumFor: checksumFor         // The last certain frame with inputs from everybody
-							checksum: checksums[checksumFor] // The checksum of the last certain frame
-							
-							acknowledgePos: receiver.inputs.writePos  // We ackledge that we received up to this input buffer pos
-							
-							buffer: localPlayer.inputs                // Send inputs that they haven't acknowleged yet
-							start: receiver.acknowledgedPos
-							end: localPlayer.inputs.writePos
+				sendInputs nextInputFrame, targetFrame
 							
 			// Replay all frames from the first uncertain frame until the current frame
 			// when we received all inputs for frames that we were uncertain about before
@@ -377,12 +361,11 @@ transient unit Network
 				eventLog = ""; sentLog = ""; receivedLog = ""; writeLog = ""; parseLog = ""; touchLog = ""; checksumLog = ""
 				
 				// Debug string
-				debugString = "v{Platform.version} a:{ahead} av:{aheadAverageString} "
+				debugString = "v{Platform.version} checks:{checkedChecksums} inputs:"
 				for user -> Input.internalUsers
 					if user
-						if debugString: debugString += " "
-						debugString += user.inputs.writePos.format(grouping:true)
-						
+						debugString += user.inputs.writePos.format(grouping:true) + " "
+				debugString += "a:{ahead} av:{aheadAverageString}"
 				lastNetworkFrame = now
 				
 			localPlayer.startInputFrame nextInputFrame
@@ -416,27 +399,17 @@ transient unit Network
 		
 		// Calculate checksum if we received all inputs for this frame
 		if isCertain
-			let myChecksum = 0
-			for Framework.objects
-				myChecksum += o.position.x + o.position.y + o.frame + cast o.side
-				if o.type == Board
-					Board board = cast o
-					let m = board.matrix
-					myChecksum += m.m0 + m.m1 + m.m2 + m.m3 + m.m4 + m.m5
-					for boardObj -> board.objects
-						myChecksum += boardObj.position.x + boardObj.position.y + boardObj.frame + cast boardObj.side
-				else
-				if o.type == Coin
-					Coin coin = cast o
-					myChecksum += coin.value
-					
+			int myChecksum = calculateChecksum					
 			let theirChecksum = checksums[frame]
 			checksumLog += " <mine> #{frame} {myChecksum}"
 			if !theirChecksum
 				checksums[frame] = myChecksum
 			else
-			if theirChecksum != myChecksum
+			if theirChecksum == myChecksum
+				checkedChecksums++
+			else
 				onWrongChecksum
+				checkedChecksums = 0
 				checksumLog += " MISMATCH saved theirs:{theirChecksum}"
 		
 		// Cleanup
@@ -463,7 +436,29 @@ transient unit Network
 			graphics.finishFrame
 			
 		log "#{frame}{Input.isCertain ? "c":""} {Framework.debugString}"
-			
+		
+	// Send each user the inputs that they haven't acknowleged yet
+	// This is called in animationFrame.
+	private sendInputs: int nextInputFrame, int targetFrame
+		let localPlayer = Input.internalUsers[userId]
+		for c -> connections
+			if c.state == Connected
+				let receiver = Input.internalUsers[c.userId]
+				let checksumFor = uncertainFrame>1 ? uncertainFrame-1 : frame-1
+				sendTickMessage
+					to: c
+					inputFrame: nextInputFrame-1     // You got all inputs up to and including this frame
+					currentFrame: targetFrame-1      // The currently processed frame, used to calculate "ahead" 
+					
+					checksumFor: checksumFor         // The last certain frame with inputs from everybody
+					checksum: checksums[checksumFor] // The checksum of the last certain frame
+					
+					acknowledgePos: receiver.inputs.writePos  // We ackledge that we received up to this input buffer pos
+					
+					buffer: localPlayer.inputs                // Send inputs that they haven't acknowleged yet
+					start: receiver.acknowledgedPos
+					end: localPlayer.inputs.writePos
+		
 	// Save a snapshot when we are about to start the frame after the last certain frame 
 	// where we received inputs from all users. This is called at the beginning of a step
 	// before we start processing the frame.
@@ -471,6 +466,7 @@ transient unit Network
 		if mode != Connected: return
 		if frame == receivedFrames+1
 			for Input.internalUsers: uncertainReadPos = inputs.readPos
+			Math.uncertainRandomValueIndex = Math.randomValueIndex
 			parseLog += " [saveState] r0:{Input.internalUsers[0]?.inputs.readPos} r1:{Input.internalUsers[1]?.inputs.readPos} u0:{Input.internalUsers[0]?.uncertainReadPos} u1:{Input.internalUsers[1]?.uncertainReadPos}"
 			uncertainFrame = frame
 			saveTime = Time.measure
@@ -486,6 +482,7 @@ transient unit Network
 			// Restore state
 			log "Restore before {Framework.debugString}"
 			for Input.internalUsers: inputs.readPos = uncertainReadPos
+			Math.randomValueIndex = Math.uncertainRandomValueIndex
 			restoreTime = Time.measure
 				Snapshot.deserialize commonState
 			log "Restore after {Framework.debugString}"
@@ -519,6 +516,25 @@ transient unit Network
 				minFrames = user.currentFrame
 		return minFrames
 	
+	private calculateChecksum
+		let checksum = 0
+		for Framework.objects
+			checksum += o.position.x + o.position.y + o.frame + cast o.side
+			if o.type == Board
+				Board board = cast o
+				let m = board.matrix
+				checksum += m.m0 + m.m1 + m.m2 + m.m3 + m.m4 + m.m5
+				for boardObj -> board.objects
+					checksum += boardObj.position.x + boardObj.position.y + boardObj.frame + cast boardObj.side
+			else
+			if o.type == Coin
+				Coin coin = cast o
+				checksum += coin.value
+		// We ensure that we never return 0
+		// because a checksum of 0 is used to indicate that we don't have a checksum for this frame yet
+		if checksum == 0: return 1
+		return checksum
+			
 	private onWrongChecksum
 		log "%%% OUT OF SYNC %%%"
 		// Platform.setTitle "%%% OUT OF SYNC %%%"
@@ -989,14 +1005,18 @@ transient unit Network
 		// Checksum
 		let checksumFor = buffer.readInt32
 		let checksum = buffer.readFloat64
-		let myChecksum = checksums[checksumFor] 
 		checksumLog += " <{c.userId}> #{checksumFor} {checksum}"
-		if !myChecksum
-			checksums[checksumFor] = checksum
-		else
-		if myChecksum != checksum
-			onWrongChecksum
-			checksumLog += " MISMATCH mine:{myChecksum}"
+		if checksum
+			let myChecksum = checksums[checksumFor] 
+			if !myChecksum
+				checksums[checksumFor] = checksum
+			else
+			if myChecksum == checksum
+				checkedChecksums++
+			else
+				onWrongChecksum
+				checkedChecksums = 0
+				checksumLog += " MISMATCH mine:{myChecksum}"
 		
 		int inputFrame = buffer.readInt32 
 		if inputFrame > sender.inputFrame
