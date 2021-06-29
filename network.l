@@ -229,6 +229,7 @@ transient unit Network
 	public bool showDebugString
 	private float lastNetworkFrame, lastAnimationFrame, drawTime, tickTime, restoreTime, replayTime, saveTime
 	private int replayFrames, checkedChecksums
+	private string lastError
 	
 	internal const targetFps = 30
 	private const pingCount = 6
@@ -336,14 +337,19 @@ transient unit Network
 		
 		if frame < targetFrame
 			let startFrame = frame
+			try
+				// Send each user the inputs that they haven't acknowleged yet
+				if mode == Connected
+					sendInputs nextInputFrame, targetFrame
+								
+				// Replay all frames from the first uncertain frame until the current frame
+				// when we received all inputs for frames that we were uncertain about before
+				replayState
 			
-			// Send each user the inputs that they haven't acknowleged yet
-			if mode == Connected
-				sendInputs nextInputFrame, targetFrame
-							
-			// Replay all frames from the first uncertain frame until the current frame
-			// when we received all inputs for frames that we were uncertain about before
-			replayState
+			catch 
+				print error
+				log error
+				lastError = error.message
 					
 			// Ensure that step is called every targetFrameTime milliseconds
 			while frame < targetFrame
@@ -351,21 +357,28 @@ transient unit Network
 				step fastFordward:frame < targetFrame-1
 				
 				// Logs
-				logTable += "{frame-1},{now - lastAnimationFrame},{now - lastNetworkFrame},{tickTime.format(fractionDigits:2)},{drawTime.format(fractionDigits:2)},{frame-startFrame}"
-				logTable += ",{restoreTime.format(fractionDigits:2)},{replayFrames},{replayTime.format(fractionDigits:2)},{saveTime.format(fractionDigits:2)}"
-				logTable += ","+(Input.internalUsers[0] ? Input.internalUsers[0].inputFrame : 0)
-				logTable += ","+(Input.internalUsers[1] ? Input.internalUsers[1].inputFrame : 0)
-				logTable += ","+(Input.internalUsers[2] ? Input.internalUsers[2].inputFrame : 0)
-				logTable += ",{receivedFrames},{uncertainFrame},{frame - receivedFrames},{ahead},{aheadAverageString}"
-				logTable += ",\"{checksumLog.trim}\",\"{eventLog.trim}\",\"{sentLog.trim}\",\"{receivedLog.trim}\",\"{writeLog.trim}\",\"{parseLog.trim}\",\"{touchLog.trim}\"\n"
-				eventLog = ""; sentLog = ""; receivedLog = ""; writeLog = ""; parseLog = ""; touchLog = ""; checksumLog = ""
+				try
+					logTable += "{frame-1},{now - lastAnimationFrame},{now - lastNetworkFrame},{tickTime.format(fractionDigits:2)},{drawTime.format(fractionDigits:2)},{frame-startFrame}"
+					logTable += ",{restoreTime.format(fractionDigits:2)},{replayFrames},{replayTime.format(fractionDigits:2)},{saveTime.format(fractionDigits:2)}"
+					logTable += ","+(Input.internalUsers[0] ? Input.internalUsers[0].inputFrame : 0)
+					logTable += ","+(Input.internalUsers[1] ? Input.internalUsers[1].inputFrame : 0)
+					logTable += ","+(Input.internalUsers[2] ? Input.internalUsers[2].inputFrame : 0)
+					logTable += ",{receivedFrames},{uncertainFrame},{frame - receivedFrames},{ahead},{aheadAverageString}"
+					logTable += ",\"{checksumLog.trim}\",\"{eventLog.trim}\",\"{sentLog.trim}\",\"{receivedLog.trim}\",\"{writeLog.trim}\",\"{parseLog.trim}\",\"{touchLog.trim}\"\n"
+					eventLog = ""; sentLog = ""; receivedLog = ""; writeLog = ""; parseLog = ""; touchLog = ""; checksumLog = ""
+				
+				catch
+					print error
+					lastError = error.message
 				
 				// Debug string
-				debugString = "v{Platform.version} checks:{checkedChecksums} inputs:"
-				for user -> Input.internalUsers
-					if user
-						debugString += user.inputs.writePos.format(grouping:true) + " "
-				debugString += "a:{ahead} av:{aheadAverageString}"
+				if showDebugString
+					debugString = "v{Platform.version} checks:{checkedChecksums} inputs:"
+					for user -> Input.internalUsers
+						if user
+							debugString += user.inputs.writePos.format(grouping:true) + " "
+					debugString += "a:{ahead} av:{aheadAverageString} {lastError}"
+					
 				lastNetworkFrame = now
 				
 			localPlayer.startInputFrame nextInputFrame
@@ -378,60 +391,72 @@ transient unit Network
 	// The frame is increment at the end of this function. This means that while processing the frame,
 	// frame will point to the current frame. After processing, frame will point to the next frame.
 	private step: bool fastFordward = false // If a step is fast forwarted nothing is drawn
-		// Set time
-		Time.now = Math.round(frame * targetFrameTime)
-		Platform.fastForward = fastFordward
-		
-		// Log
-		parseLog += " #{frame}"
-		bool isCertain = receivedFrames >= frame
-		if fastFordward: parseLog += "f"
-		if isCertain: parseLog += "c"
+		try
+			// Set time
+			Time.now = Math.round(frame * targetFrameTime)
+			Platform.fastForward = fastFordward
 			
-		// Save a snapshot when we are about to start the frame after the last certain frame where we got all inputs
-		saveState
-		
-		// Parse inputs
-		Input.parseInputs(frame, isCertain)
-		
-		// Tick
-		tick
-		
-		// Calculate checksum if we received all inputs for this frame
-		if isCertain
-			int myChecksum = calculateChecksum					
-			let theirChecksum = checksums[frame]
-			checksumLog += " <> #{frame} {myChecksum}"
-			if !theirChecksum
-				checksums[frame] = myChecksum
-			else
-			if theirChecksum == myChecksum
-				checkedChecksums++
-			else
-				onWrongChecksum
-				checkedChecksums = 0
-				checksumLog += " MISMATCH saved theirs:{theirChecksum}"
-		
-		// Cleanup
-		for user -> Input.internalUsers if user
-			user.clearEvent
+			// Log
+			parseLog += " #{frame}"
+			bool isCertain = receivedFrames >= frame
+			if fastFordward: parseLog += "f"
+			if isCertain: parseLog += "c"
+				
+			// Save a snapshot when we are about to start the frame after the last certain frame where we got all inputs
+			saveState
+			
+			// Parse inputs
+			Input.parseInputs(frame, isCertain)
+			
+			// Tick
+			tick
+			
+			// Calculate checksum if we received all inputs for this frame
+			if isCertain
+				int myChecksum = calculateChecksum					
+				let theirChecksum = checksums[frame]
+				checksumLog += " <> #{frame} {myChecksum}"
+				if !theirChecksum
+					checksums[frame] = myChecksum
+				else
+				if theirChecksum == myChecksum
+					checkedChecksums++
+				else
+					onWrongChecksum
+					checkedChecksums = 0
+					checksumLog += " MISMATCH saved theirs:{theirChecksum}"
+			
+			// Cleanup
+			for user -> Input.internalUsers if user
+				user.clearEvent
+		catch
+			print error
+			log error
+			lastError = error.message
 			
 		frame++
 		
 	// Step physics, prepare graphics, process application tick, and draw all graphics
 	// This is called in step.
 	internal tick
-		Physics.step
-		graphics.startFrame
-		updateVideoScreen
-		drawFingers
-		if lobby.inLobby
-			lobby.tick
-		else
-			Framework.tick
-			tickTime = Time.measure
-				app.tick
-			Input.updateCursor
+		try
+			Physics.step
+			graphics.startFrame
+			updateVideoScreen
+			drawFingers
+			if lobby.inLobby
+				lobby.tick
+			else
+				Framework.tick
+				tickTime = Time.measure
+					app.tick
+				Input.updateCursor
+		catch
+			print error
+			log error
+			lastError = error.message
+			
+		drawText debugString, {0, 528}
 		drawTime = Time.measure
 			graphics.finishFrame
 		
