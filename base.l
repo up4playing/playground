@@ -450,22 +450,26 @@ transient class SourceCodeLocation
 		if left != null:  left.flatten result
 		if right != null: right.flatten result
 	
+class Error
+	inline js string message := this.message
+	implicit inline js string toString := this.stack
+	
 // A collection of basic system functions
 global transient unit System
 	// Executes code depending on whether a given condition is true or false
 	global inline js void if: implicit bool condition // The condition to check
-	                   void() then             // The code to execute if the condition is true
+		                      void() then             // The code to execute if the condition is true
 		if(condition) then()
 			
 	// Executes code depending on whether a given condition is true or false
 	global inline js void if: implicit bool condition // The condition to check
-		               void() then                    // The code to execute if the condition is true
-		               void() else                    // The code to execute if the condition is false
+		                      void() then                    // The code to execute if the condition is true
+		                      void() else                    // The code to execute if the condition is false
 		if(condition) then() @else else()
 			
 	// Executes code as long as a given condition is true
 	global inline js void while: bool condition // The condition to check
-	                      void() block   // The code to execute while to condition is true
+		                         void() block   // The code to execute while to condition is true
 		while(condition) block()
 	
 	// Prints a message to the console
@@ -479,6 +483,11 @@ global transient unit System
 		
 	global inline js void break() break
 	global inline js void continue() continue
+		
+	global inline js void try: void() code
+		                       void(Error error) catch
+		try code() @catch(error) catch()
+		
 		
 // A collection of mathematical functions and constants
 transient unit Math
