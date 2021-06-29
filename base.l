@@ -540,7 +540,11 @@ transient unit Math
 	inline js float tan: float angle // The angle in radians
 		Math.tan(angle)
 		
-	js void init
+		
+	init
+		initDefaultRandomGenerator
+		
+	js void initDefaultRandomGenerator
 		Math_randomGenerator = Math.random
 		
 	js string generateRandomSeed:
@@ -553,6 +557,10 @@ transient unit Math
 			return Date.now().toString()
 		}
 		
+	private float[] randomValues
+	int randomValueIndex
+	int uncertainRandomValueIndex
+	
 	js void setRandomSeed: string seed
 		// Ported from an algorithm by Johannes Baagøe <baagoe@baagoe.com>
 		// https://github.com/nquinlan/better-random-numbers-for-javascript-mirror
@@ -560,14 +568,28 @@ transient unit Math
 			var me = this, mash = Mash();
 			var count = 0
 			me.next = function() {
-				var t = 2091639 * me.s0 + me.c * 2.3283064365386963e-10; // 2^-32
-				me.s0 = me.s1;
-				me.s1 = me.s2;
-				var value = me.s2 = t - (me.c = t | 0);
-				
-				// TEMP: Log every random number
-				Network_eventLog += " ["+count+"] "+value;
-				count++
+				if(Math_randomValueIndex < Math_randomValues.length) {
+					var value = Math_randomValues[Math_randomValueIndex]
+					
+					// TEMP: Log every random number
+					Network_eventLog += " ["+Math_randomValueIndex+"/"+Math_randomValues.length+"] replay "+value;
+					
+					Math_randomValueIndex++
+				} else {
+					var t = 2091639 * me.s0 + me.c * 2.3283064365386963e-10; // 2^-32
+					me.s0 = me.s1;
+					me.s1 = me.s2;
+					var value = me.s2 = t - (me.c = t | 0);
+					
+					// TEMP: Log every random number
+					Network_eventLog += " ["+Math_randomValueIndex+"/"+Math_randomValues.length+"] "+value;
+					if(Math_randomValueIndex != Math_randomValues.length) {
+						Network_eventLog += " INVALID randomValues.length"
+						alert("Random values out of sync. Please click 'Save Logs' and send me the log file that will be created.")
+					}
+					
+					Math_randomValues[Math_randomValueIndex++] = value;
+				}
 				return value
 			}
 			

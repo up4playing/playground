@@ -471,6 +471,7 @@ transient unit Network
 		if mode != Connected: return
 		if frame == receivedFrames+1
 			for Input.internalUsers: uncertainReadPos = inputs.readPos
+			Math.uncertainRandomValueIndex = Math.randomValueIndex
 			parseLog += " [saveState] r0:{Input.internalUsers[0]?.inputs.readPos} r1:{Input.internalUsers[1]?.inputs.readPos} u0:{Input.internalUsers[0]?.uncertainReadPos} u1:{Input.internalUsers[1]?.uncertainReadPos}"
 			uncertainFrame = frame
 			saveTime = Time.measure
@@ -486,6 +487,7 @@ transient unit Network
 			// Restore state
 			log "Restore before {Framework.debugString}"
 			for Input.internalUsers: inputs.readPos = uncertainReadPos
+			Math.randomValueIndex = Math.uncertainRandomValueIndex
 			restoreTime = Time.measure
 				Snapshot.deserialize commonState
 			log "Restore after {Framework.debugString}"
