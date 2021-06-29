@@ -79,7 +79,7 @@ class Object
 		this.nextBoard = board
 		
 	debugString
-		return "(Object pos:{position.x} {position.y} board:{board.toBool})"
+		return "(Object pos:{position.x} {position.y} frame:{frame} side:{side} image:{image?.file} board:{board.toBool})"
 	
 	remove
 		siblings.remove this

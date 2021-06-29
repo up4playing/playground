@@ -754,7 +754,7 @@ transient unit Network
 					partnerIds.add c.userId
 			createOffers partnerIds
 		else
-			log Time.dateAndTimeString + " local version:" + Platform.version + " user agent:"+Platform.userAgent+" "
+			log Time.dateAndTimeString, Platform.version, Platform.userAgent, message.seed
 			if message.roomId != roomId
 				log "Received room id {message.roomId}"
 				Platform.pushState null, "{gameId} {message.roomId}", "/{gameId}/{message.roomId}"
