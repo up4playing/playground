@@ -789,7 +789,7 @@ transient unit Network
 					partnerIds.add c.userId
 			createOffers partnerIds
 		else
-			log Time.dateAndTimeString + " local version:" + Platform.version + " user agent:"+Platform.userAgent+" "
+			log Time.dateAndTimeString, Platform.version, Platform.userAgent, message.seed
 			if message.roomId != roomId
 				log "Received room id {message.roomId}"
 				Platform.pushState null, "{gameId} {message.roomId}", "/{gameId}/{message.roomId}"
@@ -1012,12 +1012,13 @@ transient unit Network
 		sentLog += " #{inputFrame} ack:{acknowledgePos} csFor:{checksumFor} cs:{checksum} cf:{currentFrame} start:{start} l:{end-start}  end:{end} {buffer.toRangeString(start, end)}"
 		
 	
-	private js void onTickMessage: Connection c, Buffer buffer
-		if(Math.random() < .75) setTimeout(() => Network_onTickMessageActual(c, buffer), Math.random()*500)
+	// private js void onTickMessage: Connection c, Buffer buffer
+		// if(Math.random() < .75) setTimeout(() => Network_onTickMessageActual(c, buffer), Math.random()*500)
 		// setTimeout(() => Network_onTickMessageActual(c, buffer), 500)
 		// Network_onPeerMessageActual(c, buffer)
 		
-	private onTickMessageActual: Connection c, Buffer buffer
+	// private onTickMessageActual: Connection c, Buffer buffer
+	private onTickMessage: Connection c, Buffer buffer
 		let sender = Input.internalUsers[c.userId]
 		if c.state != Connected: c.state = Connected
 
