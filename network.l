@@ -124,6 +124,9 @@ transient class Buffer
 			this.dataView.setInt32(this.writePos, value.charCodeAt(i))
 			this.writePos += 4
 		}
+		
+	void writeBuffer: Buffer source
+		writeBuffer source, 0, source.writePos
 	
 	js void writeBuffer: Buffer source
 		                 int start
@@ -190,7 +193,7 @@ transient class Buffer
 		return value
 
 	js int readBuffer: Buffer writeBuffer
-		               int writeStart
+		               int writeStart = 0
 		let readPos = this.readPos
 		let writePos = writeStart
 		
@@ -281,6 +284,7 @@ transient unit Network
 		receivedFrames = -1
 		log "Connected", userId, frame, startTime, this.startTime, receivedFrames
 		saveState
+		IndexedDB.start "up4playing", "snapshot"
 		
 	startLocal: userCount = 1
 		userId = 0
@@ -295,6 +299,7 @@ transient unit Network
 		startTime = currentTime
 		startApp
 		animationFrame
+		IndexedDB.start "up4playing", "snapshot"
 			
 	// AnimationFrame --> Step --> Tick
 
@@ -365,7 +370,7 @@ transient unit Network
 				for user -> Input.internalUsers
 					if user
 						debugString += user.inputs.writePos.format(grouping:true) + " "
-				debugString += "a:{ahead} av:{aheadAverageString}"
+				debugString += "snaphotLength:{snapshotBuffer.writePos} a:{ahead} av:{aheadAverageString}"
 				lastNetworkFrame = now
 				
 			localPlayer.startInputFrame nextInputFrame
@@ -546,6 +551,7 @@ transient unit Network
 	log: logstring text
 		string str = text
 		eventLog += str + "\n"
+		print str
 		
 	inline js int currentTime := Date.now()
 	
@@ -585,10 +591,22 @@ transient unit Network
 			}
 		}
 		
-	save
-		if Platform.fastForward: return
-		saveLogs
-		saveEventStream
+	Buffer snapshotBuffer
+		
+	save: int slot
+		snapshotBuffer.reset
+		Snapshot.serialize snapshotBuffer
+		IndexedDB.save "{gameId}-{slot}", snapshotBuffer
+			print "saved {snapshotBuffer.writePos} bytes"
+		else
+			print "save failed"
+		
+	open: int slot
+		IndexedDB.open "{gameId}-{slot}"
+			Input.handleSetState buffer
+			print "restored {buffer.writePos} bytes"
+		else
+			print "restore failed"
 		
 	saveLogs
 		Platform.createTextFile "log.csv", logTable
@@ -596,6 +614,7 @@ transient unit Network
 			log "save logs"
 		else
 			print "save logs failed {error}"
+			
 		
 	js void saveEventStream
 		let trans = db.transaction("eventstreams", "readwrite")

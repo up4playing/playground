@@ -42,7 +42,7 @@ class NetworkUser
 	visible Touch[] startingTouches
 	string textInput
 	
-enum InputType: None, TouchDown, TouchMove, TouchUp, Wheel, KeyDown, KeyUp, TextInput, Stick, Trigger, Grip, ButtonDown, ButtonUp, ControllerTransform, HeadTransform, DeviceRotation, Join, Leave
+enum InputType: None, TouchDown, TouchMove, TouchUp, Wheel, KeyDown, KeyUp, TextInput, Stick, Trigger, Grip, ButtonDown, ButtonUp, ControllerTransform, HeadTransform, DeviceRotation, Join, Leave, SetState
 		
 // Phase of a touch or a click
 enum TouchPhase: Stationary, Down, Move, Up, Handled
@@ -137,6 +137,12 @@ unit Input
 			if(window.require && e.key == "t" && e.ctrlKey && e.metaKey && e.shiftKey)
 				require("electron").remote.getCurrentWindow().toggleDevTools()
 			else
+			if(e.key >= "1" && e.key <= "9") {
+				let slot = (e.key - "1")+1
+				if(e.altKey)  Network_save(slot); else
+				if(e.ctrlKey) Network_open(slot);
+			}
+			else
 			if(e.key == "F8") {
 				Network_saveLogs();
 			}
@@ -226,6 +232,13 @@ unit Input
 		inputs.writeInt16 Math.round(delta)
 		Network.writeLog += " [{user.inputFrame}] {type} {Math.round(referencePos.x)} {Math.round(referencePos.y)} {Math.round(delta)} \{r:{inputs.readPos} w:{inputs.writePos}\}"
 		
+	handleSetState: Buffer buffer
+		let user = internalUsers[Network.userId], inputs = user.inputs
+		InputType type = SetState
+		inputs.writeInt32 user.inputFrame
+		inputs.writeUnsignedInt16 cast type
+		inputs.writeBuffer buffer
+		
 	internal parseInputs(int frame, bool isCertain)
 		this.isCertain = isCertain
 		if isCertain: Network.parseLog += " *certain*"
@@ -302,6 +315,12 @@ unit Input
 					if type == Leave
 						Network.parseLog += " leave {internalUser.id}"
 						users[internalUser.id] = null
+					else
+					if type == SetState
+						Network.parseLog += " setState"
+						Network.snapshotBuffer.reset
+						inputs.readBuffer Network.snapshotBuffer
+						Snapshot.deserialize Network.snapshotBuffer
 				
 	// Executes code when the user touches or clicks within a given area
 	onTouchDownWithin: float2 position        // The center of the touch area

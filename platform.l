@@ -254,3 +254,51 @@ transient unit Http
 		} catch(e) {
 			else(e.message)
 		}
+		
+unit IndexedDB
+	object db
+	string database, store
+	
+	js void start: string database, string store
+		IndexedDB_database = database;
+		IndexedDB_store = store;
+		var request = indexedDB.open(database, 2)
+		request.onupgradeneeded = e => {
+			IndexedDB_db = e.target.result;
+			IndexedDB_db.createObjectStore(store, { keyPath: "id" });
+			log("db: update")
+		}
+		request.onsuccess = e => {
+			IndexedDB_db = e.target.result;
+			log("db: success")
+		}
+		
+	js void open: string id, void(Buffer buffer) then, void() else
+		let trans = IndexedDB_db.transaction(IndexedDB_store, "readonly")
+		let req = trans.objectStore(IndexedDB_store).get(id)
+		req.onsuccess = async e => {
+			let result = req.result
+			if(result) {
+				let arrayBuffer = await result.data.arrayBuffer()
+				let buffer = new Buffer(arrayBuffer, 0, 0, 0)
+				then(buffer)
+			} @else {
+				else()
+			}
+		}
+		req.onerror = e => {
+			else()
+		}
+				
+	js void save: string id, Buffer buffer, void() then, void() else
+		let trans = IndexedDB_db.transaction(IndexedDB_store, "readwrite")
+		trans.onerror = e => {
+			alert("error"+e)
+			else()
+		}
+		let dataView = new DataView(buffer.buffer, 0, buffer.writePos)
+		let data = new Blob([dataView])
+		trans.objectStore(IndexedDB_store).put({id, data}).onsuccess = e => {
+			then()
+		}
+
