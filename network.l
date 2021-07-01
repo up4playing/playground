@@ -304,8 +304,8 @@ transient unit Network
 	// AnimationFrame --> Step --> Tick
 
 	// AnimationFrame  Send tick message, replay state, and call step
-	// Step            Save state, parse inputs, process tick, and calculate checksum
-	// Tick            Step physics, prepare graphics, process application tick, and draw all graphics
+	// Step            Save state, parse inputs, step physics, process tick, and calculate checksum
+	// Tick            Clear screen, process application tick, and draw all graphics
 		
 	// Send tick message, replay state, call step, and logging
 	// This is called by the requestAnimationFrame callback.
@@ -389,7 +389,7 @@ transient unit Network
 			
 		lastAnimationFrame = now
 		
-	// Save state, parse inputs, process tick, and calculate checksum
+	// Save state, parse inputs, step physics, process tick, and calculate checksum
 	// This is called in animationFrame and during replays. 
 	// All steps except the very last of an animation frame are fast forwared, which means that nothing is drawn.
 	// The frame is increment at the end of this function. This means that while processing the frame,
@@ -411,6 +411,9 @@ transient unit Network
 			
 			// Parse inputs
 			Input.parseInputs(frame, isCertain)
+			
+			// Physics
+			Physics.step
 			
 			// Tick
 			tick
@@ -440,11 +443,10 @@ transient unit Network
 			
 		frame++
 		
-	// Step physics, prepare graphics, process application tick, and draw all graphics
+	// Clear screen, process application tick, and draw all graphics
 	// This is called in step.
 	internal tick
 		try
-			Physics.step
 			graphics.startFrame
 			updateVideoScreen
 			drawFingers
