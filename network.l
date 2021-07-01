@@ -17,9 +17,18 @@ transient class VideoScreenInfo
 	float2 pos
 	float width
 	
-transient unit Snapshot
+unit Snapshot
+	const maxLength = 3
+	
+	transient bool takeAtEndOfStep
+	transient Buffer[] snapshots
+	transient int offset = 0
+	
+	int currentIndex
+	
 	inline js void serialize(Buffer buffer) serialize(buffer)
 	inline js void deserialize(Buffer buffer) deserialize(buffer)
+		
 	Buffer save
 		Buffer buffer
 		serialize(buffer)
@@ -27,6 +36,21 @@ transient unit Snapshot
 		
 	void restore: Buffer buffer
 		deserialize(buffer)
+		
+	take() takeAtEndOfStep = true
+	
+	internal onEndOfStep
+		if takeAtEndOfStep and !lobby.inLobby
+			let snap = save
+			snapshots.add snap
+			if snapshots.length > maxLength
+				snapshots.removeAt 0
+				offset++
+			int index = currentIndex
+			IndexedDB.save "{Network.gameId}-0", snap
+				print "Saved snapshot {index}"
+			takeAtEndOfStep = false
+			currentIndex++
 	
 transient class Buffer
 	int readPos, writePos
@@ -418,6 +442,8 @@ transient unit Network
 			// Tick
 			tick
 			
+			Snapshot.onEndOfStep
+			
 			// Calculate checksum if we received all inputs for this frame
 			if isCertain
 				int myChecksum = calculateChecksum					
@@ -618,14 +644,14 @@ transient unit Network
 		snapshotBuffer.reset
 		Snapshot.serialize snapshotBuffer
 		IndexedDB.save "{gameId}-{slot}", snapshotBuffer
-			print "saved {snapshotBuffer.writePos} bytes"
+			print "saved snapshot {gameId}-{slot} ({snapshotBuffer.writePos} bytes)"
 		else
 			print "save failed"
 		
-	open: int slot
+	restore: int slot
 		IndexedDB.open "{gameId}-{slot}"
 			Input.handleSetState buffer
-			print "restored {buffer.writePos} bytes"
+			print "restored snapshot {gameId}-{slot} ({buffer.writePos} bytes)"
 		else
 			print "restore failed"
 		
@@ -735,7 +761,7 @@ transient unit Network
 			nextPingTime = currentTime + 300
 		
 	private object socket = null
-	private string roomId, gameId
+	visible string roomId, gameId
 	private Connection[] connections
 	
 	js void join: string gameId, string roomId

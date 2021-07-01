@@ -256,16 +256,15 @@ transient unit Http
 		}
 		
 unit IndexedDB
-	object db
-	string database, store
+	private object db
+	private string storeName
 	
-	js void start: string database, string store
-		IndexedDB_database = database;
-		IndexedDB_store = store;
-		var request = indexedDB.open(database, 1)
+	js void start: string databaseName, string storeName
+		IndexedDB_storeName = storeName;
+		var request = indexedDB.open(databaseName, 1)
 		request.onupgradeneeded = e => {
 			IndexedDB_db = e.target.result;
-			IndexedDB_db.createObjectStore(store, { keyPath: "id" });
+			IndexedDB_db.createObjectStore(storeName, { keyPath: "id" });
 			log("db: update")
 		}
 		request.onsuccess = e => {
@@ -273,9 +272,9 @@ unit IndexedDB
 			log("db: success")
 		}
 		
-	js void open: string id, void(Buffer buffer) then, void() else
-		let trans = IndexedDB_db.transaction(IndexedDB_store, "readonly")
-		let req = trans.objectStore(IndexedDB_store).get(id)
+	js void open: string id, void(Buffer buffer) then, void() else = null
+		let trans = IndexedDB_db.transaction(IndexedDB_storeName, "readonly")
+		let req = trans.objectStore(IndexedDB_storeName).get(id)
 		req.onsuccess = async e => {
 			let result = req.result
 			if(result) {
@@ -283,22 +282,22 @@ unit IndexedDB
 				let buffer = new Buffer(arrayBuffer, 0, 0, 0)
 				then(buffer)
 			} @else {
-				else()
+				else?.()
 			}
 		}
 		req.onerror = e => {
 			else()
 		}
 				
-	js void save: string id, Buffer buffer, void() then, void() else
-		let trans = IndexedDB_db.transaction(IndexedDB_store, "readwrite")
+	js void save: string id, Buffer buffer, void() then = null, void() else = null
+		let trans = IndexedDB_db.transaction(IndexedDB_storeName, "readwrite")
 		trans.onerror = e => {
 			alert("error"+e)
-			else()
+			else?.()
 		}
 		let dataView = new DataView(buffer.buffer, 0, buffer.writePos)
 		let data = new Blob([dataView])
-		trans.objectStore(IndexedDB_store).put({id, data}).onsuccess = e => {
-			then()
+		trans.objectStore(IndexedDB_storeName).put({id, data}).onsuccess = e => {
+			then?.()
 		}
 

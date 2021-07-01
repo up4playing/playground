@@ -137,10 +137,10 @@ unit Input
 			if(window.require && e.key == "t" && e.ctrlKey && e.metaKey && e.shiftKey)
 				require("electron").remote.getCurrentWindow().toggleDevTools()
 			else
-			if(e.key >= "1" && e.key <= "9") {
-				let slot = (e.key - "1")+1
+			if(e.key >= "0" && e.key <= "9") {
+				let slot = e.key - "0"
 				if(e.altKey)  Network_save(slot); else
-				if(e.ctrlKey) Network_open(slot);
+				if(e.ctrlKey) Network_restore(slot);
 			}
 			else
 			if(e.key == "F8") {
@@ -413,6 +413,7 @@ unit Input
 					log "up", touch.position
 					code touch
 					if markAsHandled: touch.markAsHandled
+					Snapshot.take
 		else
 			for user -> internalUsers if user
 				for touch -> user.upTouches
@@ -421,6 +422,7 @@ unit Input
 						log "up", touch.position
 						code touch
 						if markAsHandled: touch.markAsHandled
+						Snapshot.take
 		if showTouchArea: drawRectangle position, size, fillColor:{"ff000080"}
 
 	// Executes code when the user touches or clicks within a given area
@@ -441,6 +443,7 @@ unit Input
 					log "up", touch.position
 					code touch
 					if markAsHandled: touch.markAsHandled
+					Snapshot.take
 		else
 			for user -> internalUsers if user
 				for touch -> user.upTouches
@@ -449,6 +452,7 @@ unit Input
 						log "up", touch.position
 						code touch
 						if markAsHandled: touch.markAsHandled
+						Snapshot.take
 			if cursor
 				let user = internalUsers[Network.userId]
 				for touch -> user.movingTouches
@@ -534,6 +538,7 @@ unit Input
 				t.startPosition = t.referenceStartPosition.getRelativeTo(graphics.localMatrix)
 				log "up", t.position
 				code t
+				Snapshot.take
 				if markAsHandled: t.markAsHandled
 				
 	// Executes code when a touch or click ends
@@ -548,6 +553,7 @@ unit Input
 					t.startPosition = t.referenceStartPosition.getRelativeTo(graphics.localMatrix)
 					log "up", t.position
 					code t
+					Snapshot.take
 		else
 			for user -> internalUsers if user
 				for t -> user.upTouches
@@ -556,6 +562,7 @@ unit Input
 						t.startPosition = t.referenceStartPosition.getRelativeTo(graphics.localMatrix)
 						log "up", t.position
 						code t
+						Snapshot.take
 						
 	private log: string text, float2 pos
 		Network.touchLog += " #{Network.frame}{isCertain ? " c" : ""} {text} {pos}"
