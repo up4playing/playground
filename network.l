@@ -19,6 +19,7 @@ unit Snapshot
 	transient int offset = 0
 	
 	int currentIndex
+	int takeCount
 	
 	inline js void serialize(Buffer buffer) serialize(buffer)
 	inline js void deserialize(Buffer buffer) deserialize(buffer)
@@ -34,15 +35,16 @@ unit Snapshot
 	take() takeAtEndOfStep = true
 	
 	internal onEndOfStep
-		if takeAtEndOfStep and !lobby.inLobby
+		if takeAtEndOfStep
 			let snap = save
 			snapshots.add snap
 			if snapshots.length > maxLength
 				snapshots.removeAt 0
 				offset++
-			int index = currentIndex
-			IndexedDB.save "{Network.gameId}-0", snap
-				print "Saved snapshot {index}"
+			if ++takeCount > 5
+				int index = currentIndex
+				IndexedDB.save "{Network.gameId}-0", snap
+					print "Saved snapshot {index}"
 			takeAtEndOfStep = false
 			currentIndex++
 	
