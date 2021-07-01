@@ -19,6 +19,8 @@ transient class InternalUser
 	int acknowledgedPos   // The remote user has received the input buffer up to this buffer position
 	int uncertainReadPos  // The buffer position where we haven't received inputs from all users
 	
+	object videoElement = null
+	
 	startInputFrame: int index
 		lastTouchMoveIndex.clear
 		lastTextInputIndex = -1
@@ -41,6 +43,8 @@ class NetworkUser
 	float2 touchPos
 	visible Touch[] startingTouches
 	string textInput
+	float2 videoPosition = {}
+	float videoWidth = 440
 	
 enum InputType: None, TouchDown, TouchMove, TouchUp, Wheel, KeyDown, KeyUp, TextInput, Stick, Trigger, Grip, ButtonDown, ButtonUp, ControllerTransform, HeadTransform, DeviceRotation, Join, Leave, SetState
 		

@@ -9,13 +9,7 @@ transient class Connection
 	bool offerByMe
 	
 enum NetworkMode: None, Ping, Local, Connected, Reconnecting
-transient class HTMLVideoElement: int id
 transient class RoomInfo: int time, userId
-		
-transient class VideoScreenInfo
-	object videoElement = null
-	float2 pos
-	float width
 	
 unit Snapshot
 	const maxLength = 3
@@ -267,7 +261,6 @@ transient unit Network
 	visible int userId = -1
 	public bool simulateConnection = true
 	
-	private VideoScreenInfo[] videoScreens
 	private object localVideo = null
 	
 	private float startTime
@@ -1192,6 +1185,7 @@ transient unit Network
 		});
 
 	private js void createVideoElement: int userId, object stream, bool local
+		let internalUser = Input_internalUsers[userId];
 		let el = document.createElement('video');
 		el.style = "position:absolute; top:0px; left:0px; z-index:10000; visibility:hidden; "+(local ? "transform: scaleX(-1)" : "")
 		el.autoplay = true
@@ -1200,33 +1194,33 @@ transient unit Network
 		el.muted = local
 		document.body.appendChild(el)
 		el.srcObject = stream;
-		let vs = Network_videoScreens[userId] || (Network_videoScreens[userId] = new VideoScreenInfo(null, new float2(0,0,null), 0))
-		vs.videoElement = el
+		internalUser.videoElement = el;
 		
 	private js void removeVideoElement: int userId
-		let vs = Network_videoScreens[userId]
-		if(vs && vs.videoElement) vs.videoElement.remove()
+		let internalUser = Input_internalUsers[userId];
+		if(internalUser?.videoElement) internalUser.videoElement.remove()
 			
 	setUserVideoAndColor: int userId = 0, float2 pos = {}, float width = 440, Color color = null
-		let vs = videoScreens[userId] || (videoScreens[userId] = VideoScreenInfo)
-		vs.pos = pos
-		vs.width = width
 		let user = Input.users[userId]
-		if color and user: user.color = color
+		if !user: return
+		user.videoPosition = pos
+		user.videoWidth = width
+		user.color = color
 		
 	internal js void updateVideoScreen
 		if(Network_mode == 2/*Local*/ || Network_isLocalhost) {
-			for(let vs of Network_videoScreens) {
-				graphics_drawImage(Image_VideoScreen, vs.pos, 0, vs.width/440, -1)
+			for(let user of Input_users) {
+				graphics_drawImage(Image_VideoScreen, user.videoPosition, 0, user.videoWidth/440, -1)
 			}
 		}
 		else {
-			for(let vs of Network_videoScreens) {
-				if(vs.videoElement && vs.width) {
-					let el = vs.videoElement
-					let pixelPos = Input_logicalToPixelPosition(vs.pos)
-					let pixelSizeX = vs.width*graphics_totalMatrix.m0/Platform_pixelRatio
-					let pixelSizeY = (vs.width*3/4)*graphics_totalMatrix.m3/Platform_pixelRatio
+			for(let user of Input_users) {
+				let internetUser = Input_internalUsers[user.id];
+				let el = internetUser?.videoElement
+				if(el) {
+					let pixelPos = Input_logicalToPixelPosition(user.videoPosition)
+					let pixelSizeX = user.videoWidth*graphics_totalMatrix.m0/Platform_pixelRatio
+					let pixelSizeY = (user.videoWidth*3/4)*graphics_totalMatrix.m3/Platform_pixelRatio
 					el.style.left = (pixelPos.x-pixelSizeX/2)+"px"
 					el.style.top = (pixelPos.y-pixelSizeY/2)+"px"
 					el.style.width = pixelSizeX+"px"
