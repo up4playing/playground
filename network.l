@@ -285,7 +285,6 @@ transient unit Network
 		receivedFrames = -1
 		log "Connected", userId, frame, startTime, this.startTime, receivedFrames
 		saveState
-		IndexedDB.start "up4playing", "snapshot"
 		
 	startLocal: userCount = 1
 		userId = 0
@@ -572,7 +571,6 @@ transient unit Network
 	log: logstring text
 		string str = text
 		eventLog += str + "\n"
-		print str
 		
 	inline js int currentTime := Date.now()
 	
@@ -741,6 +739,7 @@ transient unit Network
 	js void join: string gameId, string roomId
 		Network_gameId = gameId
 		Network_roomId = roomId
+		IndexedDB_start("up4playing", "snapshot")
 		Network_log("Network.join "+location.href)
 		if(Network_isLocalhost) Network_socket = new WebSocket("ws://localhost:3111");
 		else                    Network_socket = new WebSocket("wss://"+location.host+":3111");
@@ -767,23 +766,24 @@ transient unit Network
 		// 	userId = roomInfo && roomInfo.time > currentTime - 3600000*24 ? roomInfo.userId : -1
 		// 	log "Reconnect to session", roomInfo, userId
 		
-		openEventStream
-			Math.setRandomSeed eventStream.randomSeed
-			for eventStream.users
-				Input.internalUsers.add {id:u.id, local:u.local, inputFrame:u.frame, inputs:u.inputs}
-			userId = Input.internalUsers.find(local).id
-			// receivedFrames = getReceivedFrames
-			frame = receivedFrames
-			// resetStartTime
-			while frame < receivedFrames - 1
-				step fastFordward:true
-			step
-			log "Opening saved eventstream", roomId, frame
-			sendToServer JoinMessage roomId, userId, version:Platform.version
-		else
-			frame = 0
-			log "onConnectedToServer {roomId} connect as user {userId}"
-			sendToServer JoinMessage roomId, userId, version:Platform.version
+		// openEventStream
+		// 	Math.setRandomSeed eventStream.randomSeed
+		// 	for eventStream.users
+		// 		Input.internalUsers.add {id:u.id, local:u.local, inputFrame:u.frame, inputs:u.inputs}
+		// 	userId = Input.internalUsers.find(local).id
+		// 	// receivedFrames = getReceivedFrames
+		// 	frame = receivedFrames
+		// 	// resetStartTime
+		// 	while frame < receivedFrames - 1
+		// 		step fastFordward:true
+		// 	step
+		// 	log "Opening saved eventstream", roomId, frame
+		// 	sendToServer JoinMessage roomId, userId, version:Platform.version
+		// else
+		
+		frame = 0
+		log "onConnectedToServer {roomId} connect as user {userId}"
+		sendToServer JoinMessage roomId, userId, version:Platform.version
 		
 	private onMessageFromServer: ServerMessage message
 		if message.type == JoinResponseMessage: onJoinResponse cast message; else

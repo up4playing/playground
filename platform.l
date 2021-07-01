@@ -262,7 +262,7 @@ unit IndexedDB
 	js void start: string database, string store
 		IndexedDB_database = database;
 		IndexedDB_store = store;
-		var request = indexedDB.open(database, 2)
+		var request = indexedDB.open(database, 1)
 		request.onupgradeneeded = e => {
 			IndexedDB_db = e.target.result;
 			IndexedDB_db.createObjectStore(store, { keyPath: "id" });
