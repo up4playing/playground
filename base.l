@@ -490,7 +490,7 @@ global transient unit System
 		
 		
 // A collection of mathematical functions and constants
-transient unit Math
+unit Math
 	// Returns the absolute value
 	inline js int abs: int value // The value to return the absolute value of
 		Math.abs(value)
@@ -566,9 +566,8 @@ transient unit Math
 			return Date.now().toString()
 		}
 		
-	private float[] randomValues
+	transient private float[] randomValues
 	internal int randomValueIndex
-	internal int uncertainRandomValueIndex
 	
 	js void setRandomSeed: string seed
 		// Ported from an algorithm by Johannes Baagøe <baagoe@baagoe.com>

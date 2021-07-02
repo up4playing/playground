@@ -516,7 +516,6 @@ transient unit Network
 		if mode != Connected: return
 		if frame == receivedFrames+1
 			for Input.internalUsers: uncertainReadPos = inputs.readPos
-			Math.uncertainRandomValueIndex = Math.randomValueIndex
 			uncertainFrame = frame
 			saveTime = Time.measure
 				Snapshot.serialize commonState
@@ -530,7 +529,6 @@ transient unit Network
 		if uncertainFrame != -1 and receivedFrames >= uncertainFrame
 			// Restore state
 			for Input.internalUsers: inputs.readPos = uncertainReadPos
-			Math.randomValueIndex = Math.uncertainRandomValueIndex
 			restoreTime = Time.measure
 				Snapshot.deserialize commonState
 			parseLog +=  " restore u:{uncertainFrame} c:{calculateChecksum}"
