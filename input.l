@@ -180,28 +180,33 @@ unit Input
 		return 0
 		
 	private handleTextInput: InputType type, string text
-		if Network.mode == None || Platform.mode != Record: return
+		if Network.mode == None || Platform.mode != Record || Network.userId == -1: return
 		let user = internalUsers[Network.userId], inputs = user.inputs
+		if !user.collectInputs: return
+		
 		inputs.writeInt32 user.inputFrame
 		user.lastTextInputIndex = inputs.writePos
 		inputs.writeUnsignedInt16 cast type
 		inputs.writeString text
 			
 	private handleKeyEvent: InputType type, int keyCode
-		if Network.mode == None || Platform.mode != Record: return
+		if Network.mode == None || Platform.mode != Record || Network.userId == -1: return
 		let user = internalUsers[Network.userId], inputs = user.inputs
+		if !user.collectInputs: return
+		
 		inputs.writeInt32 user.inputFrame
 		inputs.writeUnsignedInt16 cast type
 		inputs.writeInt32 keyCode
 		
 	private handleTouchEvent: InputType type, float x, float y, int id, int button
+		if Network.mode == None || Platform.mode != Record || Network.userId == -1: return
+		let user = internalUsers[Network.userId], inputs = user.inputs
+		if !user.collectInputs: return
+
 		float2 pixelPos = {x*Platform.pixelRatio, y*Platform.pixelRatio}
 		float2 referencePos = pixelPos.getRelativeTo(Platform.baseMatrix)
 		Platform.handleSide type, id, pixelPos, referencePos
 		
-		let user = internalUsers[Network.userId], inputs = user.inputs
-		if Network.mode == None || Platform.mode != Record || !user.collectInputs: return
-
 		if type == TouchMove
 			int index = getLastTouchMoveIndex id
 			if index
@@ -224,8 +229,9 @@ unit Input
 		Network.writeLog += " #{user.inputFrame} {composite} {Math.round(referencePos.x)} {Math.round(referencePos.y)} ({inputs.readPos}/{inputs.writePos})"
 		
 	private handleWheelEvent: float x, float y, float delta
-		if Network.mode == None || Platform.mode != Record: return
+		if Network.mode == None || Platform.mode != Record || Network.userId == -1: return
 		let user = internalUsers[Network.userId], inputs = user.inputs
+		if !user.collectInputs: return
 		
 		float2 referencePos = {x*Platform.pixelRatio, y*Platform.pixelRatio}.getRelativeTo(Platform.baseMatrix)
 		InputType type = Wheel
