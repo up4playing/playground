@@ -1212,22 +1212,26 @@ transient unit Network
 	internal js void updateVideoScreen
 		if(Network_mode == 2/*Local*/ || Network_isLocalhost) {
 			for(let user of Input_users) {
-				graphics_drawImage(Image_VideoScreen, user.videoPosition, 0, user.videoWidth/440, -1)
+				if(user) {
+					graphics_drawImage(Image_VideoScreen, user.videoPosition, 0, user.videoWidth/440, -1)
+				}
 			}
 		}
 		else {
 			for(let user of Input_users) {
-				let internetUser = Input_internalUsers[user.id];
-				let el = internetUser?.videoElement
-				if(el) {
-					let pixelPos = Input_logicalToPixelPosition(user.videoPosition)
-					let pixelSizeX = user.videoWidth*graphics_totalMatrix.m0/Platform_pixelRatio
-					let pixelSizeY = (user.videoWidth*3/4)*graphics_totalMatrix.m3/Platform_pixelRatio
-					el.style.left = (pixelPos.x-pixelSizeX/2)+"px"
-					el.style.top = (pixelPos.y-pixelSizeY/2)+"px"
-					el.style.width = pixelSizeX+"px"
-					el.style.height = pixelSizeY+"px"
-					el.style.visibility = "visible"
+				if(user) {
+					let internetUser = Input_internalUsers[user.id];
+					let el = internetUser?.videoElement
+					if(el) {
+						let pixelPos = Input_logicalToPixelPosition(user.videoPosition)
+						let pixelSizeX = user.videoWidth*graphics_totalMatrix.m0/Platform_pixelRatio
+						let pixelSizeY = (user.videoWidth*3/4)*graphics_totalMatrix.m3/Platform_pixelRatio
+						el.style.left = (pixelPos.x-pixelSizeX/2)+"px"
+						el.style.top = (pixelPos.y-pixelSizeY/2)+"px"
+						el.style.width = pixelSizeX+"px"
+						el.style.height = pixelSizeY+"px"
+						el.style.visibility = "visible"
+					}
 				}
 			}
 		}
