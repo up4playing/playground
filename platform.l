@@ -255,25 +255,28 @@ transient unit Http
 			else(e.message)
 		}
 		
-unit IndexedDB
-	private object db
-	private string storeName
+transient unit IndexedDB
+	private object db = null
 	
-	js void start: string databaseName, string storeName
+	js void start: string databaseName, string storeName, int version = 1
 		IndexedDB_storeName = storeName;
-		var request = indexedDB.open(databaseName, 1)
+		var request = indexedDB.open(databaseName, version)
 		request.onupgradeneeded = e => {
 			IndexedDB_db = e.target.result;
-			IndexedDB_db.createObjectStore(storeName, { keyPath: "id" });
-			log("db: update")
+			if(!IndexedDB_db.objectStoreNames.contains(storeName))
+				IndexedDB_db.createObjectStore(storeName, { keyPath: "id" });
+			Network_log("IndexedDB: update")
 		}
 		request.onsuccess = e => {
 			IndexedDB_db = e.target.result;
-			log("db: success")
+			Network_log("IndexedDB: success")
+		}
+		request.onerror = e => {
+			Network_log("IndexedDB: error "+request.error);
 		}
 		
-	js void open: string id, void(Buffer buffer) then, void() else = null
-		let trans = IndexedDB_db.transaction(IndexedDB_storeName, "readonly")
+	js void open: string storeName, string id, void(Buffer buffer) then, void() else = null
+		let trans = IndexedDB_db.transaction(storeName, "readonly")
 		let req = trans.objectStore(IndexedDB_storeName).get(id)
 		req.onsuccess = async e => {
 			let result = req.result
@@ -289,8 +292,8 @@ unit IndexedDB
 			else()
 		}
 				
-	js void save: string id, Buffer buffer, void() then = null, void() else = null
-		let trans = IndexedDB_db.transaction(IndexedDB_storeName, "readwrite")
+	js void save: string storeName, string id, Buffer buffer, void() then = null, void() else = null
+		let trans = IndexedDB_db.transaction(storeName, "readwrite")
 		trans.onerror = e => {
 			alert("error"+e)
 			else?.()

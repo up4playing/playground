@@ -33,6 +33,7 @@ unit Snapshot
 		deserialize(buffer)
 		
 	take() takeAtEndOfStep = true
+	lastSnapshotSize := snapshots.length>0 ? snapshots[snapshots.length-1].writePos : 0
 	
 	internal onEndOfStep
 		if takeAtEndOfStep
@@ -43,7 +44,7 @@ unit Snapshot
 				offset++
 			if ++takeCount > 5
 				int index = currentIndex
-				IndexedDB.save "{Network.gameId}-0", snap
+				IndexedDB.save "snapshot", "{Network.gameId}-0", snap
 					print "Saved snapshot {index}"
 			takeAtEndOfStep = false
 			currentIndex++
@@ -284,6 +285,9 @@ transient unit Network
 	
 	init
 		showDebugString = isLocalhost = Platform.url.contains("localhost")
+		
+	initDatabase
+		IndexedDB.start "up4playing", "snapshot", 5
 
 	private startConnected: float startTime = 0
 		if mode == Connected: return
@@ -318,7 +322,7 @@ transient unit Network
 		startTime = currentTime
 		startApp
 		animationFrame
-		IndexedDB.start "up4playing", "snapshot"
+		initDatabase
 			
 	// AnimationFrame --> Step --> Tick
 
@@ -400,7 +404,7 @@ transient unit Network
 					for user -> Input.internalUsers
 						if user
 							debugString += user.inputs.writePos.format(grouping:true) + " "
-					debugString += "a:{ahead} av:{aheadAverageString} {lastError}"
+					debugString += "snapshot:{Snapshot.currentIndex} size:{Snapshot.lastSnapshotSize.format(grouping:true)} a:{ahead} av:{aheadAverageString} {lastError}"
 					
 				lastNetworkFrame = now
 				
@@ -437,8 +441,6 @@ transient unit Network
 			// Tick
 			tick
 			
-			Snapshot.onEndOfStep
-			
 			// Calculate checksum if we received all inputs for this frame
 			if isCertain
 				int myChecksum = Framework.checksum					
@@ -453,14 +455,17 @@ transient unit Network
 					onWrongChecksum
 					checkedChecksums = 0
 					checksumLog += " MISMATCH saved theirs:{theirChecksum}"
-			
-			// Cleanup
-			for user -> Input.internalUsers if user
-				user.clearEvent
+					
+			// Take snapshot
+			Snapshot.onEndOfStep
 		catch
 			print error
 			log error
 			lastError = error.message
+			
+		// Cleanup
+		for user -> Input.internalUsers if user
+			user.clearEvent
 			
 		frame++
 		
@@ -617,13 +622,13 @@ transient unit Network
 	save: int slot
 		snapshotBuffer.reset
 		Snapshot.serialize snapshotBuffer
-		IndexedDB.save "{gameId}-{slot}", snapshotBuffer
+		IndexedDB.save "snapshot", "{gameId}-{slot}", snapshotBuffer
 			print "saved snapshot {gameId}-{slot} ({snapshotBuffer.writePos} bytes)"
 		else
 			print "save failed"
 		
 	restore: int slot
-		IndexedDB.open "{gameId}-{slot}"
+		IndexedDB.open "snapshot", "{gameId}-{slot}"
 			Input.handleSetState buffer
 			print "restored snapshot {gameId}-{slot} ({buffer.writePos} bytes)"
 		else
@@ -741,7 +746,6 @@ transient unit Network
 	js void join: string gameId, string roomId
 		Network_gameId = gameId
 		Network_roomId = roomId
-		IndexedDB_start("up4playing", "snapshot")
 		Network_log("Network.join "+location.href)
 		if(Network_isLocalhost) Network_socket = new WebSocket("ws://localhost:3111");
 		else                    Network_socket = new WebSocket("wss://"+location.host+":3111");
@@ -759,6 +763,7 @@ transient unit Network
 		Network_socket.onerror = ex => {
 			log(ex)
 		}
+		Network_initDatabase();
 		
 	private onConnectedToServer
 		// Disabled rejoining with the same id to support testing in two browser tabs
@@ -1035,11 +1040,11 @@ transient unit Network
 		sentLog += " #{inputFrame} ack:{acknowledgePos} cf:{currentFrame} s:{start} e:{end}"
 		
 	
-	private js void onTickMessage: Connection c, Buffer buffer
-		if(Math.random() < .75) setTimeout(() => Network_onTickMessageActual(c, buffer), Math.random()*500)
+	// private js void onTickMessage: Connection c, Buffer buffer
+		// if(Math.random() < .75) setTimeout(() => Network_onTickMessageActual(c, buffer), Math.random()*500)
 		
-	private onTickMessageActual: Connection c, Buffer buffer
-	// private onTickMessage: Connection c, Buffer buffer
+	// private onTickMessageActual: Connection c, Buffer buffer
+	private onTickMessage: Connection c, Buffer buffer
 		let sender = Input.internalUsers[c.userId]
 		if c.state != Connected: c.state = Connected
 
