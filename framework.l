@@ -27,6 +27,14 @@ unit Framework
 		let result = ""
 		for objects: result+= o.debugString
 		return result
+		
+	checksum
+		let result = 0
+		for objects: result += o.checksum
+		// We ensure that we never return 0
+		// because a checksum of 0 is used to indicate that we don't have a checksum for this frame yet
+		if result == 0: return 1
+		return result		
 			
 // class NetworkUser
 // 	Object selectedObject = null
@@ -78,9 +86,10 @@ class Object
 		this.targetAngle = angle
 		this.nextBoard = board
 		
-	debugString
-		return "(Object pos:{position.x} {position.y} frame:{frame} side:{side} image:{image?.file} board:{board.toBool})"
+	debugString := "(Object pos:{position.x} {position.y} frame:{frame} side:{side} image:{image?.file} board:{board.toBool})"
 	
+	checksum := position.x + position.y + frame + scale + angle + cast side
+		
 	remove
 		siblings.remove this
 		
@@ -247,6 +256,11 @@ Object Board
 		for objects: children += o.debugString
 		return "(Board pos:{position.x} {position.y} children:{children})"
 		
+	checksum
+		let result = position.x + position.y + cast(visibleForOthers) + matrix.m0 + matrix.m1 + matrix.m2 + matrix.m3 + matrix.m4 + matrix.m5
+		for objects: result += o.checksum
+		return result
+		
 	add: Object object
 		objects.add object
 		object.board = object.nextBoard = this
@@ -373,8 +387,8 @@ Object Coin
 	private closestCoinType closestCoinType
 	private float distanceToClosest
 	
-	debugString
-		return "(Coin {value} pos:{position.x} {position.y} dis:{distanceToClosest})"
+	debugString := "(Coin {value} pos:{position.x} {position.y} dis:{distanceToClosest})"
+	checksum := position.x + position.y + frame + value
 	
 	tick
 		if movable

@@ -441,7 +441,7 @@ transient unit Network
 			
 			// Calculate checksum if we received all inputs for this frame
 			if isCertain
-				int myChecksum = calculateChecksum					
+				int myChecksum = Framework.checksum					
 				let theirChecksum = checksums[frame]
 				checksumLog += " <> #{frame} {myChecksum}"
 				if !theirChecksum
@@ -519,7 +519,7 @@ transient unit Network
 			uncertainFrame = frame
 			saveTime = Time.measure
 				Snapshot.serialize commonState
-			parseLog += " save u:{uncertainFrame} c:{calculateChecksum}"
+			parseLog += " save u:{uncertainFrame} c:{Framework.checksum}"
 	
 	// Replay all frames from the first uncertain frame until the current frame
 	// when we received all inputs for frames that we were uncertain about before.
@@ -531,7 +531,7 @@ transient unit Network
 			for Input.internalUsers: inputs.readPos = uncertainReadPos
 			restoreTime = Time.measure
 				Snapshot.deserialize commonState
-			parseLog +=  " restore u:{uncertainFrame} c:{calculateChecksum}"
+			parseLog +=  " restore u:{uncertainFrame} c:{Framework.checksum}"
 	
 			let targetFrame = frame
 			frame = uncertainFrame
@@ -561,25 +561,6 @@ transient unit Network
 			if user && !user.local && (minFrames == -1 || user.currentFrame < minFrames)
 				minFrames = user.currentFrame
 		return minFrames
-	
-	private calculateChecksum
-		let checksum = 0
-		for Framework.objects
-			checksum += o.position.x + o.position.y + o.frame + cast o.side
-			if o.type == Board
-				Board board = cast o
-				let m = board.matrix
-				checksum += m.m0 + m.m1 + m.m2 + m.m3 + m.m4 + m.m5
-				for boardObj -> board.objects
-					checksum += boardObj.position.x + boardObj.position.y + boardObj.frame + cast boardObj.side
-			else
-			if o.type == Coin
-				Coin coin = cast o
-				checksum += coin.value
-		// We ensure that we never return 0
-		// because a checksum of 0 is used to indicate that we don't have a checksum for this frame yet
-		if checksum == 0: return 1
-		return checksum
 			
 	private onWrongChecksum
 		log "##### OUT OF SYNC #####"
