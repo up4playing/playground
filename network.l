@@ -578,6 +578,7 @@ transient unit Network
 	log: logstring text
 		string str = text
 		eventLog += str + "\n"
+		print str
 		
 	inline js int currentTime := Date.now()
 	
@@ -760,8 +761,8 @@ transient unit Network
 		Network_socket.onclose = function() {
 			log("Websocket closed")
 		}
-		Network_socket.onerror = ex => {
-			log(ex)
+		socket.onerror = ex => {
+			Network_log(ex.stack)
 		}
 		Network_initDatabase();
 		
@@ -872,7 +873,6 @@ transient unit Network
 		peerConnection.onicegatheringstatechange = e => Network_log("onicegatheringstatechange", peerConnection.iceGatheringState)
 		peerConnection.onsignalingstatechange  = e => Network_log("onsignalingstatechange", peerConnection.signalingState)
 		peerConnection.onnegotiationneeded = () => Network_log("onnegotiationneeded")
-		Network_log("createOfferFor: setup event handlers")
 		
 		peerConnection.onicecandidate = async event => {
 			if (event.candidate)
@@ -943,7 +943,8 @@ transient unit Network
 					Network_log("createOffers: Created and sent offer, waiting for answer. receiverId:"+partnerId+" acknowledgePos:"+acknowledgePos);
 				}
 				catch(e) {
-					console.error(e)
+					console.error(e);
+					Network_log(e.stack);
 				}
 			}
 		}
@@ -990,7 +991,7 @@ transient unit Network
 		}
 		catch(e) {
 			console.error(e)
-			// Network_statusString = "Error while joining room: "+e
+			Network_log(e.stack);
 		}
 	private js void onReceivedAnswer: int partnerId, Signal answer
 		let connection = Network_connections.find(a => a.userId == partnerId)
@@ -1006,6 +1007,7 @@ transient unit Network
 				await connection.peerConnection.addIceCandidate(new RTCIceCandidate(message.iceCandidate));
 			} catch(e) {
 				log("onIce failed " + e.message)
+				Network_log(e.stack);
 			}
 		}
 		
