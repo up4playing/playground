@@ -787,8 +787,8 @@ transient unit Network
 		// 	log "Opening saved eventstream", roomId, frame
 		// 	sendToServer JoinMessage roomId, userId, version:Platform.version
 		// else
+		// frame = 0
 		
-		frame = 0
 		log "onConnectedToServer {roomId} connect as user {userId}"
 		sendToServer JoinMessage roomId, userId, version:Platform.version
 		
@@ -906,7 +906,7 @@ transient unit Network
 				try {
 					// Tell the other users whether we are are reconnecting and already have inputs from them
 					// or whether they need to send their past inputs to us
-					let existingUser = Input_users[partnerId]
+					let existingUser = Input_internalUsers[partnerId]
 					let acknowledgePos = existingUser ? existingUser.inputs.writePos : 0
 					
 					// Peer connection
@@ -952,7 +952,7 @@ transient unit Network
 	private js void onReceivedOffer: int partnerId, Signal offer
 		try {
 			// Peer connection
-			let connection = Network_createConnection(partnerId, /*offerByMe*/true, offer.acknowledgePos)
+			let connection = Network_createConnection(partnerId, /*offerByMe*/false, offer.acknowledgePos)
 			let peerConnection = connection.peerConnection
 			
 			// Data channel
