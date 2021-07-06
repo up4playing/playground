@@ -74,6 +74,7 @@ class Object
 	visible float2 size
 	public Board board = null, nextBoard = null
 	public float2 targetPos = float2.none
+	private int interactingUserId
 	
 	private siblings := board ? board.objects : Framework.objects
 	onBoardChanged
@@ -103,7 +104,8 @@ class Object
 				isBeingMoved = false
 				
 			Input.onTouchMove moveTouch
-				position = touch.position + touchOffset
+				Network.smoothAnimation moveTouch.userId
+					position = touch.position + touchOffset
 				if touch.position - touch.startPosition > 8: isBeingMoved = true
 				if board
 					let closestSpotPos = board.getSpotAt touch.position, threshold:size
@@ -148,9 +150,10 @@ class Object
 				targetAngle = Math.round(angle / (Math.PI/2)) * Math.PI/2
 				rotateTouch = null
 				if !rotatedOverThreshold: targetAngle -= Math.PI/2
+				interactingUserId = touch.userId
 		
-		Network.smoothAnimation
-			if angle != targetAngle: angle = Math.moveTowards(angle, targetAngle, .1)
+		Network.smoothAnimation interactingUserId
+			if angle != targetAngle: angle = Math.moveTowards(angle, targetAngle, .2)
 			
 		// Draw
 		if image

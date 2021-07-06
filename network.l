@@ -248,7 +248,7 @@ transient class Buffer
 		
 transient unit Network
 	// Logs
-	string logTable = "frame,animTime,networkTime,tickTime,drawTime,iteration,restoreTime,replayFrames,replayTime,saveTime,user0,user1,user2,received,uncertain,offset,ahead,avarage,certainFrame,buffer,checksums,events,send,receive,write,parse,touch\n"
+	string logTable = "frame,animTime,networkTime,tickTime,drawTime,iteration,restoreTime,replayFrames,replayTime,saveTime,user0,user1,user2,received,uncertain,offset,ahead,avarage,percentile90,certainFrame,buffer,checksums,events,send,receive,write,parse,touch\n"
 	public string eventLog = ""; sentLog = "", receivedLog="", writeLog="", parseLog = "", touchLog = "", checksumLog = "", debugString = ""
 	public bool showDebugString
 	private float lastNetworkFrame, lastAnimationFrame, drawTime, tickTime, restoreTime, replayTime, saveTime
@@ -307,6 +307,7 @@ transient unit Network
 		
 		mode = Connected
 		receivedFrames = -1
+		certainFrame = -1
 		log "Connected", userId, frame, startTime, this.startTime
 		saveState
 		
@@ -325,6 +326,10 @@ transient unit Network
 		animationFrame
 		initDatabase
 		
+	smoothAnimation: int userId
+		             void() code
+		if Input.isCertain or this.userId == userId: code
+			
 	smoothAnimation: void() code
 		if Input.isCertain: code
 			
@@ -351,14 +356,22 @@ transient unit Network
 			reconnect
 			return
 			
+		// Ahead
+		float aheadAverage
+		int aheadPercentile90
+		if mode == Connected and Input.users.length > 1
+			let receivedCurrentFrames = getReceivedCurrentFrames
+			ahead = frame - receivedCurrentFrames
+			if ahead >= 0 and ahead < 60: aheads.add ahead, maxLength:1000
+			aheadAverage = aheads.average
+			aheadPercentile90 = aheads.percentile 90
+		
 		let now = currentTime
 		let localPlayer = Input.internalUsers[userId]
-		let aheadAverage = aheads.average
-		let aheadAverageString = aheadAverage.format(fractionDigits:1)
 		let targetFrame = Math.floor((now - startTime)/targetFrameTime)+1
 		// int nextInputFrame = targetFrame + aheadAverage.round + bufferFrames
 		let nextInputFrame = targetFrame
-		let frameMinusOffset = targetFrame - 30
+		let frameMinusOffset = targetFrame - aheadPercentile90
 		certainFrame = Math.min(frameMinusOffset, receivedFrames)
 		
 		if mode == Local && targetFrame > frame + targetFps*2
@@ -396,7 +409,8 @@ transient unit Network
 					logTable += ","+(Input.internalUsers[0] ? Input.internalUsers[0].inputFrame : 0)
 					logTable += ","+(Input.internalUsers[1] ? Input.internalUsers[1].inputFrame : 0)
 					logTable += ","+(Input.internalUsers[2] ? Input.internalUsers[2].inputFrame : 0)
-					logTable += ",{receivedFrames},{uncertainFrame},{frame - receivedFrames},{ahead},{aheadAverageString},{certainFrame},{receivedFrames-frameMinusOffset}"
+					logTable += ",{receivedFrames},{uncertainFrame},{frame - receivedFrames},{ahead},{aheadAverage.format(fractionDigits:1)}"
+					logTable += ",{aheadPercentile90},{certainFrame},{receivedFrames-frameMinusOffset}"
 					logTable += ",\"{checksumLog.trim}\",\"{eventLog.trim}\",\"{sentLog.trim}\",\"{receivedLog.trim}\",\"{writeLog.trim}\",\"{parseLog.trim}\",\"{touchLog.trim}\"\n"
 					eventLog = ""; sentLog = ""; receivedLog = ""; writeLog = ""; parseLog = ""; touchLog = ""; checksumLog = ""
 				
@@ -410,7 +424,7 @@ transient unit Network
 					for user -> Input.internalUsers
 						if user
 							debugString += user.inputs.writePos.format(grouping:true) + " "
-					debugString += "snapshot:{Snapshot.currentIndex} size:{Snapshot.lastSnapshotSize.format(grouping:true)} a:{ahead} av:{aheadAverageString} {lastError}"
+					debugString += "snapshot:{Snapshot.currentIndex} size:{Snapshot.lastSnapshotSize.format(grouping:true)} a:{ahead} av:{aheadAverage.format(fractionDigits:1)} p:{aheadPercentile90} {lastError}"
 					
 				lastNetworkFrame = now
 				
@@ -464,6 +478,8 @@ transient unit Network
 					
 			// Take snapshot
 			Snapshot.onEndOfStep
+			
+			// log "#{frame}{isCertain ? "c":""}", certainFrame, "a:{Framework.objects[0]?.angle}"
 			
 		catch
 			print error
@@ -532,6 +548,7 @@ transient unit Network
 			saveTime = Time.measure
 				Snapshot.serialize commonState
 			parseLog += " save u:{uncertainFrame} c:{Framework.checksum}"
+			// log uncertainFrame, "a:{Framework.objects[0]?.angle}"
 	
 	// Replay all frames from the first uncertain frame until the current frame
 	// when we received all inputs for frames that we were uncertain about before.
@@ -544,6 +561,7 @@ transient unit Network
 			restoreTime = Time.measure
 				Snapshot.deserialize commonState
 			parseLog +=  " restore u:{uncertainFrame} c:{Framework.checksum}"
+			// log uncertainFrame, "a:{Framework.objects[0]?.angle}"
 	
 			let targetFrame = frame
 			frame = uncertainFrame
@@ -1098,11 +1116,6 @@ transient unit Network
 			let length = buffer.readBuffer sender.inputs, writeStart
 			sender.inputs.writePos = writeStart + length
 			receivedFrames = getReceivedInputFrames
-			
-			// Calculate "ahead"
-			let receivedCurrentFrames = getReceivedCurrentFrames
-			ahead = frame - receivedCurrentFrames
-			if ahead >= 0 and ahead < 60: aheads.add ahead, maxLength:900
 	
 			receivedLog += " <{c.userId}> #{sender.inputFrame} a:{sender.acknowledgedPos} cf:{sender.currentFrame} s:{writeStart} e:{sender.inputs.writePos}"
 		else
@@ -1116,7 +1129,7 @@ transient unit Network
 			let writeStart = buffer.readInt32
 			let length = buffer.readInt32
 			receivedLog += " <{c.userId}> irgnoring #{inputFrame} (already at {sender.inputFrame}) a:{acknowledgedPos} s:{writeStart} e:{writeStart+length}"
-			
+		
 	private void sendOwnInputsAfterReconnectMessage: Connection c
 		                                int frame
 		                                Buffer buffer

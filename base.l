@@ -314,6 +314,11 @@ class List<T>
 			this.set(j, temp)
 		return this
 		
+	js T percentile: int value
+		if(this.length == 0) return 0
+		this.sort((a,b) => a - b)
+		return this[Math.round((this.length-1) * value / 100)]
+		
 	min: int(T a) selector 
 		 int threshold = int.maxValue
 		int resultValue = threshold
