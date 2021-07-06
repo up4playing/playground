@@ -254,8 +254,8 @@ unit Input
 		if isCertain: Network.parseLog += " c"
 		for userIndex, internalUser -> internalUsers 
 			if internalUser
-				Network.parseLog += " <{internalUser.id}>"
-				let inputs = internalUser.inputs
+				let inputs = internalUser.inputs, userId = internalUser.id
+				Network.parseLog += " <{userId}>"
 					
 				while true
 					int nextFrame = inputs.canRead ? inputs.peekInt32 : int.maxValue
@@ -272,13 +272,14 @@ unit Input
 						MouseButton button = cast Math.shiftRight(value, 5) % 4
 						int id = Math.shiftRight(value, 7)
 						float2 touchPos = {inputs.readInt16, inputs.readInt16}
-						let user = users[internalUser.id]
-						user.touchPos = touchPos
+						let user = users[userId]
+						if !Network.smoothTouchPosition or isCertain or Network.userId == userId
+							user.touchPos = touchPos
 						Network.parseLog += " "+id
 						
 						if type == TouchDown
 							Network.parseLog += " down {touchPos}"
-							Touch touch = {id, internalUser.id, cast type, button, touchPos, touchPos, isDown:true}
+							Touch touch = {id, userId, cast type, button, touchPos, touchPos, isDown:true}
 							internalUser.downTouches.add touch
 							user.startingTouches.add touch
 						else
@@ -289,7 +290,7 @@ unit Input
 							if isDown: referenceStartPosition = startingTouch.referencePosition
 							else       referenceStartPosition = float2.none; id = 0
 							// let referenceStartPosition = isDown ? startingTouch.referencePosition : float2.none
-							internalUser.movingTouches.add {id, internalUser.id, cast type, button, touchPos, referenceStartPosition, isDown}
+							internalUser.movingTouches.add {id, userId, cast type, button, touchPos, referenceStartPosition, isDown}
 							Network.parseLog += " move {type} {button} {touchPos}"
 							cursor = "auto"
 						else
@@ -297,14 +298,14 @@ unit Input
 							Network.parseLog += " up {touchPos}"
 							let startingTouch = user.startingTouches.removeWhere a.id == id
 							let referenceStartPosition = startingTouch ? startingTouch.referencePosition : float2.none
-							internalUser.upTouches.add {id, internalUser.id, cast type, button, touchPos, referenceStartPosition}
+							internalUser.upTouches.add {id, userId, cast type, button, touchPos, referenceStartPosition}
 						else
 						if type == Wheel
 							let delta = inputs.readInt16
 							internalUser.wheelEvents.add {user, delta, referencePosition:touchPos}
 					else
 					if type == TextInput
-						let user = users[internalUser.id]
+						let user = users[userId]
 						let textInput = inputs.readString
 						user.textInput = textInput
 						internalUser.textInputs.add textInput
@@ -317,12 +318,12 @@ unit Input
 						internalUser.upKeys.add inputs.readInt32
 					else
 					if type == Join
-						Network.parseLog += " join {internalUser.id}"
-						users[internalUser.id] = {id:internalUser.id}
+						Network.parseLog += " join {userId}"
+						users[userId] = {id:userId}
 					else
 					if type == Leave
-						Network.parseLog += " leave {internalUser.id}"
-						users[internalUser.id] = null
+						Network.parseLog += " leave {userId}"
+						users[userId] = null
 					else
 					if type == SetState
 						Network.parseLog += " setState"

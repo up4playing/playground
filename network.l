@@ -248,6 +248,9 @@ transient class Buffer
 		
 transient unit Network
 	// Logs
+	public int smoothing = 90
+	public bool smoothTouchPosition = true
+	
 	string logTable = "frame,animTime,networkTime,tickTime,drawTime,iteration,restoreTime,replayFrames,replayTime,saveTime,user0,user1,user2,received,uncertain,offset,ahead,avarage,percentile90,certainFrame,buffer,checksums,events,send,receive,write,parse,touch\n"
 	public string eventLog = ""; sentLog = "", receivedLog="", writeLog="", parseLog = "", touchLog = "", checksumLog = "", debugString = ""
 	public bool showDebugString
@@ -358,20 +361,20 @@ transient unit Network
 			
 		// Ahead
 		float aheadAverage
-		int aheadPercentile90
+		int aheadPercentile
 		if mode == Connected and Input.users.length > 1
 			let receivedCurrentFrames = getReceivedCurrentFrames
 			ahead = frame - receivedCurrentFrames
 			if ahead >= 0 and ahead < 60: aheads.add ahead, maxLength:1000
 			aheadAverage = aheads.average
-			aheadPercentile90 = aheads.percentile 90
+			aheadPercentile = smoothing ? aheads.percentile smoothing : 0
 		
 		let now = currentTime
 		let localPlayer = Input.internalUsers[userId]
 		let targetFrame = Math.floor((now - startTime)/targetFrameTime)+1
 		// int nextInputFrame = targetFrame + aheadAverage.round + bufferFrames
 		let nextInputFrame = targetFrame
-		let frameMinusOffset = targetFrame - aheadPercentile90
+		let frameMinusOffset = targetFrame - aheadPercentile
 		certainFrame = Math.min(frameMinusOffset, receivedFrames)
 		
 		if mode == Local && targetFrame > frame + targetFps*2
@@ -410,7 +413,7 @@ transient unit Network
 					logTable += ","+(Input.internalUsers[1] ? Input.internalUsers[1].inputFrame : 0)
 					logTable += ","+(Input.internalUsers[2] ? Input.internalUsers[2].inputFrame : 0)
 					logTable += ",{receivedFrames},{uncertainFrame},{frame - receivedFrames},{ahead},{aheadAverage.format(fractionDigits:1)}"
-					logTable += ",{aheadPercentile90},{certainFrame},{receivedFrames-frameMinusOffset}"
+					logTable += ",{aheadPercentile},{certainFrame},{receivedFrames-frameMinusOffset}"
 					logTable += ",\"{checksumLog.trim}\",\"{eventLog.trim}\",\"{sentLog.trim}\",\"{receivedLog.trim}\",\"{writeLog.trim}\",\"{parseLog.trim}\",\"{touchLog.trim}\"\n"
 					eventLog = ""; sentLog = ""; receivedLog = ""; writeLog = ""; parseLog = ""; touchLog = ""; checksumLog = ""
 				
@@ -424,7 +427,7 @@ transient unit Network
 					for user -> Input.internalUsers
 						if user
 							debugString += user.inputs.writePos.format(grouping:true) + " "
-					debugString += "snapshot:{Snapshot.currentIndex} size:{Snapshot.lastSnapshotSize.format(grouping:true)} a:{ahead} av:{aheadAverage.format(fractionDigits:1)} p:{aheadPercentile90} {lastError}"
+					debugString += "snapshot:{Snapshot.currentIndex} size:{Snapshot.lastSnapshotSize.format(grouping:true)} a:{ahead} av:{aheadAverage.format(fractionDigits:1)} p:{aheadPercentile} {lastError}"
 					
 				lastNetworkFrame = now
 				
