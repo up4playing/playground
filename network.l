@@ -248,7 +248,7 @@ transient class Buffer
 		
 transient unit Network
 	// Logs
-	string logTable = "frame,animTime,networkTime,tickTime,drawTime,iteration,restoreTime,replayFrames,replayTime,saveTime,user0,user1,user2,received,uncertain,offset,ahead,avarage,checksums,events,send,receive,write,parse,touch\n"
+	string logTable = "frame,animTime,networkTime,tickTime,drawTime,iteration,restoreTime,replayFrames,replayTime,saveTime,user0,user1,user2,received,uncertain,offset,ahead,avarage,certainFrame,buffer,checksums,events,send,receive,write,parse,touch\n"
 	public string eventLog = ""; sentLog = "", receivedLog="", writeLog="", parseLog = "", touchLog = "", checksumLog = "", debugString = ""
 	public bool showDebugString
 	private float lastNetworkFrame, lastAnimationFrame, drawTime, tickTime, restoreTime, replayTime, saveTime
@@ -272,6 +272,7 @@ transient unit Network
 	visible int frame               // Will increase by 1 at the end of every step (so every targetFrameTime milliseconds)
 	private int receivedFrames      // We received all remote inputs up to this frame (lowest of all user frames)
 	private int uncertainFrame = -1 // The first frame that doesn't have inputs from all players
+	private int certainFrame
 	private Buffer commonState      // A snapshot taken before the first uncertain frame
 		
 	private float[] checksums
@@ -306,7 +307,7 @@ transient unit Network
 		
 		mode = Connected
 		receivedFrames = -1
-		log "Connected", userId, frame, startTime, this.startTime, receivedFrames
+		log "Connected", userId, frame, startTime, this.startTime
 		saveState
 		
 	startLocal: userCount = 1
@@ -323,6 +324,9 @@ transient unit Network
 		startApp
 		animationFrame
 		initDatabase
+		
+	smoothAnimation: void() code
+		if Input.isCertain: code
 			
 	// AnimationFrame --> Step --> Tick
 
@@ -352,8 +356,10 @@ transient unit Network
 		let aheadAverage = aheads.average
 		let aheadAverageString = aheadAverage.format(fractionDigits:1)
 		let targetFrame = Math.floor((now - startTime)/targetFrameTime)+1
-		int nextInputFrame = targetFrame + aheadAverage.round + bufferFrames
-		// let nextInputFrame = targetFrame
+		// int nextInputFrame = targetFrame + aheadAverage.round + bufferFrames
+		let nextInputFrame = targetFrame
+		let frameMinusOffset = targetFrame - 30
+		certainFrame = Math.min(frameMinusOffset, receivedFrames)
 		
 		if mode == Local && targetFrame > frame + targetFps*2
 			// After a long pause in local mode, we do not want to process all missed frames, so we adjust the start time
@@ -390,7 +396,7 @@ transient unit Network
 					logTable += ","+(Input.internalUsers[0] ? Input.internalUsers[0].inputFrame : 0)
 					logTable += ","+(Input.internalUsers[1] ? Input.internalUsers[1].inputFrame : 0)
 					logTable += ","+(Input.internalUsers[2] ? Input.internalUsers[2].inputFrame : 0)
-					logTable += ",{receivedFrames},{uncertainFrame},{frame - receivedFrames},{ahead},{aheadAverageString}"
+					logTable += ",{receivedFrames},{uncertainFrame},{frame - receivedFrames},{ahead},{aheadAverageString},{certainFrame},{receivedFrames-frameMinusOffset}"
 					logTable += ",\"{checksumLog.trim}\",\"{eventLog.trim}\",\"{sentLog.trim}\",\"{receivedLog.trim}\",\"{writeLog.trim}\",\"{parseLog.trim}\",\"{touchLog.trim}\"\n"
 					eventLog = ""; sentLog = ""; receivedLog = ""; writeLog = ""; parseLog = ""; touchLog = ""; checksumLog = ""
 				
@@ -425,7 +431,7 @@ transient unit Network
 			
 			// Log
 			parseLog += " #{frame}"
-			bool isCertain = receivedFrames >= frame
+			bool isCertain = frame <= certainFrame
 			if fastFordward: parseLog += "f"
 			if isCertain: parseLog += "c"
 				
@@ -458,6 +464,7 @@ transient unit Network
 					
 			// Take snapshot
 			Snapshot.onEndOfStep
+			
 		catch
 			print error
 			log error
@@ -519,7 +526,7 @@ transient unit Network
 	// before we start processing the frame.
 	private saveState
 		if mode != Connected: return
-		if frame == receivedFrames+1
+		if frame == certainFrame+1
 			for Input.internalUsers: uncertainReadPos = inputs.readPos
 			uncertainFrame = frame
 			saveTime = Time.measure
@@ -531,7 +538,7 @@ transient unit Network
 	// This is called at the begining of animationFrame before we start stepping.
 	private replayState
 		if mode != Connected or Input.internalUsers.length == 1: return
-		if uncertainFrame != -1 and receivedFrames >= uncertainFrame
+		if uncertainFrame != -1 and certainFrame >= uncertainFrame
 			// Restore state
 			for Input.internalUsers: inputs.readPos = uncertainReadPos
 			restoreTime = Time.measure
@@ -1057,11 +1064,11 @@ transient unit Network
 		sentLog += " #{inputFrame} ack:{acknowledgePos} cf:{currentFrame} s:{start} e:{end}"
 		
 	
-	// private js void onTickMessage: Connection c, Buffer buffer
-		// if(Math.random() < .75) setTimeout(() => Network_onTickMessageActual(c, buffer), Math.random()*500)
+	private js void onTickMessage: Connection c, Buffer buffer
+		if(Math.random() < .75) setTimeout(() => Network_onTickMessageActual(c, buffer), Math.random()*500)
 		
-	// private onTickMessageActual: Connection c, Buffer buffer
-	private onTickMessage: Connection c, Buffer buffer
+	private onTickMessageActual: Connection c, Buffer buffer
+	// private onTickMessage: Connection c, Buffer buffer
 		let sender = Input.internalUsers[c.userId]
 		if c.state != Connected: c.state = Connected
 

@@ -149,7 +149,8 @@ class Object
 				rotateTouch = null
 				if !rotatedOverThreshold: targetAngle -= Math.PI/2
 		
-		if angle != targetAngle: angle = Math.moveTowards(angle, targetAngle, .2)
+		Network.smoothAnimation
+			if angle != targetAngle: angle = Math.moveTowards(angle, targetAngle, .1)
 			
 		// Draw
 		if image
