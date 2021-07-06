@@ -709,7 +709,6 @@ transient unit Network
 		connection.state = Disconnected
 		mode = Reconnecting
 		nextReconnect = currentTime + 1000
-		removeVideoElement connection.userId
 		graphics.reset
 		drawText "Connection lost. Trying to reconnect...", {0,-Platform.size.y/2+32}
 		drawRectangle {0,-Platform.size.y/2+32}, {Platform.size.x, 64}, fillColor:{"900000"}
@@ -726,12 +725,21 @@ transient unit Network
 			connection.dataChannel.close();
 			connection.dataChannel = null;
 		}
+		if(Network_socket) {
+			Network_log("closeConnection: socket")
+			Network_socket.close()
+			Network_socket = null
+		}
 		
 	private reconnect
 		if currentTime >= nextReconnect
-			log "Trying to reconnect"
-			join gameId, roomId
-			nextReconnect = currentTime + 5000
+			if(socket)
+				log "Existing socket -> resending offers"
+				resendOffers
+			else
+				log "No existing socket -> reconnecting to server"
+				join gameId, roomId
+			nextReconnect = currentTime + 6000
 	
 	private ping
 		if currentTime >= nextPingTime
@@ -748,18 +756,21 @@ transient unit Network
 		Network_gameId = gameId
 		Network_roomId = roomId
 		Network_log("Network.join "+location.href)
-		if(Network_isLocalhost) Network_socket = new WebSocket("ws://localhost:3111");
-		else                    Network_socket = new WebSocket("wss://"+location.host+":3111");
-		Network_socket.onopen = function() {
-			log("Websocket open");
+		let socket
+		if(Network_isLocalhost) socket = new WebSocket("ws://localhost:3111");
+		else                    socket = new WebSocket("wss://"+location.host+":3111");
+		socket.onopen = function() {
+			Network_log("Websocket open");
+			Network_socket = socket
 			Network_onConnectedToServer();
 		}
-		Network_socket.onmessage = function(event) {
+		socket.onmessage = function(event) {
 			let message = JSON.parse(event.data);
 			Network_onMessageFromServer(message);
 		}
-		Network_socket.onclose = function() {
-			log("Websocket closed")
+		socket.onclose = function() {
+			Network_log("Websocket closed")
+			Network_socket = null
 		}
 		socket.onerror = ex => {
 			Network_log(ex.stack)
@@ -809,14 +820,8 @@ transient unit Network
 	private onJoinResponse: JoinResponseMessage message
 		log "onJoinResponse", message.roomId, message.userId
 		if mode == Reconnecting
-			log "onJoinResponse: Reconnecting to "+roomId+" with user "+userId
-			int[] partnerIds
-			for c -> connections
-				if c: log "Connection "+c.userId+" state:"+c.state+" offerByMe:"+c.offerByMe
-				else  log "Connection null"
-				if c && (c.state == Disconnected || c.state == Reconnecting) && c.offerByMe
-					partnerIds.add c.userId
-			createOffers partnerIds
+			log "Reconnecting to {roomId} with user {userId}"
+			resendOffers
 		else
 			log Time.dateAndTimeString, Platform.version, Platform.userAgent, message.seed
 			if message.roomId != roomId
@@ -837,6 +842,16 @@ transient unit Network
 			// The first user will enter the "connected" state right away, all later uers will first 
 			// ping the existing users to sync the startTime and calculate the frame from it
 			if userId == 0: startConnected
+				
+	private resendOffers
+		int[] partnerIds
+		for c -> connections
+			if c: log "Connection "+c.userId+" state:"+c.state+" offerByMe:"+c.offerByMe
+			else  log "Connection null"
+			if c && (c.state == Disconnected || c.state == Reconnecting) && c.offerByMe
+				partnerIds.add c.userId
+		log "Resending offers", userId, partnerIds
+		createOffers partnerIds		
 	
 	private onSignal: SignalMessage message
 		log "on signal: "+message.signal.type+" "+message.senderId+" -> "+message.signal.receiverId
@@ -1152,7 +1167,7 @@ transient unit Network
 
 	private js void setupLocalVideo: int userId
 		if(Network_isLocalhost) return 
-		Network_localVideo = await navigator.mediaDevices.getUserMedia({video: true, audio: true});
+		Network_localVideo = await navigator.mediaDevices.getUserMedia({video: true, audio: false});
 		Network_createVideoElement(userId, Network_localVideo, /*local*/true)
 			
 	private js void setupRemoteVideo: int partnerId, object peerConnection
