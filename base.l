@@ -83,6 +83,10 @@ struct float
 		                   float max
 		(this < min ? min : this > max ? max : this)
 		
+	inline js bool isApproximately: float value
+		                            float epsilon = 0.00001
+		(Math.abs(this - value) < epsilon)
+		
 // A sequence of characters
 class string
 	// Returns the number of characters in the string

@@ -471,7 +471,7 @@ transient unit Network
 				if !theirChecksum
 					checksums[frame] = myChecksum
 				else
-				if theirChecksum == myChecksum
+				if(theirChecksum isApproximately myChecksum)
 					checkedChecksums++
 				else
 					onWrongChecksum
@@ -595,11 +595,12 @@ transient unit Network
 		return minFrames
 			
 	private onWrongChecksum
-		log "##### OUT OF SYNC #####"
+		log "##### OUT OF SYNC #####", frame, debugString
 		// Platform.setTitle "%%% OUT OF SYNC %%%"
 		
 		if !alertShown
-			alert "Clients out of sync. Please click 'Save Logs' and send me the log file that will be created."
+			alert "Clients out of sync. Please send me the log file that will be created."
+			saveLogs
 			alertShown = true
 			
 	log: logstring text
@@ -1097,11 +1098,11 @@ transient unit Network
 		let checksum = buffer.readFloat64
 		checksumLog += " <{c.userId}> #{checksumFor} {checksum}"
 		if checksum
-			let myChecksum = checksums[checksumFor] 
+			let myChecksum = checksums[checksumFor]
 			if !myChecksum
 				checksums[checksumFor] = checksum
 			else
-			if myChecksum == checksum
+			if(myChecksum isApproximately checksum)
 				checkedChecksums++
 			else
 				onWrongChecksum
