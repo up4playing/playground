@@ -250,7 +250,7 @@ transient unit Network
 	public int smoothStrength = 90
 	public bool smoothTouchPosition = true
 	
-	string logTable = "frame,animTime,networkTime,tickTime,drawTime,iteration,restoreTime,replayFrames,replayTime,saveTime,user0,user1,user2,received,uncertain,offset,ahead,avarage,percentile90,certainFrame,buffer,checksums,events,send,receive,write,parse,touch\n"
+	string logTable = "frame,animTime,networkTime,tickTime,drawTime,iteration,restoreTime,replayFrames,replayTime,saveTime,user0,user1,user2,received,uncertain,offset,ahead,avarage,percentile,certainFrame,buffer,checksums,events,send,receive,write,parse,touch\n"
 	public string eventLog = ""; sentLog = "", receivedLog="", writeLog="", parseLog = "", touchLog = "", checksumLog = "", debugString = ""
 	public bool showDebugString
 	private float lastNetworkFrame, lastAnimationFrame, drawTime, tickTime, restoreTime, replayTime, saveTime
@@ -364,9 +364,9 @@ transient unit Network
 		if mode == Connected and Input.users.length > 1
 			let receivedCurrentFrames = getReceivedCurrentFrames
 			ahead = frame - receivedCurrentFrames
-			if ahead >= 0 and ahead < 60: aheads.add ahead, maxLength:1000
+			aheads.add ahead, maxLength:100
 			aheadAverage = aheads.average
-			aheadPercentile = smoothStrength ? aheads.percentile smoothStrength : 0
+			aheadPercentile = smoothStrength ? aheads.percentile(smoothStrength).limit(0, 50) : 0
 		
 		let now = currentTime
 		let localPlayer = Input.internalUsers[userId]
