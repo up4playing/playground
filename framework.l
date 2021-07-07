@@ -104,7 +104,7 @@ class Object
 				isBeingMoved = false
 				
 			Input.onTouchMove moveTouch
-				Network.smoothAnimation moveTouch.userId
+				Network.smooth moveTouch.userId
 					position = touch.position + touchOffset
 				if touch.position - touch.startPosition > 8: isBeingMoved = true
 				if board
@@ -143,7 +143,8 @@ class Object
 					rotatedOverThreshold = false
 				
 			Input.onTouchMove rotateTouch
-				angle = targetAngle = Math.atan2(touch.position - position) + rotateOffset
+				Network.smooth touch.userId
+					angle = targetAngle = Math.atan2(touch.position - position) + rotateOffset
 				if (touch.position - touch.startPosition).length > 4: rotatedOverThreshold = true
 				
 			Input.onTouchUp rotateTouch
@@ -152,7 +153,7 @@ class Object
 				if !rotatedOverThreshold: targetAngle -= Math.PI/2
 				interactingUserId = touch.userId
 		
-		Network.smoothAnimation interactingUserId
+		Network.smooth interactingUserId
 			if angle != targetAngle: angle = Math.moveTowards(angle, targetAngle, .2)
 			
 		// Draw
@@ -403,7 +404,8 @@ Object Coin
 				isBeingMoved = false
 			
 			Input.onTouchMove moveTouch
-				position = touch.position + touchOffset
+				Network.smooth touch.userId
+					position = touch.position + touchOffset
 				if touch.position - touch.startPosition > 8: isBeingMoved = true
 				updateNeighbors siblings, isBeingMoved
 				checkBoardsWhileMoving touch

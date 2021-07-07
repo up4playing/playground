@@ -54,9 +54,8 @@ transient class Buffer
 	private object buffer = null
 	private object dataView = null
 	
-	// TEMP: Small buffer size for testing
 	Buffer: object buffer = null
-		    int size = 4
+		    int size = 1024
 		setup(size)
 		
 	private js void setup: int size = 1024
@@ -248,10 +247,10 @@ transient class Buffer
 		
 transient unit Network
 	// Logs
-	public int smoothing = 90
+	public int smoothStrength = 90
 	public bool smoothTouchPosition = true
 	
-	string logTable = "frame,animTime,networkTime,tickTime,drawTime,iteration,restoreTime,replayFrames,replayTime,saveTime,user0,user1,user2,received,uncertain,offset,ahead,avarage,percentile90,certainFrame,buffer,checksums,events,send,receive,write,parse,touch\n"
+	string logTable = "frame,animTime,networkTime,tickTime,drawTime,iteration,restoreTime,replayFrames,replayTime,saveTime,user0,user1,user2,received,uncertain,offset,ahead,avarage,percentile,certainFrame,buffer,checksums,events,send,receive,write,parse,touch\n"
 	public string eventLog = ""; sentLog = "", receivedLog="", writeLog="", parseLog = "", touchLog = "", checksumLog = "", debugString = ""
 	public bool showDebugString
 	private float lastNetworkFrame, lastAnimationFrame, drawTime, tickTime, restoreTime, replayTime, saveTime
@@ -328,11 +327,11 @@ transient unit Network
 		animationFrame
 		initDatabase
 		
-	smoothAnimation: int userId
+	smooth: int userId
 		             void() code
 		if Input.isCertain or this.userId == userId: code
 			
-	smoothAnimation: void() code
+	smooth: void() code
 		if Input.isCertain: code
 			
 	// AnimationFrame --> Step --> Tick
@@ -364,9 +363,9 @@ transient unit Network
 		if mode == Connected and Input.users.length > 1
 			let receivedCurrentFrames = getReceivedCurrentFrames
 			ahead = frame - receivedCurrentFrames
-			if ahead >= 0 and ahead < 60: aheads.add ahead, maxLength:1000
+			aheads.add ahead, maxLength:100
 			aheadAverage = aheads.average
-			aheadPercentile = smoothing ? aheads.percentile smoothing : 0
+			aheadPercentile = smoothStrength ? aheads.percentile(smoothStrength).limit(0, 50) : 0
 		
 		let now = currentTime
 		let localPlayer = Input.internalUsers[userId]
@@ -471,7 +470,7 @@ transient unit Network
 				if !theirChecksum
 					checksums[frame] = myChecksum
 				else
-				if theirChecksum == myChecksum
+				if(theirChecksum isApproximately myChecksum)
 					checkedChecksums++
 				else
 					onWrongChecksum
@@ -595,11 +594,12 @@ transient unit Network
 		return minFrames
 			
 	private onWrongChecksum
-		log "##### OUT OF SYNC #####"
+		log "##### OUT OF SYNC #####", frame, debugString
 		// Platform.setTitle "%%% OUT OF SYNC %%%"
 		
 		if !alertShown
-			alert "Clients out of sync. Please click 'Save Logs' and send me the log file that will be created."
+			alert "Clients out of sync. Please send me the log file that will be created."
+			saveLogs
 			alertShown = true
 			
 	log: logstring text
@@ -1083,11 +1083,11 @@ transient unit Network
 		sentLog += " #{inputFrame} ack:{acknowledgePos} cf:{currentFrame} s:{start} e:{end}"
 		
 	
-	private js void onTickMessage: Connection c, Buffer buffer
-		if(Math.random() < .75) setTimeout(() => Network_onTickMessageActual(c, buffer), Math.random()*500)
+	// private js void onTickMessage: Connection c, Buffer buffer
+	// 	if(Math.random() < .75) setTimeout(() => Network_onTickMessageActual(c, buffer), Math.random()*500)
 		
-	private onTickMessageActual: Connection c, Buffer buffer
-	// private onTickMessage: Connection c, Buffer buffer
+	// private onTickMessageActual: Connection c, Buffer buffer
+	private onTickMessage: Connection c, Buffer buffer
 		let sender = Input.internalUsers[c.userId]
 		if c.state != Connected: c.state = Connected
 
@@ -1096,11 +1096,11 @@ transient unit Network
 		let checksum = buffer.readFloat64
 		checksumLog += " <{c.userId}> #{checksumFor} {checksum}"
 		if checksum
-			let myChecksum = checksums[checksumFor] 
+			let myChecksum = checksums[checksumFor]
 			if !myChecksum
 				checksums[checksumFor] = checksum
 			else
-			if myChecksum == checksum
+			if(myChecksum isApproximately checksum)
 				checkedChecksums++
 			else
 				onWrongChecksum
