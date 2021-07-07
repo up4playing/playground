@@ -234,19 +234,17 @@ unit Input
 		if !user.collectInputs: return
 		
 		float2 referencePos = {x*Platform.pixelRatio, y*Platform.pixelRatio}.getRelativeTo(Platform.baseMatrix)
-		InputType type = Wheel
 		inputs.writeInt32 user.inputFrame
-		inputs.writeUnsignedInt16 cast type
+		inputs.writeUnsignedInt16 cast InputType.Wheel
 		inputs.writeInt16 Math.round(referencePos.x)
 		inputs.writeInt16 Math.round(referencePos.y)
 		inputs.writeInt16 Math.round(delta)
-		Network.writeLog += " [{user.inputFrame}] {type} {Math.round(referencePos.x)} {Math.round(referencePos.y)} {Math.round(delta)} \{r:{inputs.readPos} w:{inputs.writePos}\}"
+		Network.writeLog += " [{user.inputFrame}] wheel {Math.round(referencePos.x)} {Math.round(referencePos.y)} {Math.round(delta)} \{r:{inputs.readPos} w:{inputs.writePos}\}"
 		
 	handleSetState: Buffer buffer
 		let user = internalUsers[Network.userId], inputs = user.inputs
-		InputType type = SetState
 		inputs.writeInt32 user.inputFrame
-		inputs.writeUnsignedInt16 cast type
+		inputs.writeUnsignedInt16 cast InputType.SetState
 		inputs.writeBuffer buffer
 		
 	internal parseInputs(int frame, bool isCertain)

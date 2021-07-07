@@ -303,9 +303,8 @@ transient unit Network
 		user.startInputFrame 0
 		
 		int joinFrame = Math.floor((currentTime - this.startTime)/targetFrameTime)
-		InputType type = Join
 		user.inputs.writeInt32 joinFrame
-		user.inputs.writeInt16 cast type
+		user.inputs.writeInt16 cast InputType.Join
 		user.collectInputs = true
 		
 		mode = Connected
@@ -1071,8 +1070,7 @@ transient unit Network
 		                          int start
 		                          int end
 		sendBuffer.reset
-		NetworkMessageType type = Tick
-		sendBuffer.writeInt16 cast type
+		sendBuffer.writeInt16 cast NetworkMessageType.Tick
 		sendBuffer.writeInt32 checksumFor
 		sendBuffer.writeFloat64 checksum || 0
 		sendBuffer.writeInt32 inputFrame
@@ -1137,8 +1135,7 @@ transient unit Network
 		                                int frame
 		                                Buffer buffer
 		sendBuffer.reset
-		NetworkMessageType type = OwnInputsAfterReconnect
-		sendBuffer.writeInt16 cast type
+		sendBuffer.writeInt16 cast NetworkMessageType.OwnInputsAfterReconnect
 		sendBuffer.writeInt32 frame
 		sendBuffer.writeBuffer buffer, start:0, length:buffer.writePos
 		send c, sendBuffer
@@ -1155,8 +1152,7 @@ transient unit Network
 		
 	private void sendPingMessage: Connection c, float pingTime
 		sendBuffer.reset
-		NetworkMessageType type = Ping
-		sendBuffer.writeInt16 cast type
+		sendBuffer.writeInt16 cast NetworkMessageType.Ping
 		sendBuffer.writeFloat64 pingTime
 		send c, sendBuffer
 			
@@ -1168,8 +1164,7 @@ transient unit Network
 		
 	private void sendPongMessage: Connection c, float timeSinceStart, float pingTime
 		sendBuffer.reset
-		NetworkMessageType type = Pong
-		sendBuffer.writeInt16 cast type
+		sendBuffer.writeInt16 cast NetworkMessageType.Pong
 		sendBuffer.writeFloat64 timeSinceStart		
 		sendBuffer.writeFloat64 pingTime
 		send c, sendBuffer
