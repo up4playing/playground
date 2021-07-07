@@ -259,48 +259,63 @@ transient unit IndexedDB
 	private object db = null
 	
 	js void start: string databaseName, string storeName, int version = 1
-		IndexedDB_storeName = storeName;
-		var request = indexedDB.open(databaseName, version)
-		request.onupgradeneeded = e => {
-			IndexedDB_db = e.target.result;
-			if(!IndexedDB_db.objectStoreNames.contains(storeName))
-				IndexedDB_db.createObjectStore(storeName, { keyPath: "id" });
-			Network_log("IndexedDB: update")
-		}
-		request.onsuccess = e => {
-			IndexedDB_db = e.target.result;
-			Network_log("IndexedDB: success")
-		}
-		request.onerror = e => {
-			Network_log("IndexedDB: error "+request.error);
+		try {
+			IndexedDB_storeName = storeName;
+			var request = indexedDB.open(databaseName, version)
+			request.onupgradeneeded = e => {
+				IndexedDB_db = e.target.result;
+				if(!IndexedDB_db.objectStoreNames.contains(storeName))
+					IndexedDB_db.createObjectStore(storeName, { keyPath: "id" });
+				Network_log("IndexedDB: update")
+			}
+			request.onsuccess = e => {
+				IndexedDB_db = e.target.result;
+				Network_log("IndexedDB: success")
+			}
+			request.onerror = e => {
+				Network_log("Error in IndexedDB.start: "+request.error);
+			}
+		} catch(e) {
+			Network.log("Error in IndexedDB.start: "+e.message)
 		}
 		
 	js void open: string storeName, string id, void(Buffer buffer) then, void() else = null
-		let trans = IndexedDB_db.transaction(storeName, "readonly")
-		let req = trans.objectStore(IndexedDB_storeName).get(id)
-		req.onsuccess = async e => {
-			let result = req.result
-			if(result) {
-				let arrayBuffer = await result.data.arrayBuffer()
-				let buffer = new Buffer(arrayBuffer, 0, 0, 0)
-				then(buffer)
-			} @else {
+		try {
+			let trans = IndexedDB_db.transaction(storeName, "readonly")
+			let req = trans.objectStore(IndexedDB_storeName).get(id)
+			req.onsuccess = async e => {
+				let result = req.result
+				if(result) {
+					let arrayBuffer = await result.data.arrayBuffer()
+					let buffer = new Buffer(arrayBuffer, 0, 0, 0)
+					then(buffer)
+				} @else {
+					else?.()
+				}
+			}
+			req.onerror = e => {
+				Network.log("Error in IndexedDB.open: "+req.error)
 				else?.()
 			}
-		}
-		req.onerror = e => {
-			else()
+		} catch(e) {
+			Network.log("Error in IndexedDB.open: "+e.message)
+			else?.()
 		}
 				
 	js void save: string storeName, string id, Buffer buffer, void() then = null, void() else = null
-		let trans = IndexedDB_db.transaction(storeName, "readwrite")
-		trans.onerror = e => {
-			alert("error"+e)
+		try {
+			let trans = IndexedDB_db.transaction(storeName, "readwrite")
+			trans.onerror = e => {
+				Network.log("Error in IndexedDB.save: "+trans.error)
+				else?.()
+			}
+			let dataView = new DataView(buffer.buffer, 0, buffer.writePos)
+			let data = new Blob([dataView])
+			trans.objectStore(IndexedDB_storeName).put({id, data}).onsuccess = e => {
+				then?.()
+			}
+		} catch(e) {
+			Network.log("Error in IndexedDB.save: "+e.message)
 			else?.()
-		}
-		let dataView = new DataView(buffer.buffer, 0, buffer.writePos)
-		let data = new Blob([dataView])
-		trans.objectStore(IndexedDB_storeName).put({id, data}).onsuccess = e => {
-			then?.()
 		}
 
