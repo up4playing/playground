@@ -248,7 +248,7 @@ transient class Buffer
 		
 transient unit Network
 	// Logs
-	public int smoothing = 90
+	public int smoothStrength = 90
 	public bool smoothTouchPosition = true
 	
 	string logTable = "frame,animTime,networkTime,tickTime,drawTime,iteration,restoreTime,replayFrames,replayTime,saveTime,user0,user1,user2,received,uncertain,offset,ahead,avarage,percentile90,certainFrame,buffer,checksums,events,send,receive,write,parse,touch\n"
@@ -329,11 +329,11 @@ transient unit Network
 		animationFrame
 		initDatabase
 		
-	smoothAnimation: int userId
+	smooth: int userId
 		             void() code
 		if Input.isCertain or this.userId == userId: code
 			
-	smoothAnimation: void() code
+	smooth: void() code
 		if Input.isCertain: code
 			
 	// AnimationFrame --> Step --> Tick
@@ -367,7 +367,7 @@ transient unit Network
 			ahead = frame - receivedCurrentFrames
 			if ahead >= 0 and ahead < 60: aheads.add ahead, maxLength:1000
 			aheadAverage = aheads.average
-			aheadPercentile = smoothing ? aheads.percentile smoothing : 0
+			aheadPercentile = smoothStrength ? aheads.percentile smoothStrength : 0
 		
 		let now = currentTime
 		let localPlayer = Input.internalUsers[userId]
