@@ -54,9 +54,8 @@ transient class Buffer
 	private object buffer = null
 	private object dataView = null
 	
-	// TEMP: Small buffer size for testing
 	Buffer: object buffer = null
-		    int size = 4
+		    int size = 1024
 		setup(size)
 		
 	private js void setup: int size = 1024
