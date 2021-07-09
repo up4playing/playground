@@ -390,7 +390,7 @@ global unit graphics
 		                    implicit layer = 0          // Higher layers are drawn in front of lower layers
 		if isVisibleFor(visibleFor)
 			if image: drawImage image, position, frame, scale, visibleFor, layer
-			if text:  drawText text, position, fontSize, textColor, visibleFor, layer
+			if text != "":  drawText text, position, fontSize, textColor, visibleFor, layer
 			
 	// Draws a button that consists of an image and a text
 	global void drawButton: Image image = null               // The image of the button
@@ -408,7 +408,7 @@ global unit graphics
 		                    void(Touch touch) onClick = null // Execute this code when the user clicks the button
 		if isVisibleFor(visibleFor)
 			if image: drawImage image, position, frame, scale, visibleFor, layer
-			if text:  drawText text, position, fontSize, textColor, visibleFor, layer
+			if text != "":  drawText text, position, fontSize, textColor, visibleFor, layer
 			
 		Input.onTouchDownWithin position, image.size*scale + touchMargin, userId:clickableBy, showTouchArea
 			onClick touch

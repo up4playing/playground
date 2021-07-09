@@ -218,7 +218,7 @@ struct int2
 	int2 operator *  (int2 a, int2 b) return int2(a.x*b.x, a.y*b.y)
 	int2 operator *  (int2 a, int b) return int2(a.x*b, a.y*b)
 		
-	int2 operator /  (int2 a, int2 b) return int2(a.x/b.x, a.y/b.y)
+	float2 operator /  (int2 a, int2 b) return float2(a.x/b.x, a.y/b.y)
 	float2 operator /  (int2 a, float b) return float2(a.x/b, a.y/b)
 	
 	int2 operator += (int2 a, int2 b) a.x += b.x; a.y += b.y; return a

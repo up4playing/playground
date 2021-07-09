@@ -183,8 +183,8 @@ unit Network
 		// Checksum
 		let myChecksum = 0
 		for Framework.objects:
-			myChecksum += position.x + position.y + frame + cast side
-			if type == Board
+			myChecksum += o.position.x + o.position.y + o.frame + cast o.side
+			if o.type == Board
 				Board board = cast o
 				let m = board.matrix
 				myChecksum += m.m0 + m.m1 + m.m2 + m.m3 + m.m4 + m.m5
