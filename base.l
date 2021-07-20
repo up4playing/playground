@@ -125,6 +125,9 @@ class List<T>
 		this.splice(0, 1)
 		return firstItem
 		
+	inline js bool contains: T item
+		(this.indexOf(item) != -1)
+	
 	// Gets the number of items in the list
 	inline js int length() this.length
 	
