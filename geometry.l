@@ -402,3 +402,6 @@ class IsometicGrid
 		let y = Math.round((xOffset.y*t.x - xOffset.x*t.y) / (2*xOffset.x*xOffset.y))
 		if x >= 0 and x < size.x and y >= 0 and y < size.y: return int2(x,y)
 		else                                                return int2.none
+		
+	isValid: int2 pos
+		return pos >= {0,0} and pos < size
