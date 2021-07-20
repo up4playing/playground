@@ -1,13 +1,13 @@
 // A color comprised of a red, green, blue and alpha component
 class Color
-	global Color White   = {"ffffff"}
-	global Color Black   = {"000000"}
-	global Color Red     = {"ef476f"}
-	global Color Yellow  = {"ffd166"}
-	global Color Green   = {"06d6a0"}
-	global Color Blue    = {"118ab2"}
-	global Color Gray    = {"073b4c"}
-	global Color TransparentRed   = {"ef476f80"}
+	global const Color White   = {"ffffff"}
+	global const Color Black   = {"000000"}
+	global const Color Red     = {"ef476f"}
+	global const Color Yellow  = {"ffd166"}
+	global const Color Green   = {"06d6a0"}
+	global const Color Blue    = {"118ab2"}
+	global const Color Gray    = {"073b4c"}
+	global const Color TransparentRed   = {"ef476f80"}
 	string hex
 	
 	Color: string hex = ""
@@ -39,7 +39,7 @@ class Texture
 				this._htmlImage = image
 				window._htmlImageCache[this.file] = image
 				this.size = new float2(image.width, image.height, null)
-				if(Platform_mode == 0) Network_tickFrame();
+				if(Platform_mode == 0) Network_tick();
 			}
 		} else {
 			this._htmlImage = image
@@ -62,7 +62,7 @@ enum VerticalAlignment: Top, Middle, Bottom
 enum FontStyle: Normal, Bold
 		
 // A collection of functions for drawing on the screen
-global unit graphics
+transient global unit graphics
 	internal Matrix2D totalMatrix, localMatrix
 	internal DisplayItem[] items
 		
@@ -298,7 +298,7 @@ global unit graphics
 		                   scale = 1.0            // Scale the image by this factor
 		                   visibleFor = -1        // Only this user will see the image
 		                   implicit int layer = 0 // Higher layers are drawn in front of lower layers
-		var frame = Math.floor(Network.logicFrame * Math.max(framesPerSecond, 0) / Network.targetFps) % image.frames.length;
+		var frame = Math.floor(Network.frame * Math.max(framesPerSecond, 0) / Network.targetFps) % image.frames.length;
 		drawImage image, position, frame, scale, visibleFor, layer
 	
 	// Draws an image on the screen
@@ -406,6 +406,7 @@ global unit graphics
 		                    scale = 1.0                      // Scale the image by this factor
 		                    fontSize = 18                    // The font size in pixels   
 		                    touchMargin = float2(16,16)      // The margin around the button within which it is touchable
+		                    textOffset = float2()
 		                    showTouchArea = false            // Show the area within which the button is touchable
 		                    visibleFor = -1                  // Only this user will see the button
 		                    clickableBy = -1                 // Only this user can click the button
@@ -413,7 +414,7 @@ global unit graphics
 		                    void(Touch touch) onClick = null // Execute this code when the user clicks the button
 		if isVisibleFor(visibleFor)
 			if image: drawImage image, position, frame, scale, visibleFor, layer
-			if text:  drawText text, position, fontSize, textColor, visibleFor, layer
+			if text:  drawText text, position+textOffset, fontSize, textColor, visibleFor, layer
 			
 		Input.onTouchDownWithin position, image.size*scale + touchMargin, userId:clickableBy, showTouchArea
 			onClick touch
@@ -426,10 +427,14 @@ global unit graphics
 		                          outlineWidth = 0          // The width of the outline around the rectangle
 		                          visibleFor = -1           // Only this user will see the rectangle
 		                          implicit layer = 0        // Higher layers are drawn in front of lower layers
+		                          HorizontalAlignment align = Center // The horizontal alignment of the text
+		                          VerticalAlignment valign = Middle  // The vertical alignment of the text
 		if(graphics_isVisibleFor(visibleFor)) {
 			graphics_items.push(new DisplayRectangle(
-				graphics_totalMatrix, 
-				position.x-size.x/2, position.y-size.y/2, size.x, size.y,
+				graphics_totalMatrix,
+				align == 0  ? position.x : align  == 1 ? position.x-size.x*.5 : position.x-size.x,
+				valign == 0 ? position.y : valign == 1 ? position.y-size.y*.5 : position.y-size.y,
+				size.x, size.y,
 				layer, "Rectangle", position.location,
 				fillColor || !outlineColor ? (fillColor || graphics_currentColor).hex : null,
 				outlineColor ? outlineColor.hex : null,
@@ -578,7 +583,7 @@ global unit graphics
 			))
 		}
 
-class DisplayItem
+transient class DisplayItem
 	float x, y, w, h
 	int layer
 	string name
@@ -598,7 +603,7 @@ class DisplayItem
 			]
 	draw
 	
-DisplayItem DisplayImage
+transient DisplayItem DisplayImage
 	object htmlImage
 	float sx, sy, sw, sh
 	js void draw
@@ -606,7 +611,7 @@ DisplayItem DisplayImage
 		try{ Platform_context.drawImage(this.htmlImage, this.sx, this.sy, this.sw, this.sh, this.x, this.y, this.w, this.h) }
 		catch(e) { log("DisplayImage: "+e.message) }
 
-DisplayItem DisplayText
+transient DisplayItem DisplayText
 	string fillStyle, outlineColor, outlineWidth, font
 	js void draw
 		Platform_context.setTransform(this.m0, this.m1, this.m2, this.m3, this.m4, this.m5)
@@ -621,7 +626,7 @@ DisplayItem DisplayText
 		Platform_context.fillStyle = this.fillStyle
 		Platform_context.fillText(this.name, this.x, this.y)
 		
-DisplayItem DisplayRectangle
+transient DisplayItem DisplayRectangle
 	string fillColor, outlineColor, outlineWidth
 	js void draw
 		Platform_context.setTransform(this.m0, this.m1, this.m2, this.m3, this.m4, this.m5)
@@ -641,7 +646,7 @@ DisplayItem DisplayRectangle
 		
 enum CircleDirection: Clockwise, CounterClockwise
 		
-DisplayItem DisplayCircle
+transient DisplayItem DisplayCircle
 	string radius, startAngle, endAngle, counterclockwise, fillColor, outlineColor, outlineWidth
 	js void draw
 		Platform_context.setTransform(this.m0, this.m1, this.m2, this.m3, this.m4, this.m5)
@@ -671,6 +676,6 @@ struct Sound
 		}
 
 // A collection of functions for playing audio 
-global unit audio
+transient global unit audio
 	global js void playSound: Sound sound
 		sound.audio.play()

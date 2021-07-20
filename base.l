@@ -1,10 +1,10 @@
 // A number stored as a 32-bit integer
 struct int
 	// The  largest possible value of an integer
-	static maxValue = 2147483647
+	const maxValue = 2147483647
 	
 	// The  smallest possible value of an integer
-	static minValue = -2147483648
+	const minValue = -2147483648
 	
 	// Returns true if the integer is not zero
 	inline js bool toBool := this
@@ -13,13 +13,36 @@ struct int
 		
 	inline js string formatWithSpaces := this.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ")
 		
-	inline js string format: int digits
-		this.toLocaleString('en-US', {minimumIntegerDigits:digits})
+	inline js string format: int minIntegerDigits = 1, bool grouping = false
+		this.toLocaleString('en-US', {minimumIntegerDigits:minIntegerDigits, useGrouping:grouping})
+		
+	// Returns the absolute value
+	inline js int abs
+		Math.abs(this)
+		
+	inline js int shiftLeft: int count
+		(this << count)
 	
+	inline js int shiftRight: int count
+		(this >> count)
+		
+	inline js int limit: int min
+		(this < min ? min : this)
+	
+	inline js int limit: int max
+		(this > max ? max : this)
+	
+	inline js int limit: int min
+		                 int max
+		(this < min ? min : this > max ? max : this)
+		
+	inline js int setIfLarger: int newValue
+		(this = Math.max(newValue, this))
+
 
 // A number stored as a double precision 64-bit floating point value
 struct float
-	static inline js float infinity := Number.POSITIVE_INFINITY
+	const inline js float infinity := Number.POSITIVE_INFINITY
 	
 	// Returns true if the floot is not zero
 	inline js bool toBool := this != 0
@@ -27,9 +50,45 @@ struct float
 	inline js string toString := this.toString()
 		
 	js float operator **(float a, float b) return Math.pow(a,b)
-
+		
+	inline js string format: int minIntegerDigits = 1, bool grouping = false
+		this.toLocaleString('en-US', {minimumIntegerDigits:minIntegerDigits, useGrouping:grouping})
+		
+	inline js string format: int fractionDigits
+		this.toLocaleString('en-US', {maximumFractionDigits:fractionDigits, minimumFractionDigits:fractionDigits})
+		
+	// Returns the absolute value
+	inline js float abs
+		Math.abs(this)
+		
+	// Returns the smallest integer greater than or equal to the given value 
+	inline js int ceil
+		Math.ceil(this)
+		
+	// Returns the largest integer less than or equal to the given value
+	inline js int floor
+		Math.floor(this)
+		
+	// Returns the given value rounded to the nearest integer
+	inline js int round
+		Math.round(this)
+		
+	inline js float limit: float min
+		(this < min ? min : this)
+	
+	inline js float limit: float max
+		(this > max ? max : this)
+	
+	inline js float limit: float min
+		                   float max
+		(this < min ? min : this > max ? max : this)
+		
+	inline js bool isApproximately: float value
+		                            float epsilon = 0.00001
+		(Math.abs(this - value) < epsilon)
+		
 // A sequence of characters
-struct string
+class string
 	// Returns the number of characters in the string
 	inline js int length := this.length
 	
@@ -52,6 +111,8 @@ struct string
 	inline js bool startsWith(string str) (this.indexOf(str) == 0)
 		
 	inline js int indexOf(string str) this.indexOf(str)
+		
+	inline js bool contains(string str) (this.indexOf(str) != -1)
 		
 	inline js int getCharCodeAt(int index) this.charCodeAt(index)
 		
@@ -95,9 +156,23 @@ class List<T>
 	inline js void add: T item // The item to add
 		this.push(item)
 		
+	void add: T item
+		      int maxLength
+		add item
+		if length > maxLength: removeAt 0
+			
+	inline js void addRange: T[] items
+		this.push(...items)
+			
 	inline js void insert: T item // The item to add
 		                   int index
 		this.splice(index, 0, item)
+		
+	inline js bool contains: T item
+		(this.indexOf(item) != -1)
+		
+	inline js bool indexOf: T item
+		this.indexOf(item)
 		
 	inline js void setList: T[] list
 		this.splice(0, this.length, ...list)
@@ -136,6 +211,14 @@ class List<T>
 	
 	// Removes all items from the list
 	inline js void clear := this.length = 0
+	
+	js string toString()
+		let result = "";
+		for(let item of this) {
+			if(result) result += ", ";
+			result += item;
+		}
+		return "["+result+"]"
 		
 	// Gets a random item from the list
 	T random() := get(Math.randomInteger(length))
@@ -166,19 +249,23 @@ class List<T>
 	// Moves an item to the end of the list
 	js T moveToBack: T item // The item to move to the end of the list
 		var index = this.indexOf(item);
-		let endIndex = this.length-1;
-		for(let i=index; i<endIndex; ++i) {
-			this[i] = this[i+1]
+		if(index != -1) {
+			let endIndex = this.length-1;
+			for(let i=index; i<endIndex; ++i) {
+				this[i] = this[i+1]
+			}
+			this[endIndex] = item
 		}
-		this[endIndex] = item
 		
 	// Moves an item to the end of the list
 	js T moveToFront: T item // The item to move to the end of the list
 		var index = this.indexOf(item);
-		for(let i=index; i>0; --i) {
-			this[i] = this[i-1]
+		if(index != -1) {
+			for(let i=index; i>0; --i) {
+				this[i] = this[i-1]
+			}
+			this[0] = item
 		}
-		this[0] = item
 		
 	// Sort the list
 	inline js void sort
@@ -217,6 +304,15 @@ class List<T>
 			sum += selector(this[i])
 		return sum
 		
+	js int sum
+		let sum = 0;
+		for(let i=0; i<this.length; i++)
+			sum += this[i];
+		return sum;
+	
+	average
+		return length > 0 ? sum() / length : 0
+		
 	shuffle
 		for i = 1 <- length
 			var j = Math.floor(Math.randomFloat * (i + 1))
@@ -225,37 +321,51 @@ class List<T>
 			this.set(j, temp)
 		return this
 		
-	min: int(T a) selector 
-		int resultValue = int.maxValue
-		for item -> this
-			let value = selector(item)
-			if value < resultValue: resultValue = value
-		return resultValue
+	private static transient T[] temporaryCopy = null
+		
+	js T percentile: int value
+		if(this.length == 0) return 0
+		if(this.length == 1) return this[0]
+		if(!List_temporaryCopy) List_temporaryCopy = []
+		const len = List_temporaryCopy.length = this.length
+		for(let i=0; i<len; ++i) List_temporaryCopy[i] = this[i] 
+		List_temporaryCopy.sort((a,b) => a - b)
+		return List_temporaryCopy[Math.round((List_temporaryCopy.length-1) * value / 100)]
 		
 	min: int(T a) selector 
-		 bool(T a) where
-		int resultValue = int.maxValue
-		for item -> this if where(item)
-			let value = selector(item)
-			if value < resultValue: resultValue = value
-		return resultValue
-		
-	max: int(T a) selector
 		 int threshold = int.maxValue
 		int resultValue = threshold
 		for item -> this
 			let value = selector(item)
-			if value > resultValue: resultValue = value
-		return resultValue
+			if value < resultValue: resultValue = value
+		return resultValue != threshold ? resultValue : 0
+		
+	min: int(T a) selector 
+		 int threshold = int.maxValue
+		 bool(T a) where
+		int resultValue = threshold
+		for item -> this
+			if where(item)
+				let value = selector(item)
+				if value < resultValue: resultValue = value
+		return resultValue != threshold ? resultValue : 0
 		
 	max: int(T a) selector
-		 int threshold = int.maxValue
+		 int threshold = int.minValue
+		int resultValue = threshold
+		for item -> this
+			let value = selector(item)
+			if value > resultValue: resultValue = value
+		return resultValue != threshold ? resultValue : 0
+		
+	max: int(T a) selector
+		 int threshold = int.minValue
 		 bool(T a) where
 		int resultValue = threshold
 		for item -> this if where(item)
 			let value = selector(item)
 			if value > resultValue: resultValue = value
-		return resultValue
+		return resultValue != threshold ? resultValue : 0
 		
 	withMin: int(T a) selector
 		     int threshold = int.maxValue
@@ -266,9 +376,10 @@ class List<T>
 			if value < resultValue
 				resultValue = value
 				resultItem = item
-		return resultItem
+		return resultValue != threshold ? resultItem : null
 		
-	withMin: float(T a) selector, float threshold = float.infinity
+	withMin: float(T a) selector
+		     float threshold = float.infinity
 		float resultValue = threshold
 		T resultItem
 		for item -> this
@@ -276,17 +387,18 @@ class List<T>
 			if value < resultValue
 				resultValue = value
 				resultItem = item
-		return resultItem
+		return resultValue != threshold ? resultItem : null
 		
-	withMax: int(T a) selector 
-		int resultValue = int.minValue
+	withMax: int(T a) selector
+		     int threshold = int.minValue
+		int resultValue = threshold
 		T resultItem
 		for item -> this
 			let value = selector(item)
 			if value > resultValue
 				resultValue = value
 				resultItem = item
-		return resultItem
+		return resultValue != threshold ? resultItem : null
 		
 	count: bool(T a) predicate
 		int count = 0
@@ -295,11 +407,6 @@ class List<T>
 				count++
 		return count
 		
-	addRolling: T value
-		        int maxValues
-		add value
-		if length > maxValues: removeAt 0
-	
 // A data container that stores key-value pairs
 class Map<T>
 
@@ -345,7 +452,7 @@ interface object
 
 		
 // This struct is automatically filled with the source code location
-class SourceCodeLocation
+transient class SourceCodeLocation
 	int row     // The row of the source code
 	int column  // The column of the source code
 	string file // The filename of the source code
@@ -361,22 +468,26 @@ class SourceCodeLocation
 		if left != null:  left.flatten result
 		if right != null: right.flatten result
 	
+class Error
+	inline js string message := this.message
+	implicit inline js string toString := this.stack
+	
 // A collection of basic system functions
-global unit System
+global transient unit System
 	// Executes code depending on whether a given condition is true or false
 	global inline js void if: implicit bool condition // The condition to check
-	                   void() then             // The code to execute if the condition is true
+		                      void() then             // The code to execute if the condition is true
 		if(condition) then()
 			
 	// Executes code depending on whether a given condition is true or false
 	global inline js void if: implicit bool condition // The condition to check
-		               void() then                    // The code to execute if the condition is true
-		               void() else                    // The code to execute if the condition is false
+		                      void() then                    // The code to execute if the condition is true
+		                      void() else                    // The code to execute if the condition is false
 		if(condition) then() @else else()
 			
 	// Executes code as long as a given condition is true
 	global inline js void while: bool condition // The condition to check
-	                      void() block   // The code to execute while to condition is true
+		                         void() block   // The code to execute while to condition is true
 		while(condition) block()
 	
 	// Prints a message to the console
@@ -391,8 +502,17 @@ global unit System
 	global inline js void break() break
 	global inline js void continue() continue
 		
+	global inline js void try: void() code
+		                       void(Error error) catch
+		try code() @catch(error) catch()
+		
+		
 // A collection of mathematical functions and constants
 unit Math
+	// Returns the absolute value
+	inline js int abs: int value // The value to return the absolute value of
+		Math.abs(value)
+		
 	// Returns the absolute value
 	inline js float abs: float value // The value to return the absolute value of
 		Math.abs(value)
@@ -447,7 +567,11 @@ unit Math
 	inline js float tan: float angle // The angle in radians
 		Math.tan(angle)
 		
-	js void init
+		
+	init
+		initDefaultRandomGenerator
+		
+	js void initDefaultRandomGenerator
 		Math_randomGenerator = Math.random
 		
 	js string generateRandomSeed:
@@ -460,6 +584,9 @@ unit Math
 			return Date.now().toString()
 		}
 		
+	transient private float[] randomValues
+	internal int randomValueIndex
+	
 	js void setRandomSeed: string seed
 		// Ported from an algorithm by Johannes Baagøe <baagoe@baagoe.com>
 		// https://github.com/nquinlan/better-random-numbers-for-javascript-mirror
@@ -467,14 +594,28 @@ unit Math
 			var me = this, mash = Mash();
 			var count = 0
 			me.next = function() {
-				var t = 2091639 * me.s0 + me.c * 2.3283064365386963e-10; // 2^-32
-				me.s0 = me.s1;
-				me.s1 = me.s2;
-				var value = me.s2 = t - (me.c = t | 0);
-				
-				// TEMP: Log every random number
-				Network_eventLog += " ["+count+"] "+value;
-				count++
+				if(Math_randomValueIndex < Math_randomValues.length) {
+					var value = Math_randomValues[Math_randomValueIndex]
+					
+					// TEMP: Log every random number
+					Network_eventLog += " ["+Math_randomValueIndex+"/"+Math_randomValues.length+"] replay "+value;
+					
+					Math_randomValueIndex++
+				} else {
+					var t = 2091639 * me.s0 + me.c * 2.3283064365386963e-10; // 2^-32
+					me.s0 = me.s1;
+					me.s1 = me.s2;
+					var value = me.s2 = t - (me.c = t | 0);
+					
+					// TEMP: Log every random number
+					Network_eventLog += " ["+Math_randomValueIndex+"/"+Math_randomValues.length+"] "+value;
+					if(Math_randomValueIndex != Math_randomValues.length) {
+						Network_eventLog += " INVALID randomValues.length"
+						alert("Random values out of sync. Please click 'Save Logs' and send me the log file that will be created.")
+					}
+					
+					Math_randomValues[Math_randomValueIndex++] = value;
+				}
 				return value
 			}
 			
@@ -578,27 +719,7 @@ unit Math
 		if value > max: return max
 			            return value
 	
-struct RollingList
-	public int maxValues = 50
-	
-	int[] list
-
-	add: int value
-		list.add value
-		if list.length > maxValues: list.removeAt 0
-	
-	sum
-		let result = 0
-		for list: result += l
-		return result
-	
-	average
-		return list.length > 0 ? sum / list.length : 0
-		
-	// Returns true if the rolling list is not empty
-	toBool := list.length > 0
-	
-class Time
+transient class Time
 	inline js int year := this.getFullYear()
 	inline js int month := (this.getMonth()+1)
 	inline js int date := this.getDate()
@@ -608,19 +729,22 @@ class Time
 	inline js int minute := this.getMinutes()
 	inline js int second := this.getSeconds()
 		
-	inline js int twoDigitMonth := (this.getMonth()+1).toLocaleString('en-US', {minimumIntegerDigits:2})
-	inline js int twoDigitDate := this.getDate().toLocaleString('en-US', {minimumIntegerDigits:2})
-	inline js int twoDigitDay := this.getDay().toLocaleString('en-US', {minimumIntegerDigits:2})
-	inline js int twoDigitHour := this.getHours().toLocaleString('en-US', {minimumIntegerDigits:2})
-	inline js int twoDigitMinute := this.getMinutes().toLocaleString('en-US', {minimumIntegerDigits:2})
-	inline js int twoDigitSecond := this.getSeconds().toLocaleString('en-US', {minimumIntegerDigits:2})
-		
+	inline js string twoDigitMonth := (this.getMonth()+1).toLocaleString('en-US', {minimumIntegerDigits:2})
+	inline js string twoDigitDate := this.getDate().toLocaleString('en-US', {minimumIntegerDigits:2})
+	inline js string twoDigitDay := this.getDay().toLocaleString('en-US', {minimumIntegerDigits:2})
+	inline js string twoDigitHour := this.getHours().toLocaleString('en-US', {minimumIntegerDigits:2})
+	inline js string twoDigitMinute := this.getMinutes().toLocaleString('en-US', {minimumIntegerDigits:2})
+	inline js string twoDigitSecond := this.getSeconds().toLocaleString('en-US', {minimumIntegerDigits:2})
+	
+	inline js string dayMonthYearString := (this.getDate().toLocaleString('en-US', {minimumIntegerDigits:2})+"."+(this.getMonth()+1).toLocaleString('en-US', {minimumIntegerDigits:2})+"."+this.getFullYear())
+	
 	inline js int time := this.getTime()
 		
 	static inline js Time current := new Date()
 		
 	// Return the number of milliseconds elapsed since January 1, 1970
-	static inline js int now := Date.now()
+	static int now
+	
 	static inline js float preciseTime := performance.now()
 		
 	static measure: void() code

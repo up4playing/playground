@@ -1,5 +1,6 @@
 unit Framework
 	Object[] objects
+	Object[] selectedObjects
 	
 	clear
 		objects.clear
@@ -7,7 +8,8 @@ unit Framework
 	tick
 		for <- objects: tick
 		for objects: updateBoard
-		Input.onTouchUp: touch.user.selectedObject = null
+		// Input.onTouchUp: touch.user.selectedObject = null
+		Input.onTouchUp: selectedObjects[touch.userId] = null
 		
 	isVisibleFor: float2 pos, int userId
 		let board = getBoardAt pos
@@ -20,15 +22,28 @@ unit Framework
 				if pos >= b.position - b.size/2 && pos < b.position + b.size/2
 					return b
 		return null
+		
+	debugString
+		let result = ""
+		for objects: result+= o.debugString
+		return result
+		
+	checksum
+		let result = 0
+		for objects: result += o.checksum
+		// We ensure that we never return 0
+		// because a checksum of 0 is used to indicate that we don't have a checksum for this frame yet
+		if result == 0: return 1
+		return result		
 			
-class NetworkUser
-	Object selectedObject = null
+// class NetworkUser
+// 	Object selectedObject = null
 		
 enum Side: Front, Back
 		
 class Object
-	static float2 stackOffset = {8,8}
-	static minSize = 75
+	const float2 stackOffset = {8,8}
+	const minSize = 75
 	
 	Image image = null
 	float2 position
@@ -59,6 +74,7 @@ class Object
 	visible float2 size
 	public Board board = null, nextBoard = null
 	public float2 targetPos = float2.none
+	private int interactingUserId
 	
 	private siblings := board ? board.objects : Framework.objects
 	onBoardChanged
@@ -70,7 +86,11 @@ class Object
 		if size.y < minSize: size.y = minSize
 		this.targetAngle = angle
 		this.nextBoard = board
+		
+	debugString := "(Object pos:{position.x} {position.y} frame:{frame} side:{side} image:{image?.file} board:{board.toBool})"
 	
+	checksum := position.x + position.y + frame + scale + angle + cast side
+		
 	remove
 		siblings.remove this
 		
@@ -84,7 +104,8 @@ class Object
 				isBeingMoved = false
 				
 			Input.onTouchMove moveTouch
-				position = touch.position + touchOffset
+				Network.smooth moveTouch.userId
+					position = touch.position + touchOffset
 				if touch.position - touch.startPosition > 8: isBeingMoved = true
 				if board
 					let closestSpotPos = board.getSpotAt touch.position, threshold:size
@@ -108,11 +129,13 @@ class Object
 				// 		Network.touchLog += " [create stack] "+touch.position.x+" "+touch.position.y
 				// 		Stack.create overSpot.object, this
 					
-				touch.user.selectedObject = this
+				// touch.user.selectedObject = this
+				Framework.selectedObjects[touch.userId] = this
 				moveTouch = null
 		
 		// Rotate	
-		if Input.users.any(selectedObject == this) && rotatable
+		// if Input.users.any(selectedObject == this) && rotatable
+		if Framework.selectedObjects.contains(this) && rotatable
 			if !rotateTouch || !rotatedOverThreshold
 				drawButton rotateIcon, position:position+image.size/2*{1,-1}*scale+{8, -8}, touchMargin:{50,50}
 					rotateTouch = touch
@@ -120,15 +143,18 @@ class Object
 					rotatedOverThreshold = false
 				
 			Input.onTouchMove rotateTouch
-				angle = targetAngle = Math.atan2(touch.position - position) + rotateOffset
+				Network.smooth touch.userId
+					angle = targetAngle = Math.atan2(touch.position - position) + rotateOffset
 				if (touch.position - touch.startPosition).length > 4: rotatedOverThreshold = true
 				
 			Input.onTouchUp rotateTouch
 				targetAngle = Math.round(angle / (Math.PI/2)) * Math.PI/2
 				rotateTouch = null
 				if !rotatedOverThreshold: targetAngle -= Math.PI/2
+				interactingUserId = touch.userId
 		
-		if angle != targetAngle: angle = Math.moveTowards(angle, targetAngle, .2)
+		Network.smooth interactingUserId
+			if angle != targetAngle: angle = Math.moveTowards(angle, targetAngle, .2)
 			
 		// Draw
 		if image
@@ -220,7 +246,8 @@ Object Board
 	
 	private Touch panTouch = null
 	private Matrix2D downMatrix
-	static zoomLookupTable = [
+	
+	const zoomLookupTable = [
 		0.9608086423320881,0.96176945097442,0.9627312204253944,0.9636939516458196,0.9646576455974654,0.9656223032430628,0.9665879255463057,0.9675545134718518,0.9685220679853236,0.9694905900533088,0.9704600806433621,0.9714305407240054,0.9724019712647292,0.9733743732359939,0.9743477476092297,0.9753220953568389,0.9762974174521956,0.9772737148696476,0.9782509885845172,0.9792292395731016,
 		0.9802084688126746,0.9811886772814872,0.9821698659587685,0.9831520358247272,0.9841351878605519,0.9851193230484123,0.9861044423714606,0.9870905468138319,0.9880776373606457,0.9890657149980062,0.9900547807130041,0.991044835493717,0.9920358803292106,0.9930279162095397,0.9940209441257492,0.9950149650698747,0.9960099800349446,0.9970059900149794,0.9980029960049942,0.9990009990009991,
 		1,1.001,1.0020009999999997,1.0030030009999997,1.0040060040009995,1.0050100100050003,1.0060150200150053,1.0070210350350202,1.0080280560700552,1.009036084126125,1.0100451202102512,1.0110551653304611,1.0120662204957915,1.0130782867162873,1.0140913650030035,1.0151054563680064,1.0161205618243743,1.0171366823861985,1.0181538190685846,1.0191719728876532,
@@ -228,6 +255,16 @@ Object Board
 	]
 	Board: float2 size
 		this.size = size
+		
+	debugString
+		string children
+		for objects: children += o.debugString
+		return "(Board pos:{position.x} {position.y} children:{children})"
+		
+	checksum
+		let result = position.x + position.y + cast(visibleForOthers) + matrix.m0 + matrix.m1 + matrix.m2 + matrix.m3 + matrix.m4 + matrix.m5
+		for objects: result += o.checksum
+		return result
 		
 	add: Object object
 		objects.add object
@@ -261,7 +298,7 @@ Object Board
 		if zoomable	
 			Input.onWheelWithin position, size
 				float factor = zoomLookupTable[Math.limit event.delta+40 min:0 max:zoomLookupTable.length-1]
-				Network.touchLog += "[{Network.logicFrame}] zoom value:{event.delta} factor:{factor} matrix:{matrix}"
+				Network.touchLog += "[{Network.frame}] zoom value:{event.delta} factor:{factor} matrix:{matrix}"
 				matrix.move event.position
 				matrix.scale {factor, factor}
 				matrix.move event.position*{-1,-1}
@@ -355,6 +392,9 @@ Object Coin
 	private closestCoinType closestCoinType
 	private float distanceToClosest
 	
+	debugString := "(Coin {value} pos:{position.x} {position.y} dis:{distanceToClosest})"
+	checksum := position.x + position.y + frame + value
+	
 	tick
 		if movable
 			Input.onTouchDownWithin position, radius:40
@@ -364,13 +404,15 @@ Object Coin
 				isBeingMoved = false
 			
 			Input.onTouchMove moveTouch
-				position = touch.position + touchOffset
+				Network.smooth touch.userId
+					position = touch.position + touchOffset
 				if touch.position - touch.startPosition > 8: isBeingMoved = true
 				updateNeighbors siblings, isBeingMoved
 				checkBoardsWhileMoving touch
 			
 			Input.onTouchUp moveTouch
-				touch.user.selectedObject = this
+				// touch.user.selectedObject = this
+				Framework.selectedObjects[touch.userId] = this
 				moveTouch = null
 				
 				if closestCoinType == Over: mergeWith closestCoin; else

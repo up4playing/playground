@@ -1,7 +1,7 @@
 enum NetworkMessageType: Tick, Ping, Pong, OwnInputsAfterReconnect
 enum ConnectionState: Disconnected, Reconnecting, WaitingForFirstTickMessage, Connected
 
-class Connection
+transient class Connection
 	int userId
 	object peerConnection = null
 	object dataChannel = null
@@ -9,19 +9,47 @@ class Connection
 	bool offerByMe
 	
 enum NetworkMode: None, Ping, Local, Connected, Reconnecting
-class HTMLVideoElement: int id
-class RoomInfo: int time, userId
+transient class RoomInfo: int time, userId
+	
+unit Snapshot
+	const maxLength = 3
+	
+	transient bool takeAtEndOfStep
+	transient Buffer[] snapshots
+	transient int offset = 0
+	
+	int currentIndex
+	int takeCount
+	
+	inline js void serialize(Buffer buffer) serialize(buffer)
+	inline js void deserialize(Buffer buffer) deserialize(buffer)
 		
-class VideoScreenInfo
-	object videoElement = null
-	float2 pos
-	float width
+	Buffer save
+		Buffer buffer
+		serialize(buffer)
+		return buffer
+		
+	void restore: Buffer buffer
+		deserialize(buffer)
+		
+	take() takeAtEndOfStep = true
+	lastSnapshotSize := snapshots.length>0 ? snapshots[snapshots.length-1].writePos : 0
 	
-unit Serializer
-	void serialize: Buffer buffer
-	void deserialize: Buffer buffer
+	internal onEndOfStep
+		if takeAtEndOfStep
+			let snap = save
+			snapshots.add snap
+			if snapshots.length > maxLength
+				snapshots.removeAt 0
+				offset++
+			if ++takeCount > 5
+				int index = currentIndex
+				IndexedDB.save "snapshot", "{Network.gameId}-0", snap
+					print "Saved snapshot {index}"
+			takeAtEndOfStep = false
+			currentIndex++
 	
-class Buffer
+transient class Buffer
 	int readPos, writePos
 	private object buffer = null
 	private object dataView = null
@@ -36,40 +64,90 @@ class Buffer
 		this.dataView = new DataView(this.buffer)
 		
 	canRead := readPos < writePos
-	// setWritePos(int writePos) this.writePos = writePos
-	// setReadPos(int readPos) this.readPos = readPos
-	
+
 	reset
 		this.writePos = 0
 		this.readPos = 0   
 		
 	js void expandBuffer: int size
 		let prevLength = this.buffer.byteLength
-		this.buffer = new ArrayBuffer(Math.max(prevLength * 2, size))
+		let len = Math.max(prevLength*2, size)
+		this.buffer = new ArrayBuffer(len)
 		let prevDataView = this.dataView
 		let newDataView = new DataView(this.buffer)
-		for(let i=0; i<prevLength; i+=2)
-			newDataView.setInt16(i, prevDataView.getInt16(i))
+		for(let i=0; i<prevLength; i++)
+			newDataView.setInt8(i, prevDataView.getInt8(i))
+			
+		// TEMP: Check if data is still the same after expanding
+		Network_log("expand buffer from "+prevLength+" to "+len)
+		for(let i=0; i<prevLength; i++)
+			if(prevDataView.getInt8(i) != newDataView.getInt8(i))
+				Network_log("expand failed at " + i 
+				+" expected "+prevDataView.getInt8(i)
+				+" got "+newDataView.getInt8(i))
+				
 		this.dataView = newDataView
 		
 	inline js void setInt16: int index, int value
 		this.dataView.setInt16(index, value)
 	
-	inline js void writeInt16: int value
-		if(this.writePos+2 > this.buffer.byteLength) this.expandBuffer((this.writePos+2)*2)
+	js void writeInt8: int value
+		if(this.writePos+1 > this.buffer.byteLength)
+			this.expandBuffer(this.writePos+1)
+		this.dataView.setInt8(this.writePos, value)
+		this.writePos += 1
+	
+	js void writeUnsignedInt8: int value
+		if(this.writePos+1 > this.buffer.byteLength)
+			this.expandBuffer(this.writePos+1)
+		this.dataView.setUint8(this.writePos, value)
+		this.writePos += 1
+	
+	js void writeInt16: int value
+		if(this.writePos+2 > this.buffer.byteLength)
+			this.expandBuffer(this.writePos+2)
 		this.dataView.setInt16(this.writePos, value)
 		this.writePos += 2
 	
-	inline js void writeInt32: int value
-		if(this.writePos+4 > this.buffer.byteLength) this.expandBuffer((this.writePos+4)*2)
+	js void writeUnsignedInt16: int value
+		if(this.writePos+2 > this.buffer.byteLength)
+			this.expandBuffer(this.writePos+2)
+		this.dataView.setUint16(this.writePos, value)
+		this.writePos += 2
+	
+	js void writeInt32: int value
+		if(this.writePos+4 > this.buffer.byteLength)
+			this.expandBuffer(this.writePos+4)
 		this.dataView.setInt32(this.writePos, value)
 		this.writePos += 4
 	
-	inline js void writeFloat64: float value
-		if(this.writePos+8 > this.buffer.byteLength) this.expandBuffer((this.writePos+8)*2)
+	js void writeFloat64: float value
+		if(this.writePos+8 > this.buffer.byteLength)
+			this.expandBuffer(this.writePos+8)
 		this.dataView.setFloat64(this.writePos, value)
 		this.writePos += 8
 		
+	js void writeBool: bool value
+		if(this.writePos+1 > this.buffer.byteLength)
+			this.expandBuffer(this.writePos+1)
+		this.dataView.setInt8(this.writePos, value ? 1 : 0)
+		this.writePos += 1
+		
+	js void writeString: string value
+		let len = value.length
+		let size = 4+len*4
+		if(this.writePos+size > this.buffer.byteLength)
+			this.expandBuffer(this.writePos+size)
+		this.dataView.setInt32(this.writePos, len)
+		this.writePos += 4
+		for(let i=0; i<len; ++i) {
+			this.dataView.setInt32(this.writePos, value.charCodeAt(i))
+			this.writePos += 4
+		}
+		
+	void writeBuffer: Buffer source
+		writeBuffer source, 0, source.writePos
+	
 	js void writeBuffer: Buffer source
 		                 int start
 		                 int length
@@ -77,7 +155,8 @@ class Buffer
 		let writePos = this.writePos
 		
 		// Expand if neccessary
-		if(writePos+length+4 > this.buffer.byteLength) this.expandBuffer((writePos+length+4)*2)
+		if(writePos+length+4 > this.buffer.byteLength)
+			this.expandBuffer(writePos+length+4)
 			
 		// Write length
 		this.dataView.setInt32(writePos, length)
@@ -89,9 +168,24 @@ class Buffer
 			this.dataView.setUint8(writePos++, source.dataView.getUint8(readPos++))
 			
 		this.writePos = writePos
+		
+	inline js int peekInt8  := this.dataView.getInt8(this.readPos)
+	inline js int peekInt16 := this.dataView.getInt16(this.readPos)
+	inline js int peekInt32 := this.dataView.getInt32(this.readPos)
 	
+	js int readInt8
+		return this.dataView.getInt8(this.readPos++)
+		
+	js int readUnsignedInt8
+		return this.dataView.getUint8(this.readPos++)
+		
 	js int readInt16
 		let value = this.dataView.getInt16(this.readPos)
+		this.readPos += 2
+		return value
+		
+	js int readUnsignedInt16
+		let value = this.dataView.getUint16(this.readPos)
 		this.readPos += 2
 		return value
 		
@@ -100,16 +194,26 @@ class Buffer
 		this.readPos += 4
 		return value
 
-	js int peekInt32
-		return this.dataView.getInt32(this.readPos)
-
 	js float readFloat64
 		let value = this.dataView.getFloat64(this.readPos)
 		this.readPos += 8
 		return value
 		
+	js bool readBool
+		return this.dataView.getInt8(this.readPos++) != 0
+		
+	js string readString
+		let value = ""
+		let len = this.dataView.getInt32(this.readPos)
+		this.readPos += 4
+		for(let i=0; i<len; ++i) {
+			value += String.fromCharCode(this.dataView.getInt32(this.readPos))
+			this.readPos += 4
+		}
+		return value
+
 	js int readBuffer: Buffer writeBuffer
-		               int writeStart
+		               int writeStart = 0
 		let readPos = this.readPos
 		let writePos = writeStart
 		
@@ -118,7 +222,8 @@ class Buffer
 		readPos += 4
 		
 		// Expand writeBuffer if neccessary
-		if(writeStart+length > writeBuffer.buffer.byteLength) writeBuffer.expandBuffer((writeStart+length)*2)
+		if(writeStart+length > writeBuffer.buffer.byteLength)
+			writeBuffer.expandBuffer(writeStart+length)
 			
 		// Read bytes
 		let readPosEnd = readPos + length
@@ -127,123 +232,118 @@ class Buffer
 			
 		this.readPos = readPos
 		return length
-		
+			
 	js string toString
 		let result = "readPos:" + this.readPos + " writePos:" + this.writePos
 		for(let i=0; i<this.writePos; i ++)
 			result += " " + this.dataView.getUint8(i)
 		return result
 		
-unit Network
+	js string toRangeString: int start, int end
+		let result = ""
+		for(let i=start; i<end; i++)
+			result += " " + this.dataView.getUint8(i)
+		return result
+		
+transient unit Network
 	// Logs
-	string logTable = "animTime,networkTime,tickTime,drawTime,iteration,networkFrame,user0,user1,user2,received,common,logic,ahead,checksums,events,send,receive,write,parse,touch\n"
-	public string eventLog = ""; sentLog = "", receivedLog="", writeLog="", parseLog = "", touchLog = ""
-	private float lastNetworkFrame, lastAnimationFrame, drawTime, tickTime
+	public int smoothStrength = 90
+	public bool smoothTouchPosition = true
 	
-	internal targetFps = 30
-	private inputFrameEvery = 1, maxAhead = 10, pingCount = 6
-	private targetFrameTime = 1000/targetFps
+	string logTable = "frame,animTime,networkTime,tickTime,drawTime,iteration,restoreTime,replayFrames,replayTime,saveTime,user0,user1,user2,received,uncertain,offset,ahead,avarage,percentile,certainFrame,buffer,checksums,events,send,receive,write,parse,touch\n"
+	public string eventLog = ""; sentLog = "", receivedLog="", writeLog="", parseLog = "", touchLog = "", checksumLog = "", debugString = ""
+	public bool showDebugString
+	private float lastNetworkFrame, lastAnimationFrame, drawTime, tickTime, restoreTime, replayTime, saveTime
+	private int replayFrames, checkedChecksums
+	private string lastError
+	
+	internal const targetFps = 30
+	private const pingCount = 6
+	private const bufferFrames = 1
+	private const targetFrameTime = 1000/targetFps
 	
 	visible NetworkMode mode
-	visible bool inLobby = true
 	visible int userId = -1
 	public bool simulateConnection = true
 	
-	private VideoScreenInfo[] videoScreens
 	private object localVideo = null
 	
 	private float startTime
 	private int startInputFrame
 	
-	internal int inputFrame
-	internal int logicFrame
-	private int networkFrame
-	
+	visible int frame               // Will increase by 1 at the end of every step (so every targetFrameTime milliseconds)
+	private int receivedFrames      // We received all remote inputs up to this frame (lowest of all user frames)
+	private int uncertainFrame = -1 // The first frame that doesn't have inputs from all players
+	private int certainFrame
+	private Buffer commonState      // A snapshot taken before the first uncertain frame
+		
 	private float[] checksums
 	private bool alertShown
 	private int nextReconnect
 	private string randomSeed
+	private bool isLocalhost
+	private int ahead
+	private int[] aheads
+	private Buffer sendBuffer
 	
-	// init() initHandlers
-	
-	// js void initHandlers
-	// 	log("initHandlers")
-	// 	window.onbeforeunload = e => { Network_saveEventStream(); alert("onbeforeunload") }
-	// 	window.onunload = e => { alert("onunload") }
-	
-	log: logstring text
-		string str = text
-		eventLog += str + "\n"
-		print str
+	init
+		showDebugString = isLocalhost = Platform.url.contains("localhost")
+		
+	initDatabase
+		IndexedDB.start "up4playing", "snapshot", 5
 
 	private startConnected: float startTime = 0
-		// for Input.users: log "User {id}", id, frames, inputs
 		if mode == Connected: return
 		if startTime
 			this.startTime = startTime
-			networkFrame = Math.floor((Time.now - this.startTime)/targetFrameTime)
 		else
 			resetStartTime
-		// startInputFrame = inputFrame = Math.floor(networkFrame / inputFrameEvery) + 1
-		inputFrame = networkFrame+1
-		Input.users[userId].startInputFrame inputFrame
-		// for Input.users: log "User {id}", id, frames, inputs
-		int receivedFrames = getReceivedFrames
-		log "Connected", userId, logicFrame, networkFrame, startTime, this.startTime, inputFrame, receivedFrames
-		// for Input.users: log "User {id}", id, inputs
-		// while logicFrame < receivedFrames - 1
-		// 	step fastFordward:true
-		// log "Replay done", logicFrame
-		// for Input.users: log "User {id}", id, inputs.readPos, inputs.writePos
+		let user = Input.internalUsers[userId]
+		user.startInputFrame 0
+		
+		int joinFrame = Math.floor((currentTime - this.startTime)/targetFrameTime)
+		user.inputs.writeInt32 joinFrame
+		user.inputs.writeInt16 cast InputType.Join
+		user.collectInputs = true
+		
 		mode = Connected
+		receivedFrames = -1
+		certainFrame = -1
+		log "Connected", userId, frame, startTime, this.startTime
+		saveState
 		
 	startLocal: userCount = 1
 		userId = 0
 		mode = Local
-		Input.users.clear
-		// openEventStream
-		// 	log "opening session from event stream"
-		// 	Math.setRandomSeed eventStream.randomSeed
-		// 	for eventStream.users
-		// 		Input.users.add {id:u.id, local:u.local, frames:u.frames, inputs:u.inputs}
-		// 	int receivedFrames = getReceivedFrames * inputFrameEvery
-		// 	networkFrame = receivedFrames
-		// 	resetStartTime
-		// 	startApp
-		// 	while logicFrame < receivedFrames - 1
-		// 		step fastFordward:true
-		// 	step
-		// 	// tick
-		// else
-		// log "starting new session"
+		Input.internalUsers.clear
 		randomSeed = Math.generateRandomSeed
 		Math.setRandomSeed randomSeed
-		for userCount: Input.users.add {id:i, local:true}
-		startTime = Time.now
+		for userCount
+			Input.internalUsers.add {id:i, local:true, collectInputs:true}
+			Input.users.add {id:i}
+		
+		startTime = currentTime
 		startApp
 		animationFrame
+		initDatabase
+		
+	smooth: int userId
+		             void() code
+		if Input.isCertain or this.userId == userId: code
 			
-	js void startApp
-		Network_inLobby = false
-		if(window.app_start) app_start()
+	smooth: void() code
+		if Input.isCertain: code
+			
+	// AnimationFrame --> Step --> Tick
+
+	// AnimationFrame  Send tick message, replay state, and call step
+	// Step            Save state, parse inputs, step physics, process tick, and calculate checksum
+	// Tick            Clear screen, process application tick, and draw all graphics
 		
-	resetStartTime
-		startTime = Time.now - networkFrame*targetFrameTime// - (targetFrameTime-0.001)
-		
-	eventStreamSize
-		string result
-		for Input.users
-			if u
-				if result: result += ", "
-				result += u.inputs.writePos.formatWithSpaces
-		return result
-		
-	Buffer commonState
-	int commonFrame
-		
+	// Send tick message, replay state, call step, and logging
+	// This is called by the requestAnimationFrame callback.
+	// We ensure that step is called every targetFrameTime milliseconds.
 	internal animationFrame
-		let now = Time.now
-		
 		if mode == None || mode == Ping
 			graphics.startFrame
 			if mode == Ping: ping
@@ -252,179 +352,270 @@ unit Network
 			updateVideoScreen
 			graphics.finishFrame
 			return
+			
 		if mode == Reconnecting
 			reconnect
 			return
 			
-		let targetFrame = Math.floor((now - startTime)/targetFrameTime)
-		if mode == Local && targetFrame > networkFrame + targetFps*2
+		// Ahead
+		float aheadAverage
+		int aheadPercentile
+		if mode == Connected and Input.users.length > 1
+			let receivedCurrentFrames = getReceivedCurrentFrames
+			ahead = frame - receivedCurrentFrames
+			aheads.add ahead, maxLength:100
+			aheadAverage = aheads.average
+			aheadPercentile = smoothStrength ? aheads.percentile(smoothStrength).limit(0, 50) : 0
+		
+		let now = currentTime
+		let localPlayer = Input.internalUsers[userId]
+		let targetFrame = Math.floor((now - startTime)/targetFrameTime)+1
+		// int nextInputFrame = targetFrame + aheadAverage.round + bufferFrames
+		let nextInputFrame = targetFrame
+		let frameMinusOffset = targetFrame - aheadPercentile
+		certainFrame = Math.min(frameMinusOffset, receivedFrames)
+		
+		if mode == Local && targetFrame > frame + targetFps*2
 			// After a long pause in local mode, we do not want to process all missed frames, so we adjust the start time
 			let prevTargetFrame = targetFrame
-			targetFrame = networkFrame
-			startTime = now - targetFrame*targetFrameTime - (targetFrameTime-0.001)
-			log "Paused {prevTargetFrame-networkFrame} frames, adjusting startTime. prevTargetTime:{prevTargetFrame} networkFrame:{networkFrame} targetFrame:{Math.floor((now - startTime)/targetFrameTime)}"
+			targetFrame = frame
+			startTime = now - targetFrame*targetFrameTime
+			log "Paused {prevTargetFrame-frame} frames, adjusting startTime. prevTargetTime:{prevTargetFrame} frame:{frame} targetFrame:{Math.floor((now - startTime)/targetFrameTime)}"
 		
-		let startNetworkFrame = networkFrame
-		while networkFrame <= targetFrame
-			networkFrame++
-			let localPlayer = Input.users[userId]
-			// bool isInputFrame = (networkFrame % inputFrameEvery) == 0
-			// bool isInputFrame = true
-			// inputFrame = Math.floor(networkFrame / inputFrameEvery) + 1
-			int startLogicFrame = logicFrame
+		if frame < targetFrame
+			let startFrame = frame
+			try
+				// Send each user the inputs that they haven't acknowleged yet
+				if mode == Connected
+					sendInputs nextInputFrame, targetFrame
+								
+				// Replay all frames from the first uncertain frame until the current frame
+				// when we received all inputs for frames that we were uncertain about before
+				replayState
 			
-			// if isInputFrame
-			inputFrame = networkFrame + 1
-			localPlayer.startInputFrame networkFrame
-			
-			if mode == Connected
-				for c -> connections
-					if c.state == Connected
-						let receiver = Input.users[c.userId]
-						sendTickMessage
-							c
-							frames: networkFrame
-							acknowledgePos: receiver.inputs.writePos
-							checksumFor: logicFrame-1
-							checksum: checksums[logicFrame-1] || 0
-							buffer:localPlayer.inputs
-							start:receiver.acknowledgedPos
-							end:localPlayer.inputs.writePos
-							
-						// int startFrame = Math.max(startInputFrame, p.acknowledgedFrames)
-						// sentLog += " <"+c.userId+">"
-						// for f = startFrame -> localPlayer.frames
-						// 	message.inputs.add localPlayer.inputs[f]
-						// 	sentLog += " ["+f+"]"
-						// 	for input -> localPlayer.inputs[f]: sentLog += " "+input
-						// send c, message
-			
-			// for Input.users: log id, frames
-			int receivedFrames = getReceivedFrames
-			if logicFrame < receivedFrames - maxAhead
-				log " >>> catching up", logicFrame, receivedFrames
-				while logicFrame < receivedFrames - 1
-					step fastFordward:true
+			catch 
+				print error
+				log error
+				lastError = error.message
 					
-			// if logicFrame < receivedFrames
-			//	step
+			// Ensure that step is called every targetFrameTime milliseconds
+			while frame < targetFrame
+				// Step
+				step fastFordward:frame < targetFrame-1
+				
+				// Logs
+				try
+					logTable += "{frame-1},{now - lastAnimationFrame},{now - lastNetworkFrame},{tickTime.format(fractionDigits:2)},{drawTime.format(fractionDigits:2)},{frame-startFrame}"
+					logTable += ",{restoreTime.format(fractionDigits:2)},{replayFrames},{replayTime.format(fractionDigits:2)},{saveTime.format(fractionDigits:2)}"
+					logTable += ","+(Input.internalUsers[0] ? Input.internalUsers[0].inputFrame : 0)
+					logTable += ","+(Input.internalUsers[1] ? Input.internalUsers[1].inputFrame : 0)
+					logTable += ","+(Input.internalUsers[2] ? Input.internalUsers[2].inputFrame : 0)
+					logTable += ",{receivedFrames},{uncertainFrame},{frame - receivedFrames},{ahead},{aheadAverage.format(fractionDigits:1)}"
+					logTable += ",{aheadPercentile},{certainFrame},{receivedFrames-frameMinusOffset}"
+					logTable += ",\"{checksumLog.trim}\",\"{eventLog.trim}\",\"{sentLog.trim}\",\"{receivedLog.trim}\",\"{writeLog.trim}\",\"{parseLog.trim}\",\"{touchLog.trim}\"\n"
+					eventLog = ""; sentLog = ""; receivedLog = ""; writeLog = ""; parseLog = ""; touchLog = ""; checksumLog = ""
+				
+				catch
+					print error
+					lastError = error.message
+				
+				// Debug string
+				if showDebugString
+					debugString = "v{Platform.version} checks:{checkedChecksums} inputs:"
+					for user -> Input.internalUsers
+						if user
+							debugString += user.inputs.writePos.format(grouping:true) + " "
+					debugString += "snapshot:{Snapshot.currentIndex} size:{Snapshot.lastSnapshotSize.format(grouping:true)} a:{ahead} av:{aheadAverage.format(fractionDigits:1)} p:{aheadPercentile} {lastError}"
+					
+				lastNetworkFrame = now
+				
+			localPlayer.startInputFrame nextInputFrame
 			
-			step fastFordward:networkFrame <= targetFrame
-			
-			// Logs	
-			logTable += "{now - lastAnimationFrame},{now - lastNetworkFrame},{tickTime},{drawTime},{networkFrame-startNetworkFrame},{networkFrame}"
-			logTable += ","+(Input.users[0] ? Input.users[0].frames : 0)
-			logTable += ","+(Input.users[1] ? Input.users[1].frames : 0)
-			logTable += ","+(Input.users[2] ? Input.users[2].frames : 0)
-			logTable += ",{receivedFrames},{commonFrame},{logicFrame},{receivedFrames-logicFrame},"
-			for i = startLogicFrame -> logicFrame
-				logTable += "("+i+") "+checksums[i]
-			logTable += ",\"{eventLog.trim}\",\"{sentLog.trim}\",\"{receivedLog.trim}\",\"{writeLog.trim}\",\"{parseLog.trim}\",\"{touchLog.trim}\"\n"
-			eventLog = ""; sentLog = ""; receivedLog = ""; writeLog = ""; parseLog = ""; touchLog = ""
-
-			lastNetworkFrame = now
-		
 		lastAnimationFrame = now
 		
-	// inputFrame:     networkFrame + 1
-	// networkFrame:   will increase by 1 at the beginning of every {targetFrameTime} milliseconds
-	// user.frames:    for the localPlayer, user.frames will be the networkFrame
-	// receivedFrames: the lowest value of all user.frames
-	// commonFrame:    the last logic frame that has inputs from all players
-	// logicFrame:     the same as networkFrame, but adjusted during replay
-	saveCommonState
-		if mode == Local: return
-		int receivedFrames = getReceivedFrames
-		// if logicFrame <= receivedFrames
-		// 	commonFrame = logicFrame
-		// else
-		if logicFrame == receivedFrames+1
-			for Input.users: commonReadPos = inputs.readPos
-			commonFrame = logicFrame-1
-			Serializer.serialize commonState
-			// log "Save state", logicFrame, app.xPos[0], app.xPos[1], app.speed[0], app.speed[1]
-			log "Save state", logicFrame
-	
-	replayCommonState
-		if mode == Local: return
-		int receivedFrames = getReceivedFrames
-		if commonFrame and receivedFrames > commonFrame
-			log "Replay state", receivedFrames, commonFrame, logicFrame, commonState
-			let currentLogicFrame = logicFrame
-			logicFrame = commonFrame
-			for Input.users: inputs.readPos = commonReadPos
-			Serializer.deserialize commonState
-			commonFrame = 0
-			// log "Restore state", app.xPos[0], app.xPos[1], app.speed[0], app.speed[1]
-			while logicFrame < currentLogicFrame
-				step fastFordward:true
-		
-	private getReceivedFrames
-		if mode == Local: return Input.users[userId].frames
-		int minFrames = -1
-		for user -> Input.users
-			if user && (minFrames == -1 || user.frames < minFrames)
-				minFrames = user.frames
-		return minFrames
-		
-	private step: bool fastFordward = false
-		logicFrame++
-		Platform.fastForward = fastFordward
-		parseLog += " #{logicFrame}"
-		if fastFordward: parseLog += "f"
+	// Save state, parse inputs, step physics, process tick, and calculate checksum
+	// This is called in animationFrame and during replays. 
+	// All steps except the very last of an animation frame are fast forwared, which means that nothing is drawn.
+	// The frame is increment at the end of this function. This means that while processing the frame,
+	// frame will point to the current frame. After processing, frame will point to the next frame.
+	private step: bool fastFordward = false // If a step is fast forwarted nothing is drawn
+		try
+			// Set time
+			Time.now = Math.round(frame * targetFrameTime)
+			Platform.fastForward = fastFordward
 			
-		saveCommonState
-		
-		// Parse inputs
-		bool isInputFrame = logicFrame % inputFrameEvery == 0
-		if isInputFrame: Input.parseInputs(logicFrame)
-		
-		// Tick
-		tick
-		
-		// Checksum
-		let myChecksum = 0
-		for Framework.objects:
-			myChecksum += position.x + position.y + frame + cast side
-			if type == Board
-				Board board = cast o
-				let m = board.matrix
-				myChecksum += m.m0 + m.m1 + m.m2 + m.m3 + m.m4 + m.m5
+			// Log
+			parseLog += " #{frame}"
+			bool isCertain = frame <= certainFrame
+			if fastFordward: parseLog += "f"
+			if isCertain: parseLog += "c"
 				
-		let theirChecksum = checksums[logicFrame]
-		if !theirChecksum
-			checksums[logicFrame] = myChecksum
-		else
-			if theirChecksum != myChecksum: onWrongChecksum
-			eventLog += " ["+logicFrame+"] mine:"+myChecksum+" theirs:"+theirChecksum
-		
+			// Save a snapshot when we are about to start the frame after the last certain frame where we got all inputs
+			saveState
+			
+			// Parse inputs
+			Input.parseInputs(frame, isCertain)
+			
+			// Physics
+			Physics.step
+			
+			// Tick
+			tick
+			
+			// Calculate checksum if we received all inputs for this frame
+			if isCertain
+				int myChecksum = Framework.checksum					
+				let theirChecksum = checksums[frame]
+				checksumLog += " <> #{frame} {myChecksum}"
+				if !theirChecksum
+					checksums[frame] = myChecksum
+				else
+				if(theirChecksum isApproximately myChecksum)
+					checkedChecksums++
+				else
+					onWrongChecksum
+					checkedChecksums = 0
+					checksumLog += " MISMATCH saved theirs:{theirChecksum}"
+					
+			// Take snapshot
+			Snapshot.onEndOfStep
+			
+			// log "#{frame}{isCertain ? "c":""}", certainFrame, "a:{Framework.objects[0]?.angle}"
+			
+		catch
+			print error
+			log error
+			lastError = error.message
+			
 		// Cleanup
-		if isInputFrame
-			for user -> Input.users if user
-				user.clearEvent
-				
+		for user -> Input.internalUsers if user
+			user.clearEvent
+			
+		frame++
+		
+	// Clear screen, process application tick, and draw all graphics
+	// This is called in step.
 	internal tick
-		Physics.step
-		graphics.startFrame
-		updateVideoScreen
-		drawFingers
-		if Network.inLobby
-			lobby.tick
-		else
-			Timeline.tick
-			tickTime = Time.measure
-				app.tick
-			Framework.tick
-			Input.updateCursor
+		try
+			graphics.startFrame
+			updateVideoScreen
+			drawFingers
+			if lobby.inLobby
+				lobby.tick
+			else
+				Framework.tick
+				tickTime = Time.measure
+					app.tick
+				Input.updateCursor
+		catch
+			print error
+			log error
+			lastError = error.message
+			
+		drawText debugString, {0, 528}
 		drawTime = Time.measure
 			graphics.finishFrame
+		
+	// Send each user the inputs that they haven't acknowleged yet
+	// This is called in animationFrame.
+	private sendInputs: int nextInputFrame, int targetFrame
+		let localPlayer = Input.internalUsers[userId]
+		for c -> connections
+			if c.state == Connected
+				let receiver = Input.internalUsers[c.userId]
+				let checksumFor = uncertainFrame>1 ? uncertainFrame-1 : frame-1
+				sendTickMessage
+					to: c
+					inputFrame: nextInputFrame-1     // You got all inputs up to and including this frame
+					currentFrame: targetFrame-1      // The currently processed frame, used to calculate "ahead" 
+					
+					checksumFor: checksumFor         // The last certain frame with inputs from everybody
+					checksum: checksums[checksumFor] // The checksum of the last certain frame
+					
+					acknowledgePos: receiver.inputs.writePos  // We ackledge that we received up to this input buffer pos
+					
+					buffer: localPlayer.inputs                // Send inputs that they haven't acknowleged yet
+					start: receiver.acknowledgedPos
+					end: localPlayer.inputs.writePos
+		
+	// Save a snapshot when we are about to start the frame after the last certain frame 
+	// where we received inputs from all users. This is called at the beginning of a step
+	// before we start processing the frame.
+	private saveState
+		if mode != Connected: return
+		if frame == certainFrame+1
+			for Input.internalUsers: uncertainReadPos = inputs.readPos
+			uncertainFrame = frame
+			saveTime = Time.measure
+				Snapshot.serialize commonState
+			parseLog += " save u:{uncertainFrame} c:{Framework.checksum}"
+			// log uncertainFrame, "a:{Framework.objects[0]?.angle}"
+	
+	// Replay all frames from the first uncertain frame until the current frame
+	// when we received all inputs for frames that we were uncertain about before.
+	// This is called at the begining of animationFrame before we start stepping.
+	private replayState
+		if mode != Connected or Input.internalUsers.length == 1: return
+		if uncertainFrame != -1 and certainFrame >= uncertainFrame
+			// Restore state
+			for Input.internalUsers: inputs.readPos = uncertainReadPos
+			restoreTime = Time.measure
+				Snapshot.deserialize commonState
+			parseLog +=  " restore u:{uncertainFrame} c:{Framework.checksum}"
+			// log uncertainFrame, "a:{Framework.objects[0]?.angle}"
+	
+			let targetFrame = frame
+			frame = uncertainFrame
+			// We set uncertainFrame to -1 because we currently have no uncertainty. If we process frames beyond 
+			// the received frame during replay, we save a new state and set the uncertainFrame.
+			// If not, uncertainFrame stays -1,  which means we are certain about every frame.
+			uncertainFrame = -1
+			
+			// Replay from uncertainFrame to frame
+			replayFrames = targetFrame - frame
+			replayTime = Time.measure
+				while frame < targetFrame
+					step fastFordward:true
+		
+	// Calculate the frame we received all remote inputs for.
+	// The lowest of all user frames. Called in onTickMessage.
+	private getReceivedInputFrames
+		int minFrames = -1
+		for user -> Input.internalUsers
+			if user && !user.local && (minFrames == -1 || user.inputFrame < minFrames)
+				minFrames = user.inputFrame
+		return minFrames
+	
+	private getReceivedCurrentFrames
+		int minFrames = -1
+		for user -> Input.internalUsers
+			if user && !user.local && (minFrames == -1 || user.currentFrame < minFrames)
+				minFrames = user.currentFrame
+		return minFrames
 			
 	private onWrongChecksum
-		eventLog += "%%% OUT OF SYNC %%%"
+		log "##### OUT OF SYNC #####", frame, debugString
+		// Platform.setTitle "%%% OUT OF SYNC %%%"
+		
 		if !alertShown
-			alert "Clients out of sync. Please click 'Save Logs' and send me the log file that will be created."
+			alert "Clients out of sync. Please send me the log file that will be created."
+			saveLogs
 			alertShown = true
 			
+	log: logstring text
+		string str = text
+		eventLog += str + "\n"
+		print str
+		
+	inline js int currentTime := Date.now()
+	
+	js void startApp
+		lobby_inLobby = false
+		if(window.app_start) app_start()
+		
+	resetStartTime
+		startTime = currentTime - frame*targetFrameTime// - (targetFrameTime-0.001)
+		
 	object db = null
 	
 	js void openEventStream: void(EventStream eventStream) then, void() else
@@ -440,7 +631,7 @@ unit Network
 			req.onsuccess = async e => {
 				let eventStream = req.result
 				if(eventStream) {
-					for(let user of eventStream.users) {
+					for(let user of eventStream.internalUsers) {
 						let arrayBuffer = await user.blob.arrayBuffer()
 						user.inputs = new Buffer(arrayBuffer, 0, 0, 0)
 					}
@@ -454,17 +645,30 @@ unit Network
 			}
 		}
 		
-	save
-		if Platform.fastForward: return
-		saveLogs
-		saveEventStream
+	Buffer snapshotBuffer
+		
+	save: int slot
+		snapshotBuffer.reset
+		Snapshot.serialize snapshotBuffer
+		IndexedDB.save "snapshot", "{gameId}-{slot}", snapshotBuffer
+			print "saved snapshot {gameId}-{slot} ({snapshotBuffer.writePos} bytes)"
+		else
+			print "save failed"
+		
+	restore: int slot
+		IndexedDB.open "snapshot", "{gameId}-{slot}"
+			Input.handleSetState buffer
+			print "restored snapshot {gameId}-{slot} ({buffer.writePos} bytes)"
+		else
+			print "restore failed"
 		
 	saveLogs
 		Platform.createTextFile "log.csv", logTable
-		Http.post "https://up4playing.com:3112/saveLog/{roomId}/{userId}", logTable
+		Http.post "/saveLog/{gameId}/{roomId}/{userId}", logTable
 			log "save logs"
 		else
 			print "save logs failed {error}"
+			
 		
 	js void saveEventStream
 		let trans = db.transaction("eventstreams", "readwrite")
@@ -480,7 +684,7 @@ unit Network
 			users.push({
 				id: user.id,
 				local: user.local,
-				frames: user.frames,
+				frame: user.frame,
 				blob: new Blob([dataView]),
 				inputs: null
 			})
@@ -503,149 +707,129 @@ unit Network
 	private onConnectedToPeer: Connection connection
 		                       bool isNewUser // Did this user just join the already exiting users (and make the offer)
 		
-		// for Input.users: log "User {id}", id, frames, inputs
-			
-		// if mode == Reconnecting
-		// 	// mode = Connected
-		// 	// let user = Input.users[connection.userId]
-		// 	// connection.state = user && user.acknowledgedPos > 0 ? Connected : WaitingForFirstTickMessage
-			
-		// 	// connection.state = WaitingForFirstTickMessage
-		// 	// showLocalVideo
-		// 	// Platform.debugger
-			
-			
-		// 	bool isHost
-		// 	for i -> Input.users.length
-		// 		if i == userId: isHost = true; break
-		// 		let c = connections.find userId == i
-		// 		if c && c != connection && c.state == Connected: isHost = false; break
-		// 	log "Reconnected", isHost
-		// 	if isHost
-		// 		let user = Input.users[connection.userId]
-		// 		sendOwnInputsAfterReconnectMessage connection, user.frames, user.inputs
-				
-		// 	// return
-			
-		let user = Input.users[connection.userId]
+		let user = Input.internalUsers[connection.userId]
 		if mode == Reconnecting && user && user.acknowledgedPos > 0
 			mode = Connected
 			connection.state = Connected
 			log "Both users were already connected before", connection.userId, userId, mode, connection.state
 		else
 		if mode == None
+			// New users will send out ping messages to sync the startTime (and this way also the current frame)
 			mode = Ping
-			nextPingTime = Time.now + 300
+			nextPingTime = currentTime + 300
 			estimatedStartTimeTotal = 0
 			pongCount = 0
 			connection.state = Connected
 			log "New user, starting to ping", connection.userId, userId, mode, connection.state
 		else
+			// Existing users will wait for the new user to finish pinging
+			// to prevent sending the large initial message several times
 			if mode == Reconnecting: mode = Connected
 			connection.state = WaitingForFirstTickMessage
 			log "Answering user, waiting for ping", connection.userId, userId, mode, connection.state
 		
-		// The first user will enter the "connected" state right away, all later uers will first 
-		// ping the existing users to sync the startTime and calculate the networkFrame from it
-		// if mode == None
-		// 	mode = Ping
-		// 	nextPingTime = Time.now + 300
-			
-		// New users will start sending tick messages as soon as they are done with pinging,
-		// existing users will wait for the new user to finish pinging
-		// to prevent sending the large initial message several times
-		// connection.state = isNewUser ? Connected : WaitingForFirstTickMessage
-		
 		log connection.userId, isNewUser, mode, connection.state
-		// for Input.users: log "User {id}", id, frames, inputs
 		
 	private onDisconnectFromPeer: Connection connection
 		log "onDisconnectFromPeer userId:"+connection.userId
 		closeConnection connection
 		connection.state = Disconnected
 		mode = Reconnecting
-		nextReconnect = Time.now + 1000
-		removeVideoElement connection.userId
+		nextReconnect = currentTime + 1000
 		graphics.reset
 		drawText "Connection lost. Trying to reconnect...", {0,-Platform.size.y/2+32}
 		drawRectangle {0,-Platform.size.y/2+32}, {Platform.size.x, 64}, fillColor:{"900000"}
 		graphics.finishFrame
 
-	
 	private js void closeConnection: Connection connection
 		if(connection.peerConnection) {
-			console.log("closeConnection: peerConnection")
+			Network_log("closeConnection: peerConnection")
 			connection.peerConnection.close();
 			connection.peerConnection = null;
 		}
 		if(connection.dataChannel) {
-			console.log("closeConnection: dataChannel")
+			Network_log("closeConnection: dataChannel")
 			connection.dataChannel.close();
 			connection.dataChannel = null;
 		}
+		if(Network_socket) {
+			Network_log("closeConnection: socket")
+			Network_socket.close()
+			Network_socket = null
+		}
 		
 	private reconnect
-		if Time.now >= nextReconnect
-			log "Trying to reconnect"
-			join roomId
-			nextReconnect = Time.now + 5000
+		if currentTime >= nextReconnect
+			if(socket)
+				log "Existing socket -> resending offers"
+				resendOffers
+			else
+				log "No existing socket -> reconnecting to server"
+				join gameId, roomId
+			nextReconnect = currentTime + 6000
 	
 	private ping
-		if Time.now >= nextPingTime
+		if currentTime >= nextPingTime
 			for c -> connections
 				if c.state != Disconnected
-					sendPingMessage c, Time.now
-			nextPingTime = Time.now + 300
+					sendPingMessage c, currentTime
+			nextPingTime = currentTime + 300
 		
 	private object socket = null
-	private string roomId = ""
+	visible string roomId, gameId
 	private Connection[] connections
 	
-	js void join: string roomId
+	js void join: string gameId, string roomId
+		Network_gameId = gameId
 		Network_roomId = roomId
-		console.log(location.href)
-		log("init websocket "+roomId)
-		Network_socket = new WebSocket("wss://up4playing.com:3111");
-		Network_socket.onopen = function() {
-			log("Websocket open");
+		Network_log("Network.join "+location.href)
+		let socket
+		if(Network_isLocalhost) socket = new WebSocket("ws://localhost:3111");
+		else                    socket = new WebSocket("wss://"+location.host+":3111");
+		socket.onopen = function() {
+			Network_log("Websocket open");
+			Network_socket = socket
 			Network_onConnectedToServer();
 		}
-		Network_socket.onmessage = function(event) {
+		socket.onmessage = function(event) {
 			let message = JSON.parse(event.data);
 			Network_onMessageFromServer(message);
 		}
-		Network_socket.onclose = function() {
-			log("Websocket closed")
+		socket.onclose = function() {
+			Network_log("Websocket closed")
+			Network_socket = null
 		}
-		Network_socket.onerror = ex => {
-			log(ex)
+		socket.onerror = ex => {
+			Network_log(ex.stack)
 		}
+		Network_initDatabase();
 		
 	private onConnectedToServer
 		// Disabled rejoining with the same id to support testing in two browser tabs
 		// Is this still needed if we have an eventStream?
 		// if userId == -1
 		// 	RoomInfo roomInfo = cast Platform.getLocalStorageObject "room"+roomId
-		// 	userId = roomInfo && roomInfo.time > Time.now - 3600000*24 ? roomInfo.userId : -1
+		// 	userId = roomInfo && roomInfo.time > currentTime - 3600000*24 ? roomInfo.userId : -1
 		// 	log "Reconnect to session", roomInfo, userId
 		
-		openEventStream
-			Math.setRandomSeed eventStream.randomSeed
-			for eventStream.users
-				Input.users.add {id:u.id, local:u.local, frames:u.frames, inputs:u.inputs}
-			userId = Input.users.find(local).id
-			int receivedFrames = getReceivedFrames
-			networkFrame = receivedFrames
-			// resetStartTime
-			while logicFrame < receivedFrames - 1
-				step fastFordward:true
-			step
-			log "Opening saved eventstream", roomId, logicFrame, networkFrame, eventStreamSize
-			sendToServer JoinMessage roomId, userId, version:Platform.version
-		else
-			networkFrame = 0
-			log "onConnectedToServer {roomId} connect as user {userId}"
-			sendToServer JoinMessage roomId, userId, version:Platform.version
+		// openEventStream
+		// 	Math.setRandomSeed eventStream.randomSeed
+		// 	for eventStream.users
+		// 		Input.internalUsers.add {id:u.id, local:u.local, inputFrame:u.frame, inputs:u.inputs}
+		// 	userId = Input.internalUsers.find(local).id
+		// 	// receivedFrames = getReceivedFrames
+		// 	frame = receivedFrames
+		// 	// resetStartTime
+		// 	while frame < receivedFrames - 1
+		// 		step fastFordward:true
+		// 	step
+		// 	log "Opening saved eventstream", roomId, frame
+		// 	sendToServer JoinMessage roomId, userId, version:Platform.version
+		// else
+		// frame = 0
+		
+		log "onConnectedToServer {roomId} connect as user {userId}"
+		sendToServer JoinMessage roomId, userId, version:Platform.version
 		
 	private onMessageFromServer: ServerMessage message
 		if message.type == JoinResponseMessage: onJoinResponse cast message; else
@@ -657,31 +841,24 @@ unit Network
 			let messageString = JSON.stringify(message)
 			Network_socket.send(messageString)
 		} catch(e) {
-			console.log(e)
+			Network_log(e)
 		}
 	
 	private onJoinResponse: JoinResponseMessage message
 		log "onJoinResponse", message.roomId, message.userId
 		if mode == Reconnecting
-			log "onJoinResponse: Reconnecting to "+roomId+" with user "+userId
-			int[] partnerIds
-			for c -> connections
-				if c: log "Connection "+c.userId+" state:"+c.state+" offerByMe:"+c.offerByMe
-				else  log "Connection null"
-				if c && (c.state == Disconnected || c.state == Reconnecting) && c.offerByMe
-					partnerIds.add c.userId
-			createOffers partnerIds
+			log "Reconnecting to {roomId} with user {userId}"
+			resendOffers
 		else
-			eventLog += Time.dateAndTimeString + " local version:" + Platform.version + " user agent:"+Platform.userAgent+" "
+			log Time.dateAndTimeString, Platform.version, Platform.userAgent, message.seed
 			if message.roomId != roomId
 				log "Received room id {message.roomId}"
-				let gameId = Platform.url.split("/")[3]
-				Platform.pushState null, "{gameId} {message.roomId}", "https://up4playing.com/{gameId}/{message.roomId}"
+				Platform.pushState null, "{gameId} {message.roomId}", "/{gameId}/{message.roomId}"
 			
 			roomId = message.roomId
 			userId = message.userId
-			Input.users[message.userId] = {id:userId, local:true}
-			Platform.setLocalStorageObject "room"+roomId, RoomInfo(Time.now, userId)
+			Input.internalUsers[message.userId] = {id:userId, local:true}
+			Platform.setLocalStorageObject "room"+roomId, RoomInfo(currentTime, userId)
 			
 			if message.version != Platform.version
 				alert "You are using an old version of this application. Please refresh your browser."
@@ -690,8 +867,18 @@ unit Network
 			createOffers message.partnerIds
 			
 			// The first user will enter the "connected" state right away, all later uers will first 
-			// ping the existing users to sync the startTime and calculate the networkFrame from it
+			// ping the existing users to sync the startTime and calculate the frame from it
 			if userId == 0: startConnected
+				
+	private resendOffers
+		int[] partnerIds
+		for c -> connections
+			if c: log "Connection "+c.userId+" state:"+c.state+" offerByMe:"+c.offerByMe
+			else  log "Connection null"
+			if c && (c.state == Disconnected || c.state == Reconnecting) && c.offerByMe
+				partnerIds.add c.userId
+		log "Resending offers", userId, partnerIds
+		createOffers partnerIds		
 	
 	private onSignal: SignalMessage message
 		log "on signal: "+message.signal.type+" "+message.senderId+" -> "+message.signal.receiverId
@@ -711,8 +898,8 @@ unit Network
 				],
 			},{
 				urls: 'turn:81.169.197.127',
-	    		username: 'app',
-	    		credential: 'cyancircle'
+				username: 'app',
+				credential: 'cyancircle'
 			}
 			],
 			// iceCandidatePoolSize: 10,
@@ -720,21 +907,20 @@ unit Network
 		
 		// Event handlers
 		peerConnection.onconnectionstatechange = e => {
-			console.log("onconnectionstatechange", peerConnection.connectionState)
+			Network_log("onconnectionstatechange", peerConnection.connectionState)
 			if(peerConnection.connectionState == "disconnected")
 				Network_onDisconnectFromPeer(c)
 		}
-		peerConnection.oniceconnectionstatechange = e => console.log("oniceconnectionstatechange", peerConnection.iceConnectionState)
-		peerConnection.onicegatheringstatechange = e => console.log("onicegatheringstatechange", peerConnection.iceGatheringState)
-		peerConnection.onsignalingstatechange  = e => console.log("onsignalingstatechange", peerConnection.signalingState)
-		peerConnection.onnegotiationneeded = () => console.log("onnegotiationneeded")
-		console.log("createOfferFor: setup event handlers")
+		peerConnection.oniceconnectionstatechange = e => Network_log("oniceconnectionstatechange", peerConnection.iceConnectionState)
+		peerConnection.onicegatheringstatechange = e => Network_log("onicegatheringstatechange", peerConnection.iceGatheringState)
+		peerConnection.onsignalingstatechange  = e => Network_log("onsignalingstatechange", peerConnection.signalingState)
+		peerConnection.onnegotiationneeded = () => Network_log("onnegotiationneeded")
 		
 		peerConnection.onicecandidate = async event => {
 			if (event.candidate)
 				Network_sendToServer(new IceMessage(Network_userId, c.userId, event.candidate))
 			else
-				console.log('Got final candidate!');
+				Network_log('Got final candidate!');
 		}
 		return peerConnection
 	
@@ -748,7 +934,7 @@ unit Network
 			connections.add connection = Connection(partnerId)
 		connection.peerConnection = setupPeerConnection(connection)
 		connection.offerByMe = offerByMe
-		let user = Input.users[partnerId] || (Input.users[partnerId] = {id:partnerId, local:false})
+		let user = Input.internalUsers[partnerId] || (Input.internalUsers[partnerId] = {id:partnerId, local:false})
 		user.acknowledgedPos = acknowledgePos
 		log partnerId, offerByMe, acknowledgePos, connection.state, connection.dataChannel
 		return connection
@@ -762,13 +948,13 @@ unit Network
 				try {
 					// Tell the other users whether we are are reconnecting and already have inputs from them
 					// or whether they need to send their past inputs to us
-					let existingUser = Input_users[partnerId]
+					let existingUser = Input_internalUsers[partnerId]
 					let acknowledgePos = existingUser ? existingUser.inputs.writePos : 0
 					
 					// Peer connection
 					let connection = Network_createConnection(partnerId, /*offerByMe*/true, acknowledgePos)
 					let peerConnection = connection.peerConnection
-					console.log("createOffers: Created peer connection for partner "+partnerId)
+					Network_log("createOffers: Created peer connection for partner "+partnerId)
 					
 					// Data channel
 					let dataChannel = peerConnection.createDataChannel("channel", {ordered: false, maxRetransmits: 0})
@@ -779,12 +965,12 @@ unit Network
 						Network_logConnectionType(peerConnection);
 						Network_onConnectedToPeer(connection, /*isNewUser*/true);
 					}
-					dataChannel.onclose = e => console.log("onclose", e)
+					dataChannel.onclose = e => Network_log("onclose", e)
 					dataChannel.onclosing = e => {
-						console.log("onclosing -> disconnect", e)
+						Network_log("onclosing -> disconnect", e)
 						Network_onDisconnectFromPeer(connection)
 					}
-					dataChannel.onerror = e => console.log("onerror", e)
+					dataChannel.onerror = e => Network_log("onerror", e)
 					dataChannel.onmessage = e => {
 						Network_onPeerMessage(connection, new Buffer(e.data, 0, 0, 0))
 					}
@@ -799,7 +985,8 @@ unit Network
 					Network_log("createOffers: Created and sent offer, waiting for answer. receiverId:"+partnerId+" acknowledgePos:"+acknowledgePos);
 				}
 				catch(e) {
-					console.error(e)
+					console.error(e);
+					Network_log(e.stack);
 				}
 			}
 		}
@@ -808,12 +995,12 @@ unit Network
 	private js void onReceivedOffer: int partnerId, Signal offer
 		try {
 			// Peer connection
-			let connection = Network_createConnection(partnerId, /*offerByMe*/true, offer.acknowledgePos)
+			let connection = Network_createConnection(partnerId, /*offerByMe*/false, offer.acknowledgePos)
 			let peerConnection = connection.peerConnection
 			
 			// Data channel
 			peerConnection.addEventListener('datachannel', e => {
-				console.log("onReceivedOffer: received datachannel")
+				Network_log("onReceivedOffer: received datachannel")
 				let dataChannel = e.channel
 				dataChannel.binaryType = "arraybuffer"
 				connection.dataChannel = dataChannel
@@ -825,14 +1012,14 @@ unit Network
 				dataChannel.onmessage = e => {
 					Network_onPeerMessage(connection, new Buffer(e.data, 0, 0, 0))
 				}
-				dataChannel.onclose = e => console.log("onclose", e)
+				dataChannel.onclose = e => Network_log("onclose", e)
 				dataChannel.onclosing = e => {
-					console.log("onclosing -> disconnect", e)
+					Network_log("onclosing -> disconnect", e)
 					Network_onDisconnectFromPeer(connection)
 				}
-				dataChannel.onerror = e => console.log("onerror", e)
+				dataChannel.onerror = e => Network_log("onerror", e)
 			})
-			console.log("onReceivedOffer: data channel listeners")
+			Network_log("onReceivedOffer: data channel listeners")
 						
 			// Video
 			Network_setupRemoteVideo(partnerId, peerConnection)
@@ -846,12 +1033,12 @@ unit Network
 		}
 		catch(e) {
 			console.error(e)
-			// Network_statusString = "Error while joining room: "+e
+			Network_log(e.stack);
 		}
 	private js void onReceivedAnswer: int partnerId, Signal answer
 		let connection = Network_connections.find(a => a.userId == partnerId)
 		await connection.peerConnection.setRemoteDescription(new RTCSessionDescription(answer));
-		console.log("onReceivedAnswer: Received answer, set remote description")
+		Network_log("onReceivedAnswer: Received answer, set remote description")
 		
 	private js void onIce: IceMessage message
 		let partnerId = message.senderId
@@ -862,11 +1049,10 @@ unit Network
 				await connection.peerConnection.addIceCandidate(new RTCIceCandidate(message.iceCandidate));
 			} catch(e) {
 				log("onIce failed " + e.message)
+				Network_log(e.stack);
 			}
 		}
 		
-	Buffer sendBuffer
-	
 	private onPeerMessage: Connection c, Buffer buffer
 		NetworkMessageType type = cast buffer.readInt16
 		if type == Tick: onTickMessage c, buffer; else
@@ -874,8 +1060,9 @@ unit Network
 		if type == Pong: onPongMessage c, buffer; else
 		if type == OwnInputsAfterReconnect: onOwnInputsAfterReconnect c, buffer;
 			
-	private void sendTickMessage: Connection c
-		                          int frames
+	private void sendTickMessage: Connection to
+		                          int inputFrame
+		                          int currentFrame
 		                          int acknowledgePos
 		                          int checksumFor
 		                          float checksum
@@ -883,76 +1070,89 @@ unit Network
 		                          int start
 		                          int end
 		sendBuffer.reset
-		NetworkMessageType type = Tick
-		sendBuffer.writeInt16 cast type
-		sendBuffer.writeInt32 frames
-		sendBuffer.writeInt32 acknowledgePos
+		sendBuffer.writeInt16 cast NetworkMessageType.Tick
 		sendBuffer.writeInt32 checksumFor
-		sendBuffer.writeFloat64 checksum
+		sendBuffer.writeFloat64 checksum || 0
+		sendBuffer.writeInt32 inputFrame
+		sendBuffer.writeInt32 currentFrame
+		sendBuffer.writeInt32 acknowledgePos
 		sendBuffer.writeInt32 start
 		sendBuffer.writeBuffer buffer, start, end - start
-		send c, sendBuffer
+		send to, sendBuffer
 		
+		sentLog += " #{inputFrame} ack:{acknowledgePos} cf:{currentFrame} s:{start} e:{end}"
+		
+	
+	// private js void onTickMessage: Connection c, Buffer buffer
+	// 	if(Math.random() < .75) setTimeout(() => Network_onTickMessageActual(c, buffer), Math.random()*500)
+		
+	// private onTickMessageActual: Connection c, Buffer buffer
 	private onTickMessage: Connection c, Buffer buffer
-		let sender = Input.users[c.userId]
+		let sender = Input.internalUsers[c.userId]
 		if c.state != Connected: c.state = Connected
 
-		sender.frames = buffer.readInt32
-		sender.acknowledgedPos = buffer.readInt32
-		
 		// Checksum
 		let checksumFor = buffer.readInt32
 		let checksum = buffer.readFloat64
-		let myChecksum = checksums[checksumFor] 
-		if !myChecksum
-			checksums[checksumFor] = checksum
-		else
-			if myChecksum != checksum: onWrongChecksum
-			eventLog += " ["+checksumFor+"] mine:"+myChecksum+" theirs:"+checksum
+		checksumLog += " <{c.userId}> #{checksumFor} {checksum}"
+		if checksum
+			let myChecksum = checksums[checksumFor]
+			if !myChecksum
+				checksums[checksumFor] = checksum
+			else
+			if(myChecksum isApproximately checksum)
+				checkedChecksums++
+			else
+				onWrongChecksum
+				checkedChecksums = 0
+				checksumLog += " MISMATCH mine:{myChecksum}"
 		
-		let writeStart = buffer.readInt32
-		let length = buffer.readBuffer sender.inputs, writeStart
-		sender.inputs.writePos = writeStart + length
-		
-		// log sender.frames, writeStart, length, sender.acknowledgedPos
-		receivedLog += " <{c.userId}> f:{sender.frames} a:{sender.acknowledgedPos} l:{length}"
-		
-		replayCommonState
-		
-		// if length: for Input.users: log "User {id}", id, inputs
+		int inputFrame = buffer.readInt32 
+		if inputFrame > sender.inputFrame
+			sender.inputFrame = inputFrame
+			sender.currentFrame = buffer.readInt32 
+			sender.acknowledgedPos = buffer.readInt32
 			
-		// let startFrame = message.frames - message.inputs.length
-		// for i, item -> message.inputs
-		// 	// sender.inputs[startFrame + i] = item
-		// 	receivedLog += " ["+(startFrame + i)+"]"
-		// 	for input -> item: receivedLog += " "+input
-				
+			let writeStart = buffer.readInt32
+			let length = buffer.readBuffer sender.inputs, writeStart
+			sender.inputs.writePos = writeStart + length
+			receivedFrames = getReceivedInputFrames
+	
+			receivedLog += " <{c.userId}> #{sender.inputFrame} a:{sender.acknowledgedPos} cf:{sender.currentFrame} s:{writeStart} e:{sender.inputs.writePos}"
+		else
+			// Ignore this frame because we already received a later frame
+			// Later frames start from the pos we acknowleged (everything before that we definately already received)
+			// until the latest available pos, so later frames contain the maximum available information
+			
+			// This is just for logging and debugging
+			let currentFrame = buffer.readInt32 
+			let acknowledgedPos = buffer.readInt32
+			let writeStart = buffer.readInt32
+			let length = buffer.readInt32
+			receivedLog += " <{c.userId}> irgnoring #{inputFrame} (already at {sender.inputFrame}) a:{acknowledgedPos} s:{writeStart} e:{writeStart+length}"
+		
 	private void sendOwnInputsAfterReconnectMessage: Connection c
-		                                int frames
+		                                int frame
 		                                Buffer buffer
-		// Platform.debugger
 		sendBuffer.reset
-		NetworkMessageType type = OwnInputsAfterReconnect
-		sendBuffer.writeInt16 cast type
-		sendBuffer.writeInt32 frames
+		sendBuffer.writeInt16 cast NetworkMessageType.OwnInputsAfterReconnect
+		sendBuffer.writeInt32 frame
 		sendBuffer.writeBuffer buffer, start:0, length:buffer.writePos
 		send c, sendBuffer
-		log "Sending own inputs to {c.userId}", frames, buffer, sendBuffer
+		log "Sending own inputs to {c.userId}", frame, buffer, sendBuffer
 		
 	private onOwnInputsAfterReconnect: Connection c, Buffer buffer
 		// Platform.debugger
-		let localUser = Input.users[userId]
+		let localUser = Input.internalUsers[userId]
 		log userId, localUser.id
-		localUser.frames = buffer.readInt32
+		localUser.inputFrame = buffer.readInt32
 		let length = buffer.readBuffer localUser.inputs, writeStart:0
 		localUser.inputs.writePos = length
-		log "Receiving own inputs from {c.userId}", localUser.frames, localUser.inputs.writePos, buffer, localUser.inputs
-		// for Input.users: log "User {id}", id, frames, inputs
+		log "Receiving own inputs from {c.userId}", localUser.inputFrame, localUser.inputs.writePos, buffer, localUser.inputs
 		
 	private void sendPingMessage: Connection c, float pingTime
 		sendBuffer.reset
-		NetworkMessageType type = Ping
-		sendBuffer.writeInt16 cast type
+		sendBuffer.writeInt16 cast NetworkMessageType.Ping
 		sendBuffer.writeFloat64 pingTime
 		send c, sendBuffer
 			
@@ -960,52 +1160,51 @@ unit Network
 		log c.state
 		if c.state != Disconnected
 			let pingTime = buffer.readFloat64
-			sendPongMessage c, Time.now-startTime, pingTime
+			sendPongMessage c, currentTime-startTime, pingTime
 		
 	private void sendPongMessage: Connection c, float timeSinceStart, float pingTime
 		sendBuffer.reset
-		NetworkMessageType type = Pong
-		sendBuffer.writeInt16 cast type
+		sendBuffer.writeInt16 cast NetworkMessageType.Pong
 		sendBuffer.writeFloat64 timeSinceStart		
 		sendBuffer.writeFloat64 pingTime
 		send c, sendBuffer
 
 	private onPongMessage: Connection c, Buffer buffer
-		float now = Time.now
+		float now = currentTime
 		float timeSinceStart = buffer.readFloat64
 		float pingTime = buffer.readFloat64
 		float pingPongTime = now - pingTime
 		float estimatedStartTime = now - pingPongTime/2 - timeSinceStart
-		// eventLog += "user:"+c.userId+" count:"+pongCount+" pingPongTime: "+pingPongTime+" estimatedStartTime:"+estimatedStartTime
 		if pongCount >= 2: estimatedStartTimeTotal += estimatedStartTime
 		log pongCount, pingPongTime, estimatedStartTime
 		if ++pongCount >= pingCount
 			startConnected startTime: estimatedStartTimeTotal / (pongCount - 2)
 			
 	private js void send: Connection connection, Buffer buffer
-		// if(Math.random() < .5) setTimeout(() => connection.dataChannel.send(buffer.buffer), Math.random()*250)
 		connection.dataChannel.send(buffer.buffer)
-		
+
 	private js void setupLocalVideo: int userId
-		let audio = location.href.indexOf("/p/") == -1
-		Network_localVideo = await navigator.mediaDevices.getUserMedia({video: true, audio});
+		if(Network_isLocalhost) return 
+		Network_localVideo = await navigator.mediaDevices.getUserMedia({video: true, audio: false});
 		Network_createVideoElement(userId, Network_localVideo, /*local*/true)
 			
 	private js void setupRemoteVideo: int partnerId, object peerConnection
+		if(Network_isLocalhost) return 
 		for(let track of Network_localVideo.getTracks())
 			peerConnection.addTrack(track, Network_localVideo);
 		
 		var remoteStream = new MediaStream();
 		Network_createVideoElement(partnerId, remoteStream, /*local*/false)
 		peerConnection.addEventListener('track', event => {
-			console.log('Got remote track:', event.streams[0]);
+			Network_log('Got remote track:', event.streams[0]);
 			event.streams[0].getTracks().forEach(track => {
-				console.log('Add a track to the remoteStream:', track);
+				Network_log('Add a track to the remoteStream:', track);
 				remoteStream.addTrack(track);
 			});
 		});
 
 	private js void createVideoElement: int userId, object stream, bool local
+		let internalUser = Input_internalUsers[userId];
 		let el = document.createElement('video');
 		el.style = "position:absolute; top:0px; left:0px; z-index:10000; visibility:hidden; "+(local ? "transform: scaleX(-1)" : "")
 		el.autoplay = true
@@ -1014,46 +1213,53 @@ unit Network
 		el.muted = local
 		document.body.appendChild(el)
 		el.srcObject = stream;
-		let vs = Network_videoScreens[userId] || (Network_videoScreens[userId] = new VideoScreenInfo(null, new float2(0,0,null), 0))
-		vs.videoElement = el
+		internalUser.videoElement = el;
 		
 	private js void removeVideoElement: int userId
-		let vs = Network_videoScreens[userId]
-		if(vs && vs.videoElement) vs.videoElement.remove()
+		let internalUser = Input_internalUsers[userId];
+		if(internalUser?.videoElement) internalUser.videoElement.remove()
 			
 	setUserVideoAndColor: int userId = 0, float2 pos = {}, float width = 440, Color color = null
-		let vs = videoScreens[userId] || (videoScreens[userId] = VideoScreenInfo)
-		vs.pos = pos
-		vs.width = width
-		if color: Input.users[userId].color = color
+		let user = Input.users[userId]
+		if !user: return
+		user.videoPosition = pos
+		user.videoWidth = width
+		user.color = color
 		
 	internal js void updateVideoScreen
-		if(Network_mode == 2/*Local*/) {
-			for(let vs of Network_videoScreens) {
-				graphics_drawImage(Image_VideoScreen, vs.pos, 0, vs.width/440, -1)
+		if(Network_mode == 2/*Local*/ || Network_isLocalhost) {
+			for(let user of Input_users) {
+				if(user) {
+					graphics_drawImage(Image_VideoScreen, user.videoPosition, 0, user.videoWidth/440, -1)
+				}
 			}
 		}
 		else {
-			for(let vs of Network_videoScreens) {
-				if(vs.videoElement && vs.width) {
-					let el = vs.videoElement
-					let pixelPos = Input_logicalToPixelPosition(vs.pos)
-					let pixelSizeX = vs.width*graphics_totalMatrix.m0/Platform_pixelRatio
-					let pixelSizeY = (vs.width*3/4)*graphics_totalMatrix.m3/Platform_pixelRatio
-					el.style.left = (pixelPos.x-pixelSizeX/2)+"px"
-					el.style.top = (pixelPos.y-pixelSizeY/2)+"px"
-					el.style.width = pixelSizeX+"px"
-					el.style.height = pixelSizeY+"px"
-					el.style.visibility = "visible"
+			for(let user of Input_users) {
+				if(user) {
+					let internetUser = Input_internalUsers[user.id];
+					let el = internetUser?.videoElement
+					if(el) {
+						let pixelPos = Input_logicalToPixelPosition(user.videoPosition)
+						let pixelSizeX = user.videoWidth*graphics_totalMatrix.m0/Platform_pixelRatio
+						let pixelSizeY = (user.videoWidth*3/4)*graphics_totalMatrix.m3/Platform_pixelRatio
+						el.style.left = (pixelPos.x-pixelSizeX/2)+"px"
+						el.style.top = (pixelPos.y-pixelSizeY/2)+"px"
+						el.style.width = pixelSizeX+"px"
+						el.style.height = pixelSizeY+"px"
+						el.style.visibility = "visible"
+					}
 				}
 			}
 		}
 		
 	internal drawFingers
 		for user -> Input.users
-			if (!user.local or Platform.showLocalPointer) and Framework.isVisibleFor user.touchPos, this.userId
-				drawImage finger, user.touchPos+{11,34}, frame:user.id
-				if user.color: drawRectangle user.touchPos+{16,76}, size:{26,8}, user.color
+			if user
+				let internalUser = Input.internalUsers[user.id]
+				if (!internalUser.local or Platform.showLocalPointer) and Framework.isVisibleFor user.touchPos, this.userId
+					drawImage finger, user.touchPos+{11,34}, frame:user.id
+					if user.color: drawRectangle user.touchPos+{16,76}, size:{26,8}, user.color
 				
 	private js void logConnectionType(object peerConnection)
 		setTimeout(async () => {
@@ -1064,10 +1270,10 @@ unit Network
 				let candidate = stats.get(candidatePair.localCandidateId);
 				let type = candidate.candidateType
 				let ip = candidate.ip || candidate.address
-				console.log(">>> Connection", type, ip, candidate)
+				Network_log(">>> Connection", type, ip, candidate)
 				if(Network_userId == 0) Platform_setTitle(candidate.candidateType+" "+ip) 
 			} else {
 				window.stats = [...stats.values()]
-				console.log("Can't access stats", window.stats)
+				Network_log("Can't access stats", window.stats)
 			}
 		}, 5000)

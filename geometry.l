@@ -5,7 +5,7 @@ struct float2
 	SourceCodeLocation location
 	
 	// Used to specify that the vector is not set or invalid
-	static float2 none = new float2(float.infinity, float.infinity)
+	const float2 none = new float2(float.infinity, float.infinity)
 	
 	// A string representation of the vector
 	string toString := "({x} {y})"
@@ -191,13 +191,21 @@ struct float2
 	cross: float2 value // The value to calculate the cross procut with
 		return x*value.y - y*value.x
 		
+	serialize: Buffer buffer
+		buffer.writeFloat64(x)
+		buffer.writeFloat64(y)
+		
+	deserialize: Buffer buffer
+		x = buffer.readFloat64
+		y = buffer.readFloat64
+		
 // A 2D vector comprised of an integer x and y coordinate
 struct int2
 	int x // The x-coordinate of the vector
 	int y // The y-coordinate of the vector
 	
 	// Used to specify that the vector is not set or invalid
-	static int2 none = new int2(int.minValue, int.minValue)
+	const int2 none = new int2(int.minValue, int.minValue)
 	
 	// Creates a copy of the vector with the same values
 	int2 clone := int2(x, y)
@@ -218,8 +226,8 @@ struct int2
 	int2 operator *  (int2 a, int2 b) return int2(a.x*b.x, a.y*b.y)
 	int2 operator *  (int2 a, int b) return int2(a.x*b, a.y*b)
 		
-	int2 operator /  (int2 a, int2 b) return int2(a.x/b.x, a.y/b.y)
-	float2 operator /  (int2 a, float b) return float2(a.x/b, a.y/b)
+	float2 operator / (int2 a, int2 b) return float2(a.x/b.x, a.y/b.y)
+	float2 operator / (int2 a, float b) return float2(a.x/b, a.y/b)
 	
 	int2 operator += (int2 a, int2 b) a.x += b.x; a.y += b.y; return a
 	int2 operator -= (int2 a, int2 b) a.x -= b.x; a.y -= b.y; return a

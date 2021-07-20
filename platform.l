@@ -1,10 +1,12 @@
 enum PlatformMode: Pause, Record, Play, Pointer, Slide
-enum ScaleMode: Auto, FixedWidth, FixedHeight, TopWidth, NoScaling
+enum ScaleMode: Auto, FixedWidth, FixedHeight, None
+enum AnchorMode: TopLeft, TopCenter, Center
 		
-unit Platform
+transient unit Platform
 	public userCount = 2
 	public bool showSafeArea = true
 	public bool showLocalPointer = false
+	public bool isLocal = false
 	
 	public inline js string url := location.href
 	public inline js int version := version
@@ -12,6 +14,7 @@ unit Platform
 	
 	public float2 referenceSize = {1920, 1080}
 	public ScaleMode scaleMode = Auto, effectiveScaleMode
+	public AnchorMode anchor = Center
 	
 	private object canvas = null
 	internal object context = null
@@ -66,7 +69,6 @@ unit Platform
 				break;
 				
 			case 1:
-			case 3:
 				Platform_effectiveScaleMode = Platform_scaleMode
 				scale = ratio.x; 
 				Platform_size = new float2(Platform_referenceSize.x, Platform_pixelSize.y/scale, null)
@@ -78,11 +80,9 @@ unit Platform
 				Platform_size = new float2(Platform_pixelSize.x/scale, Platform_referenceSize.y, null)
 				break;
 		}
-		
-		if(Platform_scaleMode < 3)
-			Platform_baseMatrix = new Matrix2D(scale,0,0,scale,Platform_pixelSize.x/2,Platform_pixelSize.y/2)
-		else
-			Platform_baseMatrix = new Matrix2D(scale,0,0,scale,Platform_pixelSize.x/2,0)
+		let offsetX = Platform_anchor > 0 ? Platform_pixelSize.x/2 : 0
+		let offsetY = Platform_anchor > 1 ? Platform_pixelSize.y/2 : 0
+		Platform_baseMatrix = new Matrix2D(scale,0,0,scale,offsetX,offsetY)
 		
 	private startEngine: bool isDebug
 		init
@@ -96,9 +96,12 @@ unit Platform
 		resize
 		if !isDebug: Network.simulateConnection = false
 		if mode <= Play: mode = Pause
-		let param = url.split("/")[4]
-		if isDebug || param == "local" || url.startsWith("file"): Network.startLocal userCount:userCount
-		else                                                      Network.join roomId:param
+		let path = url.split("/")
+		let gameId = path[3]
+		let roomId = path[4]
+
+		if isDebug || isLocal || roomId == "local" || url.startsWith("file"): Network.startLocal userCount:userCount
+		else                                                                  Network.join gameId, roomId
 		sendMode
 		// Network.tick
 		
@@ -142,14 +145,13 @@ unit Platform
 		_sendToEditor({type:"touch", id, x:pos.x, y:pos.y, phase, row, column, file})
 	
 	private js void sendMode
-		if(Platform_isDebug) _sendToEditor({type:"setPlatformMode", mode:Platform_mode, frame:Network_logicFrame})
+		if(Platform_isDebug) _sendToEditor({type:"setPlatformMode", mode:Platform_mode, frame:Network_frame})
 
 	private inline js void sendEvaluateFinished
 		if(Platform_isDebug) _sendToEditor({type:"evaluateFinished"})
 
 	js void setTitle: string title
 		document.title = title
-		console.log(title)
 		
 	inline js void requestFullscreen
 		try   { document.body.requestFullscreen() }
@@ -202,7 +204,7 @@ struct FileFilter
 	string name
 	string[] extensions
 
-unit Http	
+transient unit Http	
 	js void get: string url, void(object result) code
 		let response = await fetch(url)
 		code(await response.json())
@@ -252,3 +254,68 @@ unit Http
 		} catch(e) {
 			else(e.message)
 		}
+		
+transient unit IndexedDB
+	private object db = null
+	
+	js void start: string databaseName, string storeName, int version = 1
+		try {
+			IndexedDB_storeName = storeName;
+			var request = indexedDB.open(databaseName, version)
+			request.onupgradeneeded = e => {
+				IndexedDB_db = e.target.result;
+				if(!IndexedDB_db.objectStoreNames.contains(storeName))
+					IndexedDB_db.createObjectStore(storeName, { keyPath: "id" });
+				Network_log("IndexedDB: update")
+			}
+			request.onsuccess = e => {
+				IndexedDB_db = e.target.result;
+				Network_log("IndexedDB: success")
+			}
+			request.onerror = e => {
+				Network_log("Error in IndexedDB.start: "+request.error);
+			}
+		} catch(e) {
+			Network.log("Error in IndexedDB.start: "+e.message)
+		}
+		
+	js void open: string storeName, string id, void(Buffer buffer) then, void() else = null
+		try {
+			let trans = IndexedDB_db.transaction(storeName, "readonly")
+			let req = trans.objectStore(IndexedDB_storeName).get(id)
+			req.onsuccess = async e => {
+				let result = req.result
+				if(result) {
+					let arrayBuffer = await result.data.arrayBuffer()
+					let buffer = new Buffer(arrayBuffer, 0, 0, 0)
+					then(buffer)
+				} @else {
+					else?.()
+				}
+			}
+			req.onerror = e => {
+				Network.log("Error in IndexedDB.open: "+req.error)
+				else?.()
+			}
+		} catch(e) {
+			Network.log("Error in IndexedDB.open: "+e.message)
+			else?.()
+		}
+				
+	js void save: string storeName, string id, Buffer buffer, void() then = null, void() else = null
+		try {
+			let trans = IndexedDB_db.transaction(storeName, "readwrite")
+			trans.onerror = e => {
+				Network.log("Error in IndexedDB.save: "+trans.error)
+				else?.()
+			}
+			let dataView = new DataView(buffer.buffer, 0, buffer.writePos)
+			let data = new Blob([dataView])
+			trans.objectStore(IndexedDB_storeName).put({id, data}).onsuccess = e => {
+				then?.()
+			}
+		} catch(e) {
+			Network.log("Error in IndexedDB.save: "+e.message)
+			else?.()
+		}
+
