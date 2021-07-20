@@ -603,9 +603,8 @@ transient unit Network
 			alertShown = true
 			
 	log: logstring text
-		string str = text
-		eventLog += str + "\n"
-		print str
+		eventLog += text + "\n"
+		print text
 		
 	inline js int currentTime := Date.now()
 	

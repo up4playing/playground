@@ -103,6 +103,8 @@ class string
 	// Returns true if the string is not null and not empty	
 	inline js bool toBool := this
 	
+	inline js string toString() this
+	
 	inline js int toInt := parseInt(this)
 	
 	inline js string[] split: string character = " "
@@ -131,7 +133,7 @@ class string
 		
 	inline js string trim
 		this.trim()
-
+		
 // A logical data type that can have the value true or false
 enum bool: false, true
 		
