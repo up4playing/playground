@@ -45,7 +45,6 @@ unit Snapshot
 			if ++takeCount > 5
 				int index = currentIndex
 				IndexedDB.save "snapshot", "{Network.gameId}-0", snap
-					print "Saved snapshot {index}"
 			takeAtEndOfStep = false
 			currentIndex++
 	
@@ -488,8 +487,10 @@ transient unit Network
 			lastError = error.message
 			
 		// Cleanup
-		for user -> Input.internalUsers if user
-			user.clearEvent
+		for internalUser -> Input.internalUsers
+			internalUser?.clearEvent
+		for user -> Input.users
+			user?.clearEvents
 			
 		frame++
 		
@@ -604,7 +605,7 @@ transient unit Network
 			
 	log: logstring text
 		eventLog += text + "\n"
-		print text
+		// print text
 		
 	inline js int currentTime := Date.now()
 	
@@ -1228,7 +1229,7 @@ transient unit Network
 	internal js void updateVideoScreen
 		if(Network_mode == 2/*Local*/ || Network_isLocalhost) {
 			for(let user of Input_users) {
-				if(user) {
+				if(user && user.videoWidth) {
 					graphics_drawImage(Image_VideoScreen, user.videoPosition, 0, user.videoWidth/440, -1)
 				}
 			}

@@ -266,11 +266,10 @@ transient unit IndexedDB
 				IndexedDB_db = e.target.result;
 				if(!IndexedDB_db.objectStoreNames.contains(storeName))
 					IndexedDB_db.createObjectStore(storeName, { keyPath: "id" });
-				Network_log("IndexedDB: update")
+				Network_log("IndexedDB successfully upgraded to version "+version)
 			}
 			request.onsuccess = e => {
 				IndexedDB_db = e.target.result;
-				Network_log("IndexedDB: success")
 			}
 			request.onerror = e => {
 				Network_log("Error in IndexedDB.start: "+request.error);
