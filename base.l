@@ -26,6 +26,12 @@ struct int
 	inline js int shiftRight: int count
 		(this >> count)
 		
+	inline js int bitwiseOr: int value
+		(this | value)
+	
+	inline js int bitwiseAnd: int value
+		(this & value)
+	
 	inline js int limit: int min
 		(this < min ? min : this)
 	
@@ -201,9 +207,6 @@ class List<T>
 		let firstItem = this[0]
 		this.splice(0, 1)
 		return firstItem
-		
-	inline js bool contains: T item
-		(this.indexOf(item) != -1)
 	
 	// Gets the number of items in the list
 	inline js int length() this.length
