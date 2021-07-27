@@ -294,9 +294,9 @@ unit Input
 								Network.parseLog += " down {id} {touchPos} {button}"
 							else
 								touch = {id, userId, cast type, button, touchPos, touchPos, isDown:true}
+								user.touches.add touch
 								Network.parseLog += " down(new) {id} {touchPos} {button}"
 							internalUser.downTouches.add touch
-							user.touches.add touch
 						else
 						if type == TouchMove
 							let touch = user.touches.find a.id == id
@@ -308,7 +308,9 @@ unit Input
 								Network.parseLog += " move {id} {touchPos} {button}"
 							else
 								touch = {id, userId, cast type, button, touchPos, referenceStartPosition:float2.none, isDown:false}
+								user.touches.add touch
 								Network.parseLog += " move(new) {id} {touchPos} {button}"
+							internalUser.movingTouches.add touch
 							cursor = "auto"
 						else
 						if type == TouchUp
@@ -322,6 +324,7 @@ unit Input
 								Network.parseLog += " up {id} {touchPos} {button}"
 							else
 								touch = {id, userId, cast type, button, touchPos, referenceStartPosition:float2.none, isDown:false}
+								user.touches.add touch
 								Network.parseLog += " up(new) {id} {touchPos} {button}"
 							internalUser.upTouches.add touch
 						else
