@@ -182,7 +182,7 @@ transient unit Platform
 	inline js void vibrate: int duration = 100
 		navigator.vibrate(duration)
 		
-	inline js void saveImage: string file
+	js void saveImage: string file
 		var url = Platform_canvas.toDataURL('image/png');
 		var base64Data = url.replace(/data:image\/png;base64,/, "");
 		var fs = require("fs")

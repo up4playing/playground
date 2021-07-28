@@ -112,6 +112,8 @@ class string
 	inline js string toString() this
 	
 	inline js int toInt := parseInt(this)
+		
+	inline js int toFloat := parseFloat(this)
 	
 	inline js string[] split: string character = " "
 		this.split(character)
