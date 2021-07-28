@@ -207,14 +207,14 @@ unit Input
 		inputs.writeInt32 keyCode
 		
 	private handleTouchEvent: InputType type, float x, float y, int id, int button
+		float2 pixelPos = {x*Platform.pixelRatio, y*Platform.pixelRatio}
+		float2 referencePos = pixelPos.getRelativeTo(Platform.baseMatrix)
+		Platform.handleSlide type, id, pixelPos, referencePos
+		
 		if Network.mode == None || Platform.mode != Record || Network.userId == -1: return
 		let user = internalUsers[Network.userId], inputs = user.inputs
 		if !user.collectInputs: return
 
-		float2 pixelPos = {x*Platform.pixelRatio, y*Platform.pixelRatio}
-		float2 referencePos = pixelPos.getRelativeTo(Platform.baseMatrix)
-		Platform.handleSide type, id, pixelPos, referencePos
-		
 		if type == TouchMove
 			int index = getLastTouchMoveIndex id
 			if index
@@ -689,24 +689,21 @@ unit Input
 			_input.style.fontSize = "1px"
 			_input.style.backgroundColor = "#000000"
 			_input.oninput = e => {
-				Input_handleTextInput(8, _input.value)
+				Input_handleTextInput(7, _input.value)
 			}
 			document.body.appendChild(_input)
 		}
 		return _input
 				
-	js void showKeyboard
-		if(!window._input) {
-			Input_getOrCreateInputField()
-			setTimeout(() => _input.focus(), 100)
-		} else {
-			_input.focus()
-		}
+	js void startTextInput: string initalValue
+		let input = Input_getOrCreateInputField()
+		input.value = initalValue
+		setTimeout(() => _input.focus(), 0)
 		
 	js void setTextInput: string value
 		let input = Input_getOrCreateInputField()
 		input.value = value
-		Input_handleTextInput(8, value)
+		Input_handleTextInput(7, value)
 		
 	js void updateCursor
 		document.body.style.cursor = Input_cursor
@@ -716,7 +713,7 @@ unit Input
 			for text -> user.textCompositions
 				code text
 				
-	onTextInput: void(string characters) code
+	onTextInput: void(string textInput) code
 		for user -> internalUsers if user
 			for text -> user.textInputs
 				code text

@@ -114,10 +114,11 @@ transient unit Platform
 	private tick
 		if mode == Play || mode == Record: Network.animationFrame
 		
-	float2 touchUpPos
-	int locationIndex
+	private float2 touchUpPos
+	private int locationIndex
+	private SourceCodeLocation[] locations
 	
-	handleSide: InputType inputType, int id, float2 pixelPos, float2 referencePos	
+	internal handleSlide: InputType inputType, int id, float2 pixelPos, float2 referencePos	
 		if Platform.mode == Pointer or Platform.mode == Slide
 			int row, column
 			string file
@@ -126,19 +127,21 @@ transient unit Platform
 				if inputType == TouchUp: touchUpPos = pixelPos
 					
 				if (inputType == TouchDown and movedSinceTouchUp) or (inputType == TouchUp and !movedSinceTouchUp)
-					if !movedSinceTouchUp: locationIndex++
-					else                   locationIndex = 0
+					if movedSinceTouchUp                   
+						locationIndex = 0
+						locations.clear
+						for item -> graphics.items
+							if item.location != null and pixelPos.isInsidePoygon item.poly
+								SourceCodeLocation[] itemLocations
+								item.location.flatten itemLocations
+								itemLocations.sort (a.file compareTo b.file) || b.row - a.row || a.column - b.column
+								locations.addRange itemLocations
 					
-					for item -> graphics.items
-						if item.location != null and pixelPos.isInsidePoygon item.poly
-							SourceCodeLocation[] locations
-							item.location.flatten locations
-							locations.sort (a.file compareTo b.file) || b.row - a.row || a.column - b.column
-							let selectedLocation = locations[locationIndex % locations.length]
-							row = selectedLocation.row
-							column = selectedLocation.column
-							file = selectedLocation.file
-							break
+					if locations.length
+						let selectedLocation = locations[locationIndex++ % locations.length]
+						row = selectedLocation.row
+						column = selectedLocation.column
+						file = selectedLocation.file
 			sendTouchToEditor id, referencePos, cast inputType, row, column, file
 			
 	private js void sendTouchToEditor: int id, float2 pos, TouchPhase phase, int row, int column, string file
@@ -182,7 +185,7 @@ transient unit Platform
 	inline js void vibrate: int duration = 100
 		navigator.vibrate(duration)
 		
-	inline js void saveImage: string file
+	js void saveImage: string file
 		var url = Platform_canvas.toDataURL('image/png');
 		var base64Data = url.replace(/data:image\/png;base64,/, "");
 		var fs = require("fs")
