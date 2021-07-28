@@ -82,10 +82,13 @@ transient global unit graphics
 
 	internal finishFrame
 		if(Platform.fastForward) return
-		items.sort b.layer - a.layer
-		for <- items: draw
+		drawItems
 		drawSafeArea
 		
+	private drawItems
+		items.sort b.layer - a.layer
+		for <- items: draw	
+				
 	private isVisibleFor: int user
 		if(Platform.fastForward) return false
 		let visibleFor = user != -1 ? user : currentlyVisibleFor
@@ -182,12 +185,15 @@ transient global unit graphics
 		Platform_context.putImageData(imageData, 0, 0)
 		
 	// Creates an image to draw to
-	js void createImage: float2 size // The size of the image
-		                 void() code // This code will draw on the created image instead of drawing on the screen
+	js void createImage: float2 size      // The size of the image
+		                 string file = "" // Save the image to a file with this filename
+		                 void() code      // This code will draw on the created image instead of drawing on the screen
 		let prevCanvas = Platform_canvas
 		let prevContext = Platform_context
 		let prevPixelSizeX = Platform_pixelSize.x
 		let prevPixelSizeY = Platform_pixelSize.y
+		let prevItems = graphics_items
+		graphics_items = []
 		Platform_canvas = document.createElement("canvas")
 		Platform_canvas.width = size.x
 		Platform_canvas.height = size.y
@@ -195,17 +201,20 @@ transient global unit graphics
 		Platform_pixelSize.x = size.x
 		Platform_pixelSize.y = size.y
 		let a = graphics_localMatrix.matrix, b = graphics_totalMatrix.matrix
-		let a0 = localMatrix.m0, a1 = localMatrix.m1, a2 = localMatrix.m2, a3 = localMatrix.m3, a4 = localMatrix.m4, a5 = localMatrix.m5
-		let b0 = matrix.m0, b1 = matrix.m1, b2 = matrix.m2, b3 = matrix.m3, b4 = matrix.m4, b5 = matrix.m5
+		let a0 = graphics_localMatrix.m0, a1 = graphics_localMatrix.m1, a2 = graphics_localMatrix.m2, a3 = graphics_localMatrix.m3, a4 = graphics_localMatrix.m4, a5 = graphics_localMatrix.m5
+		let b0 = graphics_totalMatrix.m0, b1 = graphics_totalMatrix.m1, b2 = graphics_totalMatrix.m2, b3 = graphics_totalMatrix.m3, b4 = graphics_totalMatrix.m4, b5 = graphics_totalMatrix.m5
 		graphics_localMatrix.set(1, 0, 0, 1, -size.x/2, -size.y/2)
 		graphics_totalMatrix.set(1, 0, 0, 1, size.x/2, size.y/2)
 		code()
-		localMatrix.m0 = a0; localMatrix.m1 = a1; localMatrix.m2 = a2; localMatrix.m3 = a3; localMatrix.m4 = a4; localMatrix.m5 = a5
-		matrix.m0 = b0; matrix.m1 = b1; matrix.m2 = b2; matrix.m3 = b3; matrix.m4 = b4; matrix.m5 = b5
+		graphics_drawItems()
+		if(file) Platform_saveImage(file);
+		graphics_localMatrix.m0 = a0; graphics_localMatrix.m1 = a1; graphics_localMatrix.m2 = a2; graphics_localMatrix.m3 = a3; graphics_localMatrix.m4 = a4; graphics_localMatrix.m5 = a5
+		graphics_totalMatrix.m0 = b0; graphics_totalMatrix.m1 = b1; graphics_totalMatrix.m2 = b2; graphics_totalMatrix.m3 = b3; graphics_totalMatrix.m4 = b4; graphics_totalMatrix.m5 = b5
 		Platform_context = prevContext
 		Platform_canvas = prevCanvas
 		Platform_pixelSize.x = prevPixelSizeX
 		Platform_pixelSize.y = prevPixelSizeY
+		graphics_items = prevItems
 
 	// The default color for all draw operations
 	color
@@ -427,8 +436,8 @@ transient global unit graphics
 		                          outlineWidth = 0          // The width of the outline around the rectangle
 		                          visibleFor = -1           // Only this user will see the rectangle
 		                          implicit layer = 0        // Higher layers are drawn in front of lower layers
-		                          HorizontalAlignment align = Center // The horizontal alignment of the text
-		                          VerticalAlignment valign = Middle  // The vertical alignment of the text
+		                          HorizontalAlignment align = Center // The horizontal alignment of the rectangle
+		                          VerticalAlignment valign = Middle  // The vertical alignment of the rectangle
 		if(graphics_isVisibleFor(visibleFor)) {
 			graphics_items.push(new DisplayRectangle(
 				graphics_totalMatrix,
@@ -490,20 +499,20 @@ transient global unit graphics
 
 	// Draws a texture on the screen
 	global js void drawTexture: Texture texture            // The texture to draw
-		                        float2 position = {}       // The position to draw to
-		                        scale = 1.0                // Scale the texture by this factor
-		                        float2 sourcePosition = {} // The center of the area of the source texture to draw
-		                        float2 sourceSize = {}     // The size of the area of the source texture to draw
+		                        float2 position = {}       // The target position to draw to
+		                        float2 size = {}           // The target size of the area to draw
+		                        float2 sourcePosition = {} // The center of the area of the source texture
+		                        float2 sourceSize = {}     // The size of the area of the source texture
 		                        visibleFor = -1            // Only this user will see the texture
 		                        implicit int layer = 0     // Higher layers are drawn in front of lower layers
 		if(!texture || !texture._htmlImage) return
 		if(graphics_isVisibleFor(visibleFor)) {
 			graphics_items.push(new DisplayImage(
 				graphics_totalMatrix,
-				position.x-texture.size.x/2*scale,
-				position.y-texture.size.y/2*scale,
-				texture.size.x*scale,
-				texture.size.y*scale,
+				position.x - size.x/2,
+				position.y - size.y/2,
+				size.x,
+				size.y,
 				
 				layer, texture.file, position.location, 
 				texture._htmlImage,
@@ -543,33 +552,20 @@ transient global unit graphics
 		                                 outlineWidth = 0          // The width of the outline around the rectangle
 		                                 visibleFor = -1           // Only this user will see the rectangle
 		                                 implicit int layer = 0    // Higher layers are drawn in front of lower layers
-		if(Platform_fastForward) return
-		if(visibleFor == -1) visibleFor = graphics_currentlyVisibleFor
-		if(visibleFor != -1 && visibleFor != Network_userId) return
-		let m = graphics_totalMatrix.matrix
-		Platform_context.setTransform(m0, m[1], m[2], m[3], m[4], m[5])
-		let sizeX = size.x, sizeY = size.y
-		let x = position.x - sizeX/2
-		let y = position.y - sizeY/2
-		Platform_context.beginPath();
-		Platform_context.moveTo(x + radius, y);
-		Platform_context.lineTo(x + sizeX - radius, y);
-		Platform_context.quadraticCurveTo(x + sizeX, y, x + sizeX, y + radius);
-		Platform_context.lineTo(x + sizeX, y + sizeY - radius);
-		Platform_context.quadraticCurveTo(x + sizeX, y + sizeY, x + sizeX - radius, y + sizeY);
-		Platform_context.lineTo(x + radius, y + sizeY);
-		Platform_context.quadraticCurveTo(x, y + sizeY, x, y + sizeY - radius);
-		Platform_context.lineTo(x, y + radius);
-		Platform_context.quadraticCurveTo(x, y, x + radius, y);
-		Platform_context.closePath();
-		if(fillColor || !outlineColor) {
-			Platform_context.fillStyle = (fillColor || graphics_currentColor).hex
-			Platform_context.fill()
-		}
-		if(outlineColor) {
-			Platform_context.lineWidth = outlineWidth || graphics_currentLineWidth
-			Platform_context.strokeStyle = outlineColor.hex
-			Platform_context.stroke()
+		                                 HorizontalAlignment align = Center // The horizontal alignment of the rectangle
+		                                 VerticalAlignment valign = Middle  // The vertical alignment of the rectangle
+		if(graphics_isVisibleFor(visibleFor)) {
+			graphics_items.push(new DisplayRoundedRectangle(
+				graphics_totalMatrix,
+				align == 0  ? position.x : align  == 1 ? position.x-size.x*.5 : position.x-size.x,
+				valign == 0 ? position.y : valign == 1 ? position.y-size.y*.5 : position.y-size.y,
+				size.x, size.y,
+				layer, "RoundedRectangle", position.location,
+				fillColor || !outlineColor ? (fillColor || graphics_currentColor).hex : null,
+				outlineColor ? outlineColor.hex : null,
+				outlineWidth || graphics_currentLineWidth,
+				radius
+			))
 		}
 		
 	// Clears all pixels within a rectangle
@@ -615,8 +611,6 @@ transient DisplayItem DisplayText
 	string fillStyle, outlineColor, outlineWidth, font
 	js void draw
 		Platform_context.setTransform(this.m0, this.m1, this.m2, this.m3, this.m4, this.m5)
-		// Platform_context.fillStyle = "#ff000080"
-		// Platform_context.fillRect(this.x, this.y, this.w, this.h)
 		Platform_context.font = this.font
 		if(this.outlineColor) {
 			Platform_context.lineWidth = this.outlineWidth
@@ -642,6 +636,35 @@ transient DisplayItem DisplayRectangle
 			Platform_context.lineWidth = this.outlineWidth
 			Platform_context.strokeStyle = this.outlineColor
 			Platform_context.strokeRect(this.x, this.y, this.w, this.h)
+		}
+		
+		
+transient DisplayItem DisplayRoundedRectangle
+	string fillColor, outlineColor, outlineWidth, radius
+	js void draw
+		Platform_context.setTransform(this.m0, this.m1, this.m2, this.m3, this.m4, this.m5)
+		let sizeX = this.w, sizeY = this.h, x = this.x, y = this.y, radius = this.radius
+		
+		Platform_context.beginPath();
+		Platform_context.moveTo(x + radius, y);
+		Platform_context.lineTo(x + sizeX - radius, y);
+		Platform_context.quadraticCurveTo(x + sizeX, y, x + sizeX, y + radius);
+		Platform_context.lineTo(x + sizeX, y + sizeY - radius);
+		Platform_context.quadraticCurveTo(x + sizeX, y + sizeY, x + sizeX - radius, y + sizeY);
+		Platform_context.lineTo(x + radius, y + sizeY);
+		Platform_context.quadraticCurveTo(x, y + sizeY, x, y + sizeY - radius);
+		Platform_context.lineTo(x, y + radius);
+		Platform_context.quadraticCurveTo(x, y, x + radius, y);
+		Platform_context.closePath();
+		
+		if(this.fillColor) {
+			Platform_context.fillStyle = this.fillColor
+			Platform_context.fill()
+		}
+		if(this.outlineColor) {
+			Platform_context.lineWidth = this.outlineWidth
+			Platform_context.strokeStyle = this.outlineColor
+			Platform_context.stroke()
 		}
 		
 enum CircleDirection: Clockwise, CounterClockwise
