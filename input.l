@@ -207,14 +207,14 @@ unit Input
 		inputs.writeInt32 keyCode
 		
 	private handleTouchEvent: InputType type, float x, float y, int id, int button
+		float2 pixelPos = {x*Platform.pixelRatio, y*Platform.pixelRatio}
+		float2 referencePos = pixelPos.getRelativeTo(Platform.baseMatrix)
+		Platform.handleSlide type, id, pixelPos, referencePos
+		
 		if Network.mode == None || Platform.mode != Record || Network.userId == -1: return
 		let user = internalUsers[Network.userId], inputs = user.inputs
 		if !user.collectInputs: return
 
-		float2 pixelPos = {x*Platform.pixelRatio, y*Platform.pixelRatio}
-		float2 referencePos = pixelPos.getRelativeTo(Platform.baseMatrix)
-		Platform.handleSide type, id, pixelPos, referencePos
-		
 		if type == TouchMove
 			int index = getLastTouchMoveIndex id
 			if index
