@@ -477,7 +477,7 @@ transient unit Network
 					checksumLog += " MISMATCH saved theirs:{theirChecksum}"
 					
 			// Take snapshot
-			Snapshot.onEndOfStep
+			if mode != Local: Snapshot.onEndOfStep
 			
 			// log "#{frame}{isCertain ? "c":""}", certainFrame, "a:{Framework.objects[0]?.angle}"
 			
