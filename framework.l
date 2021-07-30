@@ -134,7 +134,6 @@ class Object
 				moveTouch = null
 		
 		// Rotate	
-		// if Input.users.any(selectedObject == this) && rotatable
 		if Framework.selectedObjects.contains(this) && rotatable
 			if !rotateTouch || !rotatedOverThreshold
 				drawButton rotateIcon, position:position+image.size/2*{1,-1}*scale+{8, -8}, touchMargin:{50,50}
@@ -153,13 +152,18 @@ class Object
 				if !rotatedOverThreshold: targetAngle -= Math.PI/2
 				interactingUserId = touch.userId
 		
+		// Flip	
+		if Framework.selectedObjects.contains(this) && flipable
+			drawButton flipIcon, position:position+image.size/2*{-1,1}*scale-{8, -8}, touchMargin:{50,50}
+				side = side == Back ? Front : Back
+		
 		Network.smooth interactingUserId
 			if angle != targetAngle: angle = Math.moveTowards(angle, targetAngle, .2)
 			
 		// Draw
 		if image
-			if side == Front || !backImage: drawImage image, position, frame, scale, angle
-			else                            drawImage backImage, position, scale, angle
+			if side == Front || !backImage: drawImage image, position, frame:frame%image.frames.length, scale, angle
+			else                            drawImage backImage, position, frame:frame%backImage.frames.length, scale, angle
 		
 	private checkBoardsWhileMoving: Touch touch
 		float2 pos = position
@@ -224,7 +228,7 @@ Object Stack
 			obj.moveTouch = touch
 			obj.touchOffset = obj.position - touch.position
 			
-		for i = (objects.length-shownObjectCount) <- objects.length: objects[i].tick
+		for i = Math.limit(objects.length-shownObjectCount, min:0) <- objects.length: objects[i].tick
 	
 	shuffle
 		objects.shuffle

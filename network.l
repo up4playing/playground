@@ -1185,7 +1185,7 @@ transient unit Network
 
 	private js void setupLocalVideo: int userId
 		if(Network_isLocalhost) return 
-		Network_localVideo = await navigator.mediaDevices.getUserMedia({video: true, audio: false});
+		Network_localVideo = await navigator.mediaDevices.getUserMedia({video: true, audio: true});
 		Network_createVideoElement(userId, Network_localVideo, /*local*/true)
 			
 	private js void setupRemoteVideo: int partnerId, object peerConnection
