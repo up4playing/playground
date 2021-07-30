@@ -290,7 +290,7 @@ Object Board
 				downMatrix = matrix
 			Input.onTouchMove panTouch
 				matrix = downMatrix
-				matrix.move touch.position - panTouch.position
+				matrix.move touch.position - touch.startPosition
 			Input.onTouchUp panTouch
 				panTouch = null
 				

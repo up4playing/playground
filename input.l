@@ -288,6 +288,7 @@ unit Input
 							if touch
 								touch.phase = cast type
 								touch.referencePosition = touchPos
+								touch.referenceStartPosition = touchPos
 								touch.handled = false
 								touch.button = button
 								touch.isDown = true
