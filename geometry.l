@@ -381,27 +381,47 @@ unit Math
 	inline js float atan2: float2 vector
 		Math.atan2(vector.y, vector.x)
 
-// Helper class for converting positions within an isomatic grid
+// Converts positions within an isomatic grid with the origin in the north
+// Tilt your head slighly to the right to visualize the directions
+//
+//      Left   Top             
+//           x               🡷 🡶
+//    Bottom   Right        y     x
+//
 class IsometicGrid
 	int2 size            // The amount of cells in the grid
 	float2 cellSize      // The size of each cell
 	float2 topFaceOffset // The position of the top face within the cell
 	
 	visible float2 xOffset = cellSize / 2
-	visible float2 yOffset = {xOffset.x, -xOffset.y}
-	visible float2 basePos = {-xOffset.x*(size.x-1)}
+	visible float2 yOffset = {-xOffset.x, xOffset.y}
+	visible float2 basePos = {0,-yOffset.y*(size.y-1)}
 	
 	// Convert from grid position to logical position
-	getPosition: int2 gridPos // The grid position specifies which cell we want to get the position of
+	getPixelPosition: int2 gridPos // The grid position specifies which cell we want to get the position of
 		return basePos + xOffset*gridPos.x + yOffset*gridPos.y
 		
 	// Convert from locgical position to grid position
-	getGridPosition: float2 pos // The logical position
-		float2 t = pos - basePos + topFaceOffset
+	getGridPosition: float2 pixelPos // The logical position
+		float2 t = pixelPos - basePos + topFaceOffset
 		let x = Math.round((xOffset.x*t.y + xOffset.y*t.x) / (2*xOffset.x*xOffset.y))
-		let y = Math.round((xOffset.y*t.x - xOffset.x*t.y) / (2*xOffset.x*xOffset.y))
+		let y = Math.round((xOffset.x*t.y - xOffset.y*t.x) / (2*xOffset.x*xOffset.y))
 		if x >= 0 and x < size.x and y >= 0 and y < size.y: return int2(x,y)
 		else                                                return int2.none
 		
 	isValid: int2 pos
 		return pos >= {0,0} and pos < size
+		
+class Direction
+	int index
+	int2 vector
+	float angle
+	float isoAngle
+	
+	global const Direction Right = {0, { 1, 0},   0°, 330°} // positive x direction (1,0)
+	global const Direction Down  = {1, { 0, 1}, 270°, 210°} // positive y direction (0,1)
+	global const Direction Left  = {2, {-1, 0}, 180°, 150°} // negative x direction (-1,0)
+	global const Direction Up    = {3,  {0,-1},  90°,  30°} // negative y direction (0,-1)
+		
+	const allDirections = [Right, Down, Left, Up]
+	
