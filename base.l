@@ -219,6 +219,9 @@ class List<T>
 	// Removes all items from the list
 	inline js void clear := this.length = 0
 	
+	inline js void each: void(T a) code
+		this.forEach(code());
+	
 	js string toString()
 		let result = "";
 		for(let item of this) {

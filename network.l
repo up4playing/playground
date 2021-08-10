@@ -320,11 +320,23 @@ transient unit Network
 		for userCount
 			Input.internalUsers.add {id:i, local:true, collectInputs:true}
 			Input.users.add {id:i}
-		
-		startTime = currentTime
-		startApp
-		animationFrame
 		initDatabase
+		
+	reset
+		for Input.internalUsers: inputs.reset
+		frame = 0
+		
+	replay
+		for Input.internalUsers
+			.inputs.readPos = 0
+		let targetFrame = frame-1
+		frame = 0
+		startApp
+		while frame < targetFrame
+			step fastFordward:true
+		resetStartTime
+		animationFrame
+
 		
 	smooth: int userId
 		             void() code
@@ -614,7 +626,7 @@ transient unit Network
 		if(window.app_start) app_start()
 		
 	resetStartTime
-		startTime = currentTime - frame*targetFrameTime// - (targetFrameTime-0.001)
+		startTime = currentTime - frame*targetFrameTime - (targetFrameTime-.5)
 		
 	object db = null
 	
