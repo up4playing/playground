@@ -32,6 +32,7 @@ transient unit Platform
 		
 	private js void initPlatform
 		Platform_init();
+		Math_init();
 		Network_init();
 		Input_init();
 		Platform_isMobile = false;

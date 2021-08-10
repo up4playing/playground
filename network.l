@@ -334,6 +334,7 @@ transient unit Network
 		Platform.initApplication
 		lobby.inLobby = false
 		for Input.internalUsers: inputs.readPos = 0
+		Math.randomValueIndex = 0
 		let targetFrame = frame-1
 		frame = 0
 		startApp

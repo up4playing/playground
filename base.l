@@ -577,7 +577,6 @@ unit Math
 	inline js float tan: float angle // The angle in radians
 		Math.tan(angle)
 		
-		
 	init
 		initDefaultRandomGenerator
 		
