@@ -101,7 +101,6 @@ transient unit Platform
 		if isDebug || isLocal || roomId == "local" || url.startsWith("file"): Network.startLocal userCount:userCount
 		else                                                                  Network.join gameId, roomId
 		sendMode
-		replay
 		
 	// This is called after every code change to replay all inputs with the new code
 	private replay()  Network.replay

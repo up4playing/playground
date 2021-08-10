@@ -321,6 +321,7 @@ transient unit Network
 			Input.internalUsers.add {id:i, local:true, collectInputs:true}
 			Input.users.add {id:i}
 		initDatabase
+		replay
 		
 	// Resets the application to the first frame
 	stop
@@ -328,7 +329,7 @@ transient unit Network
 		frame = 0
 		replay
 		
-	// This is called after every code change to replay all inputs with the new code
+	// Replay all inputs with the new code at app startup and after every code change
 	replay
 		Platform.initApplication
 		lobby.inLobby = false
@@ -796,6 +797,7 @@ transient unit Network
 	private Connection[] connections
 	
 	js void join: string gameId, string roomId
+		init()
 		Network_gameId = gameId
 		Network_roomId = roomId
 		Network_log("Network.join "+location.href)
