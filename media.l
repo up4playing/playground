@@ -67,18 +67,17 @@ transient global unit graphics
 	internal DisplayItem[] items
 		
 	internal js void startFrame
-		if(Platform_fastForward) return
 		graphics_reset()
-		Platform_context.clearRect(0,0,Platform_pixelSize.x, Platform_pixelSize.y)
+		if(!Platform_fastForward)
+			Platform_context.clearRect(0,0,Platform_pixelSize.x, Platform_pixelSize.y)
 
 	internal js void reset
-		if(Platform_fastForward) return
 		Matrix2D_assign_Matrix2D(graphics_totalMatrix, Platform_baseMatrix);
 		graphics_localMatrix.clear();
-		Platform_context.setTransform(1,0,0,1,0,0)
-		Platform_context.textBaseline = "hanging"
 		graphics_currentlyVisibleFor = -1
 		graphics_items.length = 0
+		if(!Platform_fastForward)
+			Platform_context.textBaseline = "hanging"
 
 	internal finishFrame
 		if(Platform.fastForward) return
