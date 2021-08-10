@@ -27,10 +27,10 @@ transient unit Platform
 	internal bool fastForward
 	visible bool isMobile = true
 	
-	private inline js void initApp
-		init();
+	internal inline js void initApplication
+		init()
 		
-	private js void initEngine
+	private js void initPlatform
 		Platform_init();
 		Network_init();
 		Input_init();
@@ -84,8 +84,8 @@ transient unit Platform
 		let offsetY = Platform_anchor > 1 ? Platform_pixelSize.y/2 : 0
 		Platform_baseMatrix = new Matrix2D(scale,0,0,scale,offsetX,offsetY)
 		
-	private startEngine: bool isDebug
-		initEngine
+	private start: bool isDebug
+		initPlatform
 		this.isDebug = isDebug
 		if !isDebug: showSafeArea = false
 		this.engineStarted = true
@@ -101,23 +101,21 @@ transient unit Platform
 		if isDebug || isLocal || roomId == "local" || url.startsWith("file"): Network.startLocal userCount:userCount
 		else                                                                  Network.join gameId, roomId
 		sendMode
-		// Network.tick
+		replay
 		
-	private startApp
-		initApp
-		lobby.inLobby = false
-		Network.replay
-		
-	private stop()    mode = Pause;  Network.reset; startApp; sendMode
+	// This is called after every code change to replay all inputs with the new code
+	private replay()  Network.replay
+	
+	// This is called every animation frame
+	private tick()   if mode == Play || mode == Record: Network.animationFrame
+	
+	private enterSlideMode(PlatformMode mode) Network.replay; this.mode = mode; sendMode
+	
+	private stop()    mode = Pause;  Network.stop; sendMode
 	private pause()   mode = Pause;  sendMode
 	private record()  mode = Record; Network.resetStartTime; sendMode
 	private play()    mode = Play;   Network.resetStartTime; sendMode
 	
-	private enterSlideMode(PlatformMode mode) startApp; this.mode = mode; sendMode
-	
-	private tick
-		if mode == Play || mode == Record: Network.animationFrame
-		
 	private float2 touchUpPos
 	private int locationIndex
 	private SourceCodeLocation[] locations

@@ -322,13 +322,17 @@ transient unit Network
 			Input.users.add {id:i}
 		initDatabase
 		
-	reset
+	// Resets the application to the first frame
+	stop
 		for Input.internalUsers: inputs.reset
 		frame = 0
+		replay
 		
+	// This is called after every code change to replay all inputs with the new code
 	replay
-		for Input.internalUsers
-			.inputs.readPos = 0
+		Platform.initApplication
+		lobby.inLobby = false
+		for Input.internalUsers: inputs.readPos = 0
 		let targetFrame = frame-1
 		frame = 0
 		startApp
@@ -336,12 +340,12 @@ transient unit Network
 			step fastFordward:true
 		resetStartTime
 		animationFrame
-
-		
+	
+	// Smooth out animations by only executing code when we received inputs from everybody	
 	smooth: int userId
-		             void() code
+		    void() code
 		if Input.isCertain or this.userId == userId: code
-			
+	
 	smooth: void() code
 		if Input.isCertain: code
 			
