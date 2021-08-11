@@ -332,8 +332,14 @@ transient unit Network
 	// Replay all inputs with the new code at app startup and after every code change
 	replay
 		Platform.initApplication
-		lobby.inLobby = false
+		
+		// Recreating users, because developers might have added fields to NetworkUser or Touch
+		let userCount = Input.users.length
+		Input.users.clear
+		for userCount: Input.users.add {id:i}
 		for Input.internalUsers: inputs.readPos = 0
+			
+		lobby.inLobby = false
 		Math.randomValueIndex = 0
 		let targetFrame = frame-1
 		frame = 0

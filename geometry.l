@@ -250,6 +250,9 @@ struct int2
 	// A vector with the sign of each coordinate flipped
 	inverse := int2(-x, -y)
 		
+	// A vector with the absolute value of each coordinate
+	abs := int2(Math.abs(x), Math.abs(y))
+		
 	// The larger of the two coordinates
 	max := x > y ? x : y
 	

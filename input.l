@@ -45,8 +45,8 @@ class NetworkUser
 	string textInput
 	float2 videoPosition = {}
 	float videoWidth
-	
-	clearEvents
+
+	internal clearEvents
 		for <- touches
 			if t.phase == Up and t.button == None
 				touches.remove t
