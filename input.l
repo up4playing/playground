@@ -156,16 +156,13 @@ unit Input
 				                            Network_userId = Math.min(index-1, Input_users.length-1);
 			}
 			else
-			if(e.key == "F8") {
+			if(e.key == "F2") {
 				Network_saveLogs();
 			}
 			else
 			if(e.key == "F9") {
 				Network_showDebugString = !Network_showDebugString;
 			}
-			else
-			if(e.key == "q" && e.ctrlKey)
-				Platform_startApp();
 			else
 			if(keyCode >= 49 && keyCode <= 52 && Network_simulateConnection)
 				Network_userId = Math.min(keyCode-49, Input_users.length-1);
