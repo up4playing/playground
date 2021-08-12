@@ -137,7 +137,9 @@ transient unit Platform
 								SourceCodeLocation[] itemLocations
 								item.location.flatten itemLocations
 								itemLocations.sort (a.file compareTo b.file) || b.row - a.row || a.column - b.column
-								locations.addRange itemLocations
+								for itemLocations
+									if !.file.startsWith("lib")
+										locations.add .
 					
 					if locations.length
 						let selectedLocation = locations[locationIndex++ % locations.length]
