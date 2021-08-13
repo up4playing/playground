@@ -150,9 +150,10 @@ unit Input
 				require("electron").remote.getCurrentWindow().toggleDevTools()
 			else
 			if(e.key >= "0" && e.key <= "9") {
-				let slot = e.key - "0"
-				if(e.altKey)  Network_save(slot); else
-				if(e.ctrlKey) Network_restore(slot);
+				let index = e.key - "0"
+				if(e.ctrlKey && e.shiftKey) Network_save(index); else
+				if(e.ctrlKey)               Network_restore(index); else
+				                            Network_userId = Math.min(index-1, Input_users.length-1);
 			}
 			else
 			if(e.key == "F8") {
