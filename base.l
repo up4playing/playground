@@ -751,7 +751,7 @@ transient class Time
 		
 	static inline js Time current := new Date()
 		
-	// Return the number of milliseconds elapsed since January 1, 1970
+	// The number of milliseconds elapsed since January 1, 1970
 	static int now
 	
 	static inline js float preciseTime := performance.now()

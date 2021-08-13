@@ -415,6 +415,9 @@ class IsometicGrid
 	isValid: int2 pos
 		return pos >= {0,0} and pos < size
 		
+	gridPixelVector: int2 gridVector
+		return xOffset*gridVector.x + yOffset*gridVector.y
+		
 class Direction
 	int index
 	int2 vector
