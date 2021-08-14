@@ -419,15 +419,18 @@ class IsometicGrid
 		return xOffset*gridVector.x + yOffset*gridVector.y
 		
 class Direction
+	string name
 	int index
 	int2 vector
 	float angle
 	float isoAngle
 	
-	global const Direction Right = {0, { 1, 0},   0°, 330°} // positive x direction (1,0)
-	global const Direction Down  = {1, { 0, 1}, 270°, 210°} // positive y direction (0,1)
-	global const Direction Left  = {2, {-1, 0}, 180°, 150°} // negative x direction (-1,0)
-	global const Direction Up    = {3,  {0,-1},  90°,  30°} // negative y direction (0,-1)
+	toString := name
+	
+	global const Direction Right = {"Right", 0, { 1, 0},   0°, 330°} // positive x direction (1,0)
+	global const Direction Down  = {"Down",  1, { 0, 1}, 270°, 210°} // positive y direction (0,1)
+	global const Direction Left  = {"Left",  2, {-1, 0}, 180°, 150°} // negative x direction (-1,0)
+	global const Direction Up    = {"Up",    3,  {0,-1},  90°,  30°} // negative y direction (0,-1)
 		
 	const allDirections = [Right, Down, Left, Up]
 	
