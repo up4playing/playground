@@ -485,23 +485,24 @@ transient unit Network
 			// Tick
 			tick
 			
-			// Calculate checksum if we received all inputs for this frame
-			if isCertain
-				int myChecksum = Framework.checksum					
-				let theirChecksum = checksums[frame]
-				checksumLog += " <> #{frame} {myChecksum}"
-				if !theirChecksum
-					checksums[frame] = myChecksum
-				else
-				if(theirChecksum isApproximately myChecksum)
-					checkedChecksums++
-				else
-					onWrongChecksum
-					checkedChecksums = 0
-					checksumLog += " MISMATCH saved theirs:{theirChecksum}"
-					
-			// Take snapshot
-			if mode != Local: Snapshot.onEndOfStep
+			if mode != Local
+				// Calculate checksum if we received all inputs for this frame
+				if isCertain
+					int myChecksum = Framework.checksum					
+					let theirChecksum = checksums[frame]
+					checksumLog += " <> #{frame} {myChecksum}"
+					if !theirChecksum
+						checksums[frame] = myChecksum
+					else
+					if(theirChecksum isApproximately myChecksum)
+						checkedChecksums++
+					else
+						onWrongChecksum
+						checkedChecksums = 0
+						checksumLog += " MISMATCH saved theirs:{theirChecksum}"
+						
+				// Take snapshot
+				Snapshot.onEndOfStep
 			
 			// log "#{frame}{isCertain ? "c":""}", certainFrame, "a:{Framework.objects[0]?.angle}"
 			
