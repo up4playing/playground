@@ -398,10 +398,17 @@ unit Math
 
 // Converts positions within an isomatic grid with the origin in the north
 // Tilt your head slighly to the right to visualize the directions
+// World space (northwest is up)
 //
 //      Left   Top             
 //           x               🡷 🡶
 //    Bottom   Right        y     x
+//
+// Screen space (north is up)
+//
+//          Top              🡺 x
+//     Left  +  Right      🡻 
+//        Bottom            y
 //
 class IsometicGrid
 	int2 size            // The amount of cells in the grid
@@ -412,31 +419,31 @@ class IsometicGrid
 	visible float2 yOffset = {-xOffset.x, xOffset.y}
 	visible float2 basePos = {0,-yOffset.y*(size.y-1)}
 	
-	// Convert from grid position to logical position
-	getPixelPosition: float2 gridPos // The grid position specifies which cell we want to get the position of
-		return basePos + xOffset*gridPos.x + yOffset*gridPos.y
+	// Convert world position (northwest is up) to screen position (north is up)
+	getScreenPosition: float2 worldPos // The world position
+		return basePos + xOffset*worldPos.x + yOffset*worldPos.y
 		
-	// Convert from locgical position to grid position
-	getGridPosition: float2 pixelPos // The logical position
-		float2 t = pixelPos - basePos + topFaceOffset
-		let x = Math.round((xOffset.x*t.y + xOffset.y*t.x) / (2*xOffset.x*xOffset.y))
-		let y = Math.round((xOffset.x*t.y - xOffset.y*t.x) / (2*xOffset.x*xOffset.y))
-		if x >= 0 and x < size.x and y >= 0 and y < size.y: return int2(x,y)
-		else                                                return int2.none
-		
-	// Convert from locgical position to grid position
-	getWorldPosition: float2 pixelPos // The logical position
-		float2 t = pixelPos - basePos + topFaceOffset
+	// Convert screen position (north is up) to world position (northwest is up)
+	getWorldPosition: float2 screenPos // The screen position
+		float2 t = screenPos - basePos + topFaceOffset
 		let x = (xOffset.x*t.y + xOffset.y*t.x) / (2*xOffset.x*xOffset.y)
 		let y = (xOffset.x*t.y - xOffset.y*t.x) / (2*xOffset.x*xOffset.y)
 		if x >= 0 and x < size.x and y >= 0 and y < size.y: return float2(x,y)
 		else                                                return float2.none
 		
+	// Convert screen pos (north is up) to rounded world pos (northwest is up)
+	getGridPosition: float2 screenPos // The screen position
+		float2 t = screenPos - basePos + topFaceOffset
+		let x = Math.round((xOffset.x*t.y + xOffset.y*t.x) / (2*xOffset.x*xOffset.y))
+		let y = Math.round((xOffset.x*t.y - xOffset.y*t.x) / (2*xOffset.x*xOffset.y))
+		if x >= 0 and x < size.x and y >= 0 and y < size.y: return int2(x,y)
+		else                                                return int2.none
+		
 	isValid: int2 pos
 		return pos >= {0,0} and pos < size
 		
-	gridPixelVector: int2 gridVector
-		return xOffset*gridVector.x + yOffset*gridVector.y
+	gridScreenVector: int2 worldVector
+		return xOffset*worldVector.x + yOffset*worldVector.y
 		
 class Direction
 	string name
