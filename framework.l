@@ -315,6 +315,7 @@ Object Board
 				visibleForOthers = visibleForOthers == On ? Off : On
 				
 		if color: drawRectangle position, size, fillColor:color, layer:-1
+		if image: drawImage image, position, scale
 			
 	updateBoard
 		for objects: updateBoard
