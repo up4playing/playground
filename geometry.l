@@ -454,6 +454,9 @@ class Direction
 	
 	toString := name
 	
+	rotate: CircleDirection direction = Clockwise
+		return allDirections[(index+(direction == Clockwise ? 1:3))%4]
+	
 	global const Direction Right = {"Right", 0, { 1, 0},   0°, 330°} // positive x direction (1,0)
 	global const Direction Down  = {"Down",  1, { 0, 1}, 270°, 210°} // positive y direction (0,1)
 	global const Direction Left  = {"Left",  2, {-1, 0}, 180°, 150°} // negative x direction (-1,0)
