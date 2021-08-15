@@ -233,20 +233,47 @@ class List<T>
 	// Gets a random item from the list
 	T random() := get(Math.randomInteger(length))
 		
+	T pickWithinRangeOrClosest: float(T a) selector
+		                        float min = -float.infinity
+		                        float max = float.infinity
+		float closestDistance = float.infinity
+		int closestIndex = -1
+		T closestItem = null
+		for i, item -> this
+			let value = selector(item)
+			float distance
+			if value > max: distance = value - max; else
+			if value < min: distance = min - value; else
+				            this.removeAt(i); return item
+				
+			if distance < closestDistance
+				closestDistance = distance
+				closestIndex = i
+				closestItem = item
+		
+		if(closestIndex != -1) this.removeAt(closestIndex)
+		return closestItem
+			
 	// Removes an item from the list
-	js T remove: T item // The item to remove
+	js void remove: T item // The item to remove
 		var index = this.indexOf(item);
 		if(index > -1) this.splice(index, 1);
 			
 	// Removes the item at the given index from the list
-	js T removeAt: int index // The index of the item to remove
-		this.splice(index, 1);
+	inline js void removeAt: int index // The index of the item to remove
+		this.splice(index, 1)
 			
-	removeWhere: bool(T a) condition // The condition to check
+	removeFirstWhere: bool(T a) condition // The condition to check
 		for i, item -> this
 			if condition(item)
 				removeAt i
 				return item
+		return null
+		
+	removeAllWhere: bool(T a) condition // The condition to check
+		for i, item <- this
+			if condition(item)
+				removeAt i
 		return null
 		
 	// Returns true if the list is not null and not empty	
