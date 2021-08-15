@@ -409,7 +409,7 @@ unit Input
 		if (Network.mode == Connected || Network.simulateConnection) && userId != -1
 			let user = internalUsers[userId]
 			for touch -> user.downTouches
-				if !touch.handled && float2.distanceBetween(touch.referencePosition, referencePosition) <= referenceRadius
+				if !touch.handled && (touch.referencePosition distanceTo referencePosition) <= referenceRadius
 					touch.position = touch.referencePosition.getRelativeTo(graphics.localMatrix)
 					log "down", touch.position
 					code touch
@@ -417,7 +417,7 @@ unit Input
 		else
 			for user -> internalUsers if user
 				for touch -> user.downTouches
-					if !touch.handled && float2.distanceBetween(touch.referencePosition, referencePosition) <= referenceRadius
+					if !touch.handled && (touch.referencePosition distanceTo referencePosition) <= referenceRadius
 						touch.position = touch.referencePosition.getRelativeTo(graphics.localMatrix)
 						log "down", touch.position
 						code touch
@@ -425,7 +425,7 @@ unit Input
 			if cursor
 				let user = internalUsers[Network.userId]
 				for touch -> user.movingTouches
-					if !touch.handled && float2.distanceBetween(touch.referencePosition, position) <= radius
+					if !touch.handled && (touch.referencePosition distanceTo position) <= radius
 						this.cursor = cursor
 				
 		if showTouchArea: drawCircle position, radius, fillColor:{"ff000080"}
@@ -511,7 +511,7 @@ unit Input
 		if (Network.mode == Connected || Network.simulateConnection) && userId != -1
 			let user = internalUsers[userId]
 			for touch -> user.upTouches
-				if !touch.handled && float2.distanceBetween(touch.referencePosition, referencePosition) <= referenceRadius
+				if !touch.handled && (touch.referencePosition distanceTo referencePosition) <= referenceRadius
 					touch.position = touch.referencePosition.getRelativeTo(graphics.localMatrix)
 					log "up", touch.position
 					code touch
@@ -520,7 +520,7 @@ unit Input
 		else
 			for user -> internalUsers if user
 				for touch -> user.upTouches
-					if !touch.handled && float2.distanceBetween(touch.referencePosition, referencePosition) <= referenceRadius
+					if !touch.handled && (touch.referencePosition distanceTo referencePosition) <= referenceRadius
 						touch.position = touch.referencePosition.getRelativeTo(graphics.localMatrix)
 						log "up", touch.position
 						code touch
@@ -529,7 +529,7 @@ unit Input
 			if cursor
 				let user = internalUsers[Network.userId]
 				for touch -> user.movingTouches
-					if !touch.handled && float2.distanceBetween(touch.referencePosition, position) <= radius
+					if !touch.handled && (touch.referencePosition distanceTo position) <= radius
 						this.cursor = cursor
 				
 		if showTouchArea: drawCircle position, radius, fillColor:{"ff000080"}

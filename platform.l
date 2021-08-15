@@ -137,7 +137,7 @@ transient unit Platform
 			int row, column
 			string file
 			if Platform.mode == Pointer
-				let movedSinceTouchUp = float2.manhattanDistanceBetween(pixelPos, touchUpPos) > 8
+				let movedSinceTouchUp = (pixelPos manhattanDistanceTo touchUpPos) > 8
 				if inputType == TouchUp: touchUpPos = pixelPos
 					
 				if (inputType == TouchDown and movedSinceTouchUp) or (inputType == TouchUp and !movedSinceTouchUp)

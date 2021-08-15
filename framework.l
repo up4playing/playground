@@ -446,7 +446,7 @@ Object Coin
 				Coin c = cast object
 				let closestCoin = getClosestCoin c, threshold:90
 				if closestCoin and c.closestCoin != closestCoin
-					let distance = float2.distanceBetween(closestCoin.position, object.position)
+					let distance = closestCoin.position distanceTo object.position
 					if distance < closestCoin.distanceToClosest
 						if c.closestCoin: c.closestCoin.clearClosestCoin
 						if closestCoin.closestCoin: closestCoin.closestCoin.clearClosestCoin

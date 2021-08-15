@@ -107,29 +107,25 @@ struct float2
 	// The smaller of the two coordinates
 	min := x < y ? x : y
 		
-	// The distance between two vectors
-	static distanceBetween: float2 a // The first vector 
-		                    float2 b // The second vector
-		let x = a.x - b.x
-		let y = a.y - b.y
+	// The distance to another vector
+	distanceTo: float2 value // The second vector
+		let x = x - value.x
+		let y = y - value.y
 		return Math.sqrt(x*x + y*y)
 
-	// The distance between two vectors along axes at right angles
-	static manhattanDistanceBetween: float2 a // The first vector 
-		                             float2 b // The second vector
-		return Math.abs(a.x - b.x) + Math.abs(a.y - b.y)
-		
-	// The angle between two vectors in radians
-	static angleBetween: float2 a // The first vector
-		                 float2 b // The second vector
-		return Math.atan2(b-a)
+	// The distance to another vector along axes at right angles
+	manhattanDistanceTo: float2 value // The second vector
+		return Math.abs(x - value.x) + Math.abs(y - value.y)
 
-	// Interpolates linearly between two given vectors
-	static lerp: float2 a    // The first vector
-		         float2 b    // The second vector
-		         float value // The interpolation value, 0 returns the first vector, 1 returns the second vector
+	// The angle to another vector in radians
+	angleTo: float2 value // The second vector
+		return Math.atan2(value - this)
+
+	// Interpolates linearly to another vector
+	lerpTo: float2 target  // The target vector to interpolate to
+		    float value    // The interpolation value, 0 returns the original vector, 1 returns the target vector
 		let ivalue = 1 - value
-		return new float2(a.x * ivalue + b.x * value, a.y * ivalue + b.y * value)
+		return new float2(x * ivalue + target.x * value, y * ivalue + target.y * value)
 
 	// A vector that points in the same direction, but has a length of 1
 	normalized
@@ -266,22 +262,19 @@ struct int2
 	// The smaller of the two coordinates
 	min := x < y ? x : y
 		
-	// The distance between two vectors
-	static distanceBetween: int2 a // The first vector 
-		                    int2 b // The second vector
-		let x = a.x - b.x
-		let y = a.y - b.y
+	// The distance to another vector
+	distanceTo: int2 value // The second vector
+		let x = x - value.x
+		let y = y - value.y
 		return Math.sqrt(x*x + y*y)
 
-	// The distance between two vectors along axes at right angles
-	static manhattanDistanceBetween: int2 a // The first vector 
-		                             int2 b // The second vector
-		return Math.abs(a.x - b.x) + Math.abs(a.y - b.y)
+	// The distance to another vector along axes at right angles
+	manhattanDistanceTo: int2 value // The second vector
+		return Math.abs(x - value.x) + Math.abs(y - value.y)
 
-	// The angle between two vectors in radians
-	static angleBetween: int2 a // The first vector
-		                 int2 b // The second vector
-		return Math.atan2(b-a)
+	// The angle to another vector in radians
+	angleTo: int2 value // The second vector
+		return Math.atan2(value - this)
 		
 	// A float vector that points in the same direction, but has a length of 1
 	normalized
