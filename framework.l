@@ -334,7 +334,7 @@ Object Board
 		
 class Spot
 	float2 pos
-	getClosestPoint(float2 touchPos, float2 boardPos) := pos
+	getClosestPoint(float2 touchPos, float2 boardPos) := pos + boardPos
 	
 Spot SpotGrid
 	float2 cellSize
