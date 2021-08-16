@@ -327,7 +327,7 @@ Object Board
 			let spotPos = spot.getClosestPoint position, this.position
 			let delta = (spotPos - position).abs
 			let distance = delta.length
-			if delta < threshold && distance < minDistance
+			if delta < threshold and distance < minDistance and !objects.find.position == spotPos
 				minDistance = distance
 				closestSpotPos = spotPos
 		return closestSpotPos
