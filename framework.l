@@ -228,7 +228,9 @@ Object Stack
 			obj.moveTouch = touch
 			obj.touchOffset = obj.position - touch.position
 			
-		for i = Math.limit(objects.length-shownObjectCount, min:0) <- objects.length: objects[i].tick
+		for i = Math.limit(objects.length-shownObjectCount, min:0) <- objects.length
+			let obj = objects[i]
+			drawImage obj.backImage, obj.position, scale:obj.scale
 	
 	shuffle
 		objects.shuffle
