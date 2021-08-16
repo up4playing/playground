@@ -524,23 +524,25 @@ transient global unit graphics
 		}
 		
 	// Draws a polygon on the screen
-	global js void drawPolygon: float2[] positions        // A list of points for the polygon
+	global js void drawPolygon: float2[] points           // A list of points for the polygon
+		                        float2 position = {0,0}   // The position all points are relative to 
 		                        Color fillColor = null    // The color of the area within the polygon
 		                        Color outlineColor = null // The color of the outline around the polygon
+		                        outlineWidth = 0          // The width of the outline around the polygon
 		                        visibleFor = -1           // Only this user will see the polygon
 		                        implicit int layer = 0    // Higher layers are drawn in front of lower layers
-		if(Platform_fastForward) return
-		if(visibleFor == -1) visibleFor = graphics_currentlyVisibleFor
-		if(visibleFor != -1 && visibleFor != Network_userId) return
-		let m = graphics_totalMatrix.matrix
-		Platform_context.setTransform(m0, -m[1], -m[2], m[3], m[4], m[5])
-		
-		Platform_context.fillStyle = (fillColor || graphics_currentColor).hex
-		let firstPos = positions[positions.length-1]
-		Platform_context.moveTo(firstPos.x, firstPos.y)
-		for(let p of positions)
-			Platform_context.lineTo(p.x, p.y)
-		Platform_context.fill()
+		if(graphics_isVisibleFor(visibleFor)) {
+			graphics_items.push(new DisplayPolygon(
+				graphics_totalMatrix,
+				position.x, position.y,
+				0, 0,
+				layer, "Polygon", position.location,
+				points,
+				fillColor || !outlineColor ? (fillColor || graphics_currentColor).hex : null,
+				outlineColor ? outlineColor.hex : null,
+				outlineWidth || graphics_currentLineWidth
+			))
+		}
 		
 	// Draws a rectangle with rounded corners on the screen
 	global js void drawRoundedRectangle: position = float2()       // The center of the rectangle
@@ -559,11 +561,11 @@ transient global unit graphics
 				align == 0  ? position.x : align  == 1 ? position.x-size.x*.5 : position.x-size.x,
 				valign == 0 ? position.y : valign == 1 ? position.y-size.y*.5 : position.y-size.y,
 				size.x, size.y,
+				radius,
 				layer, "RoundedRectangle", position.location,
 				fillColor || !outlineColor ? (fillColor || graphics_currentColor).hex : null,
 				outlineColor ? outlineColor.hex : null,
-				outlineWidth || graphics_currentLineWidth,
-				radius
+				outlineWidth || graphics_currentLineWidth
 			))
 		}
 		
@@ -589,7 +591,7 @@ transient class DisplayItem
 	
 	DisplayItem: Matrix2D m
 		m0 = m.m0; m1 = m.m1; m2 = m.m2; m3 = m.m3; m4 = m.m4; m5 = m.m5
-		if Platform.isDebug
+		if Platform.isDebug and (w or h)
 			poly = [
 				{ x,   y   }.transform(m),
 				{ x+w, y   }.transform(m),
@@ -607,7 +609,9 @@ transient DisplayItem DisplayImage
 		catch(e) { log("DisplayImage: "+e.message) }
 
 transient DisplayItem DisplayText
-	string fillStyle, outlineColor, outlineWidth, font
+	string fillStyle, outlineColor
+	float outlineWidth
+	string font
 	js void draw
 		Platform_context.setTransform(this.m0, this.m1, this.m2, this.m3, this.m4, this.m5)
 		Platform_context.font = this.font
@@ -620,7 +624,8 @@ transient DisplayItem DisplayText
 		Platform_context.fillText(this.name, this.x, this.y)
 		
 transient DisplayItem DisplayRectangle
-	string fillColor, outlineColor, outlineWidth
+	string fillColor, outlineColor
+	float outlineWidth
 	js void draw
 		Platform_context.setTransform(this.m0, this.m1, this.m2, this.m3, this.m4, this.m5)
 		if(this.fillColor == "clear") {
@@ -637,9 +642,10 @@ transient DisplayItem DisplayRectangle
 			Platform_context.strokeRect(this.x, this.y, this.w, this.h)
 		}
 		
-		
 transient DisplayItem DisplayRoundedRectangle
-	string fillColor, outlineColor, outlineWidth, radius
+	float radius
+	string fillColor, outlineColor
+	float outlineWidth
 	js void draw
 		Platform_context.setTransform(this.m0, this.m1, this.m2, this.m3, this.m4, this.m5)
 		let sizeX = this.w, sizeY = this.h, x = this.x, y = this.y, radius = this.radius
@@ -666,14 +672,41 @@ transient DisplayItem DisplayRoundedRectangle
 			Platform_context.stroke()
 		}
 		
+transient DisplayItem DisplayPolygon
+	float2[] points
+	string fillColor, outlineColor
+	float outlineWidth
+	js void draw
+		Platform_context.setTransform(this.m0, this.m1, this.m2, this.m3, this.m4, this.m5)
+		let x = this.x, y = this.y
+		
+		let firstPos = this.points[this.points.length-1]
+		Platform_context.beginPath();
+		Platform_context.moveTo(x + firstPos.x, y + firstPos.y)
+		for(let p of this.points)
+			Platform_context.lineTo(x + p.x, y + p.y)
+			
+		if(this.fillColor) {
+			Platform_context.fillStyle = this.fillColor
+			Platform_context.fill()
+		}
+		if(this.outlineColor) {
+			Platform_context.lineWidth = this.outlineWidth
+			Platform_context.strokeStyle = this.outlineColor
+			Platform_context.stroke()
+		}
+		
 enum CircleDirection: Clockwise, CounterClockwise
 		
 transient DisplayItem DisplayCircle
-	string radius, startAngle, endAngle, counterclockwise, fillColor, outlineColor, outlineWidth
+	float radius, startAngle, endAngle
+	CircleDirection direction
+	string fillColor, outlineColor
+	float outlineWidth
 	js void draw
 		Platform_context.setTransform(this.m0, this.m1, this.m2, this.m3, this.m4, this.m5)
 		Platform_context.beginPath();
-		Platform_context.arc(this.x, this.y, this.radius, this.startAngle, this.endAngle, this.counterclockwise);
+		Platform_context.arc(this.x, this.y, this.radius, this.startAngle, this.endAngle, this.direction);
 		if(this.fillColor) {
 			Platform_context.fillStyle = this.fillColor
 			Platform_context.fill()

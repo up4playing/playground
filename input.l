@@ -396,7 +396,7 @@ unit Input
 				
 		if showTouchArea: drawRectangle position, size, fillColor:{"ff000080"}
 
-	// Executes code when the user touches or clicks within a given area
+	// Executes code when the user touches or clicks within a given circle
 	onTouchDownWithin: float2 position        // The center of the touch area
 		               float radius           // The radius of a round touch area
 		               void(Touch touch) code // The code to execute for each touch or click
@@ -429,6 +429,41 @@ unit Input
 						this.cursor = cursor
 				
 		if showTouchArea: drawCircle position, radius, fillColor:{"ff000080"}
+
+	// Executes code when the user touches or clicks within a given polygon
+	onTouchDownWithin: float2 position        // The center of the touch area
+		               float2[] points        // The points that define the touch area
+		               void(Touch touch) code // The code to execute for each touch or click
+		               int userId = -1        // Only consider touches or clicks from this user  
+		               string cursor = ""
+		               bool showTouchArea = false
+		               bool markAsHandled = true
+		float2[] poly
+		for points: poly.add (position + p).transform(graphics.localMatrix)
+			
+		if (Network.mode == Connected || Network.simulateConnection) && userId != -1
+			let user = internalUsers[userId]
+			for touch -> user.downTouches
+				if !touch.handled && touch.referencePosition.isInsidePoygon(poly)
+					touch.position = touch.referencePosition.getRelativeTo(graphics.localMatrix)
+					log "down", touch.position
+					code touch
+					if markAsHandled: touch.handled = true
+		else
+			for user -> internalUsers if user
+				for touch -> user.downTouches
+					if !touch.handled && touch.referencePosition.isInsidePoygon(poly)
+						touch.position = touch.referencePosition.getRelativeTo(graphics.localMatrix)
+						log "down", touch.position
+						code touch
+						if markAsHandled: touch.handled = true
+			if cursor
+				let user = internalUsers[Network.userId]
+				for touch -> user.movingTouches
+					if !touch.handled && touch.referencePosition.isInsidePoygon(poly)
+						this.cursor = cursor
+				
+		if showTouchArea: drawPolygon position, points, fillColor:{"ff0000b0"}
 
 	// Executes code when the user touches or clicks within a given area
 	onTouchUpWithin: float2 position        // The center of the touch area
