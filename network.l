@@ -259,7 +259,7 @@ transient unit Network
 	internal const targetFps = 30
 	private const pingCount = 6
 	private const bufferFrames = 1
-	private const targetFrameTime = 1000/targetFps
+	const targetFrameTime = 1000/targetFps
 	
 	visible NetworkMode mode
 	visible int userId = -1

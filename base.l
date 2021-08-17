@@ -530,7 +530,7 @@ global transient unit System
 	// Prints a message to the console
 	global js void print: logstring text // The text, variables or expressions to print
 		                  SourceCodeLocation location
-		log(text, location.row, location.column, location.file)
+		log(text, location.row, location.column, location.file, Network_frame)
 	
 	// Shows a dialog box with a given message
 	global inline js void alert: implicit string message // The message to show
