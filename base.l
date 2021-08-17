@@ -6,6 +6,16 @@ struct int
 	// The  smallest possible value of an integer
 	const minValue = -2147483648
 	
+	inline js int operator ** (int a, int b) 
+		Math.pow(a,b)
+		
+	js int operator % (int a, int b)
+		return ((a % b) + b) % b
+		
+	// The remainer after a division by the given value. The sign stays the same.
+	inline js int remainder: int value
+		(this % value)
+		
 	// Returns true if the integer is not zero
 	inline js bool toBool := this
 	
@@ -44,18 +54,25 @@ struct int
 		
 	inline js int setIfLarger: int newValue
 		(this = Math.max(newValue, this))
-
-
+	
 // A number stored as a double precision 64-bit floating point value
 struct float
 	const inline js float infinity := Number.POSITIVE_INFINITY
 	
+	inline js float operator ** (float a, float b) 
+		Math.pow(a,b)
+		
+	js float operator % (float a, float b)
+		return ((a % b) + b) % b
+		
+	// The remainer after a division by the given value. The sign stays the same.
+	inline js float remainder: float value
+		(this % value)
+		
 	// Returns true if the floot is not zero
 	inline js bool toBool := this != 0
 	
 	inline js string toString := this.toString()
-		
-	js float operator **(float a, float b) return Math.pow(a,b)
 		
 	inline js string format: int minIntegerDigits = 1, bool grouping = false
 		this.toLocaleString('en-US', {minimumIntegerDigits:minIntegerDigits, useGrouping:grouping})
