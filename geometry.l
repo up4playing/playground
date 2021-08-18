@@ -226,8 +226,12 @@ struct int2
 	int2 operator +  (int2 a, int2 b) return int2(a.x+b.x, a.y+b.y)
 	int2 operator -  (int2 a, int2 b) return int2(a.x-b.x, a.y-b.y)
 		
-	int2 operator *  (int2 a, int2 b) return int2(a.x*b.x, a.y*b.y)
-	int2 operator *  (int2 a, int b) return int2(a.x*b, a.y*b)
+	int2 operator * (int2 a, int2 b) return int2(a.x*b.x, a.y*b.y)
+	int2 operator * (int2 a, int b) return int2(a.x*b, a.y*b)
+	int2 operator * (int a, int2 b) return int2(a*b.x, a*b.y)
+		
+	float2 operator * (int2 a, float b) return float2(a.x*b, a.y*b)
+	float2 operator * (float a, int2 b) return float2(a*b.x, a*b.y)
 		
 	float2 operator / (int2 a, int2 b) return float2(a.x/b.x, a.y/b.y)
 	float2 operator / (int2 a, float b) return float2(a.x/b, a.y/b)
