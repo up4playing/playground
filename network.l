@@ -270,10 +270,11 @@ transient unit Network
 	private float startTime
 	private int startInputFrame
 	
-	visible int frame               // Will increase by 1 at the end of every step (so every targetFrameTime milliseconds)
+	visible int frame               // Current frame, will increase by 1 at the end of every step (every targetFrameTime ms)
+	private int frames              // Total number of frames we have inputs for
 	private int receivedFrames      // We received all remote inputs up to this frame (lowest of all user frames)
-	private int uncertainFrame = -1 // The first frame that doesn't have inputs from all players
-	private int certainFrame
+	private int uncertainFrame = -1 // The first frame where we don't have inputs from all players
+	private int certainFrame        // The last frame where we have inputs from all players
 	private Buffer commonState      // A snapshot taken before the first uncertain frame
 		
 	private float[] checksums
@@ -319,36 +320,49 @@ transient unit Network
 		Math.setRandomSeed randomSeed
 		for userCount
 			Input.internalUsers.add {id:i, local:true, collectInputs:true}
-			Input.users.add {id:i}
 		initDatabase
-		replay
+		reset
+		resetStartTime
+		animationFrame
 		
-	// Resets the application to the first frame
+	// Clears all inputs and resets the application to the first frame
 	stop
 		for Input.internalUsers: inputs.reset
-		frame = 0
-		replay
+		frames = 0
+		goToFrame 0
 		
-	// Replay all inputs with the new code at app startup and after every code change
-	replay
+	// Calls init functions, creates the local users, resets read positions and starts app
+	// This is called on startup, after every code change and when going backwards in the timeline
+	reset
 		Platform.initApplication
 		
-		// Recreating users, because developers might have added fields to NetworkUser or Touch
-		let userCount = Input.users.length
+		// We always recreating users, because developers might have added fields to NetworkUser or Touch
+		// By the time we call startApp, all users need to exist
 		Input.users.clear
-		for userCount: Input.users.add {id:i}
+		for Input.internalUsers.length: Input.users.add {id:i}
+			
+		// Reset read pos to replay inputs from the beginning
 		for Input.internalUsers: inputs.readPos = 0
 			
 		lobby.inLobby = false
 		Math.randomValueIndex = 0
-		let targetFrame = frame-1
 		frame = 0
 		startApp
+	
+	// Steps forward when going to a frame in the future
+	// or replays from the beginning when going to a frame in the past
+	// This is called after every code change with alwaysReplay = true 
+	// to replay all inputs with the new code from the beginning,
+	// and when stepping through the timeline with alwaysReplay = false
+	// to only replay from the beginning when going to a frame in the past
+	goToFrame: int targetFrame, alwaysReplay = false
+		if targetFrame < frame or alwaysReplay: reset
+			
 		while frame < targetFrame
 			step fastFordward:true
 		resetStartTime
 		animationFrame
-	
+
 	// Smooth out animations by only executing code when we received inputs from everybody	
 	smooth: int userId
 		    void() code
@@ -357,11 +371,11 @@ transient unit Network
 	smooth: void() code
 		if Input.isCertain: code
 			
-	// AnimationFrame --> Step --> Tick
+	// animationFrame --> step --> tick
 
-	// AnimationFrame  Send tick message, replay state, and call step
-	// Step            Save state, parse inputs, step physics, process tick, and calculate checksum
-	// Tick            Clear screen, process application tick, and draw all graphics
+	// animationFrame  Send tick message, replay state, and call step
+	// step            Save state, parse inputs, step physics, process tick, and calculate checksum
+	// tick            Clear screen, process application tick, and draw all graphics
 		
 	// Send tick message, replay state, call step, and logging
 	// This is called by the requestAnimationFrame callback.
@@ -393,7 +407,6 @@ transient unit Network
 		let now = currentTime
 		let localPlayer = Input.internalUsers[userId]
 		let targetFrame = Math.floor((now - startTime)/targetFrameTime)+1
-		// int nextInputFrame = targetFrame + aheadAverage.round + bufferFrames
 		let nextInputFrame = targetFrame
 		let frameMinusOffset = targetFrame - aheadPercentile
 		certainFrame = Math.min(frameMinusOffset, receivedFrames)
@@ -504,7 +517,6 @@ transient unit Network
 				// Take snapshot
 				Snapshot.onEndOfStep
 			
-			// log "#{frame}{isCertain ? "c":""}", certainFrame, "a:{Framework.objects[0]?.angle}"
 			
 		catch
 			print error
@@ -516,7 +528,11 @@ transient unit Network
 			internalUser?.clearEvent
 		for user -> Input.users
 			user?.clearEvents
-			
+		
+		// Send current frame to editor	
+		if frame > frames: frames = frame
+		if !fastFordward and (Platform.mode == Record or Platform.mode == Play): Platform.sendFrame(frame, frames)			
+		
 		frame++
 		
 	// Clear screen, process application tick, and draw all graphics
@@ -639,7 +655,7 @@ transient unit Network
 		if(window.app_start) app_start()
 		
 	resetStartTime
-		startTime = currentTime - frame*targetFrameTime - (targetFrameTime-.5)
+		startTime = currentTime - frame*targetFrameTime - (targetFrameTime*.5)
 		
 	object db = null
 	

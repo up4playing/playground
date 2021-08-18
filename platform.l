@@ -96,7 +96,8 @@ transient unit Platform
 		let offsetX = Platform_anchor > 0 ? Platform_pixelSize.x/2 : 0
 		let offsetY = Platform_anchor > 1 ? Platform_pixelSize.y/2 : 0
 		Platform_baseMatrix = new Matrix2D(scale,0,0,scale,offsetX,offsetY)
-		
+	
+	// This is called when the application starts for the first time	
 	private start: bool isDebug
 		initPlatform
 		this.isDebug = isDebug
@@ -116,18 +117,20 @@ transient unit Platform
 		sendMode
 		
 	// This is called after every code change to replay all inputs with the new code
-	private replay()  Network.replay
+	private replay()  Network.goToFrame Network.frame-1, alwaysReplay:true
 	
 	// This is called every animation frame
 	private tick()   if mode == Play || mode == Record: Network.animationFrame
 	
-	private enterSlideMode(PlatformMode mode) Network.replay; this.mode = mode; sendMode
+	private enterSlideMode(PlatformMode mode) this.mode = mode; sendMode
 	
 	private stop()    mode = Pause;  Network.stop; sendMode
 	private pause()   mode = Pause;  sendMode
 	private record()  mode = Record; Network.resetStartTime; sendMode
 	private play()    mode = Play;   Network.resetStartTime; sendMode
 	
+	private goToFrame(int targetFrame) Network.goToFrame(targetFrame)
+		
 	private float2 touchUpPos
 	private int locationIndex
 	private SourceCodeLocation[] locations
@@ -162,6 +165,9 @@ transient unit Platform
 			
 	private js void sendTouchToEditor: int id, float2 pos, TouchPhase phase, int row, int column, string file
 		_sendToEditor({type:"touch", id, x:pos.x, y:pos.y, phase, row, column, file})
+	
+	internal js void sendFrame: int frame, int frames
+		_sendToEditor({type:"frame", frame, frames})
 	
 	private js void sendMode
 		if(Platform_isDebug) _sendToEditor({type:"setPlatformMode", mode:Platform_mode, frame:Network_frame})
@@ -215,6 +221,10 @@ transient unit Platform
 		
 	inline js void debugger
 		debugger
+		
+	js void stack
+		try      { _ }
+		catch(e) { return e.stack }
 		
 	inline js void pushState: object state, string title, string url = ""
 		history.pushState(state, title, url)

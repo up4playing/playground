@@ -61,7 +61,6 @@ enum MouseButton: None, Left, Middle, Right
 // A touch or a click
 class Touch
 	int id
-	// InternalUser user = null
 	int userId
 	TouchPhase phase
 	MouseButton button
