@@ -572,6 +572,25 @@ transient global unit graphics
 			))
 		}
 		
+	// Draws a polygon on the screen
+	global js void drawLine: float2 start
+		                     float2 end 
+		                     Color color = null // The color of the outline around the line
+		                     width = 0          // The width of the outline around the line
+		                     visibleFor = -1           // Only this user will see the line
+		                     implicit int layer = 0    // Higher layers are drawn in front of lower layers
+		if(graphics_isVisibleFor(visibleFor)) {
+			graphics_items.push(new DisplayLine(
+				graphics_totalMatrix,
+				start.x, end.y,
+				end.x - start.x, end.y - start.y,
+				layer, "Line", start.location,
+				end,
+				color ? color.hex : null,
+				width || graphics_currentLineWidth
+			))
+		}
+		
 	// Clears all pixels within a rectangle
 	global js void clearRectangle: position = float2()  // The position of the rectangle to clear
 		                           size = float2(32,32) // The size of the rectangle to clear
@@ -719,6 +738,20 @@ transient DisplayItem DisplayCircle
 			Platform_context.strokeStyle = this.outlineColor
 			Platform_context.stroke()
 		}
+		
+transient DisplayItem DisplayLine
+	float2 end
+	string outlineColor
+	float outlineWidth
+	js void draw
+		Platform_context.setTransform(this.m0, this.m1, this.m2, this.m3, this.m4, this.m5)
+		
+		Platform_context.beginPath();
+		Platform_context.moveTo(this.x,this.y)
+		Platform_context.lineTo(this.end.x, this.end.y)
+		Platform_context.lineWidth = this.outlineWidth
+		Platform_context.strokeStyle = this.outlineColor
+		Platform_context.stroke()
 		
 // A sound
 struct Sound
