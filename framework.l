@@ -228,7 +228,9 @@ Object Stack
 			obj.moveTouch = touch
 			obj.touchOffset = obj.position - touch.position
 			
-		for i = Math.limit(objects.length-shownObjectCount, min:0) <- objects.length: objects[i].tick
+		for i = Math.limit(objects.length-shownObjectCount, min:0) <- objects.length
+			let obj = objects[i]
+			drawImage obj.backImage, obj.position, scale:obj.scale
 	
 	shuffle
 		objects.shuffle
@@ -315,6 +317,7 @@ Object Board
 				visibleForOthers = visibleForOthers == On ? Off : On
 				
 		if color: drawRectangle position, size, fillColor:color, layer:-1
+		if image: drawImage image, position, scale
 			
 	updateBoard
 		for objects: updateBoard
@@ -326,14 +329,14 @@ Object Board
 			let spotPos = spot.getClosestPoint position, this.position
 			let delta = (spotPos - position).abs
 			let distance = delta.length
-			if delta < threshold && distance < minDistance
+			if delta < threshold and distance < minDistance and !objects.find.position == spotPos
 				minDistance = distance
 				closestSpotPos = spotPos
 		return closestSpotPos
 		
 class Spot
 	float2 pos
-	getClosestPoint(float2 touchPos, float2 boardPos) := pos
+	getClosestPoint(float2 touchPos, float2 boardPos) := pos + boardPos
 	
 Spot SpotGrid
 	float2 cellSize
