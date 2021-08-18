@@ -110,6 +110,10 @@ struct float
 		                            float epsilon = 0.00001
 		(Math.abs(this - value) < epsilon)
 		
+	inline js bool isAngleApproximately: float value
+		                                 float epsilon = 0.0175
+		(Math.abs((((this % Math_TwoPI) + Math_TwoPI) % Math_TwoPI) - (((value % Math_TwoPI) + Math_TwoPI) % Math_TwoPI)) < epsilon)
+		
 // A sequence of characters
 class string
 	// Returns the number of characters in the string
@@ -607,7 +611,10 @@ unit Math
 		Math.sqrt(value)
 		
 	// The ratio of a circle's circumference to its diameter
-	inline js float PI := Math.PI
+	float PI = 3.141592653589793
+	
+	// The ratio of a circle's radius to its diameter
+	float TwoPI = 6.283185307179586
 	
 	// Returns the sine of an angle in radians
 	inline js float sin: float angle // The angle in radians
