@@ -439,7 +439,7 @@ class IsometicGrid
 	isValid: int2 pos
 		return pos >= {0,0} and pos < size
 		
-	gridScreenVector: int2 worldVector
+	getScreenVector: float2 worldVector
 		return xOffset*worldVector.x + yOffset*worldVector.y
 		
 class Direction
@@ -455,9 +455,9 @@ class Direction
 		return allDirections[(index+(direction == Clockwise ? 1:3))%4]
 	
 	global const Direction Right = {"Right", 0, { 1, 0},   0°, 330°} // positive x direction (1,0)
-	global const Direction Down  = {"Down",  1, { 0, 1}, 270°, 210°} // positive y direction (0,1)
+	global const Direction Down  = {"Down",  1, { 0, 1},  90°,  30°} // positive y direction (0,1)
 	global const Direction Left  = {"Left",  2, {-1, 0}, 180°, 150°} // negative x direction (-1,0)
-	global const Direction Up    = {"Up",    3,  {0,-1},  90°,  30°} // negative y direction (0,-1)
+	global const Direction Up    = {"Up",    3,  {0,-1}, 270°, 210°} // negative y direction (0,-1)
 		
 	const allDirections = [Right, Down, Left, Up]
 	
