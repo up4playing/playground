@@ -530,7 +530,7 @@ transient unit Network
 			user?.clearEvents
 		
 		// Send current frame to editor	
-		if frame > frames: frames = frame
+		if frame+1 > frames: frames = frame+1
 		if !fastFordward and (Platform.mode == Record or Platform.mode == Play): Platform.sendFrame(frame, frames)			
 		
 		frame++
