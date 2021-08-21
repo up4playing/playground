@@ -365,7 +365,7 @@ Object ParticleSystem
 			let r = (Math.randomFloat) * Math.PI
 			let speedFactor = Math.randomFloat*(maxSpeed-minSpeed) + minSpeed
 			particles.add Particle
-				position
+				pos: position
 				speed: {Math.cos(r), Math.sin(r)} * speedFactor
 				size: 50
 				frame: Math.randomInteger(particleImage.frames.length)
