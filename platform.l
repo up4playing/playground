@@ -169,6 +169,9 @@ transient unit Platform
 	internal js void sendFrame: int frame, int frames
 		_sendToEditor({type:"frame", frame, frames})
 	
+	internal js void sendWatch: int frame, string text, int row, int column, string file
+		_sendToEditor({type:"watch", frame, text, row, column, file})
+	
 	private js void sendMode
 		if(Platform_isDebug) _sendToEditor({type:"setPlatformMode", mode:Platform_mode, frame:Network_frame})
 
