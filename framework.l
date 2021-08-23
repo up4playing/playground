@@ -230,7 +230,7 @@ Object Stack
 			
 		for i = Math.limit(objects.length-shownObjectCount, min:0) <- objects.length
 			let obj = objects[i]
-			drawImage obj.backImage, obj.position, scale:obj.scale
+			drawImage obj.backImage, obj.position, frame:obj.frame%obj.backImage.frames.length, scale:obj.scale
 	
 	shuffle
 		objects.shuffle
