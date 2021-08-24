@@ -354,13 +354,13 @@ transient unit Network
 	
 	// Steps forward when going to a frame in the future
 	// or replays from the beginning when going to a frame in the past
-	// This is called after every code change with alwaysReplay = true 
+	// This is called after every code change with replay = true 
 	// to replay all inputs with the new code from the beginning,
-	// and when stepping through the timeline with alwaysReplay = false
+	// and when stepping through the timeline with replay = false
 	// to only replay from the beginning when going to a frame in the past
-	goToFrame: int targetFrame, alwaysReplay = false
-		if alwaysReplay: frameWithNewWatches = 0
-		if targetFrame < frame or alwaysReplay: reset
+	goToFrame: int targetFrame, replay = false
+		if replay: frameWithNewWatches = 0
+		if targetFrame < frame or replay: reset
 			
 		while frame < targetFrame
 			step fastFordward:true
@@ -472,6 +472,7 @@ transient unit Network
 			localPlayer.startInputFrame nextInputFrame
 			
 		lastAnimationFrame = now
+		if Platform.mode == Play and frame >= frames: Platform.record()
 		
 	// Save state, parse inputs, step physics, process tick, and calculate checksum
 	// This is called in animationFrame and during replays. 
@@ -659,8 +660,11 @@ transient unit Network
 		lobby_inLobby = false
 		if(window.app_start) app_start()
 		
-	resetStartTime
+	private resetStartTime
 		startTime = currentTime - frame*targetFrameTime - (targetFrameTime*.5)
+		
+	resetStartTimeIfNeeded
+		if Platform.mode < Play: resetStartTime
 		
 	object db = null
 	
