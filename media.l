@@ -582,7 +582,7 @@ transient global unit graphics
 		if(graphics_isVisibleFor(visibleFor)) {
 			graphics_items.push(new DisplayLine(
 				graphics_totalMatrix,
-				start.x, end.y,
+				start.x, start.y,
 				end.x - start.x, end.y - start.y,
 				layer, "Line", start.location,
 				end,
