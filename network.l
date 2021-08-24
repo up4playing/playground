@@ -276,6 +276,8 @@ transient unit Network
 	private int uncertainFrame = -1 // The first frame where we don't have inputs from all players
 	private int certainFrame        // The last frame where we have inputs from all players
 	private Buffer commonState      // A snapshot taken before the first uncertain frame
+	
+	internal int frameWithNewWatches = 0 // First frame with new watches, do not send watches for frames below this
 		
 	private float[] checksums
 	private bool alertShown
@@ -329,6 +331,7 @@ transient unit Network
 	stop
 		for Input.internalUsers: inputs.reset
 		frames = 0
+		frameWithNewWatches = 0
 		goToFrame 0
 		
 	// Calls init functions, creates the local users, resets read positions and starts app
@@ -356,6 +359,7 @@ transient unit Network
 	// and when stepping through the timeline with alwaysReplay = false
 	// to only replay from the beginning when going to a frame in the past
 	goToFrame: int targetFrame, alwaysReplay = false
+		if alwaysReplay: frameWithNewWatches = 0
 		if targetFrame < frame or alwaysReplay: reset
 			
 		while frame < targetFrame
@@ -530,7 +534,8 @@ transient unit Network
 			user?.clearEvents
 		
 		// Send current frame to editor	
-		if frame+1 > frames: frames = frame+1
+		if frames < frame+1: frames = frame+1
+		if frameWithNewWatches < frame+1: frameWithNewWatches = frame+1
 		if Platform.isDebug and !fastFordward and (Platform.mode == Record or Platform.mode == Play): Platform.sendFrame(frame, frames)			
 		
 		frame++

@@ -554,10 +554,12 @@ global transient unit System
 		                  SourceCodeLocation location
 		log(text, location.row, location.column, location.file, Network_frame)
 	
-	// Prints a message to the console
-	global js void watch: logstring text // The text, variables or expressions to print
+	// Display a message in the timeline
+	global js void watch: string text // The text to display
 		                  SourceCodeLocation location
-		Platform_sendWatch(Network_frame, text, location.row, location.column, location.file)
+		if(Network_frame >= Network_frameWithNewWatches) {
+			Platform_sendWatch(Network_frame, text, location.row, location.column, location.file)
+		}
 	
 	// Shows a dialog box with a given message
 	global inline js void alert: implicit string message // The message to show
