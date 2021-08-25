@@ -27,9 +27,8 @@ class Color
 class Texture
 	string file
 	float2 size
-	Texture() open
 	
-	js void open
+	js void open: void() callback = null
 		if(!window._htmlImageCache) _htmlImageCache = {}
 		let image = _htmlImageCache[this.file]
 		if(!image) {
@@ -39,14 +38,12 @@ class Texture
 				this._htmlImage = image
 				window._htmlImageCache[this.file] = image
 				this.size = new float2(image.width, image.height, null)
-				if(Platform_mode == 0 && Network_frame == 1) {
-					Network_frame = 0;
-					Network_tick();
-				}
+				callback?.();
 			}
 		} else {
 			this._htmlImage = image
 			this.size = new float2(image.width, image.height, null)
+			callback?.()
 		}
 
 // A single frame of an animated image

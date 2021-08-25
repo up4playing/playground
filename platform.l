@@ -42,6 +42,9 @@ transient unit Platform
 	internal inline js void initApplication
 		init()
 		
+	internal inline js void initImages
+		Image_init();
+		
 	private js void initPlatform
 		Platform_init();
 		Math_init();
@@ -99,6 +102,7 @@ transient unit Platform
 	
 	// This is called when the application starts for the first time	
 	private start: bool isDebug
+		initImages
 		initPlatform
 		this.isDebug = isDebug
 		if !isDebug: showSafeArea = false
@@ -111,13 +115,17 @@ transient unit Platform
 		let path = url.split("/")
 		let gameId = path[3]
 		let roomId = path[4]
-
-		if isDebug || isLocal || roomId == "local" || url.startsWith("file"): Network.startLocal userCount:userCount
-		else                                                                  Network.join gameId, roomId
-		sendMode
+		
+		Image.mainTexture.open
+			if isDebug || isLocal || roomId == "local" || url.startsWith("file"): Network.startLocal userCount:userCount
+			else                                                                  Network.join gameId, roomId
+			sendMode
 		
 	// This is called after every code change to replay all inputs with the new code
-	private replay()  Network.goToFrame Network.frame-1, replay:true
+	private replay() 
+		initImages
+		Image.mainTexture.open
+			Network.goToFrame Network.frame-1, replay:true
 	
 	// This is called every animation frame
 	private tick()   if mode == Play || mode == Record: Network.animationFrame
