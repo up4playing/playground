@@ -244,6 +244,10 @@ class List<T>
 	inline js void each(void(T a) code)
 		for(let a of this) code()
 					
+	// Execute code for each item in the list in reverse order
+	inline js void eachBackwards(void(T a) code)
+		for(let i=this.length-1; i>=0; i--) {let a=this[i]; code()}
+					
 	js string toString()
 		let result = "";
 		for(let item of this) {
@@ -809,6 +813,9 @@ transient class Time
 	inline js int time := this.getTime()
 		
 	static inline js Time current := new Date()
+	
+	// The current frame	
+	static inline js int frame := Network_frame
 		
 	// The number of milliseconds elapsed since January 1, 1970
 	static int now
