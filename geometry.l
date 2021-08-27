@@ -422,22 +422,30 @@ class IsometicGrid
 		
 	// Convert screen position (north is up) to world position (northwest is up)
 	getWorldPosition: float2 screenPos // The screen position
+		              bool allowOutside = false
 		float2 t = screenPos - basePos + topFaceOffset
 		let x = (xOffset.x*t.y + xOffset.y*t.x) / (2*xOffset.x*xOffset.y)
 		let y = (xOffset.x*t.y - xOffset.y*t.x) / (2*xOffset.x*xOffset.y)
-		if x >= 0 and x < size.x and y >= 0 and y < size.y: return float2(x,y)
-		else                                                return float2.none
+		if allowOutside or (x >= 0 and x < size.x and y >= 0 and y < size.y): return float2(x,y)
+		else                                                                  return float2.none
 		
 	// Convert screen pos (north is up) to rounded world pos (northwest is up)
 	getGridPosition: float2 screenPos // The screen position
+		             bool allowOutside = false
 		float2 t = screenPos - basePos + topFaceOffset
 		let x = Math.round((xOffset.x*t.y + xOffset.y*t.x) / (2*xOffset.x*xOffset.y))
 		let y = Math.round((xOffset.x*t.y - xOffset.y*t.x) / (2*xOffset.x*xOffset.y))
-		if x >= 0 and x < size.x and y >= 0 and y < size.y: return int2(x,y)
-		else                                                return int2.none
+		if allowOutside or (x >= 0 and x < size.x and y >= 0 and y < size.y): return int2(x,y)
+		else                                                                  return int2.none
 		
 	isValid: int2 pos
 		return pos >= {0,0} and pos < size
+		
+	limitToInside: int2 position
+		return int2(
+			Math.limit position.x, min:0, max:size.x-1
+			Math.limit position.y, min:0, max:size.y-1
+		)
 		
 	getScreenVector: float2 worldVector
 		return xOffset*worldVector.x + yOffset*worldVector.y
