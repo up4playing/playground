@@ -447,9 +447,21 @@ class Direction
 	global const Direction Down  = {"Down",  1, { 0, 1},  90°,  30°} // positive y direction (0,1)
 	global const Direction Left  = {"Left",  2, {-1, 0}, 180°, 150°} // negative x direction (-1,0)
 	global const Direction Up    = {"Up",    3,  {0,-1}, 270°, 210°} // negative y direction (0,-1)
-		
-	const allDirections = [Right, Down, Left, Up]
 	
+	const Direction UpLeft    = {"UpLeft",    0, {-1,-1}} // negative x, negative y direction (-1,-1)
+	const Direction UpRight   = {"UpRight",   1, { 1,-1}} // positive x, negative y direction (1,-1)
+	const Direction DownLeft  = {"DownLeft",  2, {-1, 1}} // negative x, positive y direction (-1,1)
+	const Direction DownRight = {"DownRight", 3, { 1, 1}} // positive x, positive y direction (1,1)
+	
+	// List of the four primary direction: Right, Down, Left, Up
+	const Direction[] allFourDirections = [Right, Down, Left, Up]
+	
+	// List of the primary direction and the diagonals
+	const Direction[] allEightDirections = [Right, DownRight, Down, DownLeft, Left, UpLeft, Up, UpRight]
+	
+	// List of the four diagonals: UpLeft, UpRight, DownLeft, DownRight
+	const Direction[] allDiagonals = [UpLeft, UpRight, DownLeft, DownRight]
+
 	string name
 	int index
 	int2 vector
@@ -459,7 +471,7 @@ class Direction
 	toString := name
 	
 	rotate: CircleDirection direction = Clockwise
-		return allDirections[(index+(direction == Clockwise ? 1:3))%4]
+		return allFourDirections[(index+(direction == Clockwise ? 1:3))%4]
 		
 	isOrthogonalTo: Direction value
 		return index%2 != value.index%2
