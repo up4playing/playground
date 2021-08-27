@@ -289,6 +289,11 @@ class List<T>
 	inline js void removeAt: int index // The index of the item to remove
 		this.splice(index, 1)
 			
+	// Removes the item at the given index from the list
+	inline js void removeRange: int index // The index of the first item to remove
+		                        int count // The number of items to remove
+		this.splice(index, count)
+			
 	removeFirstWhere: bool(T a) condition // The condition to check
 		for i, item -> this
 			if condition(item)

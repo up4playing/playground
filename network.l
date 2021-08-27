@@ -320,8 +320,6 @@ transient unit Network
 		Input.internalUsers.clear
 		randomSeed = Math.generateRandomSeed
 		Math.setRandomSeed randomSeed
-		for userCount
-			Input.internalUsers.add {id:i, local:true, collectInputs:true}
 		initDatabase
 		reset
 		resetStartTime
@@ -339,10 +337,16 @@ transient unit Network
 	reset
 		Platform.initApplication
 		
+		// When the developer changed Platform.userCount, add or remove internal users accordingly
+		for i = Input.internalUsers.length -> Platform.userCount
+			Input.internalUsers.add {id:i, local:true, collectInputs:true}
+		if Input.internalUsers.length > Platform.userCount
+			Input.internalUsers.removeRange Platform.userCount, count: Input.internalUsers.length - Platform.userCount
+		
 		// We always recreating users, because developers might have added fields to NetworkUser or Touch
 		// By the time we call startApp, all users need to exist
 		Input.users.clear
-		for Input.internalUsers.length: Input.users.add {id:i}
+		for Platform.userCount: Input.users.add {id:i}
 			
 		// Reset read pos to replay inputs from the beginning
 		for Input.internalUsers: inputs.readPos = 0
