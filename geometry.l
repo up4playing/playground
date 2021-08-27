@@ -265,6 +265,24 @@ struct int2
 	
 	// The smaller of the two coordinates
 	min := x < y ? x : y
+	
+	limit: int2 min
+		return int2(
+			Math.limit x, min:min.x
+			Math.limit y, min:min.y
+		)
+		
+	limit: int2 max
+		return int2(
+			Math.limit x, max:max.x
+			Math.limit y, max:max.y
+		)
+		
+	limit: int2 min, int2 max
+		return int2(
+			Math.limit x, min:min.x, max:max.x
+			Math.limit y, min:min.y, max:max.y
+		)
 		
 	// The distance to another vector
 	distanceTo: int2 value // The second vector
