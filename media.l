@@ -458,7 +458,7 @@ transient global unit graphics
 		                       outlineWidth = 0          // The width of the outline around the circle
 		                       startAngle = 0            // Draws an arc with this start angle in radians, measured from the positive x-axis
 		                       endAngle = Math.PI * 2    // Draws an arc with this end angle in radians, measured from the positive x-axis
-		                       CircleDirection direction = Clockwise
+		                       RotationDirection direction = Clockwise
 		                       visibleFor = -1           // Only this user will see the circle
 		                       implicit layer = 0        // Higher layers are drawn in front of lower layers
 		if(graphics_isVisibleFor(visibleFor)) {
@@ -715,11 +715,11 @@ transient DisplayItem DisplayPolygon
 			Platform_context.stroke()
 		}
 		
-enum CircleDirection: Clockwise, CounterClockwise
+enum RotationDirection: Clockwise, CounterClockwise
 		
 transient DisplayItem DisplayCircle
 	float radius, startAngle, endAngle
-	CircleDirection direction
+	RotationDirection direction
 	string fillColor, outlineColor
 	float outlineWidth
 	js void draw
