@@ -745,22 +745,26 @@ transient DisplayItem DisplayPolygon
 	float outlineWidth
 	js void draw
 		Platform_context.setTransform(this.m0, this.m1, this.m2, this.m3, this.m4, this.m5)
-		let x = this.x, y = this.y
-		
-		let firstPos = this.points[this.points.length-1]
-		Platform_context.beginPath();
-		Platform_context.moveTo(x + firstPos.x, y + firstPos.y)
-		for(let p of this.points)
-			Platform_context.lineTo(x + p.x, y + p.y)
+		if(this.points.length >= 2) {
+			if(this.clippingPath) this.startClipping()
+			let x = this.x, y = this.y
 			
-		if(this.fillColor) {
-			Platform_context.fillStyle = this.fillColor
-			Platform_context.fill()
-		}
-		if(this.outlineColor) {
-			Platform_context.lineWidth = this.outlineWidth
-			Platform_context.strokeStyle = this.outlineColor
-			Platform_context.stroke()
+			let firstPos = this.points[this.points.length-1]
+			Platform_context.beginPath();
+			Platform_context.moveTo(x + firstPos.x, y + firstPos.y)
+			for(let p of this.points)
+				Platform_context.lineTo(x + p.x, y + p.y)
+				
+			if(this.fillColor) {
+				Platform_context.fillStyle = this.fillColor
+				Platform_context.fill()
+			}
+			if(this.outlineColor) {
+				Platform_context.lineWidth = this.outlineWidth
+				Platform_context.strokeStyle = this.outlineColor
+				Platform_context.stroke()
+			}
+			if(this.clippingPath) this.endClipping()
 		}
 		
 enum RotationDirection: Clockwise, CounterClockwise
