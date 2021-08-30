@@ -247,6 +247,10 @@ class List<T>
 	inline js void each(void(T a) code)
 		for(let a of this) code()
 					
+	// Execute code for each item in the list in reverse order
+	inline js void eachBackwards(void(T a) code)
+		for(let i=this.length-1; i>=0; i--) {let a=this[i]; code()}
+					
 	js string toString()
 		let result = "";
 		for(let item of this) {
@@ -287,6 +291,11 @@ class List<T>
 	// Removes the item at the given index from the list
 	inline js void removeAt: int index // The index of the item to remove
 		this.splice(index, 1)
+			
+	// Removes the item at the given index from the list
+	inline js void removeRange: int index // The index of the first item to remove
+		                        int count // The number of items to remove
+		this.splice(index, count)
 			
 	removeFirstWhere: bool(T a) condition // The condition to check
 		for i, item -> this
@@ -451,6 +460,19 @@ class List<T>
 				resultItem = item
 		return resultValue != threshold ? resultItem : null
 		
+	withMin: float(T a) selector
+		     float threshold = float.infinity
+		     bool(T a) where
+		float resultValue = threshold
+		T resultItem
+		for item -> this
+			if where(item)
+				let value = selector(item)
+				if value < resultValue
+					resultValue = value
+					resultItem = item
+		return resultValue != threshold ? resultItem : null
+		
 	withMax: int(T a) selector
 		     int threshold = int.minValue
 		int resultValue = threshold
@@ -557,10 +579,12 @@ global transient unit System
 		                  SourceCodeLocation location
 		log(text, location.row, location.column, location.file, Network_frame)
 	
-	// Prints a message to the console
-	global js void watch: logstring text // The text, variables or expressions to print
+	// Display a message in the timeline
+	global js void watch: string text // The text to display
 		                  SourceCodeLocation location
-		Platform_sendWatch(Network_frame, text, location.row, location.column, location.file)
+		if(Network_frame >= Network_frameWithNewWatches) {
+			Platform_sendWatch(Network_frame, text, location.row, location.column, location.file)
+		}
 	
 	// Shows a dialog box with a given message
 	global inline js void alert: implicit string message // The message to show
@@ -810,6 +834,9 @@ transient class Time
 	inline js int time := this.getTime()
 		
 	static inline js Time current := new Date()
+	
+	// The current frame	
+	static inline js int frame := Network_frame
 		
 	// The number of milliseconds elapsed since January 1, 1970
 	static int now

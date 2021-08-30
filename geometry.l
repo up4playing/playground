@@ -265,6 +265,24 @@ struct int2
 	
 	// The smaller of the two coordinates
 	min := x < y ? x : y
+	
+	limit: int2 min
+		return int2(
+			Math.limit x, min:min.x
+			Math.limit y, min:min.y
+		)
+		
+	limit: int2 max
+		return int2(
+			Math.limit x, max:max.x
+			Math.limit y, max:max.y
+		)
+		
+	limit: int2 min, int2 max
+		return int2(
+			Math.limit x, min:min.x, max:max.x
+			Math.limit y, min:min.y, max:max.y
+		)
 		
 	// The distance to another vector
 	distanceTo: int2 value // The second vector
@@ -422,27 +440,54 @@ class IsometicGrid
 		
 	// Convert screen position (north is up) to world position (northwest is up)
 	getWorldPosition: float2 screenPos // The screen position
+		              bool allowOutside = false
 		float2 t = screenPos - basePos + topFaceOffset
 		let x = (xOffset.x*t.y + xOffset.y*t.x) / (2*xOffset.x*xOffset.y)
 		let y = (xOffset.x*t.y - xOffset.y*t.x) / (2*xOffset.x*xOffset.y)
-		if x >= 0 and x < size.x and y >= 0 and y < size.y: return float2(x,y)
-		else                                                return float2.none
+		if allowOutside or (x >= 0 and x < size.x and y >= 0 and y < size.y): return float2(x,y)
+		else                                                                  return float2.none
 		
 	// Convert screen pos (north is up) to rounded world pos (northwest is up)
 	getGridPosition: float2 screenPos // The screen position
+		             bool allowOutside = false
 		float2 t = screenPos - basePos + topFaceOffset
 		let x = Math.round((xOffset.x*t.y + xOffset.y*t.x) / (2*xOffset.x*xOffset.y))
 		let y = Math.round((xOffset.x*t.y - xOffset.y*t.x) / (2*xOffset.x*xOffset.y))
-		if x >= 0 and x < size.x and y >= 0 and y < size.y: return int2(x,y)
-		else                                                return int2.none
+		if allowOutside or (x >= 0 and x < size.x and y >= 0 and y < size.y): return int2(x,y)
+		else                                                                  return int2.none
 		
 	isValid: int2 pos
 		return pos >= {0,0} and pos < size
+		
+	limitToInside: int2 position
+		return int2(
+			Math.limit position.x, min:0, max:size.x-1
+			Math.limit position.y, min:0, max:size.y-1
+		)
 		
 	getScreenVector: float2 worldVector
 		return xOffset*worldVector.x + yOffset*worldVector.y
 		
 class Direction
+	global const Direction Right = {"Right", 0, { 1, 0},   0°, 330°} // positive x direction (1,0)
+	global const Direction Down  = {"Down",  1, { 0, 1},  90°,  30°} // positive y direction (0,1)
+	global const Direction Left  = {"Left",  2, {-1, 0}, 180°, 150°} // negative x direction (-1,0)
+	global const Direction Up    = {"Up",    3,  {0,-1}, 270°, 210°} // negative y direction (0,-1)
+	
+	const Direction UpLeft    = {"UpLeft",    0, {-1,-1}} // negative x, negative y direction (-1,-1)
+	const Direction UpRight   = {"UpRight",   1, { 1,-1}} // positive x, negative y direction (1,-1)
+	const Direction DownLeft  = {"DownLeft",  2, {-1, 1}} // negative x, positive y direction (-1,1)
+	const Direction DownRight = {"DownRight", 3, { 1, 1}} // positive x, positive y direction (1,1)
+	
+	// List of the four primary direction: Right, Down, Left, Up
+	const Direction[] allFourDirections = [Right, Down, Left, Up]
+	
+	// List of the primary direction and the diagonals
+	const Direction[] allEightDirections = [Right, DownRight, Down, DownLeft, Left, UpLeft, Up, UpRight]
+	
+	// List of the four diagonals: UpLeft, UpRight, DownLeft, DownRight
+	const Direction[] allDiagonals = [UpLeft, UpRight, DownLeft, DownRight]
+
 	string name
 	int index
 	int2 vector
@@ -452,12 +497,13 @@ class Direction
 	toString := name
 	
 	rotate: CircleDirection direction = Clockwise
-		return allDirections[(index+(direction == Clockwise ? 1:3))%4]
-	
-	global const Direction Right = {"Right", 0, { 1, 0},   0°, 330°} // positive x direction (1,0)
-	global const Direction Down  = {"Down",  1, { 0, 1},  90°,  30°} // positive y direction (0,1)
-	global const Direction Left  = {"Left",  2, {-1, 0}, 180°, 150°} // negative x direction (-1,0)
-	global const Direction Up    = {"Up",    3,  {0,-1}, 270°, 210°} // negative y direction (0,-1)
+		return allFourDirections[(index+(direction == Clockwise ? 1:3))%4]
 		
-	const allDirections = [Right, Down, Left, Up]
+	isOrthogonalTo: Direction value
+		return index%2 != value.index%2
+		
+	isParallelTo: Direction value
+		return index%2 == value.index%2
+		
+	
 	

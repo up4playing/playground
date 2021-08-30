@@ -276,6 +276,8 @@ transient unit Network
 	private int uncertainFrame = -1 // The first frame where we don't have inputs from all players
 	private int certainFrame        // The last frame where we have inputs from all players
 	private Buffer commonState      // A snapshot taken before the first uncertain frame
+	
+	internal int frameWithNewWatches = 0 // First frame with new watches, do not send watches for frames below this
 		
 	private float[] checksums
 	private bool alertShown
@@ -318,8 +320,6 @@ transient unit Network
 		Input.internalUsers.clear
 		randomSeed = Math.generateRandomSeed
 		Math.setRandomSeed randomSeed
-		for userCount
-			Input.internalUsers.add {id:i, local:true, collectInputs:true}
 		initDatabase
 		reset
 		resetStartTime
@@ -329,6 +329,7 @@ transient unit Network
 	stop
 		for Input.internalUsers: inputs.reset
 		frames = 0
+		frameWithNewWatches = 0
 		goToFrame 0
 		
 	// Calls init functions, creates the local users, resets read positions and starts app
@@ -336,10 +337,16 @@ transient unit Network
 	reset
 		Platform.initApplication
 		
+		// When the developer changed Platform.userCount, add or remove internal users accordingly
+		for i = Input.internalUsers.length -> Platform.userCount
+			Input.internalUsers.add {id:i, local:true, collectInputs:true}
+		if Input.internalUsers.length > Platform.userCount
+			Input.internalUsers.removeRange Platform.userCount, count: Input.internalUsers.length - Platform.userCount
+		
 		// We always recreating users, because developers might have added fields to NetworkUser or Touch
 		// By the time we call startApp, all users need to exist
 		Input.users.clear
-		for Input.internalUsers.length: Input.users.add {id:i}
+		for Platform.userCount: Input.users.add {id:i}
 			
 		// Reset read pos to replay inputs from the beginning
 		for Input.internalUsers: inputs.readPos = 0
@@ -351,12 +358,13 @@ transient unit Network
 	
 	// Steps forward when going to a frame in the future
 	// or replays from the beginning when going to a frame in the past
-	// This is called after every code change with alwaysReplay = true 
+	// This is called after every code change with replay = true 
 	// to replay all inputs with the new code from the beginning,
-	// and when stepping through the timeline with alwaysReplay = false
+	// and when stepping through the timeline with replay = false
 	// to only replay from the beginning when going to a frame in the past
-	goToFrame: int targetFrame, alwaysReplay = false
-		if targetFrame < frame or alwaysReplay: reset
+	goToFrame: int targetFrame, replay = false
+		if replay: frameWithNewWatches = 0
+		if targetFrame < frame or replay: reset
 			
 		while frame < targetFrame
 			step fastFordward:true
@@ -468,6 +476,7 @@ transient unit Network
 			localPlayer.startInputFrame nextInputFrame
 			
 		lastAnimationFrame = now
+		if Platform.mode == Play and frame >= frames: Platform.record()
 		
 	// Save state, parse inputs, step physics, process tick, and calculate checksum
 	// This is called in animationFrame and during replays. 
@@ -530,7 +539,8 @@ transient unit Network
 			user?.clearEvents
 		
 		// Send current frame to editor	
-		if frame+1 > frames: frames = frame+1
+		if frames < frame+1: frames = frame+1
+		if frameWithNewWatches < frame+1: frameWithNewWatches = frame+1
 		if Platform.isDebug and !fastFordward and (Platform.mode == Record or Platform.mode == Play): Platform.sendFrame(frame, frames)			
 		
 		frame++
@@ -654,8 +664,11 @@ transient unit Network
 		lobby_inLobby = false
 		if(window.app_start) app_start()
 		
-	resetStartTime
+	private resetStartTime
 		startTime = currentTime - frame*targetFrameTime - (targetFrameTime*.5)
+		
+	resetStartTimeIfNeeded
+		if Platform.mode < Play: resetStartTime
 		
 	object db = null
 	
