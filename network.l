@@ -405,6 +405,7 @@ transient unit Network
 	// This is called by the requestAnimationFrame callback.
 	// We ensure that step is called every targetFrameTime milliseconds.
 	internal animationFrame
+		let now = currentTime
 		if mode == None || mode == Ping
 			graphics.startFrame
 			if mode == Ping: ping
@@ -421,15 +422,14 @@ transient unit Network
 		// Ahead
 		float aheadAverage
 		int aheadPercentile
+		let localPlayer = Input.internalUsers[userId]
 		if mode == Connected and Input.users.length > 1
 			let receivedCurrentFrames = getReceivedCurrentFrames
 			ahead = frame - receivedCurrentFrames
 			aheads.add ahead, maxLength:100
-			aheadAverage = aheads.average
+			localPlayer.aheadAverage = aheadAverage = aheads.average
 			aheadPercentile = smoothStrength ? aheads.percentile(smoothStrength).limit(0, 50) : 0
 		
-		let now = currentTime
-		let localPlayer = Input.internalUsers[userId]
 		let targetFrame = Math.floor((now - startTime)/targetFrameTime)+1
 		let nextInputFrame = targetFrame
 		let frameMinusOffset = targetFrame - aheadPercentile
@@ -447,7 +447,7 @@ transient unit Network
 			try
 				// Send each user the inputs that they haven't acknowleged yet
 				if mode == Connected
-					sendInputs nextInputFrame, targetFrame
+					sendInputs nextInputFrame, targetFrame, aheadAverage
 								
 				// Replay all frames from the first uncertain frame until the current frame
 				// when we received all inputs for frames that we were uncertain about before
@@ -481,11 +481,16 @@ transient unit Network
 				
 				// Debug string
 				if showDebugString
-					debugString = "v{Platform.version} checks:{checkedChecksums} inputs:"
+					debugString = "v{Platform.version} w:"
 					for user -> Input.internalUsers
 						if user
-							debugString += user.inputs.writePos.format(grouping:true) + " "
-					debugString += "snapshot:{Snapshot.currentIndex} size:{Snapshot.lastSnapshotSize.format(grouping:true)} a:{ahead} av:{aheadAverage.format(fractionDigits:1)} p:{aheadPercentile} {lastError}"
+							debugString += " " + user.inputs.writePos.format(grouping:true)
+					debugString += " i:{Snapshot.currentIndex} s:{Snapshot.lastSnapshotSize.format(grouping:true)} a:{ahead} p:{aheadPercentile} av:"
+					for user -> Input.internalUsers
+						if user
+							debugString += "  " + user.aheadAverage.format(fractionDigits:1)
+					debugString += " {lastError}"
+					if skipSending: debugString += " skip sending"
 					
 				lastNetworkFrame = now
 				
@@ -586,7 +591,7 @@ transient unit Network
 		
 	// Send each user the inputs that they haven't acknowleged yet
 	// This is called in animationFrame.
-	private sendInputs: int nextInputFrame, int targetFrame
+	private sendInputs: int nextInputFrame, int targetFrame, float aheadAverage
 		let localPlayer = Input.internalUsers[userId]
 		for c -> connections
 			if c.state == Connected
@@ -595,7 +600,8 @@ transient unit Network
 				sendTickMessage
 					to: c
 					inputFrame: nextInputFrame-1     // You got all inputs up to and including this frame
-					currentFrame: targetFrame-1      // The currently processed frame, used to calculate "ahead" 
+					currentFrame: targetFrame-1      // The currently processed frame, used to calculate "ahead"
+					aheadAverage: aheadAverage
 					
 					checksumFor: checksumFor         // The last certain frame with inputs from everybody
 					checksum: checksums[checksumFor] // The checksum of the last certain frame
@@ -1134,6 +1140,7 @@ transient unit Network
 	private void sendTickMessage: Connection to
 		                          int inputFrame
 		                          int currentFrame
+		                          float aheadAverage
 		                          int acknowledgePos
 		                          int checksumFor
 		                          float checksum
@@ -1146,6 +1153,7 @@ transient unit Network
 		sendBuffer.writeFloat64 checksum || 0
 		sendBuffer.writeInt32 inputFrame
 		sendBuffer.writeInt32 currentFrame
+		sendBuffer.writeFloat64 aheadAverage
 		sendBuffer.writeInt32 acknowledgePos
 		sendBuffer.writeInt32 start
 		sendBuffer.writeBuffer buffer, start, end - start
@@ -1181,7 +1189,8 @@ transient unit Network
 		int inputFrame = buffer.readInt32 
 		if inputFrame > sender.inputFrame
 			sender.inputFrame = inputFrame
-			sender.currentFrame = buffer.readInt32 
+			sender.currentFrame = buffer.readInt32
+			sender.aheadAverage = buffer.readFloat64
 			sender.acknowledgedPos = buffer.readInt32
 			
 			let writeStart = buffer.readInt32

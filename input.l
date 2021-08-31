@@ -6,6 +6,7 @@ transient class InternalUser
 	bool collectInputs  // When we are done pinging, we add a join event and start collecting inputs
 	int inputFrame      // We got all inputs from this player up to and including this frame
 	int currentFrame    // The frame currently processed by this user, used to calculate "ahead"
+	float aheadAverage
 	
 	visible Touch[] downTouches, movingTouches, upTouches
 	visible WheelEvent[] wheelEvents
