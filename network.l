@@ -168,6 +168,22 @@ transient class Buffer
 			
 		this.writePos = writePos
 		
+	js void copyFromBuffer: Buffer source
+		let readPos = 0
+		let length = source.writePos
+		let writePos = this.writePos
+		
+		// Expand if neccessary
+		if(writePos+length > this.buffer.byteLength)
+			this.expandBuffer(writePos+length)
+			
+		// Write bytes
+		let readPosEnd = readPos + length
+		while(readPos < readPosEnd)
+			this.dataView.setUint8(writePos++, source.dataView.getUint8(readPos++))
+			
+		this.writePos = writePos
+		
 	inline js int peekInt8  := this.dataView.getInt8(this.readPos)
 	inline js int peekInt16 := this.dataView.getInt16(this.readPos)
 	inline js int peekInt32 := this.dataView.getInt32(this.readPos)
