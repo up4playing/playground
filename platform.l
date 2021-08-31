@@ -104,14 +104,13 @@ transient unit Platform
 	private start: bool isDebug
 		initImages
 		initPlatform
+		this.engineStarted = false
 		this.isDebug = isDebug
 		if !isDebug: showSafeArea = false
-		this.engineStarted = true
-		sendEvaluateFinished
 		
 		resize
 		if !isDebug: Network.simulateConnection = false
-		if mode <= Play: mode = Pause
+		if mode >= Play: mode = Pause
 		let path = url.split("/")
 		let gameId = path[3]
 		let roomId = path[4]
@@ -119,7 +118,11 @@ transient unit Platform
 		Image.mainTexture.open
 			if isDebug || isLocal || roomId == "local" || url.startsWith("file"): Network.startLocal userCount:userCount
 			else                                                                  Network.join gameId, roomId
-			sendMode
+			this.engineStarted = true
+			sendEvaluateFinished
+			
+			// When the texture is loaded, we start the app in record mode. This starts processing inputs and ticks.
+			if !isDebug: record
 		
 	// This is called after every code change to replay all inputs with the new code
 	private replay() 
@@ -128,7 +131,7 @@ transient unit Platform
 			Network.goToFrame Network.frame-1, replay:true
 	
 	// This is called every animation frame
-	private tick()   if mode == Play || mode == Record: Network.animationFrame
+	private tick()   if mode == Play or mode == Record: Network.animationFrame
 	
 	private enterSlideMode(PlatformMode mode) this.mode = mode; sendMode
 	
