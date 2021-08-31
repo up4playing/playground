@@ -494,7 +494,7 @@ class Direction
 	const Direction[] allEightDirections = [Right, DownRight, Down, DownLeft, Left, UpLeft, Up, UpRight]
 	
 	// List of the four diagonals: UpLeft, UpRight, DownLeft, DownRight
-	const Direction[] allDiagonals = [UpLeft, UpRight, DownLeft, DownRight]
+	const Direction[] allDiagonals = [DownLeft, DownRight, UpLeft, UpRight]
 
 	string name
 	int index
