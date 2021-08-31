@@ -161,7 +161,7 @@ unit Input
 			}
 			else
 			if(e.key == "F9") {
-				if(e.shiftKey) Network_saveLogs();
+				if(e.shiftKey) Network_saveLogsInternal();
 				else           Network_showDebugString = !Network_showDebugString;
 			}
 			else

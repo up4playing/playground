@@ -739,14 +739,15 @@ transient unit Network
 			print "restore failed"
 		
 	saveLogs
-		if Input.isCertain
-			Platform.createTextFile "log.csv", logTable
-			Http.post "/saveLog/{gameId}/{roomId}/{userId}", logTable
-				log "save logs"
-			else
-				print "save logs failed {error}"
+		if Input.isCertain: saveLogsInternal
 			
-		
+	internal saveLogsInternal
+		Platform.createTextFile "log.csv", logTable
+		Http.post "/saveLog/{gameId}/{roomId}/{userId}", logTable
+			log "save logs"
+		else
+			print "save logs failed {error}"
+			
 	js void saveEventStream
 		let trans = db.transaction("eventstreams", "readwrite")
 		trans.onerror = e => {
