@@ -161,7 +161,8 @@ unit Input
 			}
 			else
 			if(e.key == "F9") {
-				Network_showDebugString = !Network_showDebugString;
+				if(e.shiftKey) Network_saveLogs();
+				else           Network_showDebugString = !Network_showDebugString;
 			}
 			else
 			if(keyCode >= 49 && keyCode <= 52 && Network_simulateConnection)
