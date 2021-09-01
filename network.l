@@ -168,6 +168,22 @@ transient class Buffer
 			
 		this.writePos = writePos
 		
+	js void copyFromBuffer: Buffer source
+		let readPos = 0
+		let length = source.writePos
+		let writePos = this.writePos
+		
+		// Expand if neccessary
+		if(writePos+length > this.buffer.byteLength)
+			this.expandBuffer(writePos+length)
+			
+		// Write bytes
+		let readPosEnd = readPos + length
+		while(readPos < readPosEnd)
+			this.dataView.setUint8(writePos++, source.dataView.getUint8(readPos++))
+			
+		this.writePos = writePos
+		
 	inline js int peekInt8  := this.dataView.getInt8(this.readPos)
 	inline js int peekInt16 := this.dataView.getInt16(this.readPos)
 	inline js int peekInt32 := this.dataView.getInt32(this.readPos)
@@ -249,7 +265,7 @@ transient unit Network
 	public int smoothStrength = 90
 	public bool smoothTouchPosition = true
 	
-	string logTable = "frame,animTime,networkTime,tickTime,drawTime,iteration,restoreTime,replayFrames,replayTime,saveTime,user0,user1,user2,received,uncertain,offset,ahead,avarage,percentile,certainFrame,buffer,checksums,events,send,receive,write,parse,touch\n"
+	string logTable = "frame,now,animTime,networkTime,tickTime,drawTime,iteration,restoreTime,replayFrames,replayTime,saveTime,user0,user1,user2,received,uncertain,offset,ahead,avarage,percentile,certainFrame,buffer,checksums,events,send,receive,write,parse,touch\n"
 	public string eventLog = ""; sentLog = "", receivedLog="", writeLog="", parseLog = "", touchLog = "", checksumLog = "", debugString = ""
 	public bool showDebugString
 	private float lastNetworkFrame, lastAnimationFrame, drawTime, tickTime, restoreTime, replayTime, saveTime
@@ -389,6 +405,7 @@ transient unit Network
 	// This is called by the requestAnimationFrame callback.
 	// We ensure that step is called every targetFrameTime milliseconds.
 	internal animationFrame
+		let now = currentTime
 		if mode == None || mode == Ping
 			graphics.startFrame
 			if mode == Ping: ping
@@ -405,15 +422,14 @@ transient unit Network
 		// Ahead
 		float aheadAverage
 		int aheadPercentile
+		let localPlayer = Input.internalUsers[userId]
 		if mode == Connected and Input.users.length > 1
 			let receivedCurrentFrames = getReceivedCurrentFrames
 			ahead = frame - receivedCurrentFrames
 			aheads.add ahead, maxLength:100
-			aheadAverage = aheads.average
+			localPlayer.aheadAverage = aheadAverage = aheads.average
 			aheadPercentile = smoothStrength ? aheads.percentile(smoothStrength).limit(0, 50) : 0
 		
-		let now = currentTime
-		let localPlayer = Input.internalUsers[userId]
 		let targetFrame = Math.floor((now - startTime)/targetFrameTime)+1
 		let nextInputFrame = targetFrame
 		let frameMinusOffset = targetFrame - aheadPercentile
@@ -431,7 +447,7 @@ transient unit Network
 			try
 				// Send each user the inputs that they haven't acknowleged yet
 				if mode == Connected
-					sendInputs nextInputFrame, targetFrame
+					sendInputs nextInputFrame, targetFrame, aheadAverage
 								
 				// Replay all frames from the first uncertain frame until the current frame
 				// when we received all inputs for frames that we were uncertain about before
@@ -449,7 +465,7 @@ transient unit Network
 				
 				// Logs
 				try
-					logTable += "{frame-1},{now - lastAnimationFrame},{now - lastNetworkFrame},{tickTime.format(fractionDigits:2)},{drawTime.format(fractionDigits:2)},{frame-startFrame}"
+					logTable += "{frame-1},{now},{now - lastAnimationFrame},{now - lastNetworkFrame},{tickTime.format(fractionDigits:2)},{drawTime.format(fractionDigits:2)},{frame-startFrame}"
 					logTable += ",{restoreTime.format(fractionDigits:2)},{replayFrames},{replayTime.format(fractionDigits:2)},{saveTime.format(fractionDigits:2)}"
 					logTable += ","+(Input.internalUsers[0] ? Input.internalUsers[0].inputFrame : 0)
 					logTable += ","+(Input.internalUsers[1] ? Input.internalUsers[1].inputFrame : 0)
@@ -465,11 +481,16 @@ transient unit Network
 				
 				// Debug string
 				if showDebugString
-					debugString = "v{Platform.version} checks:{checkedChecksums} inputs:"
+					debugString = "v{Platform.version} w:"
 					for user -> Input.internalUsers
 						if user
-							debugString += user.inputs.writePos.format(grouping:true) + " "
-					debugString += "snapshot:{Snapshot.currentIndex} size:{Snapshot.lastSnapshotSize.format(grouping:true)} a:{ahead} av:{aheadAverage.format(fractionDigits:1)} p:{aheadPercentile} {lastError}"
+							debugString += " " + user.inputs.writePos.format(grouping:true)
+					debugString += " i:{Snapshot.currentIndex} s:{Snapshot.lastSnapshotSize.format(grouping:true)} a:{ahead} p:{aheadPercentile} av:"
+					for user -> Input.internalUsers
+						if user
+							debugString += "  " + user.aheadAverage.format(fractionDigits:1)
+					debugString += " {lastError}"
+					if skipSending: debugString += " skip sending"
 					
 				lastNetworkFrame = now
 				
@@ -570,7 +591,7 @@ transient unit Network
 		
 	// Send each user the inputs that they haven't acknowleged yet
 	// This is called in animationFrame.
-	private sendInputs: int nextInputFrame, int targetFrame
+	private sendInputs: int nextInputFrame, int targetFrame, float aheadAverage
 		let localPlayer = Input.internalUsers[userId]
 		for c -> connections
 			if c.state == Connected
@@ -579,7 +600,8 @@ transient unit Network
 				sendTickMessage
 					to: c
 					inputFrame: nextInputFrame-1     // You got all inputs up to and including this frame
-					currentFrame: targetFrame-1      // The currently processed frame, used to calculate "ahead" 
+					currentFrame: targetFrame-1      // The currently processed frame, used to calculate "ahead"
+					aheadAverage: aheadAverage
 					
 					checksumFor: checksumFor         // The last certain frame with inputs from everybody
 					checksum: checksums[checksumFor] // The checksum of the last certain frame
@@ -717,13 +739,15 @@ transient unit Network
 			print "restore failed"
 		
 	saveLogs
+		if Input.isCertain: saveLogsInternal
+			
+	internal saveLogsInternal
 		Platform.createTextFile "log.csv", logTable
 		Http.post "/saveLog/{gameId}/{roomId}/{userId}", logTable
 			log "save logs"
 		else
 			print "save logs failed {error}"
 			
-		
 	js void saveEventStream
 		let trans = db.transaction("eventstreams", "readwrite")
 		trans.onerror = e => {
@@ -1118,6 +1142,7 @@ transient unit Network
 	private void sendTickMessage: Connection to
 		                          int inputFrame
 		                          int currentFrame
+		                          float aheadAverage
 		                          int acknowledgePos
 		                          int checksumFor
 		                          float checksum
@@ -1130,6 +1155,7 @@ transient unit Network
 		sendBuffer.writeFloat64 checksum || 0
 		sendBuffer.writeInt32 inputFrame
 		sendBuffer.writeInt32 currentFrame
+		sendBuffer.writeFloat64 aheadAverage
 		sendBuffer.writeInt32 acknowledgePos
 		sendBuffer.writeInt32 start
 		sendBuffer.writeBuffer buffer, start, end - start
@@ -1165,7 +1191,8 @@ transient unit Network
 		int inputFrame = buffer.readInt32 
 		if inputFrame > sender.inputFrame
 			sender.inputFrame = inputFrame
-			sender.currentFrame = buffer.readInt32 
+			sender.currentFrame = buffer.readInt32
+			sender.aheadAverage = buffer.readFloat64
 			sender.acknowledgedPos = buffer.readInt32
 			
 			let writeStart = buffer.readInt32
@@ -1173,7 +1200,7 @@ transient unit Network
 			sender.inputs.writePos = writeStart + length
 			receivedFrames = getReceivedInputFrames
 	
-			receivedLog += " <{c.userId}> #{sender.inputFrame} a:{sender.acknowledgedPos} cf:{sender.currentFrame} s:{writeStart} e:{sender.inputs.writePos}"
+			receivedLog += " [{currentTime}] <{c.userId}> #{sender.inputFrame} a:{sender.acknowledgedPos} cf:{sender.currentFrame} s:{writeStart} e:{sender.inputs.writePos}"
 		else
 			// Ignore this frame because we already received a later frame
 			// Later frames start from the pos we acknowleged (everything before that we definately already received)
@@ -1184,7 +1211,7 @@ transient unit Network
 			let acknowledgedPos = buffer.readInt32
 			let writeStart = buffer.readInt32
 			let length = buffer.readInt32
-			receivedLog += " <{c.userId}> irgnoring #{inputFrame} (already at {sender.inputFrame}) a:{acknowledgedPos} s:{writeStart} e:{writeStart+length}"
+			receivedLog += " [{currentTime}] <{c.userId}> irgnoring #{inputFrame} (already at {sender.inputFrame}) a:{acknowledgedPos} s:{writeStart} e:{writeStart+length}"
 		
 	private void sendOwnInputsAfterReconnectMessage: Connection c
 		                                int frame
