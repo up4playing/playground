@@ -490,7 +490,6 @@ transient unit Network
 						if user
 							debugString += "  " + user.aheadAverage.format(fractionDigits:1)
 					debugString += " {lastError}"
-					if skipSending: debugString += " skip sending"
 					
 				lastNetworkFrame = now
 				
