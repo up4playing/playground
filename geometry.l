@@ -504,8 +504,11 @@ class Direction
 	
 	toString := name
 	
-	rotate: RotationDirection direction = Clockwise
+	rotated: RotationDirection direction = Clockwise
 		return allFourDirections[(index+(direction == Clockwise ? 1:3))%4]
+		
+	inverted
+		return allFourDirections[(index+2)%4]
 		
 	isOrthogonalTo: Direction value
 		return index%2 != value.index%2
