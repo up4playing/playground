@@ -304,6 +304,10 @@ transient unit Network
 	private int[] aheads
 	private Buffer sendBuffer
 	
+	// TEMP
+	bool skipAnimationFrame
+	bool skipSending
+	
 	init
 		showDebugString = isLocalhost = Platform.url.contains("localhost")
 		
@@ -406,6 +410,10 @@ transient unit Network
 	// We ensure that step is called every targetFrameTime milliseconds.
 	internal animationFrame
 		let now = currentTime
+		if skipAnimationFrame
+			eventLog += " x"
+			return
+	
 		if mode == None || mode == Ping
 			graphics.startFrame
 			if mode == Ping: ping
@@ -1139,6 +1147,9 @@ transient unit Network
 		if type == Pong: onPongMessage c, buffer; else
 		if type == OwnInputsAfterReconnect: onOwnInputsAfterReconnect c, buffer;
 			
+	// TEMP for testing
+	Buffer[] testingSendQueue
+			
 	private void sendTickMessage: Connection to
 		                          int inputFrame
 		                          int currentFrame
@@ -1159,11 +1170,27 @@ transient unit Network
 		sendBuffer.writeInt32 acknowledgePos
 		sendBuffer.writeInt32 start
 		sendBuffer.writeBuffer buffer, start, end - start
-		send to, sendBuffer
-		
 		sentLog += " #{inputFrame} ack:{acknowledgePos} cf:{currentFrame} s:{start} e:{end}"
 		
-	
+		
+		if skipSending
+			// TEMP: For testing, we want to press a key to skip sending packages
+			let b = Buffer()
+			b.copyFromBuffer(sendBuffer)
+			testingSendQueue.add b
+			sentLog += "x"
+			
+		else
+			send to, sendBuffer
+			
+			// TEMP: When we release the key, send all queued buffers at once
+			if testingSendQueue.length > 0
+				sentLog += " sending queue len:{testingSendQueue.length}"
+				for queuedBuffer -> testingSendQueue
+					send to, queuedBuffer
+				testingSendQueue.clear
+				
+			
 	// private js void onTickMessage: Connection c, Buffer buffer
 	// 	if(Math.random() < .75) setTimeout(() => Network_onTickMessageActual(c, buffer), Math.random()*500)
 		

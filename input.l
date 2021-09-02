@@ -156,9 +156,13 @@ unit Input
 				                            Network_userId = Math.min(index-1, Input_users.length-1);
 			}
 			else
-			if(e.key == "F2") {
-				Network_saveLogs();
-			}
+			if(e.ctrlKey && e.key == "F1")
+				// TEMP for testing
+				Network_skipAnimationFrame = true;
+			else
+			if(e.ctrlKey && e.key == "F2")
+				// TEMP for testing
+				Network_skipSending = true;
 			else
 			if(e.key == "F9") {
 				if(e.shiftKey) Network_saveLogsInternal();
@@ -170,7 +174,17 @@ unit Input
 			else
 				Input_handleKeyEvent(5, keyCode)
 		}
-		window.onkeyup = e => Input_handleKeyEvent(6, e.keyCode)
+		window.onkeyup = e => {
+			if(e.key == "F1")
+				// TEMP for testing
+				Network_skipAnimationFrame = false;
+			else
+			if(e.key == "F2")
+				// TEMP for testing
+				Network_skipSending = false;
+			else
+				Input_handleKeyEvent(6, e.keyCode)
+		}
 		if(window._input) window._input.value = ""
 		
 	private setLastTouchMoveIndex: int id, int index
