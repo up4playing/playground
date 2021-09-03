@@ -54,6 +54,9 @@ struct float2
 			vector.location
 		)			
 	
+	js float2 operator % (float2 a, float2 b) return new float2(((a.x % b.x) + b.x) % b.x, ((a.y % b.y) + b.y) % b.y, a.location || b.location ? new SourceCodeLocation(0, 0, null, a.location, b.location) : null)
+	js float2 operator % (float2 a, float b) return new float2(((a.x % b) + b) % b, ((a.y % b) + b) % b, a.location || b.location ? new SourceCodeLocation(0, 0, null, a.location, b.location) : null)
+	
 	float2 operator += (float2 a, float2 b) a.x += b.x; a.y += b.y; return a
 	float2 operator -= (float2 a, float2 b) a.x -= b.x; a.y -= b.y; return a
 	float2 operator *= (float2 a, float2 b) a.x *= b.x; a.y *= b.y; return a
@@ -243,6 +246,11 @@ struct int2
 		
 	float2 operator / (int2 a, int2 b) return float2(a.x/b.x, a.y/b.y)
 	float2 operator / (int2 a, float b) return float2(a.x/b, a.y/b)
+	
+	int2 operator % (int2 a, int b) return int2(a.x%b, a.y%b)
+	int2 operator % (int2 a, int2 b) return int2(a.x%b.x, a.y%b.y)
+	float2 operator % (int2 a, float b) return float2(a.x%b, a.y%b)
+	float2 operator % (int2 a, float2 b) return float2(a.x%b.x, a.y%b.y)
 	
 	int2 operator += (int2 a, int2 b) a.x += b.x; a.y += b.y; return a
 	int2 operator -= (int2 a, int2 b) a.x -= b.x; a.y -= b.y; return a
@@ -494,7 +502,7 @@ class Direction
 	const Direction[] allEightDirections = [Right, DownRight, Down, DownLeft, Left, UpLeft, Up, UpRight]
 	
 	// List of the four diagonals: UpLeft, UpRight, DownLeft, DownRight
-	const Direction[] allDiagonals = [UpLeft, UpRight, DownLeft, DownRight]
+	const Direction[] allDiagonals = [DownLeft, DownRight, UpLeft, UpRight]
 
 	string name
 	int index
@@ -504,8 +512,11 @@ class Direction
 	
 	toString := name
 	
-	rotate: CircleDirection direction = Clockwise
+	rotated: RotationDirection direction = Clockwise
 		return allFourDirections[(index+(direction == Clockwise ? 1:3))%4]
+		
+	inverted
+		return allFourDirections[(index+2)%4]
 		
 	isOrthogonalTo: Direction value
 		return index%2 != value.index%2

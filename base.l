@@ -57,6 +57,10 @@ struct int
 	
 // A number stored as a double precision 64-bit floating point value
 struct float
+	const inline js float minValue := Number.MIN_VALUE
+	
+	const inline js float maxValue := Number.MAX_VALUE
+	
 	const inline js float infinity := Number.POSITIVE_INFINITY
 	
 	inline js float operator ** (float a, float b) 
@@ -411,10 +415,28 @@ class List<T>
 			if value < resultValue: resultValue = value
 		return resultValue != threshold ? resultValue : 0
 		
+	min: float(T a) selector 
+		 float threshold = float.maxValue
+		float resultValue = threshold
+		for item -> this
+			let value = selector(item)
+			if value < resultValue: resultValue = value
+		return resultValue != threshold ? resultValue : 0
+		
 	min: int(T a) selector 
 		 int threshold = int.maxValue
 		 bool(T a) where
 		int resultValue = threshold
+		for item -> this
+			if where(item)
+				let value = selector(item)
+				if value < resultValue: resultValue = value
+		return resultValue != threshold ? resultValue : 0
+		
+	min: float(T a) selector 
+		 float threshold = float.maxValue
+		 bool(T a) where
+		float resultValue = threshold
 		for item -> this
 			if where(item)
 				let value = selector(item)
@@ -429,6 +451,14 @@ class List<T>
 			if value > resultValue: resultValue = value
 		return resultValue != threshold ? resultValue : 0
 		
+	max: float(T a) selector
+		 float threshold = float.minValue
+		float resultValue = threshold
+		for item -> this
+			let value = selector(item)
+			if value > resultValue: resultValue = value
+		return resultValue != threshold ? resultValue : 0
+		
 	max: int(T a) selector
 		 int threshold = int.minValue
 		 bool(T a) where
@@ -437,6 +467,37 @@ class List<T>
 			let value = selector(item)
 			if value > resultValue: resultValue = value
 		return resultValue != threshold ? resultValue : 0
+		
+	max: float(T a) selector
+		 float threshold = float.minValue
+		 bool(T a) where
+		float resultValue = threshold
+		for item -> this if where(item)
+			let value = selector(item)
+			if value > resultValue: resultValue = value
+		return resultValue != threshold ? resultValue : 0
+		
+	minIndex: int(T a) selector
+		      int threshold = int.maxValue
+		int resultValue = threshold
+		int index = -1
+		for i,item -> this
+			let value = selector(item)
+			if value < resultValue
+				resultValue = value
+				index = i
+		return index
+		
+	maxIndex: int(T a) selector
+		      int threshold = int.minValue
+		int resultValue = threshold
+		int index = -1
+		for i,item -> this
+			let value = selector(item)
+			if value > resultValue
+				resultValue = value
+				index = i
+		return index
 		
 	withMin: int(T a) selector
 		     int threshold = int.maxValue
@@ -450,7 +511,7 @@ class List<T>
 		return resultValue != threshold ? resultItem : null
 		
 	withMin: float(T a) selector
-		     float threshold = float.infinity
+		     float threshold = float.maxValue
 		float resultValue = threshold
 		T resultItem
 		for item -> this
@@ -460,8 +521,21 @@ class List<T>
 				resultItem = item
 		return resultValue != threshold ? resultItem : null
 		
+	withMin: int(T a) selector
+		     int threshold = int.maxValue
+		     bool(T a) where
+		int resultValue = threshold
+		T resultItem
+		for item -> this
+			if where(item)
+				let value = selector(item)
+				if value < resultValue
+					resultValue = value
+					resultItem = item
+		return resultValue != threshold ? resultItem : null
+		
 	withMin: float(T a) selector
-		     float threshold = float.infinity
+		     float threshold = float.maxValue
 		     bool(T a) where
 		float resultValue = threshold
 		T resultItem
@@ -482,6 +556,44 @@ class List<T>
 			if value > resultValue
 				resultValue = value
 				resultItem = item
+		return resultValue != threshold ? resultItem : null
+		
+		
+	withMax: float(T a) selector
+		     float threshold = float.minValue
+		float resultValue = threshold
+		T resultItem
+		for item -> this
+			let value = selector(item)
+			if value > resultValue
+				resultValue = value
+				resultItem = item
+		return resultValue != threshold ? resultItem : null
+		
+	withMax: int(T a) selector
+		     int threshold = int.minValue
+		     bool(T a) where
+		int resultValue = threshold
+		T resultItem
+		for item -> this
+			if where(item)
+				let value = selector(item)
+				if value > resultValue
+					resultValue = value
+					resultItem = item
+		return resultValue != threshold ? resultItem : null
+		
+	withMax: float(T a) selector
+		     float threshold = float.minValue
+		     bool(T a) where
+		float resultValue = threshold
+		T resultItem
+		for item -> this
+			if where(item)
+				let value = selector(item)
+				if value > resultValue
+					resultValue = value
+					resultItem = item
 		return resultValue != threshold ? resultItem : null
 		
 	count: bool(T a) predicate

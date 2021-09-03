@@ -498,11 +498,10 @@ transient unit Network
 						if user
 							debugString += "  " + user.aheadAverage.format(fractionDigits:1)
 					debugString += " {lastError}"
-					if skipSending: debugString += " skip sending"
 					
 				lastNetworkFrame = now
 				
-			localPlayer.startInputFrame nextInputFrame
+			for Input.internalUsers: if .local: .startInputFrame nextInputFrame	
 			
 		lastAnimationFrame = now
 		if Platform.mode == Play and frame >= frames: Platform.record()
