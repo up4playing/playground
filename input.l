@@ -151,9 +151,9 @@ unit Input
 			else
 			if(e.key >= "0" && e.key <= "9") {
 				let index = e.key - "0"
-				if(e.ctrlKey && e.shiftKey) Network_save(index); else
-				if(e.ctrlKey)               Network_restore(index); else
-				                            Network_userId = Math.min(index-1, Input_users.length-1);
+				if(e.altKey)  Network_save(index); else
+				if(e.ctrlKey) Network_restore(index); else
+				              Network_userId = Math.min(index-1, Input_users.length-1);
 			}
 			else
 			if(e.ctrlKey && e.key == "F1")

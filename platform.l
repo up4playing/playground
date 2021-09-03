@@ -42,7 +42,9 @@ transient unit Platform
 	internal inline js void initApplication
 		init()
 		
-	internal inline js void initImages
+	private inline js void initCacheAndImages
+		_constCache.length = 0;
+		_constCache.push(null);
 		Image_init();
 		
 	private js void initPlatform
@@ -102,7 +104,7 @@ transient unit Platform
 	
 	// This is called when the application starts for the first time	
 	private start: bool isDebug
-		initImages
+		initCacheAndImages
 		initPlatform
 		this.engineStarted = false
 		this.isDebug = isDebug
@@ -126,7 +128,7 @@ transient unit Platform
 		
 	// This is called after every code change to replay all inputs with the new code
 	private replay() 
-		initImages
+		initCacheAndImages
 		Image.mainTexture.open
 			Network.goToFrame Network.frame-1, replay:true
 	
@@ -313,12 +315,13 @@ transient unit IndexedDB
 			}
 			request.onsuccess = e => {
 				IndexedDB_db = e.target.result;
+				Network_log("IndexedDB started successfully");
 			}
 			request.onerror = e => {
 				Network_log("Error in IndexedDB.start: "+request.error);
 			}
 		} catch(e) {
-			Network.log("Error in IndexedDB.start: "+e.message)
+			Network_log("Error in IndexedDB.start: "+e.message)
 		}
 		
 	js void open: string storeName, string id, void(Buffer buffer) then, void() else = null
@@ -336,11 +339,11 @@ transient unit IndexedDB
 				}
 			}
 			req.onerror = e => {
-				Network.log("Error in IndexedDB.open: "+req.error)
+				Network_log("Error in IndexedDB.open: "+req.error)
 				else?.()
 			}
 		} catch(e) {
-			Network.log("Error in IndexedDB.open: "+e.message)
+			Network_log("Error in IndexedDB.open: "+e.message)
 			else?.()
 		}
 				
@@ -348,7 +351,7 @@ transient unit IndexedDB
 		try {
 			let trans = IndexedDB_db.transaction(storeName, "readwrite")
 			trans.onerror = e => {
-				Network.log("Error in IndexedDB.save: "+trans.error)
+				Network_log("Error in IndexedDB.save: "+trans.error)
 				else?.()
 			}
 			let dataView = new DataView(buffer.buffer, 0, buffer.writePos)
@@ -357,7 +360,7 @@ transient unit IndexedDB
 				then?.()
 			}
 		} catch(e) {
-			Network.log("Error in IndexedDB.save: "+e.message)
+			Network_log("Error in IndexedDB.save: "+e.message)
 			else?.()
 		}
 

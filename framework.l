@@ -111,25 +111,9 @@ class Object
 					let closestSpotPos = board.getSpotAt touch.position, threshold:size
 					if closestSpotPos
 						position = closestSpotPos
-				// overSpot = getSpotAt touch.position, threshold:size
-				// if overSpot && (overSpot.object.type == Stack || overSpot.object.type == type || overSpot.object.spots.length > 1)
-				// 	Network.touchLog += " [over spot] "+touch.position.x+" "+touch.position.y
-				// 	position = overSpot.object.position + overSpot.pos
-				// 	if overSpot.object.stackable: position += stackOffset*3
 				checkBoardsWhileMoving touch
 								
 			Input.onTouchUp moveTouch
-				// if overSpot
-				// 	if overSpot.object.type == Stack
-				// 		Network.touchLog += " [add to stack] "+touch.position.x+" "+touch.position.y
-				// 		Stack stack = cast overSpot.object
-				// 		stack.add this
-				// 	else
-				// 	if stackable && overSpot.object.type == type && overSpot.object.stackable
-				// 		Network.touchLog += " [create stack] "+touch.position.x+" "+touch.position.y
-				// 		Stack.create overSpot.object, this
-					
-				// touch.user.selectedObject = this
 				Framework.selectedObjects[touch.userId] = this
 				moveTouch = null
 		
