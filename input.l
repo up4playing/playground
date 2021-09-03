@@ -695,9 +695,11 @@ unit Input
 		}
 		return _input
 				
-	js void startTextInput: string initalValue
+	js void startTextInput: string initalValue = null
 		let input = Input_getOrCreateInputField()
-		input.value = initalValue
+		if(initalValue != null) { 
+			input.value = initalValue
+		}
 		setTimeout(() => _input.focus(), 0)
 		
 	js void setTextInput: string value
