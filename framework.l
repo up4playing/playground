@@ -118,9 +118,10 @@ class Object
 				moveTouch = null
 		
 		// Rotate	
+		float2 iconPos = rotatable ? {(image.size.x+image.size.y)/4, (image.size.x+image.size.y)/4} : image.size/2
 		if Framework.selectedObjects.contains(this) && rotatable
 			if !rotateTouch || !rotatedOverThreshold
-				drawButton rotateIcon, position:position+image.size/2*{1,-1}*scale+{8, -8}, touchMargin:{50,50}
+				drawButton rotateIcon, position:position+iconPos*{1,-1}*scale, touchMargin:{50,50}
 					rotateTouch = touch
 					rotateOffset = angle - Math.atan2(touch.position - position)
 					rotatedOverThreshold = false
@@ -138,7 +139,7 @@ class Object
 		
 		// Flip	
 		if Framework.selectedObjects.contains(this) && flipable
-			drawButton flipIcon, position:position+image.size/2*{-1,1}*scale-{8, -8}, touchMargin:{50,50}
+			drawButton flipIcon, position:position+iconPos*{-1,1}*scale, touchMargin:{50,50}
 				side = side == Back ? Front : Back
 		
 		Network.smooth interactingUserId
