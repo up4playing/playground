@@ -106,6 +106,14 @@ struct float2
 	
 	// The smaller of the two coordinates
 	min := x < y ? x : y
+	
+	rotate: float angle
+		let x = this.x, y = this.y
+		let sn = Math.sin(angle)
+		let cs = Math.cos(angle)
+		this.x = x * cs - y * sn;
+		this.y = x * sn + y * cs;
+		return this
 		
 	// The distance to another vector
 	distanceTo: float2 value // The second vector

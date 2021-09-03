@@ -97,7 +97,7 @@ class Object
 	tick
 		// Move
 		if movable
-			Input.onTouchDownWithin position, size
+			Input.onTouchDownWithin position, size, angle
 				moveTouch = touch
 				touchOffset = position - touch.position
 				siblings.moveToBack this
