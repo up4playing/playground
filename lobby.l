@@ -1,5 +1,4 @@
 unit lobby
-	float2[] dots
 	bool inLobby = true
 	
 	tick
@@ -7,9 +6,5 @@ unit lobby
 		float width = 1200/count, offset = -width*(count-1)/2
 		for count: Network.setUserVideoAndColor(i, {offset+width*i, -50}, width)
 
-		// drawButton Button, "Start", {0, 450} onClick: Platform.requestFullscreen; Network.startApp
-		drawButton Button, "Start", {0, 435} onClick: Network.startApp
+		drawButton Button, "Start", {0, 435} onClick: Platform.requestFullscreen; Network.startApp
 		drawButton Button, "Save Logs", {0, 485} onClick: Network.saveLogs
-		
-		Input.onTouchDown: dots.add touch.position
-		for dots: drawCircle d

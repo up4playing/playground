@@ -6,6 +6,16 @@ struct int
 	// The  smallest possible value of an integer
 	const minValue = -2147483648
 	
+	inline js int operator ** (int a, int b) 
+		Math.pow(a,b)
+		
+	js int operator % (int a, int b)
+		return ((a % b) + b) % b
+		
+	// The remainer after a division by the given value. The sign stays the same.
+	inline js int remainder: int value
+		(this % value)
+		
 	// Returns true if the integer is not zero
 	inline js bool toBool := this
 	
@@ -44,24 +54,38 @@ struct int
 		
 	inline js int setIfLarger: int newValue
 		(this = Math.max(newValue, this))
-
-
+	
 // A number stored as a double precision 64-bit floating point value
 struct float
+	const inline js float minValue := Number.MIN_VALUE
+	
+	const inline js float maxValue := Number.MAX_VALUE
+	
 	const inline js float infinity := Number.POSITIVE_INFINITY
 	
+	inline js float operator ** (float a, float b) 
+		Math.pow(a,b)
+		
+	js float operator % (float a, float b)
+		return ((a % b) + b) % b
+		
+	// The remainer after a division by the given value. The sign stays the same.
+	inline js float remainder: float value
+		(this % value)
+		
 	// Returns true if the floot is not zero
 	inline js bool toBool := this != 0
 	
 	inline js string toString := this.toString()
 		
-	js float operator **(float a, float b) return Math.pow(a,b)
+	inline js string format: int fractionDigits, int minIntegerDigits = 1, bool grouping = false
+		this.toLocaleString('en-US', {maximumFractionDigits:fractionDigits, minimumFractionDigits:fractionDigits, minimumIntegerDigits:minIntegerDigits, useGrouping:grouping})
+		
+	inline js string format: int fractionDigits, bool grouping = false
+		this.toLocaleString('en-US', {maximumFractionDigits:fractionDigits, minimumFractionDigits:fractionDigits, useGrouping:grouping})
 		
 	inline js string format: int minIntegerDigits = 1, bool grouping = false
 		this.toLocaleString('en-US', {minimumIntegerDigits:minIntegerDigits, useGrouping:grouping})
-		
-	inline js string format: int fractionDigits
-		this.toLocaleString('en-US', {maximumFractionDigits:fractionDigits, minimumFractionDigits:fractionDigits})
 		
 	// Returns the absolute value
 	inline js float abs
@@ -92,6 +116,10 @@ struct float
 	inline js bool isApproximately: float value
 		                            float epsilon = 0.00001
 		(Math.abs(this - value) < epsilon)
+		
+	inline js bool isAngleApproximately: float value
+		                                 float epsilon = 0.0175
+		(Math.abs((((this % Math_TwoPI) + Math_TwoPI) % Math_TwoPI) - (((value % Math_TwoPI) + Math_TwoPI) % Math_TwoPI)) < epsilon)
 		
 // A sequence of characters
 class string
@@ -219,6 +247,14 @@ class List<T>
 	// Removes all items from the list
 	inline js void clear := this.length = 0
 	
+	// Execute code for each item in the list
+	inline js void each(void(T a) code)
+		for(let a of this) code()
+					
+	// Execute code for each item in the list in reverse order
+	inline js void eachBackwards(void(T a) code)
+		for(let i=this.length-1; i>=0; i--) {let a=this[i]; code()}
+					
 	js string toString()
 		let result = "";
 		for(let item of this) {
@@ -230,20 +266,52 @@ class List<T>
 	// Gets a random item from the list
 	T random() := get(Math.randomInteger(length))
 		
+	T pickWithinRangeOrClosest: float(T a) selector
+		                        float min = -float.infinity
+		                        float max = float.infinity
+		float closestDistance = float.infinity
+		int closestIndex = -1
+		T closestItem = null
+		for i, item -> this
+			let value = selector(item)
+			float distance
+			if value > max: distance = value - max; else
+			if value < min: distance = min - value; else
+				            this.removeAt(i); return item
+				
+			if distance < closestDistance
+				closestDistance = distance
+				closestIndex = i
+				closestItem = item
+		
+		if(closestIndex != -1) this.removeAt(closestIndex)
+		return closestItem
+			
 	// Removes an item from the list
-	js T remove: T item // The item to remove
+	js void remove: T item // The item to remove
 		var index = this.indexOf(item);
 		if(index > -1) this.splice(index, 1);
 			
 	// Removes the item at the given index from the list
-	js T removeAt: int index // The index of the item to remove
-		this.splice(index, 1);
+	inline js void removeAt: int index // The index of the item to remove
+		this.splice(index, 1)
 			
-	removeWhere: bool(T a) condition // The condition to check
+	// Removes the item at the given index from the list
+	inline js void removeRange: int index // The index of the first item to remove
+		                        int count // The number of items to remove
+		this.splice(index, count)
+			
+	removeFirstWhere: bool(T a) condition // The condition to check
 		for i, item -> this
 			if condition(item)
 				removeAt i
 				return item
+		return null
+		
+	removeAllWhere: bool(T a) condition // The condition to check
+		for i, item <- this
+			if condition(item)
+				removeAt i
 		return null
 		
 	// Returns true if the list is not null and not empty	
@@ -347,10 +415,28 @@ class List<T>
 			if value < resultValue: resultValue = value
 		return resultValue != threshold ? resultValue : 0
 		
+	min: float(T a) selector 
+		 float threshold = float.maxValue
+		float resultValue = threshold
+		for item -> this
+			let value = selector(item)
+			if value < resultValue: resultValue = value
+		return resultValue != threshold ? resultValue : 0
+		
 	min: int(T a) selector 
 		 int threshold = int.maxValue
 		 bool(T a) where
 		int resultValue = threshold
+		for item -> this
+			if where(item)
+				let value = selector(item)
+				if value < resultValue: resultValue = value
+		return resultValue != threshold ? resultValue : 0
+		
+	min: float(T a) selector 
+		 float threshold = float.maxValue
+		 bool(T a) where
+		float resultValue = threshold
 		for item -> this
 			if where(item)
 				let value = selector(item)
@@ -365,6 +451,14 @@ class List<T>
 			if value > resultValue: resultValue = value
 		return resultValue != threshold ? resultValue : 0
 		
+	max: float(T a) selector
+		 float threshold = float.minValue
+		float resultValue = threshold
+		for item -> this
+			let value = selector(item)
+			if value > resultValue: resultValue = value
+		return resultValue != threshold ? resultValue : 0
+		
 	max: int(T a) selector
 		 int threshold = int.minValue
 		 bool(T a) where
@@ -373,6 +467,37 @@ class List<T>
 			let value = selector(item)
 			if value > resultValue: resultValue = value
 		return resultValue != threshold ? resultValue : 0
+		
+	max: float(T a) selector
+		 float threshold = float.minValue
+		 bool(T a) where
+		float resultValue = threshold
+		for item -> this if where(item)
+			let value = selector(item)
+			if value > resultValue: resultValue = value
+		return resultValue != threshold ? resultValue : 0
+		
+	minIndex: int(T a) selector
+		      int threshold = int.maxValue
+		int resultValue = threshold
+		int index = -1
+		for i,item -> this
+			let value = selector(item)
+			if value < resultValue
+				resultValue = value
+				index = i
+		return index
+		
+	maxIndex: int(T a) selector
+		      int threshold = int.minValue
+		int resultValue = threshold
+		int index = -1
+		for i,item -> this
+			let value = selector(item)
+			if value > resultValue
+				resultValue = value
+				index = i
+		return index
 		
 	withMin: int(T a) selector
 		     int threshold = int.maxValue
@@ -386,7 +511,7 @@ class List<T>
 		return resultValue != threshold ? resultItem : null
 		
 	withMin: float(T a) selector
-		     float threshold = float.infinity
+		     float threshold = float.maxValue
 		float resultValue = threshold
 		T resultItem
 		for item -> this
@@ -394,6 +519,32 @@ class List<T>
 			if value < resultValue
 				resultValue = value
 				resultItem = item
+		return resultValue != threshold ? resultItem : null
+		
+	withMin: int(T a) selector
+		     int threshold = int.maxValue
+		     bool(T a) where
+		int resultValue = threshold
+		T resultItem
+		for item -> this
+			if where(item)
+				let value = selector(item)
+				if value < resultValue
+					resultValue = value
+					resultItem = item
+		return resultValue != threshold ? resultItem : null
+		
+	withMin: float(T a) selector
+		     float threshold = float.maxValue
+		     bool(T a) where
+		float resultValue = threshold
+		T resultItem
+		for item -> this
+			if where(item)
+				let value = selector(item)
+				if value < resultValue
+					resultValue = value
+					resultItem = item
 		return resultValue != threshold ? resultItem : null
 		
 	withMax: int(T a) selector
@@ -405,6 +556,44 @@ class List<T>
 			if value > resultValue
 				resultValue = value
 				resultItem = item
+		return resultValue != threshold ? resultItem : null
+		
+		
+	withMax: float(T a) selector
+		     float threshold = float.minValue
+		float resultValue = threshold
+		T resultItem
+		for item -> this
+			let value = selector(item)
+			if value > resultValue
+				resultValue = value
+				resultItem = item
+		return resultValue != threshold ? resultItem : null
+		
+	withMax: int(T a) selector
+		     int threshold = int.minValue
+		     bool(T a) where
+		int resultValue = threshold
+		T resultItem
+		for item -> this
+			if where(item)
+				let value = selector(item)
+				if value > resultValue
+					resultValue = value
+					resultItem = item
+		return resultValue != threshold ? resultItem : null
+		
+	withMax: float(T a) selector
+		     float threshold = float.minValue
+		     bool(T a) where
+		float resultValue = threshold
+		T resultItem
+		for item -> this
+			if where(item)
+				let value = selector(item)
+				if value > resultValue
+					resultValue = value
+					resultItem = item
 		return resultValue != threshold ? resultItem : null
 		
 	count: bool(T a) predicate
@@ -500,7 +689,14 @@ global transient unit System
 	// Prints a message to the console
 	global js void print: logstring text // The text, variables or expressions to print
 		                  SourceCodeLocation location
-		log(text, location.row, location.column, location.file)
+		log(text, location.row, location.column, location.file, Network_frame)
+	
+	// Display a message in the timeline
+	global js void watch: string text // The text to display
+		                  SourceCodeLocation location
+		if(Network_frame >= Network_frameWithNewWatches) {
+			Platform_sendWatch(Network_frame, text, location.row, location.column, location.file)
+		}
 	
 	// Shows a dialog box with a given message
 	global inline js void alert: implicit string message // The message to show
@@ -560,7 +756,10 @@ unit Math
 		Math.sqrt(value)
 		
 	// The ratio of a circle's circumference to its diameter
-	inline js float PI := Math.PI
+	float PI = 3.141592653589793
+	
+	// The ratio of a circle's radius to its diameter
+	float TwoPI = 6.283185307179586
 	
 	// Returns the sine of an angle in radians
 	inline js float sin: float angle // The angle in radians
@@ -573,7 +772,6 @@ unit Math
 	// Returns the tangent of an angle in radians
 	inline js float tan: float angle // The angle in radians
 		Math.tan(angle)
-		
 		
 	init
 		initDefaultRandomGenerator
@@ -748,8 +946,11 @@ transient class Time
 	inline js int time := this.getTime()
 		
 	static inline js Time current := new Date()
+	
+	// The current frame	
+	static inline js int frame := Network_frame
 		
-	// Return the number of milliseconds elapsed since January 1, 1970
+	// The number of milliseconds elapsed since January 1, 1970
 	static int now
 	
 	static inline js float preciseTime := performance.now()

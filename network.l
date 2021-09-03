@@ -168,6 +168,22 @@ transient class Buffer
 			
 		this.writePos = writePos
 		
+	js void copyFromBuffer: Buffer source
+		let readPos = 0
+		let length = source.writePos
+		let writePos = this.writePos
+		
+		// Expand if neccessary
+		if(writePos+length > this.buffer.byteLength)
+			this.expandBuffer(writePos+length)
+			
+		// Write bytes
+		let readPosEnd = readPos + length
+		while(readPos < readPosEnd)
+			this.dataView.setUint8(writePos++, source.dataView.getUint8(readPos++))
+			
+		this.writePos = writePos
+		
 	inline js int peekInt8  := this.dataView.getInt8(this.readPos)
 	inline js int peekInt16 := this.dataView.getInt16(this.readPos)
 	inline js int peekInt32 := this.dataView.getInt32(this.readPos)
@@ -249,7 +265,7 @@ transient unit Network
 	public int smoothStrength = 90
 	public bool smoothTouchPosition = true
 	
-	string logTable = "frame,animTime,networkTime,tickTime,drawTime,iteration,restoreTime,replayFrames,replayTime,saveTime,user0,user1,user2,received,uncertain,offset,ahead,avarage,percentile,certainFrame,buffer,checksums,events,send,receive,write,parse,touch\n"
+	string logTable = "frame,now,animTime,networkTime,tickTime,drawTime,iteration,restoreTime,replayFrames,replayTime,saveTime,user0,user1,user2,received,uncertain,offset,ahead,avarage,percentile,certainFrame,buffer,checksums,events,send,receive,write,parse,touch\n"
 	public string eventLog = ""; sentLog = "", receivedLog="", writeLog="", parseLog = "", touchLog = "", checksumLog = "", debugString = ""
 	public bool showDebugString
 	private float lastNetworkFrame, lastAnimationFrame, drawTime, tickTime, restoreTime, replayTime, saveTime
@@ -259,7 +275,7 @@ transient unit Network
 	internal const targetFps = 30
 	private const pingCount = 6
 	private const bufferFrames = 1
-	private const targetFrameTime = 1000/targetFps
+	const targetFrameTime = 1000/targetFps
 	
 	visible NetworkMode mode
 	visible int userId = -1
@@ -270,11 +286,14 @@ transient unit Network
 	private float startTime
 	private int startInputFrame
 	
-	visible int frame               // Will increase by 1 at the end of every step (so every targetFrameTime milliseconds)
+	visible int frame               // Current frame, will increase by 1 at the end of every step (every targetFrameTime ms)
+	private int frames              // Total number of frames we have inputs for
 	private int receivedFrames      // We received all remote inputs up to this frame (lowest of all user frames)
-	private int uncertainFrame = -1 // The first frame that doesn't have inputs from all players
-	private int certainFrame
+	private int uncertainFrame = -1 // The first frame where we don't have inputs from all players
+	private int certainFrame        // The last frame where we have inputs from all players
 	private Buffer commonState      // A snapshot taken before the first uncertain frame
+	
+	internal int frameWithNewWatches = 0 // First frame with new watches, do not send watches for frames below this
 		
 	private float[] checksums
 	private bool alertShown
@@ -284,6 +303,10 @@ transient unit Network
 	private int ahead
 	private int[] aheads
 	private Buffer sendBuffer
+	
+	// TEMP
+	bool skipAnimationFrame
+	bool skipSending
 	
 	init
 		showDebugString = isLocalhost = Platform.url.contains("localhost")
@@ -317,32 +340,80 @@ transient unit Network
 		Input.internalUsers.clear
 		randomSeed = Math.generateRandomSeed
 		Math.setRandomSeed randomSeed
-		for userCount
-			Input.internalUsers.add {id:i, local:true, collectInputs:true}
-			Input.users.add {id:i}
-		
-		startTime = currentTime
-		startApp
-		animationFrame
 		initDatabase
+		reset
+		resetStartTime
+		animationFrame
 		
-	smooth: int userId
-		             void() code
-		if Input.isCertain or this.userId == userId: code
+	// Clears all inputs and resets the application to the first frame
+	stop
+		for Input.internalUsers: inputs.reset
+		frames = 0
+		frameWithNewWatches = 0
+		goToFrame 0
+		
+	// Calls init functions, creates the local users, resets read positions and starts app
+	// This is called on startup, after every code change and when going backwards in the timeline
+	reset
+		Platform.initApplication
+		
+		// When the developer changed Platform.userCount, add or remove internal users accordingly
+		for i = Input.internalUsers.length -> Platform.userCount
+			Input.internalUsers.add {id:i, local:true, collectInputs:true}
+		if Input.internalUsers.length > Platform.userCount
+			Input.internalUsers.removeRange Platform.userCount, count: Input.internalUsers.length - Platform.userCount
+		
+		// We always recreating users, because developers might have added fields to NetworkUser or Touch
+		// By the time we call startApp, all users need to exist
+		Input.users.clear
+		for Platform.userCount: Input.users.add {id:i}
 			
+		// Reset read pos to replay inputs from the beginning
+		for Input.internalUsers: inputs.readPos = 0
+			
+		lobby.inLobby = false
+		Math.randomValueIndex = 0
+		frame = 0
+		startApp
+	
+	// Steps forward when going to a frame in the future
+	// or replays from the beginning when going to a frame in the past
+	// This is called after every code change with replay = true 
+	// to replay all inputs with the new code from the beginning,
+	// and when stepping through the timeline with replay = false
+	// to only replay from the beginning when going to a frame in the past
+	goToFrame: int targetFrame, replay = false
+		if replay: frameWithNewWatches = 0
+		if targetFrame < frame or replay: reset
+			
+		while frame < targetFrame
+			step fastFordward:true
+		resetStartTime
+		animationFrame
+
+	// Smooth out animations by only executing code when we received inputs from everybody	
+	smooth: int userId
+		    void() code
+		if Input.isCertain or this.userId == userId: code
+	
 	smooth: void() code
 		if Input.isCertain: code
 			
-	// AnimationFrame --> Step --> Tick
+	// animationFrame --> step --> tick
 
-	// AnimationFrame  Send tick message, replay state, and call step
-	// Step            Save state, parse inputs, step physics, process tick, and calculate checksum
-	// Tick            Clear screen, process application tick, and draw all graphics
+	// animationFrame  Send tick message, replay state, and call step
+	// step            Save state, parse inputs, step physics, process tick, and calculate checksum
+	// tick            Clear screen, process application tick, and draw all graphics
 		
 	// Send tick message, replay state, call step, and logging
 	// This is called by the requestAnimationFrame callback.
 	// We ensure that step is called every targetFrameTime milliseconds.
 	internal animationFrame
+		let now = currentTime
+		if skipAnimationFrame
+			eventLog += " x"
+			return
+	
 		if mode == None || mode == Ping
 			graphics.startFrame
 			if mode == Ping: ping
@@ -359,17 +430,15 @@ transient unit Network
 		// Ahead
 		float aheadAverage
 		int aheadPercentile
+		let localPlayer = Input.internalUsers[userId]
 		if mode == Connected and Input.users.length > 1
 			let receivedCurrentFrames = getReceivedCurrentFrames
 			ahead = frame - receivedCurrentFrames
 			aheads.add ahead, maxLength:100
-			aheadAverage = aheads.average
+			localPlayer.aheadAverage = aheadAverage = aheads.average
 			aheadPercentile = smoothStrength ? aheads.percentile(smoothStrength).limit(0, 50) : 0
 		
-		let now = currentTime
-		let localPlayer = Input.internalUsers[userId]
 		let targetFrame = Math.floor((now - startTime)/targetFrameTime)+1
-		// int nextInputFrame = targetFrame + aheadAverage.round + bufferFrames
 		let nextInputFrame = targetFrame
 		let frameMinusOffset = targetFrame - aheadPercentile
 		certainFrame = Math.min(frameMinusOffset, receivedFrames)
@@ -386,7 +455,7 @@ transient unit Network
 			try
 				// Send each user the inputs that they haven't acknowleged yet
 				if mode == Connected
-					sendInputs nextInputFrame, targetFrame
+					sendInputs nextInputFrame, targetFrame, aheadAverage
 								
 				// Replay all frames from the first uncertain frame until the current frame
 				// when we received all inputs for frames that we were uncertain about before
@@ -404,7 +473,7 @@ transient unit Network
 				
 				// Logs
 				try
-					logTable += "{frame-1},{now - lastAnimationFrame},{now - lastNetworkFrame},{tickTime.format(fractionDigits:2)},{drawTime.format(fractionDigits:2)},{frame-startFrame}"
+					logTable += "{frame-1},{now},{now - lastAnimationFrame},{now - lastNetworkFrame},{tickTime.format(fractionDigits:2)},{drawTime.format(fractionDigits:2)},{frame-startFrame}"
 					logTable += ",{restoreTime.format(fractionDigits:2)},{replayFrames},{replayTime.format(fractionDigits:2)},{saveTime.format(fractionDigits:2)}"
 					logTable += ","+(Input.internalUsers[0] ? Input.internalUsers[0].inputFrame : 0)
 					logTable += ","+(Input.internalUsers[1] ? Input.internalUsers[1].inputFrame : 0)
@@ -420,17 +489,22 @@ transient unit Network
 				
 				// Debug string
 				if showDebugString
-					debugString = "v{Platform.version} checks:{checkedChecksums} inputs:"
+					debugString = "v{Platform.version} w:"
 					for user -> Input.internalUsers
 						if user
-							debugString += user.inputs.writePos.format(grouping:true) + " "
-					debugString += "snapshot:{Snapshot.currentIndex} size:{Snapshot.lastSnapshotSize.format(grouping:true)} a:{ahead} av:{aheadAverage.format(fractionDigits:1)} p:{aheadPercentile} {lastError}"
+							debugString += " " + user.inputs.writePos.format(grouping:true)
+					debugString += " i:{Snapshot.currentIndex} s:{Snapshot.lastSnapshotSize.format(grouping:true)} a:{ahead} p:{aheadPercentile} av:"
+					for user -> Input.internalUsers
+						if user
+							debugString += "  " + user.aheadAverage.format(fractionDigits:1)
+					debugString += " {lastError}"
 					
 				lastNetworkFrame = now
 				
-			localPlayer.startInputFrame nextInputFrame
+			for Input.internalUsers: if .local: .startInputFrame nextInputFrame	
 			
 		lastAnimationFrame = now
+		if Platform.mode == Play and frame >= frames: Platform.record()
 		
 	// Save state, parse inputs, step physics, process tick, and calculate checksum
 	// This is called in animationFrame and during replays. 
@@ -461,25 +535,25 @@ transient unit Network
 			// Tick
 			tick
 			
-			// Calculate checksum if we received all inputs for this frame
-			if isCertain
-				int myChecksum = Framework.checksum					
-				let theirChecksum = checksums[frame]
-				checksumLog += " <> #{frame} {myChecksum}"
-				if !theirChecksum
-					checksums[frame] = myChecksum
-				else
-				if(theirChecksum isApproximately myChecksum)
-					checkedChecksums++
-				else
-					onWrongChecksum
-					checkedChecksums = 0
-					checksumLog += " MISMATCH saved theirs:{theirChecksum}"
-					
-			// Take snapshot
-			if mode != Local: Snapshot.onEndOfStep
+			if mode != Local
+				// Calculate checksum if we received all inputs for this frame
+				if isCertain
+					int myChecksum = Framework.checksum					
+					let theirChecksum = checksums[frame]
+					checksumLog += " <> #{frame} {myChecksum}"
+					if !theirChecksum
+						checksums[frame] = myChecksum
+					else
+					if(theirChecksum isApproximately myChecksum)
+						checkedChecksums++
+					else
+						onWrongChecksum
+						checkedChecksums = 0
+						checksumLog += " MISMATCH saved theirs:{theirChecksum}"
+						
+				// Take snapshot
+				Snapshot.onEndOfStep
 			
-			// log "#{frame}{isCertain ? "c":""}", certainFrame, "a:{Framework.objects[0]?.angle}"
 			
 		catch
 			print error
@@ -491,7 +565,12 @@ transient unit Network
 			internalUser?.clearEvent
 		for user -> Input.users
 			user?.clearEvents
-			
+		
+		// Send current frame to editor	
+		if frames < frame+1: frames = frame+1
+		if frameWithNewWatches < frame+1: frameWithNewWatches = frame+1
+		if Platform.isDebug and !fastFordward and (Platform.mode == Record or Platform.mode == Play): Platform.sendFrame(frame, frames)			
+		
 		frame++
 		
 	// Clear screen, process application tick, and draw all graphics
@@ -519,7 +598,7 @@ transient unit Network
 		
 	// Send each user the inputs that they haven't acknowleged yet
 	// This is called in animationFrame.
-	private sendInputs: int nextInputFrame, int targetFrame
+	private sendInputs: int nextInputFrame, int targetFrame, float aheadAverage
 		let localPlayer = Input.internalUsers[userId]
 		for c -> connections
 			if c.state == Connected
@@ -528,7 +607,8 @@ transient unit Network
 				sendTickMessage
 					to: c
 					inputFrame: nextInputFrame-1     // You got all inputs up to and including this frame
-					currentFrame: targetFrame-1      // The currently processed frame, used to calculate "ahead" 
+					currentFrame: targetFrame-1      // The currently processed frame, used to calculate "ahead"
+					aheadAverage: aheadAverage
 					
 					checksumFor: checksumFor         // The last certain frame with inputs from everybody
 					checksum: checksums[checksumFor] // The checksum of the last certain frame
@@ -613,8 +693,11 @@ transient unit Network
 		lobby_inLobby = false
 		if(window.app_start) app_start()
 		
-	resetStartTime
-		startTime = currentTime - frame*targetFrameTime// - (targetFrameTime-0.001)
+	private resetStartTime
+		startTime = currentTime - frame*targetFrameTime - (targetFrameTime*.5)
+		
+	resetStartTimeIfNeeded
+		if Platform.mode < Play: resetStartTime
 		
 	object db = null
 	
@@ -663,13 +746,15 @@ transient unit Network
 			print "restore failed"
 		
 	saveLogs
+		if Input.isCertain: saveLogsInternal
+			
+	internal saveLogsInternal
 		Platform.createTextFile "log.csv", logTable
 		Http.post "/saveLog/{gameId}/{roomId}/{userId}", logTable
 			log "save logs"
 		else
 			print "save logs failed {error}"
 			
-		
 	js void saveEventStream
 		let trans = db.transaction("eventstreams", "readwrite")
 		trans.onerror = e => {
@@ -780,6 +865,7 @@ transient unit Network
 	private Connection[] connections
 	
 	js void join: string gameId, string roomId
+		init()
 		Network_gameId = gameId
 		Network_roomId = roomId
 		Network_log("Network.join "+location.href)
@@ -1060,9 +1146,13 @@ transient unit Network
 		if type == Pong: onPongMessage c, buffer; else
 		if type == OwnInputsAfterReconnect: onOwnInputsAfterReconnect c, buffer;
 			
+	// TEMP for testing
+	Buffer[] testingSendQueue
+			
 	private void sendTickMessage: Connection to
 		                          int inputFrame
 		                          int currentFrame
+		                          float aheadAverage
 		                          int acknowledgePos
 		                          int checksumFor
 		                          float checksum
@@ -1075,14 +1165,31 @@ transient unit Network
 		sendBuffer.writeFloat64 checksum || 0
 		sendBuffer.writeInt32 inputFrame
 		sendBuffer.writeInt32 currentFrame
+		sendBuffer.writeFloat64 aheadAverage
 		sendBuffer.writeInt32 acknowledgePos
 		sendBuffer.writeInt32 start
 		sendBuffer.writeBuffer buffer, start, end - start
-		send to, sendBuffer
-		
 		sentLog += " #{inputFrame} ack:{acknowledgePos} cf:{currentFrame} s:{start} e:{end}"
 		
-	
+		
+		if skipSending
+			// TEMP: For testing, we want to press a key to skip sending packages
+			let b = Buffer()
+			b.copyFromBuffer(sendBuffer)
+			testingSendQueue.add b
+			sentLog += "x"
+			
+		else
+			send to, sendBuffer
+			
+			// TEMP: When we release the key, send all queued buffers at once
+			if testingSendQueue.length > 0
+				sentLog += " sending queue len:{testingSendQueue.length}"
+				for queuedBuffer -> testingSendQueue
+					send to, queuedBuffer
+				testingSendQueue.clear
+				
+			
 	// private js void onTickMessage: Connection c, Buffer buffer
 	// 	if(Math.random() < .75) setTimeout(() => Network_onTickMessageActual(c, buffer), Math.random()*500)
 		
@@ -1110,7 +1217,8 @@ transient unit Network
 		int inputFrame = buffer.readInt32 
 		if inputFrame > sender.inputFrame
 			sender.inputFrame = inputFrame
-			sender.currentFrame = buffer.readInt32 
+			sender.currentFrame = buffer.readInt32
+			sender.aheadAverage = buffer.readFloat64
 			sender.acknowledgedPos = buffer.readInt32
 			
 			let writeStart = buffer.readInt32
@@ -1118,7 +1226,7 @@ transient unit Network
 			sender.inputs.writePos = writeStart + length
 			receivedFrames = getReceivedInputFrames
 	
-			receivedLog += " <{c.userId}> #{sender.inputFrame} a:{sender.acknowledgedPos} cf:{sender.currentFrame} s:{writeStart} e:{sender.inputs.writePos}"
+			receivedLog += " [{currentTime}] <{c.userId}> #{sender.inputFrame} a:{sender.acknowledgedPos} cf:{sender.currentFrame} s:{writeStart} e:{sender.inputs.writePos}"
 		else
 			// Ignore this frame because we already received a later frame
 			// Later frames start from the pos we acknowleged (everything before that we definately already received)
@@ -1129,7 +1237,7 @@ transient unit Network
 			let acknowledgedPos = buffer.readInt32
 			let writeStart = buffer.readInt32
 			let length = buffer.readInt32
-			receivedLog += " <{c.userId}> irgnoring #{inputFrame} (already at {sender.inputFrame}) a:{acknowledgedPos} s:{writeStart} e:{writeStart+length}"
+			receivedLog += " [{currentTime}] <{c.userId}> irgnoring #{inputFrame} (already at {sender.inputFrame}) a:{acknowledgedPos} s:{writeStart} e:{writeStart+length}"
 		
 	private void sendOwnInputsAfterReconnectMessage: Connection c
 		                                int frame
@@ -1185,7 +1293,7 @@ transient unit Network
 
 	private js void setupLocalVideo: int userId
 		if(Network_isLocalhost) return 
-		Network_localVideo = await navigator.mediaDevices.getUserMedia({video: true, audio: false});
+		Network_localVideo = await navigator.mediaDevices.getUserMedia({video: true, audio: true});
 		Network_createVideoElement(userId, Network_localVideo, /*local*/true)
 			
 	private js void setupRemoteVideo: int partnerId, object peerConnection

@@ -97,7 +97,7 @@ class Object
 	tick
 		// Move
 		if movable
-			Input.onTouchDownWithin position, size
+			Input.onTouchDownWithin position, size, angle
 				moveTouch = touch
 				touchOffset = position - touch.position
 				siblings.moveToBack this
@@ -111,33 +111,17 @@ class Object
 					let closestSpotPos = board.getSpotAt touch.position, threshold:size
 					if closestSpotPos
 						position = closestSpotPos
-				// overSpot = getSpotAt touch.position, threshold:size
-				// if overSpot && (overSpot.object.type == Stack || overSpot.object.type == type || overSpot.object.spots.length > 1)
-				// 	Network.touchLog += " [over spot] "+touch.position.x+" "+touch.position.y
-				// 	position = overSpot.object.position + overSpot.pos
-				// 	if overSpot.object.stackable: position += stackOffset*3
 				checkBoardsWhileMoving touch
 								
 			Input.onTouchUp moveTouch
-				// if overSpot
-				// 	if overSpot.object.type == Stack
-				// 		Network.touchLog += " [add to stack] "+touch.position.x+" "+touch.position.y
-				// 		Stack stack = cast overSpot.object
-				// 		stack.add this
-				// 	else
-				// 	if stackable && overSpot.object.type == type && overSpot.object.stackable
-				// 		Network.touchLog += " [create stack] "+touch.position.x+" "+touch.position.y
-				// 		Stack.create overSpot.object, this
-					
-				// touch.user.selectedObject = this
 				Framework.selectedObjects[touch.userId] = this
 				moveTouch = null
 		
 		// Rotate	
-		// if Input.users.any(selectedObject == this) && rotatable
+		float2 iconPos = rotatable ? {(image.size.x+image.size.y)/4, (image.size.x+image.size.y)/4} : image.size/2
 		if Framework.selectedObjects.contains(this) && rotatable
 			if !rotateTouch || !rotatedOverThreshold
-				drawButton rotateIcon, position:position+image.size/2*{1,-1}*scale+{8, -8}, touchMargin:{50,50}
+				drawButton rotateIcon, position:position+iconPos*{1,-1}*scale, touchMargin:{50,50}
 					rotateTouch = touch
 					rotateOffset = angle - Math.atan2(touch.position - position)
 					rotatedOverThreshold = false
@@ -153,13 +137,18 @@ class Object
 				if !rotatedOverThreshold: targetAngle -= Math.PI/2
 				interactingUserId = touch.userId
 		
+		// Flip	
+		if Framework.selectedObjects.contains(this) && flipable
+			drawButton flipIcon, position:position+iconPos*{-1,1}*scale, touchMargin:{50,50}
+				side = side == Back ? Front : Back
+		
 		Network.smooth interactingUserId
 			if angle != targetAngle: angle = Math.moveTowards(angle, targetAngle, .2)
 			
 		// Draw
 		if image
-			if side == Front || !backImage: drawImage image, position, frame, scale, angle
-			else                            drawImage backImage, position, scale, angle
+			if side == Front || !backImage: drawImage image, position, frame:frame%image.frames.length, scale, angle
+			else                            drawImage backImage, position, frame:frame%backImage.frames.length, scale, angle
 		
 	private checkBoardsWhileMoving: Touch touch
 		float2 pos = position
@@ -224,7 +213,9 @@ Object Stack
 			obj.moveTouch = touch
 			obj.touchOffset = obj.position - touch.position
 			
-		for i = (objects.length-shownObjectCount) <- objects.length: objects[i].tick
+		for i = Math.limit(objects.length-shownObjectCount, min:0) <- objects.length
+			let obj = objects[i]
+			drawImage obj.backImage, obj.position, frame:obj.frame%obj.backImage.frames.length, scale:obj.scale
 	
 	shuffle
 		objects.shuffle
@@ -290,7 +281,7 @@ Object Board
 				downMatrix = matrix
 			Input.onTouchMove panTouch
 				matrix = downMatrix
-				matrix.move touch.position - panTouch.position
+				matrix.move touch.position - touch.startPosition
 			Input.onTouchUp panTouch
 				panTouch = null
 				
@@ -311,6 +302,7 @@ Object Board
 				visibleForOthers = visibleForOthers == On ? Off : On
 				
 		if color: drawRectangle position, size, fillColor:color, layer:-1
+		if image: drawImage image, position, scale
 			
 	updateBoard
 		for objects: updateBoard
@@ -322,14 +314,14 @@ Object Board
 			let spotPos = spot.getClosestPoint position, this.position
 			let delta = (spotPos - position).abs
 			let distance = delta.length
-			if delta < threshold && distance < minDistance
+			if delta < threshold and distance < minDistance and !objects.find.position == spotPos
 				minDistance = distance
 				closestSpotPos = spotPos
 		return closestSpotPos
 		
 class Spot
 	float2 pos
-	getClosestPoint(float2 touchPos, float2 boardPos) := pos
+	getClosestPoint(float2 touchPos, float2 boardPos) := pos + boardPos
 	
 Spot SpotGrid
 	float2 cellSize
@@ -358,7 +350,7 @@ Object ParticleSystem
 			let r = (Math.randomFloat) * Math.PI
 			let speedFactor = Math.randomFloat*(maxSpeed-minSpeed) + minSpeed
 			particles.add Particle
-				position
+				pos: position
 				speed: {Math.cos(r), Math.sin(r)} * speedFactor
 				size: 50
 				frame: Math.randomInteger(particleImage.frames.length)
@@ -442,7 +434,7 @@ Object Coin
 				Coin c = cast object
 				let closestCoin = getClosestCoin c, threshold:90
 				if closestCoin and c.closestCoin != closestCoin
-					let distance = float2.distanceBetween(closestCoin.position, object.position)
+					let distance = closestCoin.position distanceTo object.position
 					if distance < closestCoin.distanceToClosest
 						if c.closestCoin: c.closestCoin.clearClosestCoin
 						if closestCoin.closestCoin: closestCoin.closestCoin.clearClosestCoin

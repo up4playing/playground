@@ -6,6 +6,7 @@ transient class InternalUser
 	bool collectInputs  // When we are done pinging, we add a join event and start collecting inputs
 	int inputFrame      // We got all inputs from this player up to and including this frame
 	int currentFrame    // The frame currently processed by this user, used to calculate "ahead"
+	float aheadAverage
 	
 	visible Touch[] downTouches, movingTouches, upTouches
 	visible WheelEvent[] wheelEvents
@@ -45,8 +46,8 @@ class NetworkUser
 	string textInput
 	float2 videoPosition = {}
 	float videoWidth
-	
-	clearEvents
+
+	internal clearEvents
 		for <- touches
 			if t.phase == Up and t.button == None
 				touches.remove t
@@ -61,7 +62,6 @@ enum MouseButton: None, Left, Middle, Right
 // A touch or a click
 class Touch
 	int id
-	// InternalUser user = null
 	int userId
 	TouchPhase phase
 	MouseButton button
@@ -150,28 +150,41 @@ unit Input
 				require("electron").remote.getCurrentWindow().toggleDevTools()
 			else
 			if(e.key >= "0" && e.key <= "9") {
-				let slot = e.key - "0"
-				if(e.altKey)  Network_save(slot); else
-				if(e.ctrlKey) Network_restore(slot);
+				let index = e.key - "0"
+				if(e.altKey)  Network_save(index); else
+				if(e.ctrlKey) Network_restore(index); else
+				              Network_userId = Math.min(index-1, Input_users.length-1);
 			}
 			else
-			if(e.key == "F8") {
-				Network_saveLogs();
-			}
+			if(e.ctrlKey && e.key == "F1")
+				// TEMP for testing
+				Network_skipAnimationFrame = true;
+			else
+			if(e.ctrlKey && e.key == "F2")
+				// TEMP for testing
+				Network_skipSending = true;
 			else
 			if(e.key == "F9") {
-				Network_showDebugString = !Network_showDebugString;
+				if(e.shiftKey) Network_saveLogsInternal();
+				else           Network_showDebugString = !Network_showDebugString;
 			}
-			else
-			if(e.key == "q" && e.ctrlKey)
-				Platform_startApp();
 			else
 			if(keyCode >= 49 && keyCode <= 52 && Network_simulateConnection)
 				Network_userId = Math.min(keyCode-49, Input_users.length-1);
 			else
 				Input_handleKeyEvent(5, keyCode)
 		}
-		window.onkeyup = e => Input_handleKeyEvent(6, e.keyCode)
+		window.onkeyup = e => {
+			if(e.key == "F1")
+				// TEMP for testing
+				Network_skipAnimationFrame = false;
+			else
+			if(e.key == "F2")
+				// TEMP for testing
+				Network_skipSending = false;
+			else
+				Input_handleKeyEvent(6, e.keyCode)
+		}
 		if(window._input) window._input.value = ""
 		
 	private setLastTouchMoveIndex: int id, int index
@@ -288,6 +301,7 @@ unit Input
 							if touch
 								touch.phase = cast type
 								touch.referencePosition = touchPos
+								touch.referenceStartPosition = touchPos
 								touch.handled = false
 								touch.button = button
 								touch.isDown = true
@@ -399,6 +413,45 @@ unit Input
 
 	// Executes code when the user touches or clicks within a given area
 	onTouchDownWithin: float2 position        // The center of the touch area
+		               float2 size            // The size of a rectangular touch area
+		               float angle
+		               void(Touch touch) code // The code to execute for each touch or click
+		               int userId = -1        // Only consider touches or clicks from this user  
+		               string cursor = ""
+		               bool showTouchArea = false
+		               bool markAsHandled = true
+		float2[] poly = [
+			(position + float2( -size.x/2, -size.y/2 ).rotate(angle)).transform(graphics.localMatrix),
+			(position + float2( +size.x/2, -size.y/2 ).rotate(angle)).transform(graphics.localMatrix),
+			(position + float2( +size.x/2, +size.y/2 ).rotate(angle)).transform(graphics.localMatrix),
+			(position + float2( -size.x/2, +size.y/2 ).rotate(angle)).transform(graphics.localMatrix),
+		]
+		if (Network.mode == Connected || Network.simulateConnection) && userId != -1
+			let user = internalUsers[userId]
+			for touch -> user.downTouches
+				if !touch.handled && touch.referencePosition.isInsidePoygon(poly)
+					touch.position = touch.referencePosition.getRelativeTo(graphics.localMatrix)
+					log "down", touch.position
+					code touch
+					if markAsHandled: touch.handled = true
+		else
+			for user -> internalUsers if user
+				for touch -> user.downTouches
+					if !touch.handled && touch.referencePosition.isInsidePoygon(poly)
+						touch.position = touch.referencePosition.getRelativeTo(graphics.localMatrix)
+						log "down", touch.position
+						code touch
+						if markAsHandled: touch.handled = true
+			if cursor
+				let user = internalUsers[Network.userId]
+				for touch -> user.movingTouches
+					if !touch.handled && touch.referencePosition.isInsidePoygon(poly)
+						this.cursor = cursor
+				
+		if showTouchArea: drawRectangle position, size, fillColor:{"ff000080"}
+
+	// Executes code when the user touches or clicks within a given circle
+	onTouchDownWithin: float2 position        // The center of the touch area
 		               float radius           // The radius of a round touch area
 		               void(Touch touch) code // The code to execute for each touch or click
 		               int userId = -1        // Only consider touches or clicks from this user  
@@ -410,7 +463,7 @@ unit Input
 		if (Network.mode == Connected || Network.simulateConnection) && userId != -1
 			let user = internalUsers[userId]
 			for touch -> user.downTouches
-				if !touch.handled && float2.distanceBetween(touch.referencePosition, referencePosition) <= referenceRadius
+				if !touch.handled && (touch.referencePosition distanceTo referencePosition) <= referenceRadius
 					touch.position = touch.referencePosition.getRelativeTo(graphics.localMatrix)
 					log "down", touch.position
 					code touch
@@ -418,7 +471,7 @@ unit Input
 		else
 			for user -> internalUsers if user
 				for touch -> user.downTouches
-					if !touch.handled && float2.distanceBetween(touch.referencePosition, referencePosition) <= referenceRadius
+					if !touch.handled && (touch.referencePosition distanceTo referencePosition) <= referenceRadius
 						touch.position = touch.referencePosition.getRelativeTo(graphics.localMatrix)
 						log "down", touch.position
 						code touch
@@ -426,10 +479,45 @@ unit Input
 			if cursor
 				let user = internalUsers[Network.userId]
 				for touch -> user.movingTouches
-					if !touch.handled && float2.distanceBetween(touch.referencePosition, position) <= radius
+					if !touch.handled && (touch.referencePosition distanceTo position) <= radius
 						this.cursor = cursor
 				
 		if showTouchArea: drawCircle position, radius, fillColor:{"ff000080"}
+
+	// Executes code when the user touches or clicks within a given polygon
+	onTouchDownWithin: float2 position        // The center of the touch area
+		               float2[] points        // The points that define the touch area
+		               void(Touch touch) code // The code to execute for each touch or click
+		               int userId = -1        // Only consider touches or clicks from this user  
+		               string cursor = ""
+		               bool showTouchArea = false
+		               bool markAsHandled = true
+		float2[] poly
+		for points: poly.add (position + p).transform(graphics.localMatrix)
+			
+		if (Network.mode == Connected || Network.simulateConnection) && userId != -1
+			let user = internalUsers[userId]
+			for touch -> user.downTouches
+				if !touch.handled && touch.referencePosition.isInsidePoygon(poly)
+					touch.position = touch.referencePosition.getRelativeTo(graphics.localMatrix)
+					log "down", touch.position
+					code touch
+					if markAsHandled: touch.handled = true
+		else
+			for user -> internalUsers if user
+				for touch -> user.downTouches
+					if !touch.handled && touch.referencePosition.isInsidePoygon(poly)
+						touch.position = touch.referencePosition.getRelativeTo(graphics.localMatrix)
+						log "down", touch.position
+						code touch
+						if markAsHandled: touch.handled = true
+			if cursor
+				let user = internalUsers[Network.userId]
+				for touch -> user.movingTouches
+					if !touch.handled && touch.referencePosition.isInsidePoygon(poly)
+						this.cursor = cursor
+				
+		if showTouchArea: drawPolygon position, points, fillColor:{"ff0000b0"}
 
 	// Executes code when the user touches or clicks within a given area
 	onTouchUpWithin: float2 position        // The center of the touch area
@@ -477,7 +565,7 @@ unit Input
 		if (Network.mode == Connected || Network.simulateConnection) && userId != -1
 			let user = internalUsers[userId]
 			for touch -> user.upTouches
-				if !touch.handled && float2.distanceBetween(touch.referencePosition, referencePosition) <= referenceRadius
+				if !touch.handled && (touch.referencePosition distanceTo referencePosition) <= referenceRadius
 					touch.position = touch.referencePosition.getRelativeTo(graphics.localMatrix)
 					log "up", touch.position
 					code touch
@@ -486,7 +574,7 @@ unit Input
 		else
 			for user -> internalUsers if user
 				for touch -> user.upTouches
-					if !touch.handled && float2.distanceBetween(touch.referencePosition, referencePosition) <= referenceRadius
+					if !touch.handled && (touch.referencePosition distanceTo referencePosition) <= referenceRadius
 						touch.position = touch.referencePosition.getRelativeTo(graphics.localMatrix)
 						log "up", touch.position
 						code touch
@@ -495,7 +583,7 @@ unit Input
 			if cursor
 				let user = internalUsers[Network.userId]
 				for touch -> user.movingTouches
-					if !touch.handled && float2.distanceBetween(touch.referencePosition, position) <= radius
+					if !touch.handled && (touch.referencePosition distanceTo position) <= radius
 						this.cursor = cursor
 				
 		if showTouchArea: drawCircle position, radius, fillColor:{"ff000080"}

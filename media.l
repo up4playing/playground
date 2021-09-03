@@ -27,9 +27,8 @@ class Color
 class Texture
 	string file
 	float2 size
-	Texture() open
 	
-	js void open
+	js void open: void() callback = null
 		if(!window._htmlImageCache) _htmlImageCache = {}
 		let image = _htmlImageCache[this.file]
 		if(!image) {
@@ -39,11 +38,12 @@ class Texture
 				this._htmlImage = image
 				window._htmlImageCache[this.file] = image
 				this.size = new float2(image.width, image.height, null)
-				if(Platform_mode == 0) Network_tick();
+				callback?.();
 			}
 		} else {
 			this._htmlImage = image
 			this.size = new float2(image.width, image.height, null)
+			callback?.()
 		}
 
 // A single frame of an animated image
@@ -60,6 +60,7 @@ class Image
 enum HorizontalAlignment: Left, Center, Right
 enum VerticalAlignment: Top, Middle, Bottom
 enum FontStyle: Normal, Bold
+class ClippingPath: float2[] points; bool show
 		
 // A collection of functions for drawing on the screen
 transient global unit graphics
@@ -67,18 +68,17 @@ transient global unit graphics
 	internal DisplayItem[] items
 		
 	internal js void startFrame
-		if(Platform_fastForward) return
 		graphics_reset()
-		Platform_context.clearRect(0,0,Platform_pixelSize.x, Platform_pixelSize.y)
+		if(!Platform_fastForward)
+			Platform_context.clearRect(0,0,Platform_pixelSize.x, Platform_pixelSize.y)
 
 	internal js void reset
-		if(Platform_fastForward) return
 		Matrix2D_assign_Matrix2D(graphics_totalMatrix, Platform_baseMatrix);
 		graphics_localMatrix.clear();
-		Platform_context.setTransform(1,0,0,1,0,0)
-		Platform_context.textBaseline = "hanging"
 		graphics_currentlyVisibleFor = -1
 		graphics_items.length = 0
+		if(!Platform_fastForward)
+			Platform_context.textBaseline = "hanging"
 
 	internal finishFrame
 		if(Platform.fastForward) return
@@ -276,6 +276,19 @@ transient global unit graphics
 		return currentLineWidth
 	private currentLineWidth = 8
 	
+	// For all drawings in code block, only pixels inside the given polygon are drawn
+	clip: float2 pos
+		  float2[] points
+		  bool show = false
+		  void() code
+		let prev = currentClippingPath
+		currentClippingPath = ClippingPath(show)
+		for points: currentClippingPath.points.add pos + p
+		code()
+		currentClippingPath = null
+		return currentColor
+	private ClippingPath currentClippingPath = null
+		
 	// The default user for which all draw operations will be visible
 	visibleFor
 		return currentlyVisibleFor
@@ -326,7 +339,7 @@ transient global unit graphics
 				position.y-f.h/2*scale,
 				f.w*scale,
 				f.h*scale,
-				layer, image.file, position.location,
+				layer, graphics_currentClippingPath, image.file, position.location,
 				image.texture._htmlImage,
 				f.x1, f.y1, f.w, f.h
 			))
@@ -352,7 +365,7 @@ transient global unit graphics
 				-f.h/2*scale,
 				f.w*scale,
 				f.h*scale,
-				layer, image.file, position.location, 
+				layer, graphics_currentClippingPath, image.file, position.location, 
 				image.texture._htmlImage,
 				f.x1, f.y1, f.w, f.h
 			))
@@ -381,7 +394,7 @@ transient global unit graphics
 			let x = align  == 0 ? position.x : align  == 1 ? position.x-w*.5 : position.x-w
 			let y = valign == 0 ? position.y : valign == 1 ? position.y-h*.365 : position.y-h
 			graphics_items.push(new DisplayText(
-				graphics_totalMatrix, x, y, w, h, layer, text, 
+				graphics_totalMatrix, x, y, w, h, layer, graphics_currentClippingPath, text, 
 				position.location, 
 				fillStyle, 
 				outlineColor ? outlineColor.hex : null,
@@ -444,7 +457,7 @@ transient global unit graphics
 				align == 0  ? position.x : align  == 1 ? position.x-size.x*.5 : position.x-size.x,
 				valign == 0 ? position.y : valign == 1 ? position.y-size.y*.5 : position.y-size.y,
 				size.x, size.y,
-				layer, "Rectangle", position.location,
+				layer, graphics_currentClippingPath, "Rectangle", position.location,
 				fillColor || !outlineColor ? (fillColor || graphics_currentColor).hex : null,
 				outlineColor ? outlineColor.hex : null,
 				outlineWidth || graphics_currentLineWidth
@@ -459,7 +472,7 @@ transient global unit graphics
 		                       outlineWidth = 0          // The width of the outline around the circle
 		                       startAngle = 0            // Draws an arc with this start angle in radians, measured from the positive x-axis
 		                       endAngle = Math.PI * 2    // Draws an arc with this end angle in radians, measured from the positive x-axis
-		                       CircleDirection direction = Clockwise
+		                       RotationDirection direction = Clockwise
 		                       visibleFor = -1           // Only this user will see the circle
 		                       implicit layer = 0        // Higher layers are drawn in front of lower layers
 		if(graphics_isVisibleFor(visibleFor)) {
@@ -467,7 +480,7 @@ transient global unit graphics
 			graphics_items.push(new DisplayCircle(
 				graphics_totalMatrix, 
 				position.x, position.y, diameter, diameter,
-				layer, "Circle", position.location,
+				layer, graphics_currentClippingPath, "Circle", position.location,
 				radius, startAngle, endAngle,
 				direction == 1,
 				fillColor || !outlineColor ? (fillColor || graphics_currentColor).hex : null,
@@ -491,7 +504,7 @@ transient global unit graphics
 				texture.size.x*scale,
 				texture.size.y*scale,
 				
-				layer, texture.file, position.location,
+				layer, graphics_currentClippingPath, texture.file, position.location,
 				texture._htmlImage,
 				0, 0, texture.size.x, texture.size.y
 			))
@@ -514,7 +527,7 @@ transient global unit graphics
 				size.x,
 				size.y,
 				
-				layer, texture.file, position.location, 
+				layer, graphics_currentClippingPath, texture.file, position.location, 
 				texture._htmlImage,
 				
 				sourcePosition.x+texture.size.x/2-sourceSize.x/2,
@@ -525,23 +538,25 @@ transient global unit graphics
 		}
 		
 	// Draws a polygon on the screen
-	global js void drawPolygon: float2[] positions        // A list of points for the polygon
+	global js void drawPolygon: float2[] points           // A list of points for the polygon
+		                        float2 position = {0,0}   // The position all points are relative to 
 		                        Color fillColor = null    // The color of the area within the polygon
 		                        Color outlineColor = null // The color of the outline around the polygon
+		                        outlineWidth = 0          // The width of the outline around the polygon
 		                        visibleFor = -1           // Only this user will see the polygon
 		                        implicit int layer = 0    // Higher layers are drawn in front of lower layers
-		if(Platform_fastForward) return
-		if(visibleFor == -1) visibleFor = graphics_currentlyVisibleFor
-		if(visibleFor != -1 && visibleFor != Network_userId) return
-		let m = graphics_totalMatrix.matrix
-		Platform_context.setTransform(m0, -m[1], -m[2], m[3], m[4], m[5])
-		
-		Platform_context.fillStyle = (fillColor || graphics_currentColor).hex
-		let firstPos = positions[positions.length-1]
-		Platform_context.moveTo(firstPos.x, firstPos.y)
-		for(let p of positions)
-			Platform_context.lineTo(p.x, p.y)
-		Platform_context.fill()
+		if(graphics_isVisibleFor(visibleFor)) {
+			graphics_items.push(new DisplayPolygon(
+				graphics_totalMatrix,
+				position.x, position.y,
+				0, 0,
+				layer, graphics_currentClippingPath, "Polygon", position.location,
+				points,
+				fillColor || !outlineColor ? (fillColor || graphics_currentColor).hex : null,
+				outlineColor ? outlineColor.hex : null,
+				outlineWidth || graphics_currentLineWidth
+			))
+		}
 		
 	// Draws a rectangle with rounded corners on the screen
 	global js void drawRoundedRectangle: position = float2()       // The center of the rectangle
@@ -560,11 +575,30 @@ transient global unit graphics
 				align == 0  ? position.x : align  == 1 ? position.x-size.x*.5 : position.x-size.x,
 				valign == 0 ? position.y : valign == 1 ? position.y-size.y*.5 : position.y-size.y,
 				size.x, size.y,
-				layer, "RoundedRectangle", position.location,
+				layer, graphics_currentClippingPath, "RoundedRectangle", position.location,
+				radius,
 				fillColor || !outlineColor ? (fillColor || graphics_currentColor).hex : null,
 				outlineColor ? outlineColor.hex : null,
-				outlineWidth || graphics_currentLineWidth,
-				radius
+				outlineWidth || graphics_currentLineWidth
+			))
+		}
+		
+	// Draws a polygon on the screen
+	global js void drawLine: float2 start
+		                     float2 end 
+		                     Color color = null // The color of the outline around the line
+		                     width = 0          // The width of the outline around the line
+		                     visibleFor = -1           // Only this user will see the line
+		                     implicit int layer = 0    // Higher layers are drawn in front of lower layers
+		if(graphics_isVisibleFor(visibleFor)) {
+			graphics_items.push(new DisplayLine(
+				graphics_totalMatrix,
+				start.x, start.y,
+				end.x - start.x, end.y - start.y,
+				layer, graphics_currentClippingPath, "Line", start.location,
+				end,
+				color ? color.hex : null,
+				width || graphics_currentLineWidth
 			))
 		}
 		
@@ -575,13 +609,14 @@ transient global unit graphics
 		                           implicit layer = 0   // Higher layers are process after lower layers
 		if(graphics_isVisibleFor(visibleFor)) {
 			graphics_items.push(new DisplayRectangle(
-				graphics_totalMatrix, position.x-size.x/2, position.y-size.y/2, size.x, size.y, layer, "Rectangle", position.location, "clear", null, 0
+				graphics_totalMatrix, position.x-size.x/2, position.y-size.y/2, size.x, size.y, layer, graphics_currentClippingPath, "Rectangle", position.location, "clear", null, 0
 			))
 		}
 
 transient class DisplayItem
 	float x, y, w, h
 	int layer
+	ClippingPath clippingPath
 	string name
 	SourceCodeLocation location
 	
@@ -590,7 +625,7 @@ transient class DisplayItem
 	
 	DisplayItem: Matrix2D m
 		m0 = m.m0; m1 = m.m1; m2 = m.m2; m3 = m.m3; m4 = m.m4; m5 = m.m5
-		if Platform.isDebug
+		if Platform.isDebug and (w or h)
 			poly = [
 				{ x,   y   }.transform(m),
 				{ x+w, y   }.transform(m),
@@ -598,19 +633,47 @@ transient class DisplayItem
 				{ x,   y+h }.transform(m),
 			]
 	draw
+		
+	js void startClipping
+		let points = this.clippingPath.points
+		if(points.length >= 2) {
+			let x = this.x, y = this.y
+			let firstPos = points[points.length-1]
+			Platform_context.beginPath();
+			Platform_context.moveTo(firstPos.x, firstPos.y)
+			for(let p of points) Platform_context.lineTo(p.x, p.y)
+			if(this.clippingPath.show) {
+				Platform_context.fillStyle = "#ff000080"
+				Platform_context.fill()
+			}
+			Platform_context.save()
+			Platform_context.clip()
+		}
+		
+	js void endClipping
+		if(this.clippingPath.points.length >= 2)
+			Platform_context.restore()
 	
 transient DisplayItem DisplayImage
 	object htmlImage
 	float sx, sy, sw, sh
 	js void draw
 		Platform_context.setTransform(this.m0, this.m1, this.m2, this.m3, this.m4, this.m5)
+		if(this.clippingPath) this.startClipping()
+		
 		try{ Platform_context.drawImage(this.htmlImage, this.sx, this.sy, this.sw, this.sh, this.x, this.y, this.w, this.h) }
 		catch(e) { log("DisplayImage: "+e.message) }
+		
+		if(this.clippingPath) this.endClipping()
 
 transient DisplayItem DisplayText
-	string fillStyle, outlineColor, outlineWidth, font
+	string fillStyle, outlineColor
+	float outlineWidth
+	string font
 	js void draw
 		Platform_context.setTransform(this.m0, this.m1, this.m2, this.m3, this.m4, this.m5)
+		if(this.clippingPath) this.startClipping()
+			
 		Platform_context.font = this.font
 		if(this.outlineColor) {
 			Platform_context.lineWidth = this.outlineWidth
@@ -620,10 +683,15 @@ transient DisplayItem DisplayText
 		Platform_context.fillStyle = this.fillStyle
 		Platform_context.fillText(this.name, this.x, this.y)
 		
+		if(this.clippingPath) this.endClipping()
+		
 transient DisplayItem DisplayRectangle
-	string fillColor, outlineColor, outlineWidth
+	string fillColor, outlineColor
+	float outlineWidth
 	js void draw
 		Platform_context.setTransform(this.m0, this.m1, this.m2, this.m3, this.m4, this.m5)
+		if(this.clippingPath) this.startClipping()
+			
 		if(this.fillColor == "clear") {
 			Platform_context.clearRect(this.x, this.y, this.w, this.h)
 		}
@@ -637,12 +705,15 @@ transient DisplayItem DisplayRectangle
 			Platform_context.strokeStyle = this.outlineColor
 			Platform_context.strokeRect(this.x, this.y, this.w, this.h)
 		}
-		
+		if(this.clippingPath) this.endClipping()
 		
 transient DisplayItem DisplayRoundedRectangle
-	string fillColor, outlineColor, outlineWidth, radius
+	float radius
+	string fillColor, outlineColor
+	float outlineWidth
 	js void draw
 		Platform_context.setTransform(this.m0, this.m1, this.m2, this.m3, this.m4, this.m5)
+		if(this.clippingPath) this.startClipping()
 		let sizeX = this.w, sizeY = this.h, x = this.x, y = this.y, radius = this.radius
 		
 		Platform_context.beginPath();
@@ -666,15 +737,49 @@ transient DisplayItem DisplayRoundedRectangle
 			Platform_context.strokeStyle = this.outlineColor
 			Platform_context.stroke()
 		}
+		if(this.clippingPath) this.endClipping()
 		
-enum CircleDirection: Clockwise, CounterClockwise
-		
-transient DisplayItem DisplayCircle
-	string radius, startAngle, endAngle, counterclockwise, fillColor, outlineColor, outlineWidth
+transient DisplayItem DisplayPolygon
+	float2[] points
+	string fillColor, outlineColor
+	float outlineWidth
 	js void draw
 		Platform_context.setTransform(this.m0, this.m1, this.m2, this.m3, this.m4, this.m5)
+		if(this.points.length >= 2) {
+			if(this.clippingPath) this.startClipping()
+			let x = this.x, y = this.y
+			
+			let firstPos = this.points[this.points.length-1]
+			Platform_context.beginPath();
+			Platform_context.moveTo(x + firstPos.x, y + firstPos.y)
+			for(let p of this.points)
+				Platform_context.lineTo(x + p.x, y + p.y)
+				
+			if(this.fillColor) {
+				Platform_context.fillStyle = this.fillColor
+				Platform_context.fill()
+			}
+			if(this.outlineColor) {
+				Platform_context.lineWidth = this.outlineWidth
+				Platform_context.strokeStyle = this.outlineColor
+				Platform_context.stroke()
+			}
+			if(this.clippingPath) this.endClipping()
+		}
+		
+enum RotationDirection: Clockwise, CounterClockwise
+		
+transient DisplayItem DisplayCircle
+	float radius, startAngle, endAngle
+	RotationDirection direction
+	string fillColor, outlineColor
+	float outlineWidth
+	js void draw
+		Platform_context.setTransform(this.m0, this.m1, this.m2, this.m3, this.m4, this.m5)
+		if(this.clippingPath) this.startClipping()
+			
 		Platform_context.beginPath();
-		Platform_context.arc(this.x, this.y, this.radius, this.startAngle, this.endAngle, this.counterclockwise);
+		Platform_context.arc(this.x, this.y, this.radius, this.startAngle, this.endAngle, this.direction);
 		if(this.fillColor) {
 			Platform_context.fillStyle = this.fillColor
 			Platform_context.fill()
@@ -684,6 +789,24 @@ transient DisplayItem DisplayCircle
 			Platform_context.strokeStyle = this.outlineColor
 			Platform_context.stroke()
 		}
+		if(this.clippingPath) this.endClipping()
+		
+transient DisplayItem DisplayLine
+	float2 end
+	string outlineColor
+	float outlineWidth
+	js void draw
+		Platform_context.setTransform(this.m0, this.m1, this.m2, this.m3, this.m4, this.m5)
+		if(this.clippingPath) this.startClipping()
+		
+		Platform_context.beginPath();
+		Platform_context.moveTo(this.x,this.y)
+		Platform_context.lineTo(this.end.x, this.end.y)
+		Platform_context.lineWidth = this.outlineWidth
+		Platform_context.strokeStyle = this.outlineColor
+		Platform_context.stroke()
+		
+		if(this.clippingPath) this.endClipping()
 		
 // A sound
 struct Sound
