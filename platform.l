@@ -22,6 +22,7 @@ transient unit Platform
 	
 	public inline js string url := location.href
 	public inline js int version := version
+	public inline js int appName := appName
 	public inline js int userAgent := navigator.userAgent.replace(/,/g," ")
 	
 	public float2 referenceSize = {1920, 1080}
