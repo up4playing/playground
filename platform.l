@@ -287,6 +287,10 @@ transient unit Platform
 		try      { _ }
 		catch(e) { return e.stack }
 		
+	inline js void alert: string message
+		alert(message)
+		log(message)
+		
 	inline js void pushState: object state, string title, string url = ""
 		history.pushState(state, title, url)
 		
