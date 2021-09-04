@@ -1349,10 +1349,12 @@ transient unit Network
 		for user -> Input.users
 			if user
 				let internalUser = Input.internalUsers[user.id]
-				if (!internalUser.local or Platform.showLocalPointer) and Framework.isVisibleFor user.touchPos, this.userId
-					drawImage finger, user.touchPos+{11,34}, frame:user.id
-					if user.color: drawRectangle user.touchPos+{16,76}, size:{26,8}, user.color
-				
+				if !internalUser.local or Platform.showLocalPointer or Platform.mode == Play or frame < frames
+					for user.touches
+						if Framework.isVisibleFor .smoothPosition, this.userId
+							drawImage finger, .smoothPosition+{11,32}, frame:.isDown ? 1 : 0
+							if user.color: drawRectangle .smoothPosition+{16,78}, size:{26,10}, user.color
+							
 	private js void logConnectionType(object peerConnection)
 		setTimeout(async () => {
 			let stats = await peerConnection.getStats()

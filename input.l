@@ -39,7 +39,6 @@ transient class InternalUser
 class NetworkUser
 	int id
 	Color color = null
-	float2 touchPos
 	visible Touch[] touches
 	string textInput
 	float2 videoPosition = {}
@@ -65,6 +64,7 @@ class Touch
 	MouseButton button
 	float2 referencePosition
 	float2 referenceStartPosition
+	float2 smoothPosition
 	bool isDown
 	float2 position
 	float2 startPosition
@@ -297,8 +297,7 @@ unit Input
 						MouseButton button = cast Math.shiftRight(value, 5) % 4
 						int id = Math.shiftRight(value, 7)
 						float2 touchPos = {inputs.readInt16, inputs.readInt16}
-						if !Network.smoothTouchPosition or isCertain or Network.userId == userId
-							user.touchPos = touchPos
+						bool isSmoothPosition = !Network.smoothTouchPosition or isCertain or Network.userId == userId
 						Network.parseLog += " "+id
 						
 						if type == TouchDown
@@ -310,9 +309,10 @@ unit Input
 								touch.handled = false
 								touch.button = button
 								touch.isDown = true
+								if isSmoothPosition: touch.smoothPosition = touchPos
 								Network.parseLog += " down {id} {touchPos} {button}"
 							else
-								touch = {id, userId, cast type, button, touchPos, touchPos, isDown:true}
+								touch = {id, userId, cast type, button, touchPos, touchPos, touchPos, isDown:true}
 								user.touches.add touch
 								Network.parseLog += " down(new) {id} {touchPos} {button}"
 							internalUser.downTouches.add touch
@@ -324,9 +324,10 @@ unit Input
 								touch.referencePosition = touchPos
 								touch.handled = false
 								touch.button = button
+								if isSmoothPosition: touch.smoothPosition = touchPos
 								Network.parseLog += " move {id} {touchPos} {button}"
 							else
-								touch = {id, userId, cast type, button, touchPos, referenceStartPosition:float2.none, isDown:false}
+								touch = {id, userId, cast type, button, touchPos, referenceStartPosition:float2.none, touchPos, isDown:false}
 								user.touches.add touch
 								Network.parseLog += " move(new) {id} {touchPos} {button}"
 							internalUser.movingTouches.add touch
@@ -340,9 +341,10 @@ unit Input
 								touch.handled = false
 								touch.button = button
 								touch.isDown = false
+								if isSmoothPosition: touch.smoothPosition = touchPos
 								Network.parseLog += " up {id} {touchPos} {button}"
 							else
-								touch = {id, userId, cast type, button, touchPos, referenceStartPosition:float2.none, isDown:false}
+								touch = {id, userId, cast type, button, touchPos, referenceStartPosition:float2.none, touchPos, isDown:false}
 								user.touches.add touch
 								Network.parseLog += " up(new) {id} {touchPos} {button}"
 							internalUser.upTouches.add touch
