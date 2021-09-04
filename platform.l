@@ -323,7 +323,28 @@ transient unit IndexedDB
 			Network_log("Error in IndexedDB.start: "+e.message)
 		}
 		
-	js void open: string storeName, string id, void(Buffer buffer) then, void() else = null
+	js void open: string storeName, string id, void(object data) then, void() else = null
+		try {
+			let trans = IndexedDB_db.transaction(storeName, "readonly")
+			let req = trans.objectStore(IndexedDB_storeName).get(id)
+			req.onsuccess = async e => {
+				let result = req.result
+				if(result) {
+					then(result)
+				} @else {
+					else?.()
+				}
+			}
+			req.onerror = e => {
+				Network_log("Error in IndexedDB.open: "+req.error)
+				else?.()
+			}
+		} catch(e) {
+			Network_log("Error in IndexedDB.open: "+e.message)
+			else?.()
+		}
+				
+	js void openBuffer: string storeName, string id, void(Buffer buffer) then, void() else = null
 		try {
 			let trans = IndexedDB_db.transaction(storeName, "readonly")
 			let req = trans.objectStore(IndexedDB_storeName).get(id)
@@ -346,7 +367,22 @@ transient unit IndexedDB
 			else?.()
 		}
 				
-	js void save: string storeName, string id, Buffer buffer, void() then = null, void() else = null
+	js void save: string storeName, object data, void() then = null, void() else = null
+		try {
+			let trans = IndexedDB_db.transaction(storeName, "readwrite")
+			trans.onerror = e => {
+				Network_log("Error in IndexedDB.save: "+trans.error)
+				else?.()
+			}
+			trans.objectStore(IndexedDB_storeName).put(data).onsuccess = e => {
+				then?.()
+			}
+		} catch(e) {
+			Network_log("Error in IndexedDB.save: "+e.message)
+			else?.()
+		}
+		
+	js void saveBuffer: string storeName, string id, Buffer buffer, void() then = null, void() else = null
 		try {
 			let trans = IndexedDB_db.transaction(storeName, "readwrite")
 			trans.onerror = e => {
