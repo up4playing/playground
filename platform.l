@@ -208,6 +208,51 @@ transient unit Platform
 		element.click();
 		document.body.removeChild(element);
 		
+	js void saveBinaryFile: string filename, Buffer buffer
+		var binary = '';
+		var bytes = new Uint8Array(buffer.buffer);
+		var len = bytes.byteLength;
+		for (var i = 0; i < len; i++) {
+		    binary += String.fromCharCode(bytes[i]);
+		}
+		var base64 = window.btoa( binary );
+		var dataUrl = 'data:text/plain;base64,' + base64;
+		
+		var element = document.createElement('a');
+		element.setAttribute('href', dataUrl);
+		element.setAttribute('download', filename);
+		element.style.display = 'none';
+		document.body.appendChild(element);
+		element.click();
+		document.body.removeChild(element);
+		
+	js void openBinaryFile: void(Buffer buffer) then, void(string error) else = null
+		fileInput = document.createElement("input")
+		fileInput.type = 'file'
+		fileInput.style.display = 'none'
+		fileInput.onchange = e => {
+			var file = e.target.files[0];
+			if (!file) {
+				else?.("")
+				return
+			}
+			var reader = new FileReader();
+			reader.onload = function(e) {
+				let buffer = new Buffer(e.target.result, 0, 0, 0);
+				document.body.removeChild(fileInput);
+				then(buffer);
+			}
+			reader.onabort = e => {
+				else?.(reader.error)
+			}
+			reader.onerror = e => {
+				else?.(reader.error)
+			}
+			reader.readAsArrayBuffer(file)
+		}
+		document.body.appendChild(fileInput)
+		fileInput.click()
+		
 	inline js void setLocalStorageObject: string key, object value
 		localStorage.setItem(key, JSON.stringify(value))
 		
