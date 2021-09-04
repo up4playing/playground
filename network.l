@@ -246,6 +246,7 @@ transient class Buffer
 			writeBuffer.dataView.setUint8(writePos++, this.dataView.getUint8(readPos++))
 			
 		this.readPos = readPos
+		writeBuffer.writePos = writePos
 		return length
 			
 	js string toString
@@ -1223,7 +1224,11 @@ transient unit Network
 			
 			let writeStart = buffer.readInt32
 			let length = buffer.readBuffer sender.inputs, writeStart
-			sender.inputs.writePos = writeStart + length
+			
+			// TEMP for testing
+			if(sender.inputs.writePos != writeStart + length)
+				Platform.alert("expected write pos:{writeStart + length} actual:{sender.inputs.writePos}")
+			
 			receivedFrames = getReceivedInputFrames
 	
 			receivedLog += " [{currentTime}] <{c.userId}> #{sender.inputFrame} a:{sender.acknowledgedPos} cf:{sender.currentFrame} s:{writeStart} e:{sender.inputs.writePos}"
