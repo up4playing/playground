@@ -199,7 +199,7 @@ transient unit Platform
 		try   { if(!Network_isLocalhost) document.body.requestFullscreen() }
 		catch { }
 		
-	js void createTextFile: string filename, string text
+	js void saveTextFile: string filename, string text
 		var element = document.createElement('a');
 		element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(text));
 		element.setAttribute('download', filename);

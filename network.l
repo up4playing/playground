@@ -570,7 +570,7 @@ transient unit Network
 		// Send current frame to editor	
 		if frames < frame+1: frames = frame+1
 		if frameWithNewWatches < frame+1: frameWithNewWatches = frame+1
-		if Platform.isDebug and !fastFordward and (Platform.mode == Record or Platform.mode == Play): Platform.sendFrame(frame, frames)			
+		if Platform.isDebug and !fastFordward and (Platform.mode == Record or Platform.mode == Play): Platform.sendFrame(frame, frames)
 		
 		frame++
 		
@@ -734,13 +734,13 @@ transient unit Network
 	save: int slot
 		snapshotBuffer.reset
 		Snapshot.serialize snapshotBuffer
-		IndexedDB.save "snapshot", "{gameId}-{slot}", snapshotBuffer
+		IndexedDB.saveBuffer "snapshot", "{gameId}-{slot}", snapshotBuffer
 			print "saved snapshot {gameId}-{slot} ({snapshotBuffer.writePos} bytes)"
 		else
 			print "save failed"
 		
 	restore: int slot
-		IndexedDB.open "snapshot", "{gameId}-{slot}"
+		IndexedDB.openBuffer "snapshot", "{gameId}-{slot}"
 			Input.handleSetState buffer
 			print "restored snapshot {gameId}-{slot} ({buffer.writePos} bytes)"
 		else
@@ -750,7 +750,7 @@ transient unit Network
 		if Input.isCertain: saveLogsInternal
 			
 	internal saveLogsInternal
-		Platform.createTextFile "log.csv", logTable
+		Platform.saveTextFile "log.csv", logTable
 		Http.post "/saveLog/{gameId}/{roomId}/{userId}", logTable
 			log "save logs"
 		else

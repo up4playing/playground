@@ -13,7 +13,6 @@ transient class InternalUser
 	visible int[] downKeys, upKeys
 	visible string[] textInputs, textCompositions
 	
-	int lastTextInputIndex = -1
 	int[] lastTouchMoveIndex
 	
 	Buffer inputs         // The stream of inputs of this user
@@ -24,7 +23,6 @@ transient class InternalUser
 	
 	startInputFrame: int index
 		lastTouchMoveIndex.clear
-		lastTextInputIndex = -1
 		inputFrame = index
 	
 	clearEvent:
@@ -206,7 +204,6 @@ unit Input
 		if !user.collectInputs: return
 		
 		inputs.writeInt32 user.inputFrame
-		user.lastTextInputIndex = inputs.writePos
 		inputs.writeUnsignedInt16 cast type
 		inputs.writeString text
 			
