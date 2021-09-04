@@ -208,15 +208,17 @@ Object Stack
 		size = (b.position+{b.size.x/2, -b.image.size.y/2}) - (a.position-{a.size.x/2, -a.size.y/2})
 	
 	tick
+		for i = Math.limit(objects.length-shownObjectCount, min:0) <- objects.length
+			let obj = objects[i]
+			drawImage obj.backImage, obj.position, frame:obj.frame%obj.backImage.frames.length, scale:obj.scale
+	
+		// We pop after drawing, because the newly created card won't be drawn until the next frame
+		// and we don't want to draw the new, smaller stack without drawing the popped card as well
 		Input.onTouchDownWithin position, size
 			let obj = pop
 			obj.moveTouch = touch
 			obj.touchOffset = obj.position - touch.position
 			
-		for i = Math.limit(objects.length-shownObjectCount, min:0) <- objects.length
-			let obj = objects[i]
-			drawImage obj.backImage, obj.position, frame:obj.frame%obj.backImage.frames.length, scale:obj.scale
-	
 	shuffle
 		objects.shuffle
 		updatePositions
