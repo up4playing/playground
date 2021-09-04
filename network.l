@@ -698,35 +698,6 @@ transient unit Network
 	resetStartTimeIfNeeded
 		if Platform.mode < Play: resetStartTime
 		
-	object db = null
-	
-	// js void openEventStream: void(EventStream eventStream) then, void() else
-	// 	var request = indexedDB.open("up4playing", 1)
-	// 	request.onupgradeneeded = e => {
-	// 		db = e.target.result;
-	// 		db.createObjectStore("eventstreams",{ keyPath: "url" });
-	// 	}
-	// 	request.onsuccess = e => {
-	// 		db = e.target.result;
-	// 		let trans = db.transaction("eventstreams", "readonly")
-	// 		let req = trans.objectStore("eventstreams").get(location.href)
-	// 		req.onsuccess = async e => {
-	// 			let eventStream = req.result
-	// 			if(eventStream) {
-	// 				for(let user of eventStream.internalUsers) {
-	// 					let arrayBuffer = await user.blob.arrayBuffer()
-	// 					user.inputs = new Buffer(arrayBuffer, 0, 0, 0)
-	// 				}
-	// 				then(eventStream)
-	// 			} @else {
-	// 				else()
-	// 			}
-	// 		}
-	// 		req.onerror = e => {
-	// 			else()
-	// 		}
-	// 	}
-		
 	Buffer snapshotBuffer
 		
 	save: int slot
@@ -793,36 +764,6 @@ transient unit Network
 			Platform.sendFrame(frame, frames)
 			Math.setRandomSeed randomSeed
 			goToFrame targetFrame:frame, replay:true
-		
-	// js void saveEventStream
-	// 	let trans = db.transaction("eventstreams", "readwrite")
-	// 	trans.onerror = e => {
-	// 		alert("error saveEventStream"+e)
-	// 	}
-	// 	let id = location.href
-	// 	let log = ""
-	// 	let users = []
-	// 	for(let i=0; i<Input_users.length; i++) {
-	// 		let user = Input_users[i]
-	// 		let dataView = new DataView(user.inputs.buffer, 0, user.inputs.writePos)
-	// 		users.push({
-	// 			id: user.id,
-	// 			local: user.local,
-	// 			frame: user.frame,
-	// 			blob: new Blob([dataView]),
-	// 			inputs: null
-	// 		})
-	// 		if(log) log += ", "
-	// 		log += user.id + ": " + user.inputs.writePos + " bytes"
-	// 	}
-	// 	let eventStream = {
-	// 		url: location.href,
-	// 		randomSeed: Network_randomSeed,
-	// 		users
-	// 	}
-	// 	trans.objectStore("eventstreams").put(eventStream).onsuccess = e => {
-	// 		alert("Saved game. "+log)
-	// 	}
 		
 	private float nextPingTime
 	private float estimatedStartTimeTotal
