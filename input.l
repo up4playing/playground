@@ -147,6 +147,14 @@ unit Input
 			if(window.require && e.key == "t" && e.ctrlKey && e.metaKey && e.shiftKey)
 				require("electron").remote.getCurrentWindow().toggleDevTools()
 			else
+			if(e.ctrlKey && e.key == "s") {
+				Network_saveEventStream();
+			}
+			else
+			if(e.ctrlKey && e.key == "o") {
+				Network_openEventStream();
+			}
+			else
 			if(e.key >= "0" && e.key <= "9") {
 				let index = e.key - "0"
 				if(e.altKey)  Network_save(index); else

@@ -700,32 +700,32 @@ transient unit Network
 		
 	object db = null
 	
-	js void openEventStream: void(EventStream eventStream) then, void() else
-		var request = indexedDB.open("up4playing", 1)
-		request.onupgradeneeded = e => {
-			db = e.target.result;
-			db.createObjectStore("eventstreams",{ keyPath: "url" });
-		}
-		request.onsuccess = e => {
-			db = e.target.result;
-			let trans = db.transaction("eventstreams", "readonly")
-			let req = trans.objectStore("eventstreams").get(location.href)
-			req.onsuccess = async e => {
-				let eventStream = req.result
-				if(eventStream) {
-					for(let user of eventStream.internalUsers) {
-						let arrayBuffer = await user.blob.arrayBuffer()
-						user.inputs = new Buffer(arrayBuffer, 0, 0, 0)
-					}
-					then(eventStream)
-				} @else {
-					else()
-				}
-			}
-			req.onerror = e => {
-				else()
-			}
-		}
+	// js void openEventStream: void(EventStream eventStream) then, void() else
+	// 	var request = indexedDB.open("up4playing", 1)
+	// 	request.onupgradeneeded = e => {
+	// 		db = e.target.result;
+	// 		db.createObjectStore("eventstreams",{ keyPath: "url" });
+	// 	}
+	// 	request.onsuccess = e => {
+	// 		db = e.target.result;
+	// 		let trans = db.transaction("eventstreams", "readonly")
+	// 		let req = trans.objectStore("eventstreams").get(location.href)
+	// 		req.onsuccess = async e => {
+	// 			let eventStream = req.result
+	// 			if(eventStream) {
+	// 				for(let user of eventStream.internalUsers) {
+	// 					let arrayBuffer = await user.blob.arrayBuffer()
+	// 					user.inputs = new Buffer(arrayBuffer, 0, 0, 0)
+	// 				}
+	// 				then(eventStream)
+	// 			} @else {
+	// 				else()
+	// 			}
+	// 		}
+	// 		req.onerror = e => {
+	// 			else()
+	// 		}
+	// 	}
 		
 	Buffer snapshotBuffer
 		
@@ -754,35 +754,75 @@ transient unit Network
 		else
 			print "save logs failed {error}"
 			
-	js void saveEventStream
-		let trans = db.transaction("eventstreams", "readwrite")
-		trans.onerror = e => {
-			alert("error saveEventStream"+e)
-		}
-		let id = location.href
-		let log = ""
-		let users = []
-		for(let i=0; i<Input_users.length; i++) {
-			let user = Input_users[i]
-			let dataView = new DataView(user.inputs.buffer, 0, user.inputs.writePos)
-			users.push({
-				id: user.id,
-				local: user.local,
-				frame: user.frame,
-				blob: new Blob([dataView]),
-				inputs: null
-			})
-			if(log) log += ", "
-			log += user.id + ": " + user.inputs.writePos + " bytes"
-		}
-		let eventStream = {
-			url: location.href,
-			randomSeed: Network_randomSeed,
-			users
-		}
-		trans.objectStore("eventstreams").put(eventStream).onsuccess = e => {
-			alert("Saved game. "+log)
-		}
+	saveEventStream
+		Buffer buffer
+		buffer.writeInt32 frame-1
+		buffer.writeInt32 frames
+		buffer.writeString randomSeed
+		buffer.writeInt8 Input.internalUsers.length
+		for Input.internalUsers
+			buffer.writeInt8 .id
+			buffer.writeBool .local
+			buffer.writeBuffer .inputs
+		let time = Time.current
+		Platform.saveBinaryFile "{Platform.appName} {time.dayShortMonthNameYearString} {time.hourMinuteSecondString} v{Platform.version}.state", buffer
+		
+	openEventStream
+		Platform.pause
+		Platform.openBinaryFile
+			// Read event stream
+			frame = buffer.readInt32
+			frames = buffer.readInt32
+			randomSeed = buffer.readString
+			let userCount = buffer.readInt8
+			Input.internalUsers.clear
+			for userCount
+				InternalUser user
+				user.id = buffer.readInt8
+				user.local = buffer.readBool
+				buffer.readBuffer user.inputs
+				Input.internalUsers.add user
+				
+			// Replay
+			for Input.internalUsers
+				.collectInputs = true
+				.currentFrame = frames - 1
+				.startInputFrame frames
+			userId = Input.internalUsers.findIndex.local
+			certainFrame = frame-1
+			Platform.sendFrame(frame, frames)
+			Math.setRandomSeed randomSeed
+			goToFrame targetFrame:frame, replay:true
+		
+	// js void saveEventStream
+	// 	let trans = db.transaction("eventstreams", "readwrite")
+	// 	trans.onerror = e => {
+	// 		alert("error saveEventStream"+e)
+	// 	}
+	// 	let id = location.href
+	// 	let log = ""
+	// 	let users = []
+	// 	for(let i=0; i<Input_users.length; i++) {
+	// 		let user = Input_users[i]
+	// 		let dataView = new DataView(user.inputs.buffer, 0, user.inputs.writePos)
+	// 		users.push({
+	// 			id: user.id,
+	// 			local: user.local,
+	// 			frame: user.frame,
+	// 			blob: new Blob([dataView]),
+	// 			inputs: null
+	// 		})
+	// 		if(log) log += ", "
+	// 		log += user.id + ": " + user.inputs.writePos + " bytes"
+	// 	}
+	// 	let eventStream = {
+	// 		url: location.href,
+	// 		randomSeed: Network_randomSeed,
+	// 		users
+	// 	}
+	// 	trans.objectStore("eventstreams").put(eventStream).onsuccess = e => {
+	// 		alert("Saved game. "+log)
+	// 	}
 		
 	private float nextPingTime
 	private float estimatedStartTimeTotal
