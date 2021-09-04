@@ -12,14 +12,14 @@ enum NetworkMode: None, Ping, Local, Connected, Reconnecting
 transient class RoomInfo: int time, userId
 	
 unit Snapshot
-	const maxLength = 3
+	transient int autoSaveCount
+	transient int lastSnapshotSize
 	
-	transient bool takeAtEndOfStep
-	transient Buffer[] snapshots
-	transient int offset = 0
+	transient Buffer snapshots
+	transient int[] snapshotStarts
+	transient int snapshotEvery = 100
 	
-	int currentIndex
-	int takeCount
+	transient private bool autoSaveAtEndOfStep
 	
 	inline js void serialize(Buffer buffer) serialize(buffer)
 	inline js void deserialize(Buffer buffer) deserialize(buffer)
@@ -29,24 +29,22 @@ unit Snapshot
 		serialize(buffer)
 		return buffer
 		
-	void restore: Buffer buffer
+	restore: Buffer buffer
 		deserialize(buffer)
 		
-	take() takeAtEndOfStep = true
-	lastSnapshotSize := snapshots.length>0 ? snapshots[snapshots.length-1].writePos : 0
+	autoSave() autoSaveAtEndOfStep = true
 	
 	internal onEndOfStep
-		if takeAtEndOfStep
+		if autoSaveAtEndOfStep and ++autoSaveCount > 5
 			let snap = save
-			snapshots.add snap
-			if snapshots.length > maxLength
-				snapshots.removeAt 0
-				offset++
-			if ++takeCount > 5
-				int index = currentIndex
-				IndexedDB.save "snapshot", "{Network.gameId}-0", snap
-			takeAtEndOfStep = false
-			currentIndex++
+			IndexedDB.saveBuffer "snapshot", "{Network.gameId}-0", snap
+			lastSnapshotSize = snap.writePos
+			
+		if Network.frame/snapshotEvery > snapshotStarts.length
+			snapshotStarts.add snapshots.writePos
+			serialize(snapshots)
+		
+		autoSaveAtEndOfStep = false
 	
 transient class Buffer
 	int readPos, writePos
@@ -494,7 +492,7 @@ transient unit Network
 					for user -> Input.internalUsers
 						if user
 							debugString += " " + user.inputs.writePos.format(grouping:true)
-					debugString += " i:{Snapshot.currentIndex} s:{Snapshot.lastSnapshotSize.format(grouping:true)} a:{ahead} p:{aheadPercentile} av:"
+					debugString += " as:{Snapshot.autoSaveCount} s:{Snapshot.lastSnapshotSize.format(grouping:true)} a:{ahead} p:{aheadPercentile} av:"
 					for user -> Input.internalUsers
 						if user
 							debugString += "  " + user.aheadAverage.format(fractionDigits:1)

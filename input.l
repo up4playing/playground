@@ -537,7 +537,7 @@ unit Input
 					log "up", touch.position
 					code touch
 					if markAsHandled: touch.handled = true
-					Snapshot.take
+					Snapshot.autoSave
 		else
 			for user -> internalUsers if user
 				for touch -> user.upTouches
@@ -546,7 +546,7 @@ unit Input
 						log "up", touch.position
 						code touch
 						if markAsHandled: touch.handled = true
-						Snapshot.take
+						Snapshot.autoSave
 		if showTouchArea: drawRectangle position, size, fillColor:{"ff000080"}
 
 	// Executes code when the user touches or clicks within a given area
@@ -567,7 +567,7 @@ unit Input
 					log "up", touch.position
 					code touch
 					if markAsHandled: touch.handled = true
-					Snapshot.take
+					Snapshot.autoSave
 		else
 			for user -> internalUsers if user
 				for touch -> user.upTouches
@@ -576,7 +576,7 @@ unit Input
 						log "up", touch.position
 						code touch
 						if markAsHandled: touch.handled = true
-						Snapshot.take
+						Snapshot.autoSave
 			if cursor
 				let user = internalUsers[Network.userId]
 				for touch -> user.movingTouches
@@ -697,7 +697,7 @@ unit Input
 				t.startPosition = t.referenceStartPosition.getRelativeTo(graphics.localMatrix)
 				log "up", t.position
 				code t
-				Snapshot.take
+				Snapshot.autoSave
 				if markAsHandled: t.handled = true
 				
 	// Executes code when a touch or click ends
@@ -712,7 +712,7 @@ unit Input
 					t.startPosition = t.referenceStartPosition.getRelativeTo(graphics.localMatrix)
 					log "up", t.position
 					code t
-					Snapshot.take
+					Snapshot.autoSave
 		else
 			for user -> internalUsers if user
 				for t -> user.upTouches
@@ -721,7 +721,7 @@ unit Input
 						t.startPosition = t.referenceStartPosition.getRelativeTo(graphics.localMatrix)
 						log "up", t.position
 						code t
-						Snapshot.take
+						Snapshot.autoSave
 						
 	private log: string text, float2 pos
 		Network.touchLog += " #{Network.frame}{isCertain ? " c" : ""} {text} {pos}"
