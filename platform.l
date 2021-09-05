@@ -42,6 +42,7 @@ transient unit Platform
 	
 	internal inline js void initApplication
 		init()
+		Platform_updateBaseMatrix();
 		
 	private inline js void initCacheAndImages
 		_constCache.length = 0;
@@ -60,48 +61,47 @@ transient unit Platform
 		}
 		if(!Platform_isMobile) 
 			window.onresize = e => { 
-				Platform_resize();
-				if(Platform_mode == 0/*Pause*/ && this.engineStarted) Network_tick();
+				Platform_onResize();
+				if(Platform_mode == 0/*Pause*/ && Platform_engineStarted) Network_tick();
 			}
 		
-	private js void resize
-		// Scale canvas
+	private js void onResize
 		Platform_canvas = document.getElementById("canvas");
 		Platform_context = Platform_canvas.getContext("2d");
 		Platform_pixelRatio = 1;
-		Platform_pixelSize = new float2(window.innerWidth*Platform_pixelRatio, window.innerHeight*Platform_pixelRatio, null)
+		Platform_pixelSize = new float2(window.innerWidth*Platform_pixelRatio, window.innerHeight*Platform_pixelRatio, null);
 		Platform_canvas.style.width = window.innerWidth + "px";
 		Platform_canvas.style.height = window.innerHeight + "px";
-		Platform_canvas.width = Platform_pixelSize.x
-		Platform_canvas.height = Platform_pixelSize.y
-		Platform_canvas.imageSmoothingEnabled = true
-		Platform_canvas.imageSmoothingQuality = "high"
+		Platform_canvas.width = Platform_pixelSize.x;
+		Platform_canvas.height = Platform_pixelSize.y;
+		log(window.innerWidth+" "+Platform_pixelRatio+" "+Platform_pixelSize.x+" "+Platform_pixelSize.y);
+		Platform_canvas.imageSmoothingEnabled = true;
+		Platform_canvas.imageSmoothingQuality = "high";
+		Platform_updateBaseMatrix();
 		
-		// Create base matrix
-		let ratio = new float2(Platform_pixelSize.x / Platform_referenceSize.x, Platform_pixelSize.y / Platform_referenceSize.y, null);
-		let scale
-		switch(Platform_scaleMode) {
-			case 0:
-				if(ratio.x < ratio.y) { Platform_effectiveScaleMode = 1; scale = ratio.x; }
-				else                  { Platform_effectiveScaleMode = 2; scale = ratio.y; }
-				Platform_size = new float2(Platform_referenceSize.x, Platform_referenceSize.y, null)
-				break;
-				
-			case 1:
-				Platform_effectiveScaleMode = Platform_scaleMode
-				scale = ratio.x; 
-				Platform_size = new float2(Platform_referenceSize.x, Platform_pixelSize.y/scale, null)
-				break;
-				
-			case 2:
-				Platform_effectiveScaleMode = Platform_scaleMode
-				scale = ratio.y; 
-				Platform_size = new float2(Platform_pixelSize.x/scale, Platform_referenceSize.y, null)
-				break;
-		}
-		let offsetX = Platform_anchor > 0 ? Platform_pixelSize.x/2 : 0
-		let offsetY = Platform_anchor > 1 ? Platform_pixelSize.y/2 : 0
-		Platform_baseMatrix = new Matrix2D(scale,0,0,scale,offsetX,offsetY)
+	// Update the base matrix
+	// Called when resizing and after calling init() because we could change the scaleMode and anchor in App.init
+	private updateBaseMatrix
+		float2 ratio = {pixelSize.x / referenceSize.x, pixelSize.y / referenceSize.y}
+		float scale
+		if scaleMode == Auto
+			if ratio.x < ratio.y: effectiveScaleMode = FixedWidth;  scale = ratio.x
+			else                  effectiveScaleMode = FixedHeight; scale = ratio.y
+			size = referenceSize
+		else
+		if scaleMode == FixedWidth
+			effectiveScaleMode = scaleMode
+			scale = ratio.x
+			size = {referenceSize.x, pixelSize.y/scale}
+		else
+		if scaleMode == FixedHeight
+			effectiveScaleMode = scaleMode
+			scale = ratio.y; 
+			size = {pixelSize.x/scale, referenceSize.y}
+			
+		let offsetX = anchor > 0 ? pixelSize.x/2 : 0
+		let offsetY = anchor > 1 ? pixelSize.y/2 : 0
+		baseMatrix = {scale,0,0,scale,offsetX,offsetY}
 	
 	// This is called when the application starts for the first time	
 	private start: bool isDebug
@@ -111,7 +111,7 @@ transient unit Platform
 		this.isDebug = isDebug
 		if !isDebug: showSafeArea = false
 		
-		resize
+		onResize
 		if !isDebug: Network.simulateConnection = false
 		if mode >= Play: mode = Pause
 		let path = url.split("/")
