@@ -60,7 +60,7 @@ transient unit Platform
 		if(!Platform_isMobile) 
 			window.onresize = e => { 
 				Platform_resize();
-				if(Platform_mode == 0/*Pause*/) Network_tick();
+				if(Platform_mode == 0/*Pause*/ && this.engineStarted) Network_tick();
 			}
 		
 	private js void resize
