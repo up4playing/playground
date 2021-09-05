@@ -149,10 +149,12 @@ unit Input
 			else
 			if(e.ctrlKey && e.key == "s") {
 				Network_saveEventStream();
+				e.preventDefault();
 			}
 			else
 			if(e.ctrlKey && e.key == "o") {
 				Network_openEventStream();
+				e.preventDefault();
 			}
 			else
 			if(e.key >= "0" && e.key <= "9") {
@@ -160,6 +162,7 @@ unit Input
 				if(e.altKey)  Network_save(index); else
 				if(e.ctrlKey) Network_restore(index); else
 				              Network_userId = Math.min(index-1, Input_users.length-1);
+				e.preventDefault();
 			}
 			else
 			if(e.ctrlKey && e.key == "F1")
@@ -173,6 +176,7 @@ unit Input
 			if(e.key == "F9") {
 				if(e.shiftKey) Network_saveLogsInternal();
 				else           Network_showDebugString = !Network_showDebugString;
+				e.preventDefault();
 			}
 			else
 			if(keyCode >= 49 && keyCode <= 52 && Network_simulateConnection)
