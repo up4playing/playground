@@ -35,7 +35,7 @@ transient unit Platform
 	visible float2 pixelSize, size
 	visible float pixelRatio
 	internal Matrix2D baseMatrix
-	private bool engineStarted
+	internal bool engineStarted
 	visible PlatformMode mode
 	internal bool fastForward
 	visible bool isMobile = true

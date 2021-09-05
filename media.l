@@ -28,6 +28,10 @@ class Texture
 	string file
 	float2 size
 	
+	Texture
+		if Platform.engineStarted
+			open
+	
 	js void open: void() callback = null
 		if(!window._htmlImageCache) _htmlImageCache = {}
 		let image = _htmlImageCache[this.file]
