@@ -11,15 +11,15 @@ transient class Connection
 enum NetworkMode: None, Ping, Local, Connected, Reconnecting
 transient class RoomInfo: int time, userId
 	
-unit Snapshot
-	transient int autoSaveCount
-	transient int lastSnapshotSize
+transient unit Snapshot
+	int autoSaveCount
+	int lastSnapshotSize
 	
-	transient Buffer snapshots
-	transient int[] snapshotStarts
-	transient int snapshotEvery = 100
+	Buffer snapshots
+	int[] snapshotStarts
+	int snapshotEvery = 100
 	
-	transient private bool autoSaveAtEndOfStep
+	private bool autoSaveAtEndOfStep
 	
 	inline js void serialize(Buffer buffer) serialize(buffer)
 	inline js void deserialize(Buffer buffer) deserialize(buffer)
@@ -35,16 +35,17 @@ unit Snapshot
 	autoSave() autoSaveAtEndOfStep = true
 	
 	internal onEndOfStep
-		if autoSaveAtEndOfStep and ++autoSaveCount > 5
-			let snap = save
-			IndexedDB.saveBuffer "snapshot", "{Network.gameId}-0", snap
-			lastSnapshotSize = snap.writePos
+		if Input.isCertain
+			if autoSaveAtEndOfStep and ++autoSaveCount > 5
+				let snap = save
+				IndexedDB.saveBuffer "snapshot", "{Network.gameId}-0", snap
+				lastSnapshotSize = snap.writePos
+				
+			if Network.frame/snapshotEvery > snapshotStarts.length
+				snapshotStarts.add snapshots.writePos
+				serialize(snapshots)
 			
-		if Network.frame/snapshotEvery > snapshotStarts.length
-			snapshotStarts.add snapshots.writePos
-			serialize(snapshots)
-		
-		autoSaveAtEndOfStep = false
+			autoSaveAtEndOfStep = false
 	
 transient class Buffer
 	int readPos, writePos
