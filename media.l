@@ -188,16 +188,16 @@ transient global unit graphics
 	js void createImage: float2 size      // The size of the image
 		                 string file = "" // Save the image to a file with this filename
 		                 void() code      // This code will draw on the created image instead of drawing on the screen
-		let prevCanvas = Platform_canvas
+		// let prevCanvas = Platform_canvas
 		let prevContext = Platform_context
 		let prevPixelSizeX = Platform_pixelSize.x
 		let prevPixelSizeY = Platform_pixelSize.y
 		let prevItems = graphics_items
 		graphics_items = []
-		Platform_canvas = document.createElement("canvas")
-		Platform_canvas.width = size.x
-		Platform_canvas.height = size.y
-		Platform_context = Platform_canvas.getContext("2d")
+		let canvas = document.createElement("canvas")
+		canvas.width = size.x
+		canvas.height = size.y
+		Platform_context = canvas.getContext("2d")
 		Platform_pixelSize.x = size.x
 		Platform_pixelSize.y = size.y
 		let a = graphics_localMatrix.matrix, b = graphics_totalMatrix.matrix
@@ -207,14 +207,16 @@ transient global unit graphics
 		graphics_totalMatrix.set(1, 0, 0, 1, size.x/2, size.y/2)
 		code()
 		graphics_drawItems()
-		if(file) Platform_saveImage(file);
+		var dataUrl = canvas.toDataURL('image/png');
+		if(file) Platform_saveImage(dataUrl, file);
 		graphics_localMatrix.m0 = a0; graphics_localMatrix.m1 = a1; graphics_localMatrix.m2 = a2; graphics_localMatrix.m3 = a3; graphics_localMatrix.m4 = a4; graphics_localMatrix.m5 = a5
 		graphics_totalMatrix.m0 = b0; graphics_totalMatrix.m1 = b1; graphics_totalMatrix.m2 = b2; graphics_totalMatrix.m3 = b3; graphics_totalMatrix.m4 = b4; graphics_totalMatrix.m5 = b5
 		Platform_context = prevContext
-		Platform_canvas = prevCanvas
+		// canvas = prevCanvas
 		Platform_pixelSize.x = prevPixelSizeX
 		Platform_pixelSize.y = prevPixelSizeY
 		graphics_items = prevItems
+		return dataUrl
 
 	// The default color for all draw operations
 	color

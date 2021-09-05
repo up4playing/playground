@@ -13,7 +13,6 @@ transient class InternalUser
 	visible int[] downKeys, upKeys
 	visible string[] textInputs, textCompositions
 	
-	int lastTextInputIndex = -1
 	int[] lastTouchMoveIndex
 	
 	Buffer inputs         // The stream of inputs of this user
@@ -24,7 +23,6 @@ transient class InternalUser
 	
 	startInputFrame: int index
 		lastTouchMoveIndex.clear
-		lastTextInputIndex = -1
 		inputFrame = index
 	
 	clearEvent:
@@ -41,7 +39,6 @@ transient class InternalUser
 class NetworkUser
 	int id
 	Color color = null
-	float2 touchPos
 	visible Touch[] touches
 	string textInput
 	float2 videoPosition = {}
@@ -67,6 +64,7 @@ class Touch
 	MouseButton button
 	float2 referencePosition
 	float2 referenceStartPosition
+	float2 smoothPosition
 	bool isDown
 	float2 position
 	float2 startPosition
@@ -149,11 +147,22 @@ unit Input
 			if(window.require && e.key == "t" && e.ctrlKey && e.metaKey && e.shiftKey)
 				require("electron").remote.getCurrentWindow().toggleDevTools()
 			else
+			if(e.ctrlKey && e.key == "s") {
+				Network_saveEventStream();
+				e.preventDefault();
+			}
+			else
+			if(e.ctrlKey && e.key == "o") {
+				Network_openEventStream();
+				e.preventDefault();
+			}
+			else
 			if(e.key >= "0" && e.key <= "9") {
 				let index = e.key - "0"
 				if(e.altKey)  Network_save(index); else
 				if(e.ctrlKey) Network_restore(index); else
 				              Network_userId = Math.min(index-1, Input_users.length-1);
+				e.preventDefault();
 			}
 			else
 			if(e.ctrlKey && e.key == "F1")
@@ -167,6 +176,7 @@ unit Input
 			if(e.key == "F9") {
 				if(e.shiftKey) Network_saveLogsInternal();
 				else           Network_showDebugString = !Network_showDebugString;
+				e.preventDefault();
 			}
 			else
 			if(keyCode >= 49 && keyCode <= 52 && Network_simulateConnection)
@@ -206,7 +216,6 @@ unit Input
 		if !user.collectInputs: return
 		
 		inputs.writeInt32 user.inputFrame
-		user.lastTextInputIndex = inputs.writePos
 		inputs.writeUnsignedInt16 cast type
 		inputs.writeString text
 			
@@ -292,8 +301,7 @@ unit Input
 						MouseButton button = cast Math.shiftRight(value, 5) % 4
 						int id = Math.shiftRight(value, 7)
 						float2 touchPos = {inputs.readInt16, inputs.readInt16}
-						if !Network.smoothTouchPosition or isCertain or Network.userId == userId
-							user.touchPos = touchPos
+						bool isSmoothPosition = !Network.smoothTouchPosition or isCertain or Network.userId == userId
 						Network.parseLog += " "+id
 						
 						if type == TouchDown
@@ -305,9 +313,10 @@ unit Input
 								touch.handled = false
 								touch.button = button
 								touch.isDown = true
+								if isSmoothPosition: touch.smoothPosition = touchPos
 								Network.parseLog += " down {id} {touchPos} {button}"
 							else
-								touch = {id, userId, cast type, button, touchPos, touchPos, isDown:true}
+								touch = {id, userId, cast type, button, touchPos, touchPos, touchPos, isDown:true}
 								user.touches.add touch
 								Network.parseLog += " down(new) {id} {touchPos} {button}"
 							internalUser.downTouches.add touch
@@ -319,9 +328,10 @@ unit Input
 								touch.referencePosition = touchPos
 								touch.handled = false
 								touch.button = button
+								if isSmoothPosition: touch.smoothPosition = touchPos
 								Network.parseLog += " move {id} {touchPos} {button}"
 							else
-								touch = {id, userId, cast type, button, touchPos, referenceStartPosition:float2.none, isDown:false}
+								touch = {id, userId, cast type, button, touchPos, referenceStartPosition:float2.none, touchPos, isDown:false}
 								user.touches.add touch
 								Network.parseLog += " move(new) {id} {touchPos} {button}"
 							internalUser.movingTouches.add touch
@@ -335,9 +345,10 @@ unit Input
 								touch.handled = false
 								touch.button = button
 								touch.isDown = false
+								if isSmoothPosition: touch.smoothPosition = touchPos
 								Network.parseLog += " up {id} {touchPos} {button}"
 							else
-								touch = {id, userId, cast type, button, touchPos, referenceStartPosition:float2.none, isDown:false}
+								touch = {id, userId, cast type, button, touchPos, referenceStartPosition:float2.none, touchPos, isDown:false}
 								user.touches.add touch
 								Network.parseLog += " up(new) {id} {touchPos} {button}"
 							internalUser.upTouches.add touch
@@ -540,7 +551,7 @@ unit Input
 					log "up", touch.position
 					code touch
 					if markAsHandled: touch.handled = true
-					Snapshot.take
+					Snapshot.autoSave
 		else
 			for user -> internalUsers if user
 				for touch -> user.upTouches
@@ -549,7 +560,7 @@ unit Input
 						log "up", touch.position
 						code touch
 						if markAsHandled: touch.handled = true
-						Snapshot.take
+						Snapshot.autoSave
 		if showTouchArea: drawRectangle position, size, fillColor:{"ff000080"}
 
 	// Executes code when the user touches or clicks within a given area
@@ -570,7 +581,7 @@ unit Input
 					log "up", touch.position
 					code touch
 					if markAsHandled: touch.handled = true
-					Snapshot.take
+					Snapshot.autoSave
 		else
 			for user -> internalUsers if user
 				for touch -> user.upTouches
@@ -579,7 +590,7 @@ unit Input
 						log "up", touch.position
 						code touch
 						if markAsHandled: touch.handled = true
-						Snapshot.take
+						Snapshot.autoSave
 			if cursor
 				let user = internalUsers[Network.userId]
 				for touch -> user.movingTouches
@@ -700,7 +711,7 @@ unit Input
 				t.startPosition = t.referenceStartPosition.getRelativeTo(graphics.localMatrix)
 				log "up", t.position
 				code t
-				Snapshot.take
+				Snapshot.autoSave
 				if markAsHandled: t.handled = true
 				
 	// Executes code when a touch or click ends
@@ -715,7 +726,7 @@ unit Input
 					t.startPosition = t.referenceStartPosition.getRelativeTo(graphics.localMatrix)
 					log "up", t.position
 					code t
-					Snapshot.take
+					Snapshot.autoSave
 		else
 			for user -> internalUsers if user
 				for t -> user.upTouches
@@ -724,7 +735,7 @@ unit Input
 						t.startPosition = t.referenceStartPosition.getRelativeTo(graphics.localMatrix)
 						log "up", t.position
 						code t
-						Snapshot.take
+						Snapshot.autoSave
 						
 	private log: string text, float2 pos
 		Network.touchLog += " #{Network.frame}{isCertain ? " c" : ""} {text} {pos}"

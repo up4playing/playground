@@ -11,15 +11,15 @@ transient class Connection
 enum NetworkMode: None, Ping, Local, Connected, Reconnecting
 transient class RoomInfo: int time, userId
 	
-unit Snapshot
-	const maxLength = 3
+transient unit Snapshot
+	int autoSaveCount
+	int lastSnapshotSize
 	
-	transient bool takeAtEndOfStep
-	transient Buffer[] snapshots
-	transient int offset = 0
+	Buffer snapshots
+	int[] snapshotStarts
+	int snapshotEvery = 100
 	
-	int currentIndex
-	int takeCount
+	private bool autoSaveAtEndOfStep
 	
 	inline js void serialize(Buffer buffer) serialize(buffer)
 	inline js void deserialize(Buffer buffer) deserialize(buffer)
@@ -29,24 +29,23 @@ unit Snapshot
 		serialize(buffer)
 		return buffer
 		
-	void restore: Buffer buffer
+	restore: Buffer buffer
 		deserialize(buffer)
 		
-	take() takeAtEndOfStep = true
-	lastSnapshotSize := snapshots.length>0 ? snapshots[snapshots.length-1].writePos : 0
+	autoSave() autoSaveAtEndOfStep = true
 	
 	internal onEndOfStep
-		if takeAtEndOfStep
-			let snap = save
-			snapshots.add snap
-			if snapshots.length > maxLength
-				snapshots.removeAt 0
-				offset++
-			if ++takeCount > 5
-				int index = currentIndex
-				IndexedDB.save "snapshot", "{Network.gameId}-0", snap
-			takeAtEndOfStep = false
-			currentIndex++
+		if Input.isCertain
+			if autoSaveAtEndOfStep and ++autoSaveCount > 5
+				let snap = save
+				IndexedDB.saveBuffer "snapshot", "{Network.gameId}-0", snap
+				lastSnapshotSize = snap.writePos
+				
+			if Network.frame/snapshotEvery > snapshotStarts.length
+				snapshotStarts.add snapshots.writePos
+				serialize(snapshots)
+			
+			autoSaveAtEndOfStep = false
 	
 transient class Buffer
 	int readPos, writePos
@@ -246,6 +245,7 @@ transient class Buffer
 			writeBuffer.dataView.setUint8(writePos++, this.dataView.getUint8(readPos++))
 			
 		this.readPos = readPos
+		writeBuffer.writePos = writePos
 		return length
 			
 	js string toString
@@ -493,7 +493,7 @@ transient unit Network
 					for user -> Input.internalUsers
 						if user
 							debugString += " " + user.inputs.writePos.format(grouping:true)
-					debugString += " i:{Snapshot.currentIndex} s:{Snapshot.lastSnapshotSize.format(grouping:true)} a:{ahead} p:{aheadPercentile} av:"
+					debugString += " as:{Snapshot.autoSaveCount} s:{Snapshot.lastSnapshotSize.format(grouping:true)} a:{ahead} p:{aheadPercentile} av:"
 					for user -> Input.internalUsers
 						if user
 							debugString += "  " + user.aheadAverage.format(fractionDigits:1)
@@ -569,7 +569,7 @@ transient unit Network
 		// Send current frame to editor	
 		if frames < frame+1: frames = frame+1
 		if frameWithNewWatches < frame+1: frameWithNewWatches = frame+1
-		if Platform.isDebug and !fastFordward and (Platform.mode == Record or Platform.mode == Play): Platform.sendFrame(frame, frames)			
+		if Platform.isDebug and !fastFordward and (Platform.mode == Record or Platform.mode == Play): Platform.sendFrame(frame, frames)
 		
 		frame++
 		
@@ -699,47 +699,18 @@ transient unit Network
 	resetStartTimeIfNeeded
 		if Platform.mode < Play: resetStartTime
 		
-	object db = null
-	
-	js void openEventStream: void(EventStream eventStream) then, void() else
-		var request = indexedDB.open("up4playing", 1)
-		request.onupgradeneeded = e => {
-			db = e.target.result;
-			db.createObjectStore("eventstreams",{ keyPath: "url" });
-		}
-		request.onsuccess = e => {
-			db = e.target.result;
-			let trans = db.transaction("eventstreams", "readonly")
-			let req = trans.objectStore("eventstreams").get(location.href)
-			req.onsuccess = async e => {
-				let eventStream = req.result
-				if(eventStream) {
-					for(let user of eventStream.internalUsers) {
-						let arrayBuffer = await user.blob.arrayBuffer()
-						user.inputs = new Buffer(arrayBuffer, 0, 0, 0)
-					}
-					then(eventStream)
-				} @else {
-					else()
-				}
-			}
-			req.onerror = e => {
-				else()
-			}
-		}
-		
 	Buffer snapshotBuffer
 		
 	save: int slot
 		snapshotBuffer.reset
 		Snapshot.serialize snapshotBuffer
-		IndexedDB.save "snapshot", "{gameId}-{slot}", snapshotBuffer
+		IndexedDB.saveBuffer "snapshot", "{gameId}-{slot}", snapshotBuffer
 			print "saved snapshot {gameId}-{slot} ({snapshotBuffer.writePos} bytes)"
 		else
 			print "save failed"
 		
 	restore: int slot
-		IndexedDB.open "snapshot", "{gameId}-{slot}"
+		IndexedDB.openBuffer "snapshot", "{gameId}-{slot}"
 			Input.handleSetState buffer
 			print "restored snapshot {gameId}-{slot} ({buffer.writePos} bytes)"
 		else
@@ -749,41 +720,51 @@ transient unit Network
 		if Input.isCertain: saveLogsInternal
 			
 	internal saveLogsInternal
-		Platform.createTextFile "log.csv", logTable
+		Platform.saveTextFile "log.csv", logTable
 		Http.post "/saveLog/{gameId}/{roomId}/{userId}", logTable
 			log "save logs"
 		else
 			print "save logs failed {error}"
 			
-	js void saveEventStream
-		let trans = db.transaction("eventstreams", "readwrite")
-		trans.onerror = e => {
-			alert("error saveEventStream"+e)
-		}
-		let id = location.href
-		let log = ""
-		let users = []
-		for(let i=0; i<Input_users.length; i++) {
-			let user = Input_users[i]
-			let dataView = new DataView(user.inputs.buffer, 0, user.inputs.writePos)
-			users.push({
-				id: user.id,
-				local: user.local,
-				frame: user.frame,
-				blob: new Blob([dataView]),
-				inputs: null
-			})
-			if(log) log += ", "
-			log += user.id + ": " + user.inputs.writePos + " bytes"
-		}
-		let eventStream = {
-			url: location.href,
-			randomSeed: Network_randomSeed,
-			users
-		}
-		trans.objectStore("eventstreams").put(eventStream).onsuccess = e => {
-			alert("Saved game. "+log)
-		}
+	saveEventStream
+		Buffer buffer
+		buffer.writeInt32 frame-1
+		buffer.writeInt32 frames
+		buffer.writeString randomSeed
+		buffer.writeInt8 Input.internalUsers.length
+		for Input.internalUsers
+			buffer.writeInt8 .id
+			buffer.writeBool .local
+			buffer.writeBuffer .inputs
+		let time = Time.current
+		Platform.saveBinaryFile "{Platform.appName} {time.dayShortMonthNameYearString} {time.hourMinuteSecondString} v{Platform.version}.state", buffer
+		
+	openEventStream
+		Platform.pause
+		Platform.openBinaryFile
+			// Read event stream
+			frame = buffer.readInt32
+			frames = buffer.readInt32
+			randomSeed = buffer.readString
+			let userCount = buffer.readInt8
+			Input.internalUsers.clear
+			for userCount
+				InternalUser user
+				user.id = buffer.readInt8
+				user.local = buffer.readBool
+				buffer.readBuffer user.inputs
+				Input.internalUsers.add user
+				
+			// Replay
+			for Input.internalUsers
+				.collectInputs = true
+				.currentFrame = frames - 1
+				.startInputFrame frames
+			userId = Input.internalUsers.findIndex.local
+			certainFrame = frame-1
+			Platform.sendFrame(frame, frames)
+			Math.setRandomSeed randomSeed
+			goToFrame targetFrame:frame, replay:true
 		
 	private float nextPingTime
 	private float estimatedStartTimeTotal
@@ -1223,7 +1204,11 @@ transient unit Network
 			
 			let writeStart = buffer.readInt32
 			let length = buffer.readBuffer sender.inputs, writeStart
-			sender.inputs.writePos = writeStart + length
+			
+			// TEMP for testing
+			if(sender.inputs.writePos != writeStart + length)
+				Platform.alert("expected write pos:{writeStart + length} actual:{sender.inputs.writePos}")
+			
 			receivedFrames = getReceivedInputFrames
 	
 			receivedLog += " [{currentTime}] <{c.userId}> #{sender.inputFrame} a:{sender.acknowledgedPos} cf:{sender.currentFrame} s:{writeStart} e:{sender.inputs.writePos}"
@@ -1365,10 +1350,12 @@ transient unit Network
 		for user -> Input.users
 			if user
 				let internalUser = Input.internalUsers[user.id]
-				if (!internalUser.local or Platform.showLocalPointer) and Framework.isVisibleFor user.touchPos, this.userId
-					drawImage finger, user.touchPos+{11,34}, frame:user.id
-					if user.color: drawRectangle user.touchPos+{16,76}, size:{26,8}, user.color
-				
+				if !internalUser.local or Platform.showLocalPointer or Platform.mode == Play or frame < frames
+					for user.touches
+						if Framework.isVisibleFor .smoothPosition, this.userId
+							drawImage finger, .smoothPosition+{11,32}, frame:.isDown ? 1 : 0
+							if user.color: drawRectangle .smoothPosition+{16,78}, size:{26,10}, user.color
+							
 	private js void logConnectionType(object peerConnection)
 		setTimeout(async () => {
 			let stats = await peerConnection.getStats()

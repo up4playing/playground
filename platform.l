@@ -22,6 +22,7 @@ transient unit Platform
 	
 	public inline js string url := location.href
 	public inline js int version := version
+	public inline js int appName := appName
 	public inline js int userAgent := navigator.userAgent.replace(/,/g," ")
 	
 	public float2 referenceSize = {1920, 1080}
@@ -198,7 +199,7 @@ transient unit Platform
 		try   { if(!Network_isLocalhost) document.body.requestFullscreen() }
 		catch { }
 		
-	js void createTextFile: string filename, string text
+	js void saveTextFile: string filename, string text
 		var element = document.createElement('a');
 		element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(text));
 		element.setAttribute('download', filename);
@@ -206,6 +207,51 @@ transient unit Platform
 		document.body.appendChild(element);
 		element.click();
 		document.body.removeChild(element);
+		
+	js void saveBinaryFile: string filename, Buffer buffer
+		var binary = '';
+		var bytes = new Uint8Array(buffer.buffer);
+		var len = bytes.byteLength;
+		for (var i = 0; i < len; i++) {
+		    binary += String.fromCharCode(bytes[i]);
+		}
+		var base64 = window.btoa( binary );
+		var dataUrl = 'data:text/plain;base64,' + base64;
+		
+		var element = document.createElement('a');
+		element.setAttribute('href', dataUrl);
+		element.setAttribute('download', filename);
+		element.style.display = 'none';
+		document.body.appendChild(element);
+		element.click();
+		document.body.removeChild(element);
+		
+	js void openBinaryFile: void(Buffer buffer) then, void(string error) else = null
+		fileInput = document.createElement("input")
+		fileInput.type = 'file'
+		fileInput.style.display = 'none'
+		fileInput.onchange = e => {
+			var file = e.target.files[0];
+			if (!file) {
+				else?.("")
+				return
+			}
+			var reader = new FileReader();
+			reader.onload = function(e) {
+				let buffer = new Buffer(e.target.result, 0, 0, 0);
+				document.body.removeChild(fileInput);
+				then(buffer);
+			}
+			reader.onabort = e => {
+				else?.(reader.error)
+			}
+			reader.onerror = e => {
+				else?.(reader.error)
+			}
+			reader.readAsArrayBuffer(file)
+		}
+		document.body.appendChild(fileInput)
+		fileInput.click()
 		
 	inline js void setLocalStorageObject: string key, object value
 		localStorage.setItem(key, JSON.stringify(value))
@@ -223,9 +269,8 @@ transient unit Platform
 	inline js void vibrate: int duration = 100
 		navigator.vibrate(duration)
 		
-	js void saveImage: string file
-		var url = Platform_canvas.toDataURL('image/png');
-		var base64Data = url.replace(/data:image\/png;base64,/, "");
+	js void saveImage: string dataUrl, string file
+		var base64Data = dataUrl.replace(/data:image\/png;base64,/, "");
 		var fs = require("fs")
 		fs.writeFile(file, base64Data, 'base64', function (err) {
 			if(err) log(err)
@@ -241,6 +286,10 @@ transient unit Platform
 	js void stack
 		try      { _ }
 		catch(e) { return e.stack }
+		
+	inline js void alert: string message
+		alert(message)
+		log(message)
 		
 	inline js void pushState: object state, string title, string url = ""
 		history.pushState(state, title, url)
@@ -324,7 +373,28 @@ transient unit IndexedDB
 			Network_log("Error in IndexedDB.start: "+e.message)
 		}
 		
-	js void open: string storeName, string id, void(Buffer buffer) then, void() else = null
+	js void open: string storeName, string id, void(object data) then, void() else = null
+		try {
+			let trans = IndexedDB_db.transaction(storeName, "readonly")
+			let req = trans.objectStore(IndexedDB_storeName).get(id)
+			req.onsuccess = async e => {
+				let result = req.result
+				if(result) {
+					then(result)
+				} @else {
+					else?.()
+				}
+			}
+			req.onerror = e => {
+				Network_log("Error in IndexedDB.open: "+req.error)
+				else?.()
+			}
+		} catch(e) {
+			Network_log("Error in IndexedDB.open: "+e.message)
+			else?.()
+		}
+				
+	js void openBuffer: string storeName, string id, void(Buffer buffer) then, void() else = null
 		try {
 			let trans = IndexedDB_db.transaction(storeName, "readonly")
 			let req = trans.objectStore(IndexedDB_storeName).get(id)
@@ -347,7 +417,22 @@ transient unit IndexedDB
 			else?.()
 		}
 				
-	js void save: string storeName, string id, Buffer buffer, void() then = null, void() else = null
+	js void save: string storeName, object data, void() then = null, void() else = null
+		try {
+			let trans = IndexedDB_db.transaction(storeName, "readwrite")
+			trans.onerror = e => {
+				Network_log("Error in IndexedDB.save: "+trans.error)
+				else?.()
+			}
+			trans.objectStore(IndexedDB_storeName).put(data).onsuccess = e => {
+				then?.()
+			}
+		} catch(e) {
+			Network_log("Error in IndexedDB.save: "+e.message)
+			else?.()
+		}
+		
+	js void saveBuffer: string storeName, string id, Buffer buffer, void() then = null, void() else = null
 		try {
 			let trans = IndexedDB_db.transaction(storeName, "readwrite")
 			trans.onerror = e => {
