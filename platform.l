@@ -74,7 +74,6 @@ transient unit Platform
 		Platform_canvas.style.height = window.innerHeight + "px";
 		Platform_canvas.width = Platform_pixelSize.x;
 		Platform_canvas.height = Platform_pixelSize.y;
-		log(window.innerWidth+" "+Platform_pixelRatio+" "+Platform_pixelSize.x+" "+Platform_pixelSize.y);
 		Platform_canvas.imageSmoothingEnabled = true;
 		Platform_canvas.imageSmoothingQuality = "high";
 		Platform_updateBaseMatrix();
