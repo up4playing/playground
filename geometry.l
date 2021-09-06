@@ -133,8 +133,8 @@ struct float2
 		return Math.atan2(value - this)
 
 	// Interpolates linearly to another vector
-	lerpTo: float2 target  // The target vector to interpolate to
-		    float value    // The interpolation value, 0 returns the original vector, 1 returns the target vector
+	interpolateTo: float2 target  // The target vector to interpolate to
+		           float value    // The interpolation value, 0 returns the original vector, 1 returns the target vector
 		let ivalue = 1 - value
 		return new float2(x * ivalue + target.x * value, y * ivalue + target.y * value)
 
@@ -300,6 +300,12 @@ struct int2
 			Math.limit y, min:min.y, max:max.y
 		)
 		
+	// Interpolates linearly to another vector
+	interpolateTo: int2 target  // The target vector to interpolate to
+		           float value    // The interpolation value, 0 returns the original vector, 1 returns the target vector
+		let ivalue = 1 - value
+		return new float2(x * ivalue + target.x * value, y * ivalue + target.y * value)
+	
 	// The distance to another vector
 	distanceTo: int2 value // The second vector
 		let x = x - value.x
