@@ -700,7 +700,7 @@ global transient unit System
 	// Display a message in the timeline
 	global js void watch: string text // The text to display
 		                  SourceCodeLocation location
-		if(Network_frame >= Network_frameWithNewWatches) {
+		if(Platform_isDebug && Network_frame >= Network_frameWithNewWatches) {
 			Platform_sendWatch(Network_frame, text, location.row, location.column, location.file)
 		}
 	
