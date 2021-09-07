@@ -174,7 +174,7 @@ unit Input
 				Network_skipSending = true;
 			else
 			if(e.key == "F9") {
-				if(e.shiftKey) { Network_saveLogsInternal(); }
+				if(e.shiftKey) { Network_saveLogs(); }
 				else           { Platform_showDebugInfo = !Platform_showDebugInfo; Network_debugString = "" }
 				e.preventDefault();
 			}

@@ -596,7 +596,7 @@ transient unit Network
 			log error
 			lastError = error.message
 			
-		drawText debugString, {0, 528}
+		drawText debugString, {0, 532}
 		drawTime = Time.measure
 			graphics.finishFrame
 		
@@ -720,10 +720,12 @@ transient unit Network
 		else
 			print "restore failed"
 		
-	saveLogs
-		if Input.isCertain: saveLogsInternal
+	saveEventStreamAndLogs
+		if Input.isCertain
+			saveEventStream
+			saveLogs
 			
-	internal saveLogsInternal
+	internal saveLogs
 		Platform.saveTextFile "log.csv", logTable
 		Http.post "/saveLog/{gameId}/{roomId}/{userId}", logTable
 			log "save logs"
