@@ -300,6 +300,7 @@ transient unit Network
 	private int nextReconnect
 	private string randomSeed
 	private bool isLocalhost
+	private bool startInLobby
 	private int ahead
 	private int[] aheads
 	private Buffer sendBuffer
@@ -337,6 +338,7 @@ transient unit Network
 	startLocal: userCount = 1
 		userId = 0
 		mode = Local
+		startInLobby = false
 		Input.internalUsers.clear
 		randomSeed = Math.generateRandomSeed
 		Math.setRandomSeed randomSeed
@@ -350,6 +352,7 @@ transient unit Network
 		for Input.internalUsers: inputs.reset
 		frames = 0
 		frameWithNewWatches = 0
+		startInLobby = false
 		goToFrame 0
 		
 	// Calls init functions, creates the local users, resets read positions and starts app
@@ -371,10 +374,10 @@ transient unit Network
 		// Reset read pos to replay inputs from the beginning
 		for Input.internalUsers: inputs.readPos = 0
 			
-		lobby.inLobby = false
 		Math.randomValueIndex = 0
 		frame = 0
-		startApp
+		lobby.inLobby = startInLobby
+		if !startInLobby: startApp
 	
 	// Steps forward when going to a frame in the future
 	// or replays from the beginning when going to a frame in the past
@@ -731,6 +734,7 @@ transient unit Network
 		buffer.writeInt32 frame-1
 		buffer.writeInt32 frames
 		buffer.writeString randomSeed
+		buffer.writeBool startInLobby
 		buffer.writeInt8 Input.internalUsers.length
 		for Input.internalUsers
 			buffer.writeInt8 .id
@@ -746,6 +750,7 @@ transient unit Network
 			frame = buffer.readInt32
 			frames = buffer.readInt32
 			randomSeed = buffer.readString
+			startInLobby = buffer.readBool
 			let userCount = buffer.readInt8
 			Input.internalUsers.clear
 			for userCount
@@ -847,6 +852,7 @@ transient unit Network
 	
 	js void join: string gameId, string roomId
 		init()
+		Network_startInLobby = true
 		Network_gameId = gameId
 		Network_roomId = roomId
 		Network_log("Network.join "+location.href)

@@ -195,7 +195,7 @@ transient unit Platform
 		document.title = title
 		
 	inline js void requestFullscreen
-		try   { if(!Network_isLocalhost) document.body.requestFullscreen() }
+		try   { if(!Network_isLocalhost && !Platform_isDebug) document.body.requestFullscreen() }
 		catch { }
 		
 	js void saveTextFile: string filename, string text
