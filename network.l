@@ -1363,10 +1363,10 @@ transient unit Network
 				if !internalUser.local or Platform.showLocalPointer or Platform.mode == Play or frame < frames
 					for user.touches
 						if Framework.isVisibleFor .smoothPosition, this.userId
-							drawImage finger, .smoothPosition+{11,32}, frame:.isDown ? 1 : 0
+							drawImage finger, .smoothPosition+{11,32}, frame:.isDown ? 1 : 0, layer:int.maxValue
 							if user.color
 								if user.color == Black
-									drawRectangle .smoothPosition+{16,80}, size:{26,10}, user.color, layer:int.maxValue, outlineColor:White, outlineWidth:2
+									drawRectangle .smoothPosition+{16,80}, size:{26,10}, user.color, layer:int.maxValue, outlineColor:{"a0a0a0"}, outlineWidth:2
 								else
 									drawRectangle .smoothPosition+{16,78}, size:{26,10}, user.color, layer:int.maxValue
 									
