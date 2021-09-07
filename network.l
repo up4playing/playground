@@ -269,7 +269,7 @@ transient unit Network
 	public string eventLog = ""; sentLog = "", receivedLog="", writeLog="", parseLog = "", touchLog = "", checksumLog = "", debugString = ""
 	private float lastNetworkFrame, lastAnimationFrame, drawTime, tickTime, restoreTime, replayTime, saveTime
 	private int replayFrames, checkedChecksums
-	private string lastError
+	private string lastError, connectionType
 	
 	internal const targetFps = 30
 	private const pingCount = 6
@@ -493,7 +493,7 @@ transient unit Network
 				
 				// Debug string
 				if Platform.showDebugInfo
-					debugString = "v{Platform.version} w:"
+					debugString = "v{Platform.version} ct:{connectionType} w:"
 					for user -> Input.internalUsers
 						if user
 							debugString += " " + user.inputs.writePos.format(grouping:true)
@@ -1379,10 +1379,9 @@ transient unit Network
 			let candidatePair = candidatePairs.find(a => a.selected) || candidatePairs[0]
 			if(candidatePair) {
 				let candidate = stats.get(candidatePair.localCandidateId);
-				let type = candidate.candidateType
 				let ip = candidate.ip || candidate.address
-				Network_log(">>> Connection", type, ip, candidate)
-				if(Network_userId == 0) Platform_setTitle(candidate.candidateType+" "+ip) 
+				Network_connectionType = candidate.candidateType
+				Network_log("Connection: ", Network_connectionType, ip, candidate)
 			} else {
 				window.stats = [...stats.values()]
 				Network_log("Can't access stats", window.stats)
