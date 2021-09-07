@@ -339,6 +339,7 @@ transient unit Network
 		userId = 0
 		mode = Local
 		startInLobby = false
+		certainFrame = int.maxValue
 		Input.internalUsers.clear
 		randomSeed = Math.generateRandomSeed
 		Math.setRandomSeed randomSeed
@@ -349,7 +350,7 @@ transient unit Network
 		
 	// Clears all inputs and resets the application to the first frame
 	stop
-		for Input.internalUsers: inputs.reset
+		for Input.internalUsers: .inputs.reset; .startInputFrame 0
 		frames = 0
 		frameWithNewWatches = 0
 		startInLobby = false
@@ -444,8 +445,8 @@ transient unit Network
 		let targetFrame = Math.floor((now - startTime)/targetFrameTime)+1
 		let nextInputFrame = targetFrame
 		let frameMinusOffset = targetFrame - aheadPercentile
-		certainFrame = Math.min(frameMinusOffset, receivedFrames)
-		
+		certainFrame = mode == Connected ? Math.min(frameMinusOffset, receivedFrames) : int.maxValue
+
 		if mode == Local && targetFrame > frame + targetFps*2
 			// After a long pause in local mode, we do not want to process all missed frames, so we adjust the start time
 			let prevTargetFrame = targetFrame
@@ -763,10 +764,11 @@ transient unit Network
 			// Replay
 			for Input.internalUsers
 				.collectInputs = true
-				.currentFrame = frames - 1
+				.currentFrame = frames-1
+				if Platform.isDebug: .local = true
 				.startInputFrame frames
 			userId = Input.internalUsers.findIndex.local
-			certainFrame = frame-1
+			certainFrame = int.maxValue
 			Platform.sendFrame(frame, frames)
 			Math.setRandomSeed randomSeed
 			goToFrame targetFrame:frame, replay:true
