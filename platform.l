@@ -18,6 +18,7 @@ transient unit Platform
 	public userCount = 2
 	public bool showSafeArea = true
 	public bool showLocalPointer = false
+	public bool showDebugInfo = false
 	
 	public inline js string url := location.href
 	public inline js int version := version

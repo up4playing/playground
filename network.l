@@ -267,7 +267,6 @@ transient unit Network
 	
 	string logTable = "frame,now,animTime,networkTime,tickTime,drawTime,iteration,restoreTime,replayFrames,replayTime,saveTime,user0,user1,user2,received,uncertain,offset,ahead,avarage,percentile,certainFrame,buffer,checksums,events,send,receive,write,parse,touch\n"
 	public string eventLog = ""; sentLog = "", receivedLog="", writeLog="", parseLog = "", touchLog = "", checksumLog = "", debugString = ""
-	public bool showDebugString
 	private float lastNetworkFrame, lastAnimationFrame, drawTime, tickTime, restoreTime, replayTime, saveTime
 	private int replayFrames, checkedChecksums
 	private string lastError
@@ -310,7 +309,7 @@ transient unit Network
 	bool skipSending
 	
 	init
-		showDebugString = isLocalhost = Platform.url.contains("localhost")
+		Platform.showDebugInfo = isLocalhost = Platform.url.contains("localhost")
 		
 	initDatabase
 		IndexedDB.start "up4playing", "snapshot", 5
@@ -355,6 +354,7 @@ transient unit Network
 		frameWithNewWatches = 0
 		startInLobby = false
 		goToFrame 0
+		lastError = ""
 		
 	// Calls init functions, creates the local users, resets read positions and starts app
 	// This is called on startup, after every code change and when going backwards in the timeline
@@ -492,7 +492,7 @@ transient unit Network
 					lastError = error.message
 				
 				// Debug string
-				if showDebugString
+				if Platform.showDebugInfo
 					debugString = "v{Platform.version} w:"
 					for user -> Input.internalUsers
 						if user

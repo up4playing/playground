@@ -174,8 +174,8 @@ unit Input
 				Network_skipSending = true;
 			else
 			if(e.key == "F9") {
-				if(e.shiftKey) Network_saveLogsInternal();
-				else           Network_showDebugString = !Network_showDebugString;
+				if(e.shiftKey) { Network_saveLogsInternal(); }
+				else           { Platform_showDebugInfo = !Platform_showDebugInfo; Network_debugString = "" }
 				e.preventDefault();
 			}
 			else
