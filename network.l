@@ -723,10 +723,12 @@ transient unit Network
 	saveEventStreamAndLogs
 		if Input.isCertain
 			saveEventStream
-			saveLogs
+			Platform.schedule delay:1000
+				saveLogs
 			
 	internal saveLogs
-		Platform.saveTextFile "log.csv", logTable
+		let time = Time.current
+		Platform.saveTextFile "{Platform.appName} {time.dayShortMonthNameYearString} {time.hourMinuteSecondString} v{Platform.version}.csv", logTable
 		Http.post "/saveLog/{gameId}/{roomId}/{userId}", logTable
 			log "save logs"
 		else

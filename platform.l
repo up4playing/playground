@@ -293,6 +293,10 @@ transient unit Platform
 	inline js void pushState: object state, string title, string url = ""
 		history.pushState(state, title, url)
 		
+	inline js void schedule: int delay
+		                     void() then
+		setTimeout(then, delay)
+		
 struct FileFilter
 	string name
 	string[] extensions
