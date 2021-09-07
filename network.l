@@ -1362,9 +1362,9 @@ transient unit Network
 							drawImage finger, .smoothPosition+{11,32}, frame:.isDown ? 1 : 0
 							if user.color
 								if user.color == Black
-									drawRectangle .smoothPosition+{16,80}, size:{26,10}, user.color, outlineColor:White, outlineWidth:2
+									drawRectangle .smoothPosition+{16,80}, size:{26,10}, user.color, layer:int.maxValue, outlineColor:White, outlineWidth:2
 								else
-									drawRectangle .smoothPosition+{16,78}, size:{26,10}, user.color
+									drawRectangle .smoothPosition+{16,78}, size:{26,10}, user.color, layer:int.maxValue
 									
 	private js void logConnectionType(object peerConnection)
 		setTimeout(async () => {
