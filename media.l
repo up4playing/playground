@@ -22,6 +22,9 @@ class Color
 	static js string componentToHex: int c
 		var hex = c.toString(16);
 		return hex.length == 1 ? "0" + hex : hex;
+		
+	inline js bool operator ==(Color a, Color b) a.hex == b.hex
+	inline js bool operator !=(Color a, Color b) a.hex != b.hex
 	
 // A texture that can be loaded into video memory
 class Texture

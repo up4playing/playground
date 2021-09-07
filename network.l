@@ -1360,8 +1360,12 @@ transient unit Network
 					for user.touches
 						if Framework.isVisibleFor .smoothPosition, this.userId
 							drawImage finger, .smoothPosition+{11,32}, frame:.isDown ? 1 : 0
-							if user.color: drawRectangle .smoothPosition+{16,78}, size:{26,10}, user.color
-							
+							if user.color
+								if user.color == Black
+									drawRectangle .smoothPosition+{16,80}, size:{26,10}, user.color, outlineColor:White, outlineWidth:2
+								else
+									drawRectangle .smoothPosition+{16,78}, size:{26,10}, user.color
+									
 	private js void logConnectionType(object peerConnection)
 		setTimeout(async () => {
 			let stats = await peerConnection.getStats()
