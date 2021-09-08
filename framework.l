@@ -81,7 +81,7 @@ class Object
 	
 	Object
 		siblings.add this
-		size = image ? image.size * scale : {}
+		size = image ? image.size : {}
 		if size.x < minSize: size.x = minSize
 		if size.y < minSize: size.y = minSize
 		this.targetAngle = angle
@@ -97,7 +97,7 @@ class Object
 	tick
 		// Move
 		if movable
-			Input.onTouchDownWithin position, size, angle
+			Input.onTouchDownWithin position, size * scale, angle
 				moveTouch = touch
 				touchOffset = position - touch.position
 				siblings.moveToBack this
@@ -108,7 +108,7 @@ class Object
 					position = touch.position + touchOffset
 				if touch.position - touch.startPosition > 8: isBeingMoved = true
 				if board
-					let closestSpotPos = board.getSpotAt touch.position, threshold:size
+					let closestSpotPos = board.getSpotAt touch.position, threshold:size * scale
 					if closestSpotPos
 						position = closestSpotPos
 				checkBoardsWhileMoving touch
