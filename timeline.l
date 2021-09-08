@@ -13,7 +13,7 @@ unit Timeline
 		float2 delta = pos - startPos
 		object.targetPos = pos
 		
-		effects.add Effect startTime: lastEndTime || Platform.now, duration: Math.floor delta.length / speed
+		effects.add Effect startTime: lastEndTime || Time.now, duration: Math.floor delta.length / speed
 			object.position = startPos + delta * f
 			if f >= 1: object.targetPos = float2.none
 	
@@ -28,26 +28,26 @@ unit Timeline
 		float startScale = object.scale
 		float deltaScale = scale - startScale
 		
-		effects.add Effect startTime: lastEndTime || Platform.now, duration
+		effects.add Effect startTime: lastEndTime || Time.now, duration
 			object.position = startPos + deltaPos * f
 			object.scale = startScale + deltaScale * f
 			if f >= 1: object.targetPos = float2.none
 				
 	remove: Object object
-		effects.add Effect startTime: lastEndTime || Platform.now
+		effects.add Effect startTime: lastEndTime || Time.now
 			object.remove
 				
 	playSound: Sound sound
-		effects.add Effect startTime: lastEndTime || Platform.now
+		effects.add Effect startTime: lastEndTime || Time.now
 			audio.playSound sound
 				
 	do: void(float f) code,
 		int duration = 0
-		effects.add Effect startTime: lastEndTime || Platform.now, duration
+		effects.add Effect startTime: lastEndTime || Time.now, duration
 			code f
 				
 	tick
-		let now = Platform.now
+		let now = Time.now
 		for i,e <- effects
 			if now >= e.startTime
 				float f = e.duration ? (now - e.startTime)/e.duration : 1

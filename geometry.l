@@ -5,7 +5,7 @@ struct float2
 	SourceCodeLocation location
 	
 	// Used to specify that the vector is not set or invalid
-	static float2 none = new float2(float.infinity, float.infinity)
+	const float2 none = new float2(float.infinity, float.infinity)
 	
 	// A string representation of the vector
 	string toString := "({x} {y})"
@@ -54,6 +54,9 @@ struct float2
 			vector.location
 		)			
 	
+	js float2 operator % (float2 a, float2 b) return new float2(((a.x % b.x) + b.x) % b.x, ((a.y % b.y) + b.y) % b.y, a.location || b.location ? new SourceCodeLocation(0, 0, null, a.location, b.location) : null)
+	js float2 operator % (float2 a, float b) return new float2(((a.x % b) + b) % b, ((a.y % b) + b) % b, a.location || b.location ? new SourceCodeLocation(0, 0, null, a.location, b.location) : null)
+	
 	float2 operator += (float2 a, float2 b) a.x += b.x; a.y += b.y; return a
 	float2 operator -= (float2 a, float2 b) a.x -= b.x; a.y -= b.y; return a
 	float2 operator *= (float2 a, float2 b) a.x *= b.x; a.y *= b.y; return a
@@ -61,6 +64,13 @@ struct float2
 	
 	bool operator == (float2 a, float2 b) return a.x == b.x && a.y == b.y
 	bool operator != (float2 a, float2 b) return a.x != b.x || a.y != b.y
+	
+	bool operator == (float2 a, int2 b) return a.x == b.x && a.y == b.y
+	bool operator != (float2 a, int2 b) return a.x != b.x || a.y != b.y
+	
+	bool operator == (int2 a, float2 b) return b.x == a.x && b.y == a.y
+	bool operator != (int2 a, float2 b) return b.x != a.x || b.y != a.y
+	
 	bool operator >  (float2 a, float2 b) return a.x >  b.x && a.y >  b.y
 	bool operator >= (float2 a, float2 b) return a.x >= b.x && a.y >= b.y
 	bool operator <  (float2 a, float2 b) return a.x <  b.x && a.y <  b.y
@@ -99,30 +109,34 @@ struct float2
 	
 	// The smaller of the two coordinates
 	min := x < y ? x : y
+	
+	rotate: float angle
+		let x = this.x, y = this.y
+		let sn = Math.sin(angle)
+		let cs = Math.cos(angle)
+		this.x = x * cs - y * sn;
+		this.y = x * sn + y * cs;
+		return this
 		
-	// The distance between two vectors
-	static distanceBetween: float2 a // The first vector 
-		                    float2 b // The second vector
-		let x = a.x - b.x
-		let y = a.y - b.y
+	// The distance to another vector
+	distanceTo: float2 value // The second vector
+		let x = x - value.x
+		let y = y - value.y
 		return Math.sqrt(x*x + y*y)
 
-	// The distance between two vectors along axes at right angles
-	static manhattanDistanceBetween: float2 a // The first vector 
-		                             float2 b // The second vector
-		return Math.abs(a.x - b.x) + Math.abs(a.y - b.y)
-		
-	// The angle between two vectors in radians
-	static angleBetween: float2 a // The first vector
-		                 float2 b // The second vector
-		return Math.atan2(b-a)
+	// The distance to another vector along axes at right angles
+	manhattanDistanceTo: float2 value // The second vector
+		return Math.abs(x - value.x) + Math.abs(y - value.y)
 
-	// Interpolates linearly between two given vectors
-	static lerp: float2 a    // The first vector
-		         float2 b    // The second vector
-		         float value // The interpolation value, 0 returns the first vector, 1 returns the second vector
+	// The angle to another vector in radians
+	angleTo: float2 value // The second vector
+		return Math.atan2(value - this)
+
+	// Interpolates linearly to another vector
+	interpolateTo: float2 target  // The target vector to interpolate to
+		           float value    // The interpolation value, 0 returns the original vector, 1 returns the target vector
 		let ivalue = 1 - value
-		return new float2(a.x * ivalue + b.x * value, a.y * ivalue + b.y * value)
+		return new float2(x * ivalue + target.x * value, y * ivalue + target.y * value)
 
 	// A vector that points in the same direction, but has a length of 1
 	normalized
@@ -191,13 +205,21 @@ struct float2
 	cross: float2 value // The value to calculate the cross procut with
 		return x*value.y - y*value.x
 		
+	serialize: Buffer buffer
+		buffer.writeFloat64(x)
+		buffer.writeFloat64(y)
+		
+	deserialize: Buffer buffer
+		x = buffer.readFloat64
+		y = buffer.readFloat64
+		
 // A 2D vector comprised of an integer x and y coordinate
 struct int2
 	int x // The x-coordinate of the vector
 	int y // The y-coordinate of the vector
 	
 	// Used to specify that the vector is not set or invalid
-	static int2 none = new int2(int.minValue, int.minValue)
+	const int2 none = new int2(int.minValue, int.minValue)
 	
 	// Creates a copy of the vector with the same values
 	int2 clone := int2(x, y)
@@ -215,11 +237,20 @@ struct int2
 	int2 operator +  (int2 a, int2 b) return int2(a.x+b.x, a.y+b.y)
 	int2 operator -  (int2 a, int2 b) return int2(a.x-b.x, a.y-b.y)
 		
-	int2 operator *  (int2 a, int2 b) return int2(a.x*b.x, a.y*b.y)
-	int2 operator *  (int2 a, int b) return int2(a.x*b, a.y*b)
+	int2 operator * (int2 a, int2 b) return int2(a.x*b.x, a.y*b.y)
+	int2 operator * (int2 a, int b) return int2(a.x*b, a.y*b)
+	int2 operator * (int a, int2 b) return int2(a*b.x, a*b.y)
 		
-	float2 operator /  (int2 a, int2 b) return float2(a.x/b.x, a.y/b.y)
-	float2 operator /  (int2 a, float b) return float2(a.x/b, a.y/b)
+	float2 operator * (int2 a, float b) return float2(a.x*b, a.y*b)
+	float2 operator * (float a, int2 b) return float2(a*b.x, a*b.y)
+		
+	float2 operator / (int2 a, int2 b) return float2(a.x/b.x, a.y/b.y)
+	float2 operator / (int2 a, float b) return float2(a.x/b, a.y/b)
+	
+	int2 operator % (int2 a, int b) return int2(a.x%b, a.y%b)
+	int2 operator % (int2 a, int2 b) return int2(a.x%b.x, a.y%b.y)
+	float2 operator % (int2 a, float b) return float2(a.x%b, a.y%b)
+	float2 operator % (int2 a, float2 b) return float2(a.x%b.x, a.y%b.y)
 	
 	int2 operator += (int2 a, int2 b) a.x += b.x; a.y += b.y; return a
 	int2 operator -= (int2 a, int2 b) a.x -= b.x; a.y -= b.y; return a
@@ -242,28 +273,57 @@ struct int2
 	// A vector with the sign of each coordinate flipped
 	inverse := int2(-x, -y)
 		
+	// A vector with the absolute value of each coordinate
+	abs := int2(Math.abs(x), Math.abs(y))
+		
 	// The larger of the two coordinates
 	max := x > y ? x : y
 	
 	// The smaller of the two coordinates
 	min := x < y ? x : y
+	
+	limit: int2 min
+		return int2(
+			Math.limit x, min:min.x
+			Math.limit y, min:min.y
+		)
 		
-	// The distance between two vectors
-	static distanceBetween: int2 a // The first vector 
-		                    int2 b // The second vector
-		let x = a.x - b.x
-		let y = a.y - b.y
+	limit: int2 max
+		return int2(
+			Math.limit x, max:max.x
+			Math.limit y, max:max.y
+		)
+		
+	limit: int2 min, int2 max
+		return int2(
+			Math.limit x, min:min.x, max:max.x
+			Math.limit y, min:min.y, max:max.y
+		)
+		
+	// Interpolates linearly to another vector
+	interpolateTo: int2 target  // The target vector to interpolate to
+		           float value    // The interpolation value, 0 returns the original vector, 1 returns the target vector
+		let ivalue = 1 - value
+		return new float2(x * ivalue + target.x * value, y * ivalue + target.y * value)
+	
+	// The distance to another vector
+	distanceTo: int2 value // The second vector
+		let x = x - value.x
+		let y = y - value.y
 		return Math.sqrt(x*x + y*y)
 
-	// The distance between two vectors along axes at right angles
-	static manhattanDistanceBetween: int2 a // The first vector 
-		                             int2 b // The second vector
-		return Math.abs(a.x - b.x) + Math.abs(a.y - b.y)
+	// The distance to another vector along axes at right angles
+	manhattanDistanceTo: int2 value // The second vector
+		return Math.abs(x - value.x) + Math.abs(y - value.y)
 
-	// The angle between two vectors in radians
-	static angleBetween: int2 a // The first vector
-		                 int2 b // The second vector
-		return Math.atan2(b-a)
+	// The angle to another vector in radians
+	angleTo: int2 value // The second vector
+		return Math.atan2(value - this)
+		
+	// A float vector that points in the same direction, but has a length of 1
+	normalized
+		let len = Math.sqrt(x * x + y * y)
+		return len != 0 ? float2(x / len, y / len) : float2(0, 0)
 	
 // A 3x2 matrix used to transform vectors in 2D space
 struct Matrix2D
@@ -368,24 +428,107 @@ struct Matrix2D
 		result.m5 = b1 * a4 + b3 * a5 + b5
 		return result
 
-// Helper class for converting positions within an isomatic grid
+unit Math
+	// Returns the arctangent of the quotient of the given values
+	inline js float atan2: float2 vector
+		Math.atan2(vector.y, vector.x)
+
+// Converts positions within an isomatic grid with the origin in the north
+// Tilt your head slighly to the right to visualize the directions
+// World space (northwest is up)
+//
+//      Left   Top             
+//           x               🡷 🡶
+//    Bottom   Right        y     x
+//
+// Screen space (north is up)
+//
+//          Top              🡺 x
+//     Left  +  Right      🡻 
+//        Bottom            y
+//
 class IsometicGrid
 	int2 size            // The amount of cells in the grid
 	float2 cellSize      // The size of each cell
 	float2 topFaceOffset // The position of the top face within the cell
 	
 	visible float2 xOffset = cellSize / 2
-	visible float2 yOffset = {xOffset.x, -xOffset.y}
-	visible float2 basePos = {-xOffset.x*(size.x-1)}
+	visible float2 yOffset = {-xOffset.x, xOffset.y}
+	visible float2 basePos = {0,-yOffset.y*(size.y-1)}
 	
-	// Convert from grid position to logical position
-	getPosition: int2 gridPos // The grid position specifies which cell we want to get the position of
-		return basePos + xOffset*gridPos.x + yOffset*gridPos.y
+	// Convert world position (northwest is up) to screen position (north is up)
+	getScreenPosition: float2 worldPos // The world position
+		return basePos + xOffset*worldPos.x + yOffset*worldPos.y
 		
-	// Convert from locgical position to grid position
-	getGridPosition: float2 pos // The logical position
-		float2 t = pos - basePos + topFaceOffset
+	// Convert screen position (north is up) to world position (northwest is up)
+	getWorldPosition: float2 screenPos // The screen position
+		              bool allowOutside = false
+		float2 t = screenPos - basePos + topFaceOffset
+		let x = (xOffset.x*t.y + xOffset.y*t.x) / (2*xOffset.x*xOffset.y)
+		let y = (xOffset.x*t.y - xOffset.y*t.x) / (2*xOffset.x*xOffset.y)
+		if allowOutside or (x >= 0 and x < size.x and y >= 0 and y < size.y): return float2(x,y)
+		else                                                                  return float2.none
+		
+	// Convert screen pos (north is up) to rounded world pos (northwest is up)
+	getGridPosition: float2 screenPos // The screen position
+		             bool allowOutside = false
+		float2 t = screenPos - basePos + topFaceOffset
 		let x = Math.round((xOffset.x*t.y + xOffset.y*t.x) / (2*xOffset.x*xOffset.y))
-		let y = Math.round((xOffset.y*t.x - xOffset.x*t.y) / (2*xOffset.x*xOffset.y))
-		if x >= 0 and x < size.x and y >= 0 and y < size.y: return int2(x,y)
-		else                                                return int2.none
+		let y = Math.round((xOffset.x*t.y - xOffset.y*t.x) / (2*xOffset.x*xOffset.y))
+		if allowOutside or (x >= 0 and x < size.x and y >= 0 and y < size.y): return int2(x,y)
+		else                                                                  return int2.none
+		
+	isValid: int2 pos
+		return pos >= {0,0} and pos < size
+		
+	limitToInside: int2 position
+		return int2(
+			Math.limit position.x, min:0, max:size.x-1
+			Math.limit position.y, min:0, max:size.y-1
+		)
+		
+	getScreenVector: float2 worldVector
+		return xOffset*worldVector.x + yOffset*worldVector.y
+		
+class Direction
+	global const Direction Right = {"Right", 0, { 1, 0},   0°, 330°} // positive x direction (1,0)
+	global const Direction Down  = {"Down",  1, { 0, 1},  90°,  30°} // positive y direction (0,1)
+	global const Direction Left  = {"Left",  2, {-1, 0}, 180°, 150°} // negative x direction (-1,0)
+	global const Direction Up    = {"Up",    3,  {0,-1}, 270°, 210°} // negative y direction (0,-1)
+	
+	const Direction UpLeft    = {"UpLeft",    0, {-1,-1}} // negative x, negative y direction (-1,-1)
+	const Direction UpRight   = {"UpRight",   1, { 1,-1}} // positive x, negative y direction (1,-1)
+	const Direction DownLeft  = {"DownLeft",  2, {-1, 1}} // negative x, positive y direction (-1,1)
+	const Direction DownRight = {"DownRight", 3, { 1, 1}} // positive x, positive y direction (1,1)
+	
+	// List of the four primary direction: Right, Down, Left, Up
+	const Direction[] allFourDirections = [Right, Down, Left, Up]
+	
+	// List of the primary direction and the diagonals
+	const Direction[] allEightDirections = [Right, DownRight, Down, DownLeft, Left, UpLeft, Up, UpRight]
+	
+	// List of the four diagonals: UpLeft, UpRight, DownLeft, DownRight
+	const Direction[] allDiagonals = [DownLeft, DownRight, UpLeft, UpRight]
+
+	string name
+	int index
+	int2 vector
+	float angle
+	float isoAngle
+	
+	toString := name
+	
+	rotated: RotationDirection direction = Clockwise
+		return allFourDirections[(index+(direction == Clockwise ? 1:3))%4]
+		
+	inverted
+		return allFourDirections[(index+2)%4]
+		
+	isOrthogonalTo: Direction value
+		return index%2 != value.index%2
+		
+	isParallelTo: Direction value
+		return index%2 == value.index%2
+		
+	
+	

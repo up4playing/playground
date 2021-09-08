@@ -1,4 +1,4 @@
-unit Physics
+transient unit Physics
 	object world = null
 	float scale = 100
 	
@@ -51,19 +51,19 @@ unit Physics
 		body.CreateFixtureFromShape(shape, type == 2 ? 1 : 0)
 		return new PhysicsBody(body)
 	
-enum BodyType
+transient enum BodyType
 	Static,
 	Kinematic,
 	Dynamic,
 
-enum BodyShape
+transient enum BodyShape
 	None,
 	Rectangle,
 	Circle,
 	Chain,
 	ClosedChain
 		
-class PhysicsBody
+transient class PhysicsBody
 	object body = null
 	js float2 position:
 		let pos = this.body.GetPosition()
