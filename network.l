@@ -297,7 +297,6 @@ transient unit Network
 	private float[] checksums
 	private bool alertShown
 	private int nextReconnect
-	private string randomSeed
 	private bool isLocalhost
 	private bool startInLobby
 	private int ahead
@@ -340,8 +339,7 @@ transient unit Network
 		startInLobby = false
 		certainFrame = int.maxValue
 		Input.internalUsers.clear
-		randomSeed = Math.generateRandomSeed
-		Math.setRandomSeed randomSeed
+		Math.setRandomSeed Math.generateRandomSeed
 		initDatabase
 		reset
 		resetStartTime
@@ -493,7 +491,7 @@ transient unit Network
 				
 				// Debug string
 				if Platform.showDebugInfo
-					debugString = "v{Platform.version} ct:{connectionType} w:"
+					debugString = "v{Platform.version} ct:{connectionType} seed:{Math.randomSeed} w:"
 					for user -> Input.internalUsers
 						if user
 							debugString += " " + user.inputs.writePos.format(grouping:true)
@@ -738,7 +736,7 @@ transient unit Network
 		Buffer buffer
 		buffer.writeInt32 frame-1
 		buffer.writeInt32 frames
-		buffer.writeString randomSeed
+		buffer.writeString Math.randomSeed
 		buffer.writeBool startInLobby
 		buffer.writeInt8 Input.internalUsers.length
 		for Input.internalUsers
@@ -754,7 +752,7 @@ transient unit Network
 			// Read event stream
 			frame = buffer.readInt32
 			frames = buffer.readInt32
-			randomSeed = buffer.readString
+			let randomSeed = buffer.readString
 			startInLobby = buffer.readBool
 			let userCount = buffer.readInt8
 			Input.internalUsers.clear

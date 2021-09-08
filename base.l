@@ -786,7 +786,7 @@ unit Math
 		Math_randomGenerator = Math.random
 		
 	js string generateRandomSeed:
-		if(window.crypto) {
+		if(typeof crypto != "undefined") {
 			let out = new Uint8Array(256);
 			crypto.getRandomValues(out);
 			return out.toString();
@@ -795,10 +795,15 @@ unit Math
 			return Date.now().toString()
 		}
 		
+	transient internal string randomSeed
 	transient private float[] randomValues
 	internal int randomValueIndex
 	
 	js void setRandomSeed: string seed
+		Math_randomSeed = seed
+		Math_randomValues.length = 0
+		Math_randomValueIndex = 0
+		
 		// Ported from an algorithm by Johannes Baagøe <baagoe@baagoe.com>
 		// https://github.com/nquinlan/better-random-numbers-for-javascript-mirror
 		function Alea(seed) {
@@ -819,9 +824,9 @@ unit Math
 					var value = me.s2 = t - (me.c = t | 0);
 					
 					// TEMP: Log every random number
-					Network_eventLog += " ["+Math_randomValueIndex+"/"+Math_randomValues.length+"] "+value;
+					Network_eventLog += " rnd("+Math_randomValueIndex+"/"+Math_randomValues.length+"):"+value;
 					if(Math_randomValueIndex != Math_randomValues.length) {
-						Network_eventLog += " INVALID randomValues.length"
+						Network_eventLog += " INVALID rnd"
 						alert("Random values out of sync. Please click 'Save Logs' and send me the log file that will be created.")
 					}
 					
