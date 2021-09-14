@@ -8,8 +8,7 @@ unit Framework
 	tick
 		for <- objects: tick
 		for objects: updateBoard
-		// Input.onTouchUp: touch.user.selectedObject = null
-		Input.onTouchUp: selectedObjects[touch.userId] = null
+		Input.onTouchUp:  deselect touch.userId
 		
 	isVisibleFor: float2 pos, int userId
 		let board = getBoardAt pos
@@ -22,6 +21,9 @@ unit Framework
 				if pos >= b.position - b.size/2 && pos < b.position + b.size/2
 					return b
 		return null
+		
+	deselect: int userId
+		selectedObjects[userId] = null
 		
 	debugString
 		let result = ""
@@ -286,6 +288,7 @@ Object Board
 				matrix.move touch.position - touch.startPosition
 			Input.onTouchUp panTouch
 				panTouch = null
+				Framework.deselect touch.userId
 				
 		// Zoom
 		if zoomable	
