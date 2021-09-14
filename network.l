@@ -491,7 +491,7 @@ transient unit Network
 				
 				// Debug string
 				if Platform.showDebugInfo
-					debugString = "v{Platform.version} ct:{connectionType} seed:{Math.randomSeed} w:"
+					debugString = "v{Platform.version} ct:{connectionType} w:"
 					for user -> Input.internalUsers
 						if user
 							debugString += " " + user.inputs.writePos.format(grouping:true)
@@ -788,7 +788,7 @@ transient unit Network
 			connection.state = Connected
 			log "Both users were already connected before", connection.userId, userId, mode, connection.state
 		else
-		if mode == None
+		if isNewUser
 			// New users will send out ping messages to sync the startTime (and this way also the current frame)
 			mode = Ping
 			nextPingTime = currentTime + 300
@@ -927,7 +927,7 @@ transient unit Network
 			log "Reconnecting to {roomId} with user {userId}"
 			resendOffers
 		else
-			log Time.dateAndTimeString, Platform.version, Platform.userAgent, message.seed
+			log Time.dateAndTimeString, Platform.version, Platform.userAgent, message.seed, message.partnerIds
 			if message.roomId != roomId
 				log "Received room id {message.roomId}"
 				Platform.pushState null, "{gameId} {message.roomId}", "/{gameId}/{message.roomId}"
@@ -1160,7 +1160,7 @@ transient unit Network
 		sendBuffer.writeInt32 acknowledgePos
 		sendBuffer.writeInt32 start
 		sendBuffer.writeBuffer buffer, start, end - start
-		sentLog += " #{inputFrame} ack:{acknowledgePos} cf:{currentFrame} s:{start} e:{end}"
+		sentLog += " #{inputFrame} to:{to.userId} ack:{acknowledgePos} cf:{currentFrame} s:{start} e:{end}"
 		
 		
 		if skipSending

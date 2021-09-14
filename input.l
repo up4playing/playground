@@ -298,6 +298,7 @@ unit Input
 					InputType type = cast value % 32
 					
 					if type >= TouchDown && type <= Wheel
+						if !user: Network.parseLog += " Error: user == null"
 						MouseButton button = cast Math.shiftRight(value, 5) % 4
 						int id = Math.shiftRight(value, 7)
 						float2 touchPos = {inputs.readInt16, inputs.readInt16}
@@ -358,7 +359,6 @@ unit Input
 							internalUser.wheelEvents.add {user, delta, referencePosition:touchPos}
 					else
 					if type == TextInput
-						let user = users[userId]
 						let textInput = inputs.readString
 						user.textInput = textInput
 						internalUser.textInputs.add textInput
@@ -372,11 +372,11 @@ unit Input
 					else
 					if type == Join
 						Network.parseLog += " join {userId}"
-						users[userId] = {id:userId}
+						users[userId] = user = {id:userId}
 					else
 					if type == Leave
 						Network.parseLog += " leave {userId}"
-						users[userId] = null
+						users[userId] = user = null
 					else
 					if type == SetState
 						Network.parseLog += " setState"
