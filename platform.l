@@ -297,6 +297,28 @@ transient unit Platform
 		                     void() then
 		setTimeout(then, delay)
 		
+unit File
+	js string readPartial: string filename, int offset=0, int length, void(string result) callback
+		let fs = require("fs")
+		let file = fs.open(filename, "r", (err, file) => {
+			fs.read(file, {offset, length}, (err, bytesRead, buffer) => {
+				callback(buffer.toString())
+				fs.closeSync(file)
+			})
+		})
+		
+	js string read: string filename, void(string data) then
+		let fs = require("fs")
+		fs.readFile(filename, "utf8", (err, data) => {
+			then(data)
+		})		
+		
+	js string write: string filename, string data, void() then = null
+		let fs = require("fs")
+		fs.writeFile(filename, data, "utf8", (err, data) => {
+			then?.()
+		})	
+		
 struct FileFilter
 	string name
 	string[] extensions

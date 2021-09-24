@@ -561,6 +561,7 @@ transient global unit graphics
 		                        Color fillColor = null    // The color of the area within the polygon
 		                        Color outlineColor = null // The color of the outline around the polygon
 		                        outlineWidth = 0          // The width of the outline around the polygon
+		                        smooth = false            // Smooth the corners of the polygon
 		                        visibleFor = -1           // Only this user will see the polygon
 		                        implicit int layer = 0    // Higher layers are drawn in front of lower layers
 		if(graphics_isVisibleFor(visibleFor)) {
@@ -572,7 +573,8 @@ transient global unit graphics
 				points,
 				fillColor || !outlineColor ? (fillColor || graphics_currentColor).hex : null,
 				outlineColor ? outlineColor.hex : null,
-				outlineWidth || graphics_currentLineWidth
+				outlineWidth || graphics_currentLineWidth,
+				smooth
 			))
 		}
 		
@@ -601,13 +603,13 @@ transient global unit graphics
 			))
 		}
 		
-	// Draws a polygon on the screen
+	// Draws a line on the screen
 	global js void drawLine: float2 start
 		                     float2 end 
-		                     Color color = null // The color of the outline around the line
-		                     width = 0          // The width of the outline around the line
-		                     visibleFor = -1           // Only this user will see the line
-		                     implicit int layer = 0    // Higher layers are drawn in front of lower layers
+		                     Color color = null     // The color of the outline around the line
+		                     width = 0              // The width of the outline around the line
+		                     visibleFor = -1        // Only this user will see the line
+		                     implicit int layer = 0 // Higher layers are drawn in front of lower layers
 		if(graphics_isVisibleFor(visibleFor)) {
 			graphics_items.push(new DisplayLine(
 				graphics_totalMatrix,
@@ -619,6 +621,29 @@ transient global unit graphics
 				width || graphics_currentLineWidth
 			))
 		}
+		
+	// Draws a continuous stroke of lines
+	global js void drawLines: float2[] points         // A list of points for the line
+		                      float2 position = {0,0} // The position all points are relative to 
+		                      Color color = null      // The color of the line
+		                      width = 0               // The width of the line
+		                      smooth = false          // Smooth the corners of the line
+		                      visibleFor = -1         // Only this user will see the line
+		                      implicit int layer = 0  // Higher layers are drawn in front of lower layers
+		if(graphics_isVisibleFor(visibleFor)) {
+			graphics_items.push(new DisplayPolygon(
+				graphics_totalMatrix,
+				position.x, position.y,
+				0, 0,
+				layer, graphics_currentClippingPath, "Line", position.location,
+				points,
+				null, // no fill color, because we want to draw a line instead of a polygon
+				color ? color.hex : null,
+				width || graphics_currentLineWidth,
+				smooth
+			))
+		}
+		
 		
 	// Clears all pixels within a rectangle
 	global js void clearRectangle: position = float2()  // The position of the rectangle to clear
@@ -761,23 +786,40 @@ transient DisplayItem DisplayPolygon
 	float2[] points
 	string fillColor, outlineColor
 	float outlineWidth
+	bool smooth
 	js void draw
 		Platform_context.setTransform(this.m0, this.m1, this.m2, this.m3, this.m4, this.m5)
 		if(this.points.length >= 2) {
 			if(this.clippingPath) this.startClipping()
 			let x = this.x, y = this.y
+			let points = this.points, startPoint = points[0]
 			
-			let firstPos = this.points[this.points.length-1]
 			Platform_context.beginPath();
-			Platform_context.moveTo(x + firstPos.x, y + firstPos.y)
-			for(let p of this.points)
-				Platform_context.lineTo(x + p.x, y + p.y)
+			Platform_context.moveTo(x + startPoint.x, y + startPoint.y)
+			
+			if(!this.smooth || points.length < 3) {
+				for(let i=1, len = points.length; i<len; ++i) {
+					let p = points[i]
+					Platform_context.lineTo(x + p.x, y + p.y)
+				}
+			} else {
+				for(var i = 1, len = points.length - 2; i<len; i++)
+				{
+					let p1 = points[i], p2 = points[i + 1]
+					Platform_context.quadraticCurveTo(p1.x, p1.y, (p1.x + p2.x) / 2, (p1.y + p2.y) / 2);
+				}
+				let p1 = points[i], p2 = points[i + 1]
+				Platform_context.quadraticCurveTo(p1.x, p1.y, p2.x,p2.y);
+			}
 				
 			if(this.fillColor) {
+				// Close the polygon and fill it
+				Platform_context.lineTo(x + startPoint.x, y + startPoint.y)
 				Platform_context.fillStyle = this.fillColor
 				Platform_context.fill()
 			}
 			if(this.outlineColor) {
+				// Draw outline
 				Platform_context.lineWidth = this.outlineWidth
 				Platform_context.strokeStyle = this.outlineColor
 				Platform_context.stroke()

@@ -159,7 +159,7 @@ class string
 	inline js string substring: int start
 		this.substring(start)
 		
-	inline js string substring: int start
+	inline js string substring: int start = 0
 		                        int end
 		this.substring(start, end)
 		
