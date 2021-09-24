@@ -351,6 +351,7 @@ transient unit Network
 		frames = 0
 		frameWithNewWatches = 0
 		startInLobby = false
+		audio.pause
 		goToFrame 0
 		lastError = ""
 		

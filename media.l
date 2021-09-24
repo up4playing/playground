@@ -868,14 +868,23 @@ struct Sound
 	Sound() open
 	
 	js void open
-		if(!window._audioCache) _audioCache = {}
+		if(!window._audioCache) {
+			log("init cache")
+			_audioCache = {}
+		}
 		this._sound = _audioCache[this.file]
 		if(!this.audio) {
 			this.audio = window._audioCache[this.file] = new Audio()
 			this.audio.src = this.file
+			this.audio.currentTime = 0
 		}
 
 // A collection of functions for playing audio 
 transient global unit audio
 	global js void playSound: Sound sound
-		sound.audio.play()
+		if(!Platform_fastForward) sound.audio.play()
+		
+	js void pause
+		for(let key in _audioCache) {
+			_audioCache[key].pause();
+		}
