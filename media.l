@@ -7,7 +7,7 @@ class Color
 	global const Color Green   = {"06d6a0"}
 	global const Color Blue    = {"118ab2"}
 	global const Color Gray    = {"073b4c"}
-	global const Color TransparentRed   = {"ef476f80"}
+	global const Color TransparentRed   = {"ff000080"}
 	string hex
 	
 	Color: string hex = ""
@@ -286,16 +286,22 @@ transient global unit graphics
 	private currentLineWidth = 8
 	
 	// For all drawings in code block, only pixels inside the given polygon are drawn
-	clip: float2 pos
-		  float2[] points
-		  bool show = false
-		  void() code
+	clip: float2[] points      // A list of points that define the area to be clipped
+		  float2 position = {} // The position all points are relative to 
+		  bool show = false    // Visualizes the clipping area by shading it transparent red
+		if show: drawPolygon position, points, fillColor:TransparentRed
+				
+	// For all drawings in code block, only pixels inside the given polygon are drawn
+	clip: float2[] points      // A list of points that define the area to be clipped
+		  float2 position = {} // The position all points are relative to 
+		  bool show = false    // Visualizes the clipping area by shading it transparent red
+		  void() code          // All draw operation within this code block will be clipped
 		let prev = currentClippingPath
 		currentClippingPath = ClippingPath(show)
-		for points: currentClippingPath.points.add pos + p
+		for points: currentClippingPath.points.add position + p
 		code()
-		currentClippingPath = null
-		return currentColor
+		currentClippingPath = prev
+		
 	private ClippingPath currentClippingPath = null
 		
 	// The default user for which all draw operations will be visible
