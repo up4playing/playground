@@ -6,8 +6,9 @@ unit Framework
 		objects.clear
 		
 	tick
+		effects.tick
 		for <- objects: tick
-		for objects: updateBoard
+		for objects: update
 		Input.onTouchUp:  deselect touch.userId
 		
 	isVisibleFor: float2 pos, int userId
@@ -37,19 +38,79 @@ unit Framework
 		// because a checksum of 0 is used to indicate that we don't have a checksum for this frame yet
 		if result == 0: return 1
 		return result		
-			
-// class NetworkUser
-// 	Object selectedObject = null
 		
 enum Side: Front, Back
 		
 class Object
+	float2 position
+	float scale = 1
+	float alpha = 1
+	int visibleFor
+	
+	private siblings := Framework.objects
+	internal checksum := 0
+	internal debugString := "(Object pos:{position.x} {position.y})"
+	internal tick
+	internal update
+	
+	Object
+		siblings.add this
+		
+	remove
+		siblings.remove this
+		
+	moveTo: float2 pos
+		    float speed = 1
+		    int delay = 0
+		let delta = pos - position
+		let duration = Math.floor(delta.length / speed)
+		effects.add MoveEffect startTime:Time.now+delay, duration, this, startValue:position, delta
+		return this
+		
+	fadeIn: int duration = 1000
+		    int delay = 0
+		alpha = 0
+		effects.add FadeEffect startTime:Time.now+delay, duration, this, startValue:0, delta:1
+		return this
+		
+	fadeOut: int duration = 1000
+		     int delay = 0
+		effects.add FadeEffect startTime:Time.now+delay, duration, this, startValue:1, delta:-1
+		return this
+		
+	scaleTo: float scale 
+		     int duration = 1000
+		     int delay = 0
+		effects.add ScaleEffect startTime:Time.now+delay, duration, this, startValue:this.scale, delta:scale-this.scale
+		return this
+	
+	fadeAndScaleIn: int duration = 200
+		            float startScale = 3
+		            int delay = 0
+		alpha = 0
+		effects.add ScaleEffect startTime:Time.now+delay, duration, this, startValue:startScale, delta:1-startScale
+		effects.add FadeEffect  startTime:Time.now+delay, duration, this, startValue:0, delta:1
+		return this
+		
+Object RectangleObject
+	float2 size
+	Color color = White
+	tick
+		drawRectangle position, size, color, visibleFor
+
+Object TextObject
+	string text
+	int size
+	string font
+	Color color = White
+	tick
+		drawText text, position, size*scale, color, font, alpha, visibleFor
+		
+Object Piece
 	const float2 stackOffset = {8,8}
 	const minSize = 75
 	
 	Image image = null
-	float2 position
-	float scale = 1
 	float angle
 	
 	bool stackable
@@ -75,26 +136,21 @@ class Object
 	
 	visible float2 size
 	public Board board = null, nextBoard = null
-	public float2 targetPos = float2.none
 	private int interactingUserId
 	
 	private siblings := board ? board.objects : Framework.objects
 	onBoardChanged
 	
-	Object
-		siblings.add this
+	Piece
 		size = image ? image.size : {}
 		if size.x < minSize: size.x = minSize
 		if size.y < minSize: size.y = minSize
 		this.targetAngle = angle
 		this.nextBoard = board
 		
-	debugString := "(Object pos:{position.x} {position.y} frame:{frame} side:{side} image:{image?.file} board:{board.toBool})"
+	debugString := "(Piece pos:{position.x} {position.y} frame:{frame} side:{side} image:{image?.file} board:{board.toBool})"
 	
 	checksum := position.x + position.y + frame + scale + angle + cast side
-		
-	remove
-		siblings.remove this
 		
 	tick
 		// Move
@@ -157,7 +213,7 @@ class Object
 		if board: pos = position * board.matrix
 		nextBoard = Framework.getBoardAt pos
 		
-	updateBoard
+	update
 		if nextBoard != board
 			if board: board.objects.remove this; position = position * board.matrix; touchOffset = touchOffset * board.matrix.scaleVector
 			else      Framework.objects.remove this
@@ -166,8 +222,8 @@ class Object
 			else      Framework.objects.add this
 			onBoardChanged
 					
-Object Stack
-	private Object[] objects
+Piece Stack
+	private Piece[] objects
 	Side sideWhenRemoving = Front
 	
 	private int visibleObjects
@@ -179,12 +235,12 @@ Object Stack
 	Stack: float2 position, Side side = Back
 		basePosition = position
 	
-	static create: Object a, Object b, Side side = Front
+	static create: Piece a, Piece b, Side side = Front
 		Stack stack = {position:a.position, side:side}
 		stack.add a
 		stack.add b
 						
-	add: Object a
+	add: Piece a
 		a.side = side
 		objects.add a
 		Framework.objects.remove a
@@ -227,7 +283,7 @@ Object Stack
 
 enum BoardVisiblity: Never, Off, On, Always		
 
-Object Board
+Piece Board
 	Object[] objects
 	Matrix2D matrix
 	Color color = null
@@ -261,7 +317,7 @@ Object Board
 		for objects: result += o.checksum
 		return result
 		
-	add: Object object
+	add: Piece object
 		objects.add object
 		object.board = object.nextBoard = this
 		Framework.objects.remove object
@@ -310,7 +366,7 @@ Object Board
 		if image: drawImage image, position, scale
 			
 	updateBoard
-		for objects: updateBoard
+		objects.each.update
 			
 	getSpotAt: float2 position, float2 threshold
 		float2 closestSpotPos = float2.none
@@ -333,18 +389,11 @@ Spot SpotGrid
 	getClosestPoint: float2 touchPos, float2 boardPos
 		return ((touchPos-boardPos)/cellSize).rounded*cellSize + boardPos
 		
-Object RectangleObject
-	Color color = White
-	float2 size
-	RectangleObject: float2 position, float2 size, Color color
-	tick
-		drawRectangle position, size, color
-	
 struct Particle
 	float2 pos, speed
-	float size
 	int frame
 	float angle
+	float scale = 1
 
 Object ParticleSystem
 	private Particle[] particles
@@ -357,7 +406,6 @@ Object ParticleSystem
 			particles.add Particle
 				pos: position
 				speed: {Math.cos(r), Math.sin(r)} * speedFactor
-				size: 50
 				frame: Math.randomInteger(particleImage.frames.length)
 				angle: Math.randomFloat*Math.PI*2
 		
@@ -365,7 +413,7 @@ Object ParticleSystem
 		for i,p <- particles
 			graphics.move p.pos
 				graphics.rotate p.angle
-					drawImage particleImage, frame:p.frame, scale
+					drawImage particleImage, frame:p.frame, scale:p.scale
 			p.pos += p.speed
 			p.speed.y -= 1
 			p.angle += .05
@@ -376,7 +424,7 @@ Object ParticleSystem
 			remove
 			
 enum closestCoinType: None, Neighbor, Over
-Object Coin
+Piece Coin
 	const Color darkColor = {"642C00"}
 	const Color lightColor = {"F7C947"}
 	
@@ -408,7 +456,6 @@ Object Coin
 				checkBoardsWhileMoving touch
 			
 			Input.onTouchUp moveTouch
-				// touch.user.selectedObject = this
 				Framework.selectedObjects[touch.userId] = this
 				moveTouch = null
 				
@@ -456,12 +503,13 @@ Object Coin
 		Coin closestCoin = null
 		float minDistance = threshold
 		for object -> source.siblings
-			if object.type == Coin and object != source and object.image == source.image
+			if object.type == Coin and object != source
 				Coin c = cast object
-				let distance = (c.position - source.position).length
-				if distance < minDistance
-					minDistance = distance
-					closestCoin = c
+				if c.image == source.image
+					let distance = (c.position - source.position).length
+					if distance < minDistance
+						minDistance = distance
+						closestCoin = c
 					
 		return closestCoin
 		
@@ -489,6 +537,4 @@ Object Coin
 		if !isInfinate and !allowZero and value <= 0: remove
 		updateNeighbors siblings, isBeingMoved:false
 			
-		
-
 
