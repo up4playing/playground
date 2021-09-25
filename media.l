@@ -918,6 +918,8 @@ transient global unit audio
 		if(!Platform_fastForward) sound.audio.play()
 		
 	js void pause
-		for(let key in _audioCache) {
-			_audioCache[key].pause();
+		if(window._audioCache) {
+			for(let key in _audioCache) {
+				_audioCache[key].pause();
+			}
 		}

@@ -365,7 +365,7 @@ Piece Board
 		if color: drawRectangle position, size, fillColor:color, layer:-1
 		if image: drawImage image, position, scale
 			
-	updateBoard
+	update
 		objects.each.update
 			
 	getSpotAt: float2 position, float2 threshold
