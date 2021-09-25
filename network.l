@@ -1334,7 +1334,7 @@ transient unit Network
 		if(Network_mode == 2/*Local*/ || Network_isLocalhost) {
 			for(let user of Input_users) {
 				if(user && user.videoWidth) {
-					graphics_drawImage(Image_VideoScreen, user.videoPosition, 0, user.videoWidth/440, -1)
+					graphics_drawImage(Image_VideoScreen, user.videoPosition, 0, user.videoWidth/440, -1, 0, 1.0)
 				}
 			}
 		}
