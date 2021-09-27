@@ -16,18 +16,26 @@ class Effect
 	int duration
 	tick: float f
 
+Effect FadeEffect
+	Object object
+	float startValue, delta
+	bool removeWhenDone
+	tick(float f) 
+		object.alpha = startValue + delta * f
+		if f >= 1 and removeWhenDone: Framework.objects.remove object
+		
 Effect MoveEffect
 	Object object
 	float2 startValue, delta
 	tick(float f) object.position = startValue + delta * f
 		
-Effect FadeEffect
-	Object object
-	float startValue, delta
-	tick(float f) object.alpha = startValue + delta * f
-		
 Effect ScaleEffect
 	Object object
 	float startValue, delta
 	tick(float f) object.scale = startValue + delta * f
+		
+Effect RadiusEffect
+	CircleObject object
+	float startValue, delta
+	tick(float f) object.radius = startValue + delta * f
 

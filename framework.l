@@ -45,7 +45,7 @@ class Object
 	float2 position
 	float scale = 1
 	float alpha = 1
-	int visibleFor
+	int visibleFor = -1
 	
 	private siblings := Framework.objects
 	internal checksum := 0
@@ -75,7 +75,8 @@ class Object
 		
 	fadeOut: int duration = 1000
 		     int delay = 0
-		effects.add FadeEffect startTime:Time.now+delay, duration, this, startValue:1, delta:-1
+		     bool removeWhenDone = true
+		effects.add FadeEffect startTime:Time.now+delay, duration, this, startValue:1, delta:-1, removeWhenDone
 		return this
 		
 	scaleTo: float scale 
@@ -98,6 +99,17 @@ Object RectangleObject
 	tick
 		drawRectangle position, size, color, visibleFor
 
+Object CircleObject
+	float radius = 10
+	Color color = White
+	tick
+		drawCircle position, radius, fillColor:color, visibleFor
+		
+	radiusTo: float value
+		      int duration = 200
+		      int delay = 0
+		effects.add RadiusEffect startTime:Time.now+delay, duration, this, startValue:radius, delta:value-radius
+
 Object TextObject
 	string text
 	int size
@@ -105,6 +117,11 @@ Object TextObject
 	Color color = White
 	tick
 		drawText text, position, size*scale, color, font, alpha, visibleFor
+		
+Object ImageObject
+	Image image
+	tick
+		drawImage image, position, scale, alpha, visibleFor
 		
 Object Piece
 	const float2 stackOffset = {8,8}
