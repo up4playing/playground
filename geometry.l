@@ -496,10 +496,10 @@ class Direction
 	global const Direction Left  = {"Left",  2, {-1, 0}, 180°, 150°} // negative x direction (-1,0)
 	global const Direction Up    = {"Up",    3,  {0,-1}, 270°, 210°} // negative y direction (0,-1)
 	
-	const Direction UpLeft    = {"UpLeft",    0, {-1,-1}} // negative x, negative y direction (-1,-1)
-	const Direction UpRight   = {"UpRight",   1, { 1,-1}} // positive x, negative y direction (1,-1)
-	const Direction DownLeft  = {"DownLeft",  2, {-1, 1}} // negative x, positive y direction (-1,1)
-	const Direction DownRight = {"DownRight", 3, { 1, 1}} // positive x, positive y direction (1,1)
+	const Direction UpRight   = {"UpRight",   1, { 1,-1}, 315°} // positive x, negative y direction (1,-1)
+	const Direction DownRight = {"DownRight", 3, { 1, 1},  45°} // positive x, positive y direction (1,1)
+	const Direction DownLeft  = {"DownLeft",  2, {-1, 1}, 135°} // negative x, positive y direction (-1,1)
+	const Direction UpLeft    = {"UpLeft",    0, {-1,-1}, 225°} // negative x, negative y direction (-1,-1)
 	
 	// List of the four primary direction: Right, Down, Left, Up
 	const Direction[] allFourDirections = [Right, Down, Left, Up]
