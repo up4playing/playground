@@ -11,6 +11,10 @@ unit fx
 				if f >= 1: f = 1; effects.removeAt i
 				e.tick f
 				
+	run: int delay
+		 void() code
+		add RunEffect startTime:Time.now+delay, code
+				
 class Effect
 	int startTime
 	int duration
@@ -38,4 +42,8 @@ Effect RadiusEffect
 	CircleObject object
 	float startValue, delta
 	tick(float f) object.radius = startValue + delta * f
+Effect RunEffect
+	void() code = null
+	tick(float f) code()
+	
 
