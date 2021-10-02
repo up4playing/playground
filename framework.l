@@ -6,7 +6,7 @@ unit Framework
 		objects.clear
 		
 	tick
-		effects.tick
+		fx.tick
 		for <- objects: tick
 		for objects: update
 		Input.onTouchUp:  deselect touch.userId
@@ -60,37 +60,44 @@ class Object
 		siblings.remove this
 		
 	moveTo: float2 pos
+		    int duration = 1000
+		    int delay = 0
+		let delta = pos - position
+		fx.add MoveEffect startTime:Time.now+delay, duration, this, startValue:position, delta
+		return this
+		
+	moveTo: float2 pos
 		    float speed = 1
 		    int delay = 0
 		let delta = pos - position
 		let duration = Math.floor(delta.length / speed)
-		effects.add MoveEffect startTime:Time.now+delay, duration, this, startValue:position, delta
+		fx.add MoveEffect startTime:Time.now+delay, duration, this, startValue:position, delta
 		return this
 		
 	fadeIn: int duration = 1000
 		    int delay = 0
 		alpha = 0
-		effects.add FadeEffect startTime:Time.now+delay, duration, this, startValue:0, delta:1
+		fx.add FadeEffect startTime:Time.now+delay, duration, this, startValue:0, delta:1
 		return this
 		
 	fadeOut: int duration = 1000
 		     int delay = 0
 		     bool removeWhenDone = true
-		effects.add FadeEffect startTime:Time.now+delay, duration, this, startValue:1, delta:-1, removeWhenDone
+		fx.add FadeEffect startTime:Time.now+delay, duration, this, startValue:1, delta:-1, removeWhenDone
 		return this
 		
 	scaleTo: float scale 
 		     int duration = 1000
 		     int delay = 0
-		effects.add ScaleEffect startTime:Time.now+delay, duration, this, startValue:this.scale, delta:scale-this.scale
+		fx.add ScaleEffect startTime:Time.now+delay, duration, this, startValue:this.scale, delta:scale-this.scale
 		return this
 	
 	fadeAndScaleIn: int duration = 200
 		            float startScale = 3
 		            int delay = 0
 		alpha = 0
-		effects.add ScaleEffect startTime:Time.now+delay, duration, this, startValue:startScale, delta:1-startScale
-		effects.add FadeEffect  startTime:Time.now+delay, duration, this, startValue:0, delta:1
+		fx.add ScaleEffect startTime:Time.now+delay, duration, this, startValue:startScale, delta:1-startScale
+		fx.add FadeEffect  startTime:Time.now+delay, duration, this, startValue:0, delta:1
 		return this
 		
 Object RectangleObject
@@ -108,7 +115,7 @@ Object CircleObject
 	radiusTo: float value
 		      int duration = 200
 		      int delay = 0
-		effects.add RadiusEffect startTime:Time.now+delay, duration, this, startValue:radius, delta:value-radius
+		fx.add RadiusEffect startTime:Time.now+delay, duration, this, startValue:radius, delta:value-radius
 
 Object TextObject
 	string text

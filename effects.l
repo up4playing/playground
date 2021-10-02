@@ -1,4 +1,4 @@
-unit effects
+unit fx
 	private Effect[] effects
 	add: Effect effect
 		effects.add effect
