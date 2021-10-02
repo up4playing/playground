@@ -42,6 +42,18 @@ Effect RadiusEffect
 	CircleObject object
 	float startValue, delta
 	tick(float f) object.radius = startValue + delta * f
+	
+Effect FadeSoundEffect
+	Sound sound
+	float startValue, delta
+	tick(float f) 
+		sound.volume = startValue + delta * f
+		if f >= 1: sound.stop
+			
+Effect PlaySoundEffect
+	Sound sound
+	tick(float f) sound.play
+	
 Effect RunEffect
 	void() code = null
 	tick(float f) code()
