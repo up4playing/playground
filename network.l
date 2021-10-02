@@ -1361,7 +1361,7 @@ transient unit Network
 		for user -> Input.users
 			if user
 				let internalUser = Input.internalUsers[user.id]
-				if !internalUser.local or Platform.showLocalPointer or Platform.mode == Play or frame < frames
+				if (Platform.showPointers and (!internalUser.local or Platform.showLocalPointer)) or Platform.mode == Play or frame+1 < frames
 					for user.touches
 						if Framework.isVisibleFor .smoothPosition, this.userId
 							drawImage finger, .smoothPosition+{11,32}, frame:.isDown ? 1 : 0, layer:int.maxValue
