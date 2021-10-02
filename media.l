@@ -437,8 +437,8 @@ transient global unit graphics
 		                    implicit layer = 0          // Higher layers are drawn in front of lower layers
 		                    alpha = 1.0                 // The opacity of the button (0: fully transpart, 1: fully visible)
 		if isVisibleFor(visibleFor)
-			if image: drawImage image, position, frame, scale, visibleFor, layer, alpha
 			if text:  drawText text, position, fontSize, textColor, visibleFor, layer, alpha
+			if image: drawImage image, position, frame, scale, visibleFor, layer, alpha
 			
 	// Draws a button that consists of an image and a text
 	global void drawButton: Image image = null               // The image of the button
@@ -457,8 +457,8 @@ transient global unit graphics
 		                    alpha = 1.0                      // The opacity of the button 0: fully transpart, 1: fully visible)
 		                    void(Touch touch) onClick = null // Execute this code when the user clicks the button
 		if isVisibleFor(visibleFor)
-			if image: drawImage image, position, frame, scale, visibleFor, layer, alpha
 			if text:  drawText text, position+textOffset, fontSize, textColor, visibleFor, layer, alpha
+			if image: drawImage image, position, frame, scale, visibleFor, layer, alpha
 			
 		// Handle click
 		// Only visible buttons can be clickable
