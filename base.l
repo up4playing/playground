@@ -612,6 +612,13 @@ class List<T>
 				count++
 		return count
 		
+	countNot: bool(T a) predicate
+		int count = 0
+		for item -> this
+			if !predicate(item)
+				count++
+		return count
+		
 // A data container that stores key-value pairs
 class Map<T>
 
