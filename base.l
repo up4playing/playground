@@ -635,7 +635,7 @@ interface object
 	inline js bool toBool() (this != null)
 	inline js string toString() object_stringify(this, 3)
 		
-	static js string stringify: object subject, int depth = 0 
+	static internal js string stringify: object subject, int depth = 0 
 		switch(typeof subject)
 		{
 			case "object":

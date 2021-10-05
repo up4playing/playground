@@ -897,7 +897,7 @@ transient DisplayItem DisplayLine
 		if(this.clippingPath) this.endClipping()
 		
 // A sound
-struct Sound
+class Sound
 	string file
 	Sound() open
 	
@@ -950,3 +950,9 @@ transient global unit audio
 				_audioCache[key].pause();
 			}
 		}
+		
+class Font
+	string name, file
+	Font() open
+	js void open
+		new FontFace(this.name, "url("+this.file+")");
