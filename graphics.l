@@ -35,23 +35,41 @@ class Texture
 		if Platform.engineStarted
 			open
 	
-	js void open: void() callback = null
+	js void open
 		if(!window._htmlImageCache) _htmlImageCache = {}
 		let image = _htmlImageCache[this.file]
 		if(!image) {
-			image = new HTMLImage()
-			image.src = this.file
-			image.onload = e => {
-				this._htmlImage = image
-				window._htmlImageCache[this.file] = image
-				this.size = new float2(image.width, image.height, null)
-				callback?.();
-			}
+			return new Promise((resolve, reject) => {
+				image = new HTMLImage()
+				image.src = this.file
+				image.onload = e => {
+					this._htmlImage = image
+					window._htmlImageCache[this.file] = image
+					this.size = new float2(image.width, image.height, null)
+					resolve(this);
+				}
+			})
 		} else {
 			this._htmlImage = image
 			this.size = new float2(image.width, image.height, null)
-			callback?.()
+			return this
 		}
+		
+// A font that can be used to draw text
+class Font
+	string name
+	string file
+	
+	js void open
+		if(!window._fontCache) _fontCache = {}
+		let font = _fontCache[this.file]
+		if(!font) {
+			let font = new FontFace(this.name, "url("+this.file+")");
+			await font.load();
+			document.fonts.add(font);
+			_fontCache[this.file] = font;
+		}
+		return this
 
 // A single frame of an animated image
 struct ImageFrame
@@ -895,9 +913,3 @@ transient DisplayItem DisplayLine
 		Platform_context.stroke()
 		
 		if(this.clippingPath) this.endClipping()
-		
-class Font
-	string name, file
-	Font() open
-	js void open
-		new FontFace(this.name, "url("+this.file+")");

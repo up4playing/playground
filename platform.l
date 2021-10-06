@@ -48,7 +48,9 @@ transient unit Platform
 	private inline js void initCacheAndImages
 		_constCache.length = 0;
 		_constCache.push(null);
-		Image_init();
+		if(window.Image_init) Image_init();
+		if(window.Font_init)  Font_init();
+		if(window.Sound_init) Sound_init();
 		
 	private js void initPlatform
 		Platform_init();
@@ -118,7 +120,7 @@ transient unit Platform
 		let gameId = path[3]
 		let roomId = path[4]
 		
-		Image.mainTexture.open
+		openMedia
 			if isDebug || roomId == "local" || url.startsWith("file"): Network.startLocal userCount:userCount
 			else                                                       Network.join gameId, roomId
 			this.engineStarted = true
@@ -130,7 +132,7 @@ transient unit Platform
 	// This is called after every code change to replay all inputs with the new code
 	private replay() 
 		initCacheAndImages
-		Image.mainTexture.open
+		openMedia
 			Network.goToFrame Network.frame-1, replay:true
 	
 	// This is called every animation frame
