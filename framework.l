@@ -120,7 +120,7 @@ Object CircleObject
 Object TextObject
 	string text
 	int size
-	string font
+	Font font
 	Color color = White
 	tick
 		drawText text, position, size*scale, color, font, alpha, visibleFor
@@ -493,9 +493,9 @@ Piece Coin
 			if closestCoinType == Neighbor 
 				drawCircle (position + closestCoin.position)/2, radius:6, fillColor:darkColor, outlineColor:lightColor, outlineWidth:5
 			if !isInfinate
-				if value < 10:  drawText cast value, position+{0, 3}, color:darkColor, size:42, style:Bold, font:"Shadowed Serif"; else
-				if value < 100: drawText cast value, position+{0, 2}, color:darkColor, size:34, style:Bold, font:"Shadowed Serif"; else
-				                drawText cast value, position+{0, 2}, color:darkColor, size:24, style:Bold, font:"Shadowed Serif"
+				if value < 10:  drawText cast value, position+{0, 3}, color:darkColor, size:42, style:Bold, font:ShadowedSerif; else
+				if value < 100: drawText cast value, position+{0, 2}, color:darkColor, size:34, style:Bold, font:ShadowedSerif; else
+				                drawText cast value, position+{0, 2}, color:darkColor, size:24, style:Bold, font:ShadowedSerif
 			
 			drawImage image, position, frame:closestCoinType == Over ? 1 : 0
 			

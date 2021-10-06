@@ -262,17 +262,17 @@ transient global unit graphics
 	// The default font for all draw operations
 	font
 		return currentFont
-	font: string font
+	font: Font font
 		currentFont = font
 		return currentFont
-	font: string font
+	font: Font font
 		  void() code
 		let prev = currentFont
 		currentFont = font
 		code()
 		currentFont = prev
 		return currentFont
-	private currentFont = "Arial"
+	private Font currentFont = {"Arial"}
 	
 	// The default font size for all draw operations
 	fontSize
@@ -416,14 +416,14 @@ transient global unit graphics
 		                     HorizontalAlignment align = Center // The horizontal alignment of the text
 		                     VerticalAlignment valign = Middle  // The vertical alignment of the text
 		                     FontStyle style = Normal           // Whether the text should be bold or normal style
-		                     font = ""                          // The font of the text
+		                     Font font = null                   // The font of the text
 		                     Color outlineColor = null          // The color of the outline around the text
 		                     outlineWidth = 0                   // The width of the outline around the text
 		                     visibleFor = -1                    // Only this user will see the image
 		                     implicit layer = 0                 // Higher layers are drawn in front of lower layers
 		                     alpha = 1.0                        // The opacity of the text (0: fully transpart, 1: fully visible)
 		if(graphics_isVisibleFor(visibleFor)) {
-			let contextFont = (style ? "bold ":"")+(size || graphics_currentFontSize)+"px "+(font || graphics_currentFont);
+			let contextFont = (style ? "bold ":"")+(size || graphics_currentFontSize)+"px "+(font || graphics_currentFont).name;
 			Platform_context.font = contextFont
 			let textSize = Platform_context.measureText(text)
 			let fillStyle = (color || graphics_currentColor).hex
