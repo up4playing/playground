@@ -35,23 +35,41 @@ class Texture
 		if Platform.engineStarted
 			open
 	
-	js void open: void() callback = null
+	js void open
 		if(!window._htmlImageCache) _htmlImageCache = {}
 		let image = _htmlImageCache[this.file]
 		if(!image) {
-			image = new HTMLImage()
-			image.src = this.file
-			image.onload = e => {
-				this._htmlImage = image
-				window._htmlImageCache[this.file] = image
-				this.size = new float2(image.width, image.height, null)
-				callback?.();
-			}
+			return new Promise((resolve, reject) => {
+				image = new HTMLImage()
+				image.src = this.file
+				image.onload = e => {
+					this._htmlImage = image
+					window._htmlImageCache[this.file] = image
+					this.size = new float2(image.width, image.height, null)
+					resolve(this);
+				}
+			})
 		} else {
 			this._htmlImage = image
 			this.size = new float2(image.width, image.height, null)
-			callback?.()
+			return this
 		}
+		
+// A font that can be used to draw text
+class Font
+	string name
+	string file
+	
+	js void open
+		if(!window._fontCache) _fontCache = {}
+		let font = _fontCache[this.file]
+		if(!font) {
+			let font = new FontFace(this.name, "url("+this.file+")");
+			await font.load();
+			document.fonts.add(font);
+			_fontCache[this.file] = font;
+		}
+		return this
 
 // A single frame of an animated image
 struct ImageFrame
@@ -244,17 +262,17 @@ transient global unit graphics
 	// The default font for all draw operations
 	font
 		return currentFont
-	font: string font
+	font: Font font
 		currentFont = font
 		return currentFont
-	font: string font
+	font: Font font
 		  void() code
 		let prev = currentFont
 		currentFont = font
 		code()
 		currentFont = prev
 		return currentFont
-	private currentFont = "Arial"
+	private Font currentFont = {"Arial"}
 	
 	// The default font size for all draw operations
 	fontSize
@@ -398,14 +416,14 @@ transient global unit graphics
 		                     HorizontalAlignment align = Center // The horizontal alignment of the text
 		                     VerticalAlignment valign = Middle  // The vertical alignment of the text
 		                     FontStyle style = Normal           // Whether the text should be bold or normal style
-		                     font = ""                          // The font of the text
+		                     Font font = null                   // The font of the text
 		                     Color outlineColor = null          // The color of the outline around the text
 		                     outlineWidth = 0                   // The width of the outline around the text
 		                     visibleFor = -1                    // Only this user will see the image
 		                     implicit layer = 0                 // Higher layers are drawn in front of lower layers
 		                     alpha = 1.0                        // The opacity of the text (0: fully transpart, 1: fully visible)
 		if(graphics_isVisibleFor(visibleFor)) {
-			let contextFont = (style ? "bold ":"")+(size || graphics_currentFontSize)+"px "+(font || graphics_currentFont);
+			let contextFont = (style ? "bold ":"")+(size || graphics_currentFontSize)+"px "+(font || graphics_currentFont).name;
 			Platform_context.font = contextFont
 			let textSize = Platform_context.measureText(text)
 			let fillStyle = (color || graphics_currentColor).hex
@@ -895,58 +913,3 @@ transient DisplayItem DisplayLine
 		Platform_context.stroke()
 		
 		if(this.clippingPath) this.endClipping()
-		
-// A sound
-struct Sound
-	string file
-	Sound() open
-	
-	js void open
-		if(!window._audioCache) {
-			_audioCache = {}
-		}
-		this.audio = _audioCache[this.file]
-		if(!this.audio) {
-			this.audio = window._audioCache[this.file] = new Audio()
-			this.audio.src = this.file
-		} else {
-			this.audio.pause();
-		}
-		this.audio.currentTime = 0
-		this.audio.volume = 1
-		
-	js void volume: float value
-		this.audio.volume = value
-		
-	js void stop
-		if(!Platform_fastForward) {
-			this.audio.pause()
-			this.audio.currentTime = 0
-		}
-		
-	js void play
-		if(!Platform_fastForward) {
-			this.audio.currentTime = 0
-			this.audio.volume = 1
-			this.audio.play()
-		}
-		
-	fadeOut: int duration = 3000
-		     int delay = 0
-		fx.add FadeSoundEffect startTime:Time.now+delay, duration, this, startValue:1, delta:-1
-		return this
-
-// A collection of functions for playing audio
-transient global unit audio
-	global playSound: Sound sound
-		if Time.frame == 0
-			fx.add PlaySoundEffect startTime:Math.ceil(Time.now+Network.targetFrameTime), sound
-		else
-			sound.play
-		
-	js void pause
-		if(window._audioCache) {
-			for(let key in _audioCache) {
-				_audioCache[key].pause();
-			}
-		}
