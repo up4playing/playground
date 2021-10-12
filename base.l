@@ -212,7 +212,7 @@ class List<T>
 	inline js bool contains: T item
 		(this.indexOf(item) != -1)
 		
-	inline js bool indexOf: T item
+	inline js int indexOf: T item
 		this.indexOf(item)
 		
 	inline js void setList: T[] list
@@ -322,7 +322,7 @@ class List<T>
 		
 	
 	// Reverses the order of the items of the list
-	inline js void reverse() this.reverse()
+	inline js T[] reverse() this.reverse()
 	
 	// Moves an item to the end of the list
 	js T moveToBack: T item // The item to move to the end of the list
@@ -698,7 +698,7 @@ global transient unit System
 		if(condition) then() @else else()
 			
 	// Executes code as long as a given condition is true
-	global inline js void while: bool condition // The condition to check
+	global inline js void while: implicit bool condition // The condition to check
 		                         void() block   // The code to execute while to condition is true
 		while(condition) block()
 	
