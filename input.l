@@ -152,6 +152,11 @@ unit Input
 				e.preventDefault();
 			}
 			else
+			if(e.ctrlKey && e.key == "l") {
+				Network_saveLogs();
+				e.preventDefault();
+			}
+			else
 			if(e.ctrlKey && e.key == "o") {
 				Network_openEventStream();
 				e.preventDefault();
