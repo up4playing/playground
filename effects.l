@@ -12,7 +12,7 @@ unit fx
 				e.tick f
 				
 	run: int delay
-		 void() code
+		 stored void() code
 		add RunEffect startTime:Time.now+delay, code
 				
 class Effect
