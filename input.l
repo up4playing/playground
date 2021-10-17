@@ -46,7 +46,7 @@ class NetworkUser
 
 	internal clearEvents
 		for <- touches
-			if t.phase == Up and t.button == None
+			if t.phase == Up and t.type >= Touch
 				touches.remove t
 	
 enum InputType: None, TouchDown, TouchMove, TouchUp, Wheel, KeyDown, KeyUp, TextInput, Stick, Trigger, Grip, ButtonDown, ButtonUp, ControllerTransform, HeadTransform, DeviceRotation, Join, Leave, SetState
@@ -54,14 +54,14 @@ enum InputType: None, TouchDown, TouchMove, TouchUp, Wheel, KeyDown, KeyUp, Text
 // Phase of a touch or a click
 enum TouchPhase: Still, Down, Move, Up
 		
-enum MouseButton: None, Left, Middle, Right
+enum TouchType: Left, Middle, Right, Touch, Pen
 
 // A touch or a click
 class Touch
 	int id
 	int userId
 	TouchPhase phase
-	MouseButton button
+	TouchType type
 	float2 referencePosition
 	float2 referenceStartPosition
 	float2 smoothPosition
@@ -114,16 +114,16 @@ unit Input
 		window.onpointerdown = e => {
 			if(e.button == 0 && Platform_mode == 0)
 				Platform_record()
-			let button = e.pointerType == "mouse" ? e.button+1 : 0 
-			Input_handleTouchEvent(1, e.pageX, e.pageY, e.pointerId, button);
+			let type = e.pointerType == "mouse" ? e.button : e.pointerType == "pen" ? 4 : 3
+			Input_handleTouchEvent(1, e.pageX, e.pageY, e.pointerId, type);
 		}
 		window.onpointermove = e => {
-			let button = e.pointerType == "mouse" ? e.button+1 : 0 
-			Input_handleTouchEvent(2, e.pageX, e.pageY, e.pointerId, button);
+			let type = e.pointerType == "mouse" ? e.button : e.pointerType == "pen" ? 4 : 3
+			Input_handleTouchEvent(2, e.pageX, e.pageY, e.pointerId, type);
 		}
 		window.onpointerup = e => {
-			let button = e.pointerType == "mouse" ? e.button+1 : 0 
-			Input_handleTouchEvent(3, e.pageX, e.pageY, e.pointerId, button);
+			let type = e.pointerType == "mouse" ? e.button : e.pointerType == "pen" ? 4 : 3
+			Input_handleTouchEvent(3, e.pageX, e.pageY, e.pointerId, type);
 			
 			// if(e.button == 2 && Platform_mode == 0) {
 			// 	if(Platform_mode < 3/*Pointer*/) Platform_enterSlideMode(3/*Pointer*/)
@@ -254,9 +254,9 @@ unit Input
 				setLastTouchMoveIndex id, inputs.writePos+6
 				Network.writeLog += " save {id} at {inputs.writePos+6}"
 			
-		int composite = cast(type)                                      // type:   0 -  32 (5 bit)
-		              + Math.shiftLeft(button.limit(min:0, max:3), 5)   // button: 0 -   4 (2 bit)
-		              + Math.shiftLeft(Math.floor(Math.abs(id))%256, 7) // id:     0 - 256 (8 bit)
+		int composite = cast(type)                                      // inputType: 0 -  31 (5 bit)
+		              + Math.shiftLeft(button.limit(min:0, max:7), 5)   // touchType: 0 -   7 (3 bit)
+		              + Math.shiftLeft(Math.floor(Math.abs(id))%128, 8) // id:        0 - 127 (7 bit)
 		inputs.writeInt32 user.inputFrame
 		inputs.writeUnsignedInt16 composite
 		inputs.writeInt16 Math.round(referencePos.x)
@@ -300,90 +300,90 @@ unit Input
 					
 					let value = inputs.readUnsignedInt16
 					Network.parseLog += " "+value
-					InputType type = cast value % 32
+					InputType inputType = cast(value % 32)
 					
-					if type >= TouchDown && type <= Wheel
+					if inputType >= TouchDown && inputType <= Wheel
 						if !user: Network.parseLog += " Error: user == null"
-						MouseButton button = cast Math.shiftRight(value, 5) % 4
-						int id = Math.shiftRight(value, 7)
+						TouchType type = cast((value shiftRight 5) % 8)
+						int id = (value shiftRight 8) % 128
 						float2 touchPos = {inputs.readInt16, inputs.readInt16}
 						bool isSmoothPosition = !Network.smoothTouchPosition or isCertain or Network.userId == userId
 						Network.parseLog += " "+id
 						
-						if type == TouchDown
+						if inputType == TouchDown
 							let touch = user.touches.find a.id == id
 							if touch
-								touch.phase = cast type
+								touch.phase = cast inputType
 								touch.referencePosition = touchPos
 								touch.referenceStartPosition = touchPos
 								touch.handled = false
-								touch.button = button
+								touch.type = type
 								touch.isDown = true
 								if isSmoothPosition: touch.smoothPosition = touchPos
-								Network.parseLog += " down {id} {touchPos} {button}"
+								Network.parseLog += " down {id} {touchPos} {type}"
 							else
-								touch = {id, userId, cast type, button, touchPos, touchPos, touchPos, isDown:true}
+								touch = {id, userId, cast inputType, type, touchPos, touchPos, touchPos, isDown:true}
 								user.touches.add touch
-								Network.parseLog += " down(new) {id} {touchPos} {button}"
+								Network.parseLog += " down(new) {id} {touchPos} {type}"
 							internalUser.downTouches.add touch
 						else
-						if type == TouchMove
+						if inputType == TouchMove
 							let touch = user.touches.find a.id == id
 							if touch
-								touch.phase = cast type
+								touch.phase = cast inputType
 								touch.referencePosition = touchPos
 								touch.handled = false
-								touch.button = button
+								touch.type = type
 								if isSmoothPosition: touch.smoothPosition = touchPos
-								Network.parseLog += " move {id} {touchPos} {button}"
+								Network.parseLog += " move {id} {touchPos} {type}"
 							else
-								touch = {id, userId, cast type, button, touchPos, referenceStartPosition:float2.none, touchPos, isDown:false}
+								touch = {id, userId, cast inputType, type, touchPos, referenceStartPosition:float2.none, touchPos, isDown:false}
 								user.touches.add touch
-								Network.parseLog += " move(new) {id} {touchPos} {button}"
+								Network.parseLog += " move(new) {id} {touchPos} {type}"
 							internalUser.movingTouches.add touch
 							cursor = "auto"
 						else
-						if type == TouchUp
+						if inputType == TouchUp
 							let touch = user.touches.find a.id == id
 							if touch
-								touch.phase = cast type
+								touch.phase = cast inputType
 								touch.referencePosition = touchPos
 								touch.handled = false
-								touch.button = button
+								touch.type = type
 								touch.isDown = false
 								if isSmoothPosition: touch.smoothPosition = touchPos
-								Network.parseLog += " up {id} {touchPos} {button}"
+								Network.parseLog += " up {id} {touchPos} {type}"
 							else
-								touch = {id, userId, cast type, button, touchPos, referenceStartPosition:float2.none, touchPos, isDown:false}
+								touch = {id, userId, cast inputType, type, touchPos, referenceStartPosition:float2.none, touchPos, isDown:false}
 								user.touches.add touch
-								Network.parseLog += " up(new) {id} {touchPos} {button}"
+								Network.parseLog += " up(new) {id} {touchPos} {type}"
 							internalUser.upTouches.add touch
 						else
-						if type == Wheel
+						if inputType == Wheel
 							let delta = inputs.readInt16
 							internalUser.wheelEvents.add {user, delta, referencePosition:touchPos}
 					else
-					if type == TextInput
+					if inputType == TextInput
 						let textInput = inputs.readString
 						user.textInput = textInput
 						internalUser.textInputs.add textInput
 					else
-					if type == KeyDown
+					if inputType == KeyDown
 						let keyCode = inputs.readInt32
 						internalUser.downKeys.add keyCode
 					else
-					if type == KeyUp
+					if inputType == KeyUp
 						internalUser.upKeys.add inputs.readInt32
 					else
-					if type == Join
+					if inputType == Join
 						Network.parseLog += " join {userId}"
 						users[userId] = user = {id:userId}
 					else
-					if type == Leave
+					if inputType == Leave
 						Network.parseLog += " leave {userId}"
 						users[userId] = user = null
 					else
-					if type == SetState
+					if inputType == SetState
 						Network.parseLog += " setState"
 						Network.snapshotBuffer.reset
 						inputs.readBuffer Network.snapshotBuffer
@@ -824,16 +824,21 @@ unit Input
 			for text -> user.textInputs
 				code text
 				
+	onKeyDown: int userId = -1, void(int key) code
+		if userId != -1
+			let user = internalUsers[userId]
+			for key -> user.downKeys
+				code key
+		else
+			for user -> internalUsers if user
+				for key -> user.downKeys
+					code key
+				
 	onKeyDown: int key, void(int key) code
 		for user -> internalUsers if user
 			for k -> user.downKeys
 				if k == key
 					code key
-				
-	onKeyDown: void(int key) code
-		for user -> internalUsers if user
-			for key -> user.downKeys
-				code key
 				
 	onKeyUp: void(int key) code
 		for user -> internalUsers if user
