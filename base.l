@@ -269,6 +269,21 @@ class List<T>
 	// Gets a random item from the list
 	T random() := get(Math.randomInteger(length))
 		
+	T popRandom()
+		int index = Math.randomInteger(length)
+		T item = get(index)
+		this.removeAt(index)
+		return item
+		
+		
+	T next: T currentItem
+		int index = indexOf(currentItem)
+		return this.get((index+1)%length)
+		
+	T prev: T currentItem
+		int index = indexOf(currentItem)
+		return index != -1 ? this.get((index-1)%length) : this.get(length-1)
+		
 	T pickWithinRangeOrClosest: float(T a) selector
 		                        float min = -float.infinity
 		                        float max = float.infinity
