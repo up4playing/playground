@@ -48,6 +48,7 @@ transient unit Platform
 	private inline js void initCacheAndImages
 		_constCache.length = 0;
 		_constCache.push(null);
+		audio_init();
 		if(window.Image_init) Image_init();
 		if(window.Font_init)  Font_init();
 		if(window.Sound_init) Sound_init();

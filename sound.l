@@ -15,10 +15,10 @@ class Sound
 			this.audio.pause();
 		}
 		this.audio.currentTime = 0
-		this.audio.volume = 1
+		this.audio.volume = audio_volume
 		
 	js void volume: float value
-		this.audio.volume = value
+		this.audio.volume = value * audio_volume
 		
 	js void stop
 		if(!Platform_fastForward) {
@@ -29,7 +29,7 @@ class Sound
 	js void play
 		if(!Platform_fastForward) {
 			this.audio.currentTime = 0
-			this.audio.volume = 1
+			this.audio.volume = audio_volume
 			this.audio.play()
 		}
 		
@@ -40,6 +40,8 @@ class Sound
 
 // A collection of functions for playing audio
 transient global unit audio
+	float volume = 1
+	
 	global playSound: Sound sound
 		if Time.frame == 0
 			fx.add PlaySoundEffect startTime:Math.ceil(Time.now+Network.targetFrameTime), sound
