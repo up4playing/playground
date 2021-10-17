@@ -1039,7 +1039,7 @@ transient unit Network
 					dataChannel.binaryType = "arraybuffer"
 					connection.dataChannel = dataChannel
 					dataChannel.onopen = e => {
-						log("createOffer: connection opened!")
+						Network_log("createOffer: connection opened!")
 						Network_logConnectionType(peerConnection);
 						Network_onConnectedToPeer(connection, /*isNewUser*/true);
 					}
@@ -1083,7 +1083,7 @@ transient unit Network
 				dataChannel.binaryType = "arraybuffer"
 				connection.dataChannel = dataChannel
 				dataChannel.onopen = e => {
-					log("onReceivedOffer: connection opened!")
+					Network_log("onReceivedOffer: connection opened!")
 					Network_logConnectionType(peerConnection);
 					Network_onConnectedToPeer(connection, /*isNewUser*/false);
 				}
@@ -1123,10 +1123,9 @@ transient unit Network
 		let connection = Network_connections.find(a => a.userId == partnerId)
 		if(connection) {
 			try {
-				log("onIce " + message.iceCandidate)
 				await connection.peerConnection.addIceCandidate(new RTCIceCandidate(message.iceCandidate));
 			} catch(e) {
-				log("onIce failed " + e.message)
+				Network_log("onIce failed " + e.message)
 				Network_log(e.stack);
 			}
 		}
