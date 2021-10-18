@@ -43,6 +43,7 @@ class NetworkUser
 	string textInput
 	float2 videoPosition = {}
 	float videoWidth
+	bool enableTouch = true
 
 	internal clearEvents
 		for <- touches
@@ -404,24 +405,28 @@ unit Input
 			{ position.x-size.x/2, position.y+size.y/2 }.transform(graphics.localMatrix),
 		]
 		if (Network.mode == Connected || Network.simulateConnection) && userId != -1
-			let user = internalUsers[userId]
-			for touch -> user.downTouches
-				if !touch.handled && touch.referencePosition.isInsidePoygon(poly)
+			let internalUser = internalUsers[userId]
+			let user = users.find.id == userId
+			for touch -> internalUser.downTouches
+				if !touch.handled and (user.enableTouch or touch.type != Touch)
+				and touch.referencePosition.isInsidePoygon(poly)
 					touch.position = touch.referencePosition.getRelativeTo(graphics.localMatrix)
 					log "down", touch.position
 					code touch
 					if markAsHandled: touch.handled = true
 		else
-			for user -> internalUsers if user
-				for touch -> user.downTouches
-					if !touch.handled && touch.referencePosition.isInsidePoygon(poly)
+			for internalUser -> internalUsers if internalUser
+				let user = users.find.id == internalUser.id
+				for touch -> internalUser.downTouches
+					if !touch.handled and (user.enableTouch or touch.type != Touch)
+					and touch.referencePosition.isInsidePoygon(poly)
 						touch.position = touch.referencePosition.getRelativeTo(graphics.localMatrix)
 						log "down", touch.position
 						code touch
 						if markAsHandled: touch.handled = true
 			if cursor
-				let user = internalUsers[Network.userId]
-				for touch -> user.movingTouches
+				let internalUser = internalUsers[Network.userId]
+				for touch -> internalUser.movingTouches
 					if !touch.handled && touch.referencePosition.isInsidePoygon(poly)
 						this.cursor = cursor
 				
@@ -443,24 +448,28 @@ unit Input
 			(position + float2( -size.x/2, +size.y/2 ).rotate(angle)).transform(graphics.localMatrix),
 		]
 		if (Network.mode == Connected || Network.simulateConnection) && userId != -1
-			let user = internalUsers[userId]
-			for touch -> user.downTouches
-				if !touch.handled && touch.referencePosition.isInsidePoygon(poly)
+			let internalUser = internalUsers[userId]
+			let user = users.find.id == userId
+			for touch -> internalUser.downTouches
+				if !touch.handled and (user.enableTouch or touch.type != Touch) 
+				and touch.referencePosition.isInsidePoygon(poly)
 					touch.position = touch.referencePosition.getRelativeTo(graphics.localMatrix)
 					log "down", touch.position
 					code touch
 					if markAsHandled: touch.handled = true
 		else
-			for user -> internalUsers if user
-				for touch -> user.downTouches
-					if !touch.handled && touch.referencePosition.isInsidePoygon(poly)
+			for internalUser -> internalUsers if internalUser
+				let user = users.find.id == internalUser.id
+				for touch -> internalUser.downTouches
+					if !touch.handled and (user.enableTouch or touch.type != Touch)
+					and touch.referencePosition.isInsidePoygon(poly)
 						touch.position = touch.referencePosition.getRelativeTo(graphics.localMatrix)
 						log "down", touch.position
 						code touch
 						if markAsHandled: touch.handled = true
 			if cursor
-				let user = internalUsers[Network.userId]
-				for touch -> user.movingTouches
+				let internalUser = internalUsers[Network.userId]
+				for touch -> internalUser.movingTouches
 					if !touch.handled && touch.referencePosition.isInsidePoygon(poly)
 						this.cursor = cursor
 				
@@ -477,24 +486,28 @@ unit Input
 		let referencePosition = position.getTransformed(graphics.localMatrix)
 		let referenceRadius = radius * graphics.localMatrix.scaleVector.x
 		if (Network.mode == Connected || Network.simulateConnection) && userId != -1
-			let user = internalUsers[userId]
-			for touch -> user.downTouches
-				if !touch.handled && (touch.referencePosition distanceTo referencePosition) <= referenceRadius
+			let internalUser = internalUsers[userId]
+			let user = users.find.id == userId
+			for touch -> internalUser.downTouches
+				if !touch.handled  and (user.enableTouch or touch.type != Touch)
+				and (touch.referencePosition distanceTo referencePosition) <= referenceRadius
 					touch.position = touch.referencePosition.getRelativeTo(graphics.localMatrix)
 					log "down", touch.position
 					code touch
 					if markAsHandled: touch.handled = true
 		else
-			for user -> internalUsers if user
-				for touch -> user.downTouches
-					if !touch.handled && (touch.referencePosition distanceTo referencePosition) <= referenceRadius
+			for internalUser -> internalUsers if internalUser
+				let user = users.find.id == internalUser.id
+				for touch -> internalUser.downTouches
+					if !touch.handled and (user.enableTouch or touch.type != Touch)
+					and (touch.referencePosition distanceTo referencePosition) <= referenceRadius
 						touch.position = touch.referencePosition.getRelativeTo(graphics.localMatrix)
 						log "down", touch.position
 						code touch
 						if markAsHandled: touch.handled = true
 			if cursor
-				let user = internalUsers[Network.userId]
-				for touch -> user.movingTouches
+				let internalUser = internalUsers[Network.userId]
+				for touch -> internalUser.movingTouches
 					if !touch.handled && (touch.referencePosition distanceTo position) <= radius
 						this.cursor = cursor
 				
@@ -512,24 +525,29 @@ unit Input
 		for points: poly.add (position + p).transform(graphics.localMatrix)
 			
 		if (Network.mode == Connected || Network.simulateConnection) && userId != -1
-			let user = internalUsers[userId]
-			for touch -> user.downTouches
-				if !touch.handled && touch.referencePosition.isInsidePoygon(poly)
+			let internalUser = internalUsers[userId]
+			let user = users.find.id == userId
+			for touch -> internalUser.downTouches
+				if !touch.handled and (user.enableTouch or touch.type != Touch)
+				and touch.referencePosition.isInsidePoygon(poly)
 					touch.position = touch.referencePosition.getRelativeTo(graphics.localMatrix)
 					log "down", touch.position
 					code touch
 					if markAsHandled: touch.handled = true
 		else
-			for user -> internalUsers if user
-				for touch -> user.downTouches
-					if !touch.handled && touch.referencePosition.isInsidePoygon(poly)
+			for internalUser -> internalUsers if internalUser
+				let user = users.find.id == internalUser.id
+				for touch -> internalUser.downTouches
+					if !touch.handled and (user.enableTouch or touch.type != Touch)
+					and touch.referencePosition.isInsidePoygon(poly)
 						touch.position = touch.referencePosition.getRelativeTo(graphics.localMatrix)
 						log "down", touch.position
 						code touch
 						if markAsHandled: touch.handled = true
 			if cursor
-				let user = internalUsers[Network.userId]
-				for touch -> user.movingTouches
+				let internalUser = internalUsers[Network.userId]
+				let user = users.find.id == internalUser.id
+				for touch -> internalUser.movingTouches
 					if !touch.handled && touch.referencePosition.isInsidePoygon(poly)
 						this.cursor = cursor
 				
@@ -643,16 +661,18 @@ unit Input
 	onTouchDown: void(Touch touch) code // The code to execute for each touch or click
 		         int userId = -1        // Only consider touches or clicks from this user
 		if (Network.mode == Connected || Network.simulateConnection) && userId != -1
-			let user = internalUsers[userId]
-			for touch -> user.downTouches
-				if !touch.handled
+			let internalUser = internalUsers[userId]
+			let user = users.find.id == userId
+			for touch -> internalUser.downTouches
+				if !touch.handled and (user.enableTouch or touch.type != Touch)
 					touch.position = touch.referencePosition.getRelativeTo(graphics.localMatrix)
 					log "down", touch.position
 					code touch
 		else
-			for user -> internalUsers if user
-				for touch -> user.downTouches
-					if !touch.handled
+			for internalUser -> internalUsers if internalUser
+				let user = users.find.id == internalUser.id
+				for touch -> internalUser.downTouches
+					if !touch.handled and (user.enableTouch or touch.type != Touch)
 						touch.position = touch.referencePosition.getRelativeTo(graphics.localMatrix)
 						log "down", touch.position
 						code touch
@@ -661,17 +681,21 @@ unit Input
 	onTouchDownAny: void(Touch touch) code // The code to execute for each touch or click
 		            int userId = -1        // Only consider touches or clicks from this user
 		if (Network.mode == Connected || Network.simulateConnection) && userId != -1
-			let user = internalUsers[userId]
-			for touch -> user.downTouches
-				touch.position = touch.referencePosition.getRelativeTo(graphics.localMatrix)
-				log "down", touch.position
-				code touch
-		else
-			for user -> internalUsers if user
-				for touch -> user.downTouches
+			let internalUser = internalUsers[userId]
+			let user = users.find.id == userId
+			for touch -> internalUser.downTouches
+				if user.enableTouch or touch.type != Touch
 					touch.position = touch.referencePosition.getRelativeTo(graphics.localMatrix)
 					log "down", touch.position
 					code touch
+		else
+			for internalUser -> internalUsers if internalUser
+				let user = users.find.id == internalUser.id
+				for touch -> internalUser.downTouches
+					if user.enableTouch or touch.type != Touch
+						touch.position = touch.referencePosition.getRelativeTo(graphics.localMatrix)
+						log "down", touch.position
+						code touch
 			
 	// Executes code when a touch or click moves
 	onTouchMove: Touch touch 
