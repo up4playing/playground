@@ -46,8 +46,9 @@ class NetworkUser
 	bool enableTouch = true
 
 	internal clearEvents
+		bool hasToch = touches.any.type == Touch
 		for <- touches
-			if t.phase == Up and t.type >= Touch
+			if (t.phase == Up and t.type >= Touch) or (hasToch and t.type != Touch)
 				touches.remove t
 	
 enum InputType: None, TouchDown, TouchMove, TouchUp, Wheel, KeyDown, KeyUp, TextInput, Stick, Trigger, Grip, ButtonDown, ButtonUp, ControllerTransform, HeadTransform, DeviceRotation, Join, Leave, SetState
