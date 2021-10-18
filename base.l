@@ -54,6 +54,9 @@ struct int
 		
 	inline js int setIfLarger: int newValue
 		(this = Math.max(newValue, this))
+		
+	inline js int incrementAndWrap: int max // When the integer reaches this value, it wraps around to zero
+		(this = (((this+1) % max) + max) % max)
 	
 // A number stored as a double precision 64-bit floating point value
 struct float
