@@ -113,23 +113,14 @@ unit Input
 
 	private js void initHandlers
 		window.onpointerdown = e => {
-			if(e.button == 0 && Platform_mode == 0)
-				Platform_record()
-			let type = e.pointerType == "mouse" ? e.button : e.pointerType == "pen" ? 4 : 3
-			Input_handleTouchEvent(1, e.pageX, e.pageY, e.pointerId, type);
+			if(e.button == 0 && Platform_mode == 0) Platform_record();
+			Input_handleTouchEvent(1, e.pageX, e.pageY, e.pointerType, e.pointerId, e.button);
 		}
 		window.onpointermove = e => {
-			let type = e.pointerType == "mouse" ? e.button : e.pointerType == "pen" ? 4 : 3
-			Input_handleTouchEvent(2, e.pageX, e.pageY, e.pointerId, type);
+			Input_handleTouchEvent(2, e.pageX, e.pageY, e.pointerType, e.pointerId, e.button);
 		}
 		window.onpointerup = e => {
-			let type = e.pointerType == "mouse" ? e.button : e.pointerType == "pen" ? 4 : 3
-			Input_handleTouchEvent(3, e.pageX, e.pageY, e.pointerId, type);
-			
-			// if(e.button == 2 && Platform_mode == 0) {
-			// 	if(Platform_mode < 3/*Pointer*/) Platform_enterSlideMode(3/*Pointer*/)
-			// 	else                             Platform_stop()
-			// }
+			Input_handleTouchEvent(3, e.pageX, e.pageY, e.pointerType, e.pointerId, e.button);
 		}
 		window.oncontextmenu = e => {
 			e.preventDefault();
@@ -234,16 +225,21 @@ unit Input
 		inputs.writeUnsignedInt16 cast type
 		inputs.writeInt32 keyCode
 		
-	private handleTouchEvent: InputType type, float x, float y, int id, int button
+	private handleTouchEvent: InputType inputType, float x, float y, string pointerType, int pointerId, int button
+		int touchType, id
+		if pointerType == "mouse": touchType = button.limit(min:0, max:2); else
+		if pointerType == "touch": touchType = 3; id = pointerId; else
+			                       touchType = 4
+		
 		float2 pixelPos = {x*Platform.pixelRatio, y*Platform.pixelRatio}
 		float2 referencePos = pixelPos.getRelativeTo(Platform.baseMatrix)
-		Platform.handleSlide type, id, pixelPos, referencePos
+		Platform.handleSlide inputType, id, pixelPos, referencePos
 		
 		if Network.mode == None || Platform.mode != Record || Network.userId == -1: return
 		let user = internalUsers[Network.userId], inputs = user.inputs
 		if !user.collectInputs: return
 
-		if type == TouchMove
+		if inputType == TouchMove
 			int index = getLastTouchMoveIndex id
 			if index
 				// We already moved the pointer this input frame, so just update the last move
@@ -255,8 +251,8 @@ unit Input
 				setLastTouchMoveIndex id, inputs.writePos+6
 				Network.writeLog += " save {id} at {inputs.writePos+6}"
 			
-		int composite = cast(type)                                      // inputType: 0 -  31 (5 bit)
-		              + Math.shiftLeft(button.limit(min:0, max:7), 5)   // touchType: 0 -   7 (3 bit)
+		int composite = cast(inputType)                                 // inputType: 0 -  31 (5 bit)
+		              + Math.shiftLeft(touchType, 5)                    // touchType: 0 -   7 (3 bit)
 		              + Math.shiftLeft(Math.floor(Math.abs(id))%128, 8) // id:        0 - 127 (7 bit)
 		inputs.writeInt32 user.inputFrame
 		inputs.writeUnsignedInt16 composite
