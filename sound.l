@@ -2,6 +2,7 @@
 class Sound
 	string file
 	Sound() open
+	float fadeVolume = 1
 	
 	js void open
 		if(!window._audioCache) {
@@ -14,11 +15,13 @@ class Sound
 		} else {
 			this.audio.pause();
 		}
-		this.audio.currentTime = 0
-		this.audio.volume = audio_volume
 		
 	js void volume: float value
-		this.audio.volume = value * audio_volume
+		this.fadeVolume = value
+		this.audio.volume = this.fadeVolume * audio_volume
+		
+	js void updateVolume
+		this.audio.volume = this.fadeVolume * audio_volume
 		
 	js void stop
 		if(!Platform_fastForward) {
@@ -28,8 +31,9 @@ class Sound
 		
 	js void play
 		if(!Platform_fastForward) {
-			this.audio.currentTime = 0
+			this.fadeVolume = 1
 			this.audio.volume = audio_volume
+			this.audio.currentTime = 0
 			this.audio.play()
 		}
 		
@@ -40,7 +44,25 @@ class Sound
 
 // A collection of functions for playing audio
 transient global unit audio
-	float volume = 1
+	const float[] volumeLevels = [0, .01, .02, .04, .08, .16, .32, .64, 1]
+	float volumeLevel = 5
+	float volume = volumeLevels[volumeLevel]
+	
+	mute: int forUser = -1
+		if forUser == -1 or forUser == Network.userId
+			volumeLevel = 0
+			volume = volumeLevels[volumeLevel]
+	
+	decreaseVolume: int forUser = -1
+		if forUser == -1 or forUser == Network.userId
+			volumeLevel = Math.limit(volumeLevel-1, min:0, max:volumeLevels.length-1)
+			volume = volumeLevels[volumeLevel]
+	
+	increaseVolume: int forUser = -1
+		if forUser == -1 or forUser == Network.userId
+			volumeLevel = Math.limit(volumeLevel+1, min:0, max:volumeLevels.length-1)
+			volume = volumeLevels[volumeLevel]
+			print volume, forUser
 	
 	global playSound: Sound sound
 		if Time.frame == 0
