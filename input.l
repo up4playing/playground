@@ -845,23 +845,34 @@ unit Input
 			for text -> user.textInputs
 				code text
 				
-	onKeyDown: int userId = -1, void(int key) code
+	onKeyDown: int key, int userId = -1, void(int key, int keyUserId) code
+		if userId != -1
+			let user = internalUsers[userId]
+			for k -> user.downKeys
+				if k == key
+					code key, userId
+		else
+			for user -> internalUsers if user
+				for k -> user.downKeys
+					if k == key
+						code key, user.id
+				
+	onKeyDown: int userId = -1, void(int key, int keyUserId) code
 		if userId != -1
 			let user = internalUsers[userId]
 			for key -> user.downKeys
-				code key
+				code key, userId
 		else
 			for user -> internalUsers if user
 				for key -> user.downKeys
-					code key
+					code key, user.id
 				
-	onKeyDown: int key, void(int key) code
-		for user -> internalUsers if user
-			for k -> user.downKeys
-				if k == key
-					code key
-				
-	onKeyUp: void(int key) code
-		for user -> internalUsers if user
+	onKeyUp: int userId = -1, void(int key, int keyUserId) code
+		if userId != -1
+			let user = internalUsers[userId]
 			for key -> user.upKeys
-				code key
+				code key, userId
+		else
+			for user -> internalUsers if user
+				for key -> user.upKeys
+					code key, user.id
