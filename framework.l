@@ -292,7 +292,8 @@ Piece Stack
 	tick
 		for i = Math.limit(objects.length-shownObjectCount, min:0) <- objects.length
 			let obj = objects[i]
-			drawImage obj.backImage, obj.position, frame:obj.frame%obj.backImage.frames.length, scale:obj.scale
+			let image = obj.backImage || obj.image
+			drawImage image, obj.position, frame:obj.frame%image.frames.length, scale:obj.scale
 	
 		// We pop after drawing, because the newly created card won't be drawn until the next frame
 		// and we don't want to draw the new, smaller stack without drawing the popped card as well
