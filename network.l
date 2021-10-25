@@ -75,14 +75,6 @@ transient class Buffer
 		let newDataView = new DataView(this.buffer)
 		for(let i=0; i<prevLength; i++)
 			newDataView.setInt8(i, prevDataView.getInt8(i))
-			
-		// TEMP: Check if data is still the same after expanding
-		Network_log("expand buffer from "+prevLength+" to "+len)
-		for(let i=0; i<prevLength; i++)
-			if(prevDataView.getInt8(i) != newDataView.getInt8(i))
-				Network_log("expand failed at " + i 
-				+" expected "+prevDataView.getInt8(i)
-				+" got "+newDataView.getInt8(i))
 				
 		this.dataView = newDataView
 		
