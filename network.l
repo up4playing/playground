@@ -369,7 +369,10 @@ transient unit Network
 		// We always recreating users, because developers might have added fields to NetworkUser or Touch
 		// By the time we call startApp, all users need to exist
 		Input.users.clear
-		for Platform.userCount: Input.users.add {id:i}
+		for i, internalUser -> Input.internalUsers
+			NetworkUser user = {id:.id, index:i}
+			internalUser.user = user
+			Input.users.add user
 			
 		// Reset read pos to replay inputs from the beginning
 		for Input.internalUsers: inputs.readPos = 0
@@ -666,14 +669,14 @@ transient unit Network
 	private getReceivedInputFrames
 		int minFrames = -1
 		for user -> Input.internalUsers
-			if user && !user.local && (minFrames == -1 || user.inputFrame < minFrames)
+			if user && user.state == Connected && !user.local && (minFrames == -1 || user.inputFrame < minFrames)
 				minFrames = user.inputFrame
 		return minFrames
 	
 	private getReceivedCurrentFrames
 		int minFrames = -1
 		for user -> Input.internalUsers
-			if user && !user.local && (minFrames == -1 || user.currentFrame < minFrames)
+			if user && user.state == Connected && !user.local && (minFrames == -1 || user.currentFrame < minFrames)
 				minFrames = user.currentFrame
 		return minFrames
 			
@@ -688,7 +691,7 @@ transient unit Network
 			
 	log: logstring text
 		eventLog += text + "\n"
-		// print text
+		print text
 		
 	inline js int currentTime := Date.now()
 	
@@ -786,7 +789,7 @@ transient unit Network
 		let user = Input.internalUsers[connection.userId]
 		if mode == Reconnecting && user && user.acknowledgedPos > 0
 			mode = Connected
-			connection.state = Connected
+			connection.state = user.state = Connected
 			log "Both users were already connected before", connection.userId, userId, mode, connection.state
 		else
 		if isNewUser
@@ -795,13 +798,13 @@ transient unit Network
 			nextPingTime = currentTime + 300
 			estimatedStartTimeTotal = 0
 			pongCount = 0
-			connection.state = Connected
+			connection.state = user.state = Connected
 			log "New user, starting to ping", connection.userId, userId, mode, connection.state
 		else
 			// Existing users will wait for the new user to finish pinging
 			// to prevent sending the large initial message several times
 			if mode == Reconnecting: mode = Connected
-			connection.state = WaitingForFirstTickMessage
+			connection.state = user.state = WaitingForFirstTickMessage
 			log "Answering user, waiting for ping", connection.userId, userId, mode, connection.state
 		
 		log connection.userId, isNewUser, mode, connection.state
@@ -809,29 +812,26 @@ transient unit Network
 	private onDisconnectFromPeer: Connection connection
 		log "onDisconnectFromPeer userId:"+connection.userId
 		closeConnection connection
-		connection.state = Disconnected
-		mode = Reconnecting
-		nextReconnect = currentTime + 1000
-		graphics.reset
-		drawText "Connection lost. Trying to reconnect...", {0,-Platform.size.y/2+32}
-		drawRectangle {0,-Platform.size.y/2+32}, {Platform.size.x, 64}, fillColor:{"900000"}
-		graphics.finishFrame
+		let connectedUser = Input.internalUsers[connection.userId]
+		connection.state = connectedUser.state = Disconnected
+		
+		// Write "lost" event to tell everybody that we lost the connection to this user
+		let user = Input.internalUsers[userId]
+		int frame = Math.floor((currentTime - this.startTime)/targetFrameTime)
+		user.inputs.writeInt32 frame
+		user.inputs.writeInt16 cast InputType.Lost
+		user.inputs.writeInt16 connection.userId
 
 	private js void closeConnection: Connection connection
-		if(connection.peerConnection) {
-			Network_log("closeConnection: peerConnection")
-			connection.peerConnection.close();
-			connection.peerConnection = null;
-		}
 		if(connection.dataChannel) {
 			Network_log("closeConnection: dataChannel")
 			connection.dataChannel.close();
 			connection.dataChannel = null;
 		}
-		if(Network_socket) {
-			Network_log("closeConnection: socket")
-			Network_socket.close()
-			Network_socket = null
+		if(connection.peerConnection) {
+			Network_log("closeConnection: peerConnection")
+			connection.peerConnection.close();
+			connection.peerConnection = null;
 		}
 		
 	private reconnect
@@ -1003,16 +1003,17 @@ transient unit Network
 		return peerConnection
 	
 	private Connection createConnection: int partnerId, bool offerByMe, int acknowledgePos
+		let user = Input.internalUsers[partnerId] || (Input.internalUsers[partnerId] = {id:partnerId, local:false})
 		let connection = connections.find(a.userId == partnerId)
+		
 		if connection
-			connection.state = Reconnecting
+			connection.state = user.state = Reconnecting
 			connection.dataChannel = null
 			removeVideoElement partnerId
 		else
 			connections.add connection = Connection(partnerId)
 		connection.peerConnection = setupPeerConnection(connection)
 		connection.offerByMe = offerByMe
-		let user = Input.internalUsers[partnerId] || (Input.internalUsers[partnerId] = {id:partnerId, local:false})
 		user.acknowledgedPos = acknowledgePos
 		log partnerId, offerByMe, acknowledgePos, connection.state, connection.dataChannel
 		return connection
@@ -1043,12 +1044,12 @@ transient unit Network
 						Network_logConnectionType(peerConnection);
 						Network_onConnectedToPeer(connection, /*isNewUser*/true);
 					}
-					dataChannel.onclose = e => Network_log("onclose", e)
+					dataChannel.onerror = e => Network_log("DataChannel error: ", e)
+					dataChannel.onclose = e => Network_log("DataChannel close: ", e)
 					dataChannel.onclosing = e => {
-						Network_log("onclosing -> disconnect", e)
+						Network_log("DataChannel closing: ", e)
 						Network_onDisconnectFromPeer(connection)
 					}
-					dataChannel.onerror = e => Network_log("onerror", e)
 					dataChannel.onmessage = e => {
 						Network_onPeerMessage(connection, new Buffer(e.data, 0, 0, 0))
 					}
@@ -1087,15 +1088,15 @@ transient unit Network
 					Network_logConnectionType(peerConnection);
 					Network_onConnectedToPeer(connection, /*isNewUser*/false);
 				}
+				dataChannel.onerror = e => Network_log("DataChannel error: ", e)
+				dataChannel.onclose = e => Network_log("DataChannel close: ", e)
+				dataChannel.onclosing = e => {
+					Network_log("DataChannel closing: ", e)
+					Network_onDisconnectFromPeer(connection)
+				}
 				dataChannel.onmessage = e => {
 					Network_onPeerMessage(connection, new Buffer(e.data, 0, 0, 0))
 				}
-				dataChannel.onclose = e => Network_log("onclose", e)
-				dataChannel.onclosing = e => {
-					Network_log("onclosing -> disconnect", e)
-					Network_onDisconnectFromPeer(connection)
-				}
-				dataChannel.onerror = e => Network_log("onerror", e)
 			})
 			Network_log("onReceivedOffer: data channel listeners")
 						
@@ -1187,7 +1188,7 @@ transient unit Network
 	// private onTickMessageActual: Connection c, Buffer buffer
 	private onTickMessage: Connection c, Buffer buffer
 		let sender = Input.internalUsers[c.userId]
-		if c.state != Connected: c.state = Connected
+		if c.state != Connected: c.state = sender.state = Connected
 
 		// Checksum
 		let checksumFor = buffer.readInt32
@@ -1323,7 +1324,7 @@ transient unit Network
 		if(internalUser?.videoElement) internalUser.videoElement.remove()
 			
 	setUserVideoAndColor: int userId = 0, float2 pos = {}, float width = 440, Color color = null
-		let user = Input.users[userId]
+		let user = Input.internalUsers[userId]?.user
 		if !user: return
 		user.videoPosition = pos
 		user.videoWidth = width

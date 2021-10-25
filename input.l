@@ -2,6 +2,8 @@
 transient class InternalUser
 	int id
 	bool local
+	NetworkUser user = null
+	ConnectionState state = Disconnected
 	
 	bool collectInputs  // When we are done pinging, we add a join event and start collecting inputs
 	int inputFrame      // We got all inputs from this player up to and including this frame
@@ -38,12 +40,14 @@ transient class InternalUser
 // The public state of a user
 class NetworkUser
 	int id
+	int index
 	Color color = null
 	visible Touch[] touches
 	string textInput
 	float2 videoPosition = {}
 	float videoWidth
 	bool enableTouch = true
+	int[] connectedTo
 
 	internal clearEvents
 		bool hasToch = touches.any.type == Touch
@@ -51,7 +55,7 @@ class NetworkUser
 			if (t.phase == Up and t.type >= Touch) or (hasToch and t.type != Touch)
 				touches.remove t
 	
-enum InputType: None, TouchDown, TouchMove, TouchUp, Wheel, KeyDown, KeyUp, TextInput, Stick, Trigger, Grip, ButtonDown, ButtonUp, ControllerTransform, HeadTransform, DeviceRotation, Join, Leave, SetState
+enum InputType: None, TouchDown, TouchMove, TouchUp, Wheel, KeyDown, KeyUp, TextInput, Stick, Trigger, Grip, ButtonDown, ButtonUp, ControllerTransform, HeadTransform, DeviceRotation, Join, Lost, SetState
 		
 // Phase of a touch or a click
 enum TouchPhase: Still, Down, Move, Up
@@ -103,7 +107,9 @@ unit Input
 	NetworkUser[] users
 	string cursor
 	
-	string textInput := users[Network.userId]?.textInput
+	string textInput
+		let localUser = users.find.id == Network.userId
+		return localUser.textInput
 	
 	internal init
 		initHandlers
@@ -176,9 +182,6 @@ unit Input
 				else           { Platform_showDebugInfo = !Platform_showDebugInfo; Network_debugString = "" }
 				e.preventDefault();
 			}
-			else
-			if(keyCode >= 49 && keyCode <= 52 && Network_simulateConnection)
-				Network_userId = Math.min(keyCode-49, Input_users.length-1);
 			else
 				Input_handleKeyEvent(5, keyCode)
 		}
@@ -285,8 +288,9 @@ unit Input
 		if isCertain: Network.parseLog += " c"
 		for userIndex, internalUser -> internalUsers 
 			if internalUser
-				let inputs = internalUser.inputs, userId = internalUser.id
-				let user = users[userId]
+				let inputs = internalUser.inputs
+				let userId = internalUser.id
+				let user = internalUser.user
 				Network.parseLog += " <{userId}>"
 				
 				while true
@@ -374,18 +378,40 @@ unit Input
 						internalUser.upKeys.add inputs.readInt32
 					else
 					if inputType == Join
-						Network.parseLog += " join {userId}"
-						users[userId] = user = {id:userId}
+						users.add user = {id:userId, index:users.length}
+						internalUser.user = user
+						
+						// Update user.connectedTo and user.index
+						for users
+							if . and .id != userId
+								.connectedTo.ensure userId
+								user.connectedTo.ensure .id
+						updateUserIndices
+						Network.parseLog += " join {userId} connectedTo:{user.connectedTo}"
 					else
-					if inputType == Leave
-						Network.parseLog += " leave {userId}"
-						users[userId] = user = null
+					if inputType == Lost
+						let lostUserId = inputs.readInt16
+						user.connectedTo.remove lostUserId
+						if user.connectedTo.length == 0
+							// If all players have lost the connected to a user, we remove this user
+							users.removeAllWhere.id == lostUserId
+							let lostInternetUser = internalUsers[lostUserId]
+							lostInternetUser.user = null
+							updateUserIndices
+							Network.parseLog += " lost  {lostUserId} by {userId}, removed user"
+							print "lost {lostUserId} by {userId}, removed user"
+						else	
+							Network.parseLog += " lost {lostUserId} by {userId}, remaining:{user.connectedTo.length} {user.connectedTo}"
+							print "lost {lostUserId} by {userId}, remaining:{user.connectedTo.length} {user.connectedTo}"
 					else
 					if inputType == SetState
 						Network.parseLog += " setState"
 						Network.snapshotBuffer.reset
 						inputs.readBuffer Network.snapshotBuffer
 						Snapshot.deserialize Network.snapshotBuffer
+						
+	updateUserIndices
+		for i, user -> users: .index = i
 				
 	// Executes code when the user touches or clicks within a given area
 	onTouchDownWithin: float2 position        // The center of the touch area
@@ -403,19 +429,19 @@ unit Input
 		]
 		if (Network.mode == Connected || Network.simulateConnection) && userId != -1
 			let internalUser = internalUsers[userId]
-			let user = users.find a?.id == userId
+			if internalUser?.user
 				for touch -> internalUser.downTouches
-					if !touch.handled and (user.enableTouch or touch.type != Touch)
+					if !touch.handled and (internalUser.user.enableTouch or touch.type != Touch)
 					and touch.referencePosition.isInsidePoygon(poly)
 						touch.position = touch.referencePosition.getRelativeTo(graphics.localMatrix)
 						log "down", touch.position
 						code touch
 						if markAsHandled: touch.handled = true
 		else
-			for internalUser -> internalUsers if internalUser
-				let user = users.find a?.id == internalUser.id
+			for internalUser -> internalUsers
+				if internalUser?.user
 					for touch -> internalUser.downTouches
-						if !touch.handled and (user.enableTouch or touch.type != Touch)
+						if !touch.handled and (internalUser.user.enableTouch or touch.type != Touch)
 						and touch.referencePosition.isInsidePoygon(poly)
 							touch.position = touch.referencePosition.getRelativeTo(graphics.localMatrix)
 							log "down", touch.position
@@ -446,19 +472,19 @@ unit Input
 		]
 		if (Network.mode == Connected || Network.simulateConnection) && userId != -1
 			let internalUser = internalUsers[userId]
-			let user = users.find a?.id == userId
+			if internalUser?.user
 				for touch -> internalUser.downTouches
-					if !touch.handled and (user.enableTouch or touch.type != Touch) 
+					if !touch.handled and (internalUser.user.enableTouch or touch.type != Touch) 
 					and touch.referencePosition.isInsidePoygon(poly)
 						touch.position = touch.referencePosition.getRelativeTo(graphics.localMatrix)
 						log "down", touch.position
 						code touch
 						if markAsHandled: touch.handled = true
 		else
-			for internalUser -> internalUsers if internalUser
-				let user = users.find a?.id == internalUser.id
+			for internalUser -> internalUsers
+				if internalUser?.user
 					for touch -> internalUser.downTouches
-						if !touch.handled and (user.enableTouch or touch.type != Touch)
+						if !touch.handled and (internalUser.user.enableTouch or touch.type != Touch)
 						and touch.referencePosition.isInsidePoygon(poly)
 							touch.position = touch.referencePosition.getRelativeTo(graphics.localMatrix)
 							log "down", touch.position
@@ -484,19 +510,19 @@ unit Input
 		let referenceRadius = radius * graphics.localMatrix.scaleVector.x
 		if (Network.mode == Connected || Network.simulateConnection) && userId != -1
 			let internalUser = internalUsers[userId]
-			let user = users.find a?.id == userId
+			if internalUser?.user
 				for touch -> internalUser.downTouches
-					if !touch.handled  and (user.enableTouch or touch.type != Touch)
+					if !touch.handled  and (internalUser.user.enableTouch or touch.type != Touch)
 					and (touch.referencePosition distanceTo referencePosition) <= referenceRadius
 						touch.position = touch.referencePosition.getRelativeTo(graphics.localMatrix)
 						log "down", touch.position
 						code touch
 						if markAsHandled: touch.handled = true
 		else
-			for internalUser -> internalUsers if internalUser
-				let user = users.find a?.id == internalUser.id
+			for internalUser -> internalUsers
+				if internalUser?.user
 					for touch -> internalUser.downTouches
-						if !touch.handled and (user.enableTouch or touch.type != Touch)
+						if !touch.handled and (internalUser.user.enableTouch or touch.type != Touch)
 						and (touch.referencePosition distanceTo referencePosition) <= referenceRadius
 							touch.position = touch.referencePosition.getRelativeTo(graphics.localMatrix)
 							log "down", touch.position
@@ -523,19 +549,19 @@ unit Input
 			
 		if (Network.mode == Connected || Network.simulateConnection) && userId != -1
 			let internalUser = internalUsers[userId]
-			let user = users.find a?.id == userId
+			if internalUser?.user
 				for touch -> internalUser.downTouches
-					if !touch.handled and (user.enableTouch or touch.type != Touch)
+					if !touch.handled and (internalUser.user.enableTouch or touch.type != Touch)
 					and touch.referencePosition.isInsidePoygon(poly)
 						touch.position = touch.referencePosition.getRelativeTo(graphics.localMatrix)
 						log "down", touch.position
 						code touch
 						if markAsHandled: touch.handled = true
 		else
-			for internalUser -> internalUsers if internalUser
-				let user = users.find a?.id == internalUser.id
+			for internalUser -> internalUsers
+				if internalUser?.user
 					for touch -> internalUser.downTouches
-						if !touch.handled and (user.enableTouch or touch.type != Touch)
+						if !touch.handled and (internalUser.user.enableTouch or touch.type != Touch)
 						and touch.referencePosition.isInsidePoygon(poly)
 							touch.position = touch.referencePosition.getRelativeTo(graphics.localMatrix)
 							log "down", touch.position
@@ -543,7 +569,6 @@ unit Input
 							if markAsHandled: touch.handled = true
 			if cursor
 				let internalUser = internalUsers[Network.userId]
-				let user = users.find.id == internalUser.id
 				for touch -> internalUser.movingTouches
 					if !touch.handled && touch.referencePosition.isInsidePoygon(poly)
 						this.cursor = cursor
@@ -633,12 +658,13 @@ unit Input
 			{ position.x-size.x/2, position.y+size.y/2 }.transform(graphics.localMatrix),
 		]
 		if (Network.mode == Connected || Network.simulateConnection) && userId != -1
-			let user = users[userId]
-			for touch -> user.touches
-				if !touch.handled && touch.referencePosition.isInsidePoygon(poly)
-					touch.position = touch.referencePosition.getRelativeTo(graphics.localMatrix)
-					log "over", touch.position
-					code touch
+			let internalUser = internalUsers[userId]
+			if internalUser?.user
+				for touch -> internalUser.user.touches
+					if !touch.handled && touch.referencePosition.isInsidePoygon(poly)
+						touch.position = touch.referencePosition.getRelativeTo(graphics.localMatrix)
+						log "over", touch.position
+						code touch
 		else
 			for user -> users
 				for touch -> user.touches
@@ -659,17 +685,17 @@ unit Input
 		         int userId = -1        // Only consider touches or clicks from this user
 		if (Network.mode == Connected || Network.simulateConnection) && userId != -1
 			let internalUser = internalUsers[userId]
-			let user = users.find a?.id == userId
+			if internalUser?.user
 				for touch -> internalUser.downTouches
-					if !touch.handled and (user.enableTouch or touch.type != Touch)
+					if !touch.handled and (internalUser.user.enableTouch or touch.type != Touch)
 						touch.position = touch.referencePosition.getRelativeTo(graphics.localMatrix)
 						log "down", touch.position
 						code touch
 		else
-			for internalUser -> internalUsers if internalUser
-				let user = users.find a?.id == internalUser.id
+			for internalUser -> internalUsers 
+				if internalUser?.user
 					for touch -> internalUser.downTouches
-						if !touch.handled and (user.enableTouch or touch.type != Touch)
+						if !touch.handled and (internalUser.user.enableTouch or touch.type != Touch)
 							touch.position = touch.referencePosition.getRelativeTo(graphics.localMatrix)
 							log "down", touch.position
 							code touch
@@ -679,17 +705,17 @@ unit Input
 		            int userId = -1        // Only consider touches or clicks from this user
 		if (Network.mode == Connected || Network.simulateConnection) && userId != -1
 			let internalUser = internalUsers[userId]
-			let user = users.find a?.id == userId
+			if internalUser?.user
 				for touch -> internalUser.downTouches
-					if user.enableTouch or touch.type != Touch
+					if internalUser.user.enableTouch or touch.type != Touch
 						touch.position = touch.referencePosition.getRelativeTo(graphics.localMatrix)
 						log "down", touch.position
 						code touch
 		else
-			for internalUser -> internalUsers if internalUser
-				let user = users.find a?.id == internalUser.id
+			for internalUser -> internalUsers
+				if internalUser?.user
 					for touch -> internalUser.downTouches
-						if user.enableTouch or touch.type != Touch
+						if internalUser.user.enableTouch or touch.type != Touch
 							touch.position = touch.referencePosition.getRelativeTo(graphics.localMatrix)
 							log "down", touch.position
 							code touch
