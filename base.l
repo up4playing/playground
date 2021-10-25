@@ -205,6 +205,10 @@ class List<T>
 		add item
 		if length > maxLength: removeAt 0
 			
+	// Adds an item to the list if it isn't already in there
+	inline js void ensure: T item // The item to add
+		if(this.indexOf(item) == -1) this.push(item)
+		
 	inline js void addRange: T[] items
 		this.push(...items)
 			
