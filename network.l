@@ -1307,8 +1307,12 @@ transient unit Network
 			Network_localVideoElement = Network_createVideoElement(Network_localVideoStream, /*local*/true);
 			Network_log("setupLocalVideo: success")
 		} catch(error) {
-			Network_log(error)
-			Network_error = "Can't access webcam. Please make sure it's not used by another application."
+			Network_log(error.message)
+			if(error.name == "NotAllowedError") {
+				Network_error = "To play with friends over a video call, you need to allow access to your webcam."
+			} else {
+				Network_error = "Can't access webcam. Please make sure it's not used by another application."
+			}
 			Network_errorMessage = error.message
 		}
 			
