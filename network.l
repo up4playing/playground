@@ -1,5 +1,5 @@
 enum NetworkMessageType: Tick, Ping, Pong, OwnInputsAfterReconnect
-enum ConnectionState: Disconnected, Reconnecting, WaitingForFirstTickMessage, Connected
+enum ConnectionState: Disconnected, Reconnecting, PingPong, Connected
 
 transient class Connection
 	int userId
@@ -7,6 +7,7 @@ transient class Connection
 	object dataChannel = null
 	ConnectionState state
 	bool offerByMe
+	float fastestPingPongTime = 1000
 	
 enum NetworkMode: None, Ping, Local, Connected, Reconnecting
 transient class RoomInfo: int time, userId
@@ -257,14 +258,14 @@ transient unit Network
 	public int smoothStrength = 90
 	public bool smoothTouchPosition = true
 	
-	string logTable = "frame,now,animTime,networkTime,tickTime,drawTime,iteration,restoreTime,replayFrames,replayTime,saveTime,user0,user1,user2,received,uncertain,offset,ahead,avarage,percentile,certainFrame,buffer,checksums,events,send,receive,write,parse,touch\n"
+	string logTable = "frame,now,animTime,networkTime,tickTime,drawTime,iteration,restoreTime,replayFrames,replayTime,saveTime,pingPong,user0,user1,user2,received,uncertain,offset,ahead,avarage,percentile,certainFrame,buffer,checksums,events,send,receive,write,parse,touch\n"
 	public string eventLog = ""; sentLog = "", receivedLog="", writeLog="", parseLog = "", touchLog = "", checksumLog = "", debugString = ""
 	private float lastNetworkFrame, lastAnimationFrame, drawTime, tickTime, restoreTime, replayTime, saveTime
 	private int replayFrames, checkedChecksums
 	private string lastError, connectionType
+	private float lastPingPongTime = 0
 	
 	internal const targetFps = 30
-	private const pingCount = 6
 	private const bufferFrames = 1
 	const targetFrameTime = 1000/targetFps
 	
@@ -305,12 +306,8 @@ transient unit Network
 	initDatabase
 		IndexedDB.start "up4playing", "snapshot", 5
 
-	private startConnected: float startTime = 0
+	private startConnected
 		if mode == Connected: return
-		if startTime
-			this.startTime = startTime
-		else
-			resetStartTime
 		let user = Input.internalUsers[userId]
 		user.startInputFrame 0
 		
@@ -412,9 +409,9 @@ transient unit Network
 			eventLog += " x"
 			return
 	
+		ping
 		if mode == None || mode == Ping
 			graphics.startFrame
-			if mode == Ping: ping
 			if mode == Reconnecting: reconnect
 			else                     lobby.tick
 			updateVideoScreen
@@ -445,7 +442,7 @@ transient unit Network
 			// After a long pause in local mode, we do not want to process all missed frames, so we adjust the start time
 			let prevTargetFrame = targetFrame
 			targetFrame = frame
-			startTime = now - targetFrame*targetFrameTime
+			startTime = Math.round(now - targetFrame*targetFrameTime)
 			log "Paused {prevTargetFrame-frame} frames, adjusting startTime. prevTargetTime:{prevTargetFrame} frame:{frame} targetFrame:{Math.floor((now - startTime)/targetFrameTime)}"
 		
 		if frame < targetFrame
@@ -472,14 +469,14 @@ transient unit Network
 				// Logs
 				try
 					logTable += "{frame-1},{now},{now - lastAnimationFrame},{now - lastNetworkFrame},{tickTime.format(fractionDigits:2)},{drawTime.format(fractionDigits:2)},{frame-startFrame}"
-					logTable += ",{restoreTime.format(fractionDigits:2)},{replayFrames},{replayTime.format(fractionDigits:2)},{saveTime.format(fractionDigits:2)}"
+					logTable += ",{restoreTime.format(fractionDigits:2)},{replayFrames},{replayTime.format(fractionDigits:2)},{saveTime.format(fractionDigits:2)},{lastPingPongTime}"
 					logTable += ","+(Input.internalUsers[0] ? Input.internalUsers[0].inputFrame : 0)
 					logTable += ","+(Input.internalUsers[1] ? Input.internalUsers[1].inputFrame : 0)
 					logTable += ","+(Input.internalUsers[2] ? Input.internalUsers[2].inputFrame : 0)
 					logTable += ",{receivedFrames},{uncertainFrame},{frame - receivedFrames},{ahead},{aheadAverage.format(fractionDigits:1)}"
 					logTable += ",{aheadPercentile},{certainFrame},{receivedFrames-frameMinusOffset}"
 					logTable += ",\"{checksumLog.trim}\",\"{eventLog.trim}\",\"{sentLog.trim}\",\"{receivedLog.trim}\",\"{writeLog.trim}\",\"{parseLog.trim}\",\"{touchLog.trim}\"\n"
-					eventLog = ""; sentLog = ""; receivedLog = ""; writeLog = ""; parseLog = ""; touchLog = ""; checksumLog = ""
+					eventLog = ""; sentLog = ""; receivedLog = ""; writeLog = ""; parseLog = ""; touchLog = ""; checksumLog = ""; lastPingPongTime = 0
 				
 				catch
 					print error
@@ -487,7 +484,7 @@ transient unit Network
 				
 				// Debug string
 				if Platform.showDebugInfo
-					debugString = "v{Platform.version} ct:{connectionType} w:"
+					debugString = "v{Platform.version} ct:{connectionType} st:{startTime%1000} w:"
 					for user -> Input.internalUsers
 						if user
 							debugString += " " + user.inputs.writePos.format(grouping:true)
@@ -692,7 +689,7 @@ transient unit Network
 		if(window.app_start) app_start()
 		
 	private resetStartTime
-		startTime = currentTime - frame*targetFrameTime - (targetFrameTime*.5)
+		startTime = Math.round(currentTime - frame*targetFrameTime - (targetFrameTime*.5))
 		
 	resetStartTimeIfNeeded
 		if Platform.mode < Play: resetStartTime
@@ -772,7 +769,6 @@ transient unit Network
 			goToFrame targetFrame:frame, replay:true
 		
 	private float nextPingTime
-	private float estimatedStartTimeTotal
 	private int pongCount
 	
 	private onConnectedToPeer: Connection connection
@@ -787,16 +783,16 @@ transient unit Network
 		if isNewUser
 			// New users will send out ping messages to sync the startTime (and this way also the current frame)
 			mode = Ping
-			nextPingTime = currentTime + 300
-			estimatedStartTimeTotal = 0
+			nextPingTime = currentTime + 100
 			pongCount = 0
-			connection.state = user.state = Connected
+			startTime = 0
+			connection.state = user.state = PingPong
 			log "New user, starting to ping", connection.userId, userId, mode, connection.state
 		else
 			// Existing users will wait for the new user to finish pinging
 			// to prevent sending the large initial message several times
 			if mode == Reconnecting: mode = Connected
-			connection.state = user.state = WaitingForFirstTickMessage
+			connection.state = user.state = PingPong
 			log "Answering user, waiting for ping", connection.userId, userId, mode, connection.state
 		
 		log connection.userId, isNewUser, mode, connection.state
@@ -836,13 +832,6 @@ transient unit Network
 				join gameId, roomId
 			nextReconnect = currentTime + 6000
 	
-	private ping
-		if currentTime >= nextPingTime
-			for c -> connections
-				if c.state != Disconnected
-					sendPingMessage c, currentTime
-			nextPingTime = currentTime + 300
-		
 	private object socket = null
 	visible string roomId, gameId
 	private Connection[] connections
@@ -938,7 +927,9 @@ transient unit Network
 			
 			// The first user will enter the "connected" state right away, all later uers will first 
 			// ping the existing users to sync the startTime and calculate the frame from it
-			if userId == 0: startConnected
+			if userId == 0
+				resetStartTime
+				startConnected
 				
 	private resendOffers
 		int[] partnerIds
@@ -981,10 +972,12 @@ transient unit Network
 			if(peerConnection.connectionState == "disconnected")
 				Network_onDisconnectFromPeer(c)
 		}
-		peerConnection.oniceconnectionstatechange = e => Network_log("oniceconnectionstatechange", peerConnection.iceConnectionState)
-		peerConnection.onicegatheringstatechange = e => Network_log("onicegatheringstatechange", peerConnection.iceGatheringState)
-		peerConnection.onsignalingstatechange  = e => Network_log("onsignalingstatechange", peerConnection.signalingState)
-		peerConnection.onnegotiationneeded = () => Network_log("onnegotiationneeded")
+		
+		// Disabled logging ice to make log more readable
+		// peerConnection.oniceconnectionstatechange = e => Network_log("oniceconnectionstatechange", peerConnection.iceConnectionState)
+		// peerConnection.onicegatheringstatechange = e => Network_log("onicegatheringstatechange", peerConnection.iceGatheringState)
+		// peerConnection.onsignalingstatechange  = e => Network_log("onsignalingstatechange", peerConnection.signalingState)
+		// peerConnection.onnegotiationneeded = () => Network_log("onnegotiationneeded")
 		
 		peerConnection.onicecandidate = async event => {
 			if (event.candidate)
@@ -1246,19 +1239,28 @@ transient unit Network
 		localUser.inputs.writePos = length
 		log "Receiving own inputs from {c.userId}", localUser.inputFrame, localUser.inputs.writePos, buffer, localUser.inputs
 		
+	private ping
+		if (mode == Ping or mode == Connected) and currentTime >= nextPingTime
+			let masterUserId = Input.internalUsers.min.id where.state != Disconnected or .id == userId
+			if masterUserId != userId
+				let c = connections.find.userId == masterUserId
+				sendPingMessage c, currentTime
+				nextPingTime = currentTime + 1000
+		
 	private void sendPingMessage: Connection c, float pingTime
+		log c.userId, c.state, pingTime
 		sendBuffer.reset
 		sendBuffer.writeInt16 cast NetworkMessageType.Ping
 		sendBuffer.writeFloat64 pingTime
 		send c, sendBuffer
 			
 	private onPingMessage: Connection c, Buffer buffer
-		log c.state
 		if c.state != Disconnected
 			let pingTime = buffer.readFloat64
 			sendPongMessage c, currentTime-startTime, pingTime
 		
 	private void sendPongMessage: Connection c, float timeSinceStart, float pingTime
+		log c.userId, c.state, timeSinceStart, pingTime, startTime
 		sendBuffer.reset
 		sendBuffer.writeInt16 cast NetworkMessageType.Pong
 		sendBuffer.writeFloat64 timeSinceStart		
@@ -1270,11 +1272,26 @@ transient unit Network
 		float timeSinceStart = buffer.readFloat64
 		float pingTime = buffer.readFloat64
 		float pingPongTime = now - pingTime
-		float estimatedStartTime = now - pingPongTime/2 - timeSinceStart
-		if pongCount >= 2: estimatedStartTimeTotal += estimatedStartTime
-		log pongCount, pingPongTime, estimatedStartTime
-		if ++pongCount >= pingCount
-			startConnected startTime: estimatedStartTimeTotal / (pongCount - 2)
+		if pingPongTime < c.fastestPingPongTime
+			// Use the fastest ping-pong-time we have ever seen to calculate the start time
+			c.fastestPingPongTime = pingPongTime
+			startTime = Math.round(now - pingPongTime/2 - timeSinceStart)
+			log "New fastest pingPongTime", c.userId, pongCount, pingPongTime, startTime
+		else
+			log c.userId, pongCount, pingPongTime, startTime
+			
+		pongCount++
+		lastPingPongTime = pingPongTime
+		
+		// If we haven't started the  connection yet, start after the 15th ping
+		if mode == Ping and pongCount >= 15 and startTime
+			for connections
+				if .state == PingPong
+					let user = Input.internalUsers[.userId]
+					.state = user.state = Connected
+			startConnected
+
+		nextPingTime = now + (c.state == PingPong ? 100 : 20000)
 			
 	private js void send: Connection connection, Buffer buffer
 		connection.dataChannel.send(buffer.buffer)
