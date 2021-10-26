@@ -262,7 +262,7 @@ transient unit Network
 	public string eventLog = ""; sentLog = "", receivedLog="", writeLog="", parseLog = "", touchLog = "", checksumLog = "", debugString = ""
 	private float lastNetworkFrame, lastAnimationFrame, drawTime, tickTime, restoreTime, replayTime, saveTime
 	private int replayFrames, checkedChecksums
-	private string lastError, connectionType
+	private string connectionType
 	private float lastPingPongTime = 0
 	
 	internal const targetFps = 30
@@ -273,7 +273,11 @@ transient unit Network
 	visible int userId = -1
 	public bool simulateConnection = true
 	
-	private object localVideo = null
+	visible string error
+	visible string errorMessage
+	
+	private object localVideoStream = null
+	private object localVideoElement = null
 	
 	private float startTime
 	private int startInputFrame
@@ -342,7 +346,8 @@ transient unit Network
 		startInLobby = false
 		audio.pause
 		goToFrame 0
-		lastError = ""
+		error = ""
+		errorMessage = ""
 		
 	// Calls init functions, creates the local users, resets read positions and starts app
 	// This is called on startup, after every code change and when going backwards in the timeline
@@ -457,9 +462,8 @@ transient unit Network
 				replayState
 			
 			catch 
-				print error
 				log error
-				lastError = error.message
+				errorMessage = error.message
 					
 			// Ensure that step is called every targetFrameTime milliseconds
 			while frame < targetFrame
@@ -480,7 +484,7 @@ transient unit Network
 				
 				catch
 					print error
-					lastError = error.message
+					errorMessage = error.message
 				
 				// Debug string
 				if Platform.showDebugInfo
@@ -492,7 +496,7 @@ transient unit Network
 					for user -> Input.internalUsers
 						if user
 							debugString += "  " + user.aheadAverage.format(fractionDigits:1)
-					debugString += " {lastError}"
+					debugString += " {errorMessage}"
 					
 				lastNetworkFrame = now
 				
@@ -551,9 +555,8 @@ transient unit Network
 			
 			
 		catch
-			print error
 			log error
-			lastError = error.message
+			errorMessage = error.message
 			
 		// Cleanup
 		for internalUser -> Input.internalUsers
@@ -583,9 +586,8 @@ transient unit Network
 					app.tick
 				Input.updateCursor
 		catch
-			print error
 			log error
-			lastError = error.message
+			errorMessage = error.message
 			
 		drawText debugString, {0, 532}
 		drawTime = Time.measure
@@ -680,7 +682,7 @@ transient unit Network
 			
 	log: logstring text
 		eventLog += text + "\n"
-		print text
+		// print text
 		
 	inline js int currentTime := Date.now()
 	
@@ -842,6 +844,8 @@ transient unit Network
 		Network_gameId = gameId
 		Network_roomId = roomId
 		Network_log("Network.join "+location.href)
+		await Network_setupLocalVideo()
+		
 		let socket
 		if(Network_isLocalhost) socket = new WebSocket("ws://localhost:3111");
 		else                    socket = new WebSocket("wss://"+location.host+":3111");
@@ -858,8 +862,10 @@ transient unit Network
 			Network_log("Websocket closed")
 			Network_socket = null
 		}
-		socket.onerror = ex => {
-			Network_log(ex.stack)
+		socket.onerror = error => {
+			Network_error = "Can't connect to server."
+			Network_errorMessage = error.message
+			Network_log(error.message)
 		}
 		Network_initDatabase();
 		
@@ -916,13 +922,12 @@ transient unit Network
 			
 			roomId = message.roomId
 			userId = message.userId
-			Input.internalUsers[message.userId] = {id:userId, local:true}
+			Input.internalUsers[message.userId] = {id:userId, local:true, videoElement:localVideoElement}
 			Platform.setLocalStorageObject "room"+roomId, RoomInfo(currentTime, userId)
 			
 			if message.version != Platform.version
 				alert "You are using an old version of this application. Please refresh your browser."
 			Math.setRandomSeed message.seed
-			
 			createOffers message.partnerIds
 			
 			// The first user will enter the "connected" state right away, all later uers will first 
@@ -1004,7 +1009,6 @@ transient unit Network
 		return connection
 		
 	private js void createOffers: int[] partnerIds
-		if(!Network_localVideo) await Network_setupLocalVideo(Network_userId);
 		let offers = [];
 		
 		for(let partnerId of partnerIds) {
@@ -1297,17 +1301,26 @@ transient unit Network
 		connection.dataChannel.send(buffer.buffer)
 
 	private js void setupLocalVideo: int userId
-		if(Network_isLocalhost) return 
-		Network_localVideo = await navigator.mediaDevices.getUserMedia({video: true, audio: true});
-		Network_createVideoElement(userId, Network_localVideo, /*local*/true)
+		if(Network_isLocalhost) return
+		try {
+			Network_localVideoStream = await navigator.mediaDevices.getUserMedia({video: true, audio: true});
+			Network_localVideoElement = Network_createVideoElement(Network_localVideoStream, /*local*/true);
+			Network_log("setupLocalVideo: success")
+		} catch(error) {
+			Network_log(error)
+			Network_error = "Can't access webcam. Please make sure it's not used by another application."
+			Network_errorMessage = error.message
+		}
 			
 	private js void setupRemoteVideo: int partnerId, object peerConnection
 		if(Network_isLocalhost) return 
-		for(let track of Network_localVideo.getTracks())
-			peerConnection.addTrack(track, Network_localVideo);
+		for(let track of Network_localVideoStream.getTracks())
+			peerConnection.addTrack(track, Network_localVideoStream);
 		
 		var remoteStream = new MediaStream();
-		Network_createVideoElement(partnerId, remoteStream, /*local*/false)
+		let internalUser = Input_internalUsers[partnerId];
+		internalUser.videoElement = Network_createVideoElement(remoteStream, /*local*/false)
+		
 		peerConnection.addEventListener('track', event => {
 			Network_log('Got remote track:', event.streams[0]);
 			event.streams[0].getTracks().forEach(track => {
@@ -1316,17 +1329,16 @@ transient unit Network
 			});
 		});
 
-	private js void createVideoElement: int userId, object stream, bool local
-		let internalUser = Input_internalUsers[userId];
-		let el = document.createElement('video');
+	private js object createVideoElement: object stream, bool local
+		let el = document.createElement('video')
 		el.style = "position:absolute; top:0px; left:0px; z-index:10000; visibility:hidden; "+(local ? "transform: scaleX(-1)" : "")
 		el.autoplay = true
 		el.playsinline = true
 		el.controls = false
 		el.muted = local
 		document.body.appendChild(el)
-		el.srcObject = stream;
-		internalUser.videoElement = el;
+		el.srcObject = stream
+		return el
 		
 	private js void removeVideoElement: int userId
 		let internalUser = Input_internalUsers[userId];
