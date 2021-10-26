@@ -966,6 +966,15 @@ unit Math
 		if value < min: return min
 		if value > max: return max
 			            return value
+			
+	interpolate: float value
+		         float fromStart = 0
+		         float fromEnd = 1
+		         float toStart = 0
+		         float toEnd = 1
+		if value < fromStart: return toStart
+		if value > fromEnd:   return toEnd
+			                  return toStart + (toEnd-toStart) * (value-fromStart)/(fromEnd-fromStart)
 	
 transient class Time
 	inline js int year := this.getFullYear()
