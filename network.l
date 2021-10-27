@@ -1,5 +1,5 @@
 enum NetworkMessageType: Tick, Ping, Pong, OwnInputsAfterReconnect
-enum ConnectionState: Disconnected, Reconnecting, PingPong, Connected
+enum ConnectionState: Disconnected, Connecting, Reconnecting, PingPong, Connected
 
 transient class Connection
 	int userId
@@ -7,7 +7,7 @@ transient class Connection
 	object dataChannel = null
 	ConnectionState state
 	bool offerByMe
-	float fastestPingPongTime = 1000
+	float fastestPingPongTime = float.maxValue
 	
 enum NetworkMode: None, Ping, Local, Connected, Reconnecting
 transient class RoomInfo: int time, userId
@@ -787,7 +787,6 @@ transient unit Network
 			mode = Ping
 			nextPingTime = currentTime + 100
 			pongCount = 0
-			startTime = 0
 			connection.state = user.state = PingPong
 			log "New user, starting to ping", connection.userId, userId, mode, connection.state
 		else
@@ -1002,6 +1001,8 @@ transient unit Network
 			removeVideoElement partnerId
 		else
 			connections.add connection = Connection(partnerId)
+			connection.state = user.state = Connecting
+			
 		connection.peerConnection = setupPeerConnection(connection)
 		connection.offerByMe = offerByMe
 		user.acknowledgedPos = acknowledgePos
@@ -1252,7 +1253,6 @@ transient unit Network
 				nextPingTime = currentTime + 1000
 		
 	private void sendPingMessage: Connection c, float pingTime
-		log c.userId, c.state, pingTime
 		sendBuffer.reset
 		sendBuffer.writeInt16 cast NetworkMessageType.Ping
 		sendBuffer.writeFloat64 pingTime
@@ -1282,13 +1282,13 @@ transient unit Network
 			startTime = Math.round(now - pingPongTime/2 - timeSinceStart)
 			log "New fastest pingPongTime", c.userId, pongCount, pingPongTime, startTime
 		else
-			log c.userId, pongCount, pingPongTime, startTime
+			log c.userId, pongCount, pingPongTime, c.fastestPingPongTime, startTime
 			
 		pongCount++
 		lastPingPongTime = pingPongTime
 		
 		// If we haven't started the  connection yet, start after the 15th ping
-		if mode == Ping and pongCount >= 15 and startTime
+		if mode == Ping and pongCount >= 15 and c.fastestPingPongTime < 1000
 			for connections
 				if .state == PingPong
 					let user = Input.internalUsers[.userId]
