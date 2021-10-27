@@ -130,6 +130,26 @@ Object ImageObject
 	tick
 		drawImage image, position, scale, alpha, visibleFor
 		
+Object Button
+	Image image = null               // The image of the button
+    text = ""                        // The text of the button
+    float2 position = {}             // The position to draw to
+    Color textColor = null           // The color of the text
+    frame = 0                        // The frame of the image
+    scale = 1.0                      // Scale the image by this factor
+    fontSize = 18                    // The font size in pixels   
+    touchMargin = float2(16,16)      // The margin around the button within which it is touchable
+    textOffset = float2()
+    showTouchArea = false            // Show the area within which the button is touchable
+    visibleFor = -1                  // Only this user will see the button
+    clickableBy = -1                 // Only this user can click the button
+    implicit layer = 0               // Higher layers are drawn in front of lower layers
+    alpha = 1.0                      // The opacity of the button 0: fully transpart, 1: fully visible)
+    void(Touch touch) onClick        // Execute this code when the user clicks the button
+	tick
+		drawButton image, text, position, textColor, frame, scale, fontSize, touchMargin, textOffset, showTouchArea, visibleFor, clickableBy, layer, alpha, onClick(touch)
+
+		
 Object Piece
 	const float2 stackOffset = {8,8}
 	const minSize = 75
