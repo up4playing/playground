@@ -721,6 +721,8 @@ transient unit Network
 			
 	internal saveLogs
 		let time = Time.current
+		// Ensure that current eventLog is added to the table even if we haven't processed a single frame
+		logTable += ",,,,,,,,,,,,,,,,,,,,,,,,"+eventLog
 		Platform.saveTextFile "{Platform.appName} {time.dayShortMonthNameYearString} {time.hourMinuteSecondString} v{Platform.version}.csv", logTable
 		Http.post "/saveLog/{gameId}/{roomId}/{userId}", logTable
 			log "save logs"
