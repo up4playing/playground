@@ -306,6 +306,8 @@ transient unit Network
 	
 	init
 		Platform.showDebugInfo = isLocalhost = Platform.url.contains("localhost")
+		// TEMP
+		Platform.showDebugInfo = true
 		
 	initDatabase
 		IndexedDB.start "up4playing", "snapshot", 5
@@ -601,6 +603,13 @@ transient unit Network
 			if c.state == Connected
 				let receiver = Input.internalUsers[c.userId]
 				let checksumFor = uncertainFrame>1 ? uncertainFrame-1 : frame-1
+				
+				// TEMP for debugging
+				if receiver.acknowledgedPos > localPlayer.inputs.writePos
+					errorMessage = "ack TOO LARGE!!! {receiver.acknowledgedPos} writePos:{localPlayer.inputs.writePos}"
+					log errorMessage
+					Platform.debugger
+				
 				sendTickMessage
 					to: c
 					inputFrame: nextInputFrame-1     // You got all inputs up to and including this frame
@@ -1210,7 +1219,9 @@ transient unit Network
 			
 			// TEMP for testing
 			if(sender.inputs.writePos != writeStart + length)
-				Platform.alert("expected write pos:{writeStart + length} actual:{sender.inputs.writePos}")
+				errorMessage = "expected write pos:{writeStart + length} actual:{sender.inputs.writePos} writeStart:{writeStart} length:{length}"
+				log errorMessage
+				Platform.debugger
 			
 			receivedFrames = getReceivedInputFrames
 	
@@ -1251,6 +1262,12 @@ transient unit Network
 			let masterUserId = Input.internalUsers.min.id where.state != Disconnected or .id == userId
 			if masterUserId != userId
 				let c = connections.find.userId == masterUserId
+				
+				// TEMP: Log users
+				string users
+				for Input.internalUsers: users +="(id:{.id},state:{.state})"
+				log userId, masterUserId, users, c.state
+				
 				sendPingMessage c, currentTime
 				nextPingTime = currentTime + 1000
 		
