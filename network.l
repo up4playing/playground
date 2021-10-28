@@ -366,9 +366,10 @@ transient unit Network
 		// We always recreating users, because developers might have added fields to NetworkUser or Touch
 		// By the time we call startApp, all users need to exist
 		Input.users.clear
+		Input.usersById.clear
 		for i, internalUser -> Input.internalUsers
 			NetworkUser user = {id:.id, index:i}
-			internalUser.user = user
+			Input.usersById[.id] = user
 			Input.users.add user
 			
 		// Reset read pos to replay inputs from the beginning
@@ -1364,12 +1365,12 @@ transient unit Network
 		el.srcObject = stream
 		return el
 		
-	private js void removeVideoElement: int userId
+	js void removeVideoElement: int userId
 		let internalUser = Input_internalUsers[userId];
 		if(internalUser?.videoElement) internalUser.videoElement.remove()
 			
 	setUserVideoAndColor: int userId = 0, float2 pos = {}, float width = 440, Color color = null
-		let user = Input.internalUsers[userId]?.user
+		let user = Input.usersById[userId]
 		if !user: return
 		user.videoPosition = pos
 		user.videoWidth = width
