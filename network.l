@@ -279,6 +279,8 @@ transient unit Network
 	
 	private object localVideoStream = null
 	private object localVideoElement = null
+	private float2 localVideoPos
+	private float localVideoWidth = 440
 	
 	private float startTime
 	private int startInputFrame
@@ -307,8 +309,6 @@ transient unit Network
 	
 	init
 		Platform.showDebugInfo = isLocalhost = Platform.url.contains("localhost")
-		// TEMP
-		Platform.showDebugInfo = true
 		
 	initDatabase
 		IndexedDB.start "up4playing", "snapshot", 5
@@ -1371,10 +1371,14 @@ transient unit Network
 			
 	setUserVideoAndColor: int userId = 0, float2 pos = {}, float width = 440, Color color = null
 		let user = Input.usersById[userId]
-		if !user: return
-		user.videoPosition = pos
-		user.videoWidth = width
-		user.color = color
+			user.videoPosition = pos
+			user.videoWidth = width
+			user.color = color
+			
+	internal setLocalVideo: float2 pos={}, float width = 440
+		// Set position and size of local video before we connected
+		localVideoPos = pos
+		localVideoWidth = width
 		
 	internal js void updateVideoScreen
 		if(Network_mode == 2/*Local*/ || Network_isLocalhost) {
@@ -1383,8 +1387,8 @@ transient unit Network
 					graphics_drawImage(Image_VideoScreen, user.videoPosition, 0, user.videoWidth/440, -1, 1000000, 1.0)
 				}
 			}
-		}
-		else {
+		} else if(Input_users.length > 0) {
+			// Set position and size of videos
 			for(let user of Input_users) {
 				if(user) {
 					let internetUser = Input_internalUsers[user.id];
@@ -1401,6 +1405,16 @@ transient unit Network
 					}
 				}
 			}
+		} else if(Network_localVideoElement) {
+			// Set position and size of local video before we connected
+			let pixelPos = Input_logicalToPixelPosition(Network_localVideoPos)
+			let pixelSizeX = Network_localVideoWidth*graphics_totalMatrix.m0/Platform_pixelRatio
+			let pixelSizeY = (Network_localVideoWidth*3/4)*graphics_totalMatrix.m3/Platform_pixelRatio
+			Network_localVideoElement.style.left = (pixelPos.x-pixelSizeX/2)+"px"
+			Network_localVideoElement.style.top = (pixelPos.y-pixelSizeY/2)+"px"
+			Network_localVideoElement.style.width = pixelSizeX+"px"
+			Network_localVideoElement.style.height = pixelSizeY+"px"
+			Network_localVideoElement.style.visibility = "visible"
 		}
 		
 	internal drawFingers
