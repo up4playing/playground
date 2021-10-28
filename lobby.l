@@ -13,4 +13,9 @@ unit lobby
 		else
 			Network.setLocalVideo({0,-50}, 1200)
 			
+		if Network.mode == Ping
+			drawText "Connecting...", {0,450}
+		else
+		if Network.mode == Connected
+			drawButton Button, "Start", {0, 450} onClick: Platform.requestFullscreen; Network.startApp
 		// drawButton Button, "Save Logs", {0, 485} onClick: Network.saveLogs
