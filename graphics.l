@@ -272,7 +272,7 @@ transient global unit graphics
 		code()
 		currentFont = prev
 		return currentFont
-	private Font currentFont = {"Arial"}
+	private Font currentFont = OpenSans
 	
 	// The default font size for all draw operations
 	fontSize
