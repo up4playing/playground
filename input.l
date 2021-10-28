@@ -46,6 +46,7 @@ class NetworkUser
 	float2 videoPosition = {}
 	float videoWidth
 	bool enableTouch = true
+	bool isReady
 	internal int[] connectedTo
 
 	internal clearEvents
