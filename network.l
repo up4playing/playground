@@ -1,5 +1,5 @@
 enum NetworkMessageType: Tick, Ping, Pong, OwnInputsAfterReconnect
-enum ConnectionState: Disconnected, Connecting, Reconnecting, PingPong, Connected
+enum ConnectionState: Disconnected, Connecting, Reconnecting, PingPong, Connected, Myself
 
 transient class Connection
 	int userId
@@ -263,7 +263,8 @@ transient unit Network
 	private float lastNetworkFrame, lastAnimationFrame, drawTime, tickTime, restoreTime, replayTime, saveTime
 	private int replayFrames, checkedChecksums
 	private string connectionType
-	private float lastPingPongTime = 0
+	private float lastPingPongTime
+	private InternalUser master
 	
 	internal const targetFps = 30
 	private const bufferFrames = 1
@@ -490,7 +491,7 @@ transient unit Network
 				
 				// Debug string
 				if Platform.showDebugInfo
-					debugString = "v{Platform.version} ct:{connectionType} st:{startTime%1000} w:"
+					debugString = "v{Platform.version} ct:{connectionType} m:{master ? master.id : -1} w:"
 					for user -> Input.internalUsers
 						if user
 							debugString += " " + user.inputs.writePos.format(grouping:true)
@@ -731,7 +732,7 @@ transient unit Network
 	internal saveLogs
 		let time = Time.current
 		// Ensure that current eventLog is added to the table even if we haven't processed a single frame
-		logTable += ",,,,,,,,,,,,,,,,,,,,,,,,"+eventLog
+		logTable += ",,,,,,,,,,,,,,,,,,,,,,,,\"{eventLog.trim}\""
 		Platform.saveTextFile "{Platform.appName} {time.dayShortMonthNameYearString} {time.hourMinuteSecondString} v{Platform.version}.csv", logTable
 		Http.post "/saveLog/{gameId}/{roomId}/{userId}", logTable
 			log "save logs"
@@ -932,7 +933,7 @@ transient unit Network
 			
 			roomId = message.roomId
 			userId = message.userId
-			Input.internalUsers[message.userId] = {id:userId, local:true, videoElement:localVideoElement}
+			Input.internalUsers[message.userId] = {id:userId, local:true, state:Myself, videoElement:localVideoElement}
 			Platform.setLocalStorageObject "room"+roomId, RoomInfo(currentTime, userId)
 			
 			if message.version != Platform.version
@@ -1259,17 +1260,16 @@ transient unit Network
 		
 	private ping
 		if (mode == Ping or mode == Connected) and currentTime >= nextPingTime
-			let masterUserId = Input.internalUsers.min.id where.state != Disconnected or .id == userId
-			if masterUserId != userId
-				let c = connections.find.userId == masterUserId
+			master = Input.internalUsers.withMin.id where.state == Connected or .state == PingPong or .local
+			if master and (master.state == Connected or master.state == PingPong)
+				let c = connections.find.userId == master.id
+				sendPingMessage c, currentTime
+				nextPingTime = currentTime + 1000
 				
 				// TEMP: Log users
 				string users
-				for Input.internalUsers: users +="(id:{.id},state:{.state})"
-				log userId, masterUserId, users, c.state
-				
-				sendPingMessage c, currentTime
-				nextPingTime = currentTime + 1000
+				for Input.internalUsers: users +="(id:{.id},state:{.state},local:{.local})"
+				log userId, master.id, users, c.state
 		
 	private void sendPingMessage: Connection c, float pingTime
 		sendBuffer.reset
@@ -1306,8 +1306,8 @@ transient unit Network
 		pongCount++
 		lastPingPongTime = pingPongTime
 		
-		// If we haven't started the  connection yet, start after the 15th ping
-		if mode == Ping and pongCount >= 15 and c.fastestPingPongTime < 1000
+		// If we haven't started the  connection yet, start after the 20th ping
+		if mode == Ping and pongCount >= 20 and c.fastestPingPongTime < 1000
 			for connections
 				if .state == PingPong
 					let user = Input.internalUsers[.userId]
@@ -1333,6 +1333,7 @@ transient unit Network
 				Network_error = "Can't access webcam. Please make sure it's not used by another application."
 			}
 			Network_errorMessage = error.message
+			throw error
 		}
 			
 	private js void setupRemoteVideo: int partnerId, object peerConnection
