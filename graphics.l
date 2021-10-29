@@ -450,12 +450,13 @@ transient global unit graphics
 		                    scale = 1.0                 // Scale the image by this factor
 		                    fontSize = 18               // The font size in pixels
 		                    touchMargin = float2(16,16) // The margin around the button within which it is touchable
+		                    textOffset = float2(0,-2)
 		                    showTouchArea = false       // Show the area within which the button is touchable
 		                    visibleFor = -1             // Only this user will see the button
 		                    implicit layer = 0          // Higher layers are drawn in front of lower layers
 		                    alpha = 1.0                 // The opacity of the button (0: fully transpart, 1: fully visible)
 		if isVisibleFor(visibleFor)
-			if text:  drawText text, position, fontSize, textColor, visibleFor, layer, alpha
+			if text:  drawText text, position+textOffset, fontSize, textColor, visibleFor, layer, alpha
 			if image: drawImage image, position, frame, scale, visibleFor, layer, alpha
 			
 	// Draws a button that consists of an image and a text
@@ -467,7 +468,7 @@ transient global unit graphics
 		                    scale = 1.0                      // Scale the image by this factor
 		                    fontSize = 18                    // The font size in pixels   
 		                    touchMargin = float2(16,16)      // The margin around the button within which it is touchable
-		                    textOffset = float2()
+		                    textOffset = float2(0,-2)
 		                    showTouchArea = false            // Show the area within which the button is touchable
 		                    visibleFor = -1                  // Only this user will see the button
 		                    clickableBy = -1                 // Only this user can click the button
