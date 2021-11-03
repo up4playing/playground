@@ -311,6 +311,12 @@ struct IntVector2
 		let x = x - value.x
 		let y = y - value.y
 		return Math.sqrt(x*x + y*y)
+		
+	// The distance to another vector
+	distanceTo: Vector2 value // The second vector
+		let x = x - value.x
+		let y = y - value.y
+		return Math.sqrt(x*x + y*y)
 
 	// The distance to another vector along axes at right angles
 	manhattanDistanceTo: IntVector2 value // The second vector
