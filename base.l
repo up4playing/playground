@@ -183,6 +183,64 @@ enum SortingOrder: Ascending, Descending
 	
 // A data container that grows in size as needed
 class List<T>
+	// Execute code for each item in the list
+	inline js void each(void(T a) code)
+		for(let a of this) code()
+					
+	// Execute code for each item in the list in reverse order
+	inline js void eachBackwards(void(T a) code)
+		for(let i=this.length-1; i>=0; i--) {let a=this[i]; code()}
+					
+	// Adds an item to the end of the list
+	inline js void add: T item // The item to add
+		this.push(item)
+		
+	void add: T item
+		      int maxLength
+		add item
+		if length > maxLength: removeAt 0
+			
+	inline js void insert: T item // The item to add
+		                   int index
+		this.splice(index, 0, item)
+		
+	// Removes an item from the list
+	js void remove: T item // The item to remove
+		var index = this.indexOf(item);
+		if(index > -1) this.splice(index, 1);
+			
+	// Removes the item at the given index from the list
+	inline js void removeAt: int index // The index of the item to remove
+		this.splice(index, 1)
+			
+	// Removes the item at the given index from the list
+	inline js void removeRange: int index // The index of the first item to remove
+		                        int count // The number of items to remove
+		this.splice(index, count)
+			
+	removeFirstWhere: bool(T a) condition // The condition to check
+		for i, item -> this
+			if condition(item)
+				removeAt i
+				return item
+		return null
+		
+	removeAllWhere: bool(T a) condition // The condition to check
+		for i, item <- this
+			if condition(item)
+				removeAt i
+		return null
+		
+	// Adds an item to the list if it isn't already in there
+	inline js void ensure: T item // The item to add
+		if(this.indexOf(item) == -1) this.push(item)
+		
+	inline js void addRange: T[] items
+		this.push(...items)
+			
+	inline js bool contains: T item
+		(this.indexOf(item) != -1)
+		
 	// Gets an item from the list
 	inline js T get: int index // The index of the item to get
 		this[index]
@@ -195,29 +253,6 @@ class List<T>
 	inline js T getOrSet: int index      
 		                  T initalValue
 		this[index] || (this[index] = initalValue)
-		
-	// Adds an item to the end of the list
-	inline js void add: T item // The item to add
-		this.push(item)
-		
-	void add: T item
-		      int maxLength
-		add item
-		if length > maxLength: removeAt 0
-			
-	// Adds an item to the list if it isn't already in there
-	inline js void ensure: T item // The item to add
-		if(this.indexOf(item) == -1) this.push(item)
-		
-	inline js void addRange: T[] items
-		this.push(...items)
-			
-	inline js void insert: T item // The item to add
-		                   int index
-		this.splice(index, 0, item)
-		
-	inline js bool contains: T item
-		(this.indexOf(item) != -1)
 		
 	inline js int indexOf: T item
 		this.indexOf(item)
@@ -257,14 +292,6 @@ class List<T>
 	// Removes all items from the list
 	inline js void clear := this.length = 0
 	
-	// Execute code for each item in the list
-	inline js void each(void(T a) code)
-		for(let a of this) code()
-					
-	// Execute code for each item in the list in reverse order
-	inline js void eachBackwards(void(T a) code)
-		for(let i=this.length-1; i>=0; i--) {let a=this[i]; code()}
-					
 	js string toString()
 		let result = "";
 		for(let item of this) {
@@ -312,33 +339,6 @@ class List<T>
 		if(closestIndex != -1) this.removeAt(closestIndex)
 		return closestItem
 			
-	// Removes an item from the list
-	js void remove: T item // The item to remove
-		var index = this.indexOf(item);
-		if(index > -1) this.splice(index, 1);
-			
-	// Removes the item at the given index from the list
-	inline js void removeAt: int index // The index of the item to remove
-		this.splice(index, 1)
-			
-	// Removes the item at the given index from the list
-	inline js void removeRange: int index // The index of the first item to remove
-		                        int count // The number of items to remove
-		this.splice(index, count)
-			
-	removeFirstWhere: bool(T a) condition // The condition to check
-		for i, item -> this
-			if condition(item)
-				removeAt i
-				return item
-		return null
-		
-	removeAllWhere: bool(T a) condition // The condition to check
-		for i, item <- this
-			if condition(item)
-				removeAt i
-		return null
-		
 	// Returns true if the list is not null and not empty	
 	inline js bool toBool := (this != null && this.length != 0) 
 		
