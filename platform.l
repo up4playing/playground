@@ -301,6 +301,9 @@ transient unit Platform
 		                     void() then
 		setTimeout(then, delay)
 		
+	inline js void copyToClipboard(string text)
+		navigator.clipboard.writeText(text)
+		
 unit File
 	js string readPartial: string filename, int offset=0, int length, void(string result) callback
 		let fs = require("fs")

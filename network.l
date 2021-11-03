@@ -25,6 +25,18 @@ transient unit Snapshot
 	inline js void serialize(Buffer buffer) serialize(buffer)
 	inline js void deserialize(Buffer buffer) deserialize(buffer)
 		
+	js string toBase64: object value
+		let buffer = new Buffer(null, 1024, 0, 0);
+		init_serialize();
+		value.serialize(buffer);
+		return btoa(String.fromCharCode(...new Uint8Array(buffer.buffer, 0, buffer.writePos)));	
+		
+	js void fromBase64: object value, string base64String
+		let bytes = Uint8Array.from(atob(base64String), c => c.charCodeAt(0))
+		let buffer = new Buffer(bytes.buffer,0,0,0);
+		init_deserialize();
+		value.deserialize(buffer);
+				
 	Buffer save
 		Buffer buffer
 		serialize(buffer)
