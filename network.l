@@ -1,5 +1,5 @@
 enum NetworkMessageType: Tick, Ping, Pong, OwnInputsAfterReconnect
-enum ConnectionState: Disconnected, Connecting, Reconnecting, PingPong, Connected
+enum ConnectionState: Disconnected, Connecting, Reconnecting, PingPong, Connected, Myself
 
 transient class Connection
 	int userId
@@ -275,7 +275,8 @@ transient unit Network
 	private float lastNetworkFrame, lastAnimationFrame, drawTime, tickTime, restoreTime, replayTime, saveTime
 	private int replayFrames, checkedChecksums
 	private string connectionType
-	private float lastPingPongTime = 0
+	private float lastPingPongTime
+	private InternalUser master
 	
 	internal const targetFps = 30
 	private const bufferFrames = 1
@@ -290,6 +291,8 @@ transient unit Network
 	
 	private object localVideoStream = null
 	private object localVideoElement = null
+	private float2 localVideoPos
+	private float localVideoWidth = 440
 	
 	private float startTime
 	private int startInputFrame
@@ -318,8 +321,6 @@ transient unit Network
 	
 	init
 		Platform.showDebugInfo = isLocalhost = Platform.url.contains("localhost")
-		// TEMP
-		Platform.showDebugInfo = true
 		
 	initDatabase
 		IndexedDB.start "up4playing", "snapshot", 5
@@ -377,13 +378,14 @@ transient unit Network
 		// We always recreating users, because developers might have added fields to NetworkUser or Touch
 		// By the time we call startApp, all users need to exist
 		Input.users.clear
+		Input.usersById.clear
 		for i, internalUser -> Input.internalUsers
 			NetworkUser user = {id:.id, index:i}
-			internalUser.user = user
+			Input.usersById[.id] = user
 			Input.users.add user
 			
 		// Reset read pos to replay inputs from the beginning
-		for Input.internalUsers: inputs.readPos = 0
+		Input.internalUsers.each.inputs.readPos = 0
 			
 		Math.randomValueIndex = 0
 		frame = 0
@@ -502,7 +504,7 @@ transient unit Network
 				
 				// Debug string
 				if Platform.showDebugInfo
-					debugString = "v{Platform.version} ct:{connectionType} st:{startTime%1000} w:"
+					debugString = "v{Platform.version} ct:{connectionType} m:{master ? master.id : -1} w:"
 					for user -> Input.internalUsers
 						if user
 							debugString += " " + user.inputs.writePos.format(grouping:true)
@@ -643,7 +645,7 @@ transient unit Network
 	private saveState
 		if mode != Connected: return
 		if frame == certainFrame+1
-			for Input.internalUsers: uncertainReadPos = inputs.readPos
+			for Input.internalUsers: .uncertainReadPos = .inputs.readPos
 			uncertainFrame = frame
 			saveTime = Time.measure
 				Snapshot.serialize commonState
@@ -657,7 +659,7 @@ transient unit Network
 		if mode != Connected or Input.internalUsers.length == 1: return
 		if uncertainFrame != -1 and certainFrame >= uncertainFrame
 			// Restore state
-			for Input.internalUsers: inputs.readPos = uncertainReadPos
+			for Input.internalUsers: .inputs.readPos = .uncertainReadPos
 			restoreTime = Time.measure
 				Snapshot.deserialize commonState
 			parseLog +=  " restore u:{uncertainFrame} c:{Framework.checksum}"
@@ -743,7 +745,7 @@ transient unit Network
 	internal saveLogs
 		let time = Time.current
 		// Ensure that current eventLog is added to the table even if we haven't processed a single frame
-		logTable += ",,,,,,,,,,,,,,,,,,,,,,,,"+eventLog
+		logTable += ",,,,,,,,,,,,,,,,,,,,,,,,\"{eventLog.trim}\""
 		Platform.saveTextFile "{Platform.appName} {time.dayShortMonthNameYearString} {time.hourMinuteSecondString} v{Platform.version}.csv", logTable
 		Http.post "/saveLog/{gameId}/{roomId}/{userId}", logTable
 			log "save logs"
@@ -944,7 +946,7 @@ transient unit Network
 			
 			roomId = message.roomId
 			userId = message.userId
-			Input.internalUsers[message.userId] = {id:userId, local:true, videoElement:localVideoElement}
+			Input.internalUsers[message.userId] = {id:userId, local:true, state:Myself, videoElement:localVideoElement}
 			Platform.setLocalStorageObject "room"+roomId, RoomInfo(currentTime, userId)
 			
 			if message.version != Platform.version
@@ -1271,17 +1273,16 @@ transient unit Network
 		
 	private ping
 		if (mode == Ping or mode == Connected) and currentTime >= nextPingTime
-			let masterUserId = Input.internalUsers.min.id where.state != Disconnected or .id == userId
-			if masterUserId != userId
-				let c = connections.find.userId == masterUserId
+			master = Input.internalUsers.withMin.id where.state == Connected or .state == PingPong or .local
+			if master and (master.state == Connected or master.state == PingPong)
+				let c = connections.find.userId == master.id
+				sendPingMessage c, currentTime
+				nextPingTime = currentTime + 1000
 				
 				// TEMP: Log users
 				string users
-				for Input.internalUsers: users +="(id:{.id},state:{.state})"
-				log userId, masterUserId, users, c.state
-				
-				sendPingMessage c, currentTime
-				nextPingTime = currentTime + 1000
+				for Input.internalUsers: users +="(id:{.id},state:{.state},local:{.local})"
+				log userId, master.id, users, c.state
 		
 	private void sendPingMessage: Connection c, float pingTime
 		sendBuffer.reset
@@ -1318,8 +1319,8 @@ transient unit Network
 		pongCount++
 		lastPingPongTime = pingPongTime
 		
-		// If we haven't started the  connection yet, start after the 15th ping
-		if mode == Ping and pongCount >= 15 and c.fastestPingPongTime < 1000
+		// If we haven't started the  connection yet, start after the 20th ping
+		if mode == Ping and pongCount >= 20 and c.fastestPingPongTime < 1000
 			for connections
 				if .state == PingPong
 					let user = Input.internalUsers[.userId]
@@ -1345,6 +1346,7 @@ transient unit Network
 				Network_error = "Can't access webcam. Please make sure it's not used by another application."
 			}
 			Network_errorMessage = error.message
+			throw error
 		}
 			
 	private js void setupRemoteVideo: int partnerId, object peerConnection
@@ -1375,16 +1377,20 @@ transient unit Network
 		el.srcObject = stream
 		return el
 		
-	private js void removeVideoElement: int userId
+	js void removeVideoElement: int userId
 		let internalUser = Input_internalUsers[userId];
 		if(internalUser?.videoElement) internalUser.videoElement.remove()
 			
 	setUserVideoAndColor: int userId = 0, float2 pos = {}, float width = 440, Color color = null
-		let user = Input.internalUsers[userId]?.user
-		if !user: return
-		user.videoPosition = pos
-		user.videoWidth = width
-		user.color = color
+		let user = Input.usersById[userId]
+			user.videoPosition = pos
+			user.videoWidth = width
+			user.color = color
+			
+	internal setLocalVideo: float2 pos={}, float width = 440
+		// Set position and size of local video before we connected
+		localVideoPos = pos
+		localVideoWidth = width
 		
 	internal js void updateVideoScreen
 		if(Network_mode == 2/*Local*/ || Network_isLocalhost) {
@@ -1393,8 +1399,8 @@ transient unit Network
 					graphics_drawImage(Image_VideoScreen, user.videoPosition, 0, user.videoWidth/440, -1, 1000000, 1.0)
 				}
 			}
-		}
-		else {
+		} else if(Input_users.length > 0) {
+			// Set position and size of videos
 			for(let user of Input_users) {
 				if(user) {
 					let internetUser = Input_internalUsers[user.id];
@@ -1411,6 +1417,16 @@ transient unit Network
 					}
 				}
 			}
+		} else if(Network_localVideoElement) {
+			// Set position and size of local video before we connected
+			let pixelPos = Input_logicalToPixelPosition(Network_localVideoPos)
+			let pixelSizeX = Network_localVideoWidth*graphics_totalMatrix.m0/Platform_pixelRatio
+			let pixelSizeY = (Network_localVideoWidth*3/4)*graphics_totalMatrix.m3/Platform_pixelRatio
+			Network_localVideoElement.style.left = (pixelPos.x-pixelSizeX/2)+"px"
+			Network_localVideoElement.style.top = (pixelPos.y-pixelSizeY/2)+"px"
+			Network_localVideoElement.style.width = pixelSizeX+"px"
+			Network_localVideoElement.style.height = pixelSizeY+"px"
+			Network_localVideoElement.style.visibility = "visible"
 		}
 		
 	internal drawFingers
