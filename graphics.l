@@ -112,7 +112,7 @@ transient global unit graphics
 		
 	private drawItems
 		items.sort b.layer - a.layer
-		for <- items: draw	
+		items.eachBackwards.draw
 				
 	private isVisibleFor: int user
 		if(Platform.fastForward) return false

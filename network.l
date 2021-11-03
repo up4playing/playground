@@ -373,7 +373,7 @@ transient unit Network
 			Input.users.add user
 			
 		// Reset read pos to replay inputs from the beginning
-		for Input.internalUsers: inputs.readPos = 0
+		Input.internalUsers.each.inputs.readPos = 0
 			
 		Math.randomValueIndex = 0
 		frame = 0
@@ -633,7 +633,7 @@ transient unit Network
 	private saveState
 		if mode != Connected: return
 		if frame == certainFrame+1
-			for Input.internalUsers: uncertainReadPos = inputs.readPos
+			for Input.internalUsers: .uncertainReadPos = .inputs.readPos
 			uncertainFrame = frame
 			saveTime = Time.measure
 				Snapshot.serialize commonState
@@ -647,7 +647,7 @@ transient unit Network
 		if mode != Connected or Input.internalUsers.length == 1: return
 		if uncertainFrame != -1 and certainFrame >= uncertainFrame
 			// Restore state
-			for Input.internalUsers: inputs.readPos = uncertainReadPos
+			for Input.internalUsers: .inputs.readPos = .uncertainReadPos
 			restoreTime = Time.measure
 				Snapshot.deserialize commonState
 			parseLog +=  " restore u:{uncertainFrame} c:{Framework.checksum}"
