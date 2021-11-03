@@ -26,14 +26,14 @@ transient unit Platform
 	public inline js int appName := appName
 	public inline js int userAgent := navigator.userAgent.replace(/,/g," ")
 	
-	public float2 referenceSize = {1920, 1080}
+	public Vector2 referenceSize = {1920, 1080}
 	public ScaleMode scaleMode = Auto, effectiveScaleMode
 	public AnchorMode anchor = Center
 	
 	private object canvas = null
 	internal object context = null
 	visible bool isDebug
-	visible float2 pixelSize, size
+	visible Vector2 pixelSize, size
 	visible float pixelRatio
 	internal Matrix2D baseMatrix
 	internal bool engineStarted
@@ -73,7 +73,7 @@ transient unit Platform
 		Platform_canvas = document.getElementById("canvas");
 		Platform_context = Platform_canvas.getContext("2d");
 		Platform_pixelRatio = 1;
-		Platform_pixelSize = new float2(window.innerWidth*Platform_pixelRatio, window.innerHeight*Platform_pixelRatio, null);
+		Platform_pixelSize = new Vector2(window.innerWidth*Platform_pixelRatio, window.innerHeight*Platform_pixelRatio, null);
 		Platform_canvas.style.width = window.innerWidth + "px";
 		Platform_canvas.style.height = window.innerHeight + "px";
 		Platform_canvas.width = Platform_pixelSize.x;
@@ -85,7 +85,7 @@ transient unit Platform
 	// Update the base matrix
 	// Called when resizing and after calling init() because we could change the scaleMode and anchor in App.init
 	private updateBaseMatrix
-		float2 ratio = {pixelSize.x / referenceSize.x, pixelSize.y / referenceSize.y}
+		Vector2 ratio = {pixelSize.x / referenceSize.x, pixelSize.y / referenceSize.y}
 		float scale
 		if scaleMode == Auto
 			if ratio.x < ratio.y: effectiveScaleMode = FixedWidth;  scale = ratio.x
@@ -148,11 +148,11 @@ transient unit Platform
 	
 	private goToFrame(int targetFrame) Network.goToFrame(targetFrame)
 		
-	private float2 touchUpPos
+	private Vector2 touchUpPos
 	private int locationIndex
 	private SourceCodeLocation[] locations
 	
-	internal handleSlide: InputType inputType, int id, float2 pixelPos, float2 referencePos	
+	internal handleSlide: InputType inputType, int id, Vector2 pixelPos, Vector2 referencePos	
 		if Platform.mode == Pointer or Platform.mode == Slide
 			int row, column
 			string file
@@ -180,7 +180,7 @@ transient unit Platform
 						file = selectedLocation.file
 			sendTouchToEditor id, referencePos, cast inputType, row, column, file
 			
-	private js void sendTouchToEditor: int id, float2 pos, TouchPhase phase, int row, int column, string file
+	private js void sendTouchToEditor: int id, Vector2 pos, TouchPhase phase, int row, int column, string file
 		_sendToEditor({type:"touch", id, x:pos.x, y:pos.y, phase, row, column, file})
 	
 	internal js void sendFrame: int frame, int frames

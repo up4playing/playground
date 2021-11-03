@@ -10,7 +10,7 @@ unit lobby
 		int count = Input.users.length
 			float width = count<2 ? 1200.0 : 1920/count, offset = -width*(count-1)/2
 			for Input.users
-				float2 pos = {offset+width*.index, -50}
+				Vector2 pos = {offset+width*.index, -50}
 				Network.setUserVideoAndColor(.id, pos, width)
 				if .isReady
 					drawImage ThumbsUp, pos+{-74,width*3/8+36}

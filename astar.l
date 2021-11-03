@@ -1,5 +1,5 @@
 class AStarNode
-	int2 pos
+	IntVector2 pos
 	f = 0
 	g = 0
 	h = 0
@@ -10,11 +10,11 @@ class AStarNode
 
 unit astar
 	// Finds the shorted path between two position using the astar
-	AStarNode[] search: int2 startPos
-		                int2 endPos
-		                int2 size
+	AStarNode[] search: IntVector2 startPos
+		                IntVector2 endPos
+		                IntVector2 size
 		                AStarNode[](AStarNode[][] grid, int x, int y) getNeighbors
-		                int(int2 a, int2 b) heuristic
+		                int(IntVector2 a, IntVector2 b) heuristic
 		
 		AStarNode[][] grid
 		for x -> size.x

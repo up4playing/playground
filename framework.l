@@ -11,11 +11,11 @@ unit Framework
 		objects.each.update
 		Input.onTouchUp:  deselect touch.userId
 		
-	isVisibleFor: float2 pos, int userId
+	isVisibleFor: Vector2 pos, int userId
 		let board = getBoardAt pos
 		return !board or board.isVisibleFor userId
 			
-	getBoardAt: float2 pos
+	getBoardAt: Vector2 pos
 		for object -> Framework.objects
 			if object.type == Board
 				Board b = cast object
@@ -42,7 +42,7 @@ unit Framework
 enum Side: Front, Back
 		
 class Object
-	float2 position
+	Vector2 position
 	float scale = 1
 	float alpha = 1
 	int visibleFor = -1
@@ -59,14 +59,14 @@ class Object
 	remove
 		siblings.remove this
 		
-	moveTo: float2 pos
+	moveTo: Vector2 pos
 		    int duration = 1000
 		    int delay = 0
 		let delta = pos - position
 		fx.add MoveEffect startTime:Time.now+delay, duration, this, startValue:position, delta
 		return this
 		
-	moveTo: float2 pos
+	moveTo: Vector2 pos
 		    float speed = 1
 		    int delay = 0
 		let delta = pos - position
@@ -101,7 +101,7 @@ class Object
 		return this
 		
 Object RectangleObject
-	float2 size
+	Vector2 size
 	Color color = White
 	tick
 		drawRectangle position, size, color, visibleFor
@@ -133,13 +133,13 @@ Object ImageObject
 Object Button
 	Image image = null               // The image of the button
     text = ""                        // The text of the button
-    float2 position = {}             // The position to draw to
+    Vector2 position = {}             // The position to draw to
     Color textColor = null           // The color of the text
     frame = 0                        // The frame of the image
     scale = 1.0                      // Scale the image by this factor
     fontSize = 18                    // The font size in pixels   
-    touchMargin = float2(16,16)      // The margin around the button within which it is touchable
-    textOffset = float2()
+    touchMargin = Vector2(16,16)      // The margin around the button within which it is touchable
+    textOffset = Vector2()
     showTouchArea = false            // Show the area within which the button is touchable
     visibleFor = -1                  // Only this user will see the button
     clickableBy = -1                 // Only this user can click the button
@@ -151,7 +151,7 @@ Object Button
 
 		
 Object Piece
-	const float2 stackOffset = {8,8}
+	const Vector2 stackOffset = {8,8}
 	const minSize = 75
 	
 	Image image = null
@@ -168,7 +168,7 @@ Object Piece
 	
 	// Move
 	private Touch moveTouch = null
-	private float2 touchOffset
+	private Vector2 touchOffset
 	private bool isBeingMoved
 	private Object overStackable = null
 	
@@ -178,7 +178,7 @@ Object Piece
 	private float targetAngle
 	private bool rotatedOverThreshold
 	
-	visible float2 size
+	visible Vector2 size
 	public Board board = null, nextBoard = null
 	private int interactingUserId
 	
@@ -220,7 +220,7 @@ Object Piece
 				moveTouch = null
 		
 		// Rotate	
-		float2 iconPos = rotatable ? {(image.size.x+image.size.y)/4, (image.size.x+image.size.y)/4} : image.size/2
+		Vector2 iconPos = rotatable ? {(image.size.x+image.size.y)/4, (image.size.x+image.size.y)/4} : image.size/2
 		if Framework.selectedObjects.contains(this) && rotatable
 			if !rotateTouch || !rotatedOverThreshold
 				drawButton rotateIcon, position:position+iconPos*{1,-1}*scale, touchMargin:{50,50}
@@ -253,7 +253,7 @@ Object Piece
 			else                            drawImage backImage, position, frame:frame%backImage.frames.length, scale, angle
 		
 	private checkBoardsWhileMoving: Touch touch
-		float2 pos = position
+		Vector2 pos = position
 		if board: pos = position * board.matrix
 		nextBoard = Framework.getBoardAt pos
 		
@@ -271,12 +271,12 @@ Piece Stack
 	Side sideWhenRemoving = Front
 	
 	private int visibleObjects
-	private float2 basePosition
+	private Vector2 basePosition
 	private int shownObjectCount
 	
 	stackable = true
 	
-	Stack: float2 position, Side side = Back
+	Stack: Vector2 position, Side side = Back
 		basePosition = position
 	
 	static create: Piece a, Piece b, Side side = Front
@@ -349,7 +349,7 @@ Piece Board
 		1,1.001,1.0020009999999997,1.0030030009999997,1.0040060040009995,1.0050100100050003,1.0060150200150053,1.0070210350350202,1.0080280560700552,1.009036084126125,1.0100451202102512,1.0110551653304611,1.0120662204957915,1.0130782867162873,1.0140913650030035,1.0151054563680064,1.0161205618243743,1.0171366823861985,1.0181538190685846,1.0191719728876532,
 		1.0201911448605405,1.021211336005401,1.0222325473414062,1.0232547798887477,1.0242780346686362,1.0253023127033047,1.0263276150160079,1.0273539426310239,1.0283812965736547,1.0294096778702282,1.0304390875480984,1.0314695266356464,1.032500996162282,1.033533497158444,1.0345670306556025,1.0356015976862578,1.036637199283944,1.0376738364832279,1.038711510319711,1.0397502218300305
 	]
-	Board: float2 size
+	Board: Vector2 size
 		this.size = size
 		
 	debugString
@@ -413,8 +413,8 @@ Piece Board
 	update
 		objects.each.update
 			
-	getSpotAt: float2 position, float2 threshold
-		float2 closestSpotPos = float2.none
+	getSpotAt: Vector2 position, Vector2 threshold
+		Vector2 closestSpotPos = Vector2.none
 		float minDistance = int.maxValue
 		for spot -> spots
 			let spotPos = spot.getClosestPoint position, this.position
@@ -426,16 +426,16 @@ Piece Board
 		return closestSpotPos
 		
 class Spot
-	float2 pos
-	getClosestPoint(float2 touchPos, float2 boardPos) := pos + boardPos
+	Vector2 pos
+	getClosestPoint(Vector2 touchPos, Vector2 boardPos) := pos + boardPos
 	
 Spot SpotGrid
-	float2 cellSize
-	getClosestPoint: float2 touchPos, float2 boardPos
+	Vector2 cellSize
+	getClosestPoint: Vector2 touchPos, Vector2 boardPos
 		return ((touchPos-boardPos)/cellSize).rounded*cellSize + boardPos
 		
 struct Particle
-	float2 pos, speed
+	Vector2 pos, speed
 	int frame
 	float angle
 	float scale = 1

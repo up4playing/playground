@@ -30,7 +30,7 @@ Effect FadeEffect
 		
 Effect MoveEffect
 	Object object
-	float2 startValue, delta
+	Vector2 startValue, delta
 	tick(float f) object.position = startValue + delta * f
 		
 Effect ScaleEffect

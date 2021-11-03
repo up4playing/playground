@@ -43,7 +43,7 @@ class NetworkUser
 	Color color = null
 	visible Touch[] touches
 	string textInput
-	float2 videoPosition = {}
+	Vector2 videoPosition = {}
 	float videoWidth
 	bool enableTouch = true
 	bool isReady
@@ -68,12 +68,12 @@ class Touch
 	int userId
 	TouchPhase phase
 	TouchType type
-	float2 referencePosition
-	float2 referenceStartPosition
-	float2 smoothPosition
+	Vector2 referencePosition
+	Vector2 referenceStartPosition
+	Vector2 smoothPosition
 	bool isDown
-	float2 position
-	float2 startPosition
+	Vector2 position
+	Vector2 startPosition
 	bool handled
 	
 	markAsHandled() handled = true
@@ -81,8 +81,8 @@ class Touch
 transient class WheelEvent
 	NetworkUser user
 	int delta
-	float2 referencePosition
-	float2 position
+	Vector2 referencePosition
+	Vector2 position
 	bool handled
 	
 	markAsHandled() handled = true
@@ -115,9 +115,9 @@ unit Input
 	internal init
 		initHandlers
 	
-	private js float2 logicalToPixelPosition: float2 pos
+	private js Vector2 logicalToPixelPosition: Vector2 pos
 		let p = pos.getTransformed(graphics_totalMatrix)
-		return new float2(p.x/Platform_pixelRatio, p.y/Platform_pixelRatio, null)
+		return new Vector2(p.x/Platform_pixelRatio, p.y/Platform_pixelRatio, null)
 
 	private js void initHandlers
 		window.onpointerdown = e => {
@@ -236,8 +236,8 @@ unit Input
 		if pointerType == "touch": touchType = 3; id = pointerId; else
 			                       touchType = 4
 		
-		float2 pixelPos = {x*Platform.pixelRatio, y*Platform.pixelRatio}
-		float2 referencePos = pixelPos.getRelativeTo(Platform.baseMatrix)
+		Vector2 pixelPos = {x*Platform.pixelRatio, y*Platform.pixelRatio}
+		Vector2 referencePos = pixelPos.getRelativeTo(Platform.baseMatrix)
 		Platform.handleSlide inputType, id, pixelPos, referencePos
 		
 		if Network.mode == None || Platform.mode != Record || Network.userId == -1: return
@@ -270,7 +270,7 @@ unit Input
 		let user = internalUsers[Network.userId], inputs = user.inputs
 		if !user.collectInputs: return
 		
-		float2 referencePos = {x*Platform.pixelRatio, y*Platform.pixelRatio}.getRelativeTo(Platform.baseMatrix)
+		Vector2 referencePos = {x*Platform.pixelRatio, y*Platform.pixelRatio}.getRelativeTo(Platform.baseMatrix)
 		inputs.writeInt32 user.inputFrame
 		inputs.writeUnsignedInt16 cast InputType.Wheel
 		inputs.writeInt16 Math.round(referencePos.x)
@@ -309,7 +309,7 @@ unit Input
 						if !user: Network.parseLog += " Error: user == null"
 						TouchType type = cast((value shiftRight 5) % 8)
 						int id = (value shiftRight 8) % 128
-						float2 touchPos = {inputs.readInt16, inputs.readInt16}
+						Vector2 touchPos = {inputs.readInt16, inputs.readInt16}
 						bool isSmoothPosition = !Network.smoothTouchPosition or isCertain or Network.userId == userId
 						Network.parseLog += " "+id
 						
@@ -340,7 +340,7 @@ unit Input
 								if isSmoothPosition: touch.smoothPosition = touchPos
 								Network.parseLog += " move {id} {touchPos} {type}"
 							else
-								touch = {id, userId, cast inputType, type, touchPos, referenceStartPosition:float2.none, touchPos, isDown:false}
+								touch = {id, userId, cast inputType, type, touchPos, referenceStartPosition:Vector2.none, touchPos, isDown:false}
 								user.touches.add touch
 								Network.parseLog += " move(new) {id} {touchPos} {type}"
 							internalUser.movingTouches.add touch
@@ -357,7 +357,7 @@ unit Input
 								if isSmoothPosition: touch.smoothPosition = touchPos
 								Network.parseLog += " up {id} {touchPos} {type}"
 							else
-								touch = {id, userId, cast inputType, type, touchPos, referenceStartPosition:float2.none, touchPos, isDown:false}
+								touch = {id, userId, cast inputType, type, touchPos, referenceStartPosition:Vector2.none, touchPos, isDown:false}
 								user.touches.add touch
 								Network.parseLog += " up(new) {id} {touchPos} {type}"
 							internalUser.upTouches.add touch
@@ -415,14 +415,14 @@ unit Input
 		for i, user -> users: .index = i
 				
 	// Executes code when the user touches or clicks within a given area
-	onTouchDownWithin: float2 position        // The center of the touch area
-		               float2 size            // The size of a rectangular touch area
+	onTouchDownWithin: Vector2 position        // The center of the touch area
+		               Vector2 size            // The size of a rectangular touch area
 		               void(Touch touch) code // The code to execute for each touch or click
 		               int userId = -1        // Only consider touches or clicks from this user  
 		               string cursor = ""
 		               bool showTouchArea = false
 		               bool markAsHandled = true
-		float2[] poly = [
+		Vector2[] poly = [
 			{ position.x-size.x/2, position.y-size.y/2 }.transform(graphics.localMatrix),
 			{ position.x+size.x/2, position.y-size.y/2 }.transform(graphics.localMatrix),
 			{ position.x+size.x/2, position.y+size.y/2 }.transform(graphics.localMatrix),
@@ -455,19 +455,19 @@ unit Input
 		if showTouchArea: drawRectangle position, size, fillColor:{"ff000080"}
 
 	// Executes code when the user touches or clicks within a given area
-	onTouchDownWithin: float2 position        // The center of the touch area
-		               float2 size            // The size of a rectangular touch area
+	onTouchDownWithin: Vector2 position        // The center of the touch area
+		               Vector2 size            // The size of a rectangular touch area
 		               float angle
 		               void(Touch touch) code // The code to execute for each touch or click
 		               int userId = -1        // Only consider touches or clicks from this user  
 		               string cursor = ""
 		               bool showTouchArea = false
 		               bool markAsHandled = true
-		float2[] poly = [
-			(position + float2( -size.x/2, -size.y/2 ).rotate(angle)).transform(graphics.localMatrix),
-			(position + float2( +size.x/2, -size.y/2 ).rotate(angle)).transform(graphics.localMatrix),
-			(position + float2( +size.x/2, +size.y/2 ).rotate(angle)).transform(graphics.localMatrix),
-			(position + float2( -size.x/2, +size.y/2 ).rotate(angle)).transform(graphics.localMatrix),
+		Vector2[] poly = [
+			(position + Vector2( -size.x/2, -size.y/2 ).rotate(angle)).transform(graphics.localMatrix),
+			(position + Vector2( +size.x/2, -size.y/2 ).rotate(angle)).transform(graphics.localMatrix),
+			(position + Vector2( +size.x/2, +size.y/2 ).rotate(angle)).transform(graphics.localMatrix),
+			(position + Vector2( -size.x/2, +size.y/2 ).rotate(angle)).transform(graphics.localMatrix),
 		]
 		if (Network.mode == Connected || Network.simulateConnection) && userId != -1
 			let user = usersById[userId]
@@ -495,7 +495,7 @@ unit Input
 		if showTouchArea: drawRectangle position, size, fillColor:{"ff000080"}
 
 	// Executes code when the user touches or clicks within a given circle
-	onTouchDownWithin: float2 position        // The center of the touch area
+	onTouchDownWithin: Vector2 position        // The center of the touch area
 		               float radius           // The radius of a round touch area
 		               void(Touch touch) code // The code to execute for each touch or click
 		               int userId = -1        // Only consider touches or clicks from this user  
@@ -530,14 +530,14 @@ unit Input
 		if showTouchArea: drawCircle position, radius, fillColor:{"ff000080"}
 
 	// Executes code when the user touches or clicks within a given polygon
-	onTouchDownWithin: float2 position        // The center of the touch area
-		               float2[] points        // The points that define the touch area
+	onTouchDownWithin: Vector2 position        // The center of the touch area
+		               Vector2[] points        // The points that define the touch area
 		               void(Touch touch) code // The code to execute for each touch or click
 		               int userId = -1        // Only consider touches or clicks from this user  
 		               string cursor = ""
 		               bool showTouchArea = false
 		               bool markAsHandled = true
-		float2[] poly
+		Vector2[] poly
 		for points: poly.add (position + p).transform(graphics.localMatrix)
 			
 		if (Network.mode == Connected || Network.simulateConnection) && userId != -1
@@ -566,13 +566,13 @@ unit Input
 		if showTouchArea: drawPolygon position, points, fillColor:{"ff0000b0"}
 
 	// Executes code when the user touches or clicks within a given area
-	onTouchUpWithin: float2 position        // The center of the touch area
-		             float2 size            // The size of a rectangular touch area
+	onTouchUpWithin: Vector2 position        // The center of the touch area
+		             Vector2 size            // The size of a rectangular touch area
 		             void(Touch touch) code // The code to execute for each touch or click
 		             int userId = -1        // Only consider touches or clicks from this user
 		             bool showTouchArea = false
 		             bool markAsHandled = true
-		float2[] poly = [
+		Vector2[] poly = [
 			{ position.x-size.x/2, position.y-size.y/2 }.transform(graphics.localMatrix),
 			{ position.x+size.x/2, position.y-size.y/2 }.transform(graphics.localMatrix),
 			{ position.x+size.x/2, position.y+size.y/2 }.transform(graphics.localMatrix),
@@ -599,7 +599,7 @@ unit Input
 		if showTouchArea: drawRectangle position, size, fillColor:{"ff000080"}
 
 	// Executes code when the user touches or clicks within a given area
-	onTouchUpWithin: float2 position        // The center of the touch area
+	onTouchUpWithin: Vector2 position        // The center of the touch area
 		             float radius           // The radius of a round touch area
 		             void(Touch touch) code // The code to execute for each touch or click
 		             int userId = -1        // Only consider touches or clicks from this user  
@@ -634,14 +634,14 @@ unit Input
 				
 		if showTouchArea: drawCircle position, radius, fillColor:{"ff000080"}
 
-	onTouchOver: float2 position        // The center of the touch area
-		               float2 size            // The size of a rectangular touch area
+	onTouchOver: Vector2 position        // The center of the touch area
+		               Vector2 size            // The size of a rectangular touch area
 		               void(Touch touch) code // The code to execute for each touch or click
 		               int userId = -1        // Only consider touches or clicks from this user  
 		               string cursor = ""
 		               bool showTouchArea = false
 		               bool markAsHandled = true
-		float2[] poly = [
+		Vector2[] poly = [
 			{ position.x-size.x/2, position.y-size.y/2 }.transform(graphics.localMatrix),
 			{ position.x+size.x/2, position.y-size.y/2 }.transform(graphics.localMatrix),
 			{ position.x+size.x/2, position.y+size.y/2 }.transform(graphics.localMatrix),
@@ -774,7 +774,7 @@ unit Input
 						code t
 						Snapshot.autoSave
 						
-	private log: string text, float2 pos
+	private log: string text, Vector2 pos
 		Network.touchLog += " #{Network.frame}{isCertain ? " c" : ""} {text} {pos}"
 
 	// Executes code when a touch or click ends
@@ -784,13 +784,13 @@ unit Input
 				code value
 	
 	// Executes code when a user moves the mouse wheel within a given rectangle
-	onWheelWithin: float2 position            // The center of the rectangle
-		           float2 size                // The size of the rectangle
+	onWheelWithin: Vector2 position            // The center of the rectangle
+		           Vector2 size                // The size of the rectangle
 		           void(WheelEvent event) code // The code to execute
 		           int userId = -1             // Only consider wheel movments from this user
 		           Color fill = null
 		           bool markAsHandled = true
-		float2[] poly = [
+		Vector2[] poly = [
 			{ position.x-size.x/2, position.y-size.y/2 }.transform(graphics.localMatrix),
 			{ position.x+size.x/2, position.y-size.y/2 }.transform(graphics.localMatrix),
 			{ position.x+size.x/2, position.y+size.y/2 }.transform(graphics.localMatrix),

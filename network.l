@@ -279,7 +279,7 @@ transient unit Network
 	
 	private object localVideoStream = null
 	private object localVideoElement = null
-	private float2 localVideoPos
+	private Vector2 localVideoPos
 	private float localVideoWidth = 440
 	
 	private float startTime
@@ -1369,13 +1369,13 @@ transient unit Network
 		let internalUser = Input_internalUsers[userId];
 		if(internalUser?.videoElement) internalUser.videoElement.remove()
 			
-	setUserVideoAndColor: int userId = 0, float2 pos = {}, float width = 440, Color color = null
+	setUserVideoAndColor: int userId = 0, Vector2 pos = {}, float width = 440, Color color = null
 		let user = Input.usersById[userId]
 			user.videoPosition = pos
 			user.videoWidth = width
 			user.color = color
 			
-	internal setLocalVideo: float2 pos={}, float width = 440
+	internal setLocalVideo: Vector2 pos={}, float width = 440
 		// Set position and size of local video before we connected
 		localVideoPos = pos
 		localVideoWidth = width

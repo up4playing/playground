@@ -12,7 +12,7 @@ transient unit Physics
 	js void destroy: PhysicsBody body
 		world.DestroyBody(body.body)
 			
-	js PhysicsBody createCircle: float2 pos
+	js PhysicsBody createCircle: Vector2 pos
 		                         float radius
 		                         BodyType type = Dynamic
 		let bodyDef = new b2BodyDef()
@@ -24,8 +24,8 @@ transient unit Physics
 		body.CreateFixtureFromShape(shape, type == 2 ? 1 : 0)
 		return new PhysicsBody(body)
 			
-	js PhysicsBody createRectangle: float2 pos
-		                            float2 size
+	js PhysicsBody createRectangle: Vector2 pos
+		                            Vector2 size
 		                            BodyType type = Dynamic
 		let bodyDef = new b2BodyDef()
 		bodyDef.type = type
@@ -36,8 +36,8 @@ transient unit Physics
 		body.CreateFixtureFromShape(shape, type == 2 ? 1 : 0)
 		return new PhysicsBody(body)
 			
-	js PhysicsBody createPolygon: float2 pos
-		                          float2[] vertices
+	js PhysicsBody createPolygon: Vector2 pos
+		                          Vector2[] vertices
 		                          bool closed = true
 		                          BodyType type = Dynamic
 		let bodyDef = new b2BodyDef()
@@ -65,6 +65,6 @@ transient enum BodyShape
 		
 transient class PhysicsBody
 	object body = null
-	js float2 position:
+	js Vector2 position:
 		let pos = this.body.GetPosition()
-		return new float2(pos.x*Physics_scale, pos.y*Physics_scale, null)
+		return new Vector2(pos.x*Physics_scale, pos.y*Physics_scale, null)
