@@ -26,7 +26,7 @@ unit astar
 		let start = grid[startPos.x][startPos.y]
 		let end = grid[endPos.x][endPos.y]
 		
-		BinaryHeap openHeap
+		BinaryHeap openHeap = {}
 		openHeap.push(start)
 
 		while(openHeap.size() > 0)
