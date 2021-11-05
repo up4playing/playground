@@ -60,7 +60,7 @@ transient unit Snapshot
 			
 			autoSaveAtEndOfStep = false
 	
-transient class Buffer
+transient struct Buffer
 	int readPos, writePos
 	private object buffer = null
 	private object dataView = null
