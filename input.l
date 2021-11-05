@@ -87,18 +87,6 @@ transient class WheelEvent
 	
 	markAsHandled() handled = true
 	
-transient class EventStreamUser
-	int id
-	bool local
-	int frame
-	object blob = null
-	Buffer inputs = null
-	
-transient class EventStream
-	string url
-	string randomSeed
-	EventStreamUser[] users
-	
 // A collection of methods to receive user input
 unit Input
 	transient internal InternalUser[] internalUsers
