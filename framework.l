@@ -576,7 +576,8 @@ Piece Coin
 		Coin neighbor = coin
 		if !neighbor
 			if value <= amount and !isInfinate: return
-			neighbor = {position:position+{45,58}, board:board, image:image}
+			neighbor = {position:position+{45,58}, image:image}
+			if board: board.add neighbor
 		value -= amount
 		neighbor.value += amount
 		if !isInfinate and !allowZero and value <= 0: remove
