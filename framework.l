@@ -131,14 +131,14 @@ Object ImageObject
 		drawImage image, position, scale, alpha, visibleFor
 		
 Object Button
-	Image image = null               // The image of the button
+	Image image                      // The image of the button
     text = ""                        // The text of the button
-    Vector2 position = {}             // The position to draw to
-    Color textColor = null           // The color of the text
+    Vector2 position = {}            // The position to draw to
+    Color textColor                  // The color of the text
     frame = 0                        // The frame of the image
     scale = 1.0                      // Scale the image by this factor
     fontSize = 18                    // The font size in pixels   
-    touchMargin = Vector2(16,16)      // The margin around the button within which it is touchable
+    touchMargin = Vector2(16,16)     // The margin around the button within which it is touchable
     textOffset = Vector2()
     showTouchArea = false            // Show the area within which the button is touchable
     visibleFor = -1                  // Only this user will see the button
@@ -154,7 +154,7 @@ Object Piece
 	const Vector2 stackOffset = {8,8}
 	const minSize = 75
 	
-	Image image = null
+	Image image
 	float angle
 	
 	bool stackable
@@ -162,24 +162,24 @@ Object Piece
 	bool rotatable
 	bool flipable
 	
-	Image backImage = null
+	Image backImage
 	Side side
 	int frame
 	
 	// Move
-	private Touch moveTouch = null
+	private Touch moveTouch
 	private Vector2 touchOffset
 	private bool isBeingMoved
-	private Object overStackable = null
+	private Object overStackable
 	
 	// Rotate
-	private Touch rotateTouch = null
+	private Touch rotateTouch
 	private float rotateOffset
 	private float targetAngle
 	private bool rotatedOverThreshold
 	
 	visible Vector2 size
-	public Board board = null, nextBoard = null
+	public Board board, nextBoard
 	private int interactingUserId
 	
 	private siblings := board ? board.objects : Framework.objects
@@ -331,16 +331,16 @@ enum BoardVisiblity: Never, Off, On, Always
 Piece Board
 	Object[] objects
 	Matrix2D matrix
-	Color color = null
+	Color color
 	BoardVisiblity visibleForOthers = Always
 	int owner
 	bool panable
 	bool zoomable
 	
 	private Spot[] spots
-	private Spot overSpot = null
+	private Spot overSpot
 	
-	private Touch panTouch = null
+	private Touch panTouch
 	private Matrix2D downMatrix
 	
 	const zoomLookupTable = [
@@ -478,7 +478,7 @@ Piece Coin
 	bool allowZero
 	image = Coin
 	
-	private Coin closestCoin = null
+	private Coin closestCoin
 	private closestCoinType closestCoinType
 	private float distanceToClosest
 	

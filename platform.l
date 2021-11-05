@@ -30,8 +30,8 @@ transient unit Platform
 	public ScaleMode scaleMode = Auto, effectiveScaleMode
 	public AnchorMode anchor = Center
 	
-	private object canvas = null
-	internal object context = null
+	private object canvas
+	internal object context
 	visible bool isDebug
 	visible Vector2 pixelSize, size
 	visible float pixelRatio
@@ -382,7 +382,7 @@ transient unit Http
 		}
 		
 transient unit IndexedDB
-	private object db = null
+	private object db
 	
 	js void start: string databaseName, string storeName, int version = 1
 		try {

@@ -691,8 +691,8 @@ transient class SourceCodeLocation
 	int column  // The column of the source code
 	string file // The filename of the source code
 	
-	SourceCodeLocation left = null
-	SourceCodeLocation right = null
+	SourceCodeLocation left
+	SourceCodeLocation right
 	
 	js SourceCodeLocation clone 
 		return new SourceCodeLocation(this.row, this.column, this.file, this.left, this.right)

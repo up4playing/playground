@@ -3,8 +3,8 @@ enum ConnectionState: Disconnected, Connecting, Reconnecting, PingPong, Connecte
 
 transient class Connection
 	int userId
-	object peerConnection = null
-	object dataChannel = null
+	object peerConnection
+	object dataChannel
 	ConnectionState state
 	bool offerByMe
 	float fastestPingPongTime = float.maxValue
@@ -62,8 +62,8 @@ transient unit Snapshot
 	
 transient struct Buffer
 	int readPos, writePos
-	private object buffer = null
-	private object dataView = null
+	private object buffer
+	private object dataView
 	
 	Buffer: object buffer = null
 		    int size = 1024
@@ -289,8 +289,8 @@ transient unit Network
 	visible string error
 	visible string errorMessage
 	
-	private object localVideoStream = null
-	private object localVideoElement = null
+	private object localVideoStream
+	private object localVideoElement
 	private Vector2 localVideoPos
 	private float localVideoWidth = 440
 	
@@ -858,7 +858,7 @@ transient unit Network
 				join gameId, roomId
 			nextReconnect = currentTime + 6000
 	
-	private object socket = null
+	private object socket
 	visible string roomId, gameId
 	private Connection[] connections
 	

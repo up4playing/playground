@@ -20,7 +20,7 @@ transient class InternalUser
 	int acknowledgedPos   // The remote user has received the input buffer up to this buffer position
 	int uncertainReadPos  // The buffer position where we haven't received inputs from all users
 	
-	object videoElement = null
+	object videoElement
 	
 	startInputFrame: int index
 		lastTouchMoveIndex.clear
@@ -40,7 +40,7 @@ transient class InternalUser
 class NetworkUser
 	int id
 	int index
-	Color color = null
+	Color color
 	visible Touch[] touches
 	string textInput
 	Vector2 videoPosition = {}

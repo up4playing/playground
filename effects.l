@@ -55,7 +55,7 @@ Effect PlaySoundEffect
 	tick(float f) sound.play
 	
 Effect RunEffect
-	void() code = null
+	void() code
 	tick(float f) code()
 	
 

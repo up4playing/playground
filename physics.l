@@ -1,5 +1,5 @@
 transient unit Physics
-	object world = null
+	object world
 	float scale = 100
 	
 	js void start
@@ -64,7 +64,7 @@ transient enum BodyShape
 	ClosedChain
 		
 transient class PhysicsBody
-	object body = null
+	object body
 	js Vector2 position:
 		let pos = this.body.GetPosition()
 		return new Vector2(pos.x*Physics_scale, pos.y*Physics_scale, null)

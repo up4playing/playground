@@ -321,7 +321,7 @@ transient global unit graphics
 		code()
 		currentClippingPath = prev
 		
-	private ClippingPath currentClippingPath = null
+	private ClippingPath currentClippingPath
 		
 	// The default user for which all draw operations will be visible
 	visibleFor

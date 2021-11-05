@@ -6,7 +6,7 @@ class AStarNode
 	cost = 1
 	visited = false
 	closed = false
-	AStarNode parent = null
+	AStarNode parent
 
 unit astar
 	// Finds the shorted path between two position using the astar
