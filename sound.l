@@ -34,6 +34,8 @@ class Sound
 			this.fadeVolume = 1
 			this.audio.volume = audio_volume
 			this.audio.currentTime = 0
+			// TEMP!!!
+			Network_log("play "+this.file+" vol:"+audio_volume+" time:"+this.audio.currentTime)
 			this.audio.play()
 		}
 		
@@ -48,21 +50,22 @@ transient global unit audio
 	float volumeLevel = 5
 	float volume = volumeLevels[volumeLevel]
 	
-	mute: int forUser = -1
-		if forUser == -1 or forUser == Network.userId
-			volumeLevel = 0
-			volume = volumeLevels[volumeLevel]
+	// TEMP!!!
+	// mute: int forUser = -1
+	// 	if forUser == -1 or forUser == Network.userId
+	// 		volumeLevel = 0
+	// 		volume = volumeLevels[volumeLevel]
 	
-	decreaseVolume: int forUser = -1
-		if forUser == -1 or forUser == Network.userId
-			volumeLevel = Math.limit(volumeLevel-1, min:0, max:volumeLevels.length-1)
-			volume = volumeLevels[volumeLevel]
+	// decreaseVolume: int forUser = -1
+	// 	if forUser == -1 or forUser == Network.userId
+	// 		volumeLevel = Math.limit(volumeLevel-1, min:0, max:volumeLevels.length-1)
+	// 		volume = volumeLevels[volumeLevel]
 	
-	increaseVolume: int forUser = -1
-		if forUser == -1 or forUser == Network.userId
-			volumeLevel = Math.limit(volumeLevel+1, min:0, max:volumeLevels.length-1)
-			volume = volumeLevels[volumeLevel]
-			print volume, forUser
+	// increaseVolume: int forUser = -1
+	// 	if forUser == -1 or forUser == Network.userId
+	// 		volumeLevel = Math.limit(volumeLevel+1, min:0, max:volumeLevels.length-1)
+	// 		volume = volumeLevels[volumeLevel]
+	// 		print volume, forUser
 	
 	global playSound: Sound sound
 		if Time.frame == 0
