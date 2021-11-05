@@ -426,7 +426,6 @@ transient global unit graphics
 			let contextFont = (style ? "bold ":"")+(size || graphics_currentFontSize)+"px "+(font || graphics_currentFont).name;
 			Platform_context.font = contextFont
 			let textSize = Platform_context.measureText(text)
-			let fillStyle = (color || graphics_currentColor).hex
 			let w = textSize.width
 			let h = size || graphics_currentFontSize
 			let x = align  == 0 ? position.x : align  == 1 ? position.x-w*.5 : position.x-w
@@ -434,7 +433,7 @@ transient global unit graphics
 			graphics_items.push(new DisplayText(
 				graphics_totalMatrix, x, y, w, h, layer, alpha, graphics_currentClippingPath, text, 
 				position.location, 
-				fillStyle, 
+				(color || graphics_currentColor).hex, 
 				outlineColor ? outlineColor.hex : null,
 				outlineWidth || graphics_currentLineWidth,
 				contextFont
@@ -550,7 +549,6 @@ transient global unit graphics
 				position.y-texture.size.y/2*scale,
 				texture.size.x*scale,
 				texture.size.y*scale,
-				
 				layer, alpha, graphics_currentClippingPath, texture.file, position.location,
 				texture._htmlImage,
 				0, 0, texture.size.x, texture.size.y
@@ -574,10 +572,8 @@ transient global unit graphics
 				position.y - size.y/2,
 				size.x,
 				size.y,
-				
 				layer, alpha, graphics_currentClippingPath, texture.file, position.location, 
 				texture._htmlImage,
-				
 				sourcePosition.x+texture.size.x/2-sourceSize.x/2,
 				sourcePosition.y+texture.size.y/2-sourceSize.y/2,
 				sourceSize.x, 
@@ -650,7 +646,7 @@ transient global unit graphics
 				end.x - start.x, end.y - start.y,
 				layer, alpha, graphics_currentClippingPath, "Line", start.location,
 				end,
-				color ? color.hex : null,
+				(color || graphics_currentColor).hex,
 				width || graphics_currentLineWidth
 			))
 		}
@@ -672,7 +668,7 @@ transient global unit graphics
 				layer, alpha, graphics_currentClippingPath, "Line", position.location,
 				points,
 				null, // no fill color, because we want to draw a line instead of a polygon
-				color ? color.hex : null,
+				(color || graphics_currentColor).hex,
 				width || graphics_currentLineWidth,
 				smooth
 			))
