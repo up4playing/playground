@@ -195,10 +195,10 @@ class List<T>
 	inline js void add: T item // The item to add
 		this.push(item)
 		
-	void add: T item
+	inline js void add: T item
 		      int maxLength
-		add item
-		if length > maxLength: removeAt 0
+		this.push(item)
+		if(length > maxLength) this.splice(0, 1)
 			
 	inline js void insert: T item // The item to add
 		                   int index
