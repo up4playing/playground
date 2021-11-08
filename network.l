@@ -605,7 +605,7 @@ transient unit Network
 			log error
 			errorMessage = error.message
 			
-		drawText debugString, {0, 532}
+		drawText debugString, {0, 528}
 		drawTime = Time.measure
 			graphics.finishFrame
 		
