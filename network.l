@@ -318,6 +318,7 @@ transient unit Network
 	// TEMP
 	bool skipAnimationFrame
 	bool skipSending
+	int sendInterval = 1
 	
 	init
 		Platform.showDebugInfo = isLocalhost = Platform.url.contains("localhost")
@@ -512,7 +513,7 @@ transient unit Network
 					for user -> Input.internalUsers
 						if user
 							debugString += "  " + user.aheadAverage.format(fractionDigits:1)
-					debugString += " {errorMessage}"
+					debugString += " int:{sendInterval} {errorMessage}"
 					
 				lastNetworkFrame = now
 				
@@ -613,6 +614,9 @@ transient unit Network
 	// This is called in animationFrame.
 	private sendInputs: int nextInputFrame, int targetFrame, float aheadAverage
 		let localPlayer = Input.internalUsers[userId]
+		let maxAheadAverage = getMaxAheadAverage
+		sendInterval = maxAheadAverage < 15 ? 1 : maxAheadAverage < 50 ? 10 : 30
+		if (nextInputFrame % sendInterval) != 0: return
 		for c -> connections
 			if c.state == Connected
 				let receiver = Input.internalUsers[c.userId]
@@ -693,6 +697,13 @@ transient unit Network
 			if user && user.state == Connected && !user.local && (minFrames == -1 || user.currentFrame < minFrames)
 				minFrames = user.currentFrame
 		return minFrames
+			
+	private getMaxAheadAverage
+		float maxAheadAverage
+		for user -> Input.internalUsers
+			if user && user.aheadAverage > maxAheadAverage
+				maxAheadAverage = user.aheadAverage
+		return maxAheadAverage
 			
 	private onWrongChecksum
 		log "##### OUT OF SYNC #####", frame, debugString
@@ -1051,7 +1062,7 @@ transient unit Network
 					Network_log("createOffers: Created peer connection for partner "+partnerId)
 					
 					// Data channel
-					let dataChannel = peerConnection.createDataChannel("channel", {ordered: false, maxRetransmits: 0})
+					let dataChannel = peerConnection.createDataChannel("channel", {ordered:false, maxRetransmits:0})
 					dataChannel.binaryType = "arraybuffer"
 					connection.dataChannel = dataChannel
 					dataChannel.onopen = e => {
@@ -1176,7 +1187,7 @@ transient unit Network
 		sendBuffer.writeInt32 acknowledgePos
 		sendBuffer.writeInt32 start
 		sendBuffer.writeBuffer buffer, start, end - start
-		sentLog += " #{inputFrame} to:{to.userId} ack:{acknowledgePos} cf:{currentFrame} s:{start} e:{end}"
+		sentLog += " #{inputFrame} to:{to.userId} ack:{acknowledgePos} cf:{currentFrame} s:{start} e:{end} size:{sendBuffer.writePos}"
 		
 		
 		if skipSending
@@ -1239,7 +1250,7 @@ transient unit Network
 			
 			receivedFrames = getReceivedInputFrames
 	
-			receivedLog += " [{currentTime}] <{c.userId}> #{sender.inputFrame} a:{sender.acknowledgedPos} cf:{sender.currentFrame} s:{writeStart} e:{sender.inputs.writePos}"
+			receivedLog += " [{currentTime}] <{c.userId}> #{sender.inputFrame} a:{sender.acknowledgedPos} cf:{sender.currentFrame} s:{writeStart} e:{sender.inputs.writePos} size:{buffer.writePos}"
 		else
 			// Ignore this frame because we already received a later frame
 			// Later frames start from the pos we acknowleged (everything before that we definately already received)
