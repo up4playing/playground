@@ -383,7 +383,7 @@ unit Input
 						user.connectedTo.remove lostUserId
 						let lostUser = usersById[lostUserId]
 							lostUser.connectedTo.remove userId
-							if lostUser.connectedTo.length == 0
+							if lobby.inLobby and lostUser.connectedTo.length == 0
 								// If all players have lost the connected to a user, we remove this user
 								users.removeAllWhere.id == lostUserId
 								usersById[lostUserId] = null
