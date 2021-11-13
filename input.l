@@ -317,6 +317,14 @@ unit Input
 								user.touches.add touch
 								Network.parseLog += " down(new) {id} {touchPos} {type}"
 							internalUser.downTouches.add touch
+							
+							// Evaluate: If there a several touch downs in the same frame, they are all the same
+							// because we keep updating the touch. Is this okay or should we create new touches?
+							// user.touches.removeAllWhere.id == id
+							// Touch touch = {id, userId, cast inputType, type, touchPos, touchPos, touchPos, isDown:true}
+							// user.touches.add touch
+							// Network.parseLog += " down(new) {id} {touchPos} {type}"
+							// internalUser.downTouches.add touch
 						else
 						if inputType == TouchMove
 							let touch = user.touches.find a.id == id
@@ -333,6 +341,15 @@ unit Input
 								Network.parseLog += " move(new) {id} {touchPos} {type}"
 							internalUser.movingTouches.add touch
 							cursor = "auto"
+							
+							// Evaluate: If there a several touch moves in the same frame, they are all the same
+							// because we keep updating the touch. Is this okay or should we create new touches?
+							// user.touches.removeAllWhere.id == id
+							// Touch touch = {id, userId, cast inputType, type, touchPos, referenceStartPosition:Vector2.none, touchPos, isDown:false}
+							// user.touches.add touch
+							// Network.parseLog += " move(new) {id} {touchPos} {type}"
+							// internalUser.movingTouches.add touch
+							// cursor = "auto"
 						else
 						if inputType == TouchUp
 							let touch = user.touches.find a.id == id
@@ -349,6 +366,14 @@ unit Input
 								user.touches.add touch
 								Network.parseLog += " up(new) {id} {touchPos} {type}"
 							internalUser.upTouches.add touch
+							
+							// Evaluate: If there a several touch ups in the same frame, they are all the same
+							// because we keep updating the touch. Is this okay or should we create new touches?
+							// user.touches.removeAllWhere.id == id
+							// Touch touch = {id, userId, cast inputType, type, touchPos, referenceStartPosition:Vector2.none, touchPos, isDown:false}
+							// user.touches.add touch
+							// Network.parseLog += " up(new) {id} {touchPos} {type}"
+							// internalUser.upTouches.add touch
 						else
 						if inputType == Wheel
 							let delta = inputs.readInt16
