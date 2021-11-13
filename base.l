@@ -388,6 +388,9 @@ class List<T>
 	inline js bool any: bool(T a) predicate // The condition to check
 		this.some(predicate)
 		
+	inline js bool none: bool(T a) predicate // The condition to check
+		!this.some(predicate)
+		
 	// Returns true if the given condition is true for all items in the list
 	inline js bool all: bool(T a) predicate // The condition to check
 		this.every(predicate)
