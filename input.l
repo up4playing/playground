@@ -1,7 +1,8 @@
 // The internal state of a user that isn't serialized and shoudn't be accessed by the application
 transient class InternalUser
-	int id
-	bool local
+	int id              // The userId stays the same when a user reconnects
+	int connectionId    // The connectionId increments with every connection, lowest connectionId means oldest user
+	bool local          // Is this the local user?
 	ConnectionState state = Disconnected
 	
 	bool collectInputs  // When we are done pinging, we add a join event and start collecting inputs
@@ -392,16 +393,20 @@ unit Input
 						internalUser.upKeys.add inputs.readInt32
 					else
 					if inputType == Join
-						users.add user = {id:userId, index:users.length}
-						usersById[userId] = user
+						// Add the user if the user doesn't already exist
+						if users.none.id == userId
+							users.add user = {id:userId, index:users.length}
+							usersById[userId] = user
 						
-						// Update user.connectedTo and user.index
-						for users
-							if . and .id != userId
-								.connectedTo.ensure userId
-								user.connectedTo.ensure .id
-						updateUserIndices
-						Network.parseLog += " join {userId} connectedTo:{user.connectedTo}"
+							// Update user.connectedTo and user.index
+							for users
+								if . and .id != userId
+									.connectedTo.ensure userId
+									user.connectedTo.ensure .id
+							updateUserIndices
+							Network.parseLog += " join {userId} connectedTo:{user.connectedTo}"
+						else
+							Network.parseLog += " join {userId} user already exists"
 					else
 					if inputType == Lost
 						let lostUserId = inputs.readInt16

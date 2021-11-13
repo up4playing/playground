@@ -1,4 +1,4 @@
-enum NetworkMessageType: Tick, Ping, Pong, OwnInputsAfterReconnect
+enum NetworkMessageType: Tick, Ping, Pong, RequestState, State
 enum ConnectionState: Disconnected, Connecting, Reconnecting, PingPong, Connected, Myself
 
 transient class Connection
@@ -283,8 +283,10 @@ transient unit Network
 	const targetFrameTime = 1000/targetFps
 	
 	visible NetworkMode mode
-	visible int userId = -1
 	public bool simulateConnection = true
+	
+	visible int userId = -1       // The userId stays the same when a user reconnects
+	visible int connectionId = -1 // The connectionId increments with every connection, lowest connectionId means oldest user
 	
 	visible string error
 	visible string errorMessage
@@ -326,19 +328,24 @@ transient unit Network
 	initDatabase
 		IndexedDB.start "up4playing", "snapshot", 5
 
-	private startConnected
+	private startConnected: int startFrame = 0
 		if mode == Connected: return
+		for connections
+			if .state == PingPong
+				let user = Input.internalUsers[.userId]
+				.state = user.state = Connected
+				
 		let user = Input.internalUsers[userId]
-		user.startInputFrame 0
+		user.startInputFrame startFrame
 		
-		int joinFrame = Math.floor((currentTime - this.startTime)/targetFrameTime)
-		user.inputs.writeInt32 joinFrame
+		user.inputs.writeInt32 startFrame
 		user.inputs.writeInt16 cast InputType.Join
 		user.collectInputs = true
 		
 		mode = Connected
-		receivedFrames = -1
-		certainFrame = -1
+		receivedFrames = startFrame-1
+		certainFrame = startFrame-1
+		frame = startFrame
 		log "Connected", userId, frame, startTime, this.startTime
 		saveState
 		
@@ -356,7 +363,7 @@ transient unit Network
 		
 	// Clears all inputs and resets the application to the first frame
 	stop
-		for Input.internalUsers: .inputs.reset; .startInputFrame 0
+		for Input.internalUsers: if .: .inputs.reset; .startInputFrame 0
 		frames = 0
 		frameWithNewWatches = 0
 		startInLobby = false
@@ -517,7 +524,7 @@ transient unit Network
 					
 				lastNetworkFrame = now
 				
-			for Input.internalUsers: if .local: .startInputFrame nextInputFrame	
+			for Input.internalUsers: if . and .local: .startInputFrame nextInputFrame	
 			
 		lastAnimationFrame = now
 		if Platform.mode == Play and frame >= frames: Platform.record()
@@ -620,7 +627,6 @@ transient unit Network
 		for c -> connections
 			if c.state == Connected
 				let receiver = Input.internalUsers[c.userId]
-				let checksumFor = uncertainFrame>1 ? uncertainFrame-1 : frame-1
 				
 				// TEMP for debugging
 				if receiver.acknowledgedPos > localPlayer.inputs.writePos
@@ -634,8 +640,8 @@ transient unit Network
 					currentFrame: targetFrame-1      // The currently processed frame, used to calculate "ahead"
 					aheadAverage: aheadAverage
 					
-					checksumFor: checksumFor         // The last certain frame with inputs from everybody
-					checksum: checksums[checksumFor] // The checksum of the last certain frame
+					checksumFor: certainFrame                 // The last certain frame with inputs from everybody
+					checksum: checksums[certainFrame] || 0    // The checksum of the last certain frame
 					
 					acknowledgePos: receiver.inputs.writePos  // We ackledge that we received up to this input buffer pos
 					
@@ -649,7 +655,7 @@ transient unit Network
 	private saveState
 		if mode != Connected: return
 		if frame == certainFrame+1
-			for Input.internalUsers: .uncertainReadPos = .inputs.readPos
+			for Input.internalUsers: if .: .uncertainReadPos = .inputs.readPos
 			uncertainFrame = frame
 			saveTime = Time.measure
 				Snapshot.serialize commonState
@@ -663,7 +669,7 @@ transient unit Network
 		if mode != Connected or Input.internalUsers.length == 1: return
 		if uncertainFrame != -1 and certainFrame >= uncertainFrame
 			// Restore state
-			for Input.internalUsers: .inputs.readPos = .uncertainReadPos
+			for Input.internalUsers: if .: .inputs.readPos = .uncertainReadPos
 			restoreTime = Time.measure
 				Snapshot.deserialize commonState
 			parseLog +=  " restore u:{uncertainFrame} c:{Framework.checksum}"
@@ -701,14 +707,12 @@ transient unit Network
 	private getMaxAheadAverage
 		float maxAheadAverage
 		for user -> Input.internalUsers
-			if user && user.aheadAverage > maxAheadAverage
+			if user && user.state == Connected && user.aheadAverage > maxAheadAverage
 				maxAheadAverage = user.aheadAverage
 		return maxAheadAverage
 			
 	private onWrongChecksum
-		log "##### OUT OF SYNC #####", frame, debugString
-		// Platform.setTitle "%%% OUT OF SYNC %%%"
-		
+		errorMessage = "Out of sync"
 		if !alertShown
 			alert "Clients out of sync. Please send me the log file that will be created."
 			saveLogs
@@ -722,6 +726,7 @@ transient unit Network
 	
 	js void startApp
 		lobby_inLobby = false
+		Network_storeUserId()
 		if(window.app_start) app_start()
 		
 	private resetStartTime
@@ -769,11 +774,13 @@ transient unit Network
 		buffer.writeInt32 frames
 		buffer.writeString Math.randomSeed
 		buffer.writeBool startInLobby
-		buffer.writeInt8 Input.internalUsers.length
+		let userCount = Input.internalUsers.count . != null
+		buffer.writeInt8 userCount
 		for Input.internalUsers
-			buffer.writeInt8 .id
-			buffer.writeBool .local
-			buffer.writeBuffer .inputs
+			if .
+				buffer.writeInt8 .id
+				buffer.writeBool .local
+				buffer.writeBuffer .inputs
 		let time = Time.current
 		Platform.saveBinaryFile "{Platform.appName} {time.dayShortMonthNameYearString} {time.hourMinuteSecondString} v{Platform.version}.state", buffer
 		
@@ -792,7 +799,7 @@ transient unit Network
 				user.id = buffer.readInt8
 				user.local = buffer.readBool
 				buffer.readBuffer user.inputs
-				Input.internalUsers.add user
+				Input.internalUsers[user.id] = user
 				
 			// Replay
 			for Input.internalUsers
@@ -848,6 +855,8 @@ transient unit Network
 		user.inputs.writeInt16 connection.userId
 
 	private js void closeConnection: Connection connection
+		Network_removeVideoElement(connection.userId)
+		
 		if(connection.dataChannel) {
 			Network_log("closeConnection: dataChannel")
 			connection.dataChannel.close();
@@ -866,18 +875,19 @@ transient unit Network
 				resendOffers
 			else
 				log "No existing socket -> reconnecting to server"
-				join gameId, roomId
+				join gameId, roomId, userId
 			nextReconnect = currentTime + 6000
 	
 	private object socket
 	visible string roomId, gameId
 	private Connection[] connections
 	
-	js void join: string gameId, string roomId
+	js void join: string gameId, string roomId, int userId
 		init()
 		Network_startInLobby = true
 		Network_gameId = gameId
 		Network_roomId = roomId
+		Network_userId = userId
 		Network_log("Network.join "+location.href)
 		await Network_setupLocalVideo()
 		
@@ -905,12 +915,11 @@ transient unit Network
 		Network_initDatabase();
 		
 	private onConnectedToServer
-		// Disabled rejoining with the same id to support testing in two browser tabs
-		// Is this still needed if we have an eventStream?
-		// if userId == -1
-		// 	RoomInfo roomInfo = cast Platform.getLocalStorageObject "room"+roomId
-		// 	userId = roomInfo && roomInfo.time > currentTime - 3600000*24 ? roomInfo.userId : -1
-		// 	log "Reconnect to session", roomInfo, userId
+		if userId == -1 and !isLocalhost
+			// We were in this room before -> connect with the same userId we had before
+			RoomInfo roomInfo = cast Platform.getLocalStorageObject "room"+roomId
+			userId = roomInfo && roomInfo.time > currentTime - 3600000*24 ? roomInfo.userId : -1
+			log "Reconnect to session", roomInfo, userId
 		
 		// openEventStream
 		// 	Math.setRandomSeed eventStream.randomSeed
@@ -950,36 +959,40 @@ transient unit Network
 			log "Reconnecting to {roomId} with user {userId}"
 			resendOffers
 		else
-			log Time.dateAndTimeString, Platform.version, Platform.userAgent, message.seed, message.partnerIds
+			log Time.dateAndTimeString, Platform.version, Platform.userAgent
+			log message.roomId, message.userId, message.connectionId, message.seed, message.partners
 			if message.roomId != roomId
 				log "Received room id {message.roomId}"
 				Platform.pushState null, "{gameId} {message.roomId}", "/{gameId}/{message.roomId}"
 			
 			roomId = message.roomId
 			userId = message.userId
-			Input.internalUsers[message.userId] = {id:userId, local:true, state:Myself, videoElement:localVideoElement}
-			Platform.setLocalStorageObject "room"+roomId, RoomInfo(currentTime, userId)
+			connectionId = message.connectionId
+			Input.internalUsers[message.userId] = {id:userId, connectionId, local:true, state:Myself, videoElement:localVideoElement}
 			
 			if message.version != Platform.version
 				alert "You are using an old version of this application. Please refresh your browser."
 			Math.setRandomSeed message.seed
-			createOffers message.partnerIds
+			createOffers message.partners
 			
 			// The first user will enter the "connected" state right away, all later uers will first 
 			// ping the existing users to sync the startTime and calculate the frame from it
-			if userId == 0
+			if message.partners.length == 0
 				resetStartTime
 				startConnected
+	
+	private storeUserId
+		Platform.setLocalStorageObject "room"+roomId, RoomInfo(currentTime, userId)
 				
 	private resendOffers
-		int[] partnerIds
+		Partner[] partners
 		for c -> connections
 			if c: log "Connection "+c.userId+" state:"+c.state+" offerByMe:"+c.offerByMe
 			else  log "Connection null"
 			if c && (c.state == Disconnected || c.state == Reconnecting) && c.offerByMe
-				partnerIds.add c.userId
-		log "Resending offers", userId, partnerIds
-		createOffers partnerIds		
+				partners.add {c.userId, Input.internalUsers[c.userId]?.connectionId}
+		log "Resending offers", userId, partners
+		createOffers partners	
 	
 	private onSignal: SignalMessage message
 		log "on signal: "+message.signal.type+" "+message.senderId+" -> "+message.signal.receiverId
@@ -988,7 +1001,7 @@ transient unit Network
 	
 	private js object setupPeerConnection: Connection c
 		let peerConnection = new RTCPeerConnection({
-			// Set the ice transport policy to "replay" to test a turn server
+			// Set the ice transport policy to "relay" to test a turn server
 			// iceTransportPolicy: "relay",
 			// iceTransportPolicy: "all",
 			iceServers: [
@@ -1008,7 +1021,7 @@ transient unit Network
 		
 		// Event handlers
 		peerConnection.onconnectionstatechange = e => {
-			Network_log("onconnectionstatechange", peerConnection.connectionState)
+			Network_log("onconnectionstatechange " + peerConnection.connectionState)
 			if(peerConnection.connectionState == "disconnected")
 				Network_onDisconnectFromPeer(c)
 		}
@@ -1027,37 +1040,37 @@ transient unit Network
 		}
 		return peerConnection
 	
-	private Connection createConnection: int partnerId, bool offerByMe, int acknowledgePos
+	private Connection createConnection: int partnerId, int connectionId, bool offerByMe, int acknowledgePos
 		let user = Input.internalUsers[partnerId] || (Input.internalUsers[partnerId] = {id:partnerId, local:false})
-		let connection = connections.find(a.userId == partnerId)
+		let existingConnection = connections.find.userId == partnerId
+			log "removing existing connections", partnerId
+			closeConnection existingConnection
+			connections.removeAllWhere.userId == partnerId
 		
-		if connection
-			connection.state = user.state = Reconnecting
-			connection.dataChannel = null
-			removeVideoElement partnerId
-		else
-			connections.add connection = Connection(partnerId)
-			connection.state = user.state = Connecting
-			
+		let connection = Connection(partnerId)
+		connections.add connection
+		connection.state = user.state = Connecting
 		connection.peerConnection = setupPeerConnection(connection)
 		connection.offerByMe = offerByMe
 		user.acknowledgedPos = acknowledgePos
+		user.connectionId = connectionId
 		log partnerId, offerByMe, acknowledgePos, connection.state, connection.dataChannel
 		return connection
 		
-	private js void createOffers: int[] partnerIds
+	private js void createOffers: Partner[] partners
 		let offers = [];
 		
-		for(let partnerId of partnerIds) {
-			if(partnerId < Network_userId) {
+		for(let partner of partners) {
+			if(partner.connectionId < Network_connectionId) {
 				try {
 					// Tell the other users whether we are are reconnecting and already have inputs from them
 					// or whether they need to send their past inputs to us
+					let partnerId = partner.userId
 					let existingUser = Input_internalUsers[partnerId]
 					let acknowledgePos = existingUser ? existingUser.inputs.writePos : 0
 					
 					// Peer connection
-					let connection = Network_createConnection(partnerId, /*offerByMe*/true, acknowledgePos)
+					let connection = Network_createConnection(partnerId, partner.connectionId, /*offerByMe*/true, acknowledgePos)
 					let peerConnection = connection.peerConnection
 					Network_log("createOffers: Created peer connection for partner "+partnerId)
 					
@@ -1086,7 +1099,7 @@ transient unit Network
 					// Offer
 					let offer = await peerConnection.createOffer();
 					await peerConnection.setLocalDescription(offer);
-					offers.push({receiverId:partnerId, type: "offer", sdp: peerConnection.localDescription.sdp, acknowledgePos})
+					offers.push({receiverId:partnerId, type: "offer", sdp: peerConnection.localDescription.sdp, acknowledgePos, connectionId:partner.connectionId })
 					Network_log("createOffers: Created and sent offer, waiting for answer. receiverId:"+partnerId+" acknowledgePos:"+acknowledgePos);
 				}
 				catch(e) {
@@ -1100,7 +1113,7 @@ transient unit Network
 	private js void onReceivedOffer: int partnerId, Signal offer
 		try {
 			// Peer connection
-			let connection = Network_createConnection(partnerId, /*offerByMe*/false, offer.acknowledgePos)
+			let connection = Network_createConnection(partnerId, offer.connectionId, /*offerByMe*/false, offer.acknowledgePos)
 			let peerConnection = connection.peerConnection
 			
 			// Data channel
@@ -1159,10 +1172,11 @@ transient unit Network
 		
 	private onPeerMessage: Connection c, Buffer buffer
 		NetworkMessageType type = cast buffer.readInt16
-		if type == Tick: onTickMessage c, buffer; else
-		if type == Ping: onPingMessage c, buffer; else
-		if type == Pong: onPongMessage c, buffer; else
-		if type == OwnInputsAfterReconnect: onOwnInputsAfterReconnect c, buffer;
+		if type == Tick:         onTickMessage c, buffer; else
+		if type == Ping:         onPingMessage c, buffer; else
+		if type == Pong:         onPongMessage c, buffer; else
+		if type == RequestState: onRequestState c, buffer; else
+		if type == State:        onState c, buffer;
 			
 	// TEMP for testing
 	Buffer[] testingSendQueue
@@ -1250,7 +1264,7 @@ transient unit Network
 			
 			receivedFrames = getReceivedInputFrames
 	
-			receivedLog += " [{currentTime}] <{c.userId}> #{sender.inputFrame} a:{sender.acknowledgedPos} cf:{sender.currentFrame} s:{writeStart} e:{sender.inputs.writePos} size:{buffer.writePos}"
+			receivedLog += " [{currentTime}] <{c.userId}> #{sender.inputFrame} a:{sender.acknowledgedPos} cf:{sender.currentFrame} s:{writeStart} e:{sender.inputs.writePos} size:{buffer.readPos}"
 		else
 			// Ignore this frame because we already received a later frame
 			// Later frames start from the pos we acknowleged (everything before that we definately already received)
@@ -1263,36 +1277,36 @@ transient unit Network
 			let length = buffer.readInt32
 			receivedLog += " [{currentTime}] <{c.userId}> irgnoring #{inputFrame} (already at {sender.inputFrame}) a:{acknowledgedPos} s:{writeStart} e:{writeStart+length}"
 		
-	private void sendOwnInputsAfterReconnectMessage: Connection c
-		                                int frame
-		                                Buffer buffer
-		sendBuffer.reset
-		sendBuffer.writeInt16 cast NetworkMessageType.OwnInputsAfterReconnect
-		sendBuffer.writeInt32 frame
-		sendBuffer.writeBuffer buffer, start:0, length:buffer.writePos
-		send c, sendBuffer
-		log "Sending own inputs to {c.userId}", frame, buffer, sendBuffer
+	// private void sendOwnInputsAfterReconnectMessage: Connection c
+	// 	                                int frame
+	// 	                                Buffer buffer
+	// 	sendBuffer.reset
+	// 	sendBuffer.writeInt16 cast NetworkMessageType.OwnInputsAfterReconnect
+	// 	sendBuffer.writeInt32 frame
+	// 	sendBuffer.writeBuffer buffer, start:0, length:buffer.writePos
+	// 	send c, sendBuffer
+	// 	log "Sending own inputs to {c.userId}", frame, buffer, sendBuffer
 		
-	private onOwnInputsAfterReconnect: Connection c, Buffer buffer
-		// Platform.debugger
-		let localUser = Input.internalUsers[userId]
-		log userId, localUser.id
-		localUser.inputFrame = buffer.readInt32
-		let length = buffer.readBuffer localUser.inputs, writeStart:0
-		localUser.inputs.writePos = length
-		log "Receiving own inputs from {c.userId}", localUser.inputFrame, localUser.inputs.writePos, buffer, localUser.inputs
+	// private onOwnInputsAfterReconnect: Connection c, Buffer buffer
+	// 	// Platform.debugger
+	// 	let localUser = Input.internalUsers[userId]
+	// 	log userId, localUser.id
+	// 	localUser.inputFrame = buffer.readInt32
+	// 	let length = buffer.readBuffer localUser.inputs, writeStart:0
+	// 	localUser.inputs.writePos = length
+	// 	log "Receiving own inputs from {c.userId}", localUser.inputFrame, localUser.inputs.writePos, buffer, localUser.inputs
 		
 	private ping
 		if (mode == Ping or mode == Connected) and currentTime >= nextPingTime
-			master = Input.internalUsers.withMin.id where.state == Connected or .state == PingPong or .local
+			master = Input.internalUsers.withMin.connectionId where . and (.state == Connected or .state == PingPong or .local)
 			if master and (master.state == Connected or master.state == PingPong)
 				let c = connections.find.userId == master.id
 				sendPingMessage c, currentTime
-				nextPingTime = currentTime + 1000
+				nextPingTime = currentTime + 2000
 				
 				// TEMP: Log users
 				string users
-				for Input.internalUsers: users +="(id:{.id},state:{.state},local:{.local})"
+				for Input.internalUsers: if .: users +="(id:{.id},state:{.state},local:{.local})"
 				log userId, master.id, users, c.state
 		
 	private void sendPingMessage: Connection c, float pingTime
@@ -1330,15 +1344,59 @@ transient unit Network
 		pongCount++
 		lastPingPongTime = pingPongTime
 		
-		// If we haven't started the  connection yet, start after the 20th ping
+		// Finish pinging after the 20th pong
 		if mode == Ping and pongCount >= 20 and c.fastestPingPongTime < 1000
-			for connections
-				if .state == PingPong
-					let user = Input.internalUsers[.userId]
-					.state = user.state = Connected
-			startConnected
+			// Request the state from the user who has been here the longest (has the lowest connectionId)
+			log "Ping-Pong complete", pongCount, c.fastestPingPongTime
+			master = Input.internalUsers.withMin.connectionId where . and (.state == Connected or .state == PingPong or .local)
+			let connection = connections.find.userId == master.id
+				sendRequestState connection
 
 		nextPingTime = now + (c.state == PingPong ? 100 : 20000)
+		
+	private sendRequestState: Connection to
+		sendBuffer.reset
+		sendBuffer.writeInt16 cast NetworkMessageType.RequestState
+		send to, sendBuffer
+		log "requesting state from {to.userId}"	
+		
+	private onRequestState: Connection c, Buffer buffer
+		snapshotBuffer.reset
+		Snapshot.serialize snapshotBuffer
+		sendState c, snapshotBuffer
+		
+	private sendState: Connection to, Buffer buffer
+		let localPlayer = Input.internalUsers[userId]
+		sendBuffer.reset
+		sendBuffer.writeInt16 cast NetworkMessageType.State
+		sendBuffer.writeInt32 frame-1
+		let userCount = Input.internalUsers.count . != null
+		sendBuffer.writeInt32 userCount
+		for Input.internalUsers
+			if .
+				sendBuffer.writeInt32 .id
+				sendBuffer.writeInt32 .inputs.readPos
+		sendBuffer.writeBuffer buffer
+		send to, sendBuffer	
+		log "sending state to {to.userId} frame:{frame-1} readPos:{localPlayer.inputs.readPos} size:{buffer.writePos}"	
+		
+	private onState: Connection c, Buffer buffer
+		snapshotBuffer.reset
+		let frame = buffer.readInt32
+		let userCount = buffer.readInt32
+		for userCount
+			let id = buffer.readInt32
+			let readPos = buffer.readInt32
+			let user = Input.internalUsers[id]
+				user.inputFrame = frame
+				user.currentFrame = frame
+				user.inputs.readPos = user.inputs.writePos = readPos
+				log user.id, user.inputFrame, user.inputs.readPos
+		buffer.readBuffer snapshotBuffer
+		Snapshot.deserialize Network.snapshotBuffer
+		int startFrame = Math.floor((currentTime - this.startTime)/targetFrameTime)+1
+		startConnected startFrame
+		log "received state from {c.userId} frame:{frame} startFrame:{startFrame} size:{snapshotBuffer.writePos}"	
 			
 	private js void send: Connection connection, Buffer buffer
 		connection.dataChannel.send(buffer.buffer)
@@ -1444,15 +1502,15 @@ transient unit Network
 		for user -> Input.users
 			if user
 				let internalUser = Input.internalUsers[user.id]
-				if (Platform.showPointers and (!internalUser.local or Platform.showLocalPointer)) or Platform.mode == Play or frame+1 < frames
-					for user.touches
-						if Framework.isVisibleFor .smoothPosition, this.userId
-							drawImage finger, .smoothPosition+{11,32}, frame:.isDown ? 1 : 0, layer:int.maxValue
-							if user.color
-								if user.color == Black
-									drawRectangle .smoothPosition+{16,80}, size:{26,10}, user.color, layer:int.maxValue, outlineColor:{"a0a0a0"}, outlineWidth:2
-								else
-									drawRectangle .smoothPosition+{16,78}, size:{26,10}, user.color, layer:int.maxValue
+					if (Platform.showPointers and (!internalUser.local or Platform.showLocalPointer)) or Platform.mode == Play or frame+1 < frames
+						for user.touches
+							if Framework.isVisibleFor .smoothPosition, this.userId
+								drawImage finger, .smoothPosition+{11,32}, frame:.isDown ? 1 : 0, layer:int.maxValue
+								if user.color
+									if user.color == Black
+										drawRectangle .smoothPosition+{16,80}, size:{26,10}, user.color, layer:int.maxValue, outlineColor:{"a0a0a0"}, outlineWidth:2
+									else
+										drawRectangle .smoothPosition+{16,78}, size:{26,10}, user.color, layer:int.maxValue
 									
 	private js void logConnectionType(object peerConnection)
 		setTimeout(async () => {
