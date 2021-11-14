@@ -198,7 +198,7 @@ class List<T>
 	inline js void add: T item
 		      int maxLength
 		this.push(item)
-		if(length > maxLength) this.splice(0, 1)
+		if(this.length > maxLength) this.splice(0, 1)
 			
 	inline js void insert: T item // The item to add
 		                   int index
@@ -387,6 +387,9 @@ class List<T>
 	// Returns true if the given condition is true for any item in the list
 	inline js bool any: bool(T a) predicate // The condition to check
 		this.some(predicate)
+		
+	inline js bool none: bool(T a) predicate // The condition to check
+		!this.some(predicate)
 		
 	// Returns true if the given condition is true for all items in the list
 	inline js bool all: bool(T a) predicate // The condition to check

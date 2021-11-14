@@ -121,9 +121,17 @@ transient unit Platform
 		let gameId = path[3]
 		let roomId = path[4]
 		
+		// TEMP: For testing, support joining a room with a given userId using the format /gameId/roomId-userId
+		// because starting the app in two browser tabs overwrites the userId in the local storage
+		let userId = -1
+		let dashIndex = roomId.indexOf("-")
+		if dashIndex != -1
+			userId = cast roomId.substring(dashIndex+1)
+			roomId = roomId.substring(0,dashIndex)
+		
 		openMedia
 			if isDebug || roomId == "local" || url.startsWith("file"): Network.startLocal userCount:userCount
-			else                                                       Network.join gameId, roomId
+			else                                                       Network.join gameId, roomId, userId
 			this.engineStarted = true
 			sendEvaluateFinished
 			
