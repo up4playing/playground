@@ -392,21 +392,22 @@ transient unit Network
 	// This is called on startup, after every code change and when going backwards in the timeline
 	reset
 		Platform.initApplication
-		
-		// When the developer changed Platform.userCount, add or remove internal users accordingly
-		for i = Input.internalUsers.length -> Platform.userCount
-			Input.internalUsers.add {id:i, local:true, collectInputs:true}
-		if Input.internalUsers.length > Platform.userCount
-			Input.internalUsers.removeRange Platform.userCount, count: Input.internalUsers.length - Platform.userCount
-		
-		// We always recreating users, because developers might have added fields to NetworkUser or Touch
-		// By the time we call startApp, all users need to exist
 		Input.users.clear
 		Input.usersById.clear
-		for i, internalUser -> Input.internalUsers
-			NetworkUser user = {id:.id, index:i}
-			Input.usersById[.id] = user
-			Input.users.add user
+		
+		if !startInLobby
+			// When the developer changed Platform.userCount, add or remove internal users accordingly
+			for i = Input.internalUsers.length -> Platform.userCount
+				Input.internalUsers.add {id:i, local:true, collectInputs:true}
+			if Input.internalUsers.length > Platform.userCount
+				Input.internalUsers.removeRange Platform.userCount, count: Input.internalUsers.length - Platform.userCount
+			
+			// We always recreating users, because developers might have added fields to NetworkUser or Touch
+			// By the time we call startApp, all users need to exist
+			for i, internalUser -> Input.internalUsers
+				NetworkUser user = {id:.id, index:i}
+				Input.usersById[.id] = user
+				Input.users.add user
 			
 		// Reset read pos to replay inputs from the beginning
 		Input.internalUsers.each.inputs.readPos = 0
