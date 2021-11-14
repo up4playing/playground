@@ -417,7 +417,7 @@ unit Input
 								// If all players have lost the connected to a user, we remove this user
 								users.removeAllWhere.id == lostUserId
 								usersById[lostUserId] = null
-								Network.removeVideoElement lostUserId
+								// Network.removeVideoElement lostUserId
 								updateUserIndices
 								Network.parseLog += " lost {lostUserId} by {userId}, removed user"
 							else	
