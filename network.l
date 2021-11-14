@@ -795,9 +795,10 @@ transient unit Network
 			let userCount = buffer.readInt8
 			Input.internalUsers.clear
 			for userCount
-				InternalUser user
-				user.id = buffer.readInt8
-				user.local = buffer.readBool
+				InternalUser user = {
+					id: buffer.readInt8
+					local: buffer.readBool
+				}
 				buffer.readBuffer user.inputs
 				Input.internalUsers[user.id] = user
 				
