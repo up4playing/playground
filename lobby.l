@@ -1,5 +1,6 @@
 unit lobby
 	bool inLobby = true
+	// Vector2[] points
 	
 	tick
 		if Network.error or Network.errorMessage
@@ -18,6 +19,11 @@ unit lobby
 		else
 			Network.setLocalVideo({0,-50}, 1200)
 			
+		// Place points with a click for testing
+		// Input.onTouchDown
+		// 	points.add .position.clone
+		// points.each drawCircle .,radius:50
+			
 		if Network.mode == Ping
 			drawText "Connecting...", {0,450}
 		else
@@ -25,7 +31,7 @@ unit lobby
 			for Input.users
 				if !.isReady
 					drawButton Button, "Start", {0, 450}, visibleFor:.id
-						Platform.requestFullscreen
+						if Network.userId == touch.userId: Platform.requestFullscreen
 						Input.usersById[touch.userId].isReady = true
 						if Input.users.all.isReady
 							Network.startApp
