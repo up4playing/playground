@@ -22,20 +22,26 @@ transient unit Snapshot
 	
 	private bool autoSaveAtEndOfStep
 	
-	inline js void serialize(Buffer buffer) serialize(buffer)
-	inline js void deserialize(Buffer buffer) deserialize(buffer)
+	inline js void serialize(Buffer buffer) serialize_internal(buffer)
+	inline js void deserialize(Buffer buffer) deserialize_internal(buffer)
 		
-	js string toBase64: object value
+	js string toString: object value
 		let buffer = new Buffer(null, 1024, 0, 0);
-		init_serialize();
-		value.serialize(buffer);
+		setup_serialize();
+		value.serialize_external(buffer);
 		return btoa(String.fromCharCode(...new Uint8Array(buffer.buffer, 0, buffer.writePos)));	
+		
+	js void fromString: object value, string base64String
+		let bytes = Uint8Array.from(atob(base64String), c => c.charCodeAt(0))
+		let buffer = new Buffer(bytes.buffer,0,0,0);
+		setup_deserialize();
+		value.deserialize_external(buffer);
 		
 	js void fromBase64: object value, string base64String
 		let bytes = Uint8Array.from(atob(base64String), c => c.charCodeAt(0))
 		let buffer = new Buffer(bytes.buffer,0,0,0);
-		init_deserialize();
-		value.deserialize(buffer);
+		setup_deserialize();
+		value.deserialize_internal(buffer);
 				
 	Buffer save
 		Buffer buffer
@@ -93,6 +99,16 @@ transient struct Buffer
 		
 	inline js void setInt16: int index, int value
 		this.dataView.setInt16(index, value)
+		
+	internal skip: int count
+		this.readPos += count
+		
+	internal js int reserveSize
+		this.writePos += 4
+		return this.writePos
+	
+	internal js void writeSize: int pos
+		this.dataView.setInt32(pos-4, this.writePos-pos)
 	
 	js void writeInt8: int value
 		if(this.writePos+1 > this.buffer.byteLength)
@@ -141,7 +157,7 @@ transient struct Buffer
 		let size = 4+len*4
 		if(this.writePos+size > this.buffer.byteLength)
 			this.expandBuffer(this.writePos+size)
-		this.dataView.setInt32(this.writePos, len)
+		this.dataView.setInt32(this.writePos, len*4)
 		this.writePos += 4
 		for(let i=0; i<len; ++i) {
 			this.dataView.setInt32(this.writePos, value.charCodeAt(i))
@@ -223,7 +239,7 @@ transient struct Buffer
 		
 	js string readString
 		let value = ""
-		let len = this.dataView.getInt32(this.readPos)
+		let len = this.dataView.getInt32(this.readPos)/4
 		this.readPos += 4
 		for(let i=0; i<len; ++i) {
 			value += String.fromCharCode(this.dataView.getInt32(this.readPos))
