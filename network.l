@@ -1117,7 +1117,7 @@ transient unit Network
 					// Offer
 					let offer = await peerConnection.createOffer();
 					await peerConnection.setLocalDescription(offer);
-					offers.push({receiverId:partnerId, type: "offer", sdp: peerConnection.localDescription.sdp, acknowledgePos, connectionId:partner.connectionId })
+					offers.push({receiverId:partnerId, type: "offer", sdp: peerConnection.localDescription.sdp, acknowledgePos, connectionId:Network_connectionId })
 					Network_log("createOffers: Created and sent offer, waiting for answer. receiverId:"+partnerId+" acknowledgePos:"+acknowledgePos);
 				}
 				catch(e) {
@@ -1164,8 +1164,8 @@ transient unit Network
 			await peerConnection.setRemoteDescription(new RTCSessionDescription(offer));
 			let answer = await peerConnection.createAnswer();
 			await peerConnection.setLocalDescription(answer);
-			Network_sendToServer(new SignalMessage(Network_userId, {receiverId:partnerId, type: "answer", sdp: peerConnection.localDescription.sdp}))
-			Network_log("onReceivedOffer: Created and sent answer for "+partnerId+" acknowledgePos:"+offer.acknowledgePos+", waiting for connection")
+			Network_sendToServer(new SignalMessage(Network_userId, {receiverId:partnerId, type: "answer", sdp: peerConnection.localDescription.sdp, connectionId:Network_connectionId }))
+			Network_log("onReceivedOffer: Created and sent answer for "+partnerId+" acknowledgePos:"+offer.acknowledgePos+", received connectionId:"+offer.connectionId+" my connectionId:"+Network_connectionId+", waiting for connection")
 		}
 		catch(e) {
 			console.error(e)
