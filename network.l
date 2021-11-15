@@ -1079,51 +1079,49 @@ transient unit Network
 		let offers = [];
 		
 		for(let partner of partners) {
-			if(partner.connectionId < Network_connectionId) {
-				try {
-					// Tell the other users whether we are are reconnecting and already have inputs from them
-					// or whether they need to send their past inputs to us
-					let partnerId = partner.userId
-					let existingUser = Input_internalUsers[partnerId]
-					let acknowledgePos = existingUser ? existingUser.inputs.writePos : 0
-					
-					// Peer connection
-					let connection = Network_createConnection(partnerId, partner.connectionId, /*offerByMe*/true, acknowledgePos)
-					let peerConnection = connection.peerConnection
-					Network_log("createOffers: Created peer connection for partner "+partnerId)
-					
-					// Data channel
-					let dataChannel = peerConnection.createDataChannel("channel", {ordered:false, maxRetransmits:0})
-					dataChannel.binaryType = "arraybuffer"
-					connection.dataChannel = dataChannel
-					dataChannel.onopen = e => {
-						Network_log("createOffer: connection opened!")
-						Network_logConnectionType(peerConnection);
-						Network_onConnectedToPeer(connection, /*isNewUser*/true);
-					}
-					dataChannel.onerror = e => Network_log("DataChannel error: ", e)
-					dataChannel.onclose = e => Network_log("DataChannel close: ", e)
-					dataChannel.onclosing = e => {
-						Network_log("DataChannel closing: ", e)
-						Network_onDisconnectFromPeer(connection)
-					}
-					dataChannel.onmessage = e => {
-						Network_onPeerMessage(connection, new Buffer(e.data, 0, 0, 0))
-					}
-					
-					// Video
-					Network_setupRemoteVideo(partnerId, peerConnection)
-					
-					// Offer
-					let offer = await peerConnection.createOffer();
-					await peerConnection.setLocalDescription(offer);
-					offers.push({receiverId:partnerId, type: "offer", sdp: peerConnection.localDescription.sdp, acknowledgePos, connectionId:Network_connectionId })
-					Network_log("createOffers: Created and sent offer, waiting for answer. receiverId:"+partnerId+" acknowledgePos:"+acknowledgePos);
+			try {
+				// Tell the other users whether we are are reconnecting and already have inputs from them
+				// or whether they need to send their past inputs to us
+				let partnerId = partner.userId
+				let existingUser = Input_internalUsers[partnerId]
+				let acknowledgePos = existingUser ? existingUser.inputs.writePos : 0
+				
+				// Peer connection
+				let connection = Network_createConnection(partnerId, partner.connectionId, /*offerByMe*/true, acknowledgePos)
+				let peerConnection = connection.peerConnection
+				Network_log("createOffers: Created peer connection for partner "+partnerId)
+				
+				// Data channel
+				let dataChannel = peerConnection.createDataChannel("channel", {ordered:false, maxRetransmits:0})
+				dataChannel.binaryType = "arraybuffer"
+				connection.dataChannel = dataChannel
+				dataChannel.onopen = e => {
+					Network_log("createOffer: connection opened!")
+					Network_logConnectionType(peerConnection);
+					Network_onConnectedToPeer(connection, /*isNewUser*/true);
 				}
-				catch(e) {
-					console.error(e);
-					Network_log(e.stack);
+				dataChannel.onerror = e => Network_log("DataChannel error: ", e)
+				dataChannel.onclose = e => Network_log("DataChannel close: ", e)
+				dataChannel.onclosing = e => {
+					Network_log("DataChannel closing: ", e)
+					Network_onDisconnectFromPeer(connection)
 				}
+				dataChannel.onmessage = e => {
+					Network_onPeerMessage(connection, new Buffer(e.data, 0, 0, 0))
+				}
+				
+				// Video
+				Network_setupRemoteVideo(partnerId, peerConnection)
+				
+				// Offer
+				let offer = await peerConnection.createOffer();
+				await peerConnection.setLocalDescription(offer);
+				offers.push({receiverId:partnerId, type: "offer", sdp: peerConnection.localDescription.sdp, acknowledgePos, connectionId:Network_connectionId })
+				Network_log("createOffers: Created and sent offer, waiting for answer. receiverId:"+partnerId+" acknowledgePos:"+acknowledgePos);
+			}
+			catch(e) {
+				console.error(e);
+				Network_log(e.stack);
 			}
 		}
 		if(offers.length) Network_sendToServer(new OffersMessage(Network_userId, offers));
