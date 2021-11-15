@@ -404,9 +404,13 @@ unit Input
 									.connectedTo.ensure userId
 									user.connectedTo.ensure .id
 							updateUserIndices
-							Network.parseLog += " join {userId} connectedTo:{user.connectedTo}"
+							Network.parseLog += " join {userId} connectedTo:{user.connectedTo} userCount:{users.length}"
+							// TEMP logging
+							Network.log " join {userId} connectedTo:{user.connectedTo} userCount:{users.length}"
 						else
-							Network.parseLog += " join {userId} user already exists"
+							Network.parseLog += " join {userId} user already exists, userCount:{users.length}"
+							// TEMP logging
+							Network.log " join {userId} user already exists, userCount:{users.length}"
 					else
 					if inputType == Lost
 						let lostUserId = inputs.readInt16
@@ -419,9 +423,13 @@ unit Input
 								usersById[lostUserId] = null
 								// Network.removeVideoElement lostUserId
 								updateUserIndices
-								Network.parseLog += " lost {lostUserId} by {userId}, removed user"
+								Network.parseLog += " lost {lostUserId} by {userId}, removed user, userCount:{users.length}"
+								// TEMP logging
+								Network.log " lost {lostUserId} by {userId}, removed user, userCount:{users.length}"
 							else	
 								Network.parseLog += " lost {lostUserId} by {userId}, remaining:{user.connectedTo.length} {user.connectedTo}"
+								// TEMP logging
+								Network.log " lost {lostUserId} by {userId}, removed user, userCount:{users.length}"
 					else
 					if inputType == SetState
 						Network.parseLog += " setState"

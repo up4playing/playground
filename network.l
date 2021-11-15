@@ -354,9 +354,12 @@ transient unit Network
 		let user = Input.internalUsers[userId]
 		user.startInputFrame startFrame
 		
+		// TEMP logging
+		log "Writing join", user.inputs.writePos, startFrame
 		user.inputs.writeInt32 startFrame
 		user.inputs.writeInt16 cast InputType.Join
 		user.collectInputs = true
+		writeLog += " #{startFrame} Join"
 		
 		mode = Connected
 		receivedFrames = startFrame-1
@@ -1072,7 +1075,7 @@ transient unit Network
 		connection.offerByMe = offerByMe
 		user.acknowledgedPos = acknowledgePos
 		user.connectionId = connectionId
-		log partnerId, offerByMe, acknowledgePos, connection.state, connection.dataChannel
+		log partnerId, connectionId, offerByMe, acknowledgePos, connection.state, connection.dataChannel
 		return connection
 		
 	private js void createOffers: Partner[] partners
@@ -1322,7 +1325,7 @@ transient unit Network
 				
 				// TEMP: Log users
 				string users
-				for Input.internalUsers: if .: users +="(id:{.id},state:{.state},local:{.local})"
+				for Input.internalUsers: if .: users +="(id:{.id},cId:{.connectionId},state:{.state},local:{.local})"
 				log userId, master.id, users, c.state
 		
 	private void sendPingMessage: Connection c, float pingTime
@@ -1412,7 +1415,7 @@ transient unit Network
 		Snapshot.deserialize Network.snapshotBuffer
 		int startFrame = Math.floor((currentTime - this.startTime)/targetFrameTime)+1
 		startConnected startFrame
-		log "received state from {c.userId} frame:{frame} startFrame:{startFrame} size:{snapshotBuffer.writePos}"	
+		log "received state",c.userId, frame, startFrame, snapshotBuffer.writePos, userCount
 			
 	private js void send: Connection connection, Buffer buffer
 		connection.dataChannel.send(buffer.buffer)
@@ -1439,6 +1442,8 @@ transient unit Network
 		for(let track of Network_localVideoStream.getTracks())
 			peerConnection.addTrack(track, Network_localVideoStream);
 		
+		// TEMP logging
+		Network_log("creating video for user "+partnerId)
 		var remoteStream = new MediaStream();
 		let internalUser = Input_internalUsers[partnerId];
 		internalUser.videoElement = Network_createVideoElement(remoteStream, /*local*/false)
@@ -1463,6 +1468,8 @@ transient unit Network
 		return el
 		
 	js void removeVideoElement: int userId
+		// TEMP logging
+		log("removeVideoElement "+userId)
 		let internalUser = Input_internalUsers[userId];
 		if(internalUser?.videoElement) internalUser.videoElement.remove()
 			
