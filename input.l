@@ -430,6 +430,7 @@ unit Input
 						Snapshot.deserialize Network.snapshotBuffer
 						
 	updateUserIndices
+		users.orderBy.id
 		for i, user -> users: .index = i
 				
 	// Executes code when the user touches or clicks within a given area
