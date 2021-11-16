@@ -302,6 +302,9 @@ transient unit Platform
 		alert(message)
 		log(message)
 		
+	inline js void sendErrorToEditor: object error
+		sendErrorToEditor(error)
+		
 	inline js void pushState: object state, string title, string url = ""
 		history.pushState(state, title, url)
 		

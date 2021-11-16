@@ -508,6 +508,7 @@ transient unit Network
 			catch 
 				log error
 				errorMessage = error.message
+				Platform.sendErrorToEditor error
 					
 			// Ensure that step is called every targetFrameTime milliseconds
 			while frame < targetFrame
@@ -601,6 +602,7 @@ transient unit Network
 		catch
 			log error
 			errorMessage = error.message
+			Platform.sendErrorToEditor error
 			
 		// Cleanup
 		for internalUser -> Input.internalUsers
@@ -618,21 +620,23 @@ transient unit Network
 	// Clear screen, process application tick, and draw all graphics
 	// This is called in step.
 	internal tick
+		graphics.startFrame
+		updateVideoScreen
+		drawFingers
+		
 		try
-			graphics.startFrame
-			updateVideoScreen
-			drawFingers
 			if lobby.inLobby
 				lobby.tick
 			else
 				Framework.tick
 				tickTime = Time.measure
 					app.tick
-				Input.updateCursor
 		catch
 			log error
 			errorMessage = error.message
+			Platform.sendErrorToEditor error
 			
+		Input.updateCursor
 		drawText debugString, {0, 528}
 		drawTime = Time.measure
 			graphics.finishFrame
