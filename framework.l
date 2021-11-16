@@ -573,6 +573,7 @@ Piece Coin
 		updateNeighbors siblings, isBeingMoved:false
 	
 	private transferToNeighbor: Coin coin, int amount = 1
+		if value - amount < 0: return
 		Coin neighbor = coin
 		if !neighbor
 			if value <= amount and !isInfinate: return
