@@ -184,8 +184,8 @@ struct Vector2
 	// Returns whether the vector is within a given rectangle
 	isInsideRectangle: Vector2 center, // The center of the rectangle
 		               Vector2 size,   // The size of the rectangle
-		return x >= center.x - size.x && x < center.x + size.x
-		    && y >= center.y - size.y && y < center.y + size.y
+		return x >= center.x - size.x/2 && x < center.x + size.x/2
+		    && y >= center.y - size.y/2 && y < center.y + size.y/2
 		
 	// Returns whether the vector is within a given polygon
 	isInsidePoygon: Vector2[] poly // A list of points that make up the polygon
