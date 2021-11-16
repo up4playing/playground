@@ -601,7 +601,7 @@ transient global unit graphics
 				fillColor || !outlineColor ? (fillColor || graphics_currentColor).hex : null,
 				outlineColor ? outlineColor.hex : null,
 				outlineWidth || graphics_currentLineWidth,
-				smooth
+				smooth, /*close*/true
 			))
 		}
 		
@@ -670,7 +670,7 @@ transient global unit graphics
 				null, // no fill color, because we want to draw a line instead of a polygon
 				(color || graphics_currentColor).hex,
 				width || graphics_currentLineWidth,
-				smooth
+				smooth, /*close*/false
 			))
 		}
 		
@@ -825,7 +825,7 @@ transient DisplayItem DisplayPolygon
 	Vector2[] points
 	string fillColor, outlineColor
 	float outlineWidth
-	bool smooth
+	bool smooth, close
 	js void draw
 		if(this.points.length < 2 || this.alpha == 0) return
 		Platform_context.setTransform(this.m0, this.m1, this.m2, this.m3, this.m4, this.m5)
@@ -851,7 +851,9 @@ transient DisplayItem DisplayPolygon
 			let p1 = points[i], p2 = points[i + 1]
 			Platform_context.quadraticCurveTo(p1.x, p1.y, p2.x,p2.y);
 		}
-			
+		if(this.close) {
+			Platform_context.closePath()
+		}
 		if(this.fillColor) {
 			// Close the polygon and fill it
 			Platform_context.lineTo(x + startPoint.x, y + startPoint.y)
