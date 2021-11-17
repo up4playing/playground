@@ -1,5 +1,5 @@
 unit fx
-	private Effect[] effects
+	internal Effect[] effects
 	add: Effect effect
 		effects.add effect
 		

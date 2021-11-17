@@ -62,8 +62,19 @@ class Object
 	moveTo: Vector2 pos
 		    int duration = 1000
 		    int delay = 0
-		let delta = pos - position
-		fx.add MoveEffect startTime:Time.now+delay, duration, this, startValue:position, delta
+		Vector2 startValue = position
+		let startTime = Time.now + delay
+		
+		// When chaining serveral move effects together, continue where the last one left off
+		let effect = fx.effects[fx.effects.length-1]
+			if effect.type == MoveEffect
+				MoveEffect moveEffect = cast effect
+				if moveEffect.object == this
+					startValue = moveEffect.startValue + moveEffect.delta
+					startTime = moveEffect.startTime + moveEffect.duration
+					
+		let delta = pos - startValue
+		fx.add MoveEffect startTime, duration, this, startValue, delta
 		return this
 		
 	moveTo: Vector2 pos
