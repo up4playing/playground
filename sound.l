@@ -67,10 +67,13 @@ transient global unit audio
 	// 		volume = volumeLevels[volumeLevel]
 	// 		print volume, forUser
 	
-	global playSound: Sound sound
+	global playSound: Sound sound, int delay = 0
 		if Time.frame == 0
-			fx.add PlaySoundEffect startTime:Math.ceil(Time.now+Network.targetFrameTime), sound
+			fx.add PlaySoundEffect startTime:Math.ceil(Time.now+Network.targetFrameTime)+delay, sound
 		else
+		if delay
+			fx.add PlaySoundEffect startTime:Time.now+delay, sound
+		else	
 			sound.play
 		
 	js void pause
