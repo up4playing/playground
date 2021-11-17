@@ -31,7 +31,7 @@ unit lobby
 			for Input.users
 				if !.isReady
 					drawButton Button, "Start", {0, 450}, visibleFor:.id
-						if Network.userId == touch.userId: Platform.requestFullscreen
+						Platform.setFullscreen true forUser:touch.userId
 						Input.usersById[touch.userId].isReady = true
 						if Input.users.all.isReady
 							Network.startApp
