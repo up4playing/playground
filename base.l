@@ -419,9 +419,16 @@ class List<T>
 			sum += this[i];
 		return sum;
 	
-	average
-		return length > 0 ? sum() / length : 0
+	js float average
+		return this.length > 0 ? this.sum() / this.length : 0
 		
+	js float average: float(T a) selector
+		if(this.length == 0) return 0
+		let sum = 0
+		for(let i=0; i<this.length; i++)
+			sum += selector(this[i])
+		return sum / this.length
+				
 	shuffle
 		for i = 1 <- length
 			var j = Math.floor(Math.randomFloat * (i + 1))
