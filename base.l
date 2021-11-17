@@ -838,7 +838,7 @@ unit Math
 		}
 		
 	transient internal string randomSeed
-	transient private float[] randomValues
+	transient internal float[] randomValues
 	internal int randomValueIndex
 	
 	js void setRandomSeed: string seed

@@ -530,6 +530,7 @@ transient unit Network
 				catch
 					print error
 					errorMessage = error.message
+					Platform.sendErrorToEditor error
 				
 				// Debug string
 				if Platform.showDebugInfo
