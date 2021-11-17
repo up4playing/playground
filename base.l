@@ -404,7 +404,7 @@ class List<T>
 				return i
 		return -1
 		
-	inline js T[] filter: bool(T a) condition // The condition to check
+	inline js T[] where: bool(T a) condition // The condition to check
 		this.filter(condition)
 		
 	js int sum: int(T a) selector
