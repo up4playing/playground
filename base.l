@@ -277,6 +277,14 @@ class List<T>
 		
 	inline js T pop := this.pop()
 		
+	T popWhere: bool(T a) condition
+		for length()
+			let item = get(i)
+			if condition(item)
+				removeAt i
+				return item
+		return null
+	
 	js T popFront
 		if(this.length == 0) return null
 		let firstItem = this[0]
