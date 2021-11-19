@@ -47,7 +47,7 @@ class Sound
 // A collection of functions for playing audio
 transient global unit audio
 	const float[] volumeLevels = [0, .01, .02, .04, .08, .16, .32, .64, 1]
-	float volumeLevel = 5
+	float volumeLevel = 8
 	float volume = volumeLevels[volumeLevel]
 	
 	// TEMP!!!
