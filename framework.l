@@ -453,25 +453,34 @@ struct Particle
 
 Object ParticleSystem
 	private Particle[] particles
-	Image particleImage
+	Image particleImage = starParticle
+	minSpeed = 10.0
+	maxSpeed = 25.0
+	particlesPerBurst = 30
+	burstInterval = 500
+	nextBurst = -1
+	bursts = 10
 	
-	ParticleSystem: float minSpeed = 15, float maxSpeed = 30
-		for 20
-			let r = (Math.randomFloat) * Math.PI
-			let speedFactor = Math.randomFloat*(maxSpeed-minSpeed) + minSpeed
-			particles.add Particle
-				pos: position
-				speed: {Math.cos(r), Math.sin(r)} * speedFactor
-				frame: Math.randomInteger(particleImage.frames.length)
-				angle: Math.randomFloat*Math.PI*2
-		
+	private int burst
+	
 	tick
+		if Time.now > nextBurst
+			for particlesPerBurst
+				let r = -(Math.randomFloat) * Math.PI*2
+				let speedFactor = Math.randomFloat*(maxSpeed-minSpeed) + minSpeed
+				particles.add Particle
+					pos: position
+					speed: {Math.cos(r), Math.sin(r)} * speedFactor
+					frame: Math.randomInteger(particleImage.frames.length)
+					angle: Math.randomFloat*Math.PI*2
+			nextBurst = burst++ < bursts ? Time.now + burstInterval : int.maxValue
+
 		for i,p <- particles
 			graphics.move p.pos
 				graphics.rotate p.angle
 					drawImage particleImage, frame:p.frame, scale:p.scale
 			p.pos += p.speed
-			p.speed.y -= 1
+			p.speed.y += 1
 			p.angle += .05
 			if p.pos.y < -Platform.size.y/2
 				particles.removeAt i
