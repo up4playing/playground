@@ -514,7 +514,7 @@ transient global unit graphics
 		                       Color fillColor = null    // The color of the area within the circle
 		                       Color outlineColor = null // The color of the outline around the circle
 		                       outlineWidth = 0          // The width of the outline around the circle
-		                       startAngle = 0            // Draws an arc with this start angle in radians, measured from the positive x-axis
+		                       startAngle = 0.0          // Draws an arc with this start angle in radians, measured from the positive x-axis
 		                       endAngle = Math.PI * 2    // Draws an arc with this end angle in radians, measured from the positive x-axis
 		                       RotationDirection direction = Clockwise
 		                       visibleFor = -1           // Only this user will see the circle
