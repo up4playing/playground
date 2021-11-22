@@ -838,9 +838,14 @@ unit Math
 			return Date.now().toString()
 		}
 		
-	transient internal string randomSeed
-	transient internal float[] randomValues
+	internal string randomSeed
 	internal int randomValueIndex
+	transient internal float[] randomValues
+	
+	internal recreateRandomValues
+		let targetRandomValueIndex = randomValueIndex
+		setRandomSeed randomSeed
+		for targetRandomValueIndex: randomFloat
 	
 	js void setRandomSeed: string seed
 		Math_randomSeed = seed

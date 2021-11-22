@@ -1418,6 +1418,7 @@ transient unit Network
 				log user.id, user.inputFrame, user.inputs.readPos
 		buffer.readBuffer snapshotBuffer
 		Snapshot.deserialize Network.snapshotBuffer
+		Math.recreateRandomValues
 		int startFrame = Math.floor((currentTime - this.startTime)/targetFrameTime)+1
 		startConnected startFrame
 		log "received state",c.userId, frame, startFrame, snapshotBuffer.writePos, userCount

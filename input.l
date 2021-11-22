@@ -439,6 +439,7 @@ unit Input
 						Network.snapshotBuffer.reset
 						inputs.readBuffer Network.snapshotBuffer
 						Snapshot.deserialize Network.snapshotBuffer
+						Math.recreateRandomValues
 						
 	updateUserIndices
 		users.orderBy.id
