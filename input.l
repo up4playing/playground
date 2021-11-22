@@ -10,6 +10,13 @@ transient class InternalUser
 	int currentFrame    // The frame currently processed by this user, used to calculate "ahead"
 	float aheadAverage
 	
+	int lagFrom
+	int lagTo
+	int sendInterval
+	float time
+	float lagTimeFrom
+	float lagTimeTo
+	
 	visible Touch[] downTouches, movingTouches, upTouches
 	visible WheelEvent[] wheelEvents
 	visible int[] downKeys, upKeys

@@ -286,7 +286,7 @@ transient unit Network
 	public int smoothStrength = 90
 	public bool smoothTouchPosition = true
 	
-	string logTable = "frame,now,animTime,networkTime,tickTime,drawTime,iteration,restoreTime,replayFrames,replayTime,saveTime,pingPong,user0,user1,user2,received,uncertain,offset,ahead,avarage,percentile,certainFrame,buffer,checksums,events,send,receive,write,parse,touch\n"
+	string logTable = "frame,id 0,lagFrom 0,lagTo 0,ahead 0,interval 0,id 1,lagFrom 1,lagTo 1,ahead 1,interval 1,id 2,lagFrom 2,lagTo 2,ahead 2,interval 2,now,animTime,networkTime,tickTime,drawTime,iteration,restoreTime,replayFrames,replayTime,saveTime,pingPong,user0,user1,user2,received,uncertain,offset,ahead,avarage,percentile,certainFrame,buffer,checksums,events,send,receive,write,parse,touch\n"
 	public string eventLog = ""; sentLog = "", receivedLog="", writeLog="", parseLog = "", touchLog = "", checksumLog = "", debugString = ""
 	private float lastNetworkFrame, lastAnimationFrame, drawTime, tickTime, restoreTime, replayTime, saveTime
 	private int replayFrames, checkedChecksums
@@ -336,7 +336,6 @@ transient unit Network
 	// TEMP
 	bool skipAnimationFrame
 	bool skipSending
-	int sendInterval = 1
 	
 	init
 		Platform.showDebugInfo = isLocalhost = Platform.url.contains("localhost")
@@ -517,7 +516,15 @@ transient unit Network
 				
 				// Logs
 				try
-					logTable += "{frame-1},{now},{now - lastAnimationFrame},{now - lastNetworkFrame},{tickTime.format(fractionDigits:2)},{drawTime.format(fractionDigits:2)},{frame-startFrame}"
+					logTable += "{frame-1}"
+					let users = Input.internalUsers.where . and .state == Connected
+					for 3
+						let user = users[i]
+							logTable += ",{user.id},{user.lagFrom},{user.lagTo},{user.aheadAverage.format(fractionDigits:1)},{user.sendInterval}"
+						else
+							logTable += ",,,,,"
+							
+					logTable += ",{now},{now - lastAnimationFrame},{now - lastNetworkFrame},{tickTime.format(fractionDigits:2)},{drawTime.format(fractionDigits:2)},{frame-startFrame}"
 					logTable += ",{restoreTime.format(fractionDigits:2)},{replayFrames},{replayTime.format(fractionDigits:2)},{saveTime.format(fractionDigits:2)},{lastPingPongTime}"
 					logTable += ","+(Input.internalUsers[0] ? Input.internalUsers[0].inputFrame : 0)
 					logTable += ","+(Input.internalUsers[1] ? Input.internalUsers[1].inputFrame : 0)
@@ -525,24 +532,29 @@ transient unit Network
 					logTable += ",{receivedFrames},{uncertainFrame},{frame - receivedFrames},{ahead},{aheadAverage.format(fractionDigits:1)}"
 					logTable += ",{aheadPercentile},{certainFrame},{receivedFrames-frameMinusOffset}"
 					logTable += ",\"{checksumLog.trim}\",\"{eventLog.trim}\",\"{sentLog.trim}\",\"{receivedLog.trim}\",\"{writeLog.trim}\",\"{parseLog.trim}\",\"{touchLog.trim}\"\n"
-					eventLog = ""; sentLog = ""; receivedLog = ""; writeLog = ""; parseLog = ""; touchLog = ""; checksumLog = ""; lastPingPongTime = 0
-				
 				catch
 					print error
 					errorMessage = error.message
 					Platform.sendErrorToEditor error
+					
+				eventLog = ""; sentLog = ""; receivedLog = ""; writeLog = ""; parseLog = ""; touchLog = ""; checksumLog = ""; lastPingPongTime = 0
 				
 				// Debug string
 				if Platform.showDebugInfo
-					debugString = "v{Platform.version} ct:{connectionType} m:{master ? master.id : -1} w:"
+					debugString = "v{Platform.version} #{frame-1} ct:{connectionType} av:{aheadAverage.format(fractionDigits:1)}"
 					for user -> Input.internalUsers
-						if user
-							debugString += " " + user.inputs.writePos.format(grouping:true)
-					debugString += " as:{Snapshot.autoSaveCount} s:{Snapshot.lastSnapshotSize.format(grouping:true)} a:{ahead} p:{aheadPercentile} av:"
-					for user -> Input.internalUsers
-						if user
-							debugString += "  " + user.aheadAverage.format(fractionDigits:1)
-					debugString += " int:{sendInterval} {errorMessage}"
+						if . and !.local
+							debugString += " <{.id}> {.lagFrom}/{.lagTo} {.lagTimeFrom.format(grouping:true)}/{.lagTimeTo.format(grouping:true)} (a:{.aheadAverage.format(fractionDigits:1)}) -> {.sendInterval}"
+					
+					// debugString = "v{Platform.version} ct:{connectionType} m:{master ? master.id : -1} w:"
+					// for user -> Input.internalUsers
+					// 	if user
+					// 		debugString += " " + user.inputs.writePos.format(grouping:true)
+					// debugString += " as:{Snapshot.autoSaveCount} s:{Snapshot.lastSnapshotSize.format(grouping:true)} a:{ahead} p:{aheadPercentile} av:"
+					// for user -> Input.internalUsers
+					// 	if user
+					// 		debugString += "  " + user.aheadAverage.format(fractionDigits:1)
+					// debugString += " int:{sendInterval} {errorMessage}"
 					
 				lastNetworkFrame = now
 				
@@ -639,6 +651,7 @@ transient unit Network
 			
 		Input.updateCursor
 		drawText debugString, {0, 528}
+		if Input.internalUsers.any . and .sendInterval > 1: drawCircle {920, 496}, fillColor:Red
 		drawTime = Time.measure
 			graphics.finishFrame
 		
@@ -646,33 +659,35 @@ transient unit Network
 	// This is called in animationFrame.
 	private sendInputs: int nextInputFrame, int targetFrame, float aheadAverage
 		let localPlayer = Input.internalUsers[userId]
-		let maxAheadAverage = getMaxAheadAverage
-		sendInterval = maxAheadAverage < 15 ? 1 : maxAheadAverage < 50 ? 10 : 30
-		if (nextInputFrame % sendInterval) != 0: return
 		for c -> connections
 			if c.state == Connected
 				let receiver = Input.internalUsers[c.userId]
+				receiver.sendInterval = receiver.lagFrom < 15 and receiver.lagTo < 15 ? 1 : 60
 				
-				// TEMP for debugging
-				if receiver.acknowledgedPos > localPlayer.inputs.writePos
-					errorMessage = "ack TOO LARGE!!! {receiver.acknowledgedPos} writePos:{localPlayer.inputs.writePos}"
-					log errorMessage
-					Platform.debugger
-				
-				sendTickMessage
-					to: c
-					inputFrame: nextInputFrame-1     // You got all inputs up to and including this frame
-					currentFrame: targetFrame-1      // The currently processed frame, used to calculate "ahead"
-					aheadAverage: aheadAverage
+				if (nextInputFrame % receiver.sendInterval) == 0
+					// TEMP for debugging
+					if receiver.acknowledgedPos > localPlayer.inputs.writePos
+						errorMessage = "ack TOO LARGE!!! {receiver.acknowledgedPos} writePos:{localPlayer.inputs.writePos}"
+						log errorMessage
+						Platform.debugger
 					
-					checksumFor: certainFrame                 // The last certain frame with inputs from everybody
-					checksum: checksums[certainFrame] || 0    // The checksum of the last certain frame
-					
-					acknowledgePos: receiver.inputs.writePos  // We ackledge that we received up to this input buffer pos
-					
-					buffer: localPlayer.inputs                // Send inputs that they haven't acknowleged yet
-					start: receiver.acknowledgedPos
-					end: localPlayer.inputs.writePos
+					sendTickMessage
+						to: c
+						inputFrame: nextInputFrame-1     // You got all inputs up to and including this frame
+						currentFrame: targetFrame-1      // The currently processed frame, used to calculate "ahead"
+						lagTo: receiver.lagFrom
+						time: currentTime-startTime
+						lagTimeTo: receiver.lagTimeFrom
+						aheadAverage: aheadAverage
+						
+						checksumFor: certainFrame                 // The last certain frame with inputs from everybody
+						checksum: checksums[certainFrame] || 0    // The checksum of the last certain frame
+						
+						acknowledgePos: receiver.inputs.writePos  // We ackledge that we received up to this input buffer pos
+						
+						buffer: localPlayer.inputs                // Send inputs that they haven't acknowleged yet
+						start: receiver.acknowledgedPos
+						end: localPlayer.inputs.writePos
 		
 	// Save a snapshot when we are about to start the frame after the last certain frame 
 	// where we received inputs from all users. This is called at the beginning of a step
@@ -1208,6 +1223,9 @@ transient unit Network
 	private void sendTickMessage: Connection to
 		                          int inputFrame
 		                          int currentFrame
+		                          int lagTo
+		                          float time
+		                          float lagTimeTo
 		                          float aheadAverage
 		                          int acknowledgePos
 		                          int checksumFor
@@ -1221,6 +1239,9 @@ transient unit Network
 		sendBuffer.writeFloat64 checksum || 0
 		sendBuffer.writeInt32 inputFrame
 		sendBuffer.writeInt32 currentFrame
+		sendBuffer.writeInt32 lagTo
+		sendBuffer.writeFloat64 time
+		sendBuffer.writeFloat64 lagTimeTo
 		sendBuffer.writeFloat64 aheadAverage
 		sendBuffer.writeInt32 acknowledgePos
 		sendBuffer.writeInt32 start
@@ -1274,6 +1295,9 @@ transient unit Network
 		if inputFrame > sender.inputFrame
 			sender.inputFrame = inputFrame
 			sender.currentFrame = buffer.readInt32
+			sender.lagTo = buffer.readInt32
+			sender.time = buffer.readFloat64
+			sender.lagTimeTo = buffer.readFloat64
 			sender.aheadAverage = buffer.readFloat64
 			sender.acknowledgedPos = buffer.readInt32
 			
@@ -1288,6 +1312,9 @@ transient unit Network
 			
 			receivedFrames = getReceivedInputFrames
 	
+			sender.lagFrom = frame - sender.currentFrame
+			sender.lagTimeFrom = (currentTime-startTime) - sender.time
+			
 			receivedLog += " [{currentTime}] <{c.userId}> #{sender.inputFrame} a:{sender.acknowledgedPos} cf:{sender.currentFrame} s:{writeStart} e:{sender.inputs.writePos} size:{buffer.readPos}"
 		else
 			// Ignore this frame because we already received a later frame
