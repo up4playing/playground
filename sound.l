@@ -1,20 +1,20 @@
 // A sound
 class Sound
 	string file
-	Sound() open
 	float fadeVolume = 1
 	
-	js void open
-		if(!window._audioCache) {
-			_audioCache = {}
-		}
-		this.audio = _audioCache[this.file]
-		if(!this.audio) {
-			this.audio = window._audioCache[this.file] = new Audio()
-			this.audio.src = this.file
-		} else {
-			this.audio.pause();
-		}
+	// Sound() open
+	// js void open
+	// 	if(!window._audioCache) {
+	// 		_audioCache = {}
+	// 	}
+	// 	this.audio = _audioCache[this.file]
+	// 	if(!this.audio) {
+	// 		this.audio = window._audioCache[this.file] = new Audio()
+	// 		this.audio.src = this.file
+	// 	} else {
+	// 		this.audio.pause();
+	// 	}
 		
 	js void volume: float value
 		this.fadeVolume = value
@@ -24,19 +24,21 @@ class Sound
 		this.audio.volume = this.fadeVolume * audio_volume
 		
 	js void stop
-		if(!Platform_fastForward) {
+		if(!Platform_fastForward && this.audio) {
 			this.audio.pause()
-			this.audio.currentTime = 0
 		}
 		
 	js void play
 		if(!Platform_fastForward) {
 			this.fadeVolume = 1
-			this.audio.volume = audio_volume
-			this.audio.currentTime = 0
+			// this.audio.volume = audio_volume
+			// this.audio.currentTime = 0
 			// TEMP!!!
-			Network_log("play "+this.file+" vol:"+audio_volume+" time:"+this.audio.currentTime)
-			this.audio.play()
+			// Network_log("play "+this.file+" vol:"+audio_volume+" time:"+this.audio.currentTime)
+			this.audio = new Audio();
+			this.audio.src = this.file;
+			this.audio.volume = audio_volume;
+			this.audio.play();
 		}
 		
 	fadeOut: int duration = 3000
