@@ -97,6 +97,9 @@ unit Input
 	internal NetworkUser[] usersById
 	string cursor
 	
+	bool showLocalPointer = false
+	bool showPointers = true
+	
 	string textInput
 		let localUser = users.find.id == Network.userId
 		return localUser.textInput
