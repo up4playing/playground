@@ -289,7 +289,7 @@ transient unit Network
 	string logTable = "frame,id 0,lagFrom 0,lagTo 0,interval 0,id 1,lagFrom 1,lagTo 1,interval 1,id 2,lagFrom 2,lagTo 2,interval 2,messageSize,now,animTime,networkTime,tickTime,drawTime,iteration,restoreTime,replayFrames,replayTime,saveTime,pingPong,user0,user1,user2,received,uncertain,offset,ahead,avarage,percentile,certainFrame,buffer,checksums,events,send,receive,write,parse,touch\n"
 	public string eventLog = ""; sentLog = "", receivedLog="", writeLog="", parseLog = "", touchLog = "", checksumLog = "", debugString = ""
 	private float lastNetworkFrame, lastAnimationFrame, drawTime, tickTime, restoreTime, replayTime, saveTime
-	private int replayFrames, checkedChecksums
+	private int replayFrames
 	private string connectionType
 	private float lastPingPongTime
 	private InternalUser master
@@ -472,7 +472,6 @@ transient unit Network
 			aheadPercentile = smoothStrength ? aheads.percentile(smoothStrength).limit(0, 50) : 0
 		
 		let targetFrame = Math.floor((now - startTime)/targetFrameTime)+1
-		let nextInputFrame = targetFrame // TODO: Replace with targetFrame
 		let frameMinusOffset = targetFrame - aheadPercentile
 		certainFrame = mode == Connected ? Math.min(frameMinusOffset, receivedFrames) : int.maxValue
 
@@ -538,7 +537,7 @@ transient unit Network
 				
 				lastNetworkFrame = now
 				
-			for Input.internalUsers: if . and .local: .startInputFrame nextInputFrame	
+			for Input.internalUsers: if . and .local: .startInputFrame targetFrame	
 			
 		lastAnimationFrame = now
 		if Platform.mode == Play and frame >= frames: Platform.record()
@@ -576,17 +575,13 @@ transient unit Network
 				// Calculate checksum if we received all inputs for this frame
 				if isCertain
 					float myChecksum = Framework.checksum					
-					let theirChecksum = checksums[frame]
+					float theirChecksum = checksums[frame]
 					checksumLog += " <> #{frame} {myChecksum}"
 					if !theirChecksum
 						checksums[frame] = myChecksum
 					else
-					if(theirChecksum isApproximately myChecksum)
-						checkedChecksums++
-					else
-						onWrongChecksum
-						checkedChecksums = 0
-						checksumLog += " MISMATCH saved theirs:{theirChecksum}"
+					if !theirChecksum.isApproximately(myChecksum)
+						onWrongChecksum mine:myChecksum theirs:theirChecksum
 						
 				// Take snapshot
 				Snapshot.onEndOfStep
@@ -717,8 +712,10 @@ transient unit Network
 				minFrames = user.inputFrame
 		return minFrames
 	
-	private onWrongChecksum
-		errorMessage = "Out of sync"
+	private onWrongChecksum: float mine, float theirs
+		errorMessage = "Checksum mismatch"
+		checksumLog += " MISMATCH mine:{mine} theirs:{theirs}"
+		
 		if !alertShown
 			alert "Clients out of sync. Please send me the log file that will be created."
 			saveLogs
@@ -1182,11 +1179,6 @@ transient unit Network
 				let c = connections.find.userId == master.id
 				sendPingMessage c, currentTime
 				nextPingTime = currentTime + 2000
-				
-				// TEMP: Log users
-				string users
-				for Input.internalUsers: if .: users +="(id:{.id},cId:{.connectionId},state:{.state},local:{.local})"
-				log userId, master.id, users, c.state
 		
 	private void sendPingMessage: Connection c, float pingTime
 		sendBuffer.reset
@@ -1210,12 +1202,8 @@ transient unit Network
 				if !myChecksum
 					checksums[checksumFor] = checksum
 				else
-				if(myChecksum isApproximately checksum)
-					checkedChecksums++
-				else
-					onWrongChecksum
-					checkedChecksums = 0
-					checksumLog += " MISMATCH mine:{myChecksum}"
+				if !myChecksum.isApproximately(checksum)
+					onWrongChecksum mine:myChecksum theirs:checksum
 			
 			sendPongMessage c, currentTime-startTime, pingTime
 		
