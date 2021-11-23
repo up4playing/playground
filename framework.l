@@ -31,12 +31,15 @@ unit Framework
 		for objects: result+= o.debugString
 		return result
 		
+	private js float appChecksum()
+		return window.app_checksum ? window.app_checksum() : 0.0
+		
 	checksum
-		let result = 0
+		float result = appChecksum
 		for objects: result += o.checksum
 		// We ensure that we never return 0
 		// because a checksum of 0 is used to indicate that we don't have a checksum for this frame yet
-		if result == 0: return 1
+		if result == 0: return 1.0
 		return result		
 		
 enum Side: Front, Back

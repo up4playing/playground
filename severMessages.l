@@ -28,7 +28,6 @@ transient class Signal
 	int receiverId
 	string type
 	object sdp
-	int acknowledgePos
 	int connectionId
 	
 transient ServerMessage IceMessage
