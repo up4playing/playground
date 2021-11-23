@@ -7,15 +7,11 @@ transient class InternalUser
 	
 	bool collectInputs  // When we are done pinging, we add a join event and start collecting inputs
 	int inputFrame      // We got all inputs from this player up to and including this frame
-	int currentFrame    // The frame currently processed by this user, used to calculate "ahead"
-	float aheadAverage
-	
+	int inputsSentPos
+
 	int lagFrom
 	int lagTo
 	int sendInterval
-	float time
-	float lagTimeFrom
-	float lagTimeTo
 	
 	visible Touch[] downTouches, movingTouches, upTouches
 	visible WheelEvent[] wheelEvents
@@ -25,7 +21,6 @@ transient class InternalUser
 	int[] lastTouchMoveIndex
 	
 	Buffer inputs         // The stream of inputs of this user
-	int acknowledgedPos   // The remote user has received the input buffer up to this buffer position
 	int uncertainReadPos  // The buffer position where we haven't received inputs from all users
 	
 	object videoElement
