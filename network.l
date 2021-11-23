@@ -575,7 +575,7 @@ transient unit Network
 			if mode != Local
 				// Calculate checksum if we received all inputs for this frame
 				if isCertain
-					int myChecksum = Framework.checksum					
+					float myChecksum = Framework.checksum					
 					let theirChecksum = checksums[frame]
 					checksumLog += " <> #{frame} {myChecksum}"
 					if !theirChecksum
@@ -1190,13 +1190,33 @@ transient unit Network
 		
 	private void sendPingMessage: Connection c, float pingTime
 		sendBuffer.reset
-		sendBuffer.writeInt16 cast NetworkMessageType.Ping
+		sendBuffer.writeInt8 cast NetworkMessageType.Ping
 		sendBuffer.writeFloat64 pingTime
+		sendBuffer.writeInt32 certainFrame                    // The last certain frame with inputs from everybody
+		sendBuffer.writeFloat64 checksums[certainFrame] || 0  // The checksum of the last certain frame
+		
 		send c, sendBuffer
 			
 	private onPingMessage: Connection c, Buffer buffer
 		if c.state != Disconnected
 			let pingTime = buffer.readFloat64
+			
+			// Checksum
+			let checksumFor = buffer.readInt32
+			let checksum = buffer.readFloat64
+			checksumLog += " <{c.userId}> #{checksumFor} {checksum}"
+			if checksum
+				let myChecksum = checksums[checksumFor]
+				if !myChecksum
+					checksums[checksumFor] = checksum
+				else
+				if(myChecksum isApproximately checksum)
+					checkedChecksums++
+				else
+					onWrongChecksum
+					checkedChecksums = 0
+					checksumLog += " MISMATCH mine:{myChecksum}"
+			
 			sendPongMessage c, currentTime-startTime, pingTime
 		
 	private void sendPongMessage: Connection c, float timeSinceStart, float pingTime
@@ -1231,7 +1251,7 @@ transient unit Network
 			let connection = connections.find.userId == master.id
 				sendRequestState connection
 
-		nextPingTime = now + (c.state == PingPong ? 100 : 20000)
+		nextPingTime = now + (c.state == PingPong ? 100 : 3000)
 		
 	private sendRequestState: Connection to
 		sendBuffer.reset
