@@ -24,6 +24,8 @@ transient class InternalUser
 	int uncertainReadPos  // The buffer position where we haven't received inputs from all users
 	
 	object videoElement
+	object peerConnection
+	bool offerByMe
 	
 	startInputFrame: int index
 		lastTouchMoveIndex.clear
@@ -411,9 +413,9 @@ unit Input
 							updateUserIndices
 							Network.parseLog += " join {userId} connectedTo:{user.connectedTo} userCount:{users.length}"
 							// TEMP logging
-							Network.log " join {userId} connectedTo:{user.connectedTo} userCount:{users.length}"
+							Network.log "#{nextFrame}{isCertain ? " certain":""} join {userId} connectedTo:{user.connectedTo} userCount:{users.length}"
 						else
-							Network.parseLog += " join {userId} user already exists, userCount:{users.length}"
+							Network.parseLog += "#{nextFrame}{isCertain ? " certain":""} join {userId} user already exists, userCount:{users.length}"
 							// TEMP logging
 							Network.log " join {userId} user already exists, userCount:{users.length}"
 					else

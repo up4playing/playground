@@ -3,8 +3,8 @@ unit lobby
 	Vector2[] points
 	
 	tick
-		if Network.error or Network.errorMessage
-			drawText Network.error, size:40
+		if PeerNetwork.error or Network.errorMessage
+			drawText PeerNetwork.error, size:40
 			drawText Network.errorMessage, size:14, position:{0,40}
 			return
 			
@@ -12,12 +12,12 @@ unit lobby
 			float width = count<2 ? 1200.0 : 1920/count, offset = -width*(count-1)/2
 			for Input.users
 				Vector2 pos = {offset+width*.index, -50}
-				Network.setUserVideoAndColor(.id, pos, width)
+				PeerNetwork.setUserVideoAndColor(.id, pos, width)
 				if .isReady
 					drawImage ThumbsUp, pos+{-74,width*3/8+36}
 					drawText "I'm ready", pos+{30,width*3/8+40}, size:32, font:OpenSans
 		else
-			Network.setLocalVideo({0,-50}, 1200)
+			PeerNetwork.setLocalVideo({0,-50}, 1200)
 			
 		// Place points with a click for testing
 		Input.onTouchDown: points.add .position.clone

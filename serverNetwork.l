@@ -1,13 +1,14 @@
-enum ServerMessageType: Join, JoinResponse, Ping, Pong, Offer, Signal, Ice, Tick
+enum ServerMessageType: Join, JoinResponse, Ping, Pong, Signal, Ice, Tick
 
 transient unit ServerNetwork
-	object socket
+	private object socket
 	private Buffer sendBuffer
+	private bool isLocalhost
 	
 	js void setup
 		let socket
-		if(Network_isLocalhost) socket = new WebSocket("ws://localhost:3112");
-		else                    socket = new WebSocket("wss://"+location.host+":3112");
+		if(ServerNetwork_isLocalhost) socket = new WebSocket("ws://localhost:3112");
+		else                          socket = new WebSocket("wss://"+location.host+":3112");
 		socket.binaryType = "arraybuffer";
 		socket.onopen = function() {
 			Network_log("Websocket open");
@@ -27,8 +28,11 @@ transient unit ServerNetwork
 			Network_log(error.message)
 		}
 		
+	private getOrCreateUser: int id
+		return Input.internalUsers[id] || (Input.internalUsers[id] = {id, local:false})
+		
 	private onConnectedToServer
-		if Network.userId == -1 and !Network.isLocalhost
+		if Network.userId == -1 and !isLocalhost
 			// We were in this room before -> connect with the same userId we had before
 			RoomInfo roomInfo = cast Platform.getLocalStorageObject "room"+Network.roomId
 			Network.userId = roomInfo && roomInfo.time > Network.currentTime - 3600000*24 ? roomInfo.userId : -1
@@ -50,6 +54,8 @@ transient unit ServerNetwork
 		if type == Tick:         onTick buffer;
 		
 	private void sendJoinMessage: string roomId, int userId, int version
+		print roomId, userId, version
+		
 		sendBuffer.reset
 		sendBuffer.writeInt8 cast ServerMessageType.Join
 		sendBuffer.writeString roomId
@@ -66,8 +72,8 @@ transient unit ServerNetwork
 		for userCount
 			let id = buffer.readInt32
 			InternalUser user
-			if id == userId: user = {id, local:true, state:Myself, videoElement:Network.localVideoElement}
-			else             user = {id}
+			if id == userId: user = {id, local:true, state:Myself, videoElement:PeerNetwork.localVideoElement}
+			else             user = {id, offerByMe:true}
 			Input.internalUsers[id] = user
 			buffer.readBuffer user.inputs
 
@@ -85,8 +91,9 @@ transient unit ServerNetwork
 		inputsSentPos = localUser.inputs.writePos
 		Network.userId = userId
 		Math.setRandomSeed seed
-		// createOffers message.partners
 		Network.mode = Ping
+		for Input.internalUsers
+			if !.local: PeerNetwork.createOffer .
 		
 	float nextPingTime, fastestPingPongTime = int.maxValue, lastPingPongTime
 	int pongCount
@@ -94,7 +101,7 @@ transient unit ServerNetwork
 	ping
 		let now = Network.currentTime
 		if (Network.mode == Ping or Network.mode == Connected) and now >= nextPingTime
-			Network.log "ping", now, nextPingTime
+			// Network.log "ping", now, nextPingTime
 			sendBuffer.reset
 			sendBuffer.writeInt8 cast ServerMessageType.Ping
 			sendBuffer.writeFloat64 now
@@ -102,7 +109,6 @@ transient unit ServerNetwork
 			sendBuffer.writeFloat64 Network.checksums[Network.certainFrame] || 0  // The checksum of the last certain frame
 			send sendBuffer
 			nextPingTime = now + 5000
-			print "setNextPingTime", now, nextPingTime
 			
 	private onPong: Buffer buffer
 		float now = Network.currentTime
@@ -114,8 +120,8 @@ transient unit ServerNetwork
 			fastestPingPongTime = pingPongTime
 			Network.startTime = Math.round(now - pingPongTime/2 - timeSinceStart)
 			Network.log "New fastest pingPongTime", pongCount, now, pingPongTime, timeSinceStart, Network.startTime
-		else
-			Network.log pongCount, pingPongTime, fastestPingPongTime, Network.startTime
+		// else
+		// 	Network.log pongCount, pingPongTime, fastestPingPongTime, Network.startTime
 			
 		pongCount++
 		lastPingPongTime = pingPongTime
@@ -127,10 +133,47 @@ transient unit ServerNetwork
 			Network.startConnected
 
 		nextPingTime = now + (Network.mode == Ping ? 100 : 10000)
-		print "setNextPingTime", now, nextPingTime
+		
+	sendSignal:	int receiverId, string type, string sdp
+		Network.log receiverId, type, sdp
+		
+		sendBuffer.reset
+		sendBuffer.writeInt8 cast ServerMessageType.Signal
+		sendBuffer.writeInt32 receiverId
+		sendBuffer.writeInt32 Network.userId
+		sendBuffer.writeString type
+		sendBuffer.writeString sdp
+		send sendBuffer
 		
 	private onSignal: Buffer buffer
+		let receiverId = buffer.readInt32
+		let senderId = buffer.readInt32
+		let type = buffer.readString
+		let sdp = buffer.readString
+		Network.log receiverId, senderId, type, sdp
+		
+		let sender = getOrCreateUser senderId
+		if type == "offer":  PeerNetwork.onReceivedOffer sender, sdp; else
+		if type == "answer": PeerNetwork.onReceivedAnswer sender, sdp
+			
+	sendIce: int receiverId, string candidate
+		Network.log receiverId, candidate
+		
+		sendBuffer.reset
+		sendBuffer.writeInt8 cast ServerMessageType.Ice
+		sendBuffer.writeInt32 receiverId
+		sendBuffer.writeInt32 Network.userId
+		sendBuffer.writeString candidate
+		send sendBuffer
+		
 	private onIce: Buffer buffer
+		let receiverId = buffer.readInt32
+		let senderId = buffer.readInt32
+		let candidate = buffer.readString
+		Network.log receiverId, senderId, candidate
+		
+		let sender = getOrCreateUser senderId
+		PeerNetwork.onIce sender, candidate
 		
 	int lag, inputsSentPos, tickMessageSize
 		
@@ -154,7 +197,7 @@ transient unit ServerNetwork
 						
 	private onTick: Buffer buffer
 		let senderId = buffer.readInt32
-		let sender = Input.internalUsers[senderId] || (Input.internalUsers[senderId] = {id:senderId, local:false})
+		let sender = getOrCreateUser senderId
 		let prevWritePos = sender.inputs.writePos
 		
 		sender.inputFrame = buffer.readInt32
