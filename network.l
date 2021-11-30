@@ -83,35 +83,35 @@ transient unit Network
 	private const bufferFrames = 1
 	const targetFrameTime = 1000/targetFps
 	
-	visible NetworkMode mode
+	NetworkMode mode
 	public bool simulateConnection = true
 	
-	visible int userId = -1       // The userId stays the same when a user reconnects
+	int userId = -1       // The userId stays the same when a user reconnects
 	visible int connectionId = -1 // The connectionId increments with every connection, lowest connectionId means oldest user
 	
 	visible string error
 	visible string errorMessage
 	
 	private object localVideoStream
-	private object localVideoElement
+	public object localVideoElement
 	private Vector2 localVideoPos
 	private float localVideoWidth = 440
 	
-	private float startTime
+	public float startTime
 	
 	visible int frame               // Current frame, will increase by 1 at the end of every step (every targetFrameTime ms)
 	private int frames              // Total number of frames we have inputs for
-	private int receivedFrames      // We received all remote inputs up to this frame (lowest of all user frames)
+	public int receivedFrames      // We received all remote inputs up to this frame (lowest of all user frames)
 	private int uncertainFrame = -1 // The first frame where we don't have inputs from all players
-	private int certainFrame        // The last frame where we have inputs from all players
+	public int certainFrame        // The last frame where we have inputs from all players
 	private Buffer commonState      // A snapshot taken before the first uncertain frame
 	
 	internal int frameWithNewWatches = 0 // First frame with new watches, do not send watches for frames below this
 		
-	private float[] checksums
+	public  float[] checksums
 	private bool alertShown
 	private int nextReconnect
-	private bool isLocalhost
+	bool isLocalhost
 	private bool startInLobby
 	private int ahead
 	private int[] aheads
@@ -124,7 +124,7 @@ transient unit Network
 	initDatabase
 		IndexedDB.start "up4playing", "snapshot", 5
 
-	private startConnected: int startFrame = 0
+	startConnected
 		if mode == Connected: return
 		for connections
 			if .state == PingPong
@@ -132,17 +132,18 @@ transient unit Network
 				.state = user.state = Connected
 				
 		let user = Input.internalUsers[userId]
-		user.startInputFrame startFrame
+		user.startInputFrame 0
 		
-		user.inputs.writeInt32 startFrame
+		int joinFrame = Math.floor((currentTime - this.startTime)/targetFrameTime)+1
+		user.inputs.writeInt32 joinFrame
 		user.inputs.writeInt16 cast InputType.Join
 		user.collectInputs = true
-		writeLog += " #{startFrame} Join"
+		writeLog += " #{joinFrame} Join"
 		
 		mode = Connected
-		receivedFrames = startFrame-1
-		certainFrame = startFrame-1
-		frame = startFrame
+		receivedFrames = -1
+		certainFrame = -1
+		frame = 0
 		log "Connected", userId, frame, startTime, this.startTime
 		saveState
 		
@@ -233,7 +234,8 @@ transient unit Network
 	internal animationFrame
 		let now = currentTime
 
-		ping
+		// ping
+		ServerNetwork.ping
 		if mode == None || mode == Ping
 			graphics.startFrame
 			if mode == Reconnecting: reconnect
@@ -271,7 +273,8 @@ transient unit Network
 			let startFrame = frame
 			try
 				// Send imputs
-				if mode == Connected: sendInputs inputFrame:targetFrame-1, aheadAverage
+				// if mode == Connected: sendInputs inputFrame:targetFrame-1, aheadAverage
+				if mode == Connected: ServerNetwork.sendInputs inputFrame:targetFrame-1
 								
 				// Replay all frames from the first uncertain frame until the current frame
 				// when we received all inputs for frames that we were uncertain about before
@@ -508,7 +511,7 @@ transient unit Network
 			
 	log: logstring text
 		eventLog += text + "\n"
-		// print text
+		print text
 		
 	inline js int currentTime := Date.now()
 	
@@ -551,10 +554,10 @@ transient unit Network
 		// Ensure that current eventLog is added to the table even if we haven't processed a single frame
 		logTable += ",,,,,,,,,,,,,,,,,,,,,,,,\"{eventLog.trim}\""
 		Platform.saveTextFile "{Platform.appName} {time.dayShortMonthNameYearString} {time.hourMinuteSecondString} v{Platform.version}.csv", logTable
-		Http.post "/saveLog/{gameId}/{roomId}/{userId}", logTable
-			log "save logs"
-		else
-			print "save logs failed {error}"
+		// Http.post "/saveLog/{gameId}/{roomId}/{userId}", logTable
+		// 	log "save logs"
+		// else
+		// 	print "save logs failed {error}"
 			
 	saveEventStream
 		Buffer buffer
@@ -657,118 +660,30 @@ transient unit Network
 		}
 		
 	private reconnect
-		if currentTime >= nextReconnect
-			if(socket)
-				log "Existing socket -> resending offers"
-				resendOffers
-			else
-				log "No existing socket -> reconnecting to server"
-				join gameId, roomId, userId
-			nextReconnect = currentTime + 6000
+		// if currentTime >= nextReconnect
+		// 	if(socket)
+		// 		log "Existing socket -> resending offers"
+		// 		resendOffers
+		// 	else
+		// 		log "No existing socket -> reconnecting to server"
+		// 		join gameId, roomId, userId
+		// 	nextReconnect = currentTime + 6000
 	
-	private object socket
-	visible string roomId, gameId
+	string roomString
+	int roomId
+	string gameId
 	private Connection[] connections
 	
-	js void join: string gameId, string roomId, int userId
+	js void join: string gameId, string roomString, int userId
 		init()
 		Network_startInLobby = true
 		Network_gameId = gameId
-		Network_roomId = roomId
+		Network_roomString = roomString
 		Network_userId = userId
 		Network_log("Network.join "+location.href)
 		await Network_setupLocalVideo()
+		ServerNetwork_setup();
 		
-		let socket
-		if(Network_isLocalhost) socket = new WebSocket("ws://localhost:3111");
-		else                    socket = new WebSocket("wss://"+location.host+":3111");
-		socket.onopen = function() {
-			Network_log("Websocket open");
-			Network_socket = socket
-			Network_onConnectedToServer();
-		}
-		socket.onmessage = function(event) {
-			let message = JSON.parse(event.data);
-			Network_onMessageFromServer(message);
-		}
-		socket.onclose = function() {
-			Network_log("Websocket closed")
-			Network_socket = null
-		}
-		socket.onerror = error => {
-			Network_error = "Can't connect to server."
-			Network_errorMessage = error.message
-			Network_log(error.message)
-		}
-		Network_initDatabase();
-		
-	private onConnectedToServer
-		if userId == -1 and !isLocalhost
-			// We were in this room before -> connect with the same userId we had before
-			RoomInfo roomInfo = cast Platform.getLocalStorageObject "room"+roomId
-			userId = roomInfo && roomInfo.time > currentTime - 3600000*24 ? roomInfo.userId : -1
-			log "Reconnect to session", roomInfo, userId
-		
-		// openEventStream
-		// 	Math.setRandomSeed eventStream.randomSeed
-		// 	for eventStream.users
-		// 		Input.internalUsers.add {id:u.id, local:u.local, inputFrame:u.frame, inputs:u.inputs}
-		// 	userId = Input.internalUsers.find(local).id
-		// 	// receivedFrames = getReceivedFrames
-		// 	frame = receivedFrames
-		// 	// resetStartTime
-		// 	while frame < receivedFrames - 1
-		// 		step fastFordward:true
-		// 	step
-		// 	log "Opening saved eventstream", roomId, frame
-		// 	sendToServer JoinMessage roomId, userId, version:Platform.version
-		// else
-		// frame = 0
-		
-		log "onConnectedToServer {roomId} connect as user {userId}"
-		sendToServer JoinMessage roomId, userId, version:Platform.version
-		
-	private onMessageFromServer: ServerMessage message
-		if message.type == JoinResponseMessage: onJoinResponse cast message; else
-		if message.type == SignalMessage: onSignal cast message; else
-		if message.type == IceMessage: onIce cast message;
-		
-	private js void sendToServer: ServerMessage message
-		try {
-			let messageString = JSON.stringify(message)
-			Network_socket.send(messageString)
-		} catch(e) {
-			Network_log(e)
-		}
-	
-	private onJoinResponse: JoinResponseMessage message
-		log "onJoinResponse", message.roomId, message.userId
-		if mode == Reconnecting
-			log "Reconnecting to {roomId} with user {userId}"
-			resendOffers
-		else
-			log Time.dateAndTimeString, Platform.version, Platform.userAgent
-			log message.roomId, message.userId, message.connectionId, message.seed, message.partners
-			if message.roomId != roomId
-				log "Received room id {message.roomId}"
-				Platform.pushState null, "{gameId} {message.roomId}", "/{gameId}/{message.roomId}"
-			
-			roomId = message.roomId
-			userId = message.userId
-			connectionId = message.connectionId
-			Input.internalUsers[message.userId] = {id:userId, connectionId, local:true, state:Myself, videoElement:localVideoElement}
-			
-			if message.version != Platform.version
-				alert "You are using an old version of this application. Please refresh your browser."
-			Math.setRandomSeed message.seed
-			createOffers message.partners
-			
-			// The first user will enter the "connected" state right away, all later uers will first 
-			// ping the existing users to sync the startTime and calculate the frame from it
-			if message.partners.length == 0
-				resetStartTime
-				startConnected
-	
 	private storeUserId
 		Platform.setLocalStorageObject "room"+roomId, RoomInfo(currentTime, userId)
 				
@@ -1066,9 +981,10 @@ transient unit Network
 		buffer.readBuffer snapshotBuffer
 		Snapshot.deserialize Network.snapshotBuffer
 		Math.recreateRandomValues
-		int startFrame = Math.floor((currentTime - this.startTime)/targetFrameTime)+1
-		startConnected startFrame
-		log "received state",c.userId, frame, startFrame, snapshotBuffer.writePos, userCount
+		// int startFrame = Math.floor((currentTime - this.startTime)/targetFrameTime)+1
+		// startConnected startFrame
+		startConnected
+		log "received state",c.userId, frame, snapshotBuffer.writePos, userCount
 			
 	private js void send: Connection connection, Buffer buffer
 		connection.dataChannel.send(buffer.buffer)
@@ -1195,7 +1111,7 @@ transient unit Network
 				let candidate = stats.get(candidatePair.localCandidateId);
 				let ip = candidate.ip || candidate.address
 				Network_connectionType = candidate.candidateType
-				Network_log("Connection: ", Network_connectionType, ip, candidate)
+				Network_log("Connection: " + Network_connectionType+" "+ip+" "+candidate)
 			} else {
 				window.stats = [...stats.values()]
 				Network_log("Can't access stats", window.stats)
