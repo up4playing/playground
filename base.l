@@ -451,73 +451,81 @@ class List<T>
 		
 	min: int(T a) selector 
 		 int threshold = int.maxValue
+		 int default = 0
 		int resultValue = threshold
 		for item -> this
 			let value = selector(item)
 			if value < resultValue: resultValue = value
-		return resultValue != threshold ? resultValue : 0
+		return resultValue != threshold ? resultValue : default
 		
 	min: float(T a) selector 
 		 float threshold = float.maxValue
+		 float default = 0
 		float resultValue = threshold
 		for item -> this
 			let value = selector(item)
 			if value < resultValue: resultValue = value
-		return resultValue != threshold ? resultValue : 0
+		return resultValue != threshold ? resultValue : default
 		
 	min: int(T a) selector 
 		 int threshold = int.maxValue
+		 int default = 0
 		 bool(T a) where
 		int resultValue = threshold
 		for item -> this
 			if where(item)
 				let value = selector(item)
 				if value < resultValue: resultValue = value
-		return resultValue != threshold ? resultValue : 0
+		return resultValue != threshold ? resultValue : default
 		
 	min: float(T a) selector 
 		 float threshold = float.maxValue
+		 float default = 0
 		 bool(T a) where
 		float resultValue = threshold
 		for item -> this
 			if where(item)
 				let value = selector(item)
 				if value < resultValue: resultValue = value
-		return resultValue != threshold ? resultValue : 0
+		return resultValue != threshold ? resultValue : default
 		
 	max: int(T a) selector
 		 int threshold = int.minValue
+		 int default = 0
 		int resultValue = threshold
 		for item -> this
 			let value = selector(item)
 			if value > resultValue: resultValue = value
-		return resultValue != threshold ? resultValue : 0
+		return resultValue != threshold ? resultValue : default
 		
 	max: float(T a) selector
 		 float threshold = float.minValue
+		 float default = 0
 		float resultValue = threshold
 		for item -> this
 			let value = selector(item)
 			if value > resultValue: resultValue = value
-		return resultValue != threshold ? resultValue : 0
+		return resultValue != threshold ? resultValue : default
 		
 	max: int(T a) selector
 		 int threshold = int.minValue
+		 int default = 0
 		 bool(T a) where
 		int resultValue = threshold
 		for item -> this if where(item)
 			let value = selector(item)
 			if value > resultValue: resultValue = value
-		return resultValue != threshold ? resultValue : 0
+		return resultValue != threshold ? resultValue : default
 		
 	max: float(T a) selector
 		 float threshold = float.minValue
+		 float default = 0
 		 bool(T a) where
 		float resultValue = threshold
 		for item -> this if where(item)
 			let value = selector(item)
 			if value > resultValue: resultValue = value
-		return resultValue != threshold ? resultValue : 0
+		return resultValue != threshold ? resultValue : default
 		
 	minIndex: int(T a) selector
 		      int threshold = int.maxValue
