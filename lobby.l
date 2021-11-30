@@ -1,6 +1,6 @@
 unit lobby
 	bool inLobby = true
-	// Vector2[] points
+	Vector2[] points
 	
 	tick
 		if Network.error or Network.errorMessage
@@ -20,9 +20,8 @@ unit lobby
 			Network.setLocalVideo({0,-50}, 1200)
 			
 		// Place points with a click for testing
-		// Input.onTouchDown
-		// 	points.add .position.clone
-		// points.each drawCircle .,radius:50
+		Input.onTouchDown: points.add .position.clone
+		points.each drawCircle ., radius:50
 			
 		if Network.mode == Ping
 			drawText "Connecting...", {0,450}
