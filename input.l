@@ -165,14 +165,10 @@ unit Input
 				e.preventDefault();
 			}
 			else
-			if(e.ctrlKey && e.key == "F1")
-				// TEMP for testing
-				Network_skipAnimationFrame = true;
-			else
-			if(e.ctrlKey && e.key == "F2")
-				// TEMP for testing
-				Network_skipSending = true;
-			else
+			if(e.key == "F1") {PeerNetwork_setBitrate(1, 1000); e.preventDefault();} else
+			if(e.key == "F2") {PeerNetwork_setBitrate(1, 10000); e.preventDefault();} else
+			if(e.key == "F3") {PeerNetwork_setBitrate(1, 100000); e.preventDefault();} else
+			if(e.key == "F4") {PeerNetwork_setBitrate(1, 1000000); e.preventDefault();} else
 			if(e.key == "F9") {
 				if(e.shiftKey) { Network_saveLogs(); }
 				else           { Platform_showDebugInfo = !Platform_showDebugInfo; Network_debugString = "" }

@@ -19,7 +19,7 @@ transient unit PeerNetwork
 	visible string error
 	
 	private js object setupPeerConnection: InternalUser user, bool offerByMe
-		let peerConnection = new RTCPeerConnection({
+		let peerConnection = PeerNetwork_peerConnection = new RTCPeerConnection({
 			// Set the ice transport policy to "relay" to test a turn server
 			// iceTransportPolicy: "relay",
 			// iceTransportPolicy: "all",
@@ -70,6 +70,8 @@ transient unit PeerNetwork
 	// 	user.connectionId = connectionId
 	// 	log partnerId, connectionId, offerByMe, connection.state, connection.dataChannel
 	// 	return connection
+	
+	object peerConnection
 		
 	js void createOffer: InternalUser user
 		try {
@@ -108,6 +110,20 @@ transient unit PeerNetwork
 		catch(e) {
 			console.error(e);
 			Network_log(e.stack);
+		}
+		
+	js void setBitrate: float scaleResolutionDownBy = 1, float maxBitrate
+		let senderList = PeerNetwork_peerConnection.getSenders();
+		for(let sender of senderList) {
+			const params = sender.getParameters();
+			console.log(params);
+			if (!params.encodings) {
+				params.encodings = [{ }];
+			}
+			params.encodings[0].scaleResolutionDownBy = scaleResolutionDownBy;
+			params.encodings[0].maxBitrate = maxBitrate;
+			// params.encodings[0].adaptivePtime = true;
+			await sender.setParameters(params);
 		}
 		
 	js void onReceivedOffer: InternalUser user, string sdp
@@ -174,10 +190,11 @@ transient unit PeerNetwork
 		try {
 			PeerNetwork_localVideoStream = await navigator.mediaDevices.getUserMedia({
 				video: {
-					width: 80,
-					height: 60,
-					frameRate: 10
+					width: 500,
+					height: 375,
+					// frameRate: 30
 				},
+				// video: true,
 				audio: enableAudio
 			});
 			PeerNetwork_localVideoElement = PeerNetwork_createVideoElement(PeerNetwork_localVideoStream, /*local*/true);
