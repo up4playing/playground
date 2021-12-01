@@ -11,7 +11,6 @@ transient class InternalUser
 
 	int lagFrom
 	int lagTo
-	int sendInterval
 	
 	visible Touch[] downTouches, movingTouches, upTouches
 	visible WheelEvent[] wheelEvents

@@ -41,6 +41,9 @@ transient unit ServerNetwork
 		Network.log "onConnectedToServer as {Network.userId} {Network.roomId}"
 		sendJoinMessage Network.roomString, Network.userId, version:Platform.version
 		
+	js int bufferedAmount
+		return ServerNetwork_socket.bufferedAmount 
+		
 	private js void send: Buffer buffer
 		try      { ServerNetwork_socket.send(buffer.buffer) } 
 		catch(e) { Network_log(e) }
@@ -175,25 +178,30 @@ transient unit ServerNetwork
 		let sender = getOrCreateUser senderId
 		PeerNetwork.onIce sender, candidate
 		
-	int lag, inputsSentPos, tickMessageSize
+	int lag, inputsSentPos, tickMessageSize, sendInterval
 		
 	sendInputs: int inputFrame
-		let localPlayer = Input.internalUsers[Network.userId]
-		let inputs = localPlayer.inputs
+		lag = Input.internalUsers.max.lagFrom
+		sendInterval = lag < 15 ? 1 : 15
+		// sendInterval = 1
 		
-		let length = inputs.writePos - inputsSentPos
-		sendBuffer.reset
-		sendBuffer.writeInt8 cast ServerMessageType.Tick
-		sendBuffer.writeInt32 Network.userId
-		sendBuffer.writeInt32 inputFrame // You got all inputs up to and including this frame
-		sendBuffer.writeInt32 lag
-		sendBuffer.writeBuffer inputs, inputsSentPos, length
-		send sendBuffer
-		
-		Network.sentLog += " #{inputFrame} lag:{lag} {inputsSentPos}->{inputs.writePos} {inputs.toRangeString(inputsSentPos, inputs.writePos)}"
-		
-		inputsSentPos = inputs.writePos
-		tickMessageSize = sendBuffer.writePos	
+		if inputFrame % sendInterval == 0
+			let localPlayer = Input.internalUsers[Network.userId]
+			let inputs = localPlayer.inputs
+			
+			let length = inputs.writePos - inputsSentPos
+			sendBuffer.reset
+			sendBuffer.writeInt8 cast ServerMessageType.Tick
+			sendBuffer.writeInt32 Network.userId
+			sendBuffer.writeInt32 inputFrame // You got all inputs up to and including this frame
+			sendBuffer.writeInt32 lag
+			sendBuffer.writeBuffer inputs, inputsSentPos, length
+			send sendBuffer
+			
+			Network.sentLog += " #{inputFrame} lag:{lag} {inputsSentPos}->{inputs.writePos} {inputs.toRangeString(inputsSentPos, inputs.writePos)}"
+			
+			inputsSentPos = inputs.writePos
+			tickMessageSize = sendBuffer.writePos	
 						
 	private onTick: Buffer buffer
 		let senderId = buffer.readInt32

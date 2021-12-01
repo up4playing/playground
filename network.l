@@ -268,7 +268,7 @@ transient unit Network
 					let users = Input.internalUsers.where . and .state == Connected
 					for 3
 						let user = users[i]
-							logTable += ",{user.id},{user.lagFrom},{user.lagTo},{user.sendInterval}"
+							logTable += ",{user.id},{user.lagFrom},{user.lagTo},{ServerNetwork.sendInterval}"
 						else
 							logTable += ",,,,"
 							
@@ -290,7 +290,10 @@ transient unit Network
 					debugString = "v{Platform.version} #{frame-1} ct:{PeerNetwork.connectionType} av:{aheadAverage.format(fractionDigits:1)}"
 					for user -> Input.internalUsers
 						if . and !.local
-							debugString += " <{.id}> {.lagFrom}/{.lagTo} -> {.sendInterval}"
+							debugString += " <{.id}> {.lagFrom}/{.lagTo} -> {ServerNetwork.sendInterval}"
+					debugString += " maxLag:{ServerNetwork.lag} buffered:{ServerNetwork.bufferedAmount}"
+				else
+					debugString = ""
 					
 				eventLog = ""; sentLog = ""; receivedLog = ""; writeLog = ""; parseLog = ""; touchLog = ""; checksumLog = ""
 				ServerNetwork.lastPingPongTime = 0; ServerNetwork.tickMessageSize = 0
@@ -386,7 +389,7 @@ transient unit Network
 			
 		Input.updateCursor
 		drawText debugString, {0, 528}
-		if Input.internalUsers.any . and .sendInterval > 1: drawCircle {920, 496}, fillColor:Red
+		if ServerNetwork.sendInterval > 1: drawCircle {920, 496}, fillColor:Red
 		drawTime = Time.measure
 			graphics.finishFrame
 		
@@ -537,11 +540,12 @@ transient unit Network
 		Network_userId = userId
 		
 		ServerNetwork_isLocalhost = location.href.indexOf("localhost") != -1
-		Platform_showDebugInfo = ServerNetwork_isLocalhost
+		// Platform_showDebugInfo = ServerNetwork_isLocalhost
+		Platform_showDebugInfo = true
 		
 		// await PeerNetwork_setupLocalVideo(/*enableVideo*/true, /*enableAudio*/!ServerNetwork_isLocalhost)
 		// await PeerNetwork_setupLocalVideo(/*enableVideo*/false, /*enableAudio*/false)
-		await PeerNetwork_setupLocalVideo(/*enableVideo*/true, /*enableAudio*/true)
+		await PeerNetwork_setupLocalVideo(/*enableVideo*/true, /*enableAudio*/false)
 		ServerNetwork_setup()
 		
 	private storeUserId
