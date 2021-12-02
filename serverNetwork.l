@@ -179,11 +179,13 @@ transient unit ServerNetwork
 		PeerNetwork.onIce sender, candidate
 		
 	int lag, inputsSentPos, tickMessageSize, sendInterval
+	const sendIntervalMin = 1
+	const sendInvervalMax = 15
 		
 	sendInputs: int inputFrame
 		// lag = Input.internalUsers.max.lagFrom
-		// sendInterval = Network.aheadAverage < 15 ? 1 : 15
-		sendInterval = Network.aheadAverage < 20 ? 10 : 30
+		sendInterval = Network.aheadAverage < 15 ? sendIntervalMin : sendInvervalMax
+		// sendInterval = Network.aheadAverage < 20 ? 10 : 30
 		// sendInterval = Network.aheadAverage < 20 ? 10 : 20
 		// sendInterval = lag < 15 ? 10 : 20
 		// sendInterval = 1
