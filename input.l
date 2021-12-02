@@ -221,7 +221,7 @@ unit Input
 		inputs.writeUnsignedInt16 cast type
 		inputs.writeInt32 keyCode
 		
-	private handleTouchEvent: InputType inputType, float x, float y, string pointerType, int pointerId, int button
+	internal handleTouchEvent: InputType inputType, float x, float y, string pointerType, int pointerId, int button
 		int touchType, id
 		if pointerType == "mouse": touchType = button.limit(min:0, max:2); else
 		if pointerType == "touch": touchType = 3; id = pointerId; else

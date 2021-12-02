@@ -93,8 +93,10 @@ transient unit Network
 	private Buffer commonState      // A snapshot taken before the first uncertain frame
 	internal int frameWithNewWatches = 0 // First frame with new watches, do not send watches for frames below this
 	private bool startInLobby
+	
 	private int ahead
 	private int[] aheads
+	// private int[] aheadsMax
 	
 	// TODO
 	public  float[] checksums
@@ -221,6 +223,7 @@ transient unit Network
 			return
 			
 		// Ahead
+		// int aheadMax
 		float aheadAverage
 		int aheadPercentile
 		let localPlayer = Input.internalUsers[userId]
@@ -228,11 +231,27 @@ transient unit Network
 			ahead = frame - receivedFrames
 			aheads.add ahead, maxLength:100
 			aheadAverage = aheads.average
+			// aheadMax = aheads.max .
+			// aheadPercentile = aheadMax
+			
+			// statisticsGraph.add "ahead", ahead, Gray
+			// statisticsGraph.add "aheadMax", aheadMax, Blue
+			
+			// let user = Input.internalUsers.find.local == false
+			// statisticsGraph.add "lagTo", user.lagTo, Red
+			// statisticsGraph.add "lagFrom", user.lagFrom, Yellow
+			
+			// aheadsMax.add aheadMax, maxLength:10
+			// aheadPercentile = aheadsMax.average.round
+			// aheadPercentile = smoothStrength ? Math.round(aheads.percentile(smoothStrength).limit(0, 50)*1.2) : 0
 			aheadPercentile = smoothStrength ? aheads.percentile(smoothStrength).limit(0, 50) : 0
 		
 		let targetFrame = Math.floor((now - startTime)/targetFrameTime)+1
 		let frameMinusOffset = targetFrame - aheadPercentile
 		certainFrame = mode == Connected ? Math.min(frameMinusOffset, receivedFrames) : int.maxValue
+
+		// TEMP: simulate touch
+		// Input.handleTouchEvent inputType:TouchMove, x:(targetFrame*10)%1000, y:50+userId*20, pointerType:"mouse", pointerId:0, button:0
 
 		if mode == Local && targetFrame > frame + targetFps*2
 			// After a long pause in local mode, we do not want to process all missed frames, so we adjust the start time
@@ -287,11 +306,11 @@ transient unit Network
 					
 				// Debug string
 				if Platform.showDebugInfo
-					debugString = "v{Platform.version} #{frame-1} ct:{PeerNetwork.connectionType} av:{aheadAverage.format(fractionDigits:1)}"
+					debugString = "v{Platform.version} #{frame-1} ct:{PeerNetwork.connectionType} av:{aheadAverage.format(fractionDigits:1)} ap:{aheadPercentile}"
 					for user -> Input.internalUsers
 						if . and !.local
 							debugString += " <{.id}> {.lagFrom}/{.lagTo} -> {ServerNetwork.sendInterval}"
-					debugString += " maxLag:{ServerNetwork.lag} buffered:{ServerNetwork.bufferedAmount}"
+					debugString += " maxLag:{ServerNetwork.lag}"
 				else
 					debugString = ""
 					
@@ -388,8 +407,10 @@ transient unit Network
 			Platform.sendErrorToEditor error
 			
 		Input.updateCursor
-		drawText debugString, {0, 528}
-		if ServerNetwork.sendInterval > 1: drawCircle {920, 496}, fillColor:Red
+		if Platform.showDebugInfo
+			// statisticsGraph.draw
+			drawText debugString, {0, 540}
+		if ServerNetwork.sendInterval > 10: drawCircle {920, 496}, fillColor:Red
 		drawTime = Time.measure
 			graphics.finishFrame
 		
@@ -565,3 +586,40 @@ transient unit Network
 									else
 										drawRectangle .smoothPosition+{16,78}, size:{26,10}, user.color, layer:int.maxValue
 									
+
+class StatisticsGraphSeries
+	string name
+	float[] values
+	Color color
+	float lastValue := values.length > 0 ? values[values.length-1] : 0
+	
+transient unit statisticsGraph
+	const Vector2 position = {0, 440}
+	const Vector2 size = {880, 180}
+	
+	private StatisticsGraphSeries[] series
+	
+	add: string name, float value, Color color = White
+		var s = series.find.name == name
+		if !s: series.add s = {name, color:color}
+		s.values.add value, maxLength:size.x.round
+		
+	draw
+		float maxValue
+		for series:	for .values: if . > maxValue: maxValue = .
+			
+		Vector2 startPos = position + size/2
+		Vector2 labelPos = position - size/2 - {0,20}
+		for series
+			drawRectangle labelPos, {32,32}, fillColor:.color, align:Left, layer:1000000
+			drawText "{.name}: {.lastValue}", labelPos+{40, 0}, align:Left, layer:1000000
+			labelPos.x += 200
+			
+			Vector2 prevPos
+			int len = .values.length
+			for len
+				let value = .values[len-1-i]
+				Vector2 pos = {startPos.x - i, startPos.y - value/maxValue*size.y}
+				if i: drawLine prevPos, pos, color:.color, width:3, layer:1000000
+				prevPos = pos
+		drawRectangle position, size, fillColor:Black, outlineColor:White, outlineWidth:3, layer:1000000

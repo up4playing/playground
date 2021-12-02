@@ -183,6 +183,7 @@ transient unit ServerNetwork
 	sendInputs: int inputFrame
 		lag = Input.internalUsers.max.lagFrom
 		sendInterval = lag < 15 ? 1 : 15
+		// sendInterval = lag < 15 ? 10 : 20
 		// sendInterval = 1
 		
 		if inputFrame % sendInterval == 0
