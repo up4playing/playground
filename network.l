@@ -224,34 +224,36 @@ transient unit Network
 			return
 			
 		// Ahead
-		// int aheadMax
+		int aheadMax
 		int aheadPercentile
 		let localPlayer = Input.internalUsers[userId]
 		if mode == Connected and Input.users.length > 1
 			ahead = frame - receivedFrames
 			aheads.add ahead, maxLength:100
 			aheadAverage = aheads.average
-			// aheadMax = aheads.max .
-			// aheadPercentile = aheadMax
+			aheadMax = aheads.max .
+			aheadPercentile = aheadMax + 2
 			
-			// statisticsGraph.add "ahead", ahead, Gray
+			// aheadsMax.add aheadMax, maxLength:10
+			// aheadPercentile = aheadsMax.average.round
+			// aheadPercentile = smoothStrength ? Math.round(aheads.percentile(smoothStrength).limit(0, 50)*1.2) : 0
+			// aheadPercentile = smoothStrength ? aheads.percentile(smoothStrength).limit(0, 50) : 0
+			
 			// statisticsGraph.add "aheadMax", aheadMax, Blue
+			statisticsGraph.add "ahead", ahead, Blue
+			statisticsGraph.add "average", aheadAverage, Red
 			
 			// let user = Input.internalUsers.find.local == false
 			// statisticsGraph.add "lagTo", user.lagTo, Red
 			// statisticsGraph.add "lagFrom", user.lagFrom, Yellow
 			
-			// aheadsMax.add aheadMax, maxLength:10
-			// aheadPercentile = aheadsMax.average.round
-			// aheadPercentile = smoothStrength ? Math.round(aheads.percentile(smoothStrength).limit(0, 50)*1.2) : 0
-			aheadPercentile = smoothStrength ? aheads.percentile(smoothStrength).limit(0, 50) : 0
 		
 		let targetFrame = Math.floor((now - startTime)/targetFrameTime)+1
 		let frameMinusOffset = targetFrame - aheadPercentile
 		certainFrame = mode == Connected ? Math.min(frameMinusOffset, receivedFrames) : int.maxValue
 
-		// TEMP: simulate touch
-		// Input.handleTouchEvent inputType:TouchMove, x:(targetFrame*10)%1000, y:50+userId*20, pointerType:"mouse", pointerId:0, button:0
+		// TEMP for testing: Simulate mouse movement
+		Input.handleTouchEvent inputType:TouchMove, x:(targetFrame*10)%1000, y:50+userId*20, pointerType:"mouse", pointerId:0, button:0
 
 		if mode == Local && targetFrame > frame + targetFps*2
 			// After a long pause in local mode, we do not want to process all missed frames, so we adjust the start time
@@ -408,7 +410,7 @@ transient unit Network
 			
 		Input.updateCursor
 		if Platform.showDebugInfo
-			// statisticsGraph.draw
+			statisticsGraph.draw
 			drawText debugString, {0, 540}
 		if ServerNetwork.sendInterval > 10: drawCircle {920, 496}, fillColor:Red
 		drawTime = Time.measure
@@ -623,3 +625,5 @@ transient unit statisticsGraph
 				if i: drawLine prevPos, pos, color:.color, width:3, layer:1000000
 				prevPos = pos
 		drawRectangle position, size, fillColor:Black, outlineColor:White, outlineWidth:3, layer:1000000
+		drawText cast maxValue, position+{size.x/2+8, -size.y/2}, align:Left
+		drawText "0", position+{size.x/2+8, size.y/2}, align:Left
