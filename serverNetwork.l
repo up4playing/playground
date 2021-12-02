@@ -181,8 +181,9 @@ transient unit ServerNetwork
 	int lag, inputsSentPos, tickMessageSize, sendInterval
 		
 	sendInputs: int inputFrame
-		lag = Input.internalUsers.max.lagFrom
-		sendInterval = lag < 15 ? 1 : 15
+		// lag = Input.internalUsers.max.lagFrom
+		sendInterval = Network.aheadAverage < 15 ? 1 : 15
+		// sendInterval = Network.aheadAverage < 20 ? 10 : 20
 		// sendInterval = lag < 15 ? 10 : 20
 		// sendInterval = 1
 		

@@ -96,6 +96,7 @@ transient unit Network
 	
 	private int ahead
 	private int[] aheads
+	visible float aheadAverage
 	// private int[] aheadsMax
 	
 	// TODO
@@ -224,7 +225,6 @@ transient unit Network
 			
 		// Ahead
 		// int aheadMax
-		float aheadAverage
 		int aheadPercentile
 		let localPlayer = Input.internalUsers[userId]
 		if mode == Connected and Input.users.length > 1
