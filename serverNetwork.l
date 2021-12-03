@@ -179,8 +179,8 @@ transient unit ServerNetwork
 		PeerNetwork.onIce sender, candidate
 		
 	int lag, inputsSentPos, tickMessageSize, sendInterval
-	const sendIntervalMin = 1
-	const sendInvervalMax = 15
+	const sendIntervalMin = 10
+	const sendInvervalMax = 30
 		
 	sendInputs: int inputFrame
 		// lag = Input.internalUsers.max.lagFrom
