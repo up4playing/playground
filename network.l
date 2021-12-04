@@ -72,7 +72,7 @@ transient unit Network
 	public bool simulateConnection = true
 	
 	// Logs
-	string logTable = "frame,id 0,lagFrom 0,lagTo 0,interval 0,id 1,lagFrom 1,lagTo 1,interval 1,id 2,lagFrom 2,lagTo 2,interval 2,messageSize,now,animTime,networkTime,tickTime,drawTime,iteration,restoreTime,replayFrames,replayTime,saveTime,pingPong,user0,user1,user2,received,uncertain,offset,ahead,avarage,percentile,certainFrame,buffer,checksums,events,send,receive,write,parse,touch\n"
+	string logTable = "frame,id,frame,ama,id,frame,ama,id,frame,ama,messageSize,now,animTime,networkTime,tickTime,drawTime,iteration,restoreTime,replayFrames,replayTime,saveTime,pingPong,received,uncertain,certain,checksums,events,send,receive,write,parse,touch\n"
 	public string eventLog = ""; sentLog = "", receivedLog="", writeLog="", parseLog = "", touchLog = "", checksumLog = "", debugString = ""
 	private float lastNetworkFrame, lastAnimationFrame, drawTime, tickTime, restoreTime, replayTime, saveTime
 	private int replayFrames
@@ -87,17 +87,20 @@ transient unit Network
 	public float startTime
 	visible int frame               // Current frame, will increase by 1 at the end of every step (every targetFrameTime ms)
 	private int frames              // Total number of frames we have inputs for
-	public int receivedFrames      // We received all remote inputs up to this frame (lowest of all user frames)
+	public int receivedFrames       // We received all remote inputs up to this frame (lowest of all user frames)
 	private int uncertainFrame = -1 // The first frame where we don't have inputs from all players
-	public int certainFrame        // The last frame where we have inputs from all players
+	public int certainFrame         // The last frame where we have inputs from all players
 	private Buffer commonState      // A snapshot taken before the first uncertain frame
 	internal int frameWithNewWatches = 0 // First frame with new watches, do not send watches for frames below this
 	private bool startInLobby
 	
-	private int ahead
-	private int[] aheads
-	visible float aheadAverage
-	// private int[] aheadsMax
+	// Statistics
+	private int ahead            // How many frames are we ahead of frame we got inputs from all users for?
+	private int[] aheads         // All ahead values of the last 50 frames
+	visible float aheadAverage   // The average ahead value of the last 50 frames
+	private int aheadMax         // The maximum ahead value of the last 50 frames
+	private int[] aheadsMax      // All aheadMax values of the last 50 frames
+	visible int aheadMaxAverage  // The average of all aheadMax values
 	
 	// TODO
 	public  float[] checksums
@@ -224,32 +227,26 @@ transient unit Network
 			return
 			
 		// Ahead
-		int aheadMax
-		int aheadPercentile
 		let localPlayer = Input.internalUsers[userId]
 		if mode == Connected and Input.users.length > 1
 			ahead = frame - receivedFrames
-			aheads.add ahead, maxLength:100
 			aheadAverage = aheads.average
+			aheads.add ahead, maxLength:50
 			aheadMax = aheads.max .
-			aheadPercentile = aheadMax + 2
+			aheadsMax.add aheadMax maxLength:50
+			aheadMaxAverage = Math.round(aheadsMax.average + 3)
+			// aheadMaxAverage = aheadMax + 2
+			localPlayer.aheadMaxAverage = aheadMaxAverage
 			
-			// aheadsMax.add aheadMax, maxLength:10
-			// aheadPercentile = aheadsMax.average.round
-			// aheadPercentile = smoothStrength ? Math.round(aheads.percentile(smoothStrength).limit(0, 50)*1.2) : 0
-			// aheadPercentile = smoothStrength ? aheads.percentile(smoothStrength).limit(0, 50) : 0
-			
-			// statisticsGraph.add "aheadMax", aheadMax, Blue
+			// Statistics graph
 			statisticsGraph.add "ahead", ahead, Blue
-			statisticsGraph.add "average", aheadAverage, Red
-			
-			// let user = Input.internalUsers.find.local == false
-			// statisticsGraph.add "lagTo", user.lagTo, Red
-			// statisticsGraph.add "lagFrom", user.lagFrom, Yellow
-			
+			statisticsGraph.add "local", aheadMaxAverage, Green
+			let remoteUser = Input.internalUsers.find.local == false
+			statisticsGraph.add "remote", remoteUser.aheadMaxAverage, Red
+			statisticsGraph.add "interval", ServerNetwork.sendInterval, Yellow
 		
 		let targetFrame = Math.floor((now - startTime)/targetFrameTime)+1
-		let frameMinusOffset = targetFrame - aheadPercentile
+		let frameMinusOffset = targetFrame - aheadMaxAverage
 		certainFrame = mode == Connected ? Math.min(frameMinusOffset, receivedFrames) : int.maxValue
 
 		// TEMP for testing: Simulate mouse movement
@@ -285,21 +282,16 @@ transient unit Network
 				
 				// Logs
 				try
-					logTable += "{frame-1}"
-					let users = Input.internalUsers.where . and .state == Connected
+					logTable += "{frame-1},{ahead}"
 					for 3
-						let user = users[i]
-							logTable += ",{user.id},{user.lagFrom},{user.lagTo},{ServerNetwork.sendInterval}"
+						let user = Input.internalUsers[i]
+							logTable += ",{user.id},{user.inputFrame},{user.aheadMaxAverage}"
 						else
 							logTable += ",,,,"
 							
 					logTable += ",{ServerNetwork.tickMessageSize},{now},{now - lastAnimationFrame},{now - lastNetworkFrame},{tickTime.format(fractionDigits:2)},{drawTime.format(fractionDigits:2)},{frame-startFrame}"
 					logTable += ",{restoreTime.format(fractionDigits:2)},{replayFrames},{replayTime.format(fractionDigits:2)},{saveTime.format(fractionDigits:2)},{ServerNetwork.lastPingPongTime}"
-					logTable += ","+(Input.internalUsers[0] ? Input.internalUsers[0].inputFrame : 0)
-					logTable += ","+(Input.internalUsers[1] ? Input.internalUsers[1].inputFrame : 0)
-					logTable += ","+(Input.internalUsers[2] ? Input.internalUsers[2].inputFrame : 0)
-					logTable += ",{receivedFrames},{uncertainFrame},{frame - receivedFrames},{ahead},{aheadAverage.format(fractionDigits:1)}"
-					logTable += ",{aheadPercentile},{certainFrame},{receivedFrames-frameMinusOffset}"
+					logTable += ",{receivedFrames},{uncertainFrame},{certainFrame}"
 					logTable += ",\"{checksumLog.trim}\",\"{eventLog.trim}\",\"{sentLog.trim}\",\"{receivedLog.trim}\",\"{writeLog.trim}\",\"{parseLog.trim}\",\"{touchLog.trim}\"\n"
 				catch
 					print error
@@ -308,11 +300,11 @@ transient unit Network
 					
 				// Debug string
 				if Platform.showDebugInfo
-					debugString = "v{Platform.version} #{frame-1} ct:{PeerNetwork.connectionType} av:{aheadAverage.format(fractionDigits:1)} ap:{aheadPercentile}"
+					debugString = "v{Platform.version} #{frame-1} ct:{PeerNetwork.connectionType}"
 					for user -> Input.internalUsers
 						if . and !.local
-							debugString += " <{.id}> {.lagFrom}/{.lagTo} -> {ServerNetwork.sendInterval}"
-					debugString += " maxLag:{ServerNetwork.lag}"
+							debugString += " <{.id}> #{.inputFrame} {.aheadMaxAverage}"
+					debugString += " -> {ServerNetwork.sendInterval}"
 				else
 					debugString = ""
 					
@@ -412,7 +404,7 @@ transient unit Network
 		if Platform.showDebugInfo
 			statisticsGraph.draw
 			drawText debugString, {0, 540}
-			drawText "server, 1500ms lag outbound, interval {ServerNetwork.sendIntervalMin} : {ServerNetwork.sendInvervalMax}", statisticsGraph.position+{statisticsGraph.size.x/2-10, -statisticsGraph.size.y/2-20}, align:Right, layer:1000000
+			drawText "server {ServerNetwork.sendIntervalMin} : {ServerNetwork.sendInvervalMax}", statisticsGraph.position+{statisticsGraph.size.x/2-10, -statisticsGraph.size.y/2-20}, align:Right, layer:1000000
 		if ServerNetwork.sendInterval > 10: drawCircle {920, 496}, fillColor:Red
 		drawTime = Time.measure
 			graphics.finishFrame
@@ -616,7 +608,7 @@ transient unit statisticsGraph
 		for series
 			drawRectangle labelPos, {32,32}, fillColor:.color, align:Left, layer:1000000
 			drawText "{.name}: {.lastValue}", labelPos+{40, 0}, align:Left, layer:1000000
-			labelPos.x += 200
+			labelPos.x += 150
 			
 			Vector2 prevPos
 			int len = .values.length

@@ -183,12 +183,8 @@ transient unit ServerNetwork
 	const sendInvervalMax = 30
 		
 	sendInputs: int inputFrame
-		// lag = Input.internalUsers.max.lagFrom
-		sendInterval = Network.aheadAverage < 15 ? sendIntervalMin : sendInvervalMax
-		// sendInterval = Network.aheadAverage < 20 ? 10 : 30
-		// sendInterval = Network.aheadAverage < 20 ? 10 : 20
-		// sendInterval = lag < 15 ? 10 : 20
-		// sendInterval = 1
+		sendInterval = Network.aheadMaxAverage < 35 ? sendIntervalMin : sendInvervalMax
+		// sendInterval = Network.aheadAverage < 15 ? sendIntervalMin : sendInvervalMax
 		
 		if inputFrame % sendInterval == 0
 			let localPlayer = Input.internalUsers[Network.userId]
@@ -199,7 +195,7 @@ transient unit ServerNetwork
 			sendBuffer.writeInt8 cast ServerMessageType.Tick
 			sendBuffer.writeInt32 Network.userId
 			sendBuffer.writeInt32 inputFrame // You got all inputs up to and including this frame
-			sendBuffer.writeInt32 lag
+			sendBuffer.writeInt32 Network.aheadMaxAverage
 			sendBuffer.writeBuffer inputs, inputsSentPos, length
 			send sendBuffer
 			
@@ -214,10 +210,8 @@ transient unit ServerNetwork
 		let prevWritePos = sender.inputs.writePos
 		
 		sender.inputFrame = buffer.readInt32
-		sender.lagTo = buffer.readInt32
+		sender.aheadMaxAverage = buffer.readInt32
 		buffer.readBuffer sender.inputs, prevWritePos
 		
 		Network.receivedFrames = Input.internalUsers.min.inputFrame where . and !.local
-		sender.lagFrom = Network.frame - sender.inputFrame
-		
-		Network.receivedLog += " [{Network.currentTime}] <{senderId}> #{sender.inputFrame} lag:{sender.lagTo} {prevWritePos}->{sender.inputs.writePos} {sender.inputs.toRangeString(prevWritePos, sender.inputs.writePos)}"
+		Network.receivedLog += " [{Network.currentTime}] <{senderId}> #{sender.inputFrame} ama:{sender.aheadMaxAverage} {prevWritePos}->{sender.inputs.writePos} {sender.inputs.toRangeString(prevWritePos, sender.inputs.writePos)}"
