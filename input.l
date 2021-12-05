@@ -162,10 +162,12 @@ unit Input
 				e.preventDefault();
 			}
 			else
-			if(e.key == "F1") {PeerNetwork_setBitrate(1, 1000); e.preventDefault();} else
-			if(e.key == "F2") {PeerNetwork_setBitrate(1, 10000); e.preventDefault();} else
-			if(e.key == "F3") {PeerNetwork_setBitrate(1, 100000); e.preventDefault();} else
-			if(e.key == "F4") {PeerNetwork_setBitrate(1, 1000000); e.preventDefault();} else
+			if(e.key == "F1") {Network_sendInputsMode = 1; e.preventDefault();} else
+			if(e.key == "F2") {Network_sendInputsMode = 2; e.preventDefault();} else
+			// if(e.key == "F1") {PeerNetwork_setBitrate(1, 1000); e.preventDefault();} else
+			// if(e.key == "F2") {PeerNetwork_setBitrate(1, 10000); e.preventDefault();} else
+			// if(e.key == "F3") {PeerNetwork_setBitrate(1, 100000); e.preventDefault();} else
+			// if(e.key == "F4") {PeerNetwork_setBitrate(1, 1000000); e.preventDefault();} else
 			if(e.key == "F9") {
 				if(e.shiftKey) { Network_saveLogs(); }
 				else           { Platform_showDebugInfo = !Platform_showDebugInfo; Network_debugString = "" }

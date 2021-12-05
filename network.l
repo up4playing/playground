@@ -1,6 +1,6 @@
 enum NetworkMode: None, Ping, Local, Connected
 transient class RoomInfo: int time, userId
-enum SendInputsMode: None, Server, Peer
+enum SendInputsMode: None, Peer, Server
 	
 transient unit Snapshot
 	int autoSaveCount
@@ -406,7 +406,7 @@ transient unit Network
 		if Platform.showDebugInfo
 			statisticsGraph.draw
 			drawText debugString, {0, 540}
-			drawText "server {sendIntervalMin} : {sendInvervalMax}", statisticsGraph.position+{statisticsGraph.size.x/2-10, -statisticsGraph.size.y/2-20}, align:Right, layer:1000000
+			drawText "{sendInputsMode == Peer ? "Peer" : "Server"} {sendIntervalMin} : {sendInvervalMax}", statisticsGraph.position+{statisticsGraph.size.x/2-10, -statisticsGraph.size.y/2-20}, align:Right, layer:1000000
 		if sendInterval > 10: drawCircle {920, 496}, fillColor:Red
 		drawTime = Time.measure
 			graphics.finishFrame
