@@ -611,19 +611,13 @@ transient unit statisticsGraph
 			drawText "{.name}: {.lastValue}", labelPos+{40, 0}, align:Left, layer:1000000
 			labelPos.x += 150
 			
-			// int len = .values.length
-			// for len
-			// 	let value = .values[len-1-i]
-			// 	Vector2 pos = {startPos.x - i, startPos.y - value/maxValue*size.y}
-			// 	drawRectangle pos, size:{4,4}, fillColor:.color, layer:1000000
-			
-			Vector2 prevPos
 			int len = .values.length
+			float prevY = 0
 			for len
 				let value = .values[len-1-i]
 				Vector2 pos = {startPos.x - i, startPos.y - value/maxValue*size.y}
-				if i: drawLine prevPos, pos, color:.color, width:3, layer:1000000
-				prevPos = pos
+				if i: drawRectangle pos, size:{4, prevY-pos.y+4}, fillColor:.color, layer:1000000, valign:Top
+				prevY = pos.y
 				
 		drawRectangle position, size, fillColor:Black, outlineColor:White, outlineWidth:3, layer:1000000
 		drawText cast maxValue, position+{size.x/2+8, -size.y/2}, align:Left
