@@ -226,24 +226,7 @@ transient unit Network
 			graphics.finishFrame
 			return
 			
-		// Ahead
 		let localPlayer = Input.internalUsers[userId]
-		if mode == Connected and Input.users.length > 1
-			ahead = frame - receivedFrames
-			aheadAverage = aheads.average
-			aheads.add ahead, maxLength:50
-			aheadMax = aheads.max .
-			aheadsMax.add aheadMax maxLength:50
-			aheadMaxAverage = Math.round(aheadsMax.average + 3)
-			// aheadMaxAverage = aheadMax + 2
-			localPlayer.aheadMaxAverage = aheadMaxAverage
-			
-			// Statistics graph
-			statisticsGraph.add "ahead", ahead, Blue
-			statisticsGraph.add "local", aheadMaxAverage, Green
-			let remoteUser = Input.internalUsers.find.local == false
-			statisticsGraph.add "remote", remoteUser.aheadMaxAverage, Red
-			statisticsGraph.add "interval", ServerNetwork.sendInterval, Yellow
 		
 		let targetFrame = Math.floor((now - startTime)/targetFrameTime)+1
 		let frameMinusOffset = targetFrame - aheadMaxAverage
@@ -261,6 +244,25 @@ transient unit Network
 		
 		if frame < targetFrame
 			let startFrame = frame
+			
+			// Ahead
+			if mode == Connected and Input.users.length > 1
+				ahead = frame - receivedFrames
+				aheadAverage = aheads.average
+				aheads.add ahead, maxLength:30
+				aheadMax = aheads.max .
+				aheadsMax.add aheadMax maxLength:90
+				aheadMaxAverage = Math.round(aheadsMax.average + 3)
+				// aheadMaxAverage = aheadMax + 2
+				localPlayer.aheadMaxAverage = aheadMaxAverage
+				
+				// Statistics graph
+				statisticsGraph.add "ahead", ahead, Blue
+				statisticsGraph.add "local", aheadMaxAverage, Green
+				let remoteUser = Input.internalUsers.find.local == false
+				statisticsGraph.add "remote", remoteUser.aheadMaxAverage, Red
+				statisticsGraph.add "interval", ServerNetwork.sendInterval, Yellow
+				
 			try
 				// Send imputs
 				// if mode == Connected: sendInputs inputFrame:targetFrame-1, aheadAverage
