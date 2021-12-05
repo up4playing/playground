@@ -1,4 +1,4 @@
-enum ServerMessageType: Join, JoinResponse, Ping, Pong, Signal, Ice, Tick
+enum NetworkMessageType: Join, JoinResponse, Ping, Pong, Signal, Ice, Tick
 
 transient unit ServerNetwork
 	private object socket
@@ -49,7 +49,7 @@ transient unit ServerNetwork
 		catch(e) { Network_log(e) }
 		
 	private onMessageFromServer: Buffer buffer
-		ServerMessageType type = cast buffer.readInt8
+		NetworkMessageType type = cast buffer.readInt8
 		if type == JoinResponse: onJoinResponse buffer; else
 		if type == Pong:         onPong buffer; else
 		if type == Signal:       onSignal buffer; else
@@ -60,7 +60,7 @@ transient unit ServerNetwork
 		print roomId, userId, version
 		
 		sendBuffer.reset
-		sendBuffer.writeInt8 cast ServerMessageType.Join
+		sendBuffer.writeInt8 cast NetworkMessageType.Join
 		sendBuffer.writeString roomId
 		sendBuffer.writeInt16 userId
 		sendBuffer.writeInt16 version
@@ -75,7 +75,7 @@ transient unit ServerNetwork
 		for userCount
 			let id = buffer.readInt32
 			InternalUser user
-			if id == userId: user = {id, local:true, state:Myself, videoElement:PeerNetwork.localVideoElement}
+			if id == userId: user = {id, local:true, videoElement:PeerNetwork.localVideoElement}
 			else             user = {id, offerByMe:true}
 			Input.internalUsers[id] = user
 			buffer.readBuffer user.inputs
@@ -106,7 +106,7 @@ transient unit ServerNetwork
 		if (Network.mode == Ping or Network.mode == Connected) and now >= nextPingTime
 			// Network.log "ping", now, nextPingTime
 			sendBuffer.reset
-			sendBuffer.writeInt8 cast ServerMessageType.Ping
+			sendBuffer.writeInt8 cast NetworkMessageType.Ping
 			sendBuffer.writeFloat64 now
 			sendBuffer.writeInt32 Network.certainFrame                    // The last certain frame with inputs from everybody
 			sendBuffer.writeFloat64 Network.checksums[Network.certainFrame] || 0  // The checksum of the last certain frame
@@ -141,7 +141,7 @@ transient unit ServerNetwork
 		Network.log receiverId, type, sdp
 		
 		sendBuffer.reset
-		sendBuffer.writeInt8 cast ServerMessageType.Signal
+		sendBuffer.writeInt8 cast NetworkMessageType.Signal
 		sendBuffer.writeInt32 receiverId
 		sendBuffer.writeInt32 Network.userId
 		sendBuffer.writeString type
@@ -163,7 +163,7 @@ transient unit ServerNetwork
 		Network.log receiverId, candidate
 		
 		sendBuffer.reset
-		sendBuffer.writeInt8 cast ServerMessageType.Ice
+		sendBuffer.writeInt8 cast NetworkMessageType.Ice
 		sendBuffer.writeInt32 receiverId
 		sendBuffer.writeInt32 Network.userId
 		sendBuffer.writeString candidate
@@ -192,7 +192,7 @@ transient unit ServerNetwork
 			
 			let length = inputs.writePos - inputsSentPos
 			sendBuffer.reset
-			sendBuffer.writeInt8 cast ServerMessageType.Tick
+			sendBuffer.writeInt8 cast NetworkMessageType.Tick
 			sendBuffer.writeInt32 Network.userId
 			sendBuffer.writeInt32 inputFrame // You got all inputs up to and including this frame
 			sendBuffer.writeInt32 Network.aheadMaxAverage

@@ -1,16 +1,6 @@
-enum NetworkMessageType: Tick, Ping, Pong, RequestState, State
-enum ConnectionState: Disconnected, Connecting, Reconnecting, PingPong, Connected, Myself
-
-transient class Connection
-	int userId
-	object peerConnection
-	object dataChannel
-	ConnectionState state
-	bool offerByMe
-	float fastestPingPongTime = float.maxValue
-	
-enum NetworkMode: None, Ping, Local, Connected, Reconnecting
+enum NetworkMode: None, Ping, Local, Connected
 transient class RoomInfo: int time, userId
+enum SendInputsMode: None, Server, Peer
 	
 transient unit Snapshot
 	int autoSaveCount
@@ -71,6 +61,8 @@ transient unit Network
 	public bool smoothTouchPosition = true
 	public bool simulateConnection = true
 	
+	SendInputsMode sendInputsMode = Peer
+	
 	// Logs
 	string logTable = "frame,id,frame,ama,id,frame,ama,id,frame,ama,messageSize,now,animTime,networkTime,tickTime,drawTime,iteration,restoreTime,replayFrames,replayTime,saveTime,pingPong,received,uncertain,certain,checksums,events,send,receive,write,parse,touch\n"
 	public string eventLog = ""; sentLog = "", receivedLog="", writeLog="", parseLog = "", touchLog = "", checksumLog = "", debugString = ""
@@ -110,10 +102,6 @@ transient unit Network
 
 	startConnected
 		if mode == Connected: return
-		for connections
-			if .state == PingPong
-				let user = Input.internalUsers[.userId]
-				.state = user.state = Connected
 				
 		let user = Input.internalUsers[userId]
 		user.startInputFrame 0
@@ -265,8 +253,9 @@ transient unit Network
 				
 			try
 				// Send imputs
-				// if mode == Connected: sendInputs inputFrame:targetFrame-1, aheadAverage
-				if mode == Connected: ServerNetwork.sendInputs inputFrame:targetFrame-1
+				if mode == Connected
+					if sendInputsMode == Peer:   PeerNetwork.sendInputs inputFrame:targetFrame-1
+					if sendInputsMode == Server: ServerNetwork.sendInputs inputFrame:targetFrame-1
 								
 				// Replay all frames from the first uncertain frame until the current frame
 				// when we received all inputs for frames that we were uncertain about before
@@ -547,7 +536,6 @@ transient unit Network
 	string roomString
 	int roomId
 	string gameId
-	private Connection[] connections
 	
 	js void join: string gameId, string roomString, int userId
 		init()
@@ -612,6 +600,12 @@ transient unit statisticsGraph
 			drawText "{.name}: {.lastValue}", labelPos+{40, 0}, align:Left, layer:1000000
 			labelPos.x += 150
 			
+			// int len = .values.length
+			// for len
+			// 	let value = .values[len-1-i]
+			// 	Vector2 pos = {startPos.x - i, startPos.y - value/maxValue*size.y}
+			// 	drawRectangle pos, size:{4,4}, fillColor:.color, layer:1000000
+			
 			Vector2 prevPos
 			int len = .values.length
 			for len
@@ -619,6 +613,7 @@ transient unit statisticsGraph
 				Vector2 pos = {startPos.x - i, startPos.y - value/maxValue*size.y}
 				if i: drawLine prevPos, pos, color:.color, width:3, layer:1000000
 				prevPos = pos
+				
 		drawRectangle position, size, fillColor:Black, outlineColor:White, outlineWidth:3, layer:1000000
 		drawText cast maxValue, position+{size.x/2+8, -size.y/2}, align:Left
 		drawText "0", position+{size.x/2+8, size.y/2}, align:Left

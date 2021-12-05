@@ -1,9 +1,7 @@
 // The internal state of a user that isn't serialized and shoudn't be accessed by the application
 transient class InternalUser
 	int id              // The userId stays the same when a user reconnects
-	int connectionId    // The connectionId increments with every connection, lowest connectionId means oldest user
 	bool local          // Is this the local user?
-	ConnectionState state = Disconnected
 	
 	bool collectInputs  // When we are done pinging, we add a join event and start collecting inputs
 	int inputFrame      // We got all inputs from this player up to and including this frame
@@ -22,6 +20,7 @@ transient class InternalUser
 	
 	object videoElement
 	object peerConnection
+	object dataChannel
 	bool offerByMe
 	
 	startInputFrame: int index
@@ -91,7 +90,7 @@ transient class WheelEvent
 	
 // A collection of methods to receive user input
 unit Input
-	transient internal InternalUser[] internalUsers
+	transient visible InternalUser[] internalUsers
 	transient visible bool isCertain
 	
 	NetworkUser[] users

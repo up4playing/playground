@@ -22,7 +22,7 @@ transient unit PeerNetwork
 		let peerConnection = PeerNetwork_peerConnection = new RTCPeerConnection({
 			// Set the ice transport policy to "relay" to test a turn server
 			// iceTransportPolicy: "relay",
-			// iceTransportPolicy: "all",
+			iceTransportPolicy: "all",
 			iceServers: [
 			{
 				urls: [
@@ -55,24 +55,8 @@ transient unit PeerNetwork
 		user.offerByMe = offerByMe
 		return peerConnection
 			
-	// private Connection createConnection: int partnerId, int connectionId, bool offerByMe
-	// 	let user = Input.internalUsers[partnerId] || (Input.internalUsers[partnerId] = {id:partnerId, local:false})
-	// 	let existingConnection = connections.find.userId == partnerId
-	// 		log "removing existing connections", partnerId
-	// 		closeConnection existingConnection
-	// 		connections.removeAllWhere.userId == partnerId
-		
-	// 	let connection = Connection(partnerId)
-	// 	connections.add connection
-	// 	connection.state = user.state = Connecting
-	// 	connection.peerConnection = setupPeerConnection(connection)
-	// 	connection.offerByMe = offerByMe
-	// 	user.connectionId = connectionId
-	// 	log partnerId, connectionId, offerByMe, connection.state, connection.dataChannel
-	// 	return connection
-	
 	object peerConnection
-		
+	
 	js void createOffer: InternalUser user
 		try {
 			PeerNetwork_setupPeerConnection(user, /*offerByMe*/true)
@@ -80,30 +64,24 @@ transient unit PeerNetwork
 		
 			// Create reliable data channel
 			// These options would create an unreliable one: {ordered:false, maxRetransmits:0}
-			// let dataChannel = peerConnection.createDataChannel("channel")
-			// dataChannel.binaryType = "arraybuffer"
-			// connection.dataChannel = dataChannel
-			// dataChannel.onopen = e => {
-			// 	Network_log("createOffer: connection opened!")
-			// 	Network_logConnectionType(peerConnection);
-			// 	Network_onConnectedToPeer(connection, /*isNewUser*/true);
-			// }
-			// dataChannel.onerror = e => Network_log("DataChannel error: ", e)
-			// dataChannel.onclose = e => Network_log("DataChannel close: ", e)
-			// dataChannel.onclosing = e => {
-			// 	Network_log("DataChannel closing: ", e)
-			// 	Network_onDisconnectFromPeer(connection)
-			// }
-			// dataChannel.onmessage = e => {
-			// 	Network_onPeerMessage(connection, new Buffer(e.data, 0, 0, 0))
-			// }
+			let dataChannel = PeerNetwork_peerConnection.createDataChannel("channel")
+			dataChannel.binaryType = "arraybuffer"
+			dataChannel.onopen = e => {
+				Network_log("Data channel opened")
+				user.dataChannel = dataChannel
+			}
+			dataChannel.onclosing = e => {
+				Network_log("Data channel closing")
+				user.dataChannel = null
+			}
+			dataChannel.onclose = e => Network_log("DataChannel close "+e)
+			dataChannel.onerror = e => Network_log("DataChannel error "+e)
+			dataChannel.onmessage = e => PeerNetwork_onMessage(user, new Buffer(e.data, 0, 0, 0))
 			
 			// Offer
 			let peerConnection = user.peerConnection
 			let offer = await peerConnection.createOffer();
 			await peerConnection.setLocalDescription(offer);
-			// offers.push({receiverId:partnerId, type: "offer", sdp: peerConnection.localDescription.sdp, connectionId:Network_connectionId })
-			// offers.push({receiverId:user.id, type: "offer", sdp: peerConnection.localDescription.sdp })
 			ServerNetwork_sendSignal(user.id, "offer", peerConnection.localDescription.sdp)
 			Network_log("Sent offer to "+user.id+", waiting for answer.");
 		}
@@ -132,27 +110,24 @@ transient unit PeerNetwork
 			PeerNetwork_setupRemoteVideo(user)
 			
 			// Data channel
-			// peerConnection.addEventListener('datachannel', e => {
-			// 	Network_log("onReceivedOffer: received datachannel")
-			// 	let dataChannel = e.channel
-			// 	dataChannel.binaryType = "arraybuffer"
-			// 	connection.dataChannel = dataChannel
-			// 	dataChannel.onopen = e => {
-			// 		Network_log("onReceivedOffer: connection opened!")
-			// 		Network_logConnectionType(peerConnection);
-			// 		Network_onConnectedToPeer(connection, /*isNewUser*/false);
-			// 	}
-			// 	dataChannel.onerror = e => Network_log("DataChannel error: ", e)
-			// 	dataChannel.onclose = e => Network_log("DataChannel close: ", e)
-			// 	dataChannel.onclosing = e => {
-			// 		Network_log("DataChannel closing: ", e)
-			// 		Network_onDisconnectFromPeer(connection)
-			// 	}
-			// 	dataChannel.onmessage = e => {
-			// 		Network_onPeerMessage(connection, new Buffer(e.data, 0, 0, 0))
-			// 	}
-			// })
-			// Network_log("onReceivedOffer: data channel listeners")
+			PeerNetwork_peerConnection.addEventListener('datachannel', e => {
+				Network_log("Data Channel received")
+				let dataChannel = e.channel
+				dataChannel.binaryType = "arraybuffer"
+				user.dataChannel = dataChannel
+				dataChannel.onopen = e => {
+					Network_log("Data channel opened")
+					user.dataChannel = dataChannel
+				}
+				dataChannel.onclosing = e => {
+					Network_log("Data channel closing")
+					user.dataChannel = null
+				}
+				dataChannel.onclose = e => Network_log("DataChannel close "+e)
+				dataChannel.onerror = e => Network_log("DataChannel error "+e)
+				dataChannel.onmessage = e => PeerNetwork_onMessage(user, new Buffer(e.data, 0, 0, 0))
+			})
+			Network_log("onReceivedOffer: data channel listeners")
 						
 			// Answer
 			let peerConnection = user.peerConnection
@@ -161,14 +136,58 @@ transient unit PeerNetwork
 			await peerConnection.setLocalDescription(answer);
 			ServerNetwork_sendSignal(user.id, "answer", peerConnection.localDescription.sdp)
 			Network_log("Received offer from "+user.id+", sent answer, waiting for connection.");
-			
-			// Network_sendToServer(new SignalMessage(Network_userId, {receiverId:partnerId, type: "answer", sdp: peerConnection.localDescription.sdp, connectionId:Network_connectionId }))
-			// Network_log("onReceivedOffer: Created and sent answer for "+partnerId+", received connectionId:"+offer.connectionId+" my connectionId:"+Network_connectionId+", waiting for connection")
 		}
 		catch(e) {
 			console.error(e)
 			Network_log(e.stack);
 		}
+		
+	int lag, inputsSentPos, tickMessageSize, sendInterval
+	const sendIntervalMin = 7
+	const sendInvervalMax = 30
+	Buffer sendBuffer
+	
+	sendInputs: int inputFrame
+		sendInterval = Network.aheadMaxAverage < 35 ? sendIntervalMin : sendInvervalMax
+		// sendInterval = Network.aheadAverage < 15 ? sendIntervalMin : sendInvervalMax
+		
+		if inputFrame % sendInterval == 0
+			for Input.internalUsers
+				if .dataChannel
+					let localPlayer = Input.internalUsers[Network.userId]
+					let inputs = localPlayer.inputs
+					
+					let length = inputs.writePos - inputsSentPos
+					sendBuffer.reset
+					sendBuffer.writeInt8 cast NetworkMessageType.Tick
+					sendBuffer.writeInt32 Network.userId
+					sendBuffer.writeInt32 inputFrame // You got all inputs up to and including this frame
+					sendBuffer.writeInt32 Network.aheadMaxAverage
+					sendBuffer.writeBuffer inputs, inputsSentPos, length
+					send ., sendBuffer
+					
+					Network.sentLog += " #{inputFrame} lag:{lag} {inputsSentPos}->{inputs.writePos} {inputs.toRangeString(inputsSentPos, inputs.writePos)}"
+					
+					inputsSentPos = inputs.writePos
+					tickMessageSize = sendBuffer.writePos	
+			
+	private js void send: InternalUser user, Buffer buffer
+		user.dataChannel.send(buffer.buffer)
+		
+	private onMessage: InternalUser user, Buffer buffer
+		NetworkMessageType type = cast buffer.readInt8
+		if type == Tick: onTick user, buffer
+			
+	private onTick: InternalUser sender, Buffer buffer
+		let senderId = buffer.readInt32
+		let prevWritePos = sender.inputs.writePos
+		
+		sender.inputFrame = buffer.readInt32
+		sender.aheadMaxAverage = buffer.readInt32
+		buffer.readBuffer sender.inputs, prevWritePos
+		
+		Network.receivedFrames = Input.internalUsers.min.inputFrame where . and !.local
+		Network.receivedLog += " [{Network.currentTime}] <{senderId}> #{sender.inputFrame} ama:{sender.aheadMaxAverage} {prevWritePos}->{sender.inputs.writePos} {sender.inputs.toRangeString(prevWritePos, sender.inputs.writePos)}"
 		
 	js void onReceivedAnswer: InternalUser user, string sdp
 		await user.peerConnection.setRemoteDescription(new RTCSessionDescription({type: "answer", sdp}));
@@ -397,14 +416,6 @@ transient unit PeerNetwork
 	// 	log "on signal: "+message.signal.type+" "+message.senderId+" -> "+message.signal.receiverId
 	// 	if message.signal.type == "offer":  onReceivedOffer message.senderId, message.signal; else
 	// 	if message.signal.type == "answer": onReceivedAnswer message.senderId, message.signal
-	
-	// private onPeerMessage: Connection c, Buffer buffer
-	// 	NetworkMessageType type = cast buffer.readInt8
-	// 	if type == Tick:         onTickMessage c, buffer; else
-	// 	if type == Ping:         onPingMessage c, buffer; else
-	// 	if type == Pong:         onPongMessage c, buffer; else
-	// 	if type == RequestState: onRequestState c, buffer; else
-	// 	if type == State:        onState c, buffer;
 			
 	// private ping
 	// 	if (mode == Ping or mode == Connected) and currentTime >= nextPingTime
