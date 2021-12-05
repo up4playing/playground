@@ -83,6 +83,7 @@ transient unit PeerNetwork
 			let offer = await peerConnection.createOffer();
 			await peerConnection.setLocalDescription(offer);
 			ServerNetwork_sendSignal(user.id, "offer", peerConnection.localDescription.sdp)
+			PeerNetwork_logConnectionType()
 			Network_log("Sent offer to "+user.id+", waiting for answer.");
 		}
 		catch(e) {
@@ -135,6 +136,7 @@ transient unit PeerNetwork
 			let answer = await peerConnection.createAnswer();
 			await peerConnection.setLocalDescription(answer);
 			ServerNetwork_sendSignal(user.id, "answer", peerConnection.localDescription.sdp)
+			PeerNetwork_logConnectionType()
 			Network_log("Received offer from "+user.id+", sent answer, waiting for connection.");
 		}
 		catch(e) {
@@ -156,7 +158,7 @@ transient unit PeerNetwork
 				sendBuffer.writeInt8 cast NetworkMessageType.Tick
 				sendBuffer.writeInt32 Network.userId
 				sendBuffer.writeInt32 inputFrame // You got all inputs up to and including this frame
-				sendBuffer.writeInt32 Network.aheadMaxAverage
+				sendBuffer.writeInt32 Network.bufferFrames
 				sendBuffer.writeBuffer inputs, inputsSentPos, length
 				send ., sendBuffer
 				
@@ -177,11 +179,11 @@ transient unit PeerNetwork
 		let prevWritePos = sender.inputs.writePos
 		
 		sender.inputFrame = buffer.readInt32
-		sender.aheadMaxAverage = buffer.readInt32
+		sender.bufferFrames = buffer.readInt32
 		buffer.readBuffer sender.inputs, prevWritePos
 		
 		Network.receivedFrames = Input.internalUsers.min.inputFrame where . and !.local
-		Network.receivedLog += " [{Network.currentTime}] <{senderId}> #{sender.inputFrame} ama:{sender.aheadMaxAverage} {prevWritePos}->{sender.inputs.writePos} {sender.inputs.toRangeString(prevWritePos, sender.inputs.writePos)}"
+		Network.receivedLog += " [{Network.currentTime}] <{senderId}> #{sender.inputFrame} ama:{sender.bufferFrames} {prevWritePos}->{sender.inputs.writePos} {sender.inputs.toRangeString(prevWritePos, sender.inputs.writePos)}"
 		
 	js void onReceivedAnswer: InternalUser user, string sdp
 		await user.peerConnection.setRemoteDescription(new RTCSessionDescription({type: "answer", sdp}));
@@ -309,19 +311,19 @@ transient unit PeerNetwork
 	private onDisconnectFromPeer: InternalUser user
 		Network.log "onDisconnectFromPeer userId:"+user.id
 		
-	private js void logConnectionType(object peerConnection)
+	private js void logConnectionType
 		setTimeout(async () => {
-			let stats = await peerConnection.getStats()
+			let stats = await PeerNetwork_peerConnection.getStats()
 			let candidatePairs = [...stats.values()].filter(s => s.type == "candidate-pair" && s.state == "succeeded")
 			let candidatePair = candidatePairs.find(a => a.selected) || candidatePairs[0]
 			if(candidatePair) {
 				let candidate = stats.get(candidatePair.localCandidateId);
 				let ip = candidate.ip || candidate.address
 				PeerNetwork_connectionType = candidate.candidateType
-				Network_log("Connection: " + Network_connectionType+" "+ip+" "+candidate)
+				Network_log("Connection: "+Network_connectionType+" "+ip+" "+candidate)
 			} else {
 				window.stats = [...stats.values()]
-				Network_log("Can't access stats", window.stats)
+				Network_log("Can't access stats"+window.stats)
 			}
 		}, 5000)
 		

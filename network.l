@@ -64,7 +64,7 @@ transient unit Network
 	SendInputsMode sendInputsMode = Peer
 	
 	// Logs
-	string logTable = "frame,ahead,id,frame,ama,id,frame,ama,id,frame,ama,messageSize,now,animTime,networkTime,tickTime,drawTime,iteration,restoreTime,replayFrames,replayTime,saveTime,pingPong,received,uncertain,certain,checksums,events,send,receive,write,parse,touch\n"
+	string logTable = "frame,ahead,receivedFrames,frameMinusOffset,certainFrame,id,frame,buffer,id,frame,buffer,id,frame,buffer,messageSize,now,animTime,networkTime,tickTime,drawTime,iteration,restoreTime,replayFrames,replayTime,saveTime,pingPong,received,uncertain,certain,checksums,events,send,receive,write,parse,touch\n"
 	public string eventLog = ""; sentLog = "", receivedLog="", writeLog="", parseLog = "", touchLog = "", checksumLog = "", debugString = ""
 	private float lastNetworkFrame, lastAnimationFrame, drawTime, tickTime, restoreTime, replayTime, saveTime
 	private int replayFrames
@@ -85,17 +85,10 @@ transient unit Network
 	private Buffer commonState      // A snapshot taken before the first uncertain frame
 	internal int frameWithNewWatches = 0 // First frame with new watches, do not send watches for frames below this
 	private bool startInLobby
-	
-	// Statistics
-	private int ahead            // How many frames are we ahead of frame we got inputs from all users for?
-	private int[] aheads         // All ahead values of the last 50 frames
-	visible float aheadAverage   // The average ahead value of the last 50 frames
-	private int aheadMax         // The maximum ahead value of the last 50 frames
-	private int[] aheadsMax      // All aheadMax values of the last 50 frames
-	visible int aheadMaxAverage  // The average of all aheadMax values
+	private int joinFrame
 	
 	// TODO
-	public  float[] checksums
+	public float[] checksums
 
 	initDatabase
 		IndexedDB.start "up4playing", "snapshot", 5
@@ -106,7 +99,7 @@ transient unit Network
 		let user = Input.internalUsers[userId]
 		user.startInputFrame 0
 		
-		int joinFrame = Math.floor((currentTime - this.startTime)/targetFrameTime)+1
+		joinFrame = Math.floor((currentTime - this.startTime)/targetFrameTime)+1
 		user.inputs.writeInt32 joinFrame
 		user.inputs.writeInt16 cast InputType.Join
 		user.collectInputs = true
@@ -116,6 +109,7 @@ transient unit Network
 		receivedFrames = -1
 		certainFrame = -1
 		frame = 0
+		bufferFrames = 4
 		log "Connected", userId, frame, startTime, this.startTime
 		saveState
 		
@@ -205,7 +199,7 @@ transient unit Network
 	internal animationFrame
 		let now = currentTime
 
-		// ping
+		// Ping
 		ServerNetwork.ping
 		if mode == None || mode == Ping
 			graphics.startFrame
@@ -213,11 +207,9 @@ transient unit Network
 			PeerNetwork.updateVideoScreen
 			graphics.finishFrame
 			return
-			
-		let localPlayer = Input.internalUsers[userId]
-		
+
 		let targetFrame = Math.floor((now - startTime)/targetFrameTime)+1
-		let frameMinusOffset = targetFrame - aheadMaxAverage
+		let frameMinusOffset = targetFrame - bufferFrames
 		certainFrame = mode == Connected ? Math.min(frameMinusOffset, receivedFrames) : int.maxValue
 
 		// TEMP for testing: Simulate mouse movement
@@ -233,24 +225,9 @@ transient unit Network
 		if frame < targetFrame
 			let startFrame = frame
 			
-			// Ahead
-			if mode == Connected and Input.users.length > 1
-				ahead = frame - receivedFrames
-				aheadAverage = aheads.average
-				aheads.add ahead, maxLength:90
-				aheadMax = aheads.max .
-				aheadsMax.add aheadMax maxLength:90
-				aheadMaxAverage = Math.round(aheadsMax.average + 3)
-				// aheadMaxAverage = aheadMax + 2
-				localPlayer.aheadMaxAverage = aheadMaxAverage
-				
-				// Statistics graph
-				statisticsGraph.add "ahead", ahead, Blue
-				statisticsGraph.add "local", aheadMaxAverage, Green
-				let remoteUser = Input.internalUsers.find.local == false
-				statisticsGraph.add "remote", remoteUser.aheadMaxAverage, Red
-				statisticsGraph.add "interval", sendInterval, Yellow
-				
+			if mode == Connected and Input.users.length > 1 and frame > joinFrame + 30
+				collectStatistics
+								
 			try
 				sendInputs targetFrame-1
 				// Replay all frames from the first uncertain frame until the current frame
@@ -269,16 +246,15 @@ transient unit Network
 				
 				// Logs
 				try
-					logTable += "{frame-1},{ahead}"
+					logTable += "{frame-1},{ahead},{receivedFrames},{frameMinusOffset},{certainFrame}"
 					for 3
 						let user = Input.internalUsers[i]
-							logTable += ",{user.id},{user.inputFrame},{user.aheadMaxAverage}"
+							logTable += ",{user.id},{user.inputFrame},{user.bufferFrames}"
 						else
-							logTable += ",,,"
-							
+							logTable += ",,,,,"
+						
 					logTable += ",{tickMessageSize},{now},{now - lastAnimationFrame},{now - lastNetworkFrame},{tickTime.format(fractionDigits:2)},{drawTime.format(fractionDigits:2)},{frame-startFrame}"
 					logTable += ",{restoreTime.format(fractionDigits:2)},{replayFrames},{replayTime.format(fractionDigits:2)},{saveTime.format(fractionDigits:2)},{ServerNetwork.lastPingPongTime}"
-					logTable += ",{receivedFrames},{uncertainFrame},{certainFrame}"
 					logTable += ",\"{checksumLog.trim}\",\"{eventLog.trim}\",\"{sentLog.trim}\",\"{receivedLog.trim}\",\"{writeLog.trim}\",\"{parseLog.trim}\",\"{touchLog.trim}\"\n"
 				catch
 					print error
@@ -290,7 +266,7 @@ transient unit Network
 					debugString = "v{Platform.version} #{frame-1} ct:{PeerNetwork.connectionType}"
 					for user -> Input.internalUsers
 						if . and !.local
-							debugString += " <{.id}> #{.inputFrame} {.aheadMaxAverage}"
+							debugString += " <{.id}> #{.inputFrame} {.bufferFrames}"
 					debugString += " -> {sendInterval}"
 				else
 					debugString = ""
@@ -305,6 +281,34 @@ transient unit Network
 		lastAnimationFrame = now
 		if Platform.mode == Play and frame >= frames: Platform.record()
 			
+	// Statistics
+	private int ahead         // How many frames are we ahead of frame we got inputs from all users for?
+	private int[] aheadsLong  // Long rolling buffer of ahead values, used to calculate bufferFrames
+	private int[] aheadsShort // Short rolling buffer of ahead values, used to calculate sendInterval
+	private int aheadMax      // The maximum ahead value
+	private int[] aheadsMax   // Rolling buffer of aheadMax values
+	visible int bufferFrames  // The average of all aheadMax values 
+	
+	collectStatistics
+		let localPlayer = Input.internalUsers[userId]
+		ahead = frame - receivedFrames
+		aheadsLong.add ahead, maxLength:70
+		aheadsShort.add ahead, maxLength:10
+		aheadMax = aheadsLong.percentile(95)
+		aheadsMax.add aheadMax maxLength:35
+		
+		// We only update bufferFrames if the new value is more than 2 away from the current value
+		int actualBufferFrames = Math.round(aheadsMax.average + 3)
+		if Math.abs(actualBufferFrames - bufferFrames) > 2
+			localPlayer.bufferFrames = bufferFrames = actualBufferFrames
+		
+		// Statistics graph
+		statisticsGraph.add "ahead", ahead, Blue
+		statisticsGraph.add "local", bufferFrames, Green
+		let remoteUser = Input.internalUsers.find.local == false
+		statisticsGraph.add "remote", remoteUser.bufferFrames, Red
+		statisticsGraph.add "interval", sendInterval, Yellow
+			
 	int lastSendFrame, sendInterval, tickMessageSize
 	
 	const sendIntervalMin = 7
@@ -312,8 +316,7 @@ transient unit Network
 	
 	private sendInputs: int inputFrame
 		if mode != Connected: return
-		sendInterval = Network.aheadMaxAverage < 35 ? sendIntervalMin : sendInvervalMax
-		// sendInterval = Network.aheadAverage < 15 ? sendIntervalMin : sendInvervalMax
+		sendInterval = (aheadsShort.min .) < 5 ? sendIntervalMin : sendInvervalMax
 		
 		if frame >= lastSendFrame + sendInterval
 			if sendInputsMode == Peer:   PeerNetwork.sendInputs inputFrame

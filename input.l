@@ -5,7 +5,7 @@ transient class InternalUser
 	
 	bool collectInputs  // When we are done pinging, we add a join event and start collecting inputs
 	int inputFrame      // We got all inputs from this player up to and including this frame
-	int aheadMaxAverage
+	int bufferFrames
 	int inputsSentPos
 	
 	visible Touch[] downTouches, movingTouches, upTouches
