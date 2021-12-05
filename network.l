@@ -64,7 +64,7 @@ transient unit Network
 	SendInputsMode sendInputsMode = Peer
 	
 	// Logs
-	string logTable = "frame,id,frame,ama,id,frame,ama,id,frame,ama,messageSize,now,animTime,networkTime,tickTime,drawTime,iteration,restoreTime,replayFrames,replayTime,saveTime,pingPong,received,uncertain,certain,checksums,events,send,receive,write,parse,touch\n"
+	string logTable = "frame,ahead,id,frame,ama,id,frame,ama,id,frame,ama,messageSize,now,animTime,networkTime,tickTime,drawTime,iteration,restoreTime,replayFrames,replayTime,saveTime,pingPong,received,uncertain,certain,checksums,events,send,receive,write,parse,touch\n"
 	public string eventLog = ""; sentLog = "", receivedLog="", writeLog="", parseLog = "", touchLog = "", checksumLog = "", debugString = ""
 	private float lastNetworkFrame, lastAnimationFrame, drawTime, tickTime, restoreTime, replayTime, saveTime
 	private int replayFrames
@@ -237,7 +237,7 @@ transient unit Network
 			if mode == Connected and Input.users.length > 1
 				ahead = frame - receivedFrames
 				aheadAverage = aheads.average
-				aheads.add ahead, maxLength:30
+				aheads.add ahead, maxLength:90
 				aheadMax = aheads.max .
 				aheadsMax.add aheadMax maxLength:90
 				aheadMaxAverage = Math.round(aheadsMax.average + 3)
@@ -249,14 +249,10 @@ transient unit Network
 				statisticsGraph.add "local", aheadMaxAverage, Green
 				let remoteUser = Input.internalUsers.find.local == false
 				statisticsGraph.add "remote", remoteUser.aheadMaxAverage, Red
-				statisticsGraph.add "interval", ServerNetwork.sendInterval, Yellow
+				statisticsGraph.add "interval", sendInterval, Yellow
 				
 			try
-				// Send imputs
-				if mode == Connected
-					if sendInputsMode == Peer:   PeerNetwork.sendInputs inputFrame:targetFrame-1
-					if sendInputsMode == Server: ServerNetwork.sendInputs inputFrame:targetFrame-1
-								
+				sendInputs targetFrame-1
 				// Replay all frames from the first uncertain frame until the current frame
 				// when we received all inputs for frames that we were uncertain about before
 				replayState
@@ -278,9 +274,9 @@ transient unit Network
 						let user = Input.internalUsers[i]
 							logTable += ",{user.id},{user.inputFrame},{user.aheadMaxAverage}"
 						else
-							logTable += ",,,,"
+							logTable += ",,,"
 							
-					logTable += ",{ServerNetwork.tickMessageSize},{now},{now - lastAnimationFrame},{now - lastNetworkFrame},{tickTime.format(fractionDigits:2)},{drawTime.format(fractionDigits:2)},{frame-startFrame}"
+					logTable += ",{tickMessageSize},{now},{now - lastAnimationFrame},{now - lastNetworkFrame},{tickTime.format(fractionDigits:2)},{drawTime.format(fractionDigits:2)},{frame-startFrame}"
 					logTable += ",{restoreTime.format(fractionDigits:2)},{replayFrames},{replayTime.format(fractionDigits:2)},{saveTime.format(fractionDigits:2)},{ServerNetwork.lastPingPongTime}"
 					logTable += ",{receivedFrames},{uncertainFrame},{certainFrame}"
 					logTable += ",\"{checksumLog.trim}\",\"{eventLog.trim}\",\"{sentLog.trim}\",\"{receivedLog.trim}\",\"{writeLog.trim}\",\"{parseLog.trim}\",\"{touchLog.trim}\"\n"
@@ -295,12 +291,12 @@ transient unit Network
 					for user -> Input.internalUsers
 						if . and !.local
 							debugString += " <{.id}> #{.inputFrame} {.aheadMaxAverage}"
-					debugString += " -> {ServerNetwork.sendInterval}"
+					debugString += " -> {sendInterval}"
 				else
 					debugString = ""
 					
 				eventLog = ""; sentLog = ""; receivedLog = ""; writeLog = ""; parseLog = ""; touchLog = ""; checksumLog = ""
-				ServerNetwork.lastPingPongTime = 0; ServerNetwork.tickMessageSize = 0
+				ServerNetwork.lastPingPongTime = 0; tickMessageSize = 0
 				
 				lastNetworkFrame = now
 				
@@ -308,7 +304,22 @@ transient unit Network
 			
 		lastAnimationFrame = now
 		if Platform.mode == Play and frame >= frames: Platform.record()
+			
+	int lastSendFrame, sendInterval, tickMessageSize
+	
+	const sendIntervalMin = 7
+	const sendInvervalMax = 30
+	
+	private sendInputs: int inputFrame
+		if mode != Connected: return
+		sendInterval = Network.aheadMaxAverage < 35 ? sendIntervalMin : sendInvervalMax
+		// sendInterval = Network.aheadAverage < 15 ? sendIntervalMin : sendInvervalMax
 		
+		if frame >= lastSendFrame + sendInterval
+			if sendInputsMode == Peer:   PeerNetwork.sendInputs inputFrame
+			if sendInputsMode == Server: ServerNetwork.sendInputs inputFrame
+			lastSendFrame = frame
+
 	// Save state, parse inputs, step physics, process tick, and calculate checksum
 	// This is called in animationFrame and during replays. 
 	// All steps except the very last of an animation frame are fast forwared, which means that nothing is drawn.
@@ -395,8 +406,8 @@ transient unit Network
 		if Platform.showDebugInfo
 			statisticsGraph.draw
 			drawText debugString, {0, 540}
-			drawText "server {ServerNetwork.sendIntervalMin} : {ServerNetwork.sendInvervalMax}", statisticsGraph.position+{statisticsGraph.size.x/2-10, -statisticsGraph.size.y/2-20}, align:Right, layer:1000000
-		if ServerNetwork.sendInterval > 10: drawCircle {920, 496}, fillColor:Red
+			drawText "server {sendIntervalMin} : {sendInvervalMax}", statisticsGraph.position+{statisticsGraph.size.x/2-10, -statisticsGraph.size.y/2-20}, align:Right, layer:1000000
+		if sendInterval > 10: drawCircle {920, 496}, fillColor:Red
 		drawTime = Time.measure
 			graphics.finishFrame
 		

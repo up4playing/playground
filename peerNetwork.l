@@ -142,34 +142,28 @@ transient unit PeerNetwork
 			Network_log(e.stack);
 		}
 		
-	int lag, inputsSentPos, tickMessageSize, sendInterval
-	const sendIntervalMin = 7
-	const sendInvervalMax = 30
+	int inputsSentPos
 	Buffer sendBuffer
 	
 	sendInputs: int inputFrame
-		sendInterval = Network.aheadMaxAverage < 35 ? sendIntervalMin : sendInvervalMax
-		// sendInterval = Network.aheadAverage < 15 ? sendIntervalMin : sendInvervalMax
-		
-		if inputFrame % sendInterval == 0
-			for Input.internalUsers
-				if .dataChannel
-					let localPlayer = Input.internalUsers[Network.userId]
-					let inputs = localPlayer.inputs
-					
-					let length = inputs.writePos - inputsSentPos
-					sendBuffer.reset
-					sendBuffer.writeInt8 cast NetworkMessageType.Tick
-					sendBuffer.writeInt32 Network.userId
-					sendBuffer.writeInt32 inputFrame // You got all inputs up to and including this frame
-					sendBuffer.writeInt32 Network.aheadMaxAverage
-					sendBuffer.writeBuffer inputs, inputsSentPos, length
-					send ., sendBuffer
-					
-					Network.sentLog += " #{inputFrame} lag:{lag} {inputsSentPos}->{inputs.writePos} {inputs.toRangeString(inputsSentPos, inputs.writePos)}"
-					
-					inputsSentPos = inputs.writePos
-					tickMessageSize = sendBuffer.writePos	
+		for Input.internalUsers
+			if .dataChannel
+				let localPlayer = Input.internalUsers[Network.userId]
+				let inputs = localPlayer.inputs
+				
+				let length = inputs.writePos - inputsSentPos
+				sendBuffer.reset
+				sendBuffer.writeInt8 cast NetworkMessageType.Tick
+				sendBuffer.writeInt32 Network.userId
+				sendBuffer.writeInt32 inputFrame // You got all inputs up to and including this frame
+				sendBuffer.writeInt32 Network.aheadMaxAverage
+				sendBuffer.writeBuffer inputs, inputsSentPos, length
+				send ., sendBuffer
+				
+				Network.sentLog += " #{inputFrame} {inputsSentPos}->{inputs.writePos} {inputs.toRangeString(inputsSentPos, inputs.writePos)}"
+				
+				inputsSentPos = inputs.writePos
+				Network.tickMessageSize = sendBuffer.writePos	
 			
 	private js void send: InternalUser user, Buffer buffer
 		user.dataChannel.send(buffer.buffer)

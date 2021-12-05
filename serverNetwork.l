@@ -104,7 +104,6 @@ transient unit ServerNetwork
 	ping
 		let now = Network.currentTime
 		if (Network.mode == Ping or Network.mode == Connected) and now >= nextPingTime
-			// Network.log "ping", now, nextPingTime
 			sendBuffer.reset
 			sendBuffer.writeInt8 cast NetworkMessageType.Ping
 			sendBuffer.writeFloat64 now
@@ -123,8 +122,6 @@ transient unit ServerNetwork
 			fastestPingPongTime = pingPongTime
 			Network.startTime = Math.round(now - pingPongTime/2 - timeSinceStart)
 			Network.log "New fastest pingPongTime", pongCount, now, pingPongTime, timeSinceStart, Network.startTime
-		// else
-		// 	Network.log pongCount, pingPongTime, fastestPingPongTime, Network.startTime
 			
 		pongCount++
 		lastPingPongTime = pingPongTime
@@ -138,8 +135,6 @@ transient unit ServerNetwork
 		nextPingTime = now + (Network.mode == Ping ? 100 : 10000)
 		
 	sendSignal:	int receiverId, string type, string sdp
-		Network.log receiverId, type, sdp
-		
 		sendBuffer.reset
 		sendBuffer.writeInt8 cast NetworkMessageType.Signal
 		sendBuffer.writeInt32 receiverId
@@ -153,15 +148,12 @@ transient unit ServerNetwork
 		let senderId = buffer.readInt32
 		let type = buffer.readString
 		let sdp = buffer.readString
-		Network.log receiverId, senderId, type, sdp
 		
 		let sender = getOrCreateUser senderId
 		if type == "offer":  PeerNetwork.onReceivedOffer sender, sdp; else
 		if type == "answer": PeerNetwork.onReceivedAnswer sender, sdp
 			
 	sendIce: int receiverId, string candidate
-		Network.log receiverId, candidate
-		
 		sendBuffer.reset
 		sendBuffer.writeInt8 cast NetworkMessageType.Ice
 		sendBuffer.writeInt32 receiverId
@@ -173,36 +165,29 @@ transient unit ServerNetwork
 		let receiverId = buffer.readInt32
 		let senderId = buffer.readInt32
 		let candidate = buffer.readString
-		Network.log receiverId, senderId, candidate
 		
 		let sender = getOrCreateUser senderId
 		PeerNetwork.onIce sender, candidate
 		
-	int lag, inputsSentPos, tickMessageSize, sendInterval
-	const sendIntervalMin = 7
-	const sendInvervalMax = 30
+	int inputsSentPos
 		
 	sendInputs: int inputFrame
-		sendInterval = Network.aheadMaxAverage < 35 ? sendIntervalMin : sendInvervalMax
-		// sendInterval = Network.aheadAverage < 15 ? sendIntervalMin : sendInvervalMax
+		let localPlayer = Input.internalUsers[Network.userId]
+		let inputs = localPlayer.inputs
 		
-		if inputFrame % sendInterval == 0
-			let localPlayer = Input.internalUsers[Network.userId]
-			let inputs = localPlayer.inputs
-			
-			let length = inputs.writePos - inputsSentPos
-			sendBuffer.reset
-			sendBuffer.writeInt8 cast NetworkMessageType.Tick
-			sendBuffer.writeInt32 Network.userId
-			sendBuffer.writeInt32 inputFrame // You got all inputs up to and including this frame
-			sendBuffer.writeInt32 Network.aheadMaxAverage
-			sendBuffer.writeBuffer inputs, inputsSentPos, length
-			send sendBuffer
-			
-			Network.sentLog += " #{inputFrame} lag:{lag} {inputsSentPos}->{inputs.writePos} {inputs.toRangeString(inputsSentPos, inputs.writePos)}"
-			
-			inputsSentPos = inputs.writePos
-			tickMessageSize = sendBuffer.writePos	
+		let length = inputs.writePos - inputsSentPos
+		sendBuffer.reset
+		sendBuffer.writeInt8 cast NetworkMessageType.Tick
+		sendBuffer.writeInt32 Network.userId
+		sendBuffer.writeInt32 inputFrame // You got all inputs up to and including this frame
+		sendBuffer.writeInt32 Network.aheadMaxAverage
+		sendBuffer.writeBuffer inputs, inputsSentPos, length
+		send sendBuffer
+		
+		Network.sentLog += " #{inputFrame} {inputsSentPos}->{inputs.writePos} {inputs.toRangeString(inputsSentPos, inputs.writePos)}"
+		
+		inputsSentPos = inputs.writePos
+		Network.tickMessageSize = sendBuffer.writePos	
 						
 	private onTick: Buffer buffer
 		let senderId = buffer.readInt32
