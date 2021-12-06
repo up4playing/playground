@@ -78,7 +78,7 @@ transient unit PeerNetwork
 			user.dataChannel = null
 			if(!PeerNetwork_recreateInterval) {
 				Network_log("DataChannel "+user.id+" starting recreate interval")
-				PeerNetwork_recreateInterval = setInterval(() => Network_setupDataChannel(user), 1500)
+				PeerNetwork_recreateInterval = setInterval(() => PeerNetwork_setupDataChannel(user), 1500)
 			}
 		}
 		dataChannel.onerror = e => Network_log("DataChannel "+user.id+"error "+e)
@@ -278,11 +278,13 @@ transient unit PeerNetwork
 		let internalUser = Input_internalUsers[userId];
 		if(internalUser?.videoElement) internalUser.videoElement.remove()
 			
+	private const Color[] defaultUserColors = [{"398CA9"},{"C01352"},{"FFD166"},{"16C66E"}]
+						
 	setUserVideoAndColor: int userId = 0, Vector2 pos = {}, float width = 440, Color color = null
 		let user = Input.usersById[userId]
 			user.videoPosition = pos
 			user.videoWidth = width
-			user.color = color
+			user.color = color || defaultUserColors[user.index]
 			
 	internal setLocalVideo: Vector2 pos={}, float width = 440
 		// Set position and size of local video before we connected

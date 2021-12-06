@@ -62,21 +62,13 @@ transient unit Network
 	public bool simulateConnection = true
 	
 	SendInputsMode sendInputsMode = Peer
-	
-	// Logs
-	string logTable = "frame,ahead,receivedFrames,frameMinusOffset,certainFrame,id,frame,buffer,id,frame,buffer,id,frame,buffer,messageSize,now,animTime,networkTime,tickTime,drawTime,iteration,restoreTime,replayFrames,replayTime,saveTime,pingPong,received,uncertain,certain,checksums,events,send,receive,write,parse,touch\n"
-	public string eventLog = ""; sentLog = "", receivedLog="", writeLog="", parseLog = "", touchLog = "", checksumLog = "", debugString = ""
-	private float lastNetworkFrame, lastAnimationFrame, drawTime, tickTime, restoreTime, replayTime, saveTime
-	private int replayFrames
-	
 	internal const targetFps = 30
 	const targetFrameTime = 1000/targetFps
 	
-	NetworkMode mode
-	
-	int userId = -1       // The userId stays the same when a user reconnects
-	visible string errorMessage
-	public float startTime
+	NetworkMode mode                // Whether we are in local or connected mode
+	int userId = -1                 // The userId stays the same when a user reconnects
+	visible string errorMessage     // The error message if we caught any exceptions in the main loop
+	public float startTime          // The time the room was created, syncroniced between all clients
 	visible int frame               // Current frame, will increase by 1 at the end of every step (every targetFrameTime ms)
 	private int frames              // Total number of frames we have inputs for
 	public int receivedFrames       // We received all remote inputs up to this frame (lowest of all user frames)
@@ -84,8 +76,8 @@ transient unit Network
 	public int certainFrame         // The last frame where we have inputs from all players
 	private Buffer commonState      // A snapshot taken before the first uncertain frame
 	internal int frameWithNewWatches = 0 // First frame with new watches, do not send watches for frames below this
-	private bool startInLobby
-	private int joinFrame
+	private bool startInLobby       // Connected sessions usually start in the lobby, local sessions start in the app
+	private int joinFrame           // The frame the current user joined
 	
 	// TODO
 	public float[] checksums
@@ -197,7 +189,7 @@ transient unit Network
 	// This is called by the requestAnimationFrame callback.
 	// We ensure that step is called every targetFrameTime milliseconds.
 	internal animationFrame
-		let now = currentTime
+		now = currentTime
 
 		// Ping
 		ServerNetwork.ping
@@ -209,8 +201,8 @@ transient unit Network
 			return
 
 		let targetFrame = Math.floor((now - startTime)/targetFrameTime)+1
-		let frameMinusOffset = targetFrame - bufferFrames
-		certainFrame = mode == Connected ? Math.min(frameMinusOffset, receivedFrames) : int.maxValue
+		frameMinusBuffer = targetFrame - bufferFrames
+		certainFrame = mode == Connected ? Math.min(frameMinusBuffer, receivedFrames) : int.maxValue
 
 		// TEMP for testing: Simulate mouse movement
 		Input.handleTouchEvent inputType:TouchMove, x:(targetFrame*10)%1000, y:50+userId*20, pointerType:"mouse", pointerId:0, button:0
@@ -223,11 +215,8 @@ transient unit Network
 			log "Paused {prevTargetFrame-frame} frames, adjusting startTime. prevTargetTime:{prevTargetFrame} frame:{frame} targetFrame:{Math.floor((now - startTime)/targetFrameTime)}"
 		
 		if frame < targetFrame
-			let startFrame = frame
+			animationStartFrame = frame
 			
-			if mode == Connected and Input.users.length > 1 and frame > joinFrame + 30
-				collectStatistics
-								
 			try
 				sendInputs targetFrame-1
 				// Replay all frames from the first uncertain frame until the current frame
@@ -241,39 +230,8 @@ transient unit Network
 					
 			// Ensure that step is called every targetFrameTime milliseconds
 			while frame < targetFrame
-				// Step
 				step fastFordward:frame < targetFrame-1
-				
-				// Logs
-				try
-					logTable += "{frame-1},{ahead},{receivedFrames},{frameMinusOffset},{certainFrame}"
-					for 3
-						let user = Input.internalUsers[i]
-							logTable += ",{user.id},{user.inputFrame},{user.bufferFrames}"
-						else
-							logTable += ",,,,,"
-						
-					logTable += ",{tickMessageSize},{now},{now - lastAnimationFrame},{now - lastNetworkFrame},{tickTime.format(fractionDigits:2)},{drawTime.format(fractionDigits:2)},{frame-startFrame}"
-					logTable += ",{restoreTime.format(fractionDigits:2)},{replayFrames},{replayTime.format(fractionDigits:2)},{saveTime.format(fractionDigits:2)},{ServerNetwork.lastPingPongTime}"
-					logTable += ",\"{checksumLog.trim}\",\"{eventLog.trim}\",\"{sentLog.trim}\",\"{receivedLog.trim}\",\"{writeLog.trim}\",\"{parseLog.trim}\",\"{touchLog.trim}\"\n"
-				catch
-					print error
-					errorMessage = error.message
-					Platform.sendErrorToEditor error
-					
-				// Debug string
-				if Platform.showDebugInfo
-					debugString = "v{Platform.version} #{frame-1} ct:{PeerNetwork.connectionType}"
-					for user -> Input.internalUsers
-						if . and !.local
-							debugString += " <{.id}> #{.inputFrame} {.bufferFrames}"
-					debugString += " -> {sendInterval}"
-				else
-					debugString = ""
-					
-				eventLog = ""; sentLog = ""; receivedLog = ""; writeLog = ""; parseLog = ""; touchLog = ""; checksumLog = ""
-				ServerNetwork.lastPingPongTime = 0; tickMessageSize = 0
-				
+				collectStatistics
 				lastNetworkFrame = now
 				
 			for Input.internalUsers: if . and .local: .startInputFrame targetFrame	
@@ -282,41 +240,83 @@ transient unit Network
 		if Platform.mode == Play and frame >= frames: Platform.record()
 			
 	// Statistics
-	private int ahead         // How many frames are we ahead of frame we got inputs from all users for?
-	private int[] aheadsLong  // Long rolling buffer of ahead values, used to calculate bufferFrames
-	private int[] aheadsShort // Short rolling buffer of ahead values, used to calculate sendInterval
-	private int aheadMax      // The maximum ahead value
-	private int[] aheadsMax   // Rolling buffer of aheadMax values
-	visible int bufferFrames  // The average of all aheadMax values 
+	private int ahead               // How many frames are we ahead of frame we got inputs from all users for?
+	private int[] aheadsLong        // Long rolling buffer of ahead values, used to calculate bufferFrames
+	private int[] aheadsShort       // Short rolling buffer of ahead values, used to calculate sendInterval
+	private int aheadMax            // The maximum ahead value
+	private int[] aheadsMax         // Rolling buffer of aheadMax values
+	visible int bufferFrames        // The average of all aheadMax values
+	private int frameMinusBuffer    // We expect to receive all inputs by this frame (frame - bufferFrames)
+	private int animationStartFrame // The frame at the beginning of animationFrame, used to calculate iteration
+	private float now               // The time at the beginning of animationFrame
+	
+	// Logs
+	string logTable = "frame,ahead,receivedFrames,frameMinusBuffer,certainFrame,sendInterval,id,frame,buffer,id,frame,buffer,id,frame,buffer,messageSize,now,animTime,networkTime,tickTime,drawTime,iteration,restoreTime,replayFrames,replayTime,saveTime,pingPong,received,uncertain,certain,checksums,events,send,receive,write,parse,touch\n"
+	public string eventLog = ""; sentLog = "", receivedLog="", writeLog="", parseLog = "", touchLog = "", checksumLog = "", debugString = ""
+	private float lastNetworkFrame, lastAnimationFrame, drawTime, tickTime, restoreTime, replayTime, saveTime
+	private int replayFrames
 	
 	collectStatistics
 		let localPlayer = Input.internalUsers[userId]
-		ahead = frame - receivedFrames
-		aheadsLong.add ahead, maxLength:70
-		aheadsShort.add ahead, maxLength:10
-		aheadMax = aheadsLong.percentile(95)
-		aheadsMax.add aheadMax maxLength:35
 		
-		// We only update bufferFrames if the new value is more than 2 away from the current value
-		int actualBufferFrames = Math.round(aheadsMax.average + 3)
-		if Math.abs(actualBufferFrames - bufferFrames) > 2
-			localPlayer.bufferFrames = bufferFrames = actualBufferFrames
-		
-		// Statistics graph
-		statisticsGraph.add "ahead", ahead, Blue
-		statisticsGraph.add "local", bufferFrames, Green
-		let remoteUser = Input.internalUsers.find.local == false
-		statisticsGraph.add "remote", remoteUser.bufferFrames, Red
-		statisticsGraph.add "interval", sendInterval, Yellow
+		if mode == Connected and Input.users.length > 1 and frame > joinFrame + 30
+			ahead = frame - receivedFrames
+			aheadsLong.add ahead, maxLength:70
+			aheadsShort.add ahead, maxLength:10
+			aheadMax = aheadsLong.percentile(95)
+			aheadsMax.add aheadMax maxLength:35
 			
-	int lastSendFrame, sendInterval, tickMessageSize
+			// We only update bufferFrames if the new value is more than 2 away from the current value
+			int actualBufferFrames = Math.round(aheadsMax.average + 3)
+			if Math.abs(actualBufferFrames - bufferFrames) > 2
+				localPlayer.bufferFrames = bufferFrames = actualBufferFrames
+			
+			// Statistics graph
+			for Input.users
+				let internalUser = Input.internalUsers[.id]
+				statisticsGraph.add "user {.id}", internalUser.bufferFrames, .color
+			statisticsGraph.add "interval", sendInterval, {"808080"}
+			statisticsGraph.add "ahead", ahead, Gray
+			
+		// Logs
+		try
+			logTable += "{frame-1},{ahead},{receivedFrames},{frameMinusBuffer},{certainFrame},{sendInterval}"
+			for 3
+				let user = Input.internalUsers[i]
+					logTable += ",{user.id},{user.inputFrame},{user.bufferFrames}"
+				else
+					logTable += ",,,"
+				
+			logTable += ",{tickMessageSize},{now},{now - lastAnimationFrame},{now - lastNetworkFrame},{tickTime.format(fractionDigits:2)},{drawTime.format(fractionDigits:2)},{frame-animationStartFrame}"
+			logTable += ",{restoreTime.format(fractionDigits:2)},{replayFrames},{replayTime.format(fractionDigits:2)},{saveTime.format(fractionDigits:2)},{ServerNetwork.lastPingPongTime}"
+			logTable += ",\"{checksumLog.trim}\",\"{eventLog.trim}\",\"{sentLog.trim}\",\"{receivedLog.trim}\",\"{writeLog.trim}\",\"{parseLog.trim}\",\"{touchLog.trim}\"\n"
+		catch
+			print error
+			errorMessage = error.message
+			Platform.sendErrorToEditor error
+			
+		// Debug string
+		if Platform.showDebugInfo
+			debugString = "v{Platform.version} #{frame-1} ct:{PeerNetwork.connectionType}"
+			for user -> Input.internalUsers
+				if . and !.local
+					debugString += " <{.id}> #{.inputFrame} {.bufferFrames}"
+			debugString += " -> {sendInterval}"
+		else
+			debugString = ""
+			
+		eventLog = ""; sentLog = ""; receivedLog = ""; writeLog = ""; parseLog = ""; touchLog = ""; checksumLog = ""
+		ServerNetwork.lastPingPongTime = 0; tickMessageSize = 0
+
+	private int lastSendFrame, sendInterval
+	int tickMessageSize
 	
 	const sendIntervalMin = 7
 	const sendInvervalMax = 30
 	
 	private sendInputs: int inputFrame
 		if mode != Connected: return
-		sendInterval = (aheadsShort.min .) < 5 ? sendIntervalMin : sendInvervalMax
+		sendInterval = aheadsShort.length < 10 or (aheadsShort.min .) < 5 ? sendIntervalMin : sendInvervalMax
 		
 		// if sendInputsMode != Server and Input.internalUsers.any.bufferFrames > 300
 		// 	sendInputsMode = Server
