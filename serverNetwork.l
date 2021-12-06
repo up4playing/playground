@@ -1,4 +1,4 @@
-enum NetworkMessageType: Join, JoinResponse, Ping, Pong, Signal, Ice, Tick
+enum NetworkMessageType: Join, JoinResponse, Ping, Pong, Signal, Ice, Tick, Switch
 
 transient unit ServerNetwork
 	private object socket
@@ -54,7 +54,8 @@ transient unit ServerNetwork
 		if type == Pong:         onPong buffer; else
 		if type == Signal:       onSignal buffer; else
 		if type == Ice:          onIce buffer; else
-		if type == Tick:         onTick buffer;
+		if type == Tick:         onTick buffer; else
+		if type == Switch:       onSwitch buffer;
 		
 	private void sendJoinMessage: string roomId, int userId, int version
 		print roomId, userId, version
@@ -200,3 +201,14 @@ transient unit ServerNetwork
 		
 		Network.receivedFrames = Input.internalUsers.min.inputFrame where . and !.local
 		Network.receivedLog += " [{Network.currentTime}] <{senderId}> #{sender.inputFrame} ama:{sender.bufferFrames} {prevWritePos}->{sender.inputs.writePos} {sender.inputs.toRangeString(prevWritePos, sender.inputs.writePos)}"
+	
+	sendSwitch: SendInputsMode mode
+		sendBuffer.reset
+		sendBuffer.writeInt8 cast NetworkMessageType.Switch
+		sendBuffer.writeInt32 cast mode
+		send sendBuffer
+
+	onSwitch: Buffer buffer
+		SendInputsMode mode = cast buffer.readInt32
+		if mode != Network.sendInputsMode
+			Network.sendInputsMode = mode

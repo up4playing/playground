@@ -318,10 +318,19 @@ transient unit Network
 		if mode != Connected: return
 		sendInterval = (aheadsShort.min .) < 5 ? sendIntervalMin : sendInvervalMax
 		
+		// if sendInputsMode != Server and Input.internalUsers.any.bufferFrames > 300
+		// 	sendInputsMode = Server
+		// 	ServerNetwork.sendSwitch Server
+		
 		if frame >= lastSendFrame + sendInterval
 			if sendInputsMode == Peer:   PeerNetwork.sendInputs inputFrame
 			if sendInputsMode == Server: ServerNetwork.sendInputs inputFrame
 			lastSendFrame = frame
+			
+	switchSendInputMode: SendInputsMode mode
+		if sendInputsMode != mode
+			sendInputsMode = mode
+			ServerNetwork.sendSwitch mode
 
 	// Save state, parse inputs, step physics, process tick, and calculate checksum
 	// This is called in animationFrame and during replays. 

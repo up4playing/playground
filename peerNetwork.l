@@ -178,12 +178,18 @@ transient unit PeerNetwork
 		let senderId = buffer.readInt32
 		let prevWritePos = sender.inputs.writePos
 		
-		sender.inputFrame = buffer.readInt32
-		sender.bufferFrames = buffer.readInt32
-		buffer.readBuffer sender.inputs, prevWritePos
-		
-		Network.receivedFrames = Input.internalUsers.min.inputFrame where . and !.local
-		Network.receivedLog += " [{Network.currentTime}] <{senderId}> #{sender.inputFrame} ama:{sender.bufferFrames} {prevWritePos}->{sender.inputs.writePos} {sender.inputs.toRangeString(prevWritePos, sender.inputs.writePos)}"
+		let inputFrame = buffer.readInt32
+		if inputFrame >= sender.inputFrame
+			sender.inputFrame = inputFrame
+			
+			sender.bufferFrames = buffer.readInt32
+			buffer.readBuffer sender.inputs, prevWritePos
+			
+			Network.receivedFrames = Input.internalUsers.min.inputFrame where . and !.local
+			Network.receivedLog += " [{Network.currentTime}] <{senderId}> #{inputFrame} buffer:{sender.bufferFrames} {prevWritePos}->{sender.inputs.writePos} {sender.inputs.toRangeString(prevWritePos, sender.inputs.writePos)}"
+		else
+			Network.receivedLog += " [{Network.currentTime}] <{senderId}> (ignoring #{inputFrame})"
+			
 		
 	js void onReceivedAnswer: InternalUser user, string sdp
 		await user.peerConnection.setRemoteDescription(new RTCSessionDescription({type: "answer", sdp}));
@@ -320,7 +326,7 @@ transient unit PeerNetwork
 				let candidate = stats.get(candidatePair.localCandidateId);
 				let ip = candidate.ip || candidate.address
 				PeerNetwork_connectionType = candidate.candidateType
-				Network_log("Connection: "+Network_connectionType+" "+ip+" "+candidate)
+				Network_log("Connection: "+PeerNetwork_connectionType+" "+ip+" "+candidate)
 			} else {
 				window.stats = [...stats.values()]
 				Network_log("Can't access stats"+window.stats)
