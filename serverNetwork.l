@@ -18,8 +18,8 @@ transient unit ServerNetwork
 		socket.onmessage = function(event) {
 			ServerNetwork_onMessageFromServer(new Buffer(event.data, 0, 0, 0));
 		}
-		socket.onclose = function() {
-			Network_log("Websocket closed")
+		socket.onclose = function(ev) {
+			Network_log("Websocket closed "+ev.code+" "+ev.reason)
 			ServerNetwork_socket = null
 		}
 		socket.onerror = error => {
@@ -44,9 +44,15 @@ transient unit ServerNetwork
 	js int bufferedAmount
 		return ServerNetwork_socket.bufferedAmount 
 		
-	private js void send: Buffer buffer
-		try      { ServerNetwork_socket.send(buffer.buffer) } 
-		catch(e) { Network_log(e) }
+	private js int send: Buffer buffer
+		try {
+			let data = buffer.toByteArray()
+			ServerNetwork_socket.send(data)
+			return data.byteLength
+		} catch(e) { 
+			Network_log(e)
+			return 0
+		}
 		
 	private onMessageFromServer: Buffer buffer
 		NetworkMessageType type = cast buffer.readInt8

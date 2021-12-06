@@ -172,15 +172,21 @@ transient unit PeerNetwork
 				sendBuffer.writeInt32 inputFrame // You got all inputs up to and including this frame
 				sendBuffer.writeInt32 Network.bufferFrames
 				sendBuffer.writeBuffer inputs, inputsSentPos, length
-				send ., sendBuffer
+				Network.tickMessageSize = send ., sendBuffer
 				
-				Network.sentLog += " #{inputFrame} {inputsSentPos}->{inputs.writePos} {inputs.toRangeString(inputsSentPos, inputs.writePos)}"
+				Network.sentLog += " #{inputFrame} {inputsSentPos}->{inputs.writePos} {inputs.toRangeString(inputsSentPos, inputs.writePos)} ({Network.tickMessageSize} bytes)"
 				
 				inputsSentPos = inputs.writePos
-				Network.tickMessageSize = sendBuffer.writePos	
 			
-	private js void send: InternalUser user, Buffer buffer
-		user.dataChannel.send(buffer.buffer)
+	private js int send: InternalUser user, Buffer buffer
+		try {
+			let data = buffer.toByteArray()
+			user.dataChannel.send(data)
+			return data.byteLength
+		} catch(e) {
+			Network_log(e)
+			return 0
+		}
 		
 	private onMessage: InternalUser user, Buffer buffer
 		NetworkMessageType type = cast buffer.readInt8
