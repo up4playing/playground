@@ -56,27 +56,39 @@ transient unit PeerNetwork
 		return peerConnection
 			
 	object peerConnection
+	object recreateInterval = null
+	
+	js void setupDataChannel: InternalUser user
+		// Create reliable data channel
+		// These options would create an unreliable one: {ordered:false, maxRetransmits:0}
+		Network_log("Data channel "+user.id+" setup")
+		let dataChannel = PeerNetwork_peerConnection.createDataChannel("channel")
+		dataChannel.binaryType = "arraybuffer"
+		dataChannel.onopen = e => {
+			Network_log("Data channel "+user.id+" opened")
+			user.dataChannel = dataChannel
+			if(PeerNetwork_recreateInterval) {
+				clearInterval(PeerNetwork_recreateInterval)
+				PeerNetwork_recreateInterval = null
+			}
+		}
+		dataChannel.onclosing = e => Network_log("Data channel "+user.id+" closing")
+		dataChannel.onclose = e => {
+			Network_log("DataChannel "+user.id+" close "+e+" recreateInterval:"+PeerNetwork_recreateInterval)
+			user.dataChannel = null
+			if(!PeerNetwork_recreateInterval) {
+				Network_log("DataChannel "+user.id+" starting recreate interval")
+				PeerNetwork_recreateInterval = setInterval(() => Network_setupDataChannel(user), 1500)
+			}
+		}
+		dataChannel.onerror = e => Network_log("DataChannel "+user.id+"error "+e)
+		dataChannel.onmessage = e => PeerNetwork_onMessage(user, new Buffer(e.data, 0, 0, 0))
 	
 	js void createOffer: InternalUser user
 		try {
 			PeerNetwork_setupPeerConnection(user, /*offerByMe*/true)
 			PeerNetwork_setupRemoteVideo(user)
-		
-			// Create reliable data channel
-			// These options would create an unreliable one: {ordered:false, maxRetransmits:0}
-			let dataChannel = PeerNetwork_peerConnection.createDataChannel("channel")
-			dataChannel.binaryType = "arraybuffer"
-			dataChannel.onopen = e => {
-				Network_log("Data channel opened")
-				user.dataChannel = dataChannel
-			}
-			dataChannel.onclosing = e => {
-				Network_log("Data channel closing")
-				user.dataChannel = null
-			}
-			dataChannel.onclose = e => Network_log("DataChannel close "+e)
-			dataChannel.onerror = e => Network_log("DataChannel error "+e)
-			dataChannel.onmessage = e => PeerNetwork_onMessage(user, new Buffer(e.data, 0, 0, 0))
+			PeerNetwork_setupDataChannel(user)
 			
 			// Offer
 			let peerConnection = user.peerConnection
