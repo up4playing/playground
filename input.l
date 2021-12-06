@@ -164,10 +164,11 @@ unit Input
 			else
 			if(e.ctrlKey && e.key == "F1") {Network_switchSendInputMode(1); e.preventDefault();} else
 			if(e.ctrlKey && e.key == "F2") {Network_switchSendInputMode(2); e.preventDefault();} else
-			// if(e.key == "F1") {PeerNetwork_setBitrate(1, 1000); e.preventDefault();} else
-			// if(e.key == "F2") {PeerNetwork_setBitrate(1, 10000); e.preventDefault();} else
-			// if(e.key == "F3") {PeerNetwork_setBitrate(1, 100000); e.preventDefault();} else
-			// if(e.key == "F4") {PeerNetwork_setBitrate(1, 1000000); e.preventDefault();} else
+				
+			if(e.ctrlKey && e.key == "F5") {/*keep room, keep userId*/ ServerNetwork_sendReload(false, false); e.preventDefault();} else
+			if(e.ctrlKey && e.key == "F6") {/*new  room, keep userId*/ ServerNetwork_sendReload(true,  false); e.preventDefault();} else
+			if(e.ctrlKey && e.key == "F7") {/*new  room, new  userId*/ ServerNetwork_sendReload(true,  true);  e.preventDefault();} else
+			
 			if(e.key == "F9") {
 				if(e.shiftKey) { Network_saveLogs(); }
 				else           { Platform_showDebugInfo = !Platform_showDebugInfo; Network_debugString = "" }

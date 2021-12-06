@@ -322,6 +322,9 @@ transient unit Platform
 	inline js void copyToClipboard(string text)
 		navigator.clipboard.writeText(text)
 		
+	inline js void setLocation: string url
+		location.href = url
+		
 unit File
 	js string readPartial: string filename, int offset=0, int length, void(string result) callback
 		let fs = require("fs")

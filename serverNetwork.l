@@ -1,4 +1,4 @@
-enum NetworkMessageType: Join, JoinResponse, Ping, Pong, Signal, Ice, Tick, Switch
+enum NetworkMessageType: Join, JoinResponse, Ping, Pong, Signal, Ice, Tick, Switch, Reload
 
 transient unit ServerNetwork
 	private object socket
@@ -55,7 +55,8 @@ transient unit ServerNetwork
 		if type == Signal:       onSignal buffer; else
 		if type == Ice:          onIce buffer; else
 		if type == Tick:         onTick buffer; else
-		if type == Switch:       onSwitch buffer;
+		if type == Switch:       onSwitch buffer; else
+		if type == Reload:       onReload buffer;
 		
 	private void sendJoinMessage: string roomId, int userId, int version
 		print roomId, userId, version
@@ -212,3 +213,18 @@ transient unit ServerNetwork
 		SendInputsMode mode = cast buffer.readInt32
 		if mode != Network.sendInputsMode
 			Network.sendInputsMode = mode
+	
+	sendReload: bool newRoom, bool newUserId
+		string url = "/{Network.gameId}/{newRoom ? Network.roomId+1 : Network.roomId}"
+		sendBuffer.reset
+		sendBuffer.writeInt8 cast NetworkMessageType.Reload
+		sendBuffer.writeString url
+		sendBuffer.writeBool newUserId
+		send sendBuffer
+
+	onReload: Buffer buffer
+		let url = buffer.readString
+		let newUserId = buffer.readBool
+		if !newUserId: url += "-{Network.userId}"
+		Platform.setLocation url
+			
