@@ -213,7 +213,7 @@ transient unit Platform
 		try   {
 			if(forUser == -1 || Network_userId == forUser) {
 				if(value) {
-					if(!Network_isLocalhost && !Platform_isDebug) document.body.requestFullscreen()
+					if(!ServerNetwork_isLocalhost && !Platform_isDebug) document.body.requestFullscreen()
 				} else {
 					document.exitFullscreen()
 				}
