@@ -242,8 +242,7 @@ transient unit Network
 			
 	// Statistics
 	private int ahead               // How many frames are we ahead of frame we got inputs from all users for?
-	private int[] aheadsLong        // Long rolling buffer of ahead values, used to calculate bufferFrames
-	private int[] aheadsShort       // Short rolling buffer of ahead values, used to calculate sendInterval
+	private int[] aheads            // Rolling buffer of ahead values, used to calculate bufferFrames
 	private int aheadMax            // The maximum ahead value
 	private int[] aheadsMax         // Rolling buffer of aheadMax values
 	visible int bufferFrames        // The average of all aheadMax values
@@ -257,21 +256,24 @@ transient unit Network
 	private float lastNetworkFrame, lastAnimationFrame, drawTime, tickTime, restoreTime, replayTime, saveTime
 	private int replayFrames
 	int tickMessageSize
-
+	
+	const aheadsLength = 210
+	const percentile = 70
+	const aheadPlus = 3
+	const minChange = 3
 	
 	collectStatistics
 		let localPlayer = Input.internalUsers[userId]
 		
 		if mode == Connected and Input.users.length > 1 and frame > joinFrame + 30
 			ahead = frame - receivedFrames
-			aheadsLong.add ahead, maxLength:70
-			aheadsShort.add ahead, maxLength:10
-			aheadMax = aheadsLong.percentile(95)
-			aheadsMax.add aheadMax maxLength:35
+			aheads.add ahead, maxLength:aheadsLength
+			aheadMax = aheads.percentile(percentile)
+			aheadsMax.add aheadMax maxLength:30
 			
 			// We only update bufferFrames if the new value is more than 2 away from the current value
-			int actualBufferFrames = Math.round(aheadsMax.average + 3)
-			if Math.abs(actualBufferFrames - bufferFrames) > 2
+			int actualBufferFrames = Math.round(aheadsMax.average + aheadPlus)
+			if Math.abs(actualBufferFrames - bufferFrames) >= minChange
 				localPlayer.bufferFrames = bufferFrames = actualBufferFrames
 			
 			// Statistics graph
@@ -419,7 +421,7 @@ transient unit Network
 		if Platform.showDebugInfo
 			statisticsGraph.draw
 			drawText debugString, {0, 540}
-			drawText "{sendInputsMode == Peer ? "Peer" : "Server"} {sendInterval}", statisticsGraph.position+{statisticsGraph.size.x/2-10, -statisticsGraph.size.y/2-20}, align:Right, layer:1000000
+			drawText "{aheadsLength} {percentile} {aheadPlus} {minChange}   {sendInputsMode == Peer ? "Peer" : "Server"} {sendInterval}", statisticsGraph.position+{statisticsGraph.size.x/2-10, -statisticsGraph.size.y/2-20}, align:Right, layer:1000000
 		if sendInterval > 10: drawCircle {920, 496}, fillColor:Red
 		drawTime = Time.measure
 			graphics.finishFrame
