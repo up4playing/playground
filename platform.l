@@ -111,6 +111,7 @@ transient unit Platform
 		this.engineStarted = false
 		this.isDebug = isDebug
 		if !isDebug: showSafeArea = false
+		showDebugInfo = getLocalStorageObject("showDebugInfo") == "true"
 		
 		onResize
 		if !isDebug: Network.simulateConnection = false
@@ -203,6 +204,10 @@ transient unit Platform
 
 	js void setTitle: string title
 		document.title = title
+		
+	void toggleShowDebugInfo
+		showDebugInfo = !showDebugInfo;
+		setLocalStorageObject("showDebugInfo", showDebugInfo ? "true" : "false")
 		
 	inline js void setFullscreen: value = true, forUser = -1
 		try   {

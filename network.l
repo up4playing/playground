@@ -572,8 +572,6 @@ transient unit Network
 		Network_userId = userId
 		
 		ServerNetwork_isLocalhost = location.href.indexOf("localhost") != -1
-		// Platform_showDebugInfo = ServerNetwork_isLocalhost
-		Platform_showDebugInfo = true
 		
 		// await PeerNetwork_setupLocalVideo(/*enableVideo*/true, /*enableAudio*/!ServerNetwork_isLocalhost)
 		// await PeerNetwork_setupLocalVideo(/*enableVideo*/false, /*enableAudio*/false)

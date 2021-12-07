@@ -174,7 +174,7 @@ unit Input
 				
 			if(e.key == "F9") {
 				if(e.shiftKey) { Network_saveLogs(); }
-				else           { Platform_showDebugInfo = !Platform_showDebugInfo; Network_debugString = "" }
+				else           { Platform_toggleShowDebugInfo(); Network_debugString = "" }
 				e.preventDefault();
 			}
 			else
