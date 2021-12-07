@@ -189,7 +189,8 @@ transient unit PeerNetwork
 		
 	private onMessage: InternalUser user, Buffer buffer
 		NetworkMessageType type = cast buffer.readInt8
-		if type == Tick: onTick user, buffer
+		if type == Tick:     onTick user, buffer; else
+		if type == Checksum: onChecksum user, buffer
 			
 	private onTick: InternalUser sender, Buffer buffer
 		let inputFrame = buffer.readInt
@@ -350,6 +351,28 @@ transient unit PeerNetwork
 			}
 		}, 5000)
 		
+	sendChecksum: int checksumFor, float checksum
+		sendBuffer.reset
+		sendBuffer.writeInt8 cast NetworkMessageType.Switch
+		sendBuffer.writeInt checksumFor
+		sendBuffer.writeFloat64 checksum
+		
+		for Input.internalUsers
+			if .dataChannel		
+				send ., sendBuffer
+
+	onChecksum: InternalUser user, Buffer buffer
+		int checksumFor = buffer.readInt
+		float checksum = buffer.readFloat64
+		Network.checksumLog += " <{user.id}> #{checksumFor} {checksum}"
+		
+		let myChecksum = Network.checksums[checksumFor]
+		if !myChecksum
+			Network.checksums[checksumFor] = checksum
+		else
+		if !myChecksum.isApproximately(checksum)
+			Network.onWrongChecksum mine:myChecksum theirs:checksum
+				
 	// private float nextPingTime
 	// private int pongCount
 	
@@ -378,15 +401,6 @@ transient unit PeerNetwork
 		
 	// 	log connection.userId, isNewUser, mode, connection.state
 
-	// private onWrongChecksum: float mine, float theirs
-	// 	errorMessage = "Checksum mismatch"
-	// 	checksumLog += " MISMATCH mine:{mine} theirs:{theirs}"
-		
-	// 	if !alertShown
-	// 		alert "Clients out of sync. Please send me the log file that will be created."
-	// 		saveLogs
-	// 		alertShown = true
-	
 	// // Calculate the frame we received all remote inputs for.
 	// // The lowest of all user frames. Called in onTickMessage.
 	// private getReceivedInputFrames

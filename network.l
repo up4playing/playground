@@ -80,9 +80,8 @@ transient unit Network
 	internal int frameWithNewWatches = 0 // First frame with new watches, do not send watches for frames below this
 	private bool startInLobby       // Connected sessions usually start in the lobby, local sessions start in the app
 	private int joinFrame           // The frame the current user joined
-	
-	// TODO
 	public float[] checksums
+	bool alertShown
 
 	initDatabase
 		IndexedDB.start "up4playing", "snapshot", 5
@@ -358,18 +357,18 @@ transient unit Network
 			// Tick
 			tick
 			
-			if mode != Local
+			if mode != Local and (frame % 60)==0 and isCertain
 				// Calculate checksum if we received all inputs for this frame
-				// if isCertain
-				// 	float myChecksum = Framework.checksum					
-				// 	float theirChecksum = checksums[frame]
-				// 	checksumLog += " <> #{frame} {myChecksum}"
-				// 	if !theirChecksum
-				// 		checksums[frame] = myChecksum
-				// 	else
-				// 	if !theirChecksum.isApproximately(myChecksum)
-				// 		onWrongChecksum mine:myChecksum theirs:theirChecksum
-						
+				float myChecksum = Framework.checksum					
+				float theirChecksum = checksums[frame]
+				checksumLog += " <> #{frame} {myChecksum}"
+				if !theirChecksum
+					checksums[frame] = myChecksum
+				else
+				if !theirChecksum.isApproximately(myChecksum)
+					onWrongChecksum mine:myChecksum theirs:theirChecksum
+				PeerNetwork.sendChecksum frame, myChecksum
+					
 				// Take snapshot
 				Snapshot.onEndOfStep
 			
@@ -574,7 +573,16 @@ transient unit Network
 		
 	private storeUserId
 		Platform.setLocalStorageObject "room"+roomId, RoomInfo(currentTime, userId)
-				
+		
+	onWrongChecksum: float mine, float theirs
+		errorMessage = "Checksum mismatch"
+		checksumLog += " MISMATCH mine:{mine} theirs:{theirs}"
+		
+		if !alertShown
+			alert "Clients out of sync. Please send me the log file that will be created."
+			saveLogs
+			alertShown = true
+			
 	internal drawFingers
 		for user -> Input.users
 			if user
