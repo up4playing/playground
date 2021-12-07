@@ -353,7 +353,7 @@ transient unit PeerNetwork
 		
 	sendChecksum: int checksumFor, float checksum
 		sendBuffer.reset
-		sendBuffer.writeInt8 cast NetworkMessageType.Switch
+		sendBuffer.writeInt8 cast NetworkMessageType.Checksum
 		sendBuffer.writeInt checksumFor
 		sendBuffer.writeFloat64 checksum
 		
