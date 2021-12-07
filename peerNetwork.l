@@ -168,9 +168,8 @@ transient unit PeerNetwork
 				let length = inputs.writePos - inputsSentPos
 				sendBuffer.reset
 				sendBuffer.writeInt8 cast NetworkMessageType.Tick
-				sendBuffer.writeInt32 Network.userId
-				sendBuffer.writeInt32 inputFrame // You got all inputs up to and including this frame
-				sendBuffer.writeInt32 Network.bufferFrames
+				sendBuffer.writeInt inputFrame // You got all inputs up to and including this frame
+				sendBuffer.writeInt Network.bufferFrames
 				sendBuffer.writeBuffer inputs, inputsSentPos, length
 				Network.tickMessageSize = send ., sendBuffer
 				
@@ -193,20 +192,18 @@ transient unit PeerNetwork
 		if type == Tick: onTick user, buffer
 			
 	private onTick: InternalUser sender, Buffer buffer
-		let senderId = buffer.readInt32
-		let prevWritePos = sender.inputs.writePos
-		
-		let inputFrame = buffer.readInt32
+		let inputFrame = buffer.readInt
 		if inputFrame >= sender.inputFrame
 			sender.inputFrame = inputFrame
 			
-			sender.bufferFrames = buffer.readInt32
+			sender.bufferFrames = buffer.readInt
+			let prevWritePos = sender.inputs.writePos
 			buffer.readBuffer sender.inputs, prevWritePos
 			
 			Network.receivedFrames = Input.internalUsers.min.inputFrame where . and !.local
-			Network.receivedLog += " [{Network.currentTime}] <{senderId}> #{inputFrame} buffer:{sender.bufferFrames} {prevWritePos}->{sender.inputs.writePos} {sender.inputs.toRangeString(prevWritePos, sender.inputs.writePos)}"
+			Network.receivedLog += " [{Network.currentTime}] <{sender.id}> #{inputFrame} buffer:{sender.bufferFrames} {prevWritePos}->{sender.inputs.writePos} {sender.inputs.toRangeString(prevWritePos, sender.inputs.writePos)}"
 		else
-			Network.receivedLog += " [{Network.currentTime}] <{senderId}> (ignoring #{inputFrame})"
+			Network.receivedLog += " [{Network.currentTime}] <{sender.id}> (ignoring #{inputFrame})"
 			
 		
 	js void onReceivedAnswer: InternalUser user, string sdp
