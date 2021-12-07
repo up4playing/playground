@@ -256,7 +256,7 @@ transient unit Network
 	
 	// Logs
 	string logTable = "frame,ahead,receivedFrames,frameMinusBuffer,certainFrame,sendInterval,id,frame,buffer,id,frame,buffer,id,frame,buffer,messageSize,now,animTime,networkTime,tickTime,drawTime,iteration,restoreTime,replayFrames,replayTime,saveTime,pingPong,received,uncertain,certain,checksums,events,send,receive,write,parse,touch\n"
-	public string eventLog = ""; sentLog = "", receivedLog="", writeLog="", parseLog = "", touchLog = "", checksumLog = "", debugString = ""
+	public string eventLog = ""; sentLog = "", receivedLog="", writeLog="", parseLog = "", touchLog = "", checksumLog = ""
 	private float lastNetworkFrame, lastAnimationFrame, drawTime, tickTime, restoreTime, replayTime, saveTime
 	private int replayFrames
 	int tickMessageSize
@@ -303,16 +303,6 @@ transient unit Network
 			print error
 			errorMessage = error.message
 			Platform.sendErrorToEditor error
-			
-		// Debug string
-		if Platform.showDebugInfo
-			debugString = "v{Platform.version} #{frame-1} ct:{PeerNetwork.connectionType}"
-			for user -> Input.internalUsers
-				if . and !.local
-					debugString += " <{.id}> #{.inputFrame} {.bufferFrames}"
-			debugString += " -> {sendInterval}"
-		else
-			debugString = ""
 			
 		eventLog = ""; sentLog = ""; receivedLog = ""; writeLog = ""; parseLog = ""; touchLog = ""; checksumLog = ""
 		ServerNetwork.lastPingPongTime = 0; tickMessageSize = 0
@@ -424,8 +414,8 @@ transient unit Network
 		Input.updateCursor
 		if Platform.showDebugInfo
 			statisticsGraph.draw
-			drawText debugString, {0, 540}
-			drawText "{aheadsLength} {percentile} {aheadPlus} {minChange}   {sendInputsMode == Peer ? "Peer" : "Server"} {sendInterval}", statisticsGraph.position+{statisticsGraph.size.x/2-10, -statisticsGraph.size.y/2-20}, align:Right, layer:1000000
+			drawText "v{Platform.version} #{frame} ct:{PeerNetwork.connectionType}", statisticsGraph.position+{statisticsGraph.size.x/2-10, -statisticsGraph.size.y/2-45}, align:Right, layer:1000000
+			drawText "{aheadsLength} {percentile} {aheadPlus} {minChange}   {sendInputsMode == Peer ? "Peer" : "Server"} {sendInterval}   {statisticsGraph.maxValue}", statisticsGraph.position+{statisticsGraph.size.x/2-10, -statisticsGraph.size.y/2-20}, align:Right, layer:1000000
 		if sendInterval > 10: drawCircle {920, 496}, fillColor:Red
 		drawTime = Time.measure
 			graphics.finishFrame
@@ -607,10 +597,11 @@ class StatisticsGraphSeries
 	float lastValue := values.length > 0 ? values[values.length-1] : 0
 	
 transient unit statisticsGraph
-	const Vector2 position = {0, 440}
+	const Vector2 position = {0, 360}
 	const Vector2 size = {880, 180}
 	
 	private StatisticsGraphSeries[] series
+	float maxValue
 	
 	add: string name, float value, Color color = White
 		var s = series.find.name == name
@@ -618,7 +609,6 @@ transient unit statisticsGraph
 		s.values.add value, maxLength:size.x.round
 		
 	draw
-		float maxValue
 		for series:	for .values: if . > maxValue: maxValue = .
 			
 		Vector2 startPos = position + size/2
@@ -637,5 +627,3 @@ transient unit statisticsGraph
 				prevY = pos.y
 				
 		drawRectangle position, size, fillColor:Black, outlineColor:White, outlineWidth:3, layer:1000000
-		drawText cast maxValue, position+{size.x/2+8, -size.y/2}, align:Left
-		drawText "0", position+{size.x/2+8, size.y/2}, align:Left
