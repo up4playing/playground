@@ -609,6 +609,7 @@ transient unit statisticsGraph
 		s.values.add value, maxLength:size.x.round
 		
 	draw
+		maxValue = 0
 		for series:	for .values: if . > maxValue: maxValue = .
 			
 		Vector2 startPos = position + size/2
