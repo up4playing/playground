@@ -18,10 +18,10 @@ class Sound
 		
 	js void volume: float value
 		this.fadeVolume = value
-		this.audio.volume = this.fadeVolume * audio_volume
+		if(this.audio) this.audio.volume = this.fadeVolume * audio_volume
 		
 	js void updateVolume
-		this.audio.volume = this.fadeVolume * audio_volume
+		if(this.audio) this.audio.volume = this.fadeVolume * audio_volume
 		
 	js void stop
 		if(!Platform_fastForward && this.audio) {
@@ -33,8 +33,6 @@ class Sound
 			this.fadeVolume = 1
 			// this.audio.volume = audio_volume
 			// this.audio.currentTime = 0
-			// TEMP!!!
-			// Network_log("play "+this.file+" vol:"+audio_volume+" time:"+this.audio.currentTime)
 			this.audio = new Audio();
 			this.audio.src = this.file;
 			this.audio.volume = audio_volume;
