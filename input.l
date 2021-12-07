@@ -107,7 +107,7 @@ unit Input
 	internal init
 		initHandlers
 	
-	private js Vector2 logicalToPixelPosition: Vector2 pos
+	internal js Vector2 logicalToPixelPosition: Vector2 pos
 		let p = pos.getTransformed(graphics_totalMatrix)
 		return new Vector2(p.x/Platform_pixelRatio, p.y/Platform_pixelRatio, null)
 

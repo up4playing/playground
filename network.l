@@ -61,6 +61,7 @@ transient unit Network
 	int smoothStrength = 90
 	bool smoothTouchPosition = true
 	bool simulateConnection = true
+	internal bool simulateInputsForTesting = false
 	
 	SendInputsMode sendInputsMode = Peer
 	internal const targetFps = 30
@@ -205,8 +206,11 @@ transient unit Network
 		frameMinusBuffer = targetFrame - bufferFrames
 		certainFrame = mode == Connected ? Math.min(frameMinusBuffer, receivedFrames) : int.maxValue
 
-		// TEMP for testing: Simulate mouse movement
-		Input.handleTouchEvent inputType:TouchMove, x:(targetFrame*10)%1000, y:50+userId*20, pointerType:"mouse", pointerId:0, button:0
+		// Simulate mouse movement for testing
+		if simulateInputsForTesting
+			Vector2 pos = {(targetFrame*10)%1920-960, -540+userId*30}
+			Vector2 pixelPos = Input.logicalToPixelPosition(pos)
+			Input.handleTouchEvent inputType:TouchMove, x:pixelPos.x, y:pixelPos.y, pointerType:"mouse", pointerId:0, button:0
 
 		if mode == Local && targetFrame > frame + targetFps*2
 			// After a long pause in local mode, we do not want to process all missed frames, so we adjust the start time
