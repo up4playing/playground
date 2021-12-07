@@ -103,7 +103,7 @@ transient unit Network
 		receivedFrames = -1
 		certainFrame = -1
 		frame = 0
-		bufferFrames = 4
+		bufferFrames = 0
 		log "Connected", userId, frame, startTime, this.startTime
 		saveState
 		
@@ -262,8 +262,8 @@ transient unit Network
 	int tickMessageSize
 	
 	const aheadsLength = 210
-	const percentile = 70
-	const aheadPlus = 3
+	const percentile = 50
+	const aheadFactor = 2.0
 	const minChange = 3
 	
 	collectStatistics
@@ -276,7 +276,7 @@ transient unit Network
 			aheadsMax.add aheadMax maxLength:30
 			
 			// We only update bufferFrames if the new value is more than 2 away from the current value
-			int actualBufferFrames = Math.round(aheadsMax.average + aheadPlus)
+			int actualBufferFrames = Math.round(aheadsMax.average * aheadFactor)
 			if Math.abs(actualBufferFrames - bufferFrames) >= minChange
 				localPlayer.bufferFrames = bufferFrames = actualBufferFrames
 			
@@ -415,7 +415,7 @@ transient unit Network
 		if Platform.showDebugInfo
 			statisticsGraph.draw
 			drawText "v{Platform.version} #{frame} ct:{PeerNetwork.connectionType}", statisticsGraph.position+{statisticsGraph.size.x/2-10, -statisticsGraph.size.y/2-45}, align:Right, layer:1000000
-			drawText "{aheadsLength} {percentile} {aheadPlus} {minChange}   {sendInputsMode == Peer ? "Peer" : "Server"} {sendInterval}   {statisticsGraph.maxValue}", statisticsGraph.position+{statisticsGraph.size.x/2-10, -statisticsGraph.size.y/2-20}, align:Right, layer:1000000
+			drawText "{aheadsLength} {percentile} {aheadFactor} {minChange} - {sendInterval}   {statisticsGraph.maxValue}", statisticsGraph.position+{statisticsGraph.size.x/2-10, -statisticsGraph.size.y/2-20}, align:Right, layer:1000000
 		if sendInterval > 10: drawCircle {920, 496}, fillColor:Red
 		drawTime = Time.measure
 			graphics.finishFrame
@@ -597,7 +597,7 @@ class StatisticsGraphSeries
 	float lastValue := values.length > 0 ? values[values.length-1] : 0
 	
 transient unit statisticsGraph
-	const Vector2 position = {0, 360}
+	const Vector2 position = {0, 450}
 	const Vector2 size = {880, 180}
 	
 	private StatisticsGraphSeries[] series
