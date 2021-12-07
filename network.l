@@ -57,9 +57,10 @@ transient unit Snapshot
 			autoSaveAtEndOfStep = false
 	
 transient unit Network
-	public int smoothStrength = 90
-	public bool smoothTouchPosition = true
-	public bool simulateConnection = true
+	int sendInterval = 3
+	int smoothStrength = 90
+	bool smoothTouchPosition = true
+	bool simulateConnection = true
 	
 	SendInputsMode sendInputsMode = Peer
 	internal const targetFps = 30
@@ -255,6 +256,8 @@ transient unit Network
 	public string eventLog = ""; sentLog = "", receivedLog="", writeLog="", parseLog = "", touchLog = "", checksumLog = "", debugString = ""
 	private float lastNetworkFrame, lastAnimationFrame, drawTime, tickTime, restoreTime, replayTime, saveTime
 	private int replayFrames
+	int tickMessageSize
+
 	
 	collectStatistics
 		let localPlayer = Input.internalUsers[userId]
@@ -308,16 +311,15 @@ transient unit Network
 		eventLog = ""; sentLog = ""; receivedLog = ""; writeLog = ""; parseLog = ""; touchLog = ""; checksumLog = ""
 		ServerNetwork.lastPingPongTime = 0; tickMessageSize = 0
 
-	private int lastSendFrame, sendInterval
-	int tickMessageSize
-	
-	const sendIntervalMin = 7
-	const sendInvervalMax = 30
+	private int lastSendFrame
 	
 	private sendInputs: int inputFrame
 		if mode != Connected: return
-		sendInterval = aheadsShort.length < 10 or (aheadsShort.min .) < 5 ? sendIntervalMin : sendInvervalMax
-		
+			
+		// We used to dynamically adjust the send interval
+		// sendInterval = aheadsShort.length < 15 or (aheadsShort.min .) < 5 ? sendIntervalMin : sendInvervalMax
+
+		// We used to dynamically adjust if we are using the peer or the server connection
 		// if sendInputsMode != Server and Input.internalUsers.any.bufferFrames > 300
 		// 	sendInputsMode = Server
 		// 	ServerNetwork.sendSwitch Server
@@ -327,10 +329,9 @@ transient unit Network
 			if sendInputsMode == Server: ServerNetwork.sendInputs inputFrame
 			lastSendFrame = frame
 			
-	switchSendInputMode: SendInputsMode mode
-		if sendInputsMode != mode
-			sendInputsMode = mode
-			ServerNetwork.sendSwitch mode
+	switchSendInterval: int sendInterval
+		this.sendInterval = sendInterval
+		ServerNetwork.sendSwitch sendInputsMode, sendInterval
 
 	// Save state, parse inputs, step physics, process tick, and calculate checksum
 	// This is called in animationFrame and during replays. 
@@ -418,7 +419,7 @@ transient unit Network
 		if Platform.showDebugInfo
 			statisticsGraph.draw
 			drawText debugString, {0, 540}
-			drawText "{sendInputsMode == Peer ? "Peer" : "Server"} {sendIntervalMin} : {sendInvervalMax}", statisticsGraph.position+{statisticsGraph.size.x/2-10, -statisticsGraph.size.y/2-20}, align:Right, layer:1000000
+			drawText "{sendInputsMode == Peer ? "Peer" : "Server"} {sendInterval}", statisticsGraph.position+{statisticsGraph.size.x/2-10, -statisticsGraph.size.y/2-20}, align:Right, layer:1000000
 		if sendInterval > 10: drawCircle {920, 496}, fillColor:Red
 		drawTime = Time.measure
 			graphics.finishFrame

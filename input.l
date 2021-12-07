@@ -162,13 +162,16 @@ unit Input
 				e.preventDefault();
 			}
 			else
-			if(e.ctrlKey && e.key == "F1") {Network_switchSendInputMode(1); e.preventDefault();} else
-			if(e.ctrlKey && e.key == "F2") {Network_switchSendInputMode(2); e.preventDefault();} else
-				
-			if(e.ctrlKey && e.key == "F5") {/*keep room, keep userId*/ ServerNetwork_sendReload(false, false); e.preventDefault();} else
-			if(e.ctrlKey && e.key == "F6") {/*new  room, keep userId*/ ServerNetwork_sendReload(true,  false); e.preventDefault();} else
-			if(e.ctrlKey && e.key == "F7") {/*new  room, new  userId*/ ServerNetwork_sendReload(true,  true);  e.preventDefault();} else
+			if(e.ctrlKey && e.key == "F1") {/*keep room, keep userId*/ ServerNetwork_sendReload(false, false); e.preventDefault();} else
+			if(e.ctrlKey && e.key == "F2") {/*new  room, keep userId*/ ServerNetwork_sendReload(true,  false); e.preventDefault();} else
+			if(e.ctrlKey && e.key == "F3") {/*new  room, new  userId*/ ServerNetwork_sendReload(true,  true);  e.preventDefault();} else
 			
+			if(e.ctrlKey && e.key == "F5") {Network_switchSendInterval( 1); e.preventDefault();} else
+			if(e.ctrlKey && e.key == "F6") {Network_switchSendInterval( 3); e.preventDefault();} else
+			if(e.ctrlKey && e.key == "F7") {Network_switchSendInterval( 7); e.preventDefault();} else
+			if(e.ctrlKey && e.key == "F8") {Network_switchSendInterval(15); e.preventDefault();} else
+			if(e.ctrlKey && e.key == "F9") {Network_switchSendInterval(30); e.preventDefault();} else
+				
 			if(e.key == "F9") {
 				if(e.shiftKey) { Network_saveLogs(); }
 				else           { Platform_showDebugInfo = !Platform_showDebugInfo; Network_debugString = "" }

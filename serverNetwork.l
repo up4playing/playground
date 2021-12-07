@@ -209,14 +209,17 @@ transient unit ServerNetwork
 		Network.receivedFrames = Input.internalUsers.min.inputFrame where . and !.local
 		Network.receivedLog += " [{Network.currentTime}] <{senderId}> #{sender.inputFrame} ama:{sender.bufferFrames} {prevWritePos}->{sender.inputs.writePos} {sender.inputs.toRangeString(prevWritePos, sender.inputs.writePos)}"
 	
-	sendSwitch: SendInputsMode mode
+	sendSwitch: SendInputsMode mode, int sendInterval
 		sendBuffer.reset
 		sendBuffer.writeInt8 cast NetworkMessageType.Switch
 		sendBuffer.writeInt32 cast mode
+		sendBuffer.writeInt32 sendInterval
 		send sendBuffer
 
 	onSwitch: Buffer buffer
 		SendInputsMode mode = cast buffer.readInt32
+		Network.sendInterval = buffer.readInt32
+		
 		if mode != Network.sendInputsMode
 			Network.sendInputsMode = mode
 	
