@@ -625,8 +625,10 @@ transient unit statisticsGraph
 		Vector2 labelPos = position - size/2 - {0,20}
 		for series
 			drawRectangle labelPos, {32,32}, fillColor:.color, align:Left, layer:1000000
-			drawText "{.name}: {.lastValue}", labelPos+{40, 0}, align:Left, layer:1000000
-			labelPos.x += 150
+			drawText "{.lastValue}", labelPos+{40, 0}, align:Left, layer:1000000
+			labelPos.x += 75
+			// drawText "{.name}: {.lastValue}", labelPos+{40, 0}, align:Left, layer:1000000
+			// labelPos.x += 150
 			
 			int len = .values.length
 			float prevY = 0
