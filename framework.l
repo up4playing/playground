@@ -222,12 +222,12 @@ Object Piece
 			Input.onTouchMove moveTouch
 				Network.smooth moveTouch.userId
 					position = touch.position + touchOffset
-				if touch.position - touch.startPosition > 8: isBeingMoved = true
-				if board
-					let closestSpotPos = board.getSpotAt touch.position, threshold:size * scale
-					if closestSpotPos
-						position = closestSpotPos
-				checkBoardsWhileMoving touch
+					if touch.position - touch.startPosition > 8: isBeingMoved = true
+					if board
+						let closestSpotPos = board.getSpotAt touch.position, threshold:size * scale, currentObject:this
+						if closestSpotPos
+							position = closestSpotPos
+					checkBoardsWhileMoving touch
 								
 			Input.onTouchUp moveTouch
 				Framework.selectedObjects[touch.userId] = this
@@ -427,14 +427,14 @@ Piece Board
 	update
 		objects.each.update
 			
-	getSpotAt: Vector2 position, Vector2 threshold
+	getSpotAt: Vector2 position, Vector2 threshold, Object currentObject
 		Vector2 closestSpotPos = Vector2.none
 		float minDistance = int.maxValue
 		for spot -> spots
 			let spotPos = spot.getClosestPoint position, this.position
 			let delta = (spotPos - position).abs
 			let distance = delta.length
-			if delta < threshold and distance < minDistance and !objects.find.position == spotPos
+			if delta < threshold and distance < minDistance and !objects.find.position == spotPos and . != currentObject
 				minDistance = distance
 				closestSpotPos = spotPos
 		return closestSpotPos
