@@ -477,7 +477,7 @@ Object ParticleSystem
 					speed: {Math.cos(r), Math.sin(r)} * speedFactor
 					frame: Math.randomInteger(particleImage.frames.length)
 					angle: Math.randomFloat*Math.PI*2
-			nextBurst = burst++ < bursts ? Time.now + burstInterval : int.maxValue
+			nextBurst = ++burst < bursts ? Time.now + burstInterval : int.maxValue
 
 		for i,p <- particles
 			graphics.move p.pos
