@@ -159,9 +159,10 @@ Object Button
     clickableBy = -1                 // Only this user can click the button
     implicit layer = 0               // Higher layers are drawn in front of lower layers
     alpha = 1.0                      // The opacity of the button 0: fully transpart, 1: fully visible)
+	int hotkey
     void(Touch touch) onClick        // Execute this code when the user clicks the button
 	tick
-		drawButton image, text, position, textColor, frame, scale, fontSize, touchMargin, textOffset, showTouchArea, visibleFor, clickableBy, layer, alpha, onClick(touch)
+		drawButton image, text, position, textColor, frame, scale, fontSize, touchMargin, textOffset, showTouchArea, visibleFor, clickableBy, hotkey, layer, alpha, onClick(touch)
 
 		
 Object Piece

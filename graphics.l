@@ -471,6 +471,7 @@ transient global unit graphics
 		                    showTouchArea = false            // Show the area within which the button is touchable
 		                    visibleFor = -1                  // Only this user will see the button
 		                    clickableBy = -1                 // Only this user can click the button
+		                    hotkey = 0
 		                    implicit layer = 0               // Higher layers are drawn in front of lower layers
 		                    alpha = 1.0                      // The opacity of the button 0: fully transpart, 1: fully visible)
 		                    void(Touch touch) onClick = null // Execute this code when the user clicks the button
@@ -483,6 +484,9 @@ transient global unit graphics
 		let userId = clickableBy != -1 ? clickableBy : visibleFor != -1 ? visibleFor : currentlyVisibleFor
 		Input.onTouchDownWithin position, image.size*scale + touchMargin, userId, showTouchArea
 			onClick touch
+		if hotkey
+			Input.onKeyDown hotkey, userId
+				onClick null
 			
 	// Draws a rectangle on the screen
 	global js void drawRectangle: position = Vector2()       // The center of the rectangle
