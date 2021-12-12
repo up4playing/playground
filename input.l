@@ -139,33 +139,37 @@ unit Input
 			if(window.require && e.key == "t" && e.ctrlKey && e.metaKey && e.shiftKey)
 				require("electron").remote.getCurrentWindow().toggleDevTools()
 			else
+			if(e.ctrlKey && e.key == "o") {
+				// Open event stream
+				Network_openEventStream();
+				e.preventDefault();
+			}
+			else
 			if(e.ctrlKey && e.key == "s") {
+				// Save event steam
 				Network_saveEventStream();
 				e.preventDefault();
 			}
 			else
 			if(e.ctrlKey && e.key == "l") {
+				// Save logs
 				Network_saveLogs();
-				e.preventDefault();
-			}
-			else
-			if(e.ctrlKey && e.key == "o") {
-				Network_openEventStream();
 				e.preventDefault();
 			}
 			else
 			if(e.key >= "0" && e.key <= "9") {
 				let index = e.key - "0"
-				if(e.altKey)         Network_save(index); else
-				if(e.ctrlKey)        Network_restore(index); else
-				if(Platform_isDebug) Network_userId = Math.min(index-1, Input_users.length-1);
-				e.preventDefault();
+				if(e.altKey)         { Network_save(index); e.preventDefault(); } else
+				if(e.ctrlKey)        { Network_restore(index); e.preventDefault(); } else
+				if(Platform_isDebug) { Network_userId = Math.min(index-1, Input_users.length-1); e.preventDefault(); } 
 			}
 			else
+			// Reload
 			if(e.ctrlKey && e.key == "F1") {/*keep room, keep userId*/ ServerNetwork_sendReload(false, false); e.preventDefault();} else
 			if(e.ctrlKey && e.key == "F2") {/*new  room, keep userId*/ ServerNetwork_sendReload(true,  false); e.preventDefault();} else
 			if(e.ctrlKey && e.key == "F3") {/*new  room, new  userId*/ ServerNetwork_sendReload(true,  true);  e.preventDefault();} else
 			
+			// Switch send interval
 			if(e.ctrlKey && e.key == "F5") {Network_switchSendInterval( 1); e.preventDefault();} else
 			if(e.ctrlKey && e.key == "F6") {Network_switchSendInterval( 3); e.preventDefault();} else
 			if(e.ctrlKey && e.key == "F7") {Network_switchSendInterval( 7); e.preventDefault();} else

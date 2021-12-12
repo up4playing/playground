@@ -205,7 +205,7 @@ transient unit Platform
 	js void setTitle: string title
 		document.title = title
 		
-	void toggleShowDebugInfo
+	void toggleDebugInfo
 		showDebugInfo = !showDebugInfo;
 		setLocalStorageObject("showDebugInfo", showDebugInfo ? "true" : "false")
 		
