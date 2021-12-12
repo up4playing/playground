@@ -347,6 +347,9 @@ transient global unit graphics
 		let textSize = Platform_context.measureText(text)
 		return textSize.width
 		
+	getAbsolutPosition: Vector2 position
+		return position.getTransformed(localMatrix)
+		
 	// Draws an image on the screen
 	global void drawImage: Image image            // The image to draw
 		                   Vector2 position = {}   // The position to draw to
