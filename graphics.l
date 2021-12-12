@@ -485,7 +485,8 @@ transient global unit graphics
 		// Handle click
 		// Only visible buttons can be clickable
 		let userId = clickableBy != -1 ? clickableBy : visibleFor != -1 ? visibleFor : currentlyVisibleFor
-		Input.onTouchDownWithin position, image.size*scale + touchMargin, userId, showTouchArea
+		Vector2 size = image ? image.size*scale : {getTextWidth(text), fontSize}
+		Input.onTouchDownWithin position, size + touchMargin, userId, showTouchArea
 			onClick touch
 		if hotkey
 			Input.onKeyDown hotkey, userId
