@@ -156,26 +156,25 @@ transient unit PeerNetwork
 			Network_log(e.stack);
 		}
 		
-	int inputsSentPos
 	Buffer sendBuffer
 	
 	sendInputs: int inputFrame
-		for Input.internalUsers
+		for user -> Input.internalUsers
 			if .dataChannel
 				let localPlayer = Input.internalUsers[Network.userId]
 				let inputs = localPlayer.inputs
 				
-				let length = inputs.writePos - inputsSentPos
+				let length = inputs.writePos - user.inputsSentPos
 				sendBuffer.reset
 				sendBuffer.writeInt8 cast NetworkMessageType.Tick
 				sendBuffer.writeInt inputFrame // You got all inputs up to and including this frame
 				sendBuffer.writeInt Network.bufferFrames
-				sendBuffer.writeBuffer inputs, inputsSentPos, length
+				sendBuffer.writeBuffer inputs, user.inputsSentPos, length
 				Network.tickMessageSize = send ., sendBuffer
 				
-				Network.sentLog += " #{inputFrame} {inputsSentPos}->{inputs.writePos} {inputs.toRangeString(inputsSentPos, inputs.writePos)} ({Network.tickMessageSize} bytes)"
+				Network.sentLog += " <{user.id}> #{inputFrame} {user.inputsSentPos}->{inputs.writePos} {inputs.toRangeString(user.inputsSentPos, inputs.writePos)} ({Network.tickMessageSize} bytes)"
 				
-				inputsSentPos = inputs.writePos
+				user.inputsSentPos = inputs.writePos
 			
 	private js int send: InternalUser user, Buffer buffer
 		try {
