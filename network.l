@@ -567,9 +567,7 @@ transient unit Network
 		ServerNetwork_isLocalhost = location.href.indexOf("localhost") != -1
 		
 		Network_initDatabase()
-		// await PeerNetwork_setupLocalVideo(/*enableVideo*/true, /*enableAudio*/!ServerNetwork_isLocalhost)
-		// await PeerNetwork_setupLocalVideo(/*enableVideo*/false, /*enableAudio*/false)
-		await PeerNetwork_setupLocalVideo(/*enableVideo*/true, /*enableAudio*/false)
+		await PeerNetwork_setupLocalVideo(/*enableVideo*/!ServerNetwork_isLocalhost, /*enableAudio*/!ServerNetwork_isLocalhost)
 		ServerNetwork_setup()
 		
 	private storeUserId
