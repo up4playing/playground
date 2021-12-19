@@ -167,13 +167,14 @@ transient struct Buffer
 			
 		var array = new Uint8Array(this.buffer, this.writePos+4, maxSize)
 		var result = Buffer_textEncoder.encodeInto(value, array)
-		var size = result.written + 4
+		var size = result.written
 		this.dataView.setInt32(this.writePos, size)
-		this.writePos += size
+		this.writePos += size + 4
 		
 	js string readString
 		let size = this.dataView.getInt32(this.readPos)
-		var array = new Uint8Array(this.buffer, this.readPos+4, size-4)
+		this.readPos += 4
+		var array = new Uint8Array(this.buffer, this.readPos, size)
 		this.readPos += size
 		return Buffer_textDecoder.decode(array)
 			
