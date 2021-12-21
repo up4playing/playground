@@ -61,7 +61,7 @@ transient unit Network
 	int smoothStrength = 90
 	bool smoothTouchPosition = true
 	bool simulateConnection = true
-	internal bool simulateInputsForTesting = false
+	bool simulateInputsForTesting = false
 	
 	SendInputsMode sendInputsMode = Peer
 	internal const targetFps = 30
@@ -260,10 +260,10 @@ transient unit Network
 	private int replayFrames
 	int tickMessageSize
 	
-	const aheadsLength = 210
+	const aheadsLength = 300
 	const percentile = 50
 	const aheadFactor = 2.0
-	const minChange = 3
+	const minChange = 1
 	
 	collectStatistics
 		let localPlayer = Input.internalUsers[userId]
@@ -274,15 +274,16 @@ transient unit Network
 			aheadMax = aheads.percentile(percentile)
 			aheadsMax.add aheadMax maxLength:30
 			
+			localPlayer.bufferFrames = bufferFrames = Math.round(aheadsMax.average * aheadFactor)
 			// We only update bufferFrames if the new value is more than 2 away from the current value
-			int actualBufferFrames = Math.round(aheadsMax.average * aheadFactor)
-			if Math.abs(actualBufferFrames - bufferFrames) >= minChange
-				localPlayer.bufferFrames = bufferFrames = actualBufferFrames
+			// int actualBufferFrames = Math.round(aheadsMax.average * aheadFactor)
+			// if Math.abs(actualBufferFrames - bufferFrames) >= minChange
+			// 	localPlayer.bufferFrames = bufferFrames = actualBufferFrames
 			
 			// Statistics graph
 			for Input.users
 				let internalUser = Input.internalUsers[.id]
-				statisticsGraph.add "user {.id}", internalUser.bufferFrames, .color
+				statisticsGraph.add cast .id, internalUser.bufferFrames, .color
 			statisticsGraph.add "interval", sendInterval, {"808080"}
 			statisticsGraph.add "ahead", ahead, Gray
 			
@@ -612,7 +613,9 @@ transient unit statisticsGraph
 	
 	add: string name, float value, Color color = White
 		var s = series.find.name == name
-		if !s: series.add s = {name, color:color}
+		if !s
+			series.add s = {name, color:color}
+			series.orderBy.name
 		s.values.add value, maxLength:size.x.round
 		
 	draw

@@ -386,6 +386,9 @@ class List<T>
 	orderBy: float(T a) expression // The expression to order by
 		this.sort(expression(a) - expression(b))
 		
+	orderBy: string(T a) expression // The expression to order by
+		this.sort(expression(a) compareTo expression(b))
+		
 	// Sort the list by a given expression
 	orderBy: float(T a) expression // The expression to order by
 		     SortingOrder order    // Specifies if you want to sort in ascending or descending order
