@@ -894,7 +894,7 @@ unit Input
 				code text
 				
 	onKeyDown: int key, int userId = -1, void(int key, int keyUserId) code
-		if userId != -1
+		if (Network.mode == Connected || Network.simulateConnection) && userId != -1
 			let user = internalUsers[userId]
 			for k -> user.downKeys
 				if k == key
@@ -906,7 +906,7 @@ unit Input
 						code key, user.id
 				
 	onKeyDown: int userId = -1, void(int key, int keyUserId) code
-		if userId != -1
+		if (Network.mode == Connected || Network.simulateConnection) && userId != -1
 			let user = internalUsers[userId]
 			for key -> user.downKeys
 				code key, userId
@@ -916,7 +916,7 @@ unit Input
 					code key, user.id
 				
 	onKeyUp: int userId = -1, void(int key, int keyUserId) code
-		if userId != -1
+		if (Network.mode == Connected || Network.simulateConnection) && userId != -1
 			let user = internalUsers[userId]
 			for key -> user.upKeys
 				code key, userId
