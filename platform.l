@@ -305,7 +305,7 @@ transient unit Platform
 	inline js void debugger
 		debugger
 		
-	js void stack
+	js object stack
 		try      { _ }
 		catch(e) { return e.stack }
 		
