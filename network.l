@@ -414,8 +414,7 @@ transient unit Network
 		Input.updateCursor
 		if Platform.showDebugInfo
 			statisticsGraph.draw
-			drawText "v{Platform.version} #{frame} ct:{PeerNetwork.connectionType}", statisticsGraph.position+{statisticsGraph.size.x/2-10, -statisticsGraph.size.y/2-45}, align:Right, layer:1000000
-			drawText "{aheadsLength} {percentile} {aheadFactor} {minChange} - {sendInterval}   {statisticsGraph.maxValue}", statisticsGraph.position+{statisticsGraph.size.x/2-10, -statisticsGraph.size.y/2-20}, align:Right, layer:1000000
+			drawText "v{Platform.version} #{frame} {aheadsLength} ct:{PeerNetwork.connectionType}", statisticsGraph.position+{statisticsGraph.size.x/2-10, -statisticsGraph.size.y/2-15}, align:Right, layer:1000001
 		if sendInterval > 10: drawCircle {920, 496}, fillColor:Red
 		drawTime = Time.measure
 			graphics.finishFrame
@@ -623,13 +622,11 @@ transient unit statisticsGraph
 		for series:	for .values: if . > maxValue: maxValue = .
 			
 		Vector2 startPos = position + size/2
-		Vector2 labelPos = position - size/2 - {0,20}
+		Vector2 labelPos = position - size/2 - {0,15}
 		for series
-			drawRectangle labelPos, {32,32}, fillColor:.color, align:Left, layer:1000000
-			drawText "{.lastValue}", labelPos+{40, 0}, align:Left, layer:1000000
-			labelPos.x += 75
-			// drawText "{.name}: {.lastValue}", labelPos+{40, 0}, align:Left, layer:1000000
-			// labelPos.x += 150
+			drawRectangle labelPos, {16,16}, fillColor:.color, align:Left, layer:1000000
+			drawText "{.lastValue}", labelPos+{18, 0}, align:Left, layer:1000000
+			labelPos.x += 50
 			
 			int len = .values.length
 			float prevY = 0
@@ -639,4 +636,5 @@ transient unit statisticsGraph
 				if i: drawRectangle pos, size:{4, prevY-pos.y+4}, fillColor:.color, layer:1000000, valign:Top
 				prevY = pos.y
 				
+		drawRectangle position - {0,size.y/2+10}, {size.x, 20}, fillColor:Black, layer:1000000
 		drawRectangle position, size, fillColor:Black, outlineColor:White, outlineWidth:3, layer:1000000
