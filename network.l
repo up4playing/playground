@@ -397,7 +397,7 @@ transient unit Network
 	internal tick
 		graphics.startFrame
 		PeerNetwork.updateVideoScreen
-		drawFingers
+		drawPointers
 		
 		try
 			if lobby.inLobby
@@ -582,7 +582,7 @@ transient unit Network
 			saveLogs
 			alertShown = true
 			
-	internal drawFingers
+	internal drawPointers
 		for user -> Input.users
 			if user
 				let internalUser = Input.internalUsers[user.id]

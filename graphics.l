@@ -693,6 +693,18 @@ transient global unit graphics
 				graphics_totalMatrix, position.x-size.x/2, position.y-size.y/2, size.x, size.y, layer, /*alpha*/1.0, graphics_currentClippingPath, "Rectangle", position.location, "clear", null, 0
 			))
 		}
+		
+	global drawPointer: int userId, Color color = null
+		if Network.userId != userId or Input.showLocalPointer
+			let user = Input.usersById[userId]
+			for user.touches
+				drawImage finger, .smoothPosition+{11,32}, frame:.isDown ? 1 : 0, layer:int.maxValue
+				if color
+					if color == Black
+						drawRectangle .smoothPosition+{16,80}, size:{26,10}, color, layer:int.maxValue, outlineColor:{"a0a0a0"}, outlineWidth:2
+					else
+						drawRectangle .smoothPosition+{16,78}, size:{26,10}, color, layer:int.maxValue
+
 
 transient class DisplayItem
 	float x, y, w, h
