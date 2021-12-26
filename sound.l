@@ -3,6 +3,14 @@ class Sound
 	string file
 	float fadeVolume = 1
 	
+	js void open
+		return new Promise((resolve, reject) => {
+			this.audio = new Audio();
+			this.audio.oncanplaythrough = () => resolve();
+			this.audio.onerror = () => reject();
+			this.audio.src = this.file;			
+		})
+	
 	// Sound() open
 	// js void open
 	// 	if(!window._audioCache) {
