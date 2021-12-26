@@ -205,12 +205,6 @@ transient unit Network
 		frameMinusBuffer = targetFrame - bufferFrames
 		certainFrame = mode == Connected ? Math.min(frameMinusBuffer, receivedFrames) : int.maxValue
 
-		// Simulate mouse movement for testing
-		if simulateInputsForTesting
-			Vector2 pos = {(targetFrame*10)%1920-960, -540+userId*30}
-			Vector2 pixelPos = Input.logicalToPixelPosition(pos)
-			Input.handleTouchEvent inputType:TouchMove, x:pixelPos.x, y:pixelPos.y, pointerType:"mouse", pointerId:0, button:0
-
 		if mode == Local && targetFrame > frame + targetFps*2
 			// After a long pause in local mode, we do not want to process all missed frames, so we adjust the start time
 			let prevTargetFrame = targetFrame
@@ -234,11 +228,18 @@ transient unit Network
 					
 			// Ensure that step is called every targetFrameTime milliseconds
 			while frame < targetFrame
+				// Simulate mouse movement for testing
+				if simulateInputsForTesting
+					Input.internalUsers[userId].startInputFrame frame
+					Vector2 pos = {(frame*10)%1920-960, -540+userId*30}
+					Vector2 pixelPos = Input.logicalToPixelPosition(pos)
+					Input.handleTouchEvent inputType:TouchMove, x:pixelPos.x, y:pixelPos.y, pointerType:"mouse", pointerId:0, button:0
+
 				step fastFordward:frame < targetFrame-1
 				collectStatistics
 				lastNetworkFrame = now
 				
-			for Input.internalUsers: if . and .local: .startInputFrame targetFrame	
+			for Input.internalUsers: if .local: .startInputFrame targetFrame	
 			
 		lastAnimationFrame = now
 		if Platform.mode == Play and frame >= frames: Platform.record()
