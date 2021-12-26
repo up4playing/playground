@@ -10,19 +10,6 @@ class Sound
 			this.audio.onerror = () => reject();
 			this.audio.src = this.file;			
 		})
-	
-	// Sound() open
-	// js void open
-	// 	if(!window._audioCache) {
-	// 		_audioCache = {}
-	// 	}
-	// 	this.audio = _audioCache[this.file]
-	// 	if(!this.audio) {
-	// 		this.audio = window._audioCache[this.file] = new Audio()
-	// 		this.audio.src = this.file
-	// 	} else {
-	// 		this.audio.pause();
-	// 	}
 		
 	js void volume: float value
 		this.fadeVolume = value
@@ -32,15 +19,13 @@ class Sound
 		if(this.audio) this.audio.volume = this.fadeVolume * audio_volume
 		
 	js void stop
-		if(!Platform_fastForward && this.audio) {
+		if(Input_isCertain && this.audio) {
 			this.audio.pause()
 		}
 		
 	js void play
-		if(!Platform_fastForward) {
-			this.fadeVolume = 1
-			// this.audio.volume = audio_volume
-			// this.audio.currentTime = 0
+		if(Input_isCertain) {
+			this.fadeVolume = 1;
 			this.audio = new Audio();
 			this.audio.src = this.file;
 			this.audio.volume = audio_volume;
