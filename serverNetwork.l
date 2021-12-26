@@ -1,4 +1,4 @@
-enum NetworkMessageType: Join, JoinResponse, Ping, Pong, Signal, Ice, Tick, Switch, Reload
+enum NetworkMessageType: Join, JoinResponse, Ping, Pong, Signal, Ice, Tick, Switch, Reload, Checksum
 
 transient unit ServerNetwork
 	private object socket

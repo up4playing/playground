@@ -167,13 +167,14 @@ transient struct Buffer
 			
 		var array = new Uint8Array(this.buffer, this.writePos+4, maxSize)
 		var result = Buffer_textEncoder.encodeInto(value, array)
-		var size = result.written + 4
+		var size = result.written
 		this.dataView.setInt32(this.writePos, size)
-		this.writePos += size
+		this.writePos += size + 4
 		
 	js string readString
 		let size = this.dataView.getInt32(this.readPos)
-		var array = new Uint8Array(this.buffer, this.readPos+4, size-4)
+		this.readPos += 4
+		var array = new Uint8Array(this.buffer, this.readPos, size)
 		this.readPos += size
 		return Buffer_textDecoder.decode(array)
 			
@@ -238,18 +239,16 @@ transient struct Buffer
 	js void writeBuffer: Buffer source
 		                 int start
 		                 int length
-		let readPos = start
-		let writePos = this.writePos
-		
 		// Expand if neccessary
-		if(writePos+length+4 > this.buffer.byteLength)
-			this.expandBuffer(writePos+length+4)
+		if(this.writePos+length+4 > this.buffer.byteLength)
+			this.expandBuffer(this.writePos+length+4)
 			
 		// Write length
-		this.dataView.setInt32(writePos, length)
-		writePos += 4
+		this.writeInt(length)
 		
 		// Write bytes
+		let readPos = start
+		let writePos = this.writePos
 		let readPosEnd = start + length
 		while(readPos < readPosEnd)
 			this.dataView.setUint8(writePos++, source.dataView.getUint8(readPos++))
@@ -307,18 +306,16 @@ transient struct Buffer
 		
 	js int readBuffer: Buffer writeBuffer
 		               int writeStart = 0
-		let readPos = this.readPos
-		let writePos = writeStart
-		
 		// Read length
-		let length = this.dataView.getInt32(readPos)
-		readPos += 4
+		let length = this.readInt()
 		
 		// Expand writeBuffer if neccessary
 		if(writeStart+length > writeBuffer.buffer.byteLength)
 			writeBuffer.expandBuffer(writeStart+length)
 			
 		// Read bytes
+		let readPos = this.readPos
+		let writePos = writeStart
 		let readPosEnd = readPos + length
 		while(readPos < readPosEnd)
 			writeBuffer.dataView.setUint8(writePos++, this.dataView.getUint8(readPos++))

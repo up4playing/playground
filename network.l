@@ -61,7 +61,7 @@ transient unit Network
 	int smoothStrength = 90
 	bool smoothTouchPosition = true
 	bool simulateConnection = true
-	internal bool simulateInputsForTesting = false
+	bool simulateInputsForTesting = false
 	
 	SendInputsMode sendInputsMode = Peer
 	internal const targetFps = 30
@@ -80,9 +80,8 @@ transient unit Network
 	internal int frameWithNewWatches = 0 // First frame with new watches, do not send watches for frames below this
 	private bool startInLobby       // Connected sessions usually start in the lobby, local sessions start in the app
 	private int joinFrame           // The frame the current user joined
-	
-	// TODO
 	public float[] checksums
+	bool alertShown
 
 	initDatabase
 		IndexedDB.start "up4playing", "snapshot", 5
@@ -255,16 +254,16 @@ transient unit Network
 	private float now               // The time at the beginning of animationFrame
 	
 	// Logs
-	string logTable = "frame,ahead,receivedFrames,frameMinusBuffer,certainFrame,sendInterval,id,frame,buffer,id,frame,buffer,id,frame,buffer,messageSize,now,animTime,networkTime,tickTime,drawTime,iteration,restoreTime,replayFrames,replayTime,saveTime,pingPong,received,uncertain,certain,checksums,events,send,receive,write,parse,touch\n"
+	string logTable = "frame,ahead,receivedFrames,frameMinusBuffer,certainFrame,sendInterval,id,frame,buffer,id,frame,buffer,id,frame,buffer,messageSize,now,animTime,networkTime,tickTime,drawTime,iteration,restoreTime,replayFrames,replayTime,saveTime,pingPong,checksums,events,send,receive,write,parse,touch\n"
 	public string eventLog = ""; sentLog = "", receivedLog="", writeLog="", parseLog = "", touchLog = "", checksumLog = ""
 	private float lastNetworkFrame, lastAnimationFrame, drawTime, tickTime, restoreTime, replayTime, saveTime
 	private int replayFrames
 	int tickMessageSize
 	
-	const aheadsLength = 210
+	const aheadsLength = 300
 	const percentile = 50
 	const aheadFactor = 2.0
-	const minChange = 3
+	const minChange = 1
 	
 	collectStatistics
 		let localPlayer = Input.internalUsers[userId]
@@ -275,15 +274,16 @@ transient unit Network
 			aheadMax = aheads.percentile(percentile)
 			aheadsMax.add aheadMax maxLength:30
 			
+			localPlayer.bufferFrames = bufferFrames = Math.round(aheadsMax.average * aheadFactor)
 			// We only update bufferFrames if the new value is more than 2 away from the current value
-			int actualBufferFrames = Math.round(aheadsMax.average * aheadFactor)
-			if Math.abs(actualBufferFrames - bufferFrames) >= minChange
-				localPlayer.bufferFrames = bufferFrames = actualBufferFrames
+			// int actualBufferFrames = Math.round(aheadsMax.average * aheadFactor)
+			// if Math.abs(actualBufferFrames - bufferFrames) >= minChange
+			// 	localPlayer.bufferFrames = bufferFrames = actualBufferFrames
 			
 			// Statistics graph
 			for Input.users
 				let internalUser = Input.internalUsers[.id]
-				statisticsGraph.add "user {.id}", internalUser.bufferFrames, .color
+				statisticsGraph.add cast .id, internalUser.bufferFrames, .color
 			statisticsGraph.add "interval", sendInterval, {"808080"}
 			statisticsGraph.add "ahead", ahead, Gray
 			
@@ -358,18 +358,18 @@ transient unit Network
 			// Tick
 			tick
 			
-			if mode != Local
+			if mode != Local and (frame % 60)==0 and isCertain
 				// Calculate checksum if we received all inputs for this frame
-				// if isCertain
-				// 	float myChecksum = Framework.checksum					
-				// 	float theirChecksum = checksums[frame]
-				// 	checksumLog += " <> #{frame} {myChecksum}"
-				// 	if !theirChecksum
-				// 		checksums[frame] = myChecksum
-				// 	else
-				// 	if !theirChecksum.isApproximately(myChecksum)
-				// 		onWrongChecksum mine:myChecksum theirs:theirChecksum
-						
+				float myChecksum = Framework.checksum					
+				float theirChecksum = checksums[frame]
+				checksumLog += " <> #{frame} {myChecksum}"
+				if !theirChecksum
+					checksums[frame] = myChecksum
+				else
+				if !theirChecksum.isApproximately(myChecksum)
+					onWrongChecksum mine:myChecksum theirs:theirChecksum
+				PeerNetwork.sendChecksum frame, myChecksum
+					
 				// Take snapshot
 				Snapshot.onEndOfStep
 			
@@ -397,7 +397,7 @@ transient unit Network
 	internal tick
 		graphics.startFrame
 		PeerNetwork.updateVideoScreen
-		drawFingers
+		drawPointers
 		
 		try
 			if lobby.inLobby
@@ -414,8 +414,7 @@ transient unit Network
 		Input.updateCursor
 		if Platform.showDebugInfo
 			statisticsGraph.draw
-			drawText "v{Platform.version} #{frame} ct:{PeerNetwork.connectionType}", statisticsGraph.position+{statisticsGraph.size.x/2-10, -statisticsGraph.size.y/2-45}, align:Right, layer:1000000
-			drawText "{aheadsLength} {percentile} {aheadFactor} {minChange} - {sendInterval}   {statisticsGraph.maxValue}", statisticsGraph.position+{statisticsGraph.size.x/2-10, -statisticsGraph.size.y/2-20}, align:Right, layer:1000000
+			drawText "v{Platform.version} #{frame} {aheadsLength} ct:{PeerNetwork.connectionType}", statisticsGraph.position+{statisticsGraph.size.x/2-10, -statisticsGraph.size.y/2-15}, align:Right, layer:1000001
 		if sendInterval > 10: drawCircle {920, 496}, fillColor:Red
 		drawTime = Time.measure
 			graphics.finishFrame
@@ -567,15 +566,23 @@ transient unit Network
 		
 		ServerNetwork_isLocalhost = location.href.indexOf("localhost") != -1
 		
-		// await PeerNetwork_setupLocalVideo(/*enableVideo*/true, /*enableAudio*/!ServerNetwork_isLocalhost)
-		// await PeerNetwork_setupLocalVideo(/*enableVideo*/false, /*enableAudio*/false)
-		await PeerNetwork_setupLocalVideo(/*enableVideo*/true, /*enableAudio*/false)
+		Network_initDatabase()
+		await PeerNetwork_setupLocalVideo(/*enableVideo*/!ServerNetwork_isLocalhost, /*enableAudio*/!ServerNetwork_isLocalhost)
 		ServerNetwork_setup()
 		
 	private storeUserId
 		Platform.setLocalStorageObject "room"+roomId, RoomInfo(currentTime, userId)
-				
-	internal drawFingers
+		
+	onWrongChecksum: float mine, float theirs
+		errorMessage = "Checksum mismatch"
+		checksumLog += " MISMATCH mine:{mine} theirs:{theirs}"
+		
+		if !alertShown
+			alert "Clients out of sync. Please send me the log file that will be created."
+			saveLogs
+			alertShown = true
+			
+	internal drawPointers
 		for user -> Input.users
 			if user
 				let internalUser = Input.internalUsers[user.id]
@@ -605,7 +612,9 @@ transient unit statisticsGraph
 	
 	add: string name, float value, Color color = White
 		var s = series.find.name == name
-		if !s: series.add s = {name, color:color}
+		if !s
+			series.add s = {name, color:color}
+			series.orderBy.name
 		s.values.add value, maxLength:size.x.round
 		
 	draw
@@ -613,11 +622,11 @@ transient unit statisticsGraph
 		for series:	for .values: if . > maxValue: maxValue = .
 			
 		Vector2 startPos = position + size/2
-		Vector2 labelPos = position - size/2 - {0,20}
+		Vector2 labelPos = position - size/2 - {0,15}
 		for series
-			drawRectangle labelPos, {32,32}, fillColor:.color, align:Left, layer:1000000
-			drawText "{.name}: {.lastValue}", labelPos+{40, 0}, align:Left, layer:1000000
-			labelPos.x += 150
+			drawRectangle labelPos, {16,16}, fillColor:.color, align:Left, layer:1000000
+			drawText "{.lastValue}", labelPos+{18, 0}, align:Left, layer:1000000
+			labelPos.x += 50
 			
 			int len = .values.length
 			float prevY = 0
@@ -627,4 +636,5 @@ transient unit statisticsGraph
 				if i: drawRectangle pos, size:{4, prevY-pos.y+4}, fillColor:.color, layer:1000000, valign:Top
 				prevY = pos.y
 				
+		drawRectangle position - {0,size.y/2+10}, {size.x, 20}, fillColor:Black, layer:1000000
 		drawRectangle position, size, fillColor:Black, outlineColor:White, outlineWidth:3, layer:1000000

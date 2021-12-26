@@ -205,7 +205,7 @@ transient unit Platform
 	js void setTitle: string title
 		document.title = title
 		
-	void toggleShowDebugInfo
+	void toggleDebugInfo
 		showDebugInfo = !showDebugInfo;
 		setLocalStorageObject("showDebugInfo", showDebugInfo ? "true" : "false")
 		
@@ -213,7 +213,7 @@ transient unit Platform
 		try   {
 			if(forUser == -1 || Network_userId == forUser) {
 				if(value) {
-					if(!Network_isLocalhost && !Platform_isDebug) document.body.requestFullscreen()
+					if(!ServerNetwork_isLocalhost && !Platform_isDebug) document.body.requestFullscreen()
 				} else {
 					document.exitFullscreen()
 				}
@@ -305,7 +305,7 @@ transient unit Platform
 	inline js void debugger
 		debugger
 		
-	js void stack
+	js object stack
 		try      { _ }
 		catch(e) { return e.stack }
 		

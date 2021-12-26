@@ -347,6 +347,9 @@ transient global unit graphics
 		let textSize = Platform_context.measureText(text)
 		return textSize.width
 		
+	getAbsolutPosition: Vector2 position
+		return position.getTransformed(localMatrix)
+		
 	// Draws an image on the screen
 	global void drawImage: Image image            // The image to draw
 		                   Vector2 position = {}   // The position to draw to
@@ -471,6 +474,7 @@ transient global unit graphics
 		                    showTouchArea = false            // Show the area within which the button is touchable
 		                    visibleFor = -1                  // Only this user will see the button
 		                    clickableBy = -1                 // Only this user can click the button
+		                    hotkey = 0
 		                    implicit layer = 0               // Higher layers are drawn in front of lower layers
 		                    alpha = 1.0                      // The opacity of the button 0: fully transpart, 1: fully visible)
 		                    void(Touch touch) onClick = null // Execute this code when the user clicks the button
@@ -481,8 +485,12 @@ transient global unit graphics
 		// Handle click
 		// Only visible buttons can be clickable
 		let userId = clickableBy != -1 ? clickableBy : visibleFor != -1 ? visibleFor : currentlyVisibleFor
-		Input.onTouchDownWithin position, image.size*scale + touchMargin, userId, showTouchArea
+		Vector2 size = image ? image.size*scale : {getTextWidth(text), fontSize}
+		Input.onTouchDownWithin position, size + touchMargin, userId, showTouchArea
 			onClick touch
+		if hotkey
+			Input.onKeyDown hotkey, userId
+				onClick null
 			
 	// Draws a rectangle on the screen
 	global js void drawRectangle: position = Vector2()       // The center of the rectangle
@@ -685,6 +693,18 @@ transient global unit graphics
 				graphics_totalMatrix, position.x-size.x/2, position.y-size.y/2, size.x, size.y, layer, /*alpha*/1.0, graphics_currentClippingPath, "Rectangle", position.location, "clear", null, 0
 			))
 		}
+		
+	global drawPointer: int userId, Color color = null
+		if Network.userId != userId or Input.showLocalPointer
+			let user = Input.usersById[userId]
+			for user.touches
+				drawImage finger, .smoothPosition+{11,32}, frame:.isDown ? 1 : 0, layer:int.maxValue
+				if color
+					if color == Black
+						drawRectangle .smoothPosition+{16,80}, size:{26,10}, color, layer:int.maxValue, outlineColor:{"a0a0a0"}, outlineWidth:2
+					else
+						drawRectangle .smoothPosition+{16,78}, size:{26,10}, color, layer:int.maxValue
+
 
 transient class DisplayItem
 	float x, y, w, h

@@ -156,27 +156,25 @@ transient unit PeerNetwork
 			Network_log(e.stack);
 		}
 		
-	int inputsSentPos
 	Buffer sendBuffer
 	
 	sendInputs: int inputFrame
-		for Input.internalUsers
+		for user -> Input.internalUsers
 			if .dataChannel
 				let localPlayer = Input.internalUsers[Network.userId]
 				let inputs = localPlayer.inputs
 				
-				let length = inputs.writePos - inputsSentPos
+				let length = inputs.writePos - user.inputsSentPos
 				sendBuffer.reset
 				sendBuffer.writeInt8 cast NetworkMessageType.Tick
-				sendBuffer.writeInt32 Network.userId
-				sendBuffer.writeInt32 inputFrame // You got all inputs up to and including this frame
-				sendBuffer.writeInt32 Network.bufferFrames
-				sendBuffer.writeBuffer inputs, inputsSentPos, length
+				sendBuffer.writeInt inputFrame // You got all inputs up to and including this frame
+				sendBuffer.writeInt Network.bufferFrames
+				sendBuffer.writeBuffer inputs, user.inputsSentPos, length
 				Network.tickMessageSize = send ., sendBuffer
 				
-				Network.sentLog += " #{inputFrame} {inputsSentPos}->{inputs.writePos} {inputs.toRangeString(inputsSentPos, inputs.writePos)} ({Network.tickMessageSize} bytes)"
+				Network.sentLog += " <{user.id}> #{inputFrame} {user.inputsSentPos}->{inputs.writePos} {inputs.toRangeString(user.inputsSentPos, inputs.writePos)} ({Network.tickMessageSize} bytes)"
 				
-				inputsSentPos = inputs.writePos
+				user.inputsSentPos = inputs.writePos
 			
 	private js int send: InternalUser user, Buffer buffer
 		try {
@@ -190,23 +188,22 @@ transient unit PeerNetwork
 		
 	private onMessage: InternalUser user, Buffer buffer
 		NetworkMessageType type = cast buffer.readInt8
-		if type == Tick: onTick user, buffer
+		if type == Tick:     onTick user, buffer; else
+		if type == Checksum: onChecksum user, buffer
 			
 	private onTick: InternalUser sender, Buffer buffer
-		let senderId = buffer.readInt32
-		let prevWritePos = sender.inputs.writePos
-		
-		let inputFrame = buffer.readInt32
+		let inputFrame = buffer.readInt
 		if inputFrame >= sender.inputFrame
 			sender.inputFrame = inputFrame
 			
-			sender.bufferFrames = buffer.readInt32
+			sender.bufferFrames = buffer.readInt
+			let prevWritePos = sender.inputs.writePos
 			buffer.readBuffer sender.inputs, prevWritePos
 			
 			Network.receivedFrames = Input.internalUsers.min.inputFrame where . and !.local
-			Network.receivedLog += " [{Network.currentTime}] <{senderId}> #{inputFrame} buffer:{sender.bufferFrames} {prevWritePos}->{sender.inputs.writePos} {sender.inputs.toRangeString(prevWritePos, sender.inputs.writePos)}"
+			Network.receivedLog += " [{Network.currentTime}] <{sender.id}> #{inputFrame} buffer:{sender.bufferFrames} {prevWritePos}->{sender.inputs.writePos} {sender.inputs.toRangeString(prevWritePos, sender.inputs.writePos)}"
 		else
-			Network.receivedLog += " [{Network.currentTime}] <{senderId}> (ignoring #{inputFrame})"
+			Network.receivedLog += " [{Network.currentTime}] <{sender.id}> (ignoring #{inputFrame})"
 			
 		
 	js void onReceivedAnswer: InternalUser user, string sdp
@@ -353,6 +350,28 @@ transient unit PeerNetwork
 			}
 		}, 5000)
 		
+	sendChecksum: int checksumFor, float checksum
+		sendBuffer.reset
+		sendBuffer.writeInt8 cast NetworkMessageType.Checksum
+		sendBuffer.writeInt checksumFor
+		sendBuffer.writeFloat64 checksum
+		
+		for Input.internalUsers
+			if .dataChannel		
+				send ., sendBuffer
+
+	onChecksum: InternalUser user, Buffer buffer
+		int checksumFor = buffer.readInt
+		float checksum = buffer.readFloat64
+		Network.checksumLog += " <{user.id}> #{checksumFor} {checksum}"
+		
+		let myChecksum = Network.checksums[checksumFor]
+		if !myChecksum
+			Network.checksums[checksumFor] = checksum
+		else
+		if !myChecksum.isApproximately(checksum)
+			Network.onWrongChecksum mine:myChecksum theirs:checksum
+				
 	// private float nextPingTime
 	// private int pongCount
 	
@@ -381,15 +400,6 @@ transient unit PeerNetwork
 		
 	// 	log connection.userId, isNewUser, mode, connection.state
 
-	// private onWrongChecksum: float mine, float theirs
-	// 	errorMessage = "Checksum mismatch"
-	// 	checksumLog += " MISMATCH mine:{mine} theirs:{theirs}"
-		
-	// 	if !alertShown
-	// 		alert "Clients out of sync. Please send me the log file that will be created."
-	// 		saveLogs
-	// 		alertShown = true
-	
 	// // Calculate the frame we received all remote inputs for.
 	// // The lowest of all user frames. Called in onTickMessage.
 	// private getReceivedInputFrames
