@@ -415,11 +415,11 @@ unit Input
 							updateUserIndices
 							Network.parseLog += " join {userId} connectedTo:{user.connectedTo} userCount:{users.length}"
 							// TEMP logging
-							Network.log "#{nextFrame}{isCertain ? " certain":""} join {userId} connectedTo:{user.connectedTo} userCount:{users.length}"
+							// Network.log "#{nextFrame}{isCertain ? " certain":""} join {userId} connectedTo:{user.connectedTo} userCount:{users.length}"
 						else
 							Network.parseLog += "#{nextFrame}{isCertain ? " certain":""} join {userId} user already exists, userCount:{users.length}"
 							// TEMP logging
-							Network.log " join {userId} user already exists, userCount:{users.length}"
+							// Network.log " join {userId} user already exists, userCount:{users.length}"
 					else
 					if inputType == Lost
 						let lostUserId = inputs.readInt16
