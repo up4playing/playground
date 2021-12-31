@@ -219,15 +219,15 @@ class List<T>
 		this.splice(index, count)
 			
 	removeFirstWhere: bool(T a) condition // The condition to check
-		for i, item -> this
-			if condition(item)
+		for this
+			if condition(.)
 				removeAt i
-				return item
+				return .
 		return null
 		
 	removeAllWhere: bool(T a) condition // The condition to check
-		for i, item <- this
-			if condition(item)
+		for this <-
+			if condition(.)
 				removeAt i
 		return null
 		
@@ -263,7 +263,7 @@ class List<T>
 	void setFilteredList: T[] list
 		                  bool(T a) condition
 		clear
-		for list: if condition(l): add l
+		for list: if condition(.): add .
 		
 	void setFilteredList: T[] list
 		                  bool(T a) condition
@@ -271,8 +271,8 @@ class List<T>
 		clear
 		int count = 0
 		for list
-			if condition(l)
-				add l
+			if condition .
+				add .
 				if ++count >= maxCount: break
 		
 	inline js T pop := this.pop()
@@ -332,17 +332,17 @@ class List<T>
 		float closestDistance = float.infinity
 		int closestIndex = -1
 		T closestItem = null
-		for i, item -> this
-			let value = selector(item)
+		for this
+			let value = selector(.)
 			float distance
 			if value > max: distance = value - max; else
 			if value < min: distance = min - value; else
-				            this.removeAt(i); return item
+				            this.removeAt(i); return .
 				
 			if distance < closestDistance
 				closestDistance = distance
 				closestIndex = i
-				closestItem = item
+				closestItem = .
 		
 		if(closestIndex != -1) this.removeAt(closestIndex)
 		return closestItem
@@ -410,8 +410,8 @@ class List<T>
 		this.find(condition)
 		
 	int findIndex: bool(T a) condition // The condition to check
-		for i, item -> this
-			if condition(item)
+		for this
+			if condition(.)
 				return i
 		return -1
 		
@@ -434,7 +434,7 @@ class List<T>
 		return this.length > 0 ? this.sum() / this.length : 0
 		
 	shuffle
-		for i = 1 <- length
+		for 1 to length <- i
 			var j = Math.floor(Math.randomFloat * (i + 1))
 			var temp = this.get(i)
 			this.set(i, this.get(j))
@@ -456,8 +456,8 @@ class List<T>
 		 int threshold = int.maxValue
 		 int default = 0
 		int resultValue = threshold
-		for item -> this
-			let value = selector(item)
+		for this
+			let value = selector(.)
 			if value < resultValue: resultValue = value
 		return resultValue != threshold ? resultValue : default
 		
@@ -465,8 +465,8 @@ class List<T>
 		 float threshold = float.maxValue
 		 float default = 0
 		float resultValue = threshold
-		for item -> this
-			let value = selector(item)
+		for this
+			let value = selector(.)
 			if value < resultValue: resultValue = value
 		return resultValue != threshold ? resultValue : default
 		
@@ -475,9 +475,9 @@ class List<T>
 		 int default = 0
 		 bool(T a) where
 		int resultValue = threshold
-		for item -> this
-			if where(item)
-				let value = selector(item)
+		for this
+			if where(.)
+				let value = selector(.)
 				if value < resultValue: resultValue = value
 		return resultValue != threshold ? resultValue : default
 		
@@ -486,9 +486,9 @@ class List<T>
 		 float default = 0
 		 bool(T a) where
 		float resultValue = threshold
-		for item -> this
-			if where(item)
-				let value = selector(item)
+		for this
+			if where(.)
+				let value = selector(.)
 				if value < resultValue: resultValue = value
 		return resultValue != threshold ? resultValue : default
 		
@@ -496,8 +496,8 @@ class List<T>
 		 int threshold = int.minValue
 		 int default = 0
 		int resultValue = threshold
-		for item -> this
-			let value = selector(item)
+		for this
+			let value = selector(.)
 			if value > resultValue: resultValue = value
 		return resultValue != threshold ? resultValue : default
 		
@@ -505,8 +505,8 @@ class List<T>
 		 float threshold = float.minValue
 		 float default = 0
 		float resultValue = threshold
-		for item -> this
-			let value = selector(item)
+		for this
+			let value = selector(.)
 			if value > resultValue: resultValue = value
 		return resultValue != threshold ? resultValue : default
 		
@@ -515,9 +515,10 @@ class List<T>
 		 int default = 0
 		 bool(T a) where
 		int resultValue = threshold
-		for item -> this if where(item)
-			let value = selector(item)
-			if value > resultValue: resultValue = value
+		for this 
+			if where(.)
+				let value = selector(.)
+				if value > resultValue: resultValue = value
 		return resultValue != threshold ? resultValue : default
 		
 	max: float(T a) selector
@@ -525,17 +526,18 @@ class List<T>
 		 float default = 0
 		 bool(T a) where
 		float resultValue = threshold
-		for item -> this if where(item)
-			let value = selector(item)
-			if value > resultValue: resultValue = value
+		for this
+			if where(.)
+				let value = selector(.)
+				if value > resultValue: resultValue = value
 		return resultValue != threshold ? resultValue : default
 		
 	minIndex: int(T a) selector
 		      int threshold = int.maxValue
 		int resultValue = threshold
 		int index = -1
-		for i,item -> this
-			let value = selector(item)
+		for this
+			let value = selector(.)
 			if value < resultValue
 				resultValue = value
 				index = i
@@ -545,8 +547,8 @@ class List<T>
 		      int threshold = int.minValue
 		int resultValue = threshold
 		int index = -1
-		for i,item -> this
-			let value = selector(item)
+		for this
+			let value = selector(.)
 			if value > resultValue
 				resultValue = value
 				index = i
@@ -556,22 +558,22 @@ class List<T>
 		     int threshold = int.maxValue
 		int resultValue = threshold
 		T resultItem
-		for item -> this
-			let value = selector(item)
+		for this
+			let value = selector(.)
 			if value < resultValue
 				resultValue = value
-				resultItem = item
+				resultItem = .
 		return resultValue != threshold ? resultItem : null
 		
 	withMin: float(T a) selector
 		     float threshold = float.maxValue
 		float resultValue = threshold
 		T resultItem
-		for item -> this
-			let value = selector(item)
+		for this
+			let value = selector(.)
 			if value < resultValue
 				resultValue = value
-				resultItem = item
+				resultItem = .
 		return resultValue != threshold ? resultItem : null
 		
 	withMin: int(T a) selector
@@ -579,12 +581,12 @@ class List<T>
 		     bool(T a) where
 		int resultValue = threshold
 		T resultItem
-		for item -> this
-			if where(item)
-				let value = selector(item)
+		for this
+			if where(.)
+				let value = selector(.)
 				if value < resultValue
 					resultValue = value
-					resultItem = item
+					resultItem = .
 		return resultValue != threshold ? resultItem : null
 		
 	withMin: float(T a) selector
@@ -592,23 +594,23 @@ class List<T>
 		     bool(T a) where
 		float resultValue = threshold
 		T resultItem
-		for item -> this
-			if where(item)
-				let value = selector(item)
+		for this
+			if where(.)
+				let value = selector(.)
 				if value < resultValue
 					resultValue = value
-					resultItem = item
+					resultItem = .
 		return resultValue != threshold ? resultItem : null
 		
 	withMax: int(T a) selector
 		     int threshold = int.minValue
 		int resultValue = threshold
 		T resultItem
-		for item -> this
-			let value = selector(item)
+		for this
+			let value = selector(.)
 			if value > resultValue
 				resultValue = value
-				resultItem = item
+				resultItem = .
 		return resultValue != threshold ? resultItem : null
 		
 		
@@ -616,11 +618,11 @@ class List<T>
 		     float threshold = float.minValue
 		float resultValue = threshold
 		T resultItem
-		for item -> this
-			let value = selector(item)
+		for this
+			let value = selector(.)
 			if value > resultValue
 				resultValue = value
-				resultItem = item
+				resultItem = .
 		return resultValue != threshold ? resultItem : null
 		
 	withMax: int(T a) selector
@@ -628,12 +630,12 @@ class List<T>
 		     bool(T a) where
 		int resultValue = threshold
 		T resultItem
-		for item -> this
-			if where(item)
-				let value = selector(item)
+		for this
+			if where(.)
+				let value = selector(.)
 				if value > resultValue
 					resultValue = value
-					resultItem = item
+					resultItem = .
 		return resultValue != threshold ? resultItem : null
 		
 	withMax: float(T a) selector
@@ -641,25 +643,25 @@ class List<T>
 		     bool(T a) where
 		float resultValue = threshold
 		T resultItem
-		for item -> this
-			if where(item)
-				let value = selector(item)
+		for this
+			if where(.)
+				let value = selector(.)
 				if value > resultValue
 					resultValue = value
-					resultItem = item
+					resultItem = .
 		return resultValue != threshold ? resultItem : null
 		
 	count: bool(T a) predicate
 		int count = 0
-		for item -> this
-			if predicate(item)
+		for this
+			if predicate(.)
 				count++
 		return count
 		
 	countNot: bool(T a) predicate
 		int count = 0
-		for item -> this
-			if !predicate(item)
+		for this
+			if !predicate(.)
 				count++
 		return count
 		
@@ -746,6 +748,33 @@ global transient unit System
 		                         void() block   // The code to execute while to condition is true
 		while(condition) block()
 	
+	global inline js void for: T[] subject
+		                void(
+		                    T it,
+		                    int i
+		                ) do
+		for(let i=0, it; i<subject.length; ++i) { it = subject[i]; do()}
+		
+	global inline js void for: int subject
+		                void(
+		                    int i
+		                ) do
+		for(let i=0; i<subject; ++i) do()
+		
+	global inline js void for: int subject
+		                void(
+		                    int i
+		                ) do
+		                nocolon int to
+		for(let i=subject; i<to; ++i) do()
+		
+	global inline js void for: string subject
+		                void(
+		                    string it,
+		                    int i
+		                ) do
+		for(let i=0, it; i<subject.length; ++i) { it = subject[i]; do()}
+	
 	// Prints a message to the console
 	global js void print: logstring text // The text, variables or expressions to print
 		                  SourceCodeLocation location
@@ -766,7 +795,7 @@ global transient unit System
 	global inline js void continue() continue
 		
 	global inline js void try: void() code
-		                       void(Error error) catch
+		                       nocolon void(Error error) catch
 		try code() @catch(error) catch()
 		
 		

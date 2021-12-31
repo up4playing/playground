@@ -317,7 +317,7 @@ transient global unit graphics
 		  void() code          // All draw operation within this code block will be clipped
 		let prev = currentClippingPath
 		currentClippingPath = ClippingPath(show)
-		for points: currentClippingPath.points.add position + p
+		for points: currentClippingPath.points.add position + .
 		code()
 		currentClippingPath = prev
 		

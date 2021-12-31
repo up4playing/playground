@@ -171,7 +171,7 @@ transient unit Platform
 					if movedSinceTouchUp                   
 						locationIndex = 0
 						locations.clear
-						for item -> graphics.items
+						for graphics.items -> item
 							if item.location != null and pixelPos.isInsidePoygon item.poly
 								SourceCodeLocation[] itemLocations
 								item.location.flatten itemLocations

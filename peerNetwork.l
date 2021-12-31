@@ -159,7 +159,7 @@ transient unit PeerNetwork
 	Buffer sendBuffer
 	
 	sendInputs: int inputFrame
-		for user -> Input.internalUsers
+		for Input.internalUsers -> user
 			if .dataChannel
 				let localPlayer = Input.internalUsers[Network.userId]
 				let inputs = localPlayer.inputs

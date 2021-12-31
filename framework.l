@@ -16,7 +16,7 @@ unit Framework
 		return !board or board.isVisibleFor userId
 			
 	getBoardAt: Vector2 pos
-		for object -> Framework.objects
+		for Framework.objects -> object
 			if object.type == Board
 				Board b = cast object
 				if pos >= b.position - b.size/2 && pos < b.position + b.size/2
@@ -28,7 +28,7 @@ unit Framework
 		
 	debugString
 		let result = ""
-		for objects: result+= o.debugString
+		for objects: result+= .debugString
 		return result
 		
 	private js float appChecksum()
@@ -36,7 +36,7 @@ unit Framework
 		
 	checksum
 		float result = appChecksum
-		for objects: result += o.checksum
+		for objects: result += .checksum
 		// We ensure that we never return 0
 		// because a checksum of 0 is used to indicate that we don't have a checksum for this frame yet
 		if result == 0: return 1.0
@@ -325,7 +325,7 @@ Piece Stack
 		size = (b.position+{b.size.x/2, -b.image.size.y/2}) - (a.position-{a.size.x/2, -a.size.y/2})
 	
 	tick
-		for i = Math.limit(objects.length-shownObjectCount, min:0) <- objects.length
+		for Math.limit(objects.length-shownObjectCount, min:0) to objects.length <- i
 			let obj = objects[i]
 			let image = obj.backImage || obj.image
 			drawImage image, obj.position, frame:obj.frame%image.frames.length, scale:obj.scale
@@ -369,12 +369,12 @@ Piece Board
 		
 	debugString
 		string children
-		for objects: children += o.debugString
+		for objects: children += .debugString
 		return "(Board pos:{position.x} {position.y} children:{children})"
 		
 	checksum
 		let result = position.x + position.y + cast(visibleForOthers) + matrix.m0 + matrix.m1 + matrix.m2 + matrix.m3 + matrix.m4 + matrix.m5
-		for objects: result += o.checksum
+		for objects: result += .checksum
 		return result
 		
 	add: Piece object
@@ -431,7 +431,7 @@ Piece Board
 	getSpotAt: Vector2 position, Vector2 threshold, Object currentObject
 		Vector2 closestSpotPos = Vector2.none
 		float minDistance = int.maxValue
-		for spot -> spots
+		for spots -> spot
 			let spotPos = spot.getClosestPoint position, this.position
 			let delta = (spotPos - position).abs
 			let distance = delta.length
@@ -479,14 +479,14 @@ Object ParticleSystem
 					angle: Math.randomFloat*Math.PI*2
 			nextBurst = ++burst < bursts ? Time.now + burstInterval : int.maxValue
 
-		for i,p <- particles
-			graphics.move p.pos
-				graphics.rotate p.angle
-					drawImage particleImage, frame:p.frame, scale:p.scale
-			p.pos += p.speed
-			p.speed.y += 1
-			p.angle += .05
-			if p.pos.y < -Platform.size.y/2
+		for particles <-
+			graphics.move .pos
+				graphics.rotate .angle
+					drawImage particleImage, frame:.frame, scale:.scale
+			.pos += .speed
+			.speed.y += 1
+			.angle += .05
+			if .pos.y < -Platform.size.y/2
 				particles.removeAt i
 		
 		if particles.length == 0	
@@ -546,12 +546,12 @@ Piece Coin
 			drawImage image, position, frame:closestCoinType == Over ? 1 : 0
 			
 	private static updateNeighbors: Object[] siblings, bool isBeingMoved
-		for object -> siblings
+		for siblings -> object
 			if object.type == Coin
 				Coin c = cast object
 				c.clearClosestCoin
 				
-		for object -> siblings
+		for siblings -> object
 			if object.type == Coin
 				Coin c = cast object
 				let closestCoin = getClosestCoin c, threshold:90
@@ -572,7 +572,7 @@ Piece Coin
 	private static getClosestCoin: Coin source, float threshold = float.infinity
 		Coin closestCoin = null
 		float minDistance = threshold
-		for object -> source.siblings
+		for source.siblings -> object
 			if object.type == Coin and object != source
 				Coin c = cast object
 				if c.image == source.image
