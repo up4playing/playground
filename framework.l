@@ -7,7 +7,7 @@ unit Framework
 		
 	tick
 		fx.tick
-		objects.eachBackwards.tick
+		objects.each <- .tick
 		objects.each.update
 		Input.onTouchUp:  deselect touch.userId
 		
@@ -392,7 +392,7 @@ Piece Board
 		// Children
 		graphics.visibleFor visibleForOthers == Never or visibleForOthers == Off ? owner : -1
 			graphics.applyMatrix matrix
-				objects.eachBackwards.tick
+				objects.each <- .tick
 		
 		// Pan
 		if panable	
