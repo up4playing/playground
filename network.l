@@ -261,7 +261,7 @@ transient unit Network
 	private int replayFrames
 	int tickMessageSize
 	
-	const aheadsLength = 600
+	const aheadsLength = 200
 	const percentile = 50
 	const aheadFactor = 2.0
 	const minChange = 1
