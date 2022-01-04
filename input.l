@@ -170,11 +170,14 @@ unit Input
 			if(e.ctrlKey && e.key == "F3") {/*new  room, new  userId*/ ServerNetwork_sendReload(true,  true);  e.preventDefault();} else
 			
 			// Switch send interval
-			if(e.ctrlKey && e.key == "F5") {Network_switchSendInterval( 1); e.preventDefault();} else
-			if(e.ctrlKey && e.key == "F6") {Network_switchSendInterval( 3); e.preventDefault();} else
-			if(e.ctrlKey && e.key == "F7") {Network_switchSendInterval( 7); e.preventDefault();} else
-			if(e.ctrlKey && e.key == "F8") {Network_switchSendInterval(15); e.preventDefault();} else
-			if(e.ctrlKey && e.key == "F9") {Network_switchSendInterval(30); e.preventDefault();} else
+			if(e.ctrlKey && e.key == "F5") {Network_switchSendInterval( 3); e.preventDefault();} else
+			if(e.ctrlKey && e.key == "F6") {Network_switchSendInterval(10); e.preventDefault();} else
+			if(e.ctrlKey && e.key == "F7") {Network_switchSendInterval(20); e.preventDefault();} else
+			if(e.ctrlKey && e.key == "F8") {Network_switchSendInterval(30); e.preventDefault();} else
+			if(e.ctrlKey && e.key == "F9") {Network_switchSendInterval(40); e.preventDefault();} else
+				
+			if(e.ctrlKey && e.key == "F10") {Network_switchSendInputMode(1); e.preventDefault();} else
+			if(e.ctrlKey && e.key == "F11") {Network_switchSendInputMode(2); e.preventDefault();} else
 				
 			if(e.key == "F9") {
 				if(e.shiftKey) { Network_saveLogs(); }

@@ -329,6 +329,10 @@ transient unit Network
 	switchSendInterval: int sendInterval
 		this.sendInterval = sendInterval
 		ServerNetwork.sendSwitch sendInputsMode, sendInterval
+		
+	switchSendInputMode: SendInputsMode sendInputsMode
+		this.sendInputsMode = sendInputsMode
+		ServerNetwork.sendSwitch sendInputsMode, sendInterval
 
 	// Save state, parse inputs, step physics, process tick, and calculate checksum
 	// This is called in animationFrame and during replays. 
@@ -413,7 +417,7 @@ transient unit Network
 		Input.updateCursor
 		if Platform.showDebugInfo
 			statisticsGraph.draw
-			drawText "v{Platform.version} #{frame} {aheadsLength} ct:{PeerNetwork.connectionType}", statisticsGraph.position+{statisticsGraph.size.x/2-10, -statisticsGraph.size.y/2-15}, align:Right, layer:1000001
+			drawText "v{Platform.version} #{frame} {sendInterval}{sendInputsMode==Peer ? "p" : "s"} {aheadsLength} {PeerNetwork.connectionType}", statisticsGraph.position+{statisticsGraph.size.x/2, -statisticsGraph.size.y/2-15}, align:Right, layer:1000001
 		if sendInterval > 10: drawCircle {920, 496}, fillColor:Red
 		drawTime = Time.measure
 			graphics.finishFrame
