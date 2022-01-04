@@ -462,7 +462,7 @@ transient unit Network
 					
 	log: logstring text
 		eventLog += text + "\n"
-		print text
+		// print text
 		
 	inline js int currentTime := Date.now()
 	
