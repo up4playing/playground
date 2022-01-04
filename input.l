@@ -307,6 +307,8 @@ unit Input
 					InputType inputType = cast(value % 32)
 					
 					if inputType >= TouchDown && inputType <= Wheel
+						// We create a new touch every time to support having the down and up touch in the same frame
+						// with unique phase and handled value
 						if !user: Network.parseLog += " Error: user == null"
 						TouchType type = cast((value shiftRight 5) % 8)
 						int id = (value shiftRight 8) % 128
@@ -315,78 +317,32 @@ unit Input
 						Network.parseLog += " "+id
 						
 						if inputType == TouchDown
-							let touch = user.touches.find a.id == id
-							if touch
-								touch.phase = cast inputType
-								touch.referencePosition = touchPos
-								touch.referenceStartPosition = touchPos
-								touch.handled = false
-								touch.type = type
-								touch.isDown = true
-								if isSmoothPosition: touch.smoothPosition = touchPos
-								Network.parseLog += " down {id} {touchPos} {type}"
-							else
-								touch = {id, userId, cast inputType, type, touchPos, touchPos, touchPos, isDown:true}
-								user.touches.add touch
-								Network.parseLog += " down(new) {id} {touchPos} {type}"
+							Touch existingTouch = user.touches.removeFirstWhere.id == id
+							Touch touch = {id, userId, phase:cast inputType, type, referencePosition:touchPos, referenceStartPosition:touchPos, isDown:true}
+							touch.smoothPosition = isSmoothPosition or !existingTouch ? touchPos : existingTouch.referencePosition
+							user.touches.add touch
 							internalUser.downTouches.add touch
-							
-							// Evaluate: If there a several touch downs in the same frame, they are all the same
-							// because we keep updating the touch. Is this okay or should we create new touches?
-							// user.touches.removeAllWhere.id == id
-							// Touch touch = {id, userId, cast inputType, type, touchPos, touchPos, touchPos, isDown:true}
-							// user.touches.add touch
-							// Network.parseLog += " down(new) {id} {touchPos} {type}"
-							// internalUser.downTouches.add touch
+							Network.parseLog += " down {id} {touchPos} {type}"
 						else
 						if inputType == TouchMove
-							let touch = user.touches.find a.id == id
-							if touch
-								touch.phase = cast inputType
-								touch.referencePosition = touchPos
-								touch.handled = false
-								touch.type = type
-								if isSmoothPosition: touch.smoothPosition = touchPos
-								Network.parseLog += " move {id} {touchPos} {type}"
-							else
-								touch = {id, userId, cast inputType, type, touchPos, referenceStartPosition:Vector2.none, touchPos, isDown:false}
-								user.touches.add touch
-								Network.parseLog += " move(new) {id} {touchPos} {type}"
+							Touch existingTouch = user.touches.removeFirstWhere.id == id
+							Touch touch = {id, userId, phase:cast inputType, type, referencePosition:touchPos}
+							touch.smoothPosition = isSmoothPosition or !existingTouch ? touchPos : existingTouch.referencePosition
+							touch.referenceStartPosition = existingTouch ? existingTouch.referenceStartPosition : Vector2.none
+							touch.isDown = existingTouch ? existingTouch.isDown : false							
+							user.touches.add touch
 							internalUser.movingTouches.add touch
 							cursor = "auto"
-							
-							// Evaluate: If there a several touch moves in the same frame, they are all the same
-							// because we keep updating the touch. Is this okay or should we create new touches?
-							// user.touches.removeAllWhere.id == id
-							// Touch touch = {id, userId, cast inputType, type, touchPos, referenceStartPosition:Vector2.none, touchPos, isDown:false}
-							// user.touches.add touch
-							// Network.parseLog += " move(new) {id} {touchPos} {type}"
-							// internalUser.movingTouches.add touch
-							// cursor = "auto"
+							Network.parseLog += " move {id} {touchPos} {type}"
 						else
 						if inputType == TouchUp
-							let touch = user.touches.find a.id == id
-							if touch
-								touch.phase = cast inputType
-								touch.referencePosition = touchPos
-								touch.handled = false
-								touch.type = type
-								touch.isDown = false
-								if isSmoothPosition: touch.smoothPosition = touchPos
-								Network.parseLog += " up {id} {touchPos} {type}"
-							else
-								touch = {id, userId, cast inputType, type, touchPos, referenceStartPosition:Vector2.none, touchPos, isDown:false}
-								user.touches.add touch
-								Network.parseLog += " up(new) {id} {touchPos} {type}"
+							Touch existingTouch = user.touches.removeFirstWhere.id == id
+							Touch touch = {id, userId, phase:cast inputType, type, referencePosition:touchPos, isDown:false}
+							touch.smoothPosition = isSmoothPosition or !existingTouch ? touchPos : existingTouch.referencePosition
+							touch.referenceStartPosition = existingTouch ? existingTouch.referenceStartPosition : Vector2.none
+							user.touches.add touch
 							internalUser.upTouches.add touch
-							
-							// Evaluate: If there a several touch ups in the same frame, they are all the same
-							// because we keep updating the touch. Is this okay or should we create new touches?
-							// user.touches.removeAllWhere.id == id
-							// Touch touch = {id, userId, cast inputType, type, touchPos, referenceStartPosition:Vector2.none, touchPos, isDown:false}
-							// user.touches.add touch
-							// Network.parseLog += " up(new) {id} {touchPos} {type}"
-							// internalUser.upTouches.add touch
+							Network.parseLog += " up {id} {touchPos} {type}"
 						else
 						if inputType == Wheel
 							let delta = inputs.readInt16
