@@ -246,7 +246,7 @@ Object Piece
 			Input.onTouchMove rotateTouch
 				Network.smooth touch.userId
 					angle = targetAngle = Math.atan2(touch.position - position) + rotateOffset
-				if (touch.position - touch.startPosition).length > 4: rotatedOverThreshold = true
+				if (touch.position - touch.startPosition).length > 16: rotatedOverThreshold = true
 				
 			Input.onTouchUp rotateTouch
 				targetAngle = Math.round(angle / (Math.PI/2)) * Math.PI/2
