@@ -233,7 +233,7 @@ class List<T>
 		                        int count // The number of items to remove
 		this.splice(index, count)
 			
-	removeFirstWhere: bool(T a) condition // The condition to check
+	T removeFirstWhere: bool(T a) condition // The condition to check
 		for this
 			if condition(.)
 				removeAt i
@@ -823,43 +823,94 @@ global transient unit System
 		                       ) do           // The code to execute for each character in the given string
 		for(let _subject=subject, i=_subject.length-1; i>=0; --i) { let it = _subject[i]; do()}
 				
-	// Execute code for each consecutive pair in the list: [a,b,c] -> (a,b) (b,c)
+	// [a,b,c] -> (a, next:b), (b, next:c), (c, next:null)
+	global inline js void forLookAhead: T[] subject    // The list to iterate over
+		                                    -> void(
+		                                        T it,      // The current item of the list we are iterating over with forLookAhead
+		                                        T next,    // The next item of the list we are iterating over with forLookAhead
+		                                        int i      // The index of the current item of the list we are iterating over with forLookAhead
+		                                    ) do           // The code to execute for each consecutive pair in a list
+		for(let _subject=subject, _len=_subject.length, i=0; i<_len; ++i) { let it = _subject[i], next = i+1<_len ? _subject[i+1] : null; do()}
+		
+	global inline js void forLookAhead: T[] subject    // The list to iterate over
+		                                    <- void(
+		                                        T it,      // The current item of the list we are iterating over with forLookAhead
+		                                        T next,    // The next item of the list we are iterating over with forLookAhead
+		                                        int i      // The index of the current item of the list we are iterating over with forLookAhead
+		                                    ) do           // The code to execute for each consecutive pair in a list
+		for(let _subject=subject, i=_subject.length-1; i>=0; --i) { let it = _subject[i], next = i>0 ? _subject[i-1] : null; do()}
+		
+	// [a,b,c] -> (prev:null, a), (prev:a, b), (prev:b, c)
+	global inline js void forLookBack: T[] subject    // The list to iterate over
+		                                    -> void(
+		                                        T it,      // The current item of the list we are iterating over with forLookBack
+		                                        T prev,    // The previous item of the list we are iterating over with forLookBack
+		                                        int i      // The index of the current item of the list we are iterating over with forLookBack
+		                                    ) do           // The code to execute for each consecutive pair in a list
+		for(let i=0, _len=subject.length; i<_len; ++i) { let it = subject[i], prev = i>0 ? subject[i-1] : null; do()}
+		
+	global inline js void forLookBack: T[] subject    // The list to iterate over
+		                                    <- void(
+		                                        T it,      // The current item of the list we are iterating over with forLookBack
+		                                        T prev,    // The previous item of the list we are iterating over with forLookBack
+		                                        int i      // The index of the current item of the list we are iterating over with forLookBack
+		                                    ) do           // The code to execute for each consecutive pair in a list
+		for(let _subject=subject, _len=subject.length, i=_len-1; i>=0; --i) { let it = _subject[i], prev = i+1<_len ? _subject[i+1] : null; do()}
+		
+	// [a,b,c] -> (prev:null, a, next:b), (prev:a, b, next:c), (prev:b, c, next:null)
+	global inline js void forLookAheadAndBack: T[] subject  // The list to iterate over
+		                              -> void(
+		                                  T it,    // The current item of the list we are iterating over with forLookAheadAndBack
+		                                  T prev,  // The previous item of the list we are iterating over with forLookAheadAndBack
+		                                  T next,  // The next item of the list we are iterating over with forLookAheadAndBack
+		                                  int i    // The index of the current item of the list we are iterating over with forLookAheadAndBack
+		                              ) do         // The code to execute for each triple in a list
+		for(let i=0, _subject=subject, _len=_subject.length; i<_len; ++i) { let it = _subject[i], next = i+1<_len ? _subject[i+1] : null, prev = i>0 ? _subject[i-1] : null; do()}
+		
+	global inline js void forLookAheadAndBack: T[] subject  // The list to iterate over
+		                              <- void(
+		                                  T it,    // The current item of the list we are iterating over with forLookAheadAndBack
+		                                  T prev,  // The previous item of the list we are iterating over with forLookAheadAndBack
+		                                  T next,  // The next item of the list we are iterating over with forLookAheadAndBack
+		                                  int i    // The index of the current item of the list we are iterating over with forLookAheadAndBack
+		                              ) do         // The code to execute for each triple in a list
+		for(let _subject=subject, _len=_subject.length, i=_len-1; i>=0; --i) { let it = _subject[i], next = i>0 ? _subject[i-1] : null, prev = i+1<_len ? _subject[i+1] : null; do()}
+		
+	// [a,b,c] -> (a, next:b), (b, next:c)
 	global inline js void forPairs: T[] subject  // The list to iterate over
 		                            -> void(
 		                                T it,    // The current item of the list we are iterating over with forPairs
 		                                T next,  // The next item of the list we are iterating over with forPairs
 		                                int i    // The index of the current item of the list we are iterating over with forPairs
 		                            ) do         // The code to execute for each consecutive pair in a list
-		for(let i=0, _len = subject.length-1; i<_len; ++i) { let it = subject[i], next = subject[i+1]; do()}
+		for(let i=0, _subject=subject, _len=_subject.length-1; i<_len; ++i) { let it = _subject[i], next = _subject[i+1]; do()}
 		
-	// Execute code for each consecutive pair in the list: [a,b,c] -> (null,a) (a,b) (b,c)
-	global inline js void forPairsWithHead: T[] subject    // The list to iterate over
-		                                    -> void(
-		                                        T it,      // The current item of the list we are iterating over with forPairsWithHead
-		                                        T prev,    // The previous item of the list we are iterating over with forPairsWithHead
-		                                        int i      // The index of the current item of the list we are iterating over with forPairsWithHead
-		                                    ) do           // The code to execute for each consecutive pair in a list
-		for(let i=0, _len = subject.length; i<_len; ++i) { let it = subject[i], prev = subject[i-1]; do()}
+	global inline js void forPairs: T[] subject  // The list to iterate over
+		                            <- void(
+		                                T it,    // The current item of the list we are iterating over with forPairs
+		                                T next,  // The next item of the list we are iterating over with forPairs
+		                                int i    // The index of the current item of the list we are iterating over with forPairs
+		                            ) do         // The code to execute for each consecutive pair in a list
+		for(let _subject=subject, i=_subject.length-1; i>0; --i) { let it = _subject[i], next = _subject[i-1]; do()}
 		
-	// Execute code for each consecutive pair in the list: [a,b,c] -> (a,b) (b,c) (c,null)
-	global inline js void forPairsWithTail: T[] subject    // The list to iterate over
-		                                    -> void(
-		                                        T it,      // The current item of the list we are iterating over with forPairsWithTail
-		                                        T next,    // The next item of the list we are iterating over with forPairsWithTail
-		                                        int i      // The index of the current item of the list we are iterating over with forPairsWithTail
-		                                    ) do           // The code to execute for each consecutive pair in a list
-		for(let i=0, _len = subject.length; i<_len; ++i) { let it = subject[i], next = subject[i+1]; do()}
-		
-	// Execute code for each consecutive pair the list: [a,b,c] -> (a,b) (b,c) (c,a)
-	global inline js void forPairsWrapped: T[] subject    // The list to iterate over
+	// [a,b,c] -> (a, next:b), (b, next:c), (c, next:a) 
+	global inline js void forWrappingPairs: T[] subject    // The list to iterate over
 		                                   -> void(
-		                                       T it,      // The current item of the list we are iterating over with forPairsWrapped
-		                                       T next,    // The next item of the list we are iterating over with forPairsWrapped
-		                                       int i      // The index of the current item of the list we are iterating over with forPairsWrapped
+		                                       T it,      // The current item of the list we are iterating over with forWrappingPairs
+		                                       T next,    // The next item of the list we are iterating over with forWrappingPairs
+		                                       int i      // The index of the current item of the list we are iterating over with forWrappingPairs
 		                                   ) do           // The code to execute for each consecutive pair in a list
-		for(let i=0, _len = subject.length; i<_len; ++i) { let it = subject[i], next = subject[(i+1)%_len]; do()}
+		for(let _subject=subject, i=0, _len=_subject.length; i<_len; ++i) { let it = _subject[i], next = _subject[(i+1)%_len]; do()}
 		
-	// Execute code for each triple in the list: [a,b,c,d] -> (a,b,c) (b,c,d)
+	global inline js void forWrappingPairs: T[] subject    // The list to iterate over
+		                                   <- void(
+		                                       T it,      // The current item of the list we are iterating over with forWrappingPairs
+		                                       T next,    // The next item of the list we are iterating over with forWrappingPairs
+		                                       int i      // The index of the current item of the list we are iterating over with forWrappingPairs
+		                                   ) do           // The code to execute for each consecutive pair in a list
+		for(let _subject=subject, _len=_subject.length, i=_len-1; i>=0; --i) { let it = _subject[i], next = _subject[(((i-1)%_len)+_len)%_len]; do()}
+		
+	// [a,b,c] -> (prev:a, b, next:c)
 	global inline js void forTriples: T[] subject  // The list to iterate over
 		                              -> void(
 		                                  T it,    // The current item of the list we are iterating over with forTriple
@@ -867,38 +918,36 @@ global transient unit System
 		                                  T next,  // The next item of the list we are iterating over with forTriple
 		                                  int i    // The index of the current item of the list we are iterating over with forTriple
 		                              ) do         // The code to execute for each triple in a list
-		for(let i=1, _len = subject.length-1; i<_len; ++i) { let it = subject[i], next = subject[i+1], prev = subject[i-1]; do()}
+		for(let i=1, _subject=subject, _len=_subject.length-1; i<_len; ++i) { let it = _subject[i], next = _subject[i+1], prev = _subject[i-1]; do()}
 		
-	// Execute code for each triple in the list: [a,b,c,d] -> (null,a,b) (a,b,c) (b,c,d)
-	global inline js void forTriplesWithHead: T[] subject  // The list to iterate over
-		                                      -> void(
-		                                          T it,    // The current item of the list we are iterating over with forTriple
-		                                          T prev,  // The previous item of the list we are iterating over with forTriple
-		                                          T next,  // The next item of the list we are iterating over with forTriple
-		                                          int i    // The index of the current item of the list we are iterating over with forTriple
-		                                      ) do         // The code to execute for each triple in a list
-		for(let i=0, _len = subject.length-1; i<_len; ++i) { let it = subject[i], next = subject[i+1], prev = subject[i-1]; do()}
+	global inline js void forTriples: T[] subject  // The list to iterate over
+		                              <- void(
+		                                  T it,    // The current item of the list we are iterating over with forTriple
+		                                  T prev,  // The previous item of the list we are iterating over with forTriple
+		                                  T next,  // The next item of the list we are iterating over with forTriple
+		                                  int i    // The index of the current item of the list we are iterating over with forTriple
+		                              ) do         // The code to execute for each triple in a list
+		for(let _subject=subject, i=_subject.length-2; i>=1; --i) { let it = _subject[i], next = _subject[i-1], prev = _subject[i+1]; do()}
 		
-	// Execute code for each triple in the list: [a,b,c,d] -> (a,b,c) (b,c,d) (c,d,null)
-	global inline js void forTriplesWithTail: T[] subject  // The list to iterate over
-		                                      -> void(
-		                                          T it,    // The current item of the list we are iterating over with forTriple
-		                                          T prev,  // The previous item of the list we are iterating over with forTriple
-		                                          T next,  // The next item of the list we are iterating over with forTriple
-		                                          int i    // The index of the current item of the list we are iterating over with forTriple
-		                                      ) do         // The code to execute for each triple in a list
-		for(let i=1, _len = subject.length; i<_len; ++i) { let it = subject[i], next = subject[i+1], prev = subject[i-1]; do()}
-		
-	// Execute code for each triple in list: [a,b,c,d] -> (d,a,b) (a,b,c) (b,c,d) (c,d,a)
-	global inline js void forTriplesWrapped: T[] subject  // The list to iterate over
+	// [a,b,c] -> (prev:c, a, next:b), (prev:a, b, next:c), (prev:b, c, next:a)
+	global inline js void forWrappingTriples: T[] subject  // The list to iterate over
 		                                     -> void(
-		                                         T it,    // The current item of the list we are iterating over with forTriple
-		                                         T prev,  // The previous item of the list we are iterating over with forTriple
-		                                         T next,  // The next item of the list we are iterating over with forTriple
-		                                         int i    // The index of the current item of the list we are iterating over with forTriple
+		                                         T it,    // The current item of the list we are iterating over with forWrappingTriples
+		                                         T prev,  // The previous item of the list we are iterating over with forWrappingTriples
+		                                         T next,  // The next item of the list we are iterating over with forWrappingTriples
+		                                         int i    // The index of the current item of the list we are iterating over with forWrappingTriples
 		                                     ) do         // The code to execute for each triple in a list
-		for(let i=0, _len = subject.length; i<_len; ++i) { let it = subject[i], next = subject[(i+1)%_len], prev = subject[(i-1)%_len]; do()}
+		for(let i=0, _subject=subject, _len=_subject.length; i<_len; ++i) { let it = _subject[i], next = _subject[(i+1)%_len], prev = _subject[(((i-1)%_len)+_len)%_len]; do()}
 		
+	global inline js void forWrappingTriples: T[] subject  // The list to iterate over
+		                                     <- void(
+		                                         T it,    // The current item of the list we are iterating over with forWrappingTriples
+		                                         T prev,  // The previous item of the list we are iterating over with forWrappingTriples
+		                                         T next,  // The next item of the list we are iterating over with forWrappingTriples
+		                                         int i    // The index of the current item of the list we are iterating over with forWrappingTriples
+		                                     ) do         // The code to execute for each triple in a list
+		for(let _subject=subject, _len=_subject.length, i=_len-1; i>=0; --i) { let it = _subject[i], next = _subject[(((i-1)%_len)+_len)%_len], prev = _subject[(i+1)%_len]; do()}
+
 	// Prints a message to the console
 	global js void print: logstring text // The text, variables or expressions to print
 		                  SourceCodeLocation location
