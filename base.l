@@ -823,6 +823,22 @@ global transient unit System
 		                       ) do           // The code to execute for each character in the given string
 		for(let _subject=subject, i=_subject.length-1; i>=0; --i) { let it = _subject[i]; do()}
 				
+	global inline js void for: IntVector2 subject    // The exclusive upper bound to iterate towards
+		                       -> void(
+		                           IntVector2 pos, // The current position of the vector we are iterating over with the for-loop
+		                           int x,          // The x component of the current position we are iterating over with the for-loop
+		                           int y           // The y component of the current position we are iterating over with the for-loop
+		                       ) do           // The code to execute the given number of times
+		for(let _size=subject, y=0; y<_size.y; ++y) for(let x=0; x<_size.x; ++x) { let pos = new IntVector2(x,y); do()}
+			
+	global inline js void for: IntVector2 subject    // The exclusive upper bound to iterate towards
+		                       <- void(
+		                           IntVector2 pos, // The current position of the vector we are iterating over with the for-loop
+		                           int x,          // The x component of the current position we are iterating over with the for-loop
+		                           int y           // The y component of the current position we are iterating over with the for-loop
+		                       ) do           // The code to execute the given number of times
+		for(let _size=subject, y=_size.y-1; y>=0; --y) for(let x=_size.x-1; x>=0; --x) { let pos = new IntVector2(x,y); do()}
+			
 	// [a,b,c] -> (a, next:b), (b, next:c), (c, next:null)
 	global inline js void forLookAhead: T[] subject    // The list to iterate over
 		                                    -> void(
