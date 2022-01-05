@@ -307,8 +307,6 @@ unit Input
 					InputType inputType = cast(value % 32)
 					
 					if inputType >= TouchDown && inputType <= Wheel
-						// We create a new touch every time to support having the down and up touch in the same frame
-						// with unique phase and handled value
 						if !user: Network.parseLog += " Error: user == null"
 						TouchType type = cast((value shiftRight 5) % 8)
 						int id = (value shiftRight 8) % 128
@@ -317,32 +315,64 @@ unit Input
 						Network.parseLog += " "+id
 						
 						if inputType == TouchDown
-							Touch existingTouch = user.touches.removeFirstWhere.id == id
-							Touch touch = {id, userId, phase:cast inputType, type, referencePosition:touchPos, referenceStartPosition:touchPos, isDown:true}
-							touch.smoothPosition = isSmoothPosition or !existingTouch ? touchPos : existingTouch.referencePosition
-							user.touches.add touch
+							let touch = user.touches.find a.id == id
+							if touch
+								// Update the touch in user.touches
+								touch.phase = cast inputType
+								touch.referencePosition = touchPos
+								touch.referenceStartPosition = touchPos
+								touch.handled = false
+								touch.type = type
+								touch.isDown = true
+								Network.parseLog += " down {id} {touchPos} {type}"
+								if isSmoothPosition: touch.smoothPosition = touchPos
+							else
+								touch = {id, userId, cast inputType, type, touchPos, touchPos, touchPos, isDown:true}
+								user.touches.add touch
+								Network.parseLog += " down(new) {id} {touchPos} {type}"
+								
+							// The down touch is the same object as the one in touches that we keep updating
 							internalUser.downTouches.add touch
-							Network.parseLog += " down {id} {touchPos} {type}"
 						else
 						if inputType == TouchMove
-							Touch existingTouch = user.touches.removeFirstWhere.id == id
-							Touch touch = {id, userId, phase:cast inputType, type, referencePosition:touchPos}
-							touch.smoothPosition = isSmoothPosition or !existingTouch ? touchPos : existingTouch.referencePosition
-							touch.referenceStartPosition = existingTouch ? existingTouch.referenceStartPosition : Vector2.none
-							touch.isDown = existingTouch ? existingTouch.isDown : false							
-							user.touches.add touch
-							internalUser.movingTouches.add touch
+							let touch = user.touches.find a.id == id
+							if touch
+								// Update the touch in user.touches
+								touch.phase = cast inputType
+								touch.referencePosition = touchPos
+								touch.handled = false
+								touch.type = type
+								if isSmoothPosition: touch.smoothPosition = touchPos
+								Network.parseLog += " move {id} {touchPos} {type}"
+							else
+								touch = {id, userId, cast inputType, type, touchPos, referenceStartPosition:Vector2.none, touchPos, isDown:false}
+								user.touches.add touch
+								Network.parseLog += " move(new) {id} {touchPos} {type}"
+	
+							// We clone the move and up touch to support multiple instances in the same frame 
+							// with unique phase and handled flag
+							internalUser.movingTouches.add touch.clone
 							cursor = "auto"
-							Network.parseLog += " move {id} {touchPos} {type}"
 						else
 						if inputType == TouchUp
-							Touch existingTouch = user.touches.removeFirstWhere.id == id
-							Touch touch = {id, userId, phase:cast inputType, type, referencePosition:touchPos, isDown:false}
-							touch.smoothPosition = isSmoothPosition or !existingTouch ? touchPos : existingTouch.referencePosition
-							touch.referenceStartPosition = existingTouch ? existingTouch.referenceStartPosition : Vector2.none
-							user.touches.add touch
-							internalUser.upTouches.add touch
-							Network.parseLog += " up {id} {touchPos} {type}"
+							let touch = user.touches.find a.id == id
+							if touch
+								// Update the touch in user.touches
+								touch.phase = cast inputType
+								touch.referencePosition = touchPos
+								touch.handled = false
+								touch.type = type
+								touch.isDown = false
+								if isSmoothPosition: touch.smoothPosition = touchPos
+								Network.parseLog += " up {id} {touchPos} {type}"
+							else
+								touch = {id, userId, cast inputType, type, touchPos, referenceStartPosition:Vector2.none, touchPos, isDown:false}
+								user.touches.add touch
+								Network.parseLog += " up(new) {id} {touchPos} {type}"
+								
+							// We clone the move and up touch to support multiple instances in the same frame 
+							// with unique phase and handled flag
+							internalUser.upTouches.add touch.clone
 						else
 						if inputType == Wheel
 							let delta = inputs.readInt16
