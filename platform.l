@@ -129,6 +129,7 @@ transient unit Platform
 			roomId = roomId.substring(0,dashIndex)
 		
 		openMedia
+			startInterval
 			if isDebug || roomId == "local" || url.startsWith("file"): Network.startLocal userCount:userCount
 			else                                                       Network.join gameId, roomId, userId
 			this.engineStarted = true
@@ -142,6 +143,11 @@ transient unit Platform
 		initCacheAndImages
 		openMedia
 			Network.goToFrame Network.frame-1, replay:true
+			
+	object interval
+	private js void startInterval
+		if(Platform_interval) clearInterval(Platform_interval)
+		Platform_interval = setInterval(() => Platform_tick(), 1000/Network_targetFps)
 	
 	// This is called every animation frame
 	private tick()   if mode == Play or mode == Record: Network.animationFrame
@@ -171,7 +177,7 @@ transient unit Platform
 					if movedSinceTouchUp                   
 						locationIndex = 0
 						locations.clear
-						for item -> graphics.items
+						for graphics.items -> item
 							if item.location != null and pixelPos.isInsidePoygon item.poly
 								SourceCodeLocation[] itemLocations
 								item.location.flatten itemLocations

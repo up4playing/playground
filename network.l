@@ -137,14 +137,14 @@ transient unit Network
 		
 		if !startInLobby
 			// When the developer changed Platform.userCount, add or remove internal users accordingly
-			for i = Input.internalUsers.length -> Platform.userCount
+			for Input.internalUsers.length to Platform.userCount
 				Input.internalUsers.add {id:i, local:true, collectInputs:true}
 			if Input.internalUsers.length > Platform.userCount
 				Input.internalUsers.removeRange Platform.userCount, count: Input.internalUsers.length - Platform.userCount
 			
 			// We always recreating users, because developers might have added fields to NetworkUser or Touch
 			// By the time we call startApp, all users need to exist
-			for i, internalUser -> Input.internalUsers
+			for Input.internalUsers -> internalUser
 				NetworkUser user = {id:.id, index:i}
 				Input.usersById[.id] = user
 				Input.users.add user
@@ -261,7 +261,7 @@ transient unit Network
 	private int replayFrames
 	int tickMessageSize
 	
-	const aheadsLength = 600
+	const aheadsLength = 200
 	const percentile = 50
 	const aheadFactor = 2.0
 	const minChange = 1
@@ -329,6 +329,10 @@ transient unit Network
 	switchSendInterval: int sendInterval
 		this.sendInterval = sendInterval
 		ServerNetwork.sendSwitch sendInputsMode, sendInterval
+		
+	switchSendInputMode: SendInputsMode sendInputsMode
+		this.sendInputsMode = sendInputsMode
+		ServerNetwork.sendSwitch sendInputsMode, sendInterval
 
 	// Save state, parse inputs, step physics, process tick, and calculate checksum
 	// This is called in animationFrame and during replays. 
@@ -381,10 +385,8 @@ transient unit Network
 			Platform.sendErrorToEditor error
 			
 		// Cleanup
-		for internalUser -> Input.internalUsers
-			internalUser?.clearEvent
-		for user -> Input.users
-			user?.clearEvents
+		Input.internalUsers.each.clearEvent
+		Input.users.each.clearEvents
 		
 		// Send current frame to editor	
 		if frames < frame+1: frames = frame+1
@@ -415,7 +417,7 @@ transient unit Network
 		Input.updateCursor
 		if Platform.showDebugInfo
 			statisticsGraph.draw
-			drawText "v{Platform.version} #{frame} {aheadsLength} ct:{PeerNetwork.connectionType}", statisticsGraph.position+{statisticsGraph.size.x/2-10, -statisticsGraph.size.y/2-15}, align:Right, layer:1000001
+			drawText "v{Platform.version} #{frame} {sendInterval}{sendInputsMode==Peer ? "p" : "s"} {aheadsLength} {PeerNetwork.connectionType}", statisticsGraph.position+{statisticsGraph.size.x/2, -statisticsGraph.size.y/2-15}, align:Right, layer:1000001
 		if sendInterval > 10: drawCircle {920, 496}, fillColor:Red
 		drawTime = Time.measure
 			graphics.finishFrame
@@ -460,7 +462,7 @@ transient unit Network
 					
 	log: logstring text
 		eventLog += text + "\n"
-		print text
+		// print text
 		
 	inline js int currentTime := Date.now()
 	
@@ -584,18 +586,17 @@ transient unit Network
 			alertShown = true
 			
 	internal drawPointers
-		for user -> Input.users
-			if user
-				let internalUser = Input.internalUsers[user.id]
-					if (Input.showPointers and (!internalUser.local or Input.showLocalPointer)) or Platform.mode == Play or frame+1 < frames
-						for user.touches
-							if Framework.isVisibleFor .smoothPosition, this.userId
-								drawImage finger, .smoothPosition+{11,32}, frame:.isDown ? 1 : 0, layer:int.maxValue
-								if user.color
-									if user.color == Black
-										drawRectangle .smoothPosition+{16,80}, size:{26,10}, user.color, layer:int.maxValue, outlineColor:{"a0a0a0"}, outlineWidth:2
-									else
-										drawRectangle .smoothPosition+{16,78}, size:{26,10}, user.color, layer:int.maxValue
+		for Input.users -> user
+			let internalUser = Input.internalUsers[user.id]
+				if (Input.showPointers and (!internalUser.local or Input.showLocalPointer)) or Platform.mode == Play or frame+1 < frames
+					for user.touches
+						if Framework.isVisibleFor .smoothPosition, this.userId
+							drawImage finger, .smoothPosition+{11,32}, frame:.isDown ? 1 : 0, layer:int.maxValue
+							if user.color
+								if user.color == Black
+									drawRectangle .smoothPosition+{16,80}, size:{26,10}, user.color, layer:int.maxValue, outlineColor:{"a0a0a0"}, outlineWidth:2
+								else
+									drawRectangle .smoothPosition+{16,78}, size:{26,10}, user.color, layer:int.maxValue
 									
 
 class StatisticsGraphSeries
@@ -624,7 +625,7 @@ transient unit statisticsGraph
 			
 		Vector2 startPos = position + size/2
 		Vector2 labelPos = position - size/2 - {0,15}
-		for series
+		for series -> s
 			drawRectangle labelPos, {16,16}, fillColor:.color, align:Left, layer:1000000
 			drawText "{.lastValue}", labelPos+{18, 0}, align:Left, layer:1000000
 			labelPos.x += 50
@@ -632,9 +633,9 @@ transient unit statisticsGraph
 			int len = .values.length
 			float prevY = 0
 			for len
-				let value = .values[len-1-i]
+				let value = s.values[len-1-i]
 				Vector2 pos = {startPos.x - i, startPos.y - value/maxValue*size.y}
-				if i: drawRectangle pos, size:{4, prevY-pos.y+4}, fillColor:.color, layer:1000000, valign:Top
+				if i: drawRectangle pos, size:{4, prevY-pos.y+4}, fillColor:s.color, layer:1000000, valign:Top
 				prevY = pos.y
 				
 		drawRectangle position - {0,size.y/2+10}, {size.x, 20}, fillColor:Black, layer:1000000

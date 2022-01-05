@@ -17,9 +17,9 @@ unit astar
 		                int(IntVector2 a, IntVector2 b) heuristic
 		
 		AStarNode[][] grid
-		for x -> size.x
+		for size.x -> x
 			grid[x] = []
-			for y -> size.y
+			for size.y -> y
 				grid[x][y] = {pos:{x,y}}
 				
 		let diagonal = false
