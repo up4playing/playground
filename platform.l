@@ -120,6 +120,13 @@ transient unit Platform
 		let gameId = path[3]
 		let roomId = path[4]
 		
+		// TEMP: Allow relay
+		bool allowRelay = false
+		let relayIndex = roomId.indexOf("r")
+		if relayIndex != -1
+			allowRelay = true
+			roomId = roomId.substring(0,relayIndex)
+			
 		// TEMP: For testing, support joining a room with a given userId using the format /gameId/roomId-userId
 		// because starting the app in two browser tabs overwrites the userId in the local storage
 		let userId = -1
@@ -129,8 +136,9 @@ transient unit Platform
 			roomId = roomId.substring(0,dashIndex)
 		
 		openMedia
+			startInterval
 			if isDebug || roomId == "local" || url.startsWith("file"): Network.startLocal userCount:userCount
-			else                                                       Network.join gameId, roomId, userId
+			else                                                       Network.join gameId, roomId, userId, allowRelay
 			this.engineStarted = true
 			sendEvaluateFinished
 			
@@ -142,6 +150,11 @@ transient unit Platform
 		initCacheAndImages
 		openMedia
 			Network.goToFrame Network.frame-1, replay:true
+			
+	object interval
+	private js void startInterval
+		if(Platform_interval) clearInterval(Platform_interval)
+		Platform_interval = setInterval(() => Platform_tick(), 1000/Network_targetFps)
 	
 	// This is called every animation frame
 	private tick()   if mode == Play or mode == Record: Network.animationFrame
@@ -171,7 +184,7 @@ transient unit Platform
 					if movedSinceTouchUp                   
 						locationIndex = 0
 						locations.clear
-						for item -> graphics.items
+						for graphics.items -> item
 							if item.location != null and pixelPos.isInsidePoygon item.poly
 								SourceCodeLocation[] itemLocations
 								item.location.flatten itemLocations

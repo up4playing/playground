@@ -5,11 +5,11 @@ unit fx
 		
 	tick
 		let now = Time.now
-		for i,e <- effects
-			if now >= e.startTime
-				float f = e.duration ? (now - e.startTime)/e.duration : 1
+		for effects <-
+			if now >= .startTime
+				float f = .duration ? (now - .startTime)/.duration : 1
 				if f >= 1: f = 1; effects.removeAt i
-				e.tick f
+				.tick f
 				
 	run: int delay
 		 stored void() code

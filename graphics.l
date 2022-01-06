@@ -112,7 +112,7 @@ transient global unit graphics
 		
 	private drawItems
 		items.sort b.layer - a.layer
-		items.eachBackwards.draw
+		items.each <- .draw
 				
 	private isVisibleFor: int user
 		if(Platform.fastForward) return false
@@ -317,7 +317,7 @@ transient global unit graphics
 		  void() code          // All draw operation within this code block will be clipped
 		let prev = currentClippingPath
 		currentClippingPath = ClippingPath(show)
-		for points: currentClippingPath.points.add position + p
+		for points: currentClippingPath.points.add position + .
 		code()
 		currentClippingPath = prev
 		
@@ -640,8 +640,8 @@ transient global unit graphics
 		}
 		
 	// Draws a line on the screen
-	global js void drawLine: Vector2 start
-		                     Vector2 end 
+	global js void drawLine: Vector2 from
+		                     nocolon Vector2 to 
 		                     Color color = null     // The color of the outline around the line
 		                     width = 0              // The width of the outline around the line
 		                     visibleFor = -1        // Only this user will see the line
@@ -650,10 +650,10 @@ transient global unit graphics
 		if(graphics_isVisibleFor(visibleFor)) {
 			graphics_items.push(new DisplayLine(
 				graphics_totalMatrix,
-				start.x, start.y,
-				end.x - start.x, end.y - start.y,
-				layer, alpha, graphics_currentClippingPath, "Line", start.location,
-				end,
+				from.x, from.y,
+				to.x - from.x, to.y - from.y,
+				layer, alpha, graphics_currentClippingPath, "Line", from.location,
+				to,
 				(color || graphics_currentColor).hex,
 				width || graphics_currentLineWidth
 			))
