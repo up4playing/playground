@@ -266,6 +266,12 @@ transient unit Network
 	const aheadFactor = 2.0
 	const minChange = 1
 	
+	bool isLag100 = false
+	int lag100Count = 0
+	
+	bool isLag200 = false
+	int lag200Count = 0
+	
 	collectStatistics
 		let localPlayer = Input.internalUsers[userId]
 		
@@ -280,6 +286,14 @@ transient unit Network
 			// int actualBufferFrames = Math.round(aheadsMax.average * aheadFactor)
 			// if Math.abs(actualBufferFrames - bufferFrames) >= minChange
 			// 	localPlayer.bufferFrames = bufferFrames = actualBufferFrames
+			
+			let prevIsLag100 = isLag100
+			isLag100 = ahead > 100
+			if isLag100 and !prevIsLag100: lag100Count++
+			
+			let prevIsLag200 = isLag200
+			isLag200 = ahead > 200
+			if isLag200 and !prevIsLag200: lag200Count++
 			
 			// Statistics graph
 			for Input.users
