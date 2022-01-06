@@ -342,8 +342,8 @@ transient unit PeerNetwork
 			if(candidatePair) {
 				let candidate = stats.get(candidatePair.localCandidateId);
 				let ip = candidate.ip || candidate.address
-				PeerNetwork_connectionType = candidate.candidateType
-				Network_log("Connection: "+PeerNetwork_connectionType+" "+ip+" "+candidate)
+				PeerNetwork_connectionType += candidate.candidateType + " "
+				Network_log("#connection: "+candidate.candidateType+" "+ip+" "+ip)
 			} else {
 				window.stats = [...stats.values()]
 				Network_log("Can't access stats"+window.stats)
