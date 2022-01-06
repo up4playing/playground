@@ -73,18 +73,24 @@ class Touch
 	Vector2 referenceStartPosition
 	Vector2 smoothPosition
 	bool isDown
-	Vector2 position
-	Vector2 startPosition
 	bool handled
 	
+	// Calculate position and startPositio dynamically to ensure it is always valid and relative to the current matrix
+	// even if we never check the touch with a Input.onTouch method
+	
+	Vector2 position := referencePosition.getRelativeTo(graphics.localMatrix)
+	Vector2 startPosition := referencePosition.getRelativeTo(graphics.localMatrix)
+	
+	Touch clone := {id, userId, phase, type, referencePosition, referenceStartPosition, smoothPosition, isDown}
 	markAsHandled() handled = true
 	
 transient class WheelEvent
 	NetworkUser user
 	int delta
 	Vector2 referencePosition
-	Vector2 position
 	bool handled
+	
+	Vector2 position := referencePosition.getRelativeTo(graphics.localMatrix)
 	
 	markAsHandled() handled = true
 	
@@ -307,8 +313,6 @@ unit Input
 					InputType inputType = cast(value % 32)
 					
 					if inputType >= TouchDown && inputType <= Wheel
-						// We create a new touch every time to support having the down and up touch in the same frame
-						// with unique phase and handled value
 						if !user: Network.parseLog += " Error: user == null"
 						TouchType type = cast((value shiftRight 5) % 8)
 						int id = (value shiftRight 8) % 128
@@ -317,32 +321,64 @@ unit Input
 						Network.parseLog += " "+id
 						
 						if inputType == TouchDown
-							Touch existingTouch = user.touches.removeFirstWhere.id == id
-							Touch touch = {id, userId, phase:cast inputType, type, referencePosition:touchPos, referenceStartPosition:touchPos, isDown:true}
-							touch.smoothPosition = isSmoothPosition or !existingTouch ? touchPos : existingTouch.referencePosition
-							user.touches.add touch
+							let touch = user.touches.find a.id == id
+							if touch
+								// Update the touch in user.touches
+								touch.phase = cast inputType
+								touch.referencePosition = touchPos
+								touch.referenceStartPosition = touchPos
+								touch.handled = false
+								touch.type = type
+								touch.isDown = true
+								Network.parseLog += " down {id} {touchPos} {type}"
+								if isSmoothPosition: touch.smoothPosition = touchPos
+							else
+								touch = {id, userId, cast inputType, type, touchPos, touchPos, touchPos, isDown:true}
+								user.touches.add touch
+								Network.parseLog += " down(new) {id} {touchPos} {type}"
+								
+							// The down touch is the same object as the one in touches that we keep updating
 							internalUser.downTouches.add touch
-							Network.parseLog += " down {id} {touchPos} {type}"
 						else
 						if inputType == TouchMove
-							Touch existingTouch = user.touches.removeFirstWhere.id == id
-							Touch touch = {id, userId, phase:cast inputType, type, referencePosition:touchPos}
-							touch.smoothPosition = isSmoothPosition or !existingTouch ? touchPos : existingTouch.referencePosition
-							touch.referenceStartPosition = existingTouch ? existingTouch.referenceStartPosition : Vector2.none
-							touch.isDown = existingTouch ? existingTouch.isDown : false							
-							user.touches.add touch
-							internalUser.movingTouches.add touch
+							let touch = user.touches.find a.id == id
+							if touch
+								// Update the touch in user.touches
+								touch.phase = cast inputType
+								touch.referencePosition = touchPos
+								touch.handled = false
+								touch.type = type
+								if isSmoothPosition: touch.smoothPosition = touchPos
+								Network.parseLog += " move {id} {touchPos} {type}"
+							else
+								touch = {id, userId, cast inputType, type, touchPos, referenceStartPosition:Vector2.none, touchPos, isDown:false}
+								user.touches.add touch
+								Network.parseLog += " move(new) {id} {touchPos} {type}"
+	
+							// We clone the move and up touch to support multiple instances in the same frame 
+							// with unique phase and handled flag
+							internalUser.movingTouches.add touch.clone
 							cursor = "auto"
-							Network.parseLog += " move {id} {touchPos} {type}"
 						else
 						if inputType == TouchUp
-							Touch existingTouch = user.touches.removeFirstWhere.id == id
-							Touch touch = {id, userId, phase:cast inputType, type, referencePosition:touchPos, isDown:false}
-							touch.smoothPosition = isSmoothPosition or !existingTouch ? touchPos : existingTouch.referencePosition
-							touch.referenceStartPosition = existingTouch ? existingTouch.referenceStartPosition : Vector2.none
-							user.touches.add touch
-							internalUser.upTouches.add touch
-							Network.parseLog += " up {id} {touchPos} {type}"
+							let touch = user.touches.find a.id == id
+							if touch
+								// Update the touch in user.touches
+								touch.phase = cast inputType
+								touch.referencePosition = touchPos
+								touch.handled = false
+								touch.type = type
+								touch.isDown = false
+								if isSmoothPosition: touch.smoothPosition = touchPos
+								Network.parseLog += " up {id} {touchPos} {type}"
+							else
+								touch = {id, userId, cast inputType, type, touchPos, referenceStartPosition:Vector2.none, touchPos, isDown:false}
+								user.touches.add touch
+								Network.parseLog += " up(new) {id} {touchPos} {type}"
+								
+							// We clone the move and up touch to support multiple instances in the same frame 
+							// with unique phase and handled flag
+							internalUser.upTouches.add touch.clone
 						else
 						if inputType == Wheel
 							let delta = inputs.readInt16
@@ -429,8 +465,7 @@ unit Input
 				for internalUsers[userId].downTouches -> touch
 					if !touch.handled and (user.enableTouch or touch.type != Touch)
 					and touch.referencePosition.isInsidePoygon(poly)
-						touch.position = touch.referencePosition.getRelativeTo(graphics.localMatrix)
-						log "down", touch.position
+						log "down", touch.referencePosition
 						code touch
 						if markAsHandled: touch.handled = true
 		else
@@ -438,8 +473,7 @@ unit Input
 				for internalUsers[user.id].downTouches -> touch
 					if !touch.handled and (user.enableTouch or touch.type != Touch)
 					and touch.referencePosition.isInsidePoygon(poly)
-						touch.position = touch.referencePosition.getRelativeTo(graphics.localMatrix)
-						log "down", touch.position
+						log "down", touch.referencePosition
 						code touch
 						if markAsHandled: touch.handled = true
 			if cursor
@@ -470,8 +504,7 @@ unit Input
 				for internalUsers[userId].downTouches -> touch
 					if !touch.handled and (user.enableTouch or touch.type != Touch) 
 					and touch.referencePosition.isInsidePoygon(poly)
-						touch.position = touch.referencePosition.getRelativeTo(graphics.localMatrix)
-						log "down", touch.position
+						log "down", touch.referencePosition
 						code touch
 						if markAsHandled: touch.handled = true
 		else
@@ -479,8 +512,7 @@ unit Input
 				for internalUsers[user.id].downTouches -> touch
 					if !touch.handled and (user.enableTouch or touch.type != Touch)
 					and touch.referencePosition.isInsidePoygon(poly)
-						touch.position = touch.referencePosition.getRelativeTo(graphics.localMatrix)
-						log "down", touch.position
+						log "down", touch.referencePosition
 						code touch
 						if markAsHandled: touch.handled = true
 			if cursor
@@ -505,8 +537,7 @@ unit Input
 				for internalUsers[userId].downTouches -> touch
 					if !touch.handled  and (user.enableTouch or touch.type != Touch)
 					and (touch.referencePosition distanceTo referencePosition) <= referenceRadius
-						touch.position = touch.referencePosition.getRelativeTo(graphics.localMatrix)
-						log "down", touch.position
+						log "down", touch.referencePosition
 						code touch
 						if markAsHandled: touch.handled = true
 		else
@@ -514,8 +545,7 @@ unit Input
 				for internalUsers[user.id].downTouches -> touch
 					if !touch.handled and (user.enableTouch or touch.type != Touch)
 					and (touch.referencePosition distanceTo referencePosition) <= referenceRadius
-						touch.position = touch.referencePosition.getRelativeTo(graphics.localMatrix)
-						log "down", touch.position
+						log "down", touch.referencePosition
 						code touch
 						if markAsHandled: touch.handled = true
 			if cursor
@@ -541,8 +571,7 @@ unit Input
 				for internalUsers[userId].downTouches -> touch
 					if !touch.handled and (user.enableTouch or touch.type != Touch)
 					and touch.referencePosition.isInsidePoygon(poly)
-						touch.position = touch.referencePosition.getRelativeTo(graphics.localMatrix)
-						log "down", touch.position
+						log "down", touch.referencePosition
 						code touch
 						if markAsHandled: touch.handled = true
 		else
@@ -550,8 +579,7 @@ unit Input
 				for internalUsers[user.id].downTouches -> touch
 					if !touch.handled and (user.enableTouch or touch.type != Touch)
 					and touch.referencePosition.isInsidePoygon(poly)
-						touch.position = touch.referencePosition.getRelativeTo(graphics.localMatrix)
-						log "down", touch.position
+						log "down", touch.referencePosition
 						code touch
 						if markAsHandled: touch.handled = true
 			if cursor
@@ -578,8 +606,7 @@ unit Input
 			let user = internalUsers[userId]
 			for user.upTouches -> touch
 				if !touch.handled && touch.referencePosition.isInsidePoygon(poly)
-					touch.position = touch.referencePosition.getRelativeTo(graphics.localMatrix)
-					log "up", touch.position
+					log "up", touch.referencePosition
 					code touch
 					if markAsHandled: touch.handled = true
 					Snapshot.autoSave
@@ -587,8 +614,7 @@ unit Input
 			for internalUsers -> user
 				for user.upTouches -> touch
 					if !touch.handled && touch.referencePosition.isInsidePoygon(poly)
-						touch.position = touch.referencePosition.getRelativeTo(graphics.localMatrix)
-						log "up", touch.position
+						log "up", touch.referencePosition
 						code touch
 						if markAsHandled: touch.handled = true
 						Snapshot.autoSave
@@ -608,8 +634,7 @@ unit Input
 			let user = internalUsers[userId]
 			for user.upTouches -> touch
 				if !touch.handled && (touch.referencePosition distanceTo referencePosition) <= referenceRadius
-					touch.position = touch.referencePosition.getRelativeTo(graphics.localMatrix)
-					log "up", touch.position
+					log "up", touch.referencePosition
 					code touch
 					if markAsHandled: touch.handled = true
 					Snapshot.autoSave
@@ -617,8 +642,7 @@ unit Input
 			for internalUsers -> user
 				for user.upTouches -> touch
 					if !touch.handled && (touch.referencePosition distanceTo referencePosition) <= referenceRadius
-						touch.position = touch.referencePosition.getRelativeTo(graphics.localMatrix)
-						log "up", touch.position
+						log "up", touch.referencePosition
 						code touch
 						if markAsHandled: touch.handled = true
 						Snapshot.autoSave
@@ -647,15 +671,13 @@ unit Input
 			let user = usersById[userId]
 				for user.touches -> touch
 					if !touch.handled && touch.referencePosition.isInsidePoygon(poly)
-						touch.position = touch.referencePosition.getRelativeTo(graphics.localMatrix)
-						log "over", touch.position
+						log "over", touch.referencePosition
 						code touch
 		else
 			for users -> user
 				for user.touches -> touch
 					if touch.referencePosition.isInsidePoygon(poly)
-						touch.position = touch.referencePosition.getRelativeTo(graphics.localMatrix)
-						log "over", touch.position
+						log "over", touch.referencePosition
 						code touch
 			if cursor
 				let user = internalUsers[Network.userId]
@@ -672,15 +694,13 @@ unit Input
 			let user = usersById[userId]
 				for internalUsers[userId].downTouches -> touch
 					if !touch.handled and (user.enableTouch or touch.type != Touch)
-						touch.position = touch.referencePosition.getRelativeTo(graphics.localMatrix)
-						log "down", touch.position
+						log "down", touch.referencePosition
 						code touch
 		else
 			for users -> user
 				for internalUsers[user.id].downTouches -> touch
 					if !touch.handled and (user.enableTouch or touch.type != Touch)
-						touch.position = touch.referencePosition.getRelativeTo(graphics.localMatrix)
-						log "down", touch.position
+						log "down", touch.referencePosition
 						code touch
 
 	// Executes code when the user touches, even if the touch is already handled
@@ -690,15 +710,13 @@ unit Input
 			let user = usersById[userId]
 				for internalUsers[userId].downTouches -> touch
 					if user.enableTouch or touch.type != Touch
-						touch.position = touch.referencePosition.getRelativeTo(graphics.localMatrix)
-						log "down", touch.position
+						log "down", touch.referencePosition
 						code touch
 		else
 			for users -> user
 				for internalUsers[user.id].downTouches -> touch
 					if user.enableTouch or touch.type != Touch
-						touch.position = touch.referencePosition.getRelativeTo(graphics.localMatrix)
-						log "down", touch.position
+						log "down", touch.referencePosition
 						code touch
 			
 	// Executes code when a touch or click moves
@@ -708,9 +726,7 @@ unit Input
 		let touchId = touch.id, user = internalUsers[touch.userId]
 		for user.movingTouches -> t
 			if t.id == touchId && !t.handled
-				t.position = t.referencePosition.getRelativeTo(graphics.localMatrix)
-				t.startPosition = t.referenceStartPosition.getRelativeTo(graphics.localMatrix)
-				log "move", t.position
+				log "move", t.referencePosition
 				code t
 	
 	// Executes code when a touch or click moves
@@ -720,17 +736,13 @@ unit Input
 			let user = internalUsers[userId]
 			for user.movingTouches -> t
 				if !t.handled
-					t.position = t.referencePosition.getRelativeTo(graphics.localMatrix)
-					t.startPosition = t.referenceStartPosition.getRelativeTo(graphics.localMatrix)
-					log "move", t.position
+					log "move", t.referencePosition
 					code t
 		else
 			for internalUsers -> user
 				for user.movingTouches -> t
 					if !t.handled
-						t.position = t.referencePosition.getRelativeTo(graphics.localMatrix)
-						t.startPosition = t.referenceStartPosition.getRelativeTo(graphics.localMatrix)
-						log "move", t.position
+						log "move", t.referencePosition
 						code t
 					
 	onTouchUp: Touch touch
@@ -740,9 +752,7 @@ unit Input
 		let touchId = touch.id, user = internalUsers[touch.userId]
 		for user.upTouches -> t
 			if t.id == touchId && !t.handled
-				t.position = t.referencePosition.getRelativeTo(graphics.localMatrix)
-				t.startPosition = t.referenceStartPosition.getRelativeTo(graphics.localMatrix)
-				log "up", t.position
+				log "up", t.referencePosition
 				code t
 				Snapshot.autoSave
 				if markAsHandled: t.handled = true
@@ -755,18 +765,14 @@ unit Input
 			let user = internalUsers[userId]
 			for user.upTouches -> t
 				if !t.handled
-					t.position = t.referencePosition.getRelativeTo(graphics.localMatrix)
-					t.startPosition = t.referenceStartPosition.getRelativeTo(graphics.localMatrix)
-					log "up", t.position
+					log "up", t.referencePosition
 					code t
 					Snapshot.autoSave
 		else
 			for internalUsers -> user
 				for user.upTouches -> t
 					if !t.handled
-						t.position = t.referencePosition.getRelativeTo(graphics.localMatrix)
-						t.startPosition = t.referenceStartPosition.getRelativeTo(graphics.localMatrix)
-						log "up", t.position
+						log "up", t.referencePosition
 						code t
 						Snapshot.autoSave
 						
@@ -796,16 +802,14 @@ unit Input
 			let user = internalUsers[userId]
 			for user.wheelEvents -> event
 				if !event.handled && event.referencePosition.isInsidePoygon(poly)
-					event.position = event.referencePosition.getRelativeTo(graphics.localMatrix)
-					log "wheel", event.position
+					log "wheel", event.referencePosition
 					code event
 					if markAsHandled: event.markAsHandled
 		else
 			for internalUsers -> user
 				for user.wheelEvents -> event
 					if !event.handled && event.referencePosition.isInsidePoygon(poly)
-						event.position = event.referencePosition.getRelativeTo(graphics.localMatrix)
-						log "wheel", event.position
+						log "wheel", event.referencePosition
 						code event
 						if markAsHandled: event.markAsHandled
 		if fill: drawRectangle position, size, fill
