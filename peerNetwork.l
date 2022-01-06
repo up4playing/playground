@@ -17,26 +17,32 @@ transient unit PeerNetwork
 	private float localVideoWidth = 440
 	visible string connectionType
 	visible string error
+	bool allowRelay
 	
 	private js object setupPeerConnection: InternalUser user, bool offerByMe
-		let peerConnection = PeerNetwork_peerConnection = new RTCPeerConnection({
+		let options = {
 			// Set the ice transport policy to "relay" to test a turn server
 			// iceTransportPolicy: "relay",
 			iceTransportPolicy: "all",
-			iceServers: [
-			{
+			iceServers: [],
+			// iceCandidatePoolSize: 10,
+		}
+		if(PeerNetwork_allowRelay) {
+			options.iceServers.push({
+				urls: 'turn:81.169.197.127',
+				username: 'app',
+				credential: 'cyancircle'
+			});
+		} else {
+			options.iceServers.push({
 				urls: [
 					'stun:stun1.l.google.com:19302',
 					'stun:stun2.l.google.com:19302',
 				],
-			},{
-				urls: 'turn:81.169.197.127',
-				username: 'app',
-				credential: 'cyancircle'
-			}
-			],
-			// iceCandidatePoolSize: 10,
-		})
+			});
+		}
+		let peerConnection = PeerNetwork_peerConnection = new RTCPeerConnection(options);
+		Network_log("setupPeerConnection allowRelay:"+PeerNetwork_allowRelay+" "+JSON.stringify(options))
 		
 		// Event handlers
 		peerConnection.onconnectionstatechange = e => {

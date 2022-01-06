@@ -573,13 +573,14 @@ transient unit Network
 	int roomId
 	string gameId
 	
-	js void join: string gameId, string roomString, int userId
+	js void join: string gameId, string roomString, int userId, bool allowRelay
 		init()
 		Network_log("Network.join "+location.href)
 		Network_startInLobby = true
 		Network_gameId = gameId
 		Network_roomString = roomString
 		Network_userId = userId
+		PeerNetwork_allowRelay = allowRelay
 		
 		ServerNetwork_isLocalhost = location.href.indexOf("localhost") != -1
 		

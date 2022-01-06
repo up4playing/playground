@@ -233,7 +233,7 @@ class List<T>
 		                        int count // The number of items to remove
 		this.splice(index, count)
 			
-	removeFirstWhere: bool(T a) condition // The condition to check
+	T removeFirstWhere: bool(T a) condition // The condition to check
 		for this
 			if condition(.)
 				removeAt i
