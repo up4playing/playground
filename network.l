@@ -621,11 +621,15 @@ class StatisticsGraphSeries
 	float lastValue := values.length > 0 ? values[values.length-1] : 0
 	
 transient unit statisticsGraph
-	const Vector2 position = {0, 450}
-	const Vector2 size = {880, 180}
+	Vector2 position = {0, 450}
+	Vector2 size = {880, 180}
 	
 	private StatisticsGraphSeries[] series
 	float maxValue
+	
+	setup: Vector2 position, Vector2 size = {880, 180}
+		this.position = position
+		this.size = size
 	
 	add: string name, float value, Color color = White
 		var s = series.find.name == name
