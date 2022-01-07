@@ -40,25 +40,24 @@ class Sound
 // A collection of functions for playing audio
 transient global unit audio
 	const float[] volumeLevels = [0, .01, .02, .04, .08, .16, .32, .64, 1]
-	float volumeLevel = 8
+	float volumeLevel = 4
 	float volume = volumeLevels[volumeLevel]
 	
-	// TEMP!!!
-	// mute: int forUser = -1
-	// 	if forUser == -1 or forUser == Network.userId
-	// 		volumeLevel = 0
-	// 		volume = volumeLevels[volumeLevel]
+	mute: int forUser = -1
+		if forUser == -1 or forUser == Network.userId
+			volumeLevel = 0
+			volume = volumeLevels[volumeLevel]
 	
-	// decreaseVolume: int forUser = -1
-	// 	if forUser == -1 or forUser == Network.userId
-	// 		volumeLevel = Math.limit(volumeLevel-1, min:0, max:volumeLevels.length-1)
-	// 		volume = volumeLevels[volumeLevel]
+	decreaseVolume: int forUser = -1
+		if forUser == -1 or forUser == Network.userId
+			volumeLevel = Math.limit(volumeLevel-1, min:0, max:volumeLevels.length-1)
+			volume = volumeLevels[volumeLevel]
 	
-	// increaseVolume: int forUser = -1
-	// 	if forUser == -1 or forUser == Network.userId
-	// 		volumeLevel = Math.limit(volumeLevel+1, min:0, max:volumeLevels.length-1)
-	// 		volume = volumeLevels[volumeLevel]
-	// 		print volume, forUser
+	increaseVolume: int forUser = -1
+		if forUser == -1 or forUser == Network.userId
+			volumeLevel = Math.limit(volumeLevel+1, min:0, max:volumeLevels.length-1)
+			volume = volumeLevels[volumeLevel]
+			print volume, forUser
 	
 	global playSound: Sound sound, int delay = 0
 		if Time.frame == 0
