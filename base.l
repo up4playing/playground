@@ -188,23 +188,13 @@ class List<T>
 		                       T it,      // The current item of the list we are iterating over
 		                       int i      // The index of the current item of the list we are iterating over
 		                   ) do           // The code to execute for each item in a list
-		for(let i=0, _len=this.length; i<_len; ++i) { let it = this[i]; do()}
+		for(let i=0, _subject=this, _len=_subject.length; i<_len; ++i) { let it = _subject[i]; do()}
 		
-	// Execute code a given number of times or for each item in a list
 	inline js void each <- void(
 		                       T it,      // The current item of the list we are iterating over
 		                       int i      // The index of the current item of the list we are iterating over
 		                   ) do           // The code to execute for each item in a list
-		for(let i=this.length-1; i>=0; --i) { let it = this[i]; do()}
-		
-					
-	// Execute code for each consecutive pair in the list: [a,b,c] -> (a,b) (b,c)
-	inline js void eachPair -> void(
-		                           T it,    // The current item of the list we are iterating over with eachPair
-		                           T next,  // The next item of the list we are iterating over with eachPair
-		                           int i    // The index of the current item of the list we are iterating over with eachPair
-		                       ) do         // The code to execute for each consecutive pair in a list
-		for(let i=0, _len = this.length-1; i<_len; ++i) { let it = this[i], next = this[i+1]; do()}
+		for(let _subject=this, i=_subject.length-1; i>=0; --i) { let it = _subject[i]; do()}
 		
 	// Adds an item to the end of the list
 	inline js void add: T item // The item to add
