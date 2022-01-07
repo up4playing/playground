@@ -24,7 +24,7 @@ class Sound
 		}
 		
 	js void play
-		if(Input_isCertain) {
+		if(Input_isCertain && !(Platform_isDebug && Platform_fastForward)) {
 			this.fadeVolume = 1;
 			this.audio = new Audio();
 			this.audio.src = this.file;
