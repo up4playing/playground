@@ -706,8 +706,10 @@ transient global unit graphics
 		
 	global drawPointer: int userId
 		                Color color = null
-		if userId != Input.localUser.id or Input.showLocalPointer
+		                bool showLocalPointer = Input.showLocalPointer
+		if userId != Input.localUser.id or showLocalPointer
 			let user = Input.usersById[userId]
+			if !color: color = user.color
 			for user.touches
 				drawImage finger, .smoothPosition+{11,32}, frame:.isDown ? 1 : 0, layer:int.maxValue
 				if color

@@ -400,7 +400,9 @@ transient unit Network
 	// This is called in step.
 	internal tick
 		graphics.startFrame
-		drawPointers
+		let isPlayback = Platform.mode == Play or frame+1 < frames
+		if Input.showPointers or isPlayback
+			Input.users.each drawPointer .id, showLocalPointer:isPlayback
 		
 		try
 			if lobby.inLobby
@@ -588,20 +590,6 @@ transient unit Network
 			saveLogs
 			alertShown = true
 			
-	internal drawPointers
-		for Input.users -> user
-			let internalUser = Input.internalUsers[user.id]
-				if (Input.showPointers and (!internalUser.local or Input.showLocalPointer)) or Platform.mode == Play or frame+1 < frames
-					for user.touches
-						if Framework.isVisibleFor .smoothPosition, Input.localUser.id
-							drawImage finger, .smoothPosition+{11,32}, frame:.isDown ? 1 : 0, layer:int.maxValue
-							if user.color
-								if user.color == Black
-									drawRectangle .smoothPosition+{16,80}, size:{26,10}, user.color, layer:int.maxValue, outlineColor:{"a0a0a0"}, outlineWidth:2
-								else
-									drawRectangle .smoothPosition+{16,78}, size:{26,10}, user.color, layer:int.maxValue
-									
-
 class StatisticsGraphSeries
 	string name
 	float[] values
