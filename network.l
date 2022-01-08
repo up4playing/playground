@@ -266,6 +266,12 @@ transient unit Network
 	const aheadFactor = 2.0
 	const minChange = 1
 	
+	bool isLag100 = false
+	int lag100Count = 0
+	
+	bool isLag200 = false
+	int lag200Count = 0
+	
 	collectStatistics
 		if mode == Connected and Input.users.length > 1 and frame > joinFrame + 30
 			ahead = frame - receivedFrames
@@ -278,6 +284,14 @@ transient unit Network
 			// int actualBufferFrames = Math.round(aheadsMax.average * aheadFactor)
 			// if Math.abs(actualBufferFrames - bufferFrames) >= minChange
 			// 	localPlayer.bufferFrames = bufferFrames = actualBufferFrames
+			
+			let prevIsLag100 = isLag100
+			isLag100 = ahead > 100
+			if isLag100 and !prevIsLag100: lag100Count++
+			
+			let prevIsLag200 = isLag200
+			isLag200 = ahead > 200
+			if isLag200 and !prevIsLag200: lag200Count++
 			
 			// Statistics graph
 			for Input.users
@@ -419,7 +433,7 @@ transient unit Network
 		Input.updateCursor
 		if Platform.showDebugInfo
 			statisticsGraph.draw
-			drawText "v{Platform.version} #{frame} {sendInterval}{sendInputsMode==Peer ? "p" : "s"} {aheadsLength} {PeerNetwork.connectionType}", statisticsGraph.position+{statisticsGraph.size.x/2, -statisticsGraph.size.y/2-15}, align:Right, layer:1000001
+			drawText "v{Platform.version} {lag100Count}-{lag200Count} #{frame} {sendInterval}{sendInputsMode==Peer ? "p" : "s"} {aheadsLength} {PeerNetwork.connectionType}{statisticsGraph.maxValue}", statisticsGraph.position+{statisticsGraph.size.x/2, -statisticsGraph.size.y/2-15}, align:Right, layer:1000001, size:12
 		if sendInterval > 10: drawCircle {920, 496}, fillColor:Red
 		drawTime = Time.measure
 			graphics.finishFrame
@@ -597,11 +611,15 @@ class StatisticsGraphSeries
 	float lastValue := values.length > 0 ? values[values.length-1] : 0
 	
 transient unit statisticsGraph
-	const Vector2 position = {0, 450}
-	const Vector2 size = {880, 180}
+	Vector2 position = {0, 450}
+	Vector2 size = {880, 180}
 	
 	private StatisticsGraphSeries[] series
 	float maxValue
+	
+	setup: Vector2 position, Vector2 size = {880, 180}
+		this.position = position
+		this.size = size
 	
 	add: string name, float value, Color color = White
 		var s = series.find.name == name
@@ -615,11 +633,12 @@ transient unit statisticsGraph
 		for series:	for .values: if . > maxValue: maxValue = .
 			
 		Vector2 startPos = position + size/2
-		Vector2 labelPos = position - size/2 - {0,15}
+		Vector2 labelPos = position - size/2 - {0,13}
 		for series -> s
-			drawRectangle labelPos, {16,16}, fillColor:.color, align:Left, layer:1000000
-			drawText "{.lastValue}", labelPos+{18, 0}, align:Left, layer:1000000
-			labelPos.x += 50
+			string text = cast .lastValue
+			drawRectangle labelPos, {8,8}, fillColor:.color, align:Left, layer:1000000
+			drawText text, labelPos+{11, -2}, align:Left, layer:1000000, size:12
+			labelPos.x += graphics.getTextWidth(text, size:12) + 20
 			
 			int len = .values.length
 			float prevY = 0
