@@ -44,17 +44,17 @@ transient global unit audio
 	float volume = volumeLevels[volumeLevel]
 	
 	mute: int forUser = -1
-		if forUser == -1 or forUser == Network.userId
+		if forUser == -1 or forUser == Input.localUser?.id
 			volumeLevel = 0
 			volume = volumeLevels[volumeLevel]
 	
 	decreaseVolume: int forUser = -1
-		if forUser == -1 or forUser == Network.userId
+		if forUser == -1 or forUser == Input.localUser?.id
 			volumeLevel = Math.limit(volumeLevel-1, min:0, max:volumeLevels.length-1)
 			volume = volumeLevels[volumeLevel]
 	
 	increaseVolume: int forUser = -1
-		if forUser == -1 or forUser == Network.userId
+		if forUser == -1 or forUser == Input.localUser?.id
 			volumeLevel = Math.limit(volumeLevel+1, min:0, max:volumeLevels.length-1)
 			volume = volumeLevels[volumeLevel]
 			print volume, forUser
