@@ -3,7 +3,7 @@ enum NetworkMessageType: Join, JoinResponse, Ping, Pong, Signal, Ice, Tick, Swit
 transient unit ServerNetwork
 	private object socket
 	private Buffer sendBuffer
-	private bool isLocalhost
+	bool isLocalhost
 	
 	js void setup
 		let socket
@@ -32,14 +32,14 @@ transient unit ServerNetwork
 		return Input.internalUsers[id] || (Input.internalUsers[id] = {id, local:false})
 		
 	private onConnectedToServer
-		if Network.userId == -1 and !isLocalhost
+		if Input.localUser.id == -1 and !isLocalhost
 			// We were in this room before -> connect with the same userId we had before
 			RoomInfo roomInfo = cast Platform.getLocalStorageObject "room"+Network.roomId
-			Network.userId = roomInfo && roomInfo.time > Network.currentTime - 3600000*24 ? roomInfo.userId : -1
-			Network.log "Reconnect to session", roomInfo, Network.userId
+			Input.localUser.id = roomInfo && roomInfo.time > Network.currentTime - 3600000*24 ? roomInfo.userId : -1
+			Network.log "Reconnect to session", roomInfo, Input.localUser.id
 		
-		Network.log "onConnectedToServer as {Network.userId} {Network.roomId}"
-		sendJoinMessage Network.roomString, Network.userId, version:Platform.version
+		Network.log "onConnectedToServer as {Input.localUser.id} {Network.roomId}"
+		sendJoinMessage Network.roomString, Input.localUser.id, version:Platform.version
 		
 	js int bufferedAmount
 		return ServerNetwork_socket.bufferedAmount 
@@ -83,13 +83,12 @@ transient unit ServerNetwork
 		for userCount
 			let id = buffer.readInt32
 			InternalUser user
-			if id == userId: user = {id, local:true, videoElement:PeerNetwork.localVideoElement}
-			else             user = {id, offerByMe:true}
+			if id == userId: user = Input.localUser
+			else             user = {offerByMe:true}
+			user.id = id
 			Input.internalUsers[id] = user
 			buffer.readBuffer user.inputs
 
-		print Network.roomId, Network.userId, version, seed, userCount, Input.internalUsers
-		
 		if roomId != Network.roomId
 			Network.log "Received room id {roomId}"
 			Platform.pushState null, "{Network.gameId} {roomId}", "/{Network.gameId}/{roomId}"
@@ -98,13 +97,15 @@ transient unit ServerNetwork
 		if version != Platform.version
 			alert "You are using an old version of this application. Please refresh your browser."
 		
-		let localUser = Input.internalUsers[userId]
-		inputsSentPos = localUser.inputs.writePos
-		Network.userId = userId
+		inputsSentPos = Input.localUser.inputs.writePos
+		Input.localUser.id = userId
 		Math.setRandomSeed seed
 		Network.mode = Ping
+		Network.storeUserId
 		for Input.internalUsers
 			if !.local: PeerNetwork.createOffer .
+				
+
 		
 	float nextPingTime, fastestPingPongTime = int.maxValue, lastPingPongTime
 	int pongCount
@@ -146,7 +147,7 @@ transient unit ServerNetwork
 		sendBuffer.reset
 		sendBuffer.writeInt8 cast NetworkMessageType.Signal
 		sendBuffer.writeInt32 receiverId
-		sendBuffer.writeInt32 Network.userId
+		sendBuffer.writeInt32 Input.localUser.id
 		sendBuffer.writeString type
 		sendBuffer.writeString sdp
 		send sendBuffer
@@ -165,7 +166,7 @@ transient unit ServerNetwork
 		sendBuffer.reset
 		sendBuffer.writeInt8 cast NetworkMessageType.Ice
 		sendBuffer.writeInt32 receiverId
-		sendBuffer.writeInt32 Network.userId
+		sendBuffer.writeInt32 Input.localUser.id
 		sendBuffer.writeString candidate
 		send sendBuffer
 		
@@ -180,13 +181,12 @@ transient unit ServerNetwork
 	int inputsSentPos
 		
 	sendInputs: int inputFrame
-		let localPlayer = Input.internalUsers[Network.userId]
-		let inputs = localPlayer.inputs
+		let inputs = Input.localUser.inputs
 		
 		let length = inputs.writePos - inputsSentPos
 		sendBuffer.reset
 		sendBuffer.writeInt8 cast NetworkMessageType.Tick
-		sendBuffer.writeInt32 Network.userId
+		sendBuffer.writeInt32 Input.localUser.id
 		sendBuffer.writeInt32 inputFrame // You got all inputs up to and including this frame
 		sendBuffer.writeInt32 Network.bufferFrames
 		sendBuffer.writeBuffer inputs, inputsSentPos, length
@@ -234,6 +234,6 @@ transient unit ServerNetwork
 	onReload: Buffer buffer
 		let url = buffer.readString
 		let newUserId = buffer.readBool
-		if !newUserId: url += "-{Network.userId}"
+		if !newUserId: url += "-{Input.localUser.id}"
 		Platform.setLocation url
 			

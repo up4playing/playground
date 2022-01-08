@@ -18,7 +18,10 @@ transient class InternalUser
 	Buffer inputs         // The stream of inputs of this user
 	int uncertainReadPos  // The buffer position where we haven't received inputs from all users
 	
-	object videoElement
+	object mediaStream
+	object[] videoElements
+	int videoElementIndex = 0
+	
 	object peerConnection
 	object dataChannel
 	bool offerByMe
@@ -44,10 +47,9 @@ class NetworkUser
 	Color color
 	visible Touch[] touches
 	string textInput
-	Vector2 videoPosition = {}
-	float videoWidth
 	bool enableTouch = true
 	bool isReady
+	
 	internal int[] connectedTo
 
 	internal clearEvents
@@ -98,6 +100,7 @@ transient class WheelEvent
 unit Input
 	transient visible InternalUser[] internalUsers
 	transient visible bool isCertain
+	transient InternalUser localUser
 	
 	NetworkUser[] users
 	internal NetworkUser[] usersById
@@ -107,7 +110,7 @@ unit Input
 	bool showPointers = true
 	
 	string textInput
-		let localUser = users.find.id == Network.userId
+		let localUser = usersById[Input.localUser.id]
 		return localUser.textInput
 	
 	internal init
@@ -140,7 +143,6 @@ unit Input
 			return false;			
 		}
 		window.onkeydown = e => {
-			// app_eventLog.push("onkeydown code:"+e.keyCode+" key:"+e.key+" code:"+e.code)
 			let keyCode = e.keyCode
 			if(window.require && e.key == "t" && e.ctrlKey && e.metaKey && e.shiftKey)
 				require("electron").remote.getCurrentWindow().toggleDevTools()
@@ -167,7 +169,7 @@ unit Input
 				let index = e.key - "0"
 				if(e.altKey)         { Network_save(index); e.preventDefault(); } else
 				if(e.ctrlKey)        { Network_restore(index); e.preventDefault(); } else
-				if(Platform_isDebug) { Network_userId = Math.min(index-1, Input_users.length-1); e.preventDefault(); } 
+				if(Platform_isDebug) { Network_switchUser(index-1); e.preventDefault(); } 
 			}
 			else
 			// Reload
@@ -207,12 +209,12 @@ unit Input
 		if(window._input) window._input.value = ""
 		
 	private setLastTouchMoveIndex: int id, int index
-		let lastMoveIndex = internalUsers[Network.userId].lastTouchMoveIndex
+		let lastMoveIndex = localUser.lastTouchMoveIndex
 		lastMoveIndex.add id
 		lastMoveIndex.add index
 	
 	private getLastTouchMoveIndex: int id
-		let lastMoveIndex = internalUsers[Network.userId].lastTouchMoveIndex
+		let lastMoveIndex = localUser.lastTouchMoveIndex
 		let i = 0
 		while i < lastMoveIndex.length
 			if lastMoveIndex[i] == id: return lastMoveIndex[i+1]
@@ -220,20 +222,18 @@ unit Input
 		return 0
 		
 	private handleTextInput: InputType type, string text
-		if Network.mode == None || Platform.mode != Record || Network.userId == -1: return
-		let user = internalUsers[Network.userId], inputs = user.inputs
-		if !user.collectInputs: return
+		if Network.mode == None || Platform.mode != Record || !localUser || !localUser.collectInputs: return
+		let inputs = localUser.inputs
 		
-		inputs.writeInt32 user.inputFrame
+		inputs.writeInt32 localUser.inputFrame
 		inputs.writeUnsignedInt16 cast type
 		inputs.writeString text
 			
 	private handleKeyEvent: InputType type, int keyCode
-		if Network.mode == None || Platform.mode != Record || Network.userId == -1: return
-		let user = internalUsers[Network.userId], inputs = user.inputs
-		if !user.collectInputs: return
+		if Network.mode == None || Platform.mode != Record || !localUser || !localUser.collectInputs: return
+		let inputs = localUser.inputs
 		
-		inputs.writeInt32 user.inputFrame
+		inputs.writeInt32 localUser.inputFrame
 		inputs.writeUnsignedInt16 cast type
 		inputs.writeInt32 keyCode
 		
@@ -247,9 +247,8 @@ unit Input
 		Vector2 referencePos = pixelPos.getRelativeTo(Platform.baseMatrix)
 		Platform.handleSlide inputType, id, pixelPos, referencePos
 		
-		if Network.mode == None || Platform.mode != Record || Network.userId == -1: return
-		let user = internalUsers[Network.userId], inputs = user.inputs
-		if !user.collectInputs: return
+		if Network.mode == None || Platform.mode != Record || !localUser || !localUser.collectInputs: return
+		let inputs = localUser.inputs
 
 		if inputType == TouchMove
 			int index = getLastTouchMoveIndex id
@@ -257,7 +256,7 @@ unit Input
 				// We already moved the pointer this input frame, so just update the last move
 				inputs.setInt16 index, Math.round(referencePos.x)
 				inputs.setInt16 index+2, Math.round(referencePos.y)
-				Network.writeLog += " #{user.inputFrame} override {id} at {index} to {Math.round(referencePos.x)} {Math.round(referencePos.y)}"
+				Network.writeLog += " #{localUser.inputFrame} override {id} at {index} to {Math.round(referencePos.x)} {Math.round(referencePos.y)}"
 				return
 			else
 				setLastTouchMoveIndex id, inputs.writePos+6
@@ -266,28 +265,27 @@ unit Input
 		int composite = cast(inputType)                                 // inputType: 0 -  31 (5 bit)
 		              + Math.shiftLeft(touchType, 5)                    // touchType: 0 -   7 (3 bit)
 		              + Math.shiftLeft(Math.floor(Math.abs(id))%128, 8) // id:        0 - 127 (7 bit)
-		inputs.writeInt32 user.inputFrame
+		inputs.writeInt32 localUser.inputFrame
 		inputs.writeUnsignedInt16 composite
 		inputs.writeInt16 Math.round(referencePos.x)
 		inputs.writeInt16 Math.round(referencePos.y)
-		Network.writeLog += " #{user.inputFrame} {composite} {Math.round(referencePos.x)} {Math.round(referencePos.y)} ({inputs.readPos}/{inputs.writePos})"
+		Network.writeLog += " #{localUser.inputFrame} {composite} {Math.round(referencePos.x)} {Math.round(referencePos.y)} ({inputs.readPos}/{inputs.writePos})"
 		
 	private handleWheelEvent: float x, float y, float delta
-		if Network.mode == None || Platform.mode != Record || Network.userId == -1: return
-		let user = internalUsers[Network.userId], inputs = user.inputs
-		if !user.collectInputs: return
+		if Network.mode == None || Platform.mode != Record || !localUser || !localUser.collectInputs: return
+		let inputs = localUser.inputs
 		
 		Vector2 referencePos = {x*Platform.pixelRatio, y*Platform.pixelRatio}.getRelativeTo(Platform.baseMatrix)
-		inputs.writeInt32 user.inputFrame
+		inputs.writeInt32 localUser.inputFrame
 		inputs.writeUnsignedInt16 cast InputType.Wheel
 		inputs.writeInt16 Math.round(referencePos.x)
 		inputs.writeInt16 Math.round(referencePos.y)
 		inputs.writeInt16 Math.round(delta)
-		Network.writeLog += " [{user.inputFrame}] wheel {Math.round(referencePos.x)} {Math.round(referencePos.y)} {Math.round(delta)} \{r:{inputs.readPos} w:{inputs.writePos}\}"
+		Network.writeLog += " [{localUser.inputFrame}] wheel {Math.round(referencePos.x)} {Math.round(referencePos.y)} {Math.round(delta)} \{r:{inputs.readPos} w:{inputs.writePos}\}"
 		
-	handleSetState: Buffer buffer
-		let user = internalUsers[Network.userId], inputs = user.inputs
-		inputs.writeInt32 user.inputFrame
+	internal handleSetState: Buffer buffer
+		let inputs = localUser.inputs
+		inputs.writeInt32 localUser.inputFrame
 		inputs.writeUnsignedInt16 cast InputType.SetState
 		inputs.writeBuffer buffer
 		
@@ -317,7 +315,7 @@ unit Input
 						TouchType type = cast((value shiftRight 5) % 8)
 						int id = (value shiftRight 8) % 128
 						Vector2 touchPos = {inputs.readInt16, inputs.readInt16}
-						bool isSmoothPosition = !Network.smoothTouchPosition or isCertain or Network.userId == userId
+						bool isSmoothPosition = !Network.smoothTouchPosition or isCertain or localUser.id == userId
 						Network.parseLog += " "+id
 						
 						if inputType == TouchDown
@@ -477,8 +475,7 @@ unit Input
 						code touch
 						if markAsHandled: touch.handled = true
 			if cursor
-				let internalUser = internalUsers[Network.userId]
-				for internalUser.movingTouches -> touch
+				for localUser.movingTouches -> touch
 					if !touch.handled && touch.referencePosition.isInsidePoygon(poly)
 						this.cursor = cursor
 				
@@ -516,7 +513,7 @@ unit Input
 						code touch
 						if markAsHandled: touch.handled = true
 			if cursor
-				for internalUsers[Network.userId].movingTouches -> touch
+				for localUser.movingTouches -> touch
 					if !touch.handled && touch.referencePosition.isInsidePoygon(poly)
 						this.cursor = cursor
 				
@@ -549,7 +546,7 @@ unit Input
 						code touch
 						if markAsHandled: touch.handled = true
 			if cursor
-				for internalUsers[Network.userId].movingTouches -> touch
+				for localUser.movingTouches -> touch
 					if !touch.handled && (touch.referencePosition distanceTo position) <= radius
 						this.cursor = cursor
 				
@@ -583,7 +580,7 @@ unit Input
 						code touch
 						if markAsHandled: touch.handled = true
 			if cursor
-				for internalUsers[Network.userId].movingTouches -> touch
+				for localUser.movingTouches -> touch
 					if !touch.handled && touch.referencePosition.isInsidePoygon(poly)
 						this.cursor = cursor
 				
@@ -647,8 +644,7 @@ unit Input
 						if markAsHandled: touch.handled = true
 						Snapshot.autoSave
 			if cursor
-				let user = internalUsers[Network.userId]
-				for user.movingTouches -> touch
+				for localUser.movingTouches -> touch
 					if !touch.handled && (touch.referencePosition distanceTo position) <= radius
 						this.cursor = cursor
 				
@@ -680,8 +676,7 @@ unit Input
 						log "over", touch.referencePosition
 						code touch
 			if cursor
-				let user = internalUsers[Network.userId]
-				for user.movingTouches -> touch
+				for localUser.movingTouches -> touch
 					if !touch.handled && touch.referencePosition.isInsidePoygon(poly)
 						this.cursor = cursor
 				

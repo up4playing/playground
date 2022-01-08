@@ -40,7 +40,18 @@ unit Framework
 		// We ensure that we never return 0
 		// because a checksum of 0 is used to indicate that we don't have a checksum for this frame yet
 		if result == 0: return 1.0
-		return result		
+		return result
+			
+transient global unit graphics
+	setUserVideo: int userId = 0, Vector2 pos = {}, float width = 440
+		VideoObject videoObject = cast Framework.objects.find
+			if .type == VideoObject
+				VideoObject v = cast .
+				return v.userId == userId
+			return false
+		if !videoObject: videoObject = VideoObject(userId)
+		videoObject.position = pos
+		videoObject.width = width
 		
 enum Side: Front, Back
 		
@@ -144,6 +155,12 @@ Object ImageObject
 	tick
 		drawImage image, position, scale, alpha, visibleFor
 		
+Object VideoObject
+	int userId
+	float width = 440
+	tick
+		drawVideo userId, position, width
+			
 Object Button
 	Image image                      // The image of the button
     text = ""                        // The text of the button
