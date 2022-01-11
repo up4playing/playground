@@ -258,12 +258,12 @@ Object Piece
 			if !rotateTouch || !rotatedOverThreshold
 				drawButton rotateIcon, position:position+iconPos*{1,-1}*scale, touchMargin:{50,50}
 					rotateTouch = touch
-					rotateOffset = angle - Math.atan2(touch.position - position)
+					rotateOffset = angle - Math.getAngleForVector(touch.position - position)
 					rotatedOverThreshold = false
 				
 			Input.onTouchMove rotateTouch
 				Network.smooth touch.userId
-					angle = targetAngle = Math.atan2(touch.position - position) + rotateOffset
+					angle = targetAngle = Math.getAngleForVector(touch.position - position) + rotateOffset
 				if (touch.position - touch.startPosition).length > 16: rotatedOverThreshold = true
 				
 			Input.onTouchUp rotateTouch

@@ -130,7 +130,7 @@ struct Vector2
 
 	// The angle to another vector in radians
 	angleTo: Vector2 value // The second vector
-		return Math.atan2(value - this)
+		return Math.getAngleForVector(value - this)
 
 	// Interpolates linearly to another vector
 	interpolateTo: Vector2 target  // The target vector to interpolate to
@@ -324,7 +324,7 @@ struct IntVector2
 
 	// The angle to another vector in radians
 	angleTo: IntVector2 value // The second vector
-		return Math.atan2(value - this)
+		return Math.getAngleForVector(value - this)
 		
 	// A float vector that points in the same direction, but has a length of 1
 	normalized
@@ -436,8 +436,12 @@ struct Matrix2D
 
 unit Math
 	// Returns the arctangent of the quotient of the given values
-	inline js float atan2: Vector2 vector
+	inline js float getAngleForVector: Vector2 vector
 		Math.atan2(vector.y, vector.x)
+		
+	inline js Vector2 getVectorForAngle: float angle, float radius = 1
+		new Vector2(Math.cos(angle)*radius, Math.sin(angle)*radius)
+	
 
 // Converts positions within an isomatic grid with the origin in the north
 // Tilt your head slighly to the right to visualize the directions
