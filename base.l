@@ -58,6 +58,9 @@ struct int
 	inline js int incrementAndWrap: int max // When the integer reaches this value, it wraps around to zero
 		(this = (((this+1) % max) + max) % max)
 	
+	inline js int incrementUpTo: int max // When the integer reaches this value, it wraps around to zero
+		(this < max ? this++ : max)
+	
 // A number stored as a double precision 64-bit floating point value
 struct float
 	const inline js float minValue := Number.MIN_VALUE
