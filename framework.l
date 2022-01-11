@@ -1,11 +1,15 @@
 unit Framework
 	Object[] objects
 	Object[] selectedObjects
+	Object[] toBeRemoved
 	
 	clear
-		objects.clear
+		toBeRemoved.addRange objects
 		
 	tick
+		if toBeRemoved
+			toBeRemoved.each.siblings.remove .
+			toBeRemoved.clear
 		fx.tick
 		objects.each <- .tick
 		objects.each.update
@@ -61,7 +65,7 @@ class Object
 	float alpha = 1
 	int visibleFor = -1
 	
-	private siblings := Framework.objects
+	visible siblings := Framework.objects
 	internal checksum := 0
 	internal debugString := "(Object pos:{position.x} {position.y})"
 	internal tick
@@ -71,7 +75,7 @@ class Object
 		siblings.add this
 		
 	remove
-		siblings.remove this
+		Framework.toBeRemoved.add this
 		
 	moveTo: Vector2 pos
 		    int duration = 1000
