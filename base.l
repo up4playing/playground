@@ -960,6 +960,16 @@ global transient unit System
 		                                     ) do         // The code to execute for each triple in a list
 		for(let _subject=subject, _len=_subject.length, i=_len-1; i>=0; --i) { let it = _subject[i], next = _subject[(((i-1)%_len)+_len)%_len], prev = _subject[(i+1)%_len]; do()}
 
+	global inline js void forCentered: T[] subject  // The list to iterate over
+		                               Vector2 center = {0,0}
+		                               Vector2 delta = {100,0}
+		                               -> void(
+		                                   T it,    // The current item of the list we are iterating over with forCentered
+		                                   Vector2 pos,
+		                                   int i    // The index of the current item of the list we are iterating over with forCentered
+		                               ) do         // The code to execute for each item in a list
+		for(let i=0, _subject=subject, _center = center, _delta = delta, _len=_subject.length, _x = _center.x-(_len-1)*_delta.x/2, _y=_center.y-(_len-1)*_delta.y/2; i<_len; ++i, _x += _delta.x, _y += _delta.y) { let it = _subject[i], pos = new Vector2(_x, _y, _center.location || _delta.location ? new SourceCodeLocation(0, 0, null, _center.location, _delta.location) : null); do()}
+		
 	// Prints a message to the console
 	global js void print: logstring text // The text, variables or expressions to print
 		                  SourceCodeLocation location
