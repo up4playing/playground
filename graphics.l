@@ -728,7 +728,7 @@ transient global unit graphics
 		else
 			InternalUser user = Input.internalUsers[userId]
 				let videoElement = user.videoElements[user.videoElementIndex] 
-				               || (user.videoElements[user.videoElementIndex] = PeerNetwork.createVideoElement(user.mediaStream, true))
+				               || (user.videoElements[user.videoElementIndex] = PeerNetwork.createVideoElement(user.mediaStream, user.local))
 				PeerNetwork.updateVideoElement videoElement, pos, width, shape
 				user.videoElementIndex++
 
