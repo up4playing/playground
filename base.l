@@ -414,6 +414,9 @@ class List<T>
 	inline js bool all: bool(T a) predicate // The condition to check
 		this.every(predicate)
 		
+	inline js TValue[] select: TValue(T a) selector
+		this.map(selector)
+		
 	inline js T find: bool(T a) condition // The condition to check
 		this.find(condition)
 		
