@@ -158,8 +158,9 @@ Object ImageObject
 Object VideoObject
 	int userId
 	float width = 440
+	VideoShape shape
 	tick
-		drawVideo userId, position, width
+		drawVideo userId, position, width, shape
 			
 Object Button
 	Image image                      // The image of the button
@@ -170,7 +171,7 @@ Object Button
     scale = 1.0                      // Scale the image by this factor
     fontSize = 18                    // The font size in pixels   
     touchMargin = Vector2(16,16)     // The margin around the button within which it is touchable
-    textOffset = Vector2()
+    textOffset = Vector2(0,-2)
     showTouchArea = false            // Show the area within which the button is touchable
     visibleFor = -1                  // Only this user will see the button
     clickableBy = -1                 // Only this user can click the button

@@ -6,6 +6,8 @@ transient class Signal
 transient class IceMessage
 	int receiverId
 	object iceCandidate
+	
+enum VideoShape: Rectangle, Square, Circle
 
 transient unit PeerNetwork
 	internal enableVideo = true
@@ -293,7 +295,7 @@ transient unit PeerNetwork
 			user.peerConnection.addTrack(track, Input_localUser.mediaStream);
 		
 		user.mediaStream = new MediaStream();
-		user.videoElement = PeerNetwork_createVideoElement(user.mediaStream, /*local*/false)
+		// user.videoElement = PeerNetwork_createVideoElement(user.mediaStream, /*local*/false)
 		
 		user.peerConnection.addEventListener('track', event => {
 			Network_log('Got remote track:', event.streams[0]);
@@ -307,7 +309,7 @@ transient unit PeerNetwork
 	
 	js object createVideoElement: object stream, bool local
 		let el = document.createElement('video')
-		el.style = "position:absolute; top:0px; left:0px; z-index:10000; visibility:hidden; "+(local ? "transform: scaleX(-1)" : "")
+		el.style = "border-radius: 500px; object-fit: cover; position:absolute; top:0px; left:0px; z-index:10000; visibility:hidden; "+(local ? "transform: scaleX(-1)" : "")
 		el.autoplay = true
 		el.playsinline = true
 		el.controls = false
@@ -319,15 +321,17 @@ transient unit PeerNetwork
 	js void removeVideoElement: object videoElement
 		videoElement.remove()
 						
-	js void updateVideoElement: object videoElement, Vector2 pos, float width
+	js void updateVideoElement: object videoElement, Vector2 pos, float width, VideoShape shape = Rectangle
+		let height = shape == 0/*Rectangle*/ ? width*3/4 : width
 		let pixelPos = Input_logicalToPixelPosition(pos)
 		let pixelSizeX = width*graphics_totalMatrix.m0/Platform_pixelRatio
-		let pixelSizeY = (width*3/4)*graphics_totalMatrix.m3/Platform_pixelRatio
+		let pixelSizeY = height*graphics_totalMatrix.m3/Platform_pixelRatio
 		videoElement.style.left = (pixelPos.x-pixelSizeX/2)+"px"
 		videoElement.style.top = (pixelPos.y-pixelSizeY/2)+"px"
 		videoElement.style.width = pixelSizeX+"px"
 		videoElement.style.height = pixelSizeY+"px"
 		videoElement.style.visibility = "visible"
+		videoElement.style.borderRadius = (shape == 2/*Circle*/ ? width/2 : 0)+"px"
 					
 	// private float nextPingTime
 	// private int pongCount

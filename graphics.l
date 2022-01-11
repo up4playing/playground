@@ -698,7 +698,7 @@ transient global unit graphics
 			))
 		}
 		
-	private const Color[] defaultUserColors = [{"398CA9"},{"C01352"},{"FFD166"},{"16C66E"}]
+	const Color[] defaultUserColors = [{"398CA9"},{"C01352"},{"FFD166"},{"16C66E"}]
 	setUserColor: int userId
 		          Color color = null
 		let user = Input.usersById[userId]
@@ -721,16 +721,15 @@ transient global unit graphics
 	global drawVideo: int userId
 		              Vector2 pos = {}
 		              float width = 440
+		              VideoShape shape = Rectangle
 		if Network.mode == Local or !PeerNetwork.enableVideo
 			NetworkUser user = Input.usersById[userId]
-			if user?.color
-				drawRectangle pos, {width-8, width*3/4-8}, outlineColor:user.color, outlineWidth:8, layer:1000000
-			drawImage VideoScreen, pos, scale:width/440, layer:1000000
+			drawImage VideoScreen, pos, scale:width/440, frame:cast shape, layer:1000000
 		else
 			InternalUser user = Input.internalUsers[userId]
 				let videoElement = user.videoElements[user.videoElementIndex] 
 				               || (user.videoElements[user.videoElementIndex] = PeerNetwork.createVideoElement(user.mediaStream, true))
-				PeerNetwork.updateVideoElement videoElement, pos, width
+				PeerNetwork.updateVideoElement videoElement, pos, width, shape
 				user.videoElementIndex++
 
 transient class DisplayItem
