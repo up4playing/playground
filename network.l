@@ -627,6 +627,7 @@ transient unit statisticsGraph
 		if !s
 			series.add s = {name, color:color}
 			series.orderBy.name
+		s.color = color
 		s.values.add value, maxLength:size.x.round
 		
 	draw

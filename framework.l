@@ -161,10 +161,11 @@ Object ImageObject
 		
 Object VideoObject
 	int userId
-	float width = 440
-	VideoShape shape
+	Vector2 size = {440, 330}
+	float radius
 	tick
-		drawVideo userId, position, width, shape
+		if radius: drawVideo userId, position, radius
+		else       drawVideo userId, position, size
 			
 Object Button
 	Image image                      // The image of the button

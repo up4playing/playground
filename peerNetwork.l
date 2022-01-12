@@ -327,17 +327,13 @@ transient unit PeerNetwork
 	js void removeVideoElement: object videoElement
 		videoElement.remove()
 						
-	js void updateVideoElement: object videoElement, Vector2 pos, float width, VideoShape shape = Rectangle
-		let height = shape == 0/*Rectangle*/ ? width*3/4 : width
-		let pixelPos = Input_logicalToPixelPosition(pos)
-		let pixelSizeX = width*graphics_totalMatrix.m0/Platform_pixelRatio
-		let pixelSizeY = height*graphics_totalMatrix.m3/Platform_pixelRatio
-		videoElement.style.left = (pixelPos.x-pixelSizeX/2)+"px"
-		videoElement.style.top = (pixelPos.y-pixelSizeY/2)+"px"
-		videoElement.style.width = pixelSizeX+"px"
-		videoElement.style.height = pixelSizeY+"px"
+	js void updateVideoElement: object videoElement, float x, float y, float sizeX, float sizeY, float radius
+		videoElement.style.left = (x-sizeX/2)+"px"
+		videoElement.style.top = (y-sizeY/2)+"px"
+		videoElement.style.width = sizeX+"px"
+		videoElement.style.height = sizeY+"px"
 		videoElement.style.visibility = "visible"
-		videoElement.style.borderRadius = (shape == 2/*Circle*/ ? width/2 : 0)+"px"
+		videoElement.style.borderRadius = radius+"px"
 					
 	// private float nextPingTime
 	// private int pongCount
