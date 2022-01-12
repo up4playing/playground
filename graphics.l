@@ -112,7 +112,6 @@ transient global unit graphics
 		for Input.internalUsers -> user
 			for user.videoElementIndex to user.videoElements.length
 				PeerNetwork.removeVideoElement user.videoElements[.]
-				Network.log "### Removing video {.} for {user.id}"
 			user.videoElements.setLength user.videoElementIndex
 		
 	private drawItems
@@ -988,10 +987,8 @@ transient DisplayItem DisplayVideo
 	float radius
 	draw
 		InternalUser user = Input.internalUsers[userId]
-			let videoElement = user.videoElements[user.videoElementIndex] 
-			if !videoElement
-				Network.log Time.frame, "{Input.isCertain ? "C ":""}### Creating video {user.videoElementIndex} for {user.id}"
-				videoElement = user.videoElements[user.videoElementIndex] = PeerNetwork.createVideoElement(user.mediaStream, user.local)
+			let videoElement = user.videoElements[user.videoElementIndex]
+			               or (user.videoElements[user.videoElementIndex] = PeerNetwork.createVideoElement(user.mediaStream, user.local))
 			
 			let px = (m0 * x + m2 * y + m4) / Platform.pixelRatio
 			let py = (m1 * x + m3 * y + m5) / Platform.pixelRatio
@@ -999,6 +996,4 @@ transient DisplayItem DisplayVideo
 			let sizeY = h*m3 / Platform.pixelRatio
 			PeerNetwork.updateVideoElement videoElement, px, py, sizeX, sizeY, radius
 			user.videoElementIndex++
-			
-			Network.log Time.frame, "{Input.isCertain ? "C ":""}video {user.videoElementIndex} for {user.id}", px, py
 
