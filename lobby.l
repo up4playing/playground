@@ -1,5 +1,6 @@
 unit lobby
 	bool inLobby = true
+	bool enableFullscreen = true
 	// Vector2[] points
 	
 	tick
@@ -28,7 +29,7 @@ unit lobby
 			for Input.users
 				if !.isReady
 					drawButton Button, "Start", {0, 450}, visibleFor:.id
-						Platform.setFullscreen true forUser:touch.userId
+						if enableFullscreen: Platform.setFullscreen true forUser:touch.userId
 						Input.usersById[touch.userId].isReady = true
 						if Input.users.all.isReady
 							Network.startApp
