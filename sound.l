@@ -34,7 +34,7 @@ class Sound
 		
 	fadeOut: int duration = 3000
 		     int delay = 0
-		fx.add FadeSoundEffect startTime:Time.now+delay, duration, this, startValue:1, delta:-1
+		fx.add FadeSoundEffect startTime:Time.now+delay, duration, smooth:false, this, startValue:1, delta:-1
 		return this
 
 // A collection of functions for playing audio

@@ -55,7 +55,7 @@ transient global unit graphics
 			return false
 		if !videoObject: videoObject = VideoObject(userId)
 		videoObject.position = pos
-		videoObject.width = width
+		videoObject.size = {width, width*3/4}
 		
 enum Side: Front, Back
 		
@@ -80,6 +80,7 @@ class Object
 	moveTo: Vector2 pos
 		    int duration = 1000
 		    int delay = 0
+		    bool smooth = false
 		Vector2 startValue = position
 		let startTime = Time.now + delay
 		
@@ -92,41 +93,46 @@ class Object
 					startTime = moveEffect.startTime + moveEffect.duration
 					
 		let delta = pos - startValue
-		fx.add MoveEffect startTime, duration, this, startValue, delta
+		fx.add MoveEffect startTime, duration, smooth, this, startValue, delta
 		return this
 		
 	moveTo: Vector2 pos
 		    float speed = 1
 		    int delay = 0
+		    bool smooth = false
 		let delta = pos - position
 		let duration = Math.floor(delta.length / speed)
-		fx.add MoveEffect startTime:Time.now+delay, duration, this, startValue:position, delta
+		fx.add MoveEffect startTime:Time.now+delay, duration, smooth, this, startValue:position, delta
 		return this
 		
 	fadeIn: int duration = 1000
 		    int delay = 0
+		    bool smooth = false
 		alpha = 0
-		fx.add FadeEffect startTime:Time.now+delay, duration, this, startValue:0, delta:1
+		fx.add FadeEffect startTime:Time.now+delay, duration, smooth, this, startValue:0, delta:1
 		return this
 		
 	fadeOut: int duration = 1000
 		     int delay = 0
 		     bool removeWhenDone = true
-		fx.add FadeEffect startTime:Time.now+delay, duration, this, startValue:1, delta:-1, removeWhenDone
+		     bool smooth = false
+		fx.add FadeEffect startTime:Time.now+delay, duration, smooth, this, startValue:1, delta:-1, removeWhenDone
 		return this
 		
 	scaleTo: float scale 
 		     int duration = 1000
 		     int delay = 0
-		fx.add ScaleEffect startTime:Time.now+delay, duration, this, startValue:this.scale, delta:scale-this.scale
+		     bool smooth = false
+		fx.add ScaleEffect startTime:Time.now+delay, duration, smooth, this, startValue:this.scale, delta:scale-this.scale
 		return this
 	
 	fadeAndScaleIn: int duration = 200
 		            float startScale = 3
 		            int delay = 0
+		            bool smooth = false
 		alpha = 0
-		fx.add ScaleEffect startTime:Time.now+delay, duration, this, startValue:startScale, delta:1-startScale
-		fx.add FadeEffect  startTime:Time.now+delay, duration, this, startValue:0, delta:1
+		fx.add ScaleEffect startTime:Time.now+delay, duration, smooth, this, startValue:startScale, delta:1-startScale
+		fx.add FadeEffect  startTime:Time.now+delay, duration, smooth, this, startValue:0, delta:1
 		return this
 		
 Object RectangleObject
@@ -144,7 +150,8 @@ Object CircleObject
 	radiusTo: float value
 		      int duration = 200
 		      int delay = 0
-		fx.add RadiusEffect startTime:Time.now+delay, duration, this, startValue:radius, delta:value-radius
+		      bool smooth = false
+		fx.add RadiusEffect startTime:Time.now+delay, duration, smooth, this, startValue:radius, delta:value-radius
 
 Object TextObject
 	string text
