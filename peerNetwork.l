@@ -31,14 +31,13 @@ transient unit PeerNetwork
 				username: 'app',
 				credential: 'cyancircle'
 			});
-		} else {
-			options.iceServers.push({
-				urls: [
-					'stun:stun1.l.google.com:19302',
-					'stun:stun2.l.google.com:19302',
-				],
-			});
 		}
+		options.iceServers.push({
+			urls: [
+				'stun:stun1.l.google.com:19302',
+				'stun:stun2.l.google.com:19302',
+			],
+		});
 		let peerConnection = PeerNetwork_peerConnection = new RTCPeerConnection(options);
 		Network_log("setupPeerConnection allowRelay:"+PeerNetwork_allowRelay+" "+JSON.stringify(options))
 		
