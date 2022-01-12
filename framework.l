@@ -158,8 +158,10 @@ Object TextObject
 	int size
 	Font font
 	Color color = White
+	HorizontalAlignment align = Center // The horizontal alignment of the text
+	VerticalAlignment valign = Middle  // The vertical alignment of the text
 	tick
-		drawText text, position, size*scale, color, font, alpha, visibleFor
+		drawText text, position, size*scale, color, align, valign, font, alpha, visibleFor
 		
 Object ImageObject
 	Image image
