@@ -58,6 +58,9 @@ struct int
 	inline js int incrementAndWrap: int max // When the integer reaches this value, it wraps around to zero
 		(this = (((this+1) % max) + max) % max)
 	
+	inline js int incrementUpTo: int max // When the integer reaches this value, it wraps around to zero
+		(this < max ? this++ : max)
+	
 // A number stored as a double precision 64-bit floating point value
 struct float
 	const inline js float minValue := Number.MIN_VALUE
@@ -77,7 +80,7 @@ struct float
 		(this % value)
 		
 	// Returns true if the floot is not zero
-	inline js bool toBool := this != 0
+	inline js bool toBool := (this != 0)
 	
 	inline js string toString := this.toString()
 		
@@ -410,6 +413,9 @@ class List<T>
 	// Returns true if the given condition is true for all items in the list
 	inline js bool all: bool(T a) predicate // The condition to check
 		this.every(predicate)
+		
+	inline js TValue[] select: TValue(T a) selector
+		this.map(selector)
 		
 	inline js T find: bool(T a) condition // The condition to check
 		this.find(condition)
@@ -954,6 +960,16 @@ global transient unit System
 		                                     ) do         // The code to execute for each triple in a list
 		for(let _subject=subject, _len=_subject.length, i=_len-1; i>=0; --i) { let it = _subject[i], next = _subject[(((i-1)%_len)+_len)%_len], prev = _subject[(i+1)%_len]; do()}
 
+	global inline js void forCentered: T[] subject  // The list to iterate over
+		                               Vector2 center = {0,0}
+		                               Vector2 delta = {100,0}
+		                               -> void(
+		                                   T it,    // The current item of the list we are iterating over with forCentered
+		                                   Vector2 pos,
+		                                   int i    // The index of the current item of the list we are iterating over with forCentered
+		                               ) do         // The code to execute for each item in a list
+		for(let i=0, _subject=subject, _center = center, _delta = delta, _len=_subject.length, _x = _center.x-(_len-1)*_delta.x/2, _y=_center.y-(_len-1)*_delta.y/2; i<_len; ++i, _x += _delta.x, _y += _delta.y) { let it = _subject[i], pos = new Vector2(_x, _y, _center.location || _delta.location ? new SourceCodeLocation(0, 0, null, _center.location, _delta.location) : null); do()}
+		
 	// Prints a message to the console
 	global js void print: logstring text // The text, variables or expressions to print
 		                  SourceCodeLocation location

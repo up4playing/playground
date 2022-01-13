@@ -6,18 +6,20 @@ unit fx
 	tick
 		let now = Time.now
 		for effects <-
-			if now >= .startTime
+			if now >= .startTime and (not .smooth or Input.isCertain)
 				float f = .duration ? (now - .startTime)/.duration : 1
 				if f >= 1: f = 1; effects.removeAt i
 				.tick f
 				
 	run: int delay
+		 bool smooth = false
 		 stored void() code
-		add RunEffect startTime:Time.now+delay, code
+		add RunEffect startTime:Time.now+delay, smooth, code
 				
 class Effect
 	int startTime
 	int duration
+	bool smooth
 	tick: float f
 
 Effect FadeEffect

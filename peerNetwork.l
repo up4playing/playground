@@ -6,15 +6,13 @@ transient class Signal
 transient class IceMessage
 	int receiverId
 	object iceCandidate
+	
+enum VideoShape: Rectangle, Square, Circle
 
 transient unit PeerNetwork
-	private enableVideo = true
-	private enableAudio = true
+	internal enableVideo = true
+	internal enableAudio = true
 	
-	private object localVideoStream
-	visible object localVideoElement
-	private Vector2 localVideoPos
-	private float localVideoWidth = 440
 	visible string connectionType
 	visible string error
 	bool allowRelay
@@ -33,14 +31,13 @@ transient unit PeerNetwork
 				username: 'app',
 				credential: 'cyancircle'
 			});
-		} else {
-			options.iceServers.push({
-				urls: [
-					'stun:stun1.l.google.com:19302',
-					'stun:stun2.l.google.com:19302',
-				],
-			});
 		}
+		options.iceServers.push({
+			urls: [
+				'stun:stun1.l.google.com:19302',
+				'stun:stun2.l.google.com:19302',
+			],
+		});
 		let peerConnection = PeerNetwork_peerConnection = new RTCPeerConnection(options);
 		Network_log("setupPeerConnection allowRelay:"+PeerNetwork_allowRelay+" "+JSON.stringify(options))
 		
@@ -167,9 +164,7 @@ transient unit PeerNetwork
 	sendInputs: int inputFrame
 		for Input.internalUsers -> user
 			if .dataChannel
-				let localPlayer = Input.internalUsers[Network.userId]
-				let inputs = localPlayer.inputs
-				
+				let inputs = Input.localUser.inputs
 				let length = inputs.writePos - user.inputsSentPos
 				sendBuffer.reset
 				sendBuffer.writeInt8 cast NetworkMessageType.Tick
@@ -223,120 +218,6 @@ transient unit PeerNetwork
 			Network_log("onIce failed " + e.message)
 			Network_log(e.stack);
 		}
-		
-	private js void setupLocalVideo: bool enableVideo, bool enableAudio
-		PeerNetwork_enableVideo = enableVideo
-		PeerNetwork_enableAudio = enableAudio
-		if(!enableVideo && !enableAudio) return
-			
-		try {
-			PeerNetwork_localVideoStream = await navigator.mediaDevices.getUserMedia({
-				video: {
-					width: 500,
-					height: 375,
-					// frameRate: 30
-				},
-				// video: true,
-				audio: enableAudio
-			});
-			PeerNetwork_localVideoElement = PeerNetwork_createVideoElement(PeerNetwork_localVideoStream, /*local*/true);
-			// let localUser = Input_internalUsers.find(a => a.local);
-			// if(localUser) localUser.videoElement = PeerNetwork_localVideoElement;
-			Network_log("setupLocalVideo: success")
-		} catch(error) {
-			Network_log(error.message)
-			if(error.name == "NotAllowedError") {
-				PeerNetwork_error = "To play with friends over a video call, you need to allow access to your webcam."
-			} else {
-				PeerNetwork_error = "Can't access webcam. Please make sure it's not used by another application."
-			}
-			Network_errorMessage = error.message
-			throw error
-		}
-			
-	private js void setupRemoteVideo: InternalUser user
-		if(!PeerNetwork_enableVideo && !PeerNetwork_enableAudio) return
-		for(let track of PeerNetwork_localVideoStream.getTracks())
-			user.peerConnection.addTrack(track, PeerNetwork_localVideoStream);
-		
-		// TEMP logging
-		Network_log("creating video for user "+user.id)
-		var remoteStream = new MediaStream();
-		user.videoElement = PeerNetwork_createVideoElement(remoteStream, /*local*/false)
-		
-		user.peerConnection.addEventListener('track', event => {
-			Network_log('Got remote track:', event.streams[0]);
-			event.streams[0].getTracks().forEach(track => {
-				Network_log('Add a track to the remoteStream:', track);
-				remoteStream.addTrack(track);
-			});
-		});
-
-	private js object createVideoElement: object stream, bool local
-		let el = document.createElement('video')
-		el.style = "position:absolute; top:0px; left:0px; z-index:10000; visibility:hidden; "+(local ? "transform: scaleX(-1)" : "")
-		el.autoplay = true
-		el.playsinline = true
-		el.controls = false
-		el.muted = local
-		document.body.appendChild(el)
-		el.srcObject = stream
-		return el
-		
-	js void removeVideoElement: int userId
-		let internalUser = Input_internalUsers[userId];
-		if(internalUser?.videoElement) internalUser.videoElement.remove()
-			
-	private const Color[] defaultUserColors = [{"398CA9"},{"C01352"},{"FFD166"},{"16C66E"}]
-						
-	setUserVideoAndColor: int userId = 0, Vector2 pos = {}, float width = 440, Color color = null
-		let user = Input.usersById[userId]
-			user.videoPosition = pos
-			user.videoWidth = width
-			user.color = color || defaultUserColors[user.index]
-			
-	internal setLocalVideo: Vector2 pos={}, float width = 440
-		// Set position and size of local video before we connected
-		localVideoPos = pos
-		localVideoWidth = width
-		
-	internal js void updateVideoScreen
-		if(Network_mode == 2/*Local*/ || !PeerNetwork_enableVideo) {
-			for(let user of Input_users) {
-				if(user && user.videoWidth) {
-					graphics_drawImage(Image_VideoScreen, user.videoPosition, 0, user.videoWidth/440, -1, 1000000, 1.0)
-				}
-			}
-		} else if(Input_users.length > 0) {
-			// Set position and size of videos
-			for(let user of Input_users) {
-				if(user) {
-					let internetUser = Input_internalUsers[user.id];
-					let el = internetUser?.videoElement
-					if(el) {
-						let pixelPos = Input_logicalToPixelPosition(user.videoPosition)
-						let pixelSizeX = user.videoWidth*graphics_totalMatrix.m0/Platform_pixelRatio
-						let pixelSizeY = (user.videoWidth*3/4)*graphics_totalMatrix.m3/Platform_pixelRatio
-						el.style.left = (pixelPos.x-pixelSizeX/2)+"px"
-						el.style.top = (pixelPos.y-pixelSizeY/2)+"px"
-						el.style.width = pixelSizeX+"px"
-						el.style.height = pixelSizeY+"px"
-						el.style.visibility = "visible"
-					}
-				}
-			}
-		} else if(PeerNetwork_localVideoElement) {
-			// Set position and size of local video before we connected
-			let pixelPos = Input_logicalToPixelPosition(PeerNetwork_localVideoPos)
-			let pixelSizeX = PeerNetwork_localVideoWidth*graphics_totalMatrix.m0/Platform_pixelRatio
-			let pixelSizeY = (PeerNetwork_localVideoWidth*3/4)*graphics_totalMatrix.m3/Platform_pixelRatio
-			PeerNetwork_localVideoElement.style.left = (pixelPos.x-pixelSizeX/2)+"px"
-			PeerNetwork_localVideoElement.style.top = (pixelPos.y-pixelSizeY/2)+"px"
-			PeerNetwork_localVideoElement.style.width = pixelSizeX+"px"
-			PeerNetwork_localVideoElement.style.height = pixelSizeY+"px"
-			PeerNetwork_localVideoElement.style.visibility = "visible"
-		}
-		
 	private onDisconnectFromPeer: InternalUser user
 		Network.log "onDisconnectFromPeer userId:"+user.id
 		
@@ -356,6 +237,8 @@ transient unit PeerNetwork
 			}
 		}, 5000)
 		
+	// --------------------------------------------- Checksum ---------------------------------------------
+	
 	sendChecksum: int checksumFor, float checksum
 		sendBuffer.reset
 		sendBuffer.writeInt8 cast NetworkMessageType.Checksum
@@ -378,6 +261,79 @@ transient unit PeerNetwork
 		if !myChecksum.isApproximately(checksum)
 			Network.onWrongChecksum mine:myChecksum theirs:checksum
 				
+	// --------------------------------------------- Setup video ---------------------------------------------
+	
+	private js void setupLocalVideo: bool enableVideo, bool enableAudio
+		PeerNetwork_enableVideo = enableVideo
+		PeerNetwork_enableAudio = enableAudio
+		if(!enableVideo && !enableAudio) return
+			
+		try {
+			Input_localUser.mediaStream = await navigator.mediaDevices.getUserMedia({
+				video: {
+					width: 500,
+					height: 375,
+				},
+				audio: enableAudio
+			});
+			Network_log("setupLocalVideo: success")
+		} catch(error) {
+			Network_log(error.message)
+			if(error.name == "NotAllowedError") {
+				PeerNetwork_error = "To play with friends over a video call, you need to allow access to your webcam."
+			} else {
+				PeerNetwork_error = "Can't access webcam. Please make sure it's not used by another application."
+			}
+			Network_errorMessage = error.message
+			throw error
+		}
+			
+	private js void setupRemoteVideo: InternalUser user
+		if(!PeerNetwork_enableVideo && !PeerNetwork_enableAudio) return
+			
+		// Add local tracks to peer connection
+		for(let track of Input_localUser.mediaStream.getTracks())
+			user.peerConnection.addTrack(track, Input_localUser.mediaStream);
+		
+		// Create media stream for remote player
+		user.mediaStream = new MediaStream();
+		
+		// Create audio element so we always hear the remote user, event if no video is shown
+		let audioElement = document.createElement('audio')
+		audioElement.srcObject = user.mediaStream
+		document.body.appendChild(audioElement)
+		
+		// Add incoming tracks to media stream for remote player
+		user.peerConnection.addEventListener('track', event => {
+			event.streams[0].getTracks().forEach(track => {
+				user.mediaStream.addTrack(track);
+			});
+		});
+
+	// --------------------------------------------- Video element ---------------------------------------------
+	
+	js object createVideoElement: object stream, bool local
+		let el = document.createElement('video')
+		el.style = "border-radius: 500px; object-fit: cover; position:absolute; top:0px; left:0px; z-index:10000; visibility:hidden; "+(local ? "transform: scaleX(-1)" : "")
+		el.autoplay = true
+		el.playsinline = true
+		el.controls = false
+		el.muted = true
+		el.srcObject = stream
+		document.body.appendChild(el)
+		return el
+		
+	js void removeVideoElement: object videoElement
+		videoElement.remove()
+						
+	js void updateVideoElement: object videoElement, float x, float y, float sizeX, float sizeY, float radius
+		videoElement.style.left = (x-sizeX/2)+"px"
+		videoElement.style.top = (y-sizeY/2)+"px"
+		videoElement.style.width = sizeX+"px"
+		videoElement.style.height = sizeY+"px"
+		videoElement.style.visibility = "visible"
+		videoElement.style.borderRadius = radius+"px"
+					
 	// private float nextPingTime
 	// private int pongCount
 	

@@ -1,11 +1,15 @@
 unit Framework
 	Object[] objects
 	Object[] selectedObjects
+	Object[] toBeRemoved
 	
 	clear
-		objects.clear
+		toBeRemoved.addRange objects
 		
 	tick
+		if toBeRemoved
+			toBeRemoved.each.siblings.remove .
+			toBeRemoved.clear
 		fx.tick
 		objects.each <- .tick
 		objects.each.update
@@ -40,7 +44,18 @@ unit Framework
 		// We ensure that we never return 0
 		// because a checksum of 0 is used to indicate that we don't have a checksum for this frame yet
 		if result == 0: return 1.0
-		return result		
+		return result
+			
+transient global unit graphics
+	setUserVideo: int userId = 0, Vector2 pos = {}, float width = 440
+		VideoObject videoObject = cast Framework.objects.find
+			if .type == VideoObject
+				VideoObject v = cast .
+				return v.userId == userId
+			return false
+		if !videoObject: videoObject = VideoObject(userId)
+		videoObject.position = pos
+		videoObject.size = {width, width*3/4}
 		
 enum Side: Front, Back
 		
@@ -50,7 +65,7 @@ class Object
 	float alpha = 1
 	int visibleFor = -1
 	
-	private siblings := Framework.objects
+	visible siblings := Framework.objects
 	internal checksum := 0
 	internal debugString := "(Object pos:{position.x} {position.y})"
 	internal tick
@@ -60,11 +75,12 @@ class Object
 		siblings.add this
 		
 	remove
-		siblings.remove this
+		Framework.toBeRemoved.add this
 		
 	moveTo: Vector2 pos
 		    int duration = 1000
 		    int delay = 0
+		    bool smooth = false
 		Vector2 startValue = position
 		let startTime = Time.now + delay
 		
@@ -77,41 +93,46 @@ class Object
 					startTime = moveEffect.startTime + moveEffect.duration
 					
 		let delta = pos - startValue
-		fx.add MoveEffect startTime, duration, this, startValue, delta
+		fx.add MoveEffect startTime, duration, smooth, this, startValue, delta
 		return this
 		
 	moveTo: Vector2 pos
 		    float speed = 1
 		    int delay = 0
+		    bool smooth = false
 		let delta = pos - position
 		let duration = Math.floor(delta.length / speed)
-		fx.add MoveEffect startTime:Time.now+delay, duration, this, startValue:position, delta
+		fx.add MoveEffect startTime:Time.now+delay, duration, smooth, this, startValue:position, delta
 		return this
 		
 	fadeIn: int duration = 1000
 		    int delay = 0
+		    bool smooth = false
 		alpha = 0
-		fx.add FadeEffect startTime:Time.now+delay, duration, this, startValue:0, delta:1
+		fx.add FadeEffect startTime:Time.now+delay, duration, smooth, this, startValue:0, delta:1
 		return this
 		
 	fadeOut: int duration = 1000
 		     int delay = 0
 		     bool removeWhenDone = true
-		fx.add FadeEffect startTime:Time.now+delay, duration, this, startValue:1, delta:-1, removeWhenDone
+		     bool smooth = false
+		fx.add FadeEffect startTime:Time.now+delay, duration, smooth, this, startValue:1, delta:-1, removeWhenDone
 		return this
 		
 	scaleTo: float scale 
 		     int duration = 1000
 		     int delay = 0
-		fx.add ScaleEffect startTime:Time.now+delay, duration, this, startValue:this.scale, delta:scale-this.scale
+		     bool smooth = false
+		fx.add ScaleEffect startTime:Time.now+delay, duration, smooth, this, startValue:this.scale, delta:scale-this.scale
 		return this
 	
 	fadeAndScaleIn: int duration = 200
 		            float startScale = 3
 		            int delay = 0
+		            bool smooth = false
 		alpha = 0
-		fx.add ScaleEffect startTime:Time.now+delay, duration, this, startValue:startScale, delta:1-startScale
-		fx.add FadeEffect  startTime:Time.now+delay, duration, this, startValue:0, delta:1
+		fx.add ScaleEffect startTime:Time.now+delay, duration, smooth, this, startValue:startScale, delta:1-startScale
+		fx.add FadeEffect  startTime:Time.now+delay, duration, smooth, this, startValue:0, delta:1
 		return this
 		
 Object RectangleObject
@@ -129,21 +150,32 @@ Object CircleObject
 	radiusTo: float value
 		      int duration = 200
 		      int delay = 0
-		fx.add RadiusEffect startTime:Time.now+delay, duration, this, startValue:radius, delta:value-radius
+		      bool smooth = false
+		fx.add RadiusEffect startTime:Time.now+delay, duration, smooth, this, startValue:radius, delta:value-radius
 
 Object TextObject
 	string text
 	int size
 	Font font
 	Color color = White
+	HorizontalAlignment align = Center // The horizontal alignment of the text
+	VerticalAlignment valign = Middle  // The vertical alignment of the text
 	tick
-		drawText text, position, size*scale, color, font, alpha, visibleFor
+		drawText text, position, size*scale, color, align, valign, font, alpha, visibleFor
 		
 Object ImageObject
 	Image image
 	tick
 		drawImage image, position, scale, alpha, visibleFor
 		
+Object VideoObject
+	int userId
+	Vector2 size = {440, 330}
+	float radius
+	tick
+		if radius: drawVideo userId, position, radius
+		else       drawVideo userId, position, size
+			
 Object Button
 	Image image                      // The image of the button
     text = ""                        // The text of the button
@@ -153,7 +185,7 @@ Object Button
     scale = 1.0                      // Scale the image by this factor
     fontSize = 18                    // The font size in pixels   
     touchMargin = Vector2(16,16)     // The margin around the button within which it is touchable
-    textOffset = Vector2()
+    textOffset = Vector2(0,-2)
     showTouchArea = false            // Show the area within which the button is touchable
     visibleFor = -1                  // Only this user will see the button
     clickableBy = -1                 // Only this user can click the button
@@ -240,12 +272,12 @@ Object Piece
 			if !rotateTouch || !rotatedOverThreshold
 				drawButton rotateIcon, position:position+iconPos*{1,-1}*scale, touchMargin:{50,50}
 					rotateTouch = touch
-					rotateOffset = angle - Math.atan2(touch.position - position)
+					rotateOffset = angle - Math.getAngleForVector(touch.position - position)
 					rotatedOverThreshold = false
 				
 			Input.onTouchMove rotateTouch
 				Network.smooth touch.userId
-					angle = targetAngle = Math.atan2(touch.position - position) + rotateOffset
+					angle = targetAngle = Math.getAngleForVector(touch.position - position) + rotateOffset
 				if (touch.position - touch.startPosition).length > 16: rotatedOverThreshold = true
 				
 			Input.onTouchUp rotateTouch

@@ -1,5 +1,6 @@
 unit lobby
 	bool inLobby = true
+	bool enableFullscreen = true
 	// Vector2[] points
 	
 	tick
@@ -12,12 +13,10 @@ unit lobby
 			float width = count<2 ? 1200.0 : 1920/count, offset = -width*(count-1)/2
 			for Input.users
 				Vector2 pos = {offset+width*.index, -50}
-				PeerNetwork.setUserVideoAndColor(.id, pos, width)
+				drawVideo .id, pos, {width}
 				if .isReady
 					drawImage ThumbsUp, pos+{-74,width*3/8+36}
 					drawText "I'm ready", pos+{30,width*3/8+40}, size:32, font:OpenSans
-		else
-			PeerNetwork.setLocalVideo({0,-50}, 1200)
 			
 		// Place points with a click for testing
 		// Input.onTouchDown: points.add .position.clone
@@ -30,7 +29,7 @@ unit lobby
 			for Input.users
 				if !.isReady
 					drawButton Button, "Start", {0, 450}, visibleFor:.id
-						Platform.setFullscreen true forUser:touch.userId
+						if enableFullscreen: Platform.setFullscreen true forUser:touch.userId
 						Input.usersById[touch.userId].isReady = true
 						if Input.users.all.isReady
 							Network.startApp

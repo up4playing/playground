@@ -34,7 +34,7 @@ class Sound
 		
 	fadeOut: int duration = 3000
 		     int delay = 0
-		fx.add FadeSoundEffect startTime:Time.now+delay, duration, this, startValue:1, delta:-1
+		fx.add FadeSoundEffect startTime:Time.now+delay, duration, smooth:false, this, startValue:1, delta:-1
 		return this
 
 // A collection of functions for playing audio
@@ -44,17 +44,17 @@ transient global unit audio
 	float volume = volumeLevels[volumeLevel]
 	
 	mute: int forUser = -1
-		if forUser == -1 or forUser == Network.userId
+		if forUser == -1 or forUser == Input.localUser?.id
 			volumeLevel = 0
 			volume = volumeLevels[volumeLevel]
 	
 	decreaseVolume: int forUser = -1
-		if forUser == -1 or forUser == Network.userId
+		if forUser == -1 or forUser == Input.localUser?.id
 			volumeLevel = Math.limit(volumeLevel-1, min:0, max:volumeLevels.length-1)
 			volume = volumeLevels[volumeLevel]
 	
 	increaseVolume: int forUser = -1
-		if forUser == -1 or forUser == Network.userId
+		if forUser == -1 or forUser == Input.localUser?.id
 			volumeLevel = Math.limit(volumeLevel+1, min:0, max:volumeLevels.length-1)
 			volume = volumeLevels[volumeLevel]
 			print volume, forUser

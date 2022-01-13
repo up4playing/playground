@@ -96,19 +96,23 @@ transient global unit graphics
 		graphics_reset()
 		if(!Platform_fastForward)
 			Platform_context.clearRect(0,0,Platform_pixelSize.x, Platform_pixelSize.y)
-
-	internal js void reset
-		Matrix2D_assign_Matrix2D(graphics_totalMatrix, Platform_baseMatrix);
-		graphics_localMatrix.clear();
-		graphics_currentlyVisibleFor = -1
-		graphics_items.length = 0
-		if(!Platform_fastForward)
 			Platform_context.textBaseline = "hanging"
+
+	internal reset
+		totalMatrix = Platform.baseMatrix
+		localMatrix.clear
+		currentlyVisibleFor = -1
+		items.clear
 
 	internal finishFrame
 		if(Platform.fastForward) return
+		Input.internalUsers.each.videoElementIndex = 0
 		drawItems
 		drawSafeArea
+		for Input.internalUsers -> user
+			for user.videoElementIndex to user.videoElements.length
+				PeerNetwork.removeVideoElement user.videoElements[.]
+			user.videoElements.setLength user.videoElementIndex
 		
 	private drawItems
 		items.sort b.layer - a.layer
@@ -117,7 +121,7 @@ transient global unit graphics
 	private isVisibleFor: int user
 		if(Platform.fastForward) return false
 		let visibleFor = user != -1 ? user : currentlyVisibleFor
-		return visibleFor == -1 || visibleFor == Network.userId
+		return visibleFor == -1 || visibleFor == Input.localUser.id
 			
 	internal js void drawSafeArea
 		Platform_context.fillStyle = "#404040"
@@ -257,7 +261,7 @@ transient global unit graphics
 		code()
 		currentColor = prev
 		return currentColor
-	private Color currentColor = White
+	private Color currentColor = {"ffffff"}
 	
 	// The default font for all draw operations
 	font
@@ -694,9 +698,18 @@ transient global unit graphics
 			))
 		}
 		
-	global drawPointer: int userId, Color color = null
-		if Network.userId != userId or Input.showLocalPointer
+	const Color[] defaultUserColors = [{"398CA9"},{"C01352"},{"FFD166"},{"16C66E"}]
+	setUserColor: int userId
+		          Color color = null
+		let user = Input.usersById[userId]
+			user.color = color || defaultUserColors[user.index]
+		
+	global drawPointer: int userId
+		                Color color = null
+		                bool showLocalPointer = Input.showLocalPointer
+		if userId != Input.localUser.id or showLocalPointer
 			let user = Input.usersById[userId]
+			if !color: color = user.color
 			for user.touches
 				drawImage finger, .smoothPosition+{11,32}, frame:.isDown ? 1 : 0, layer:int.maxValue
 				if color
@@ -705,7 +718,43 @@ transient global unit graphics
 					else
 						drawRectangle .smoothPosition+{16,78}, size:{26,10}, color, layer:int.maxValue
 
-
+	global drawVideo: int userId
+		              Vector2 position = {}
+		              Vector2 size = {440, 330}
+		              visibleFor = -1      // Only clear the rectangle for this user
+		              implicit layer = 0   // Higher layers are process after lower layers
+		if isVisibleFor(visibleFor)
+			if not size.y: size.y = size.x * 3/4
+			if Network.mode == Local or !PeerNetwork.enableVideo
+				NetworkUser user = Input.usersById[userId]
+				drawImage VideoScreen, position, scale:size.x/440, frame:0, layer:1000000
+			else
+				items.add DisplayVideo(
+					m: totalMatrix,
+					x: position.x, y: position.y,
+					w: size.x,     h: size.y,
+					layer, alpha:1.0, currentClippingPath, "Video",
+					userId, radius:0
+				)
+				
+	global drawVideo: int userId
+		              Vector2 position = {}
+		              float radius = 440
+		              visibleFor = -1      // Only clear the rectangle for this user
+		              implicit layer = 0   // Higher layers are process after lower layers
+		if isVisibleFor(visibleFor)
+			if Network.mode == Local or !PeerNetwork.enableVideo
+				NetworkUser user = Input.usersById[userId]
+				drawImage VideoScreen, position, scale:radius/220, frame:1, layer:1000000
+			else
+				items.add DisplayVideo(
+					m: totalMatrix,
+					x: position.x, y: position.y,
+					w: radius*2,   h: radius*2,
+					layer, alpha:1.0, currentClippingPath, "Video",
+					userId, radius
+				)
+				
 transient class DisplayItem
 	float x, y, w, h
 	int layer
@@ -932,3 +981,19 @@ transient DisplayItem DisplayLine
 		Platform_context.stroke()
 		
 		if(this.clippingPath) this.endClipping()
+			
+transient DisplayItem DisplayVideo
+	int userId
+	float radius
+	draw
+		InternalUser user = Input.internalUsers[userId]
+			let videoElement = user.videoElements[user.videoElementIndex]
+			               or (user.videoElements[user.videoElementIndex] = PeerNetwork.createVideoElement(user.mediaStream, user.local))
+			
+			let px = (m0 * x + m2 * y + m4) / Platform.pixelRatio
+			let py = (m1 * x + m3 * y + m5) / Platform.pixelRatio
+			let sizeX = w*m0 / Platform.pixelRatio
+			let sizeY = h*m3 / Platform.pixelRatio
+			PeerNetwork.updateVideoElement videoElement, px, py, sizeX, sizeY, radius
+			user.videoElementIndex++
+
