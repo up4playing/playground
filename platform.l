@@ -43,9 +43,7 @@ transient unit Platform
 		init()
 		Platform_updateBaseMatrix();
 		
-	private inline js void initCacheAndImages
-		_constCache.length = 0;
-		_constCache.push(null);
+	private inline js void initMedia
 		audio_init();
 		if(window.Image_init) Image_init();
 		if(window.Font_init)  Font_init();
@@ -106,7 +104,7 @@ transient unit Platform
 	
 	// This is called when the application starts for the first time	
 	private start: bool isDebug
-		initCacheAndImages
+		initMedia
 		initPlatform
 		this.engineStarted = false
 		this.isDebug = isDebug
@@ -147,7 +145,7 @@ transient unit Platform
 		
 	// This is called after every code change to replay all inputs with the new code
 	private replay() 
-		initCacheAndImages
+		initMedia
 		openMedia
 			Network.goToFrame Network.frame-1, replay:true
 			
