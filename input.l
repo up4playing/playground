@@ -81,7 +81,7 @@ class Touch
 	// even if we never check the touch with a Input.onTouch method
 	
 	Vector2 position := referencePosition.getRelativeTo(graphics.localMatrix)
-	Vector2 startPosition := referencePosition.getRelativeTo(graphics.localMatrix)
+	Vector2 startPosition := referenceStartPosition.getRelativeTo(graphics.localMatrix)
 	
 	Touch clone := {id, userId, phase, type, referencePosition, referenceStartPosition, smoothPosition, isDown}
 	markAsHandled() handled = true
