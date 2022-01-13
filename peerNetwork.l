@@ -6,6 +6,8 @@ transient class Signal
 transient class IceMessage
 	int receiverId
 	object iceCandidate
+	
+enum VideoShape: Rectangle, Square, Circle
 
 transient unit PeerNetwork
 	internal enableVideo = true
@@ -29,14 +31,13 @@ transient unit PeerNetwork
 				username: 'app',
 				credential: 'cyancircle'
 			});
-		} else {
-			options.iceServers.push({
-				urls: [
-					'stun:stun1.l.google.com:19302',
-					'stun:stun2.l.google.com:19302',
-				],
-			});
 		}
+		options.iceServers.push({
+			urls: [
+				'stun:stun1.l.google.com:19302',
+				'stun:stun2.l.google.com:19302',
+			],
+		});
 		let peerConnection = PeerNetwork_peerConnection = new RTCPeerConnection(options);
 		Network_log("setupPeerConnection allowRelay:"+PeerNetwork_allowRelay+" "+JSON.stringify(options))
 		
@@ -289,16 +290,22 @@ transient unit PeerNetwork
 			
 	private js void setupRemoteVideo: InternalUser user
 		if(!PeerNetwork_enableVideo && !PeerNetwork_enableAudio) return
+			
+		// Add local tracks to peer connection
 		for(let track of Input_localUser.mediaStream.getTracks())
 			user.peerConnection.addTrack(track, Input_localUser.mediaStream);
 		
+		// Create media stream for remote player
 		user.mediaStream = new MediaStream();
-		user.videoElement = PeerNetwork_createVideoElement(user.mediaStream, /*local*/false)
 		
+		// Create audio element so we always hear the remote user, event if no video is shown
+		let audioElement = document.createElement('audio')
+		audioElement.srcObject = user.mediaStream
+		document.body.appendChild(audioElement)
+		
+		// Add incoming tracks to media stream for remote player
 		user.peerConnection.addEventListener('track', event => {
-			Network_log('Got remote track:', event.streams[0]);
 			event.streams[0].getTracks().forEach(track => {
-				Network_log('Add a track to the mediaStream:', track);
 				user.mediaStream.addTrack(track);
 			});
 		});
@@ -307,27 +314,25 @@ transient unit PeerNetwork
 	
 	js object createVideoElement: object stream, bool local
 		let el = document.createElement('video')
-		el.style = "position:absolute; top:0px; left:0px; z-index:10000; visibility:hidden; "+(local ? "transform: scaleX(-1)" : "")
+		el.style = "border-radius: 500px; object-fit: cover; position:absolute; top:0px; left:0px; z-index:10000; visibility:hidden; "+(local ? "transform: scaleX(-1)" : "")
 		el.autoplay = true
 		el.playsinline = true
 		el.controls = false
-		el.muted = local
-		document.body.appendChild(el)
+		el.muted = true
 		el.srcObject = stream
+		document.body.appendChild(el)
 		return el
 		
 	js void removeVideoElement: object videoElement
 		videoElement.remove()
 						
-	js void updateVideoElement: object videoElement, Vector2 pos, float width
-		let pixelPos = Input_logicalToPixelPosition(pos)
-		let pixelSizeX = width*graphics_totalMatrix.m0/Platform_pixelRatio
-		let pixelSizeY = (width*3/4)*graphics_totalMatrix.m3/Platform_pixelRatio
-		videoElement.style.left = (pixelPos.x-pixelSizeX/2)+"px"
-		videoElement.style.top = (pixelPos.y-pixelSizeY/2)+"px"
-		videoElement.style.width = pixelSizeX+"px"
-		videoElement.style.height = pixelSizeY+"px"
+	js void updateVideoElement: object videoElement, float x, float y, float sizeX, float sizeY, float radius
+		videoElement.style.left = (x-sizeX/2)+"px"
+		videoElement.style.top = (y-sizeY/2)+"px"
+		videoElement.style.width = sizeX+"px"
+		videoElement.style.height = sizeY+"px"
 		videoElement.style.visibility = "visible"
+		videoElement.style.borderRadius = radius+"px"
 					
 	// private float nextPingTime
 	// private int pongCount

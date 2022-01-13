@@ -103,10 +103,10 @@ transient global unit graphics
 		localMatrix.clear
 		currentlyVisibleFor = -1
 		items.clear
-		Input.internalUsers.each.videoElementIndex = 0
 
 	internal finishFrame
 		if(Platform.fastForward) return
+		Input.internalUsers.each.videoElementIndex = 0
 		drawItems
 		drawSafeArea
 		for Input.internalUsers -> user
@@ -698,7 +698,7 @@ transient global unit graphics
 			))
 		}
 		
-	private const Color[] defaultUserColors = [{"398CA9"},{"C01352"},{"FFD166"},{"16C66E"}]
+	const Color[] defaultUserColors = [{"398CA9"},{"C01352"},{"FFD166"},{"16C66E"}]
 	setUserColor: int userId
 		          Color color = null
 		let user = Input.usersById[userId]
@@ -719,20 +719,42 @@ transient global unit graphics
 						drawRectangle .smoothPosition+{16,78}, size:{26,10}, color, layer:int.maxValue
 
 	global drawVideo: int userId
-		              Vector2 pos = {}
-		              float width = 440
-		if Network.mode == Local or !PeerNetwork.enableVideo
-			NetworkUser user = Input.usersById[userId]
-			if user?.color
-				drawRectangle pos, {width-8, width*3/4-8}, outlineColor:user.color, outlineWidth:8, layer:1000000
-			drawImage VideoScreen, pos, scale:width/440, layer:1000000
-		else
-			InternalUser user = Input.internalUsers[userId]
-				let videoElement = user.videoElements[user.videoElementIndex] 
-				               || (user.videoElements[user.videoElementIndex] = PeerNetwork.createVideoElement(user.mediaStream, true))
-				PeerNetwork.updateVideoElement videoElement, pos, width
-				user.videoElementIndex++
-
+		              Vector2 position = {}
+		              Vector2 size = {440, 330}
+		              visibleFor = -1      // Only clear the rectangle for this user
+		              implicit layer = 0   // Higher layers are process after lower layers
+		if isVisibleFor(visibleFor)
+			if not size.y: size.y = size.x * 3/4
+			if Network.mode == Local or !PeerNetwork.enableVideo
+				NetworkUser user = Input.usersById[userId]
+				drawImage VideoScreen, position, scale:size.x/440, frame:0, layer:1000000
+			else
+				items.add DisplayVideo(
+					m: totalMatrix,
+					x: position.x, y: position.y,
+					w: size.x,     h: size.y,
+					layer, alpha:1.0, currentClippingPath, "Video",
+					userId, radius:0
+				)
+				
+	global drawVideo: int userId
+		              Vector2 position = {}
+		              float radius = 440
+		              visibleFor = -1      // Only clear the rectangle for this user
+		              implicit layer = 0   // Higher layers are process after lower layers
+		if isVisibleFor(visibleFor)
+			if Network.mode == Local or !PeerNetwork.enableVideo
+				NetworkUser user = Input.usersById[userId]
+				drawImage VideoScreen, position, scale:radius/220, frame:1, layer:1000000
+			else
+				items.add DisplayVideo(
+					m: totalMatrix,
+					x: position.x, y: position.y,
+					w: radius*2,   h: radius*2,
+					layer, alpha:1.0, currentClippingPath, "Video",
+					userId, radius
+				)
+				
 transient class DisplayItem
 	float x, y, w, h
 	int layer
@@ -959,3 +981,19 @@ transient DisplayItem DisplayLine
 		Platform_context.stroke()
 		
 		if(this.clippingPath) this.endClipping()
+			
+transient DisplayItem DisplayVideo
+	int userId
+	float radius
+	draw
+		InternalUser user = Input.internalUsers[userId]
+			let videoElement = user.videoElements[user.videoElementIndex]
+			               or (user.videoElements[user.videoElementIndex] = PeerNetwork.createVideoElement(user.mediaStream, user.local))
+			
+			let px = (m0 * x + m2 * y + m4) / Platform.pixelRatio
+			let py = (m1 * x + m3 * y + m5) / Platform.pixelRatio
+			let sizeX = w*m0 / Platform.pixelRatio
+			let sizeY = h*m3 / Platform.pixelRatio
+			PeerNetwork.updateVideoElement videoElement, px, py, sizeX, sizeY, radius
+			user.videoElementIndex++
+

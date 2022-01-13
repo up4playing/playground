@@ -121,11 +121,11 @@ transient unit Platform
 		let roomId = path[4]
 		
 		// TEMP: Allow relay
-		bool allowRelay = false
-		let relayIndex = roomId.indexOf("r")
-		if relayIndex != -1
-			allowRelay = true
-			roomId = roomId.substring(0,relayIndex)
+		bool allowRelay = true
+		let peerIndex = roomId.indexOf("p")
+		if peerIndex != -1
+			allowRelay = false
+			roomId = roomId.substring(0,peerIndex)
 			
 		// TEMP: For testing, support joining a room with a given userId using the format /gameId/roomId-userId
 		// because starting the app in two browser tabs overwrites the userId in the local storage
