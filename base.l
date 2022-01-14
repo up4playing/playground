@@ -80,7 +80,7 @@ struct float
 		(this % value)
 		
 	// Returns true if the floot is not zero
-	inline js bool toBool := (this != 0)
+	inline js bool toBool := this
 	
 	inline js string toString := this.toString()
 		
