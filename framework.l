@@ -47,7 +47,7 @@ unit Framework
 		return result
 			
 transient global unit graphics
-	setUserVideo: int userId = 0, Vector2 pos = {}, float width = 440
+	setUserVideo: int userId = 0, Vector2 pos = {}, float width = 440, float radius = 0
 		VideoObject videoObject = cast Framework.objects.find
 			if .type == VideoObject
 				VideoObject v = cast .
@@ -55,6 +55,7 @@ transient global unit graphics
 			return false
 		if !videoObject: videoObject = VideoObject(userId)
 		videoObject.position = pos
+		videoObject.radius = radius
 		videoObject.size = {width, width*3/4}
 		
 enum Side: Front, Back
