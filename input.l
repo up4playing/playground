@@ -355,7 +355,7 @@ unit Input
 	
 							// We clone the move and up touch to support multiple instances in the same frame 
 							// with unique phase and handled flag
-							internalUser.movingTouches.add touch.clone
+							internalUser.movingTouches.add touch
 							cursor = "auto"
 						else
 						if inputType == TouchUp
@@ -376,7 +376,7 @@ unit Input
 								
 							// We clone the move and up touch to support multiple instances in the same frame 
 							// with unique phase and handled flag
-							internalUser.upTouches.add touch.clone
+							internalUser.upTouches.add touch
 						else
 						if inputType == Wheel
 							let delta = inputs.readInt16
