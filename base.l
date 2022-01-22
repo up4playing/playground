@@ -60,6 +60,9 @@ struct int
 	
 	inline js int incrementUpTo: int max // When the integer reaches this value, it wraps around to zero
 		(this < max ? this++ : max)
+		
+	// inline js int[] to: int max
+	// 	(() => {let list=[]; for(let _i=this; _i<max; _i++) list.push(_i); return list})()
 	
 // A number stored as a double precision 64-bit floating point value
 struct float
