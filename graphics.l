@@ -34,6 +34,12 @@ class Texture
 	Texture
 		if Platform.engineStarted
 			open
+			
+	js bool ensureIsAvailable()
+		if(!this._htmlImage) {
+			this._htmlImage = _htmlImageCache[this.file]
+		}
+		return this._htmlImage != null
 	
 	js void open
 		if(!window._htmlImageCache) _htmlImageCache = {}
@@ -373,7 +379,7 @@ transient global unit graphics
 		                      visibleFor = -1      // Only this user will see the image
 		                      implicit layer = 0   // Higher layers are drawn in front of lower layers
 		                      alpha = 1.0          // The opacity of the image (0: fully transpart, 1: fully visible)
-		if(!image.texture || !image.texture._htmlImage) return
+		if(!image.texture?.ensureIsAvailable()) return
 		if(graphics_isVisibleFor(visibleFor)) {
 			let f = image.frames[frame % image.frames.length]
 			graphics_items.push(new DisplayImage(
@@ -397,7 +403,7 @@ transient global unit graphics
 		                      visibleFor = -1      // Only this user will see the image
 		                      implicit layer = 0   // Higher layers are drawn in front of lower layers
 		                      alpha = 1.0          // The opacity of the image (0: fully transpart, 1: fully visible)
-		if(!image.texture || !image.texture._htmlImage) return
+		if(!image.texture?.ensureIsAvailable()) return
 		if(graphics_isVisibleFor(visibleFor)) {
 			let f = image.frames[frame % image.frames.length]
 			let matrix = graphics_totalMatrix.clone()
@@ -553,7 +559,7 @@ transient global unit graphics
 		                        visibleFor = -1        // Only this user will see the texture
 		                        implicit int layer = 0 // Higher layers are drawn in front of lower layers
 		                        alpha = 1.0            // The opacity of the texture (0: fully transpart, 1: fully visible)
-		if(!texture || !texture._htmlImage) return
+		if(!texture?.ensureIsAvailable()) return
 		if(graphics_isVisibleFor(visibleFor)) {
 			graphics_items.push(new DisplayImage(
 				graphics_totalMatrix,
@@ -576,7 +582,7 @@ transient global unit graphics
 		                        visibleFor = -1            // Only this user will see the texture
 		                        implicit int layer = 0     // Higher layers are drawn in front of lower layers
 		                        alpha = 1.0                // The opacity of the texture (0: fully transpart, 1: fully visible)
-		if(!texture || !texture._htmlImage) return
+		if(!image.texture?.ensureIsAvailable()) return
 		if(graphics_isVisibleFor(visibleFor)) {
 			graphics_items.push(new DisplayImage(
 				graphics_totalMatrix,
