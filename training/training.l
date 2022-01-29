@@ -44,8 +44,6 @@ unit training
 		let student = students.find.id == studentId
 		let bestStudent = students.withMax.score
 		let highestScore = students.max.score
-		
-		// Find the best 3 students
 		let top3Students = students.orderBy(.score).reverse.take 3
 	
 		// Add student
