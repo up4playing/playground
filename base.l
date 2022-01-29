@@ -432,6 +432,9 @@ class List<T>
 	inline js T[] where: bool(T a) condition // The condition to check
 		this.filter(condition)
 		
+	inline js T[] take: int count
+		this.slice(0, count)
+		
 	// js int sum: int(T a) selector
 	// 	let sum = 0
 	// 	for(let i=0; i<this.length; i++)
