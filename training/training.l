@@ -8,10 +8,10 @@ class Student
     Vector2 position
 	Vector2 size
 	Touch dragTouch
-    // Draw a bird 3 times
+    // Draw a button 3 times
     draw
         for 3
-            drawImage Bird, position
+            drawImage Button, position
 	tick
 		// Drag the student with the mouse
 		Input.onTouchDownWithin position, size
