@@ -36,7 +36,7 @@ transient unit ServerNetwork
 			// We were in this room before -> connect with the same userId we had before
 			RoomInfo roomInfo = cast Platform.getLocalStorageObject "room"+Network.roomId
 			Input.localUser.id = roomInfo && roomInfo.time > Network.currentTime - 3600000*24 ? roomInfo.userId : -1
-			Network.log "Reconnect to session", roomInfo, Input.localUser.id
+			Network.log roomInfo, Input.localUser.id
 		
 		Network.log "onConnectedToServer as {Input.localUser.id} {Network.roomId}"
 		sendJoinMessage Network.roomString, Input.localUser.id, version:Platform.version
