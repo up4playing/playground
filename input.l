@@ -314,7 +314,7 @@ unit Input
 						if !user: Network.parseLog += " Error: user == null"
 						TouchType type = cast((value shiftRight 5) % 8)
 						int id = (value shiftRight 8) % 128
-						Vector2 touchPos = {inputs.readInt16, inputs.readInt16}
+						Vector2 referencePos = {inputs.readInt16, inputs.readInt16}
 						bool isSmoothPosition = !Network.smoothTouchPosition or isCertain or localUser.id == userId
 						Network.parseLog += " "+id
 						
@@ -323,17 +323,17 @@ unit Input
 							if touch
 								// Update the touch in user.touches
 								touch.phase = cast inputType
-								touch.referencePosition = touchPos
-								touch.referenceStartPosition = touchPos
+								touch.referencePosition = referencePos
+								touch.referenceStartPosition = referencePos
 								touch.handled = false
 								touch.type = type
 								touch.isDown = true
-								Network.parseLog += " down {id} {touchPos} {type}"
-								if isSmoothPosition: touch.smoothPosition = touchPos
+								Network.parseLog += " down {id} {referencePos} {type}"
+								if isSmoothPosition: touch.smoothPosition = referencePos
 							else
-								touch = {id, userId, cast inputType, type, touchPos, touchPos, touchPos, isDown:true}
+								touch = {id, userId, cast inputType, type, referencePos, referencePos, referencePos, isDown:true}
 								user.touches.add touch
-								Network.parseLog += " down(new) {id} {touchPos} {type}"
+								Network.parseLog += " down(new) {id} {referencePos} {type}"
 								
 							// The down touch is the same object as the one in touches that we keep updating
 							internalUser.downTouches.add touch
@@ -343,15 +343,15 @@ unit Input
 							if touch
 								// Update the touch in user.touches
 								touch.phase = cast inputType
-								touch.referencePosition = touchPos
+								touch.referencePosition = referencePos
 								touch.handled = false
 								touch.type = type
-								if isSmoothPosition: touch.smoothPosition = touchPos
-								Network.parseLog += " move {id} {touchPos} {type}"
+								if isSmoothPosition: touch.smoothPosition = referencePos
+								Network.parseLog += " move {id} {referencePos} {type}"
 							else
-								touch = {id, userId, cast inputType, type, touchPos, referenceStartPosition:Vector2.none, touchPos, isDown:false}
+								touch = {id, userId, cast inputType, type, referencePos, referenceStartPosition:Vector2.none, referencePos, isDown:false}
 								user.touches.add touch
-								Network.parseLog += " move(new) {id} {touchPos} {type}"
+								Network.parseLog += " move(new) {id} {referencePos} {type}"
 	
 							// We clone the move and up touch to support multiple instances in the same frame 
 							// with unique phase and handled flag
@@ -363,16 +363,16 @@ unit Input
 							if touch
 								// Update the touch in user.touches
 								touch.phase = cast inputType
-								touch.referencePosition = touchPos
+								touch.referencePosition = referencePos
 								touch.handled = false
 								touch.type = type
 								touch.isDown = false
-								if isSmoothPosition: touch.smoothPosition = touchPos
-								Network.parseLog += " up {id} {touchPos} {type}"
+								if isSmoothPosition: touch.smoothPosition = referencePos
+								Network.parseLog += " up {id} {referencePos} {type}"
 							else
-								touch = {id, userId, cast inputType, type, touchPos, referenceStartPosition:Vector2.none, touchPos, isDown:false}
+								touch = {id, userId, cast inputType, type, referencePos, referenceStartPosition:Vector2.none, referencePos, isDown:false}
 								user.touches.add touch
-								Network.parseLog += " up(new) {id} {touchPos} {type}"
+								Network.parseLog += " up(new) {id} {referencePos} {type}"
 								
 							// We clone the move and up touch to support multiple instances in the same frame 
 							// with unique phase and handled flag
@@ -380,7 +380,7 @@ unit Input
 						else
 						if inputType == Wheel
 							let delta = inputs.readInt16
-							internalUser.wheelEvents.add {user, delta, referencePosition:touchPos}
+							internalUser.wheelEvents.add {user, delta, referencePosition:referencePos}
 					else
 					if inputType == TextInput
 						let textInput = inputs.readString
