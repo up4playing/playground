@@ -372,6 +372,30 @@ transient global unit graphics
 		drawImage image, position, frame, scale, visibleFor, layer, alpha
 	
 	// Draws an image on the screen
+	global void drawImage: Image image                  // The image to draw
+		                   Vector2 position = {}        // The position to draw to
+		                   frame = 0                    // The frame of the image to draw
+		                   scale = 1.0                  // Scale the image by this factor
+		                   touchMargin = Vector2(16,16) // The margin around the button within which it is touchable
+		                   showTouchArea = false        // Show the area within which the button is touchable
+		                   visibleFor = -1              // Only this user will see the button
+		                   clickableBy = -1             // Only this user can click the button
+		                   hotkey = 0
+		                   implicit layer = 0           // Higher layers are drawn in front of lower layers
+		                   alpha = 1.0                  // The opacity of the button 0: fully transpart, 1: fully visible)
+		                   void(Touch touch) onClick    // Execute this code when the user clicks the button
+		drawImage image, position, frame, scale, visibleFor, layer, alpha
+			
+		// Handle click
+		// Only visible buttons can be clickable
+		let userId = clickableBy != -1 ? clickableBy : visibleFor != -1 ? visibleFor : currentlyVisibleFor
+		Input.onTouchDownWithin position, image.size*scale + touchMargin, userId, showTouchArea
+			onClick touch
+		if hotkey
+			Input.onKeyDown hotkey, userId
+				onClick null
+		
+	// Draws an image on the screen
 	global js void drawImage: Image image          // The image to draw
 		                      Vector2 position = {} // The position to draw to
 		                      frame = 0            // The frame of the image to draw
@@ -479,8 +503,8 @@ transient global unit graphics
 		                    frame = 0                        // The frame of the image
 		                    scale = 1.0                      // Scale the image by this factor
 		                    fontSize = 18                    // The font size in pixels   
-		                    touchMargin = Vector2(16,16)      // The margin around the button within which it is touchable
 		                    textOffset = Vector2(0,-2)
+		                    touchMargin = Vector2(16,16)     // The margin around the button within which it is touchable
 		                    showTouchArea = false            // Show the area within which the button is touchable
 		                    visibleFor = -1                  // Only this user will see the button
 		                    clickableBy = -1                 // Only this user can click the button
