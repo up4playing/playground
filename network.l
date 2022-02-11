@@ -431,7 +431,7 @@ transient unit Network
 			else
 				Framework.tick
 				tickTime = Time.measure
-					app.tick
+					appTick
 		catch
 			onError error
 			
@@ -445,6 +445,8 @@ transient unit Network
 					drawText "v{Platform.version} {lag100Count}-{lag200Count} #{frame} {sendInterval}{sendInputsMode==Peer ? "p" : "s"} {aheadsLength} {PeerNetwork.connectionType}{statisticsGraph.maxValue}", statisticsGraph.position+{statisticsGraph.size.x/2, -statisticsGraph.size.y/2-15}, align:Right, layer:1000001, size:12
 			drawTime = Time.measure
 				graphics.finishFrame
+				
+	js void appTick() if(window.app_tick) app_tick();
 		
 	// Save a snapshot when we are about to start the frame after the last certain frame 
 	// where we received inputs from all users. This is called at the beginning of a step
