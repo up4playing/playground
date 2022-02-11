@@ -511,7 +511,7 @@ transient global unit graphics
 		                    hotkey = 0
 		                    implicit layer = 0               // Higher layers are drawn in front of lower layers
 		                    alpha = 1.0                      // The opacity of the button 0: fully transpart, 1: fully visible)
-		                    void(Touch touch) onClick = null // Execute this code when the user clicks the button
+		                    void(Touch touch) onClick        // Execute this code when the user clicks the button
 		if isVisibleFor(visibleFor)
 			if text:  drawText text, position+textOffset, fontSize, textColor, visibleFor, layer, alpha
 			if image: drawImage image, position, frame, scale, visibleFor, layer, alpha

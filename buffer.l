@@ -377,3 +377,18 @@ transient struct Buffer
 				
 		this.dataView = newDataView
 		
+	js bool operator ==(Buffer a, Buffer b)
+		if(a.writePos != b.writePos) return false
+		for(var i=0, len=a.writePos; i<len; i++)
+			if(a.dataView.getUint8(i) != b.dataView.getUint8(i))
+				return false
+		return true
+		
+	js bool operator !=(Buffer a, Buffer b)
+		if(a.writePos != b.writePos) return true
+		for(var i=0, len=a.writePos; i<len; i++)
+			if(a.dataView.getUint8(i) != b.dataView.getUint8(i))
+				return true
+		return false
+			
+		

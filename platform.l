@@ -62,7 +62,7 @@ transient unit Platform
 		if(!Platform_isMobile) 
 			window.onresize = e => { 
 				Platform_onResize();
-				if(Platform_mode == 0/*Pause*/ && Platform_engineStarted) Network_tick();
+				if(Platform_mode == 0/*Pause*/ && Platform_engineStarted) Network_tick(/*draw*/true);
 			}
 		
 	private js void onResize
@@ -324,7 +324,7 @@ transient unit Platform
 		alert(message)
 		log(message)
 		
-	inline js void sendErrorToEditor: object error
+	inline js void sendErrorToEditor: Error error
 		if(window.sendErrorToEditor) sendErrorToEditor(error)
 		else                         console.log(error)
 		

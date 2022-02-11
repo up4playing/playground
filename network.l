@@ -62,6 +62,7 @@ transient unit Network
 	bool smoothTouchPosition = true
 	bool simulateConnection = true
 	bool simulateInputsForTesting = false
+	bool simulateRollback = false
 	
 	SendInputsMode sendInputsMode = Peer
 	internal const targetFps = 30
@@ -74,13 +75,15 @@ transient unit Network
 	private int frames              // Total number of frames we have inputs for
 	public int receivedFrames       // We received all remote inputs up to this frame (lowest of all user frames)
 	private int uncertainFrame = -1 // The first frame where we don't have inputs from all players
-	public int certainFrame         // The last frame where we have inputs from all players
+	public int certainFrame = -1    // The last frame where we have inputs from all players
 	private Buffer commonState      // A snapshot taken before the first uncertain frame
 	internal int frameWithNewWatches = 0 // First frame with new watches, do not send watches for frames below this
 	private bool startInLobby       // Connected sessions usually start in the lobby, local sessions start in the app
 	private int joinFrame           // The frame the current user joined
 	public float[] checksums
 	bool alertShown
+	
+	private Buffer debugCommonState // Used in debug mode to validate that serialing twice yields the same result 
 
 	initDatabase
 		IndexedDB.start "up4playing", "snapshot", 5
@@ -108,23 +111,29 @@ transient unit Network
 	startLocal: userCount = 1
 		mode = Local
 		startInLobby = false
-		certainFrame = int.maxValue
+		certainFrame = -1
 		Input.internalUsers.clear
 		Math.setRandomSeed Math.generateRandomSeed
 		initDatabase
 		reset
 		resetStartTime
+		
+		if simulateRollback: saveState
 		animationFrame
 		
 	// Clears all inputs and resets the application to the first frame
 	stop
 		for Input.internalUsers: if .: .inputs.reset; .startInputFrame 0
+		frame = 0
 		frames = 0
 		frameWithNewWatches = 0
+		certainFrame = -1
 		startInLobby = false
+		errorMessage = ""
+		
+		if simulateRollback: saveState
 		audio.pause
 		goToFrame 0
-		errorMessage = ""
 		
 	// Calls init functions, creates the local users, resets read positions and starts app
 	// This is called on startup, after every code change and when going backwards in the timeline
@@ -169,7 +178,7 @@ transient unit Network
 		if targetFrame < frame or replay: reset
 			
 		while frame < targetFrame
-			step fastFordward:true
+			step fastFordward:true, draw:false
 		resetStartTime
 		animationFrame
 
@@ -203,7 +212,9 @@ transient unit Network
 
 		let targetFrame = Math.floor((now - startTime)/targetFrameTime)+1
 		frameMinusBuffer = targetFrame - bufferFrames
-		certainFrame = mode == Connected ? Math.min(frameMinusBuffer, receivedFrames) : int.maxValue
+		if mode == Connected: certainFrame = Math.min(frameMinusBuffer, receivedFrames); else
+		if simulateRollback:  certainFrame = targetFrame - 3; else
+			                  certainFrame = int.maxValue
 
 		if mode == Local && targetFrame > frame + targetFps*2
 			// After a long pause in local mode, we do not want to process all missed frames, so we adjust the start time
@@ -222,9 +233,7 @@ transient unit Network
 				replayState
 			
 			catch 
-				log error
-				errorMessage = error.message
-				Platform.sendErrorToEditor error
+				onError error
 					
 			// Ensure that step is called every targetFrameTime milliseconds
 			while frame < targetFrame
@@ -235,7 +244,7 @@ transient unit Network
 					Vector2 pixelPos = Input.logicalToPixelPosition(pos)
 					Input.handleTouchEvent inputType:TouchMove, x:pixelPos.x, y:pixelPos.y, pointerType:"mouse", pointerId:0, button:0
 
-				step fastFordward:frame < targetFrame-1
+				step fastFordward:false, draw:frame == targetFrame-1
 				collectStatistics
 				lastNetworkFrame = now
 				
@@ -313,9 +322,7 @@ transient unit Network
 			logTable += ",{restoreTime.format(fractionDigits:2)},{replayFrames},{replayTime.format(fractionDigits:2)},{saveTime.format(fractionDigits:2)},{ServerNetwork.lastPingPongTime}"
 			logTable += ",\"{checksumLog.trim}\",\"{eventLog.trim}\",\"{sentLog.trim}\",\"{receivedLog.trim}\",\"{writeLog.trim}\",\"{parseLog.trim}\",\"{touchLog.trim}\"\n"
 		catch
-			print error
-			errorMessage = error.message
-			Platform.sendErrorToEditor error
+			onError error
 			
 		eventLog = ""; sentLog = ""; receivedLog = ""; writeLog = ""; parseLog = ""; touchLog = ""; checksumLog = ""
 		ServerNetwork.lastPingPongTime = 0; tickMessageSize = 0
@@ -354,7 +361,8 @@ transient unit Network
 	// All steps except the very last of an animation frame are fast forwared, which means that nothing is drawn.
 	// The frame is increment at the end of this function. This means that while processing the frame,
 	// frame will point to the current frame. After processing, frame will point to the next frame.
-	private step: bool fastFordward = false // If a step is fast forwarted nothing is drawn
+	private step: bool fastFordward // If we are replaying after a rollack or a code change
+		          bool draw         // We don't draw if we are stepping multiple frames in one animation frame
 		try
 			// Set time
 			Time.now = Math.round(frame * targetFrameTime)
@@ -376,7 +384,7 @@ transient unit Network
 			Physics.step
 			
 			// Tick
-			tick
+			tick draw
 			
 			if mode != Local and (frame % 60)==0 and isCertain
 				// Calculate checksum if we received all inputs for this frame
@@ -395,9 +403,7 @@ transient unit Network
 			
 			
 		catch
-			log error
-			errorMessage = error.message
-			Platform.sendErrorToEditor error
+			onError error
 			
 		// Cleanup
 		Input.internalUsers.each.clearEvent
@@ -412,11 +418,12 @@ transient unit Network
 		
 	// Clear screen, process application tick, and draw all graphics
 	// This is called in step.
-	internal tick
-		graphics.startFrame
-		let isPlayback = Platform.mode == Play or frame+1 < frames
-		if Input.showPointers or isPlayback
-			Input.users.each drawPointer .id, showLocalPointer:isPlayback
+	internal tick: bool draw
+		if draw
+			graphics.startFrame
+			let isPlayback = Platform.mode == Play or frame+1 < frames
+			if Input.showPointers or isPlayback
+				Input.users.each drawPointer .id, showLocalPointer:isPlayback
 		
 		try
 			if lobby.inLobby
@@ -426,35 +433,43 @@ transient unit Network
 				tickTime = Time.measure
 					app.tick
 		catch
-			log error
-			errorMessage = error.message
-			Platform.sendErrorToEditor error
+			onError error
 			
-		Input.updateCursor
-		if Platform.showDebugInfo
-			statisticsGraph.draw
-			drawText "v{Platform.version} {lag100Count}-{lag200Count} #{frame} {sendInterval}{sendInputsMode==Peer ? "p" : "s"} {aheadsLength} {PeerNetwork.connectionType}{statisticsGraph.maxValue}", statisticsGraph.position+{statisticsGraph.size.x/2, -statisticsGraph.size.y/2-15}, align:Right, layer:1000001, size:12
-		if sendInterval > 10: drawCircle {920, 496}, fillColor:Red
-		drawTime = Time.measure
-			graphics.finishFrame
+		if draw
+			Input.updateCursor
+			if Platform.showDebugInfo
+				statisticsGraph.draw
+				if errorMessage
+					drawText errorMessage, statisticsGraph.position+{statisticsGraph.size.x/2, -statisticsGraph.size.y/2-15}, align:Right, layer:1000001, size:12, color:{"ffff00"}
+				else
+					drawText "v{Platform.version} {lag100Count}-{lag200Count} #{frame} {sendInterval}{sendInputsMode==Peer ? "p" : "s"} {aheadsLength} {PeerNetwork.connectionType}{statisticsGraph.maxValue}", statisticsGraph.position+{statisticsGraph.size.x/2, -statisticsGraph.size.y/2-15}, align:Right, layer:1000001, size:12
+			drawTime = Time.measure
+				graphics.finishFrame
 		
 	// Save a snapshot when we are about to start the frame after the last certain frame 
 	// where we received inputs from all users. This is called at the beginning of a step
 	// before we start processing the frame.
 	private saveState
-		if mode != Connected: return
+		if mode != Connected and !simulateRollback: return
 		if frame == certainFrame+1
 			for Input.internalUsers: if .: .uncertainReadPos = .inputs.readPos
 			uncertainFrame = frame
 			saveTime = Time.measure
 				Snapshot.serialize commonState
+				
+			if simulateRollback
+				Snapshot.deserialize commonState
+				Snapshot.serialize debugCommonState
+				if(commonState != debugCommonState)
+					onError {"Serializing state failed"}
+
 			parseLog += " save u:{uncertainFrame} c:{Framework.checksum}"
 	
 	// Replay all frames from the first uncertain frame until the current frame
 	// when we received all inputs for frames that we were uncertain about before.
 	// This is called at the begining of animationFrame before we start stepping.
 	private replayState
-		if mode != Connected or Input.internalUsers.length == 1: return
+		if (mode != Connected and !simulateRollback) or Input.internalUsers.length == 1: return
 		if uncertainFrame != -1 and certainFrame >= uncertainFrame
 			// Restore state
 			for Input.internalUsers: if .: .inputs.readPos = .uncertainReadPos
@@ -474,7 +489,7 @@ transient unit Network
 			replayFrames = targetFrame - frame
 			replayTime = Time.measure
 				while frame < targetFrame
-					step fastFordward:true
+					step fastFordward:true, draw:false
 					
 	log: logstring text
 		eventLog += text + "\n"
@@ -597,14 +612,19 @@ transient unit Network
 		Platform.setLocalStorageObject "room"+roomId, RoomInfo(currentTime, Input.localUser.id)
 		
 	onWrongChecksum: float mine, float theirs
-		errorMessage = "Checksum mismatch"
+		onError {"Out of sync"}
 		checksumLog += " MISMATCH mine:{mine} theirs:{theirs}"
 		
-		if !alertShown
-			alert "Clients out of sync. Please send me the log file that will be created."
+	onError: Error error
+		errorMessage = error.message
+		eventLog += errorMessage + "\n" 
+		Platform.sendErrorToEditor error
+		
+		if !Platform.isDebug and !alertShown
+			alert "{errorMessage}. Please send me the log file that will be created."
 			saveLogs
 			alertShown = true
-			
+
 class StatisticsGraphSeries
 	string name
 	float[] values

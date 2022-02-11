@@ -743,8 +743,9 @@ transient class SourceCodeLocation
 		if left != null:  left.flatten result
 		if right != null: right.flatten result
 	
+js Error
 class Error
-	inline js string message := this.message
+	string message
 	implicit inline js string toString := this.stack
 	
 // A collection of basic system functions
