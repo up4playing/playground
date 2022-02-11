@@ -180,6 +180,11 @@ class string
 	inline js string trim
 		this.trim()
 		
+	js string getExtension
+		let dot = this.lastIndexOf(".")
+		if(dot != -1) return this.substring(dot+1)
+		else          return ""
+		
 	inline js string capitalizeFirstCharacter
 		(this.length > 0 ? this[0].toUpperCase() + this.substring(1) : this)
 		
@@ -1074,13 +1079,11 @@ unit Math
 		Math_randomGenerator = Math.random
 		
 	js string generateRandomSeed:
-		if(typeof crypto != "undefined") {
+		let crypto = !window.crypto && typeof(require) != "undefined" ? require("crypto") : window.crypto
+		if(crypto) {
 			let out = new Uint8Array(256);
 			crypto.getRandomValues(out);
 			return out.toString();
-		}
-		else {
-			return Date.now().toString()
 		}
 		
 	internal string randomSeed
@@ -1093,6 +1096,7 @@ unit Math
 		for targetRandomValueIndex: randomFloat
 	
 	js void setRandomSeed: string seed
+		console.log("setRandomSeed:"+seed)
 		Math_randomSeed = seed
 		Math_randomValues.length = 0
 		Math_randomValueIndex = 0
