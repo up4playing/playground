@@ -1,15 +1,20 @@
 unit Framework
 	Object[] objects
 	Object[] selectedObjects
-	Object[] toBeRemoved
+	
+	// Evaluate: Immediately remove objects to avoid problems in
+	// - graphics.setUserVideo (updating video object that will be removed)
+	// - Coin.transferToNeighbor (the just removed coin is still their in updateNeighbors)
+	// Object[] toBeRemoved
 	
 	clear
-		toBeRemoved.addRange objects
+		// toBeRemoved.addRange objects
+		objects.clear
 		
 	tick
-		if toBeRemoved
-			toBeRemoved.each.siblings.remove .
-			toBeRemoved.clear
+		// if toBeRemoved
+		// 	toBeRemoved.each.siblings.remove .
+		// 	toBeRemoved.clear
 		fx.tick
 		objects.each <- .tick
 		objects.each.update
@@ -76,7 +81,8 @@ class Object
 		siblings.add this
 		
 	remove
-		Framework.toBeRemoved.add this
+		siblings.remove this
+		// Framework.toBeRemoved.add this
 		
 	moveTo: Vector2 pos
 		    int duration = 1000
