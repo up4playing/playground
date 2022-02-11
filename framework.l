@@ -541,6 +541,7 @@ Piece Coin
 	bool isInfinate
 	bool allowZero
 	int valueVisibleFor = -1
+	int userId = -1
 	image = Coin
 	
 	private Coin closestCoin
@@ -552,7 +553,7 @@ Piece Coin
 	
 	tick
 		if movable
-			Input.onTouchDownWithin position, radius:40
+			Input.onTouchDownWithin position, radius:40, userId
 				moveTouch = touch
 				touchOffset = position - touch.position
 				siblings.moveToBack this
@@ -572,7 +573,7 @@ Piece Coin
 				if closestCoinType == Over: mergeWith closestCoin; else
 				if !isBeingMoved:           transferToNeighbor closestCoin
 		else
-			Input.onTouchUpWithin position, radius:64
+			Input.onTouchUpWithin position, radius:64, userId
 				transferToNeighbor closestCoin
 			
 		if isInfinate or value or allowZero
@@ -642,7 +643,7 @@ Piece Coin
 		Coin neighbor = coin
 		if !neighbor
 			if value <= amount and !isInfinate: return
-			neighbor = {position:position+{45,58}, image:image}
+			neighbor = {position:position+{45,58}, image:image, userId}
 			if board: board.add neighbor
 		value -= amount
 		neighbor.value += amount
