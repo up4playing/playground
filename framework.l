@@ -1,7 +1,7 @@
 unit Framework
 	Object[] objects
 	Object[] selectedObjects
-	Object[] toBeRemoved
+	internal Object[] toBeRemoved
 	
 	clear
 		toBeRemoved.addRange objects
@@ -53,7 +53,8 @@ transient global unit graphics
 				VideoObject v = cast .
 				return v.userId == userId
 			return false
-		if !videoObject: videoObject = VideoObject(userId)
+		if !videoObject or Framework.toBeRemoved.contains(videoObject)
+			videoObject = VideoObject(userId)
 		videoObject.position = pos
 		videoObject.radius = radius
 		videoObject.size = {width, width*3/4}
