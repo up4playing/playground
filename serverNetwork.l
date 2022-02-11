@@ -105,7 +105,7 @@ transient unit ServerNetwork
 		for Input.internalUsers
 			if !.local: PeerNetwork.createOffer .
 				
-
+		Network.log "Joining room {roomId} as user {userId}", seed
 		
 	float nextPingTime, fastestPingPongTime = int.maxValue, lastPingPongTime
 	int pongCount

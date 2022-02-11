@@ -1096,7 +1096,6 @@ unit Math
 		for targetRandomValueIndex: randomFloat
 	
 	js void setRandomSeed: string seed
-		console.log("setRandomSeed:"+seed)
 		Math_randomSeed = seed
 		Math_randomValues.length = 0
 		Math_randomValueIndex = 0
