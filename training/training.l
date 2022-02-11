@@ -6,13 +6,18 @@ class Student
     int score
 	bool alive
     Vector2 position
-	Vector2 size
+	IntVector2 size
 	Touch dragTouch
     // Draw a button 3 times
     draw
         for 3
             drawImage Button, position
 	tick
+		for size.x -> x
+			for size.y -> y
+				IntVector2 pos = {x,y}
+				print pos
+		
 		// Drag the student with the mouse
 		Input.onTouchDownWithin position, size
 			dragTouch = .
@@ -46,6 +51,7 @@ unit training
 		let highestScore = students.max.score
 		let top3Students = students.orderBy(.score).reverse.take 3
 	
+		students = []
 		// Add student
 		students.add {studentName:"John", score:0}
 	
