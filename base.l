@@ -131,6 +131,7 @@ struct float
 		(Math.abs((((this % Math_TwoPI) + Math_TwoPI) % Math_TwoPI) - (((value % Math_TwoPI) + Math_TwoPI) % Math_TwoPI)) < epsilon)
 		
 // A sequence of characters
+js String
 class string
 	// Returns the number of characters in the string
 	inline js int length := this.length
@@ -188,6 +189,7 @@ enum bool: false, true
 enum SortingOrder: Ascending, Descending
 	
 // A data container that grows in size as needed
+js Array
 class List<T>
 	// Execute code for each item in a list
 	inline js void each -> void(
@@ -683,6 +685,7 @@ class List<T>
 		return count
 		
 // A data container that stores key-value pairs
+js Map
 class Map<T>
 
 // Specifies that a function doesn't return a value
