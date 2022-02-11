@@ -325,9 +325,12 @@ unit Input
 								touch.phase = cast inputType
 								touch.referencePosition = referencePos
 								touch.referenceStartPosition = referencePos
-								touch.handled = false
 								touch.type = type
 								touch.isDown = true
+								// When we touch down, we start a new touch and reset the "handled" flag
+								// This flag is preserved throughout "TouchMove" and "TouchUp", so if we mark the touch
+								// as handled at any point, the flags stays set to "true" until we touch down again
+								touch.handled = false
 								Network.parseLog += " down {id} {referencePos} {type}"
 								if isSmoothPosition: touch.smoothPosition = referencePos
 							else
@@ -335,7 +338,6 @@ unit Input
 								user.touches.add touch
 								Network.parseLog += " down(new) {id} {referencePos} {type}"
 								
-							// The down touch is the same object as the one in touches that we keep updating
 							internalUser.downTouches.add touch
 						else
 						if inputType == TouchMove
@@ -344,7 +346,6 @@ unit Input
 								// Update the touch in user.touches
 								touch.phase = cast inputType
 								touch.referencePosition = referencePos
-								touch.handled = false
 								touch.type = type
 								if isSmoothPosition: touch.smoothPosition = referencePos
 								Network.parseLog += " move {id} {referencePos} {type}"
@@ -353,8 +354,6 @@ unit Input
 								user.touches.add touch
 								Network.parseLog += " move(new) {id} {referencePos} {type}"
 	
-							// We clone the move and up touch to support multiple instances in the same frame 
-							// with unique phase and handled flag
 							internalUser.movingTouches.add touch
 							cursor = "auto"
 						else
@@ -364,7 +363,6 @@ unit Input
 								// Update the touch in user.touches
 								touch.phase = cast inputType
 								touch.referencePosition = referencePos
-								touch.handled = false
 								touch.type = type
 								touch.isDown = false
 								if isSmoothPosition: touch.smoothPosition = referencePos
@@ -374,8 +372,6 @@ unit Input
 								user.touches.add touch
 								Network.parseLog += " up(new) {id} {referencePos} {type}"
 								
-							// We clone the move and up touch to support multiple instances in the same frame 
-							// with unique phase and handled flag
 							internalUser.upTouches.add touch
 						else
 						if inputType == Wheel
@@ -719,10 +715,10 @@ unit Input
 		         void(Touch touch) code // The code to execute for each touch or click
 		if !touch: return
 		let touchId = touch.id, user = internalUsers[touch.userId]
-		for user.movingTouches -> t
-			if t.id == touchId && !t.handled
-				log "move", t.referencePosition
-				code t
+		for user.movingTouches
+			if .id == touchId
+				log "move", .referencePosition
+				code .
 	
 	// Executes code when a touch or click moves
 	onTouchMove: int userId = -1        // Only consider touches or clicks from this user
@@ -745,12 +741,12 @@ unit Input
 		       void(Touch touch) code    // The code to execute for each touch or click
 		if !touch: return
 		let touchId = touch.id, user = internalUsers[touch.userId]
-		for user.upTouches -> t
-			if t.id == touchId && !t.handled
-				log "up", t.referencePosition
-				code t
+		for user.upTouches
+			if .id == touchId
+				log "up", .referencePosition
+				code .
 				Snapshot.autoSave
-				if markAsHandled: t.handled = true
+				if markAsHandled: .handled = true
 				
 	// Executes code when a touch or click ends
 	onTouchUp: int userId = -1
