@@ -117,21 +117,15 @@ transient unit Network
 		initDatabase
 		reset
 		resetStartTime
-		
-		if simulateRollback: saveState
 		animationFrame
 		
 	// Clears all inputs and resets the application to the first frame
 	stop
 		for Input.internalUsers: if .: .inputs.reset; .startInputFrame 0
-		frame = 0
 		frames = 0
 		frameWithNewWatches = 0
-		certainFrame = -1
 		startInLobby = false
 		errorMessage = ""
-		
-		if simulateRollback: saveState
 		audio.pause
 		goToFrame 0
 		
@@ -166,6 +160,8 @@ transient unit Network
 		frame = 0
 		lobby.inLobby = startInLobby
 		if !startInLobby: startApp
+			
+		if simulateRollback: saveState
 	
 	// Steps forward when going to a frame in the future
 	// or replays from the beginning when going to a frame in the past
