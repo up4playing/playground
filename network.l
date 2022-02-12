@@ -158,6 +158,7 @@ transient unit Network
 			
 		Math.randomValueIndex = 0
 		frame = 0
+		certainFrame = -1
 		lobby.inLobby = startInLobby
 		if !startInLobby: startApp
 			
