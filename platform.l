@@ -160,7 +160,7 @@ transient unit Platform
 	private enterSlideMode(PlatformMode mode) this.mode = mode; sendMode
 	
 	internal stop()    mode = Pause;  Network.stop; sendMode
-	internal pause()   mode = Pause;  audio.pause(); sendMode
+	internal pause()   mode = Pause;  audio.stop(); sendMode
 	internal record()  Network.resetStartTimeIfNeeded; mode = Record; sendMode
 	internal play()    Network.resetStartTimeIfNeeded; mode = Play;   sendMode
 	
