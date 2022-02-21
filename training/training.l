@@ -62,7 +62,7 @@ unit training
 		// Create a list with all even numbers between 10 and 20
 		int[] list
 		for 10 to 20
-		if . % 2 == 0: list.add .
+			if . % 2 == 0: list.add .
 		
 		// Iterate the list in revers order and remove all values smaller than 15
 		for list <-
@@ -74,12 +74,12 @@ unit training
 		
 		// If the student clicks, restart the game
 		Input.onTouchDown
-		restartGame
+			restartGame
 		
 		// Print the average score of all students
 		let totalScore = 0
 		for students
-		totalScore += .score
+			totalScore += .score
 		let averageScore = totalScore / students.length
 		print "Average score of all students: {averageScore}"
 		
@@ -96,4 +96,5 @@ unit training
 		// Get all students that are still alive and sort them by score
 		let aliveStudents = students.where.alive
 		aliveStudents.orderBy.score
+
 
