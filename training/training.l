@@ -46,15 +46,16 @@ unit training
 		students.each.restartGame
 	tick
 		int studentId = 7
-		let student = students.find.id == studentId
+		let studentWithId = students.find.id == studentId
 		let bestStudent = students.withMax.score
 		let highestScore = students.max.score
 		let top3Students = students.orderBy(.score).reverse.take 3
 	
 		students = []
-		// Add student
-		students.add {studentName:"John", score:0}
-	
+		// Create student
+		Student student = {studentName:"John", score:0}
+		students.add student
+		
 		// Draw all students
 		students.each.draw
 		
