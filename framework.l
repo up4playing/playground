@@ -5,20 +5,23 @@ unit Framework
 	// Evaluate: Immediately remove objects to avoid problems in
 	// - graphics.setUserVideo (updating video object that will be removed)
 	// - Coin.transferToNeighbor (the just removed coin is still their in updateNeighbors)
-	// Object[] toBeRemoved
+	Object[] toBeRemoved
 	
 	clear
-		// toBeRemoved.addRange objects
 		objects.clear
 		
+	clearAtEndOfFrame
+		toBeRemoved.addRange objects
+		
 	tick
-		// if toBeRemoved
-		// 	toBeRemoved.each.siblings.remove .
-		// 	toBeRemoved.clear
 		fx.tick
 		objects.each <- .tick
 		objects.each.update
 		Input.onTouchUp:  deselect touch.userId
+		
+		if toBeRemoved
+			toBeRemoved.each.siblings.remove .
+			toBeRemoved.clear
 		
 	isVisibleFor: Vector2 pos, int userId
 		let board = getBoardAt pos

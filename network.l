@@ -126,7 +126,7 @@ transient unit Network
 		frameWithNewWatches = 0
 		startInLobby = false
 		errorMessage = ""
-		audio.pause
+		audio.stop
 		goToFrame 0
 		
 	// Calls init functions, creates the local users, resets read positions and starts app
@@ -158,6 +158,7 @@ transient unit Network
 			
 		Math.randomValueIndex = 0
 		frame = 0
+		certainFrame = -1
 		lobby.inLobby = startInLobby
 		if !startInLobby: startApp
 			
@@ -420,6 +421,7 @@ transient unit Network
 			let isPlayback = Platform.mode == Play or frame+1 < frames
 			if Input.showPointers or isPlayback
 				Input.users.each drawPointer .id, showLocalPointer:isPlayback
+		audio.startFrame
 		
 		try
 			if lobby.inLobby
@@ -441,6 +443,7 @@ transient unit Network
 					drawText "v{Platform.version} {lag100Count}-{lag200Count} #{frame} {sendInterval}{sendInputsMode==Peer ? "p" : "s"} {aheadsLength} {PeerNetwork.connectionType}{statisticsGraph.maxValue}", statisticsGraph.position+{statisticsGraph.size.x/2, -statisticsGraph.size.y/2-15}, align:Right, layer:1000001, size:12
 			drawTime = Time.measure
 				graphics.finishFrame
+		audio.finishFrame
 				
 	js void appTick() if(window.app_tick) app_tick();
 		
