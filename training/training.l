@@ -5,6 +5,8 @@ class Student
 	string studentName
 	int score
 	bool alive
+	bool isBest
+	int health
 	Vector2 position
 	IntVector2 size
 	Touch dragTouch
@@ -48,6 +50,8 @@ unit training
 		int studentId = 7
 		let studentWithId = students.find.id == studentId
 		let bestStudent = students.withMax.score
+		students.each.isBest = . == bestStudent
+		students.each.alive = .health >= 100
 		let highestScore = students.max.score
 		let top3Students = students.orderBy(.score).reverse.take 3
 	
