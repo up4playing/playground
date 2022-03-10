@@ -32,13 +32,15 @@ class Sound
 			playingSound.isConfirmed = true
 		
 	private js void doPlay: PlayingSound ps
-		log("playing "+this.file);
 		this.fadeVolume = 1;
 		this.audio = new Audio();
 		this.audio.src = this.file;
 		this.audio.volume = audio_volume;
 		this.audio.onended = () => audio_playingSounds.remove(ps);
 		this.audio.play();
+		
+	isPlaying
+		return audio.playingSounds.any.sound == this
 		
 	fadeOut: int duration = 3000
 		     int delay = 0
