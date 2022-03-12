@@ -341,6 +341,30 @@ transient unit Platform
 	inline js void setLocation: string url
 		location.href = url
 		
+	js void showIcon
+		if(!Platform_isDebug && window.require) {
+			const { remote } = require('electron')
+			remote.app.dock?.show()
+		}
+	
+	js void hideIcon
+		if(!Platform_isDebug && window.require) {
+			const { remote } = require('electron')
+			remote.app.dock?.hide()
+		}
+	
+	js void show
+		if(!Platform_isDebug && window.require) {
+			const { remote } = require('electron')
+			remote.getCurrentWindow().show()
+		}
+	
+	js void hide
+		if(!Platform_isDebug && window.require) {
+			const { remote } = require('electron')
+			remote.getCurrentWindow().hide()
+		}
+		
 unit File
 	js string readPartial: string filename, int offset=0, int length, void(string result) callback
 		let fs = require("fs")
