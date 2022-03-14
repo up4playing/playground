@@ -144,7 +144,7 @@ unit Input
 		}
 		window.onkeydown = e => {
 			let keyCode = e.keyCode
-			if(window.require && e.key == "t" && e.ctrlKey && e.metaKey && e.shiftKey)
+			if(window.require && e.key == "t" && e.metaKey && e.shiftKey)
 				require("electron").remote.getCurrentWindow().toggleDevTools()
 			else
 			if(e.ctrlKey && e.key == "o") {
