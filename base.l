@@ -1243,16 +1243,15 @@ unit Math
 transient class Time
 	inline js int year := this.getFullYear()
 	inline js int month := (this.getMonth()+1)
-	inline js int date := this.getDate()
-	inline js int day := this.getDay()
+	inline js int day := this.getDate()
+	inline js int dayOfWeek := this.getDay()
 		
 	inline js int hour := this.getHours()
 	inline js int minute := this.getMinutes()
 	inline js int second := this.getSeconds()
 		
 	inline js string twoDigitMonth := (this.getMonth()+1).toLocaleString('en-US', {minimumIntegerDigits:2})
-	inline js string twoDigitDate := this.getDate().toLocaleString('en-US', {minimumIntegerDigits:2})
-	inline js string twoDigitDay := this.getDay().toLocaleString('en-US', {minimumIntegerDigits:2})
+	inline js string twoDigitDay := this.getDate().toLocaleString('en-US', {minimumIntegerDigits:2})
 	inline js string twoDigitHour := this.getHours().toLocaleString('en-US', {minimumIntegerDigits:2})
 	inline js string twoDigitMinute := this.getMinutes().toLocaleString('en-US', {minimumIntegerDigits:2})
 	inline js string twoDigitSecond := this.getSeconds().toLocaleString('en-US', {minimumIntegerDigits:2})
