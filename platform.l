@@ -399,7 +399,13 @@ unit File
 		let fs = require("fs")
 		fs.writeFile(filename, data, "utf8", (err, data) => {
 			then?.()
-		})	
+		})
+		
+	inline js bool exists: string filename
+		require("fs").existsSync(filename)
+		
+	inline js void createDirectory: string path
+		require("fs").mkdirSync(path)
 		
 struct FileFilter
 	string name
