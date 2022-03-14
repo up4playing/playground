@@ -365,6 +365,20 @@ transient unit Platform
 			remote.getCurrentWindow().hide()
 		}
 		
+	js void registerGlobalShotcut: string shortcut
+		                           void() do
+		if(!Platform_isDebug && window.require) {
+			const { remote } = require('electron')
+			remote.globalShortcut.unregister(shortcut)
+			remote.globalShortcut.register(shortcut, () => do())
+		}
+		
+	js void setInterval: int interval
+		                 void() do
+		setInterval(() => do(), interval)
+		
+	inline js string resourcesPath := process.resourcesPath
+		
 unit File
 	js string readPartial: string filename, int offset=0, int length, void(string result) callback
 		let fs = require("fs")
