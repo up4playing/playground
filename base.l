@@ -442,6 +442,9 @@ class List<T>
 	inline js T[] take: int count
 		this.slice(0, count)
 		
+	inline js T[] subList: int start, int count
+		this.slice(start, count)
+		
 	// js int sum: int(T a) selector
 	// 	let sum = 0
 	// 	for(let i=0; i<this.length; i++)
