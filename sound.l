@@ -73,17 +73,13 @@ transient global unit audio
 		if forUser == -1 or forUser == Input.localUser?.id
 			volumeLevel = 0
 			volume = volumeLevels[volumeLevel]
+			playingSounds.each.sound.updateVolume
 	
-	decreaseVolume: int forUser = -1
+	adjustVolume: int delta = 1, int forUser = -1
 		if forUser == -1 or forUser == Input.localUser?.id
-			volumeLevel = Math.limit(volumeLevel-1, min:0, max:volumeLevels.length-1)
+			volumeLevel = Math.limit(volumeLevel+delta, min:0, max:volumeLevels.length-1)
 			volume = volumeLevels[volumeLevel]
-	
-	increaseVolume: int forUser = -1
-		if forUser == -1 or forUser == Input.localUser?.id
-			volumeLevel = Math.limit(volumeLevel+1, min:0, max:volumeLevels.length-1)
-			volume = volumeLevels[volumeLevel]
-			print volume, forUser
+			playingSounds.each.sound.updateVolume
 	
 	global playSound: Sound sound, int delay = 0, bool smooth = false
 		if Time.frame == 0
