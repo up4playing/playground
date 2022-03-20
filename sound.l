@@ -40,7 +40,7 @@ class Sound
 		this.audio.play();
 		
 	isPlaying
-		return audio.playingSounds.any.sound == this
+		return audio.playingSounds.any.sound == this and .frame < Time.frame
 		
 	fadeOut: int duration = 3000
 		     int delay = 0
