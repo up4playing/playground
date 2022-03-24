@@ -33,11 +33,13 @@ class Sound
 		
 	private js void doPlay: PlayingSound ps
 		this.fadeVolume = 1;
-		this.audio = new Audio();
-		this.audio.src = this.file;
 		this.audio.volume = audio_volume;
 		this.audio.onended = () => audio_playingSounds.remove(ps);
 		this.audio.play();
+		
+		// Preload file for next playback
+		this.audio = new Audio();
+		this.audio.src = this.file;
 		
 	isPlaying
 		return audio.playingSounds.any.sound == this and .frame < Time.frame
@@ -55,7 +57,7 @@ transient class PlayingSound
 // A collection of functions for playing audio
 transient global unit audio
 	const float[] volumeLevels = [0, 0.0001, 0.0002, 0.0005, 0.001, 0.002, 0.005, .01, .02, .04, .08, .16, .32, .64, 1]
-	float volumeLevel = 10
+	float volumeLevel = 11
 	float volume = volumeLevels[volumeLevel]
 	PlayingSound[] playingSounds
 	
