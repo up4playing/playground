@@ -805,6 +805,8 @@ unit Input
 						code event
 						if markAsHandled: event.markAsHandled
 		if showTouchArea: drawRectangle position, size, Red
+			
+	bool isTextInputActive = false
 	
 	private js object getOrCreateInputField
 		if(!window._input) {
@@ -816,9 +818,9 @@ unit Input
 			_input.style.height = "1px"
 			_input.style.fontSize = "1px"
 			_input.style.backgroundColor = "#000000"
-			_input.oninput = e => {
-				Input_handleTextInput(7, _input.value)
-			}
+			_input.oninput = e => Input_handleTextInput(7, _input.value)
+			_input.onfocus = e => Input_isTextInputActive = true
+			_input.onblur = e => Input_isTextInputActive = false
 			document.body.appendChild(_input)
 		}
 		return _input
@@ -828,7 +830,10 @@ unit Input
 		if(initalValue != null) { 
 			input.value = initalValue
 		}
-		setTimeout(() => _input.focus(), 0)
+		setTimeout(() => {
+			_input.focus()
+			Input_isTextInputActive = true
+		}, 0)
 		
 	js void setTextInput: string value
 		let input = Input_getOrCreateInputField()
