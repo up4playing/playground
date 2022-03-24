@@ -68,7 +68,7 @@ transient unit Platform
 	private js void onResize
 		Platform_canvas = document.getElementById("canvas");
 		Platform_context = Platform_canvas.getContext("2d");
-		Platform_pixelRatio = 1;
+		Platform_pixelRatio = window.devicePixelRatio;
 		Platform_pixelSize = new Vector2(window.innerWidth*Platform_pixelRatio, window.innerHeight*Platform_pixelRatio, null);
 		Platform_canvas.style.width = window.innerWidth + "px";
 		Platform_canvas.style.height = window.innerHeight + "px";
