@@ -1281,6 +1281,7 @@ transient class Time
 	static inline js Time current := new Date()
 		
 	static inline js Time fromTicks(int ticks) new Date(ticks)
+	static inline js Time fromDateAndTime(int year, int month, int day, int hour = 0, int minute = 0, int second = 0) new Date(year, month-1, day, hour, minute, second)
 	
 	// The current frame	
 	static inline js int frame := Network_frame
