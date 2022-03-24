@@ -32,13 +32,17 @@ class Sound
 			playingSound.isConfirmed = true
 		
 	private js void doPlay: PlayingSound ps
-		log("playing "+this.file);
 		this.fadeVolume = 1;
-		this.audio = new Audio();
-		this.audio.src = this.file;
 		this.audio.volume = audio_volume;
 		this.audio.onended = () => audio_playingSounds.remove(ps);
 		this.audio.play();
+		
+		// Preload file for next playback
+		this.audio = new Audio();
+		this.audio.src = this.file;
+		
+	isPlaying
+		return audio.playingSounds.any.sound == this and .frame < Time.frame
 		
 	fadeOut: int duration = 3000
 		     int delay = 0
@@ -53,7 +57,7 @@ transient class PlayingSound
 // A collection of functions for playing audio
 transient global unit audio
 	const float[] volumeLevels = [0, 0.0001, 0.0002, 0.0005, 0.001, 0.002, 0.005, .01, .02, .04, .08, .16, .32, .64, 1]
-	float volumeLevel = 10
+	float volumeLevel = 11
 	float volume = volumeLevels[volumeLevel]
 	PlayingSound[] playingSounds
 	
@@ -71,17 +75,13 @@ transient global unit audio
 		if forUser == -1 or forUser == Input.localUser?.id
 			volumeLevel = 0
 			volume = volumeLevels[volumeLevel]
+			playingSounds.each.sound.updateVolume
 	
-	decreaseVolume: int forUser = -1
+	adjustVolume: int delta = 1, int forUser = -1
 		if forUser == -1 or forUser == Input.localUser?.id
-			volumeLevel = Math.limit(volumeLevel-1, min:0, max:volumeLevels.length-1)
+			volumeLevel = Math.limit(volumeLevel+delta, min:0, max:volumeLevels.length-1)
 			volume = volumeLevels[volumeLevel]
-	
-	increaseVolume: int forUser = -1
-		if forUser == -1 or forUser == Input.localUser?.id
-			volumeLevel = Math.limit(volumeLevel+1, min:0, max:volumeLevels.length-1)
-			volume = volumeLevels[volumeLevel]
-			print volume, forUser
+			playingSounds.each.sound.updateVolume
 	
 	global playSound: Sound sound, int delay = 0, bool smooth = false
 		if Time.frame == 0

@@ -144,22 +144,23 @@ unit Input
 		}
 		window.onkeydown = e => {
 			let keyCode = e.keyCode
+			let ctrlOrCmd = e.ctrlKey || e.metaKey
 			if(window.require && e.key == "t" && e.metaKey && e.shiftKey)
 				require("electron").remote.getCurrentWindow().toggleDevTools()
 			else
-			if(e.ctrlKey && e.key == "o") {
+			if(ctrlOrCmd && e.key == "o") {
 				// Open event stream
 				Network_openEventStream();
 				e.preventDefault();
 			}
 			else
-			if(e.ctrlKey && e.key == "s") {
+			if(ctrlOrCmd && e.key == "s") {
 				// Save event steam
 				Network_saveEventStream();
 				e.preventDefault();
 			}
 			else
-			if(e.ctrlKey && e.key == "l") {
+			if(ctrlOrCmd && e.key == "l") {
 				// Save logs
 				Network_saveLogs();
 				e.preventDefault();
@@ -173,19 +174,19 @@ unit Input
 			}
 			else
 			// Reload
-			if(e.ctrlKey && e.key == "F1") {/*keep room, keep userId*/ ServerNetwork_sendReload(false, false); e.preventDefault();} else
-			if(e.ctrlKey && e.key == "F2") {/*new  room, keep userId*/ ServerNetwork_sendReload(true,  false); e.preventDefault();} else
-			if(e.ctrlKey && e.key == "F3") {/*new  room, new  userId*/ ServerNetwork_sendReload(true,  true);  e.preventDefault();} else
+			if(ctrlOrCmd && e.key == "F1") {/*keep room, keep userId*/ ServerNetwork_sendReload(false, false); e.preventDefault();} else
+			if(ctrlOrCmd && e.key == "F2") {/*new  room, keep userId*/ ServerNetwork_sendReload(true,  false); e.preventDefault();} else
+			if(ctrlOrCmd && e.key == "F3") {/*new  room, new  userId*/ ServerNetwork_sendReload(true,  true);  e.preventDefault();} else
 			
 			// Switch send interval
-			if(e.ctrlKey && e.key == "F5") {Network_switchSendInterval( 3); e.preventDefault();} else
-			if(e.ctrlKey && e.key == "F6") {Network_switchSendInterval(10); e.preventDefault();} else
-			if(e.ctrlKey && e.key == "F7") {Network_switchSendInterval(20); e.preventDefault();} else
-			if(e.ctrlKey && e.key == "F8") {Network_switchSendInterval(30); e.preventDefault();} else
-			if(e.ctrlKey && e.key == "F9") {Network_switchSendInterval(40); e.preventDefault();} else
+			if(ctrlOrCmd && e.key == "F5") {Network_switchSendInterval( 3); e.preventDefault();} else
+			if(ctrlOrCmd && e.key == "F6") {Network_switchSendInterval(10); e.preventDefault();} else
+			if(ctrlOrCmd && e.key == "F7") {Network_switchSendInterval(20); e.preventDefault();} else
+			if(ctrlOrCmd && e.key == "F8") {Network_switchSendInterval(30); e.preventDefault();} else
+			if(ctrlOrCmd && e.key == "F9") {Network_switchSendInterval(40); e.preventDefault();} else
 				
-			if(e.ctrlKey && e.key == "F10") {Network_switchSendInputMode(1); e.preventDefault();} else
-			if(e.ctrlKey && e.key == "F11") {Network_switchSendInputMode(2); e.preventDefault();} else
+			if(ctrlOrCmd && e.key == "F10") {Network_switchSendInputMode(1); e.preventDefault();} else
+			if(ctrlOrCmd && e.key == "F11") {Network_switchSendInputMode(2); e.preventDefault();} else
 				
 			if(e.key == "F9") {
 				if(e.shiftKey) { Network_saveLogs(); }

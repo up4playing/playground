@@ -63,6 +63,7 @@ transient unit Network
 	bool simulateConnection = true
 	bool simulateInputsForTesting = false
 	bool simulateRollback = false
+	int checksumInterval = 30
 	
 	SendInputsMode sendInputsMode = Peer
 	internal const targetFps = 30
@@ -210,7 +211,7 @@ transient unit Network
 		let targetFrame = Math.floor((now - startTime)/targetFrameTime)+1
 		frameMinusBuffer = targetFrame - bufferFrames
 		if mode == Connected: certainFrame = Math.min(frameMinusBuffer, receivedFrames); else
-		if simulateRollback:  certainFrame = targetFrame - 3; else
+		if simulateRollback:  certainFrame = targetFrame - 5; else
 			                  certainFrame = int.maxValue
 
 		if mode == Local && targetFrame > frame + targetFps*2
@@ -383,7 +384,7 @@ transient unit Network
 			// Tick
 			tick draw
 			
-			if mode != Local and (frame % 60)==0 and isCertain
+			if mode != Local and (frame % checksumInterval)==0 and isCertain
 				// Calculate checksum if we received all inputs for this frame
 				float myChecksum = Framework.checksum					
 				float theirChecksum = checksums[frame]

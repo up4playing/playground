@@ -327,7 +327,10 @@ class List<T>
 		return "["+result+"]"
 		
 	// Gets a random item from the list
-	T random() := get(Math.randomInteger(length))
+	T random()
+		let randomInteger = Math.randomInteger(length)
+		// print randomInteger, length
+		return get(randomInteger)
 		
 	T popRandom()
 		int index = Math.randomInteger(length)
@@ -441,6 +444,9 @@ class List<T>
 		
 	inline js T[] take: int count
 		this.slice(0, count)
+		
+	inline js T[] subList: int start, int count
+		this.slice(start, count)
 		
 	// js int sum: int(T a) selector
 	// 	let sum = 0
@@ -1110,7 +1116,7 @@ unit Math
 					var value = Math_randomValues[Math_randomValueIndex]
 					
 					// TEMP: Log every random number
-					Network_eventLog += " ["+Math_randomValueIndex+"/"+Math_randomValues.length+"] replay "+value;
+					Network_log("rnd["+Math_randomValueIndex+"/"+Math_randomValues.length+"] replay "+value)
 					
 					Math_randomValueIndex++
 				} else {
@@ -1120,7 +1126,7 @@ unit Math
 					var value = me.s2 = t - (me.c = t | 0);
 					
 					// TEMP: Log every random number
-					Network_eventLog += " rnd("+Math_randomValueIndex+"/"+Math_randomValues.length+"):"+value;
+					Network_log("rnd("+Math_randomValueIndex+"/"+Math_randomValues.length+"):"+value)
 					if(Math_randomValueIndex != Math_randomValues.length) {
 						Network_eventLog += " INVALID rnd"
 						alert("Random values out of sync. Please click 'Save Logs' and send me the log file that will be created.")
@@ -1174,8 +1180,15 @@ unit Math
 		Math_randomGenerator = new Alea(seed).next
 	
 	// Generates a random integer
-	inline js int randomInteger: int max // The exclusive upper bound of the random integer to generate
-		((Math_randomGenerator() * max) | 0)
+	// inline js int randomInteger: int max // The exclusive upper bound of the random integer to generate
+	// 	((Math_randomGenerator() * max) | 0)
+	js int randomInteger: int max // The exclusive upper bound of the random integer to generate
+		let f = Math_randomGenerator()
+		let i = f * max
+		let i2 = (f * max) | 0
+		Network_log("randomInteger float:"+f+"*"+max+" -> "+i+" -> "+i2)
+		return i2
+		// return ((Math_randomGenerator() * max) | 0)
 	
 	// Generates a random float
 	inline js int randomFloat

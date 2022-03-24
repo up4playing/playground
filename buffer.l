@@ -161,6 +161,11 @@ transient struct Buffer
 		}
 			
 	js void writeString: string value
+		if(!value) {
+			this.dataView.setInt32(this.writePos, 0)
+			this.writePos += 4
+			return
+		}
 		let maxSize = value.length*3
 		if(this.writePos+maxSize+4 > this.buffer.byteLength)
 			this.expandBuffer((this.writePos+maxSize+4)*2)
