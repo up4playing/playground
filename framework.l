@@ -77,7 +77,7 @@ class Object
 	int layer = 0
 	
 	visible siblings := Framework.objects
-	internal checksum := 0
+	internal checksum := position.x + position.y + scale + alpha
 	internal debugString := "(Object pos:{position.x} {position.y})"
 	internal tick
 	internal update
@@ -150,12 +150,14 @@ class Object
 Object RectangleObject
 	Vector2 size
 	Color color = White
+	internal checksum := position.x + position.y + scale + alpha + size.x + size.y
 	tick
 		drawRectangle position, size, color, visibleFor, layer
 
 Object CircleObject
 	float radius = 10
 	Color color = White
+	internal checksum := position.x + position.y + scale + alpha + radius
 	tick
 		drawCircle position, radius, fillColor:color, visibleFor, layer
 		
@@ -172,6 +174,7 @@ Object TextObject
 	Color color = White
 	HorizontalAlignment align = Center // The horizontal alignment of the text
 	VerticalAlignment valign = Middle  // The vertical alignment of the text
+	internal checksum := position.x + position.y + text.length + size
 	tick
 		drawText text, position, size*scale, color, align, valign, font, alpha, visibleFor, layer
 		
@@ -184,6 +187,7 @@ Object VideoObject
 	int userId
 	Vector2 size = {440, 330}
 	float radius
+	internal checksum := position.x + position.y + userId + size.x + size.y + radius
 	tick
 		if radius: drawVideo userId, position, radius
 		else       drawVideo userId, position, size
