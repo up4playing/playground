@@ -293,6 +293,12 @@ transient unit Platform
 		let str = localStorage.getItem(key)
 		return str ? JSON.parse(str) : null 
 		
+	inline js void setLocalStorageString: string key, string value
+		localStorage.setItem(key, value)
+		
+	inline js string getLocalStorageString: string key
+		(localStorage.getItem(key) || "")
+		
 	js string generateObjectId
 		var result = (Date.now() / 1000 | 0).toString(16)
 		for(let i=0; i<16; i++)
