@@ -347,6 +347,44 @@ transient unit Platform
 	inline js void setLocation: string url
 		location.href = url
 		
+	js void showIcon
+		if(!Platform_isDebug && window.require) {
+			const { remote } = require('electron')
+			remote.app.dock?.show()
+		}
+	
+	js void hideIcon
+		if(!Platform_isDebug && window.require) {
+			const { remote } = require('electron')
+			remote.app.dock?.hide()
+		}
+	
+	js void show
+		if(!Platform_isDebug && window.require) {
+			const { remote } = require('electron')
+			remote.getCurrentWindow().show()
+		}
+	
+	js void hide
+		if(!Platform_isDebug && window.require) {
+			const { remote } = require('electron')
+			remote.getCurrentWindow().hide()
+		}
+		
+	js void registerGlobalShotcut: string shortcut
+		                           void() do
+		if(!Platform_isDebug && window.require) {
+			const { remote } = require('electron')
+			remote.globalShortcut.unregister(shortcut)
+			remote.globalShortcut.register(shortcut, () => do())
+		}
+		
+	js void setInterval: int interval
+		                 void() do
+		setInterval(() => do(), interval)
+		
+	inline js string resourcesPath := process.resourcesPath
+		
 unit File
 	js string readPartial: string filename, int offset=0, int length, void(string result) callback
 		let fs = require("fs")
@@ -367,12 +405,22 @@ unit File
 		let fs = require("fs")
 		fs.writeFile(filename, data, "utf8", (err, data) => {
 			then?.()
-		})	
+		})
+		
+	inline js bool exists: string filename
+		require("fs").existsSync(filename)
+		
+	inline js void createDirectory: string path
+		require("fs").mkdirSync(path)
 		
 struct FileFilter
 	string name
 	string[] extensions
 
+transient unit http	
+	js async object get: string url
+		return (await fetch(url)).json()
+		
 transient unit Http	
 	js void get: string url, void(object result) code
 		let response = await fetch(url)
