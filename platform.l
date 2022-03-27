@@ -417,14 +417,23 @@ struct FileFilter
 	string name
 	string[] extensions
 
-transient unit http	
-	js async object get: string url
-		return (await fetch(url)).json()
-		
 transient unit Http	
+	js async object get: string url
+		let response = await fetch(url)
+		return response.json()
+		
 	js void get: string url, void(object result) code
 		let response = await fetch(url)
 		code(await response.json())
+		
+	js async void delete: string url 
+		let response = await fetch(url, {method:"DELETE"})
+		return await response.text()
+		
+	js async string delete: string url 
+		                    object body
+		let response = await fetch(url, {method:"DELETE", body:JSON.stringify(body)})
+		return await response.text()
 		
 	js void delete: string url 
 		         void(object result) code
@@ -437,6 +446,10 @@ transient unit Http
 			else(e.message)
 		}
 		
+	js async void put: string url 
+		let response = await fetch(url, {method:"PUT"})
+		return await response.text()
+		
 	js void put: string url 
 		         void(object result) code
 		         void(string error) else
@@ -447,6 +460,16 @@ transient unit Http
 		} catch(e) {
 			else(e.message)
 		}
+		
+	js async void put: string url 
+		         string body
+		let response = await fetch(url, {method:"PUT", body})
+		return await response.text()
+		
+	js async void put: string url 
+		         object body
+		let response = await fetch(url, {method:"PUT", body:JSON.stringify(body)})
+		return await response.json()
 		
 	js void put: string url
 		         object body
@@ -459,6 +482,16 @@ transient unit Http
 		} catch(e) {
 			else(e.message)
 		}
+		
+	js async string post: string url 
+		                  string body
+		let response = await fetch(url, {method:"POST", body})
+		return await response.text()
+		
+	js async string post: string url 
+		                  object body
+		let response = await fetch(url, {method:"POST", body:JSON.stringify(body)})
+		return await response.text()
 		
 	js void post: string url
 		          string body
