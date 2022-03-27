@@ -411,6 +411,10 @@ struct FileFilter
 	string name
 	string[] extensions
 
+transient unit http	
+	js async object get: string url
+		return (await fetch(url)).json()
+		
 transient unit Http	
 	js void get: string url, void(object result) code
 		let response = await fetch(url)
