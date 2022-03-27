@@ -1243,7 +1243,8 @@ unit Math
 		if value > fromEnd:   return toEnd
 			                  return toStart + (toEnd-toStart) * (value-fromStart)/(fromEnd-fromStart)
 	
-transient class Time
+js Date
+transient struct Time
 	inline js int year := this.getFullYear()
 	inline js int month := (this.getMonth()+1)
 	inline js int day := this.getDate()
@@ -1266,20 +1267,23 @@ transient class Time
 	inline js string hourMinuteString := (this.getHours().toLocaleString('en-US', {minimumIntegerDigits:2}))+":"+this.getMinutes().toLocaleString('en-US', {minimumIntegerDigits:2})
 	inline js string dayMonthYearHourMinuteSecondString := (this.getDate().toLocaleString('en-US', {minimumIntegerDigits:2})+"."+(this.getMonth()+1).toLocaleString('en-US', {minimumIntegerDigits:2})+"."+this.getFullYear()+" "+this.getHours().toLocaleString('en-US', {minimumIntegerDigits:2}))+"-"+this.getMinutes().toLocaleString('en-US', {minimumIntegerDigits:2})+"-"+this.getSeconds().toLocaleString('en-US', {minimumIntegerDigits:2})
 	
-	inline js int ticks := this.getTime()
+	// The number of milliseconds elapsed since January 1, 1970
+	inline js int time := this.getTime()
 		
-	static inline js Time current := new Date()
+	// The data and time in ISO 8601 format, for example "2000-12-31T17:30:00.000Z"
+	inline js string isoString := this.toISOString()
 		
-	static inline js Time fromTicks(int ticks) new Date(ticks)
-	static inline js Time fromDateAndTime(int year, int month, int day, int hour = 0, int minute = 0, int second = 0) new Date(year, month-1, day, hour, minute, second)
+	static inline js Time realtime := new Date(now)
+	static inline js float preciseTime := performance.now()
+		
+	static inline js Time fromTime(int time) new Date(time)
+	static inline js Time fromDate(int year, int month, int day, int hour = 0, int minute = 0, int second = 0) new Date(year, month-1, day, hour, minute, second)
 	
-	// The current frame	
+	// The current frame
 	static inline js int frame := Network_frame
 		
 	// The number of milliseconds elapsed since January 1, 1970
 	static int now
-	
-	static inline js float preciseTime := performance.now()
 		
 	static measure: void() code
 		let startTime = preciseTime

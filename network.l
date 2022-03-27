@@ -533,7 +533,7 @@ transient unit Network
 				saveLogs
 			
 	internal saveLogs
-		let time = Time.current
+		let time = Time.realtime
 		// Ensure that current eventLog is added to the table even if we haven't processed a single frame
 		logTable += ",,,,,,,,,,,,,,,,,,,,,,,,\"{eventLog.trim}\""
 		Platform.saveTextFile "{Platform.appName} {time.dayShortMonthNameYearString} {time.hourMinuteSecondString} v{Platform.version}.csv", logTable
@@ -555,7 +555,7 @@ transient unit Network
 				buffer.writeInt8 .id
 				buffer.writeBool .local
 				buffer.writeBuffer .inputs
-		let time = Time.current
+		let time = Time.realtime
 		Platform.saveBinaryFile "{Platform.appName} {time.dayShortMonthNameYearString} {time.hourMinuteSecondString} v{Platform.version}.state", buffer
 		
 	openEventStream
