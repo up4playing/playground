@@ -1136,11 +1136,13 @@ unit Math
 			let value
 			if(Math_randomValueIndex < Math_randomValues.length) {
 				value = Math_randomValues[Math_randomValueIndex]
-				Network_log("rnd("+Math_randomValueIndex+"/"+Math_randomValues.length+") replay "+value)
+				// Log random numbers for testing
+				// Network_log("rnd("+Math_randomValueIndex+"/"+Math_randomValues.length+") replay "+value)
 				Math_randomValueIndex++
 			} else {
 				value = rand()
-				Network_log("rnd("+Math_randomValueIndex+"/"+Math_randomValues.length+"):"+value)
+				// Log random numbers for testing
+				// Network_log("rnd("+Math_randomValueIndex+"/"+Math_randomValues.length+"):"+value)
 				Math_randomValues[Math_randomValueIndex++] = value;
 			}
 			return value
@@ -1150,7 +1152,8 @@ unit Math
 	js int randomInteger: int max // The exclusive upper bound of the random integer to generate
 		let f = Math_randomGenerator()
 		let i = Math.floor(f * max)
-		Network_log("randomInteger float:"+f+"*"+max+" -> "+i)
+		// Log random numbers for testing
+		// Network_log("randomInteger float:"+f+"*"+max+" -> "+i)
 		return i
 	
 	// Generates a random float
