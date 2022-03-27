@@ -1092,93 +1092,66 @@ unit Math
 		for targetRandomValueIndex: randomFloat
 	
 	js void setRandomSeed: string seed
-		Math_randomSeed = seed
-		Math_randomValues.length = 0
-		Math_randomValueIndex = 0
+		// Seeding the random number generator in Javascript
+		// https://stackoverflow.com/a/47593316
+		function xmur3(str) {
+		    for(var i = 0, h = 1779033703 ^ str.length; i < str.length; i++) {
+		        h = Math.imul(h ^ str.charCodeAt(i), 3432918353);
+		        h = h << 13 | h >>> 19;
+		    } return function() {
+		        h = Math.imul(h ^ (h >>> 16), 2246822507);
+		        h = Math.imul(h ^ (h >>> 13), 3266489909);
+		        return (h ^= h >>> 16) >>> 0;
+		    }
+		}
 		
-		// Ported from an algorithm by Johannes Baagøe <baagoe@baagoe.com>
-		// https://github.com/nquinlan/better-random-numbers-for-javascript-mirror
-		function Alea(seed) {
-			var me = this, mash = Mash();
-			var count = 0
-			me.next = function() {
-				if(Math_randomValueIndex < Math_randomValues.length) {
-					var value = Math_randomValues[Math_randomValueIndex]
-					
-					// TEMP: Log every random number
-					Network_log("rnd["+Math_randomValueIndex+"/"+Math_randomValues.length+"] replay "+value)
-					
-					Math_randomValueIndex++
-				} else {
-					var t = 2091639 * me.s0 + me.c * 2.3283064365386963e-10; // 2^-32
-					me.s0 = me.s1;
-					me.s1 = me.s2;
-					var value = me.s2 = t - (me.c = t | 0);
-					
-					// TEMP: Log every random number
-					Network_log("rnd("+Math_randomValueIndex+"/"+Math_randomValues.length+"):"+value)
-					if(Math_randomValueIndex != Math_randomValues.length) {
-						Network_eventLog += " INVALID rnd"
-						alert("Random values out of sync. Please click 'Save Logs' and send me the log file that will be created.")
-					}
-					
-					Math_randomValues[Math_randomValueIndex++] = value;
-				}
-				return value
+		function sfc32(a, b, c, d) {
+		    return function() {
+		      a >>>= 0; b >>>= 0; c >>>= 0; d >>>= 0; 
+		      var t = (a + b) | 0;
+		      a = b ^ b >>> 9;
+		      b = c + (c << 3) | 0;
+		      c = (c << 21 | c >>> 11);
+		      d = d + 1 | 0;
+		      t = t + d | 0;
+		      c = c + t | 0;
+		      return (t >>> 0) / 4294967296;
+		    }
+		}
+		
+		function mulberry32(a) {
+		    return function() {
+		      var t = a += 0x6D2B79F5;
+		      t = Math.imul(t ^ t >>> 15, t | 1);
+		      t ^= t + Math.imul(t ^ t >>> 7, t | 61);
+		      return ((t ^ t >>> 14) >>> 0) / 4294967296;
+		    }
+		}
+		
+		var seed = xmur3(seed);
+		var rand = sfc32(seed(), seed(), seed(), seed());
+		var rand = mulberry32(seed());
+		
+		Math_randomGenerator = function() {
+			let value
+			if(Math_randomValueIndex < Math_randomValues.length) {
+				value = Math_randomValues[Math_randomValueIndex]
+				Network_log("rnd("+Math_randomValueIndex+"/"+Math_randomValues.length+") replay "+value)
+				Math_randomValueIndex++
+			} else {
+				value = rand()
+				Network_log("rnd("+Math_randomValueIndex+"/"+Math_randomValues.length+"):"+value)
+				Math_randomValues[Math_randomValueIndex++] = value;
 			}
-			
-			// Apply the seeding algorithm from Baagoe.
-			me.c = 1;
-			me.s0 = mash(' ');
-			me.s1 = mash(' ');
-			me.s2 = mash(' ');
-			me.s0 -= mash(seed);
-			if (me.s0 < 0) { me.s0 += 1; }
-			me.s1 -= mash(seed);
-			if (me.s1 < 0) { me.s1 += 1; }
-			me.s2 -= mash(seed);
-			if (me.s2 < 0) { me.s2 += 1; }
-			mash = null;
+			return value
 		}
-		
-		function copy(f, t) {
-			t.c = f.c;
-			t.s0 = f.s0;
-			t.s1 = f.s1;
-			t.s2 = f.s2;
-			return t;
-		}
-		
-		function Mash() {
-			var n = 0xefc8249d;
-			var mash = function(data) {
-				data = String(data);
-				for (var i = 0; i < data.length; i++) {
-					n += data.charCodeAt(i);
-					var h = 0.02519603282416938 * n;
-					n = h >>> 0;
-					h -= n;
-					h *= n;
-					n = h >>> 0;
-					h -= n;
-					n += h * 0x100000000; // 2^32
-				}
-				return (n >>> 0) * 2.3283064365386963e-10; // 2^-32
-			};
-			return mash;
-		}
-		Math_randomGenerator = new Alea(seed).next
-	
+
 	// Generates a random integer
-	// inline js int randomInteger: int max // The exclusive upper bound of the random integer to generate
-	// 	((Math_randomGenerator() * max) | 0)
 	js int randomInteger: int max // The exclusive upper bound of the random integer to generate
 		let f = Math_randomGenerator()
-		let i = f * max
-		let i2 = (f * max) | 0
-		Network_log("randomInteger float:"+f+"*"+max+" -> "+i+" -> "+i2)
-		return i2
-		// return ((Math_randomGenerator() * max) | 0)
+		let i = Math.floor(f * max)
+		Network_log("randomInteger float:"+f+"*"+max+" -> "+i)
+		return i
 	
 	// Generates a random float
 	inline js int randomFloat
