@@ -18,6 +18,7 @@ transient unit Platform
 	public userCount = 2
 	public bool showSafeArea = true
 	public bool showDebugInfo = false
+	public bool isLocal = false
 	
 	public inline js string url := location.href
 	public inline js int version := version
@@ -64,6 +65,7 @@ transient unit Platform
 				Platform_onResize();
 				if(Platform_mode == 0/*Pause*/ && Platform_engineStarted) Network_tick(/*draw*/true);
 			}
+		if(window.app_init) app_init();
 		
 	private js void onResize
 		Platform_canvas = document.getElementById("canvas");
@@ -135,8 +137,8 @@ transient unit Platform
 		
 		openMedia
 			startInterval
-			if isDebug || roomId == "local" || url.startsWith("file"): Network.startLocal userCount:userCount
-			else                                                       Network.join gameId, roomId, userId, allowRelay
+			if isDebug || isLocal || roomId == "local" || url.startsWith("file"): Network.startLocal userCount:userCount
+			else                                                                  Network.join gameId, roomId, userId, allowRelay
 			this.engineStarted = true
 			sendEvaluateFinished
 			
@@ -426,7 +428,7 @@ transient unit Http
 		let response = await fetch(url)
 		code(await response.json())
 		
-	js async void delete: string url 
+	js async string delete: string url 
 		let response = await fetch(url, {method:"DELETE"})
 		return await response.text()
 		
@@ -491,6 +493,10 @@ transient unit Http
 	js async string post: string url 
 		                  object body
 		let response = await fetch(url, {method:"POST", body:JSON.stringify(body)})
+		return await response.text()
+		
+	js async string post: string url 
+		let response = await fetch(url, {method:"POST"})
 		return await response.text()
 		
 	js void post: string url
