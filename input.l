@@ -825,15 +825,17 @@ unit Input
 		}
 		return _input
 				
-	js void startTextInput: string initalValue = null
-		let input = Input_getOrCreateInputField()
-		if(initalValue != null) { 
-			input.value = initalValue
+	js void startTextInput: string initalValue = null, int forUser = -1
+		if(forUser == -1 || Input_localUser?.id == forUser) {
+			let input = Input_getOrCreateInputField()
+			if(initalValue != null) { 
+				input.value = initalValue
+			}
+			setTimeout(() => {
+				_input.focus()
+				Input_isTextInputActive = true
+			}, 0)
 		}
-		setTimeout(() => {
-			_input.focus()
-			Input_isTextInputActive = true
-		}, 0)
 		
 	js void setTextInput: string value
 		let input = Input_getOrCreateInputField()
@@ -848,10 +850,15 @@ unit Input
 			for user.textCompositions -> text
 				code text
 				
-	onTextInput: void(string textInput) code
-		for internalUsers -> user
+	onTextInput: int userId = -1, void(string textInput) code
+		if (Network.mode == Connected || Network.simulateConnection) && userId != -1
+			let user = internalUsers[userId]
 			for user.textInputs -> text
 				code text
+		else
+			for internalUsers -> user
+				for user.textInputs -> text
+					code text
 				
 	onKeyDown: int key, int userId = -1, void(int key, int keyUserId) code
 		if (Network.mode == Connected || Network.simulateConnection) && userId != -1
