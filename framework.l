@@ -13,6 +13,11 @@ unit Framework
 	clearAtEndOfFrame
 		toBeRemoved.addRange objects
 		
+	removeWhere: bool(Object value) condition
+		for objects -> obj
+			if condition obj
+				toBeRemoved.add obj
+				
 	tick
 		fx.tick
 		objects.each <- .tick
@@ -85,9 +90,11 @@ class Object
 	Object
 		siblings.add this
 		
-	remove
+	removeImmediately
 		siblings.remove this
-		// Framework.toBeRemoved.add this
+		
+	removeAtEndOfFrame
+		Framework.toBeRemoved.add this
 		
 	moveTo: Vector2 pos
 		    int duration = 1000
@@ -538,7 +545,7 @@ Object ParticleSystem
 				particles.removeAt i
 		
 		if particles.length == 0	
-			remove
+			removeImmediately
 			
 enum closestCoinType: None, Neighbor, Over
 Piece Coin
@@ -643,7 +650,7 @@ Piece Coin
 		
 	private mergeWith: Coin coin
 		coin.value += value
-		remove
+		removeImmediately
 		updateNeighbors siblings, isBeingMoved:false
 	
 	private transferToNeighbor: Coin coin, int amount = 1
@@ -655,7 +662,7 @@ Piece Coin
 			if board: board.add neighbor
 		value -= amount
 		neighbor.value += amount
-		if !isInfinate and !allowZero and value <= 0: remove
+		if !isInfinate and !allowZero and value <= 0: removeImmediately
 		updateNeighbors siblings, isBeingMoved:false
 			
 
