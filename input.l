@@ -170,7 +170,12 @@ unit Input
 				let index = e.key - "0"
 				if(e.altKey)         { Network_save(index); e.preventDefault(); } else
 				if(e.ctrlKey)        { Network_restore(index); e.preventDefault(); } else
-				if(Platform_isDebug) { Network_switchUser(index-1); e.preventDefault(); } 
+				if(Platform_isDebug) { 
+					if(Input_isTextInputActive)
+						Input_startTextInput("", -1);
+					Network_switchUser(index-1);
+					e.preventDefault();
+				}
 			}
 			else
 			// Reload
@@ -819,8 +824,11 @@ unit Input
 			_input.style.fontSize = "1px"
 			_input.style.backgroundColor = "#000000"
 			_input.oninput = e => Input_handleTextInput(7, _input.value)
-			_input.onfocus = e => Input_isTextInputActive = true
-			_input.onblur = e => Input_isTextInputActive = false
+			_input.onblur = e => {
+				if(Input_isTextInputActive) {
+					_input.focus()
+				}
+			}
 			document.body.appendChild(_input)
 		}
 		return _input
@@ -836,6 +844,9 @@ unit Input
 				Input_isTextInputActive = true
 			}, 0)
 		}
+		
+	js void stopTextInput
+		Input_isTextInputActive = false
 		
 	js void setTextInput: string value
 		let input = Input_getOrCreateInputField()
