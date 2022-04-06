@@ -1249,7 +1249,7 @@ transient struct Time
 	// The data and time in ISO 8601 format, for example "2000-12-31T17:30:00.000Z"
 	inline js string isoString := this.toISOString()
 		
-	static inline js Time realtime := new Date(now)
+	static inline js Time realtime := new Date(Time_now)
 	static inline js float preciseTime := performance.now()
 		
 	static inline js Time fromTime(int time) new Date(time)
