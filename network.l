@@ -63,6 +63,7 @@ transient unit Network
 	bool simulateConnection = true
 	bool simulateInputsForTesting = false
 	bool simulateRollback = false
+	int checksumInterval = 30
 	
 	SendInputsMode sendInputsMode = Peer
 	internal const targetFps = 30
@@ -126,7 +127,7 @@ transient unit Network
 		frameWithNewWatches = 0
 		startInLobby = false
 		errorMessage = ""
-		audio.pause
+		audio.stop
 		goToFrame 0
 		
 	// Calls init functions, creates the local users, resets read positions and starts app
@@ -158,6 +159,7 @@ transient unit Network
 			
 		Math.randomValueIndex = 0
 		frame = 0
+		certainFrame = -1
 		lobby.inLobby = startInLobby
 		if !startInLobby: startApp
 			
@@ -209,7 +211,7 @@ transient unit Network
 		let targetFrame = Math.floor((now - startTime)/targetFrameTime)+1
 		frameMinusBuffer = targetFrame - bufferFrames
 		if mode == Connected: certainFrame = Math.min(frameMinusBuffer, receivedFrames); else
-		if simulateRollback:  certainFrame = targetFrame - 3; else
+		if simulateRollback:  certainFrame = targetFrame - 5; else
 			                  certainFrame = int.maxValue
 
 		if mode == Local && targetFrame > frame + targetFps*2
@@ -382,7 +384,7 @@ transient unit Network
 			// Tick
 			tick draw
 			
-			if mode != Local and (frame % 60)==0 and isCertain
+			if mode != Local and (frame % checksumInterval)==0 and isCertain
 				// Calculate checksum if we received all inputs for this frame
 				float myChecksum = Framework.checksum					
 				float theirChecksum = checksums[frame]
@@ -415,11 +417,12 @@ transient unit Network
 	// Clear screen, process application tick, and draw all graphics
 	// This is called in step.
 	internal tick: bool draw
+		graphics.startFrame
 		if draw
-			graphics.startFrame
 			let isPlayback = Platform.mode == Play or frame+1 < frames
 			if Input.showPointers or isPlayback
 				Input.users.each drawPointer .id, showLocalPointer:isPlayback
+		audio.startFrame
 		
 		try
 			if lobby.inLobby
@@ -441,6 +444,7 @@ transient unit Network
 					drawText "v{Platform.version} {lag100Count}-{lag200Count} #{frame} {sendInterval}{sendInputsMode==Peer ? "p" : "s"} {aheadsLength} {PeerNetwork.connectionType}{statisticsGraph.maxValue}", statisticsGraph.position+{statisticsGraph.size.x/2, -statisticsGraph.size.y/2-15}, align:Right, layer:1000001, size:12
 			drawTime = Time.measure
 				graphics.finishFrame
+		audio.finishFrame
 				
 	js void appTick() if(window.app_tick) app_tick();
 		
@@ -529,7 +533,7 @@ transient unit Network
 				saveLogs
 			
 	internal saveLogs
-		let time = Time.current
+		let time = Time.realtime
 		// Ensure that current eventLog is added to the table even if we haven't processed a single frame
 		logTable += ",,,,,,,,,,,,,,,,,,,,,,,,\"{eventLog.trim}\""
 		Platform.saveTextFile "{Platform.appName} {time.dayShortMonthNameYearString} {time.hourMinuteSecondString} v{Platform.version}.csv", logTable
@@ -551,7 +555,7 @@ transient unit Network
 				buffer.writeInt8 .id
 				buffer.writeBool .local
 				buffer.writeBuffer .inputs
-		let time = Time.current
+		let time = Time.realtime
 		Platform.saveBinaryFile "{Platform.appName} {time.dayShortMonthNameYearString} {time.hourMinuteSecondString} v{Platform.version}.state", buffer
 		
 	openEventStream
@@ -598,12 +602,13 @@ transient unit Network
 		ServerNetwork.isLocalhost = Platform.url.contains("localhost")
 		initDatabase
 		setupVideoAndNetwork
+		lobby.enableFullscreen = int(roomString) >= 1000
 		
 	private js void initAll
 		init()
 		
 	private js void setupVideoAndNetwork 
-		await PeerNetwork_setupLocalVideo(/*enableVideo*/!ServerNetwork_isLocalhost, /*enableAudio*/!ServerNetwork_isLocalhost)
+		await PeerNetwork_setupLocalVideo(/*enableVideo*/!ServerNetwork_isLocalhost, /*enableAudio*/!ServerNetwork_isLocalhost && parseInt(Network_roomString)>=1000)
 		ServerNetwork_setup()
 		
 	internal storeUserId

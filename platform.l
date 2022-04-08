@@ -18,6 +18,7 @@ transient unit Platform
 	public userCount = 2
 	public bool showSafeArea = true
 	public bool showDebugInfo = false
+	public bool isLocal = false
 	
 	public inline js string url := location.href
 	public inline js int version := version
@@ -64,11 +65,12 @@ transient unit Platform
 				Platform_onResize();
 				if(Platform_mode == 0/*Pause*/ && Platform_engineStarted) Network_tick(/*draw*/true);
 			}
+		// if(window.app_init) app_init();
 		
 	private js void onResize
 		Platform_canvas = document.getElementById("canvas");
 		Platform_context = Platform_canvas.getContext("2d");
-		Platform_pixelRatio = 1;
+		Platform_pixelRatio = window.devicePixelRatio;
 		Platform_pixelSize = new Vector2(window.innerWidth*Platform_pixelRatio, window.innerHeight*Platform_pixelRatio, null);
 		Platform_canvas.style.width = window.innerWidth + "px";
 		Platform_canvas.style.height = window.innerHeight + "px";
@@ -135,8 +137,8 @@ transient unit Platform
 		
 		openMedia
 			startInterval
-			if isDebug || roomId == "local" || url.startsWith("file"): Network.startLocal userCount:userCount
-			else                                                       Network.join gameId, roomId, userId, allowRelay
+			if isDebug || isLocal || roomId == "local" || url.startsWith("file"): Network.startLocal userCount:userCount
+			else                                                                  Network.join gameId, roomId, userId, allowRelay
 			this.engineStarted = true
 			sendEvaluateFinished
 			
@@ -160,7 +162,7 @@ transient unit Platform
 	private enterSlideMode(PlatformMode mode) this.mode = mode; sendMode
 	
 	internal stop()    mode = Pause;  Network.stop; sendMode
-	internal pause()   mode = Pause;  audio.pause(); sendMode
+	internal pause()   mode = Pause;  audio.stop(); sendMode
 	internal record()  Network.resetStartTimeIfNeeded; mode = Record; sendMode
 	internal play()    Network.resetStartTimeIfNeeded; mode = Play;   sendMode
 	
@@ -293,6 +295,12 @@ transient unit Platform
 		let str = localStorage.getItem(key)
 		return str ? JSON.parse(str) : null 
 		
+	inline js void setLocalStorageString: string key, string value
+		localStorage.setItem(key, value)
+		
+	inline js string getLocalStorageString: string key
+		(localStorage.getItem(key) || "")
+		
 	js string generateObjectId
 		var result = (Date.now() / 1000 | 0).toString(16)
 		for(let i=0; i<16; i++)
@@ -341,6 +349,44 @@ transient unit Platform
 	inline js void setLocation: string url
 		location.href = url
 		
+	js void showIcon
+		if(!Platform_isDebug && window.require) {
+			const { remote } = require('electron')
+			remote.app.dock?.show()
+		}
+	
+	js void hideIcon
+		if(!Platform_isDebug && window.require) {
+			const { remote } = require('electron')
+			remote.app.dock?.hide()
+		}
+	
+	js void show
+		if(!Platform_isDebug && window.require) {
+			const { remote } = require('electron')
+			remote.getCurrentWindow().show()
+		}
+	
+	js void hide
+		if(!Platform_isDebug && window.require) {
+			const { remote } = require('electron')
+			remote.getCurrentWindow().hide()
+		}
+		
+	js void registerGlobalShotcut: string shortcut
+		                           void() do
+		if(!Platform_isDebug && window.require) {
+			const { remote } = require('electron')
+			remote.globalShortcut.unregister(shortcut)
+			remote.globalShortcut.register(shortcut, () => do())
+		}
+		
+	js void setInterval: int interval
+		                 void() do
+		setInterval(() => do(), interval)
+		
+	inline js string resourcesPath := process.resourcesPath
+		
 unit File
 	js string readPartial: string filename, int offset=0, int length, void(string result) callback
 		let fs = require("fs")
@@ -361,16 +407,35 @@ unit File
 		let fs = require("fs")
 		fs.writeFile(filename, data, "utf8", (err, data) => {
 			then?.()
-		})	
+		})
+		
+	inline js bool exists: string filename
+		require("fs").existsSync(filename)
+		
+	inline js void createDirectory: string path
+		require("fs").mkdirSync(path)
 		
 struct FileFilter
 	string name
 	string[] extensions
 
 transient unit Http	
+	js async object get: string url
+		let response = await fetch(url)
+		return response.json()
+		
 	js void get: string url, void(object result) code
 		let response = await fetch(url)
 		code(await response.json())
+		
+	js async string delete: string url 
+		let response = await fetch(url, {method:"DELETE"})
+		return await response.text()
+		
+	js async string delete: string url 
+		                    object body
+		let response = await fetch(url, {method:"DELETE", body:JSON.stringify(body)})
+		return await response.text()
 		
 	js void delete: string url 
 		         void(object result) code
@@ -383,6 +448,10 @@ transient unit Http
 			else(e.message)
 		}
 		
+	js async void put: string url 
+		let response = await fetch(url, {method:"PUT"})
+		return await response.text()
+		
 	js void put: string url 
 		         void(object result) code
 		         void(string error) else
@@ -393,6 +462,16 @@ transient unit Http
 		} catch(e) {
 			else(e.message)
 		}
+		
+	js async void put: string url 
+		         string body
+		let response = await fetch(url, {method:"PUT", body})
+		return await response.text()
+		
+	js async void put: string url 
+		         object body
+		let response = await fetch(url, {method:"PUT", body:JSON.stringify(body)})
+		return await response.json()
 		
 	js void put: string url
 		         object body
@@ -405,6 +484,20 @@ transient unit Http
 		} catch(e) {
 			else(e.message)
 		}
+		
+	js async string post: string url 
+		                  string body
+		let response = await fetch(url, {method:"POST", body})
+		return await response.text()
+		
+	js async string post: string url 
+		                  object body
+		let response = await fetch(url, {method:"POST", body:JSON.stringify(body)})
+		return await response.text()
+		
+	js async string post: string url 
+		let response = await fetch(url, {method:"POST"})
+		return await response.text()
 		
 	js void post: string url
 		          string body

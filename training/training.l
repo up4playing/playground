@@ -3,15 +3,17 @@
 class Student
 	int id
 	string studentName
-    int score
+	int score
 	bool alive
-    Vector2 position
+	bool isBest
+	int health
+	Vector2 position
 	IntVector2 size
 	Touch dragTouch
-    // Draw a button 3 times
-    draw
-        for 3
-            drawImage Button, position
+	// Draw a button 3 times
+	draw
+		for 3
+			drawImage Button, position
 	tick
 		for size.x -> x
 			for size.y -> y
@@ -35,33 +37,36 @@ class Student
 		for 5 to 10
 			list.add .
 			
-    restartGame 
+	restartGame
 	
 // A school class
 unit training
-    // List of students
-    Student[] students
+	// List of students
+	Student[] students
 	// Function to restart the game for each student
-    restartGame
-        students.each.restartGame
-    tick
+	restartGame
+		students.each.restartGame
+	tick
 		int studentId = 7
-		let student = students.find.id == studentId
+		let studentWithId = students.find.id == studentId
 		let bestStudent = students.withMax.score
+		students.each.isBest = . == bestStudent
+		students.each.alive = .health >= 100
 		let highestScore = students.max.score
 		let top3Students = students.orderBy(.score).reverse.take 3
 	
 		students = []
-		// Add student
-		students.add {studentName:"John", score:0}
-	
-        // Draw all students
+		// Create student
+		Student student = {studentName:"John", score:0}
+		students.add student
+		
+		// Draw all students
 		students.each.draw
 		
 		// Create a list with all even numbers between 10 and 20
 		int[] list
 		for 10 to 20
-		   if . % 2 == 0: list.add .
+			if . % 2 == 0: list.add .
 		
 		// Iterate the list in revers order and remove all values smaller than 15
 		for list <-
@@ -70,15 +75,15 @@ unit training
 		// Print list
 		for list
 			print .
-		   
+		
 		// If the student clicks, restart the game
 		Input.onTouchDown
-		   restartGame
+			restartGame
 		
 		// Print the average score of all students
 		let totalScore = 0
 		for students
-		   totalScore += .score
+			totalScore += .score
 		let averageScore = totalScore / students.length
 		print "Average score of all students: {averageScore}"
 		
@@ -95,3 +100,5 @@ unit training
 		// Get all students that are still alive and sort them by score
 		let aliveStudents = students.where.alive
 		aliveStudents.orderBy.score
+
+

@@ -327,7 +327,10 @@ class List<T>
 		return "["+result+"]"
 		
 	// Gets a random item from the list
-	T random() := get(Math.randomInteger(length))
+	T random()
+		let randomInteger = Math.randomInteger(length)
+		// print randomInteger, length
+		return get(randomInteger)
 		
 	T popRandom()
 		int index = Math.randomInteger(length)
@@ -441,6 +444,9 @@ class List<T>
 		
 	inline js T[] take: int count
 		this.slice(0, count)
+		
+	inline js T[] subList: int start, int count
+		this.slice(start, count)
 		
 	// js int sum: int(T a) selector
 	// 	let sum = 0
@@ -975,16 +981,6 @@ global transient unit System
 		                                     ) do         // The code to execute for each triple in a list
 		for(let _subject=subject, _len=_subject.length, i=_len-1; i>=0; --i) { let it = _subject[i], next = _subject[(((i-1)%_len)+_len)%_len], prev = _subject[(i+1)%_len]; do()}
 
-	global inline js void forCentered: T[] subject  // The list to iterate over
-		                               Vector2 center = {0,0}
-		                               Vector2 delta = {100,0}
-		                               -> void(
-		                                   T it,    // The current item of the list we are iterating over with forCentered
-		                                   Vector2 pos,
-		                                   int i    // The index of the current item of the list we are iterating over with forCentered
-		                               ) do         // The code to execute for each item in a list
-		for(let i=0, _subject=subject, _center = center, _delta = delta, _len=_subject.length, _x = _center.x-(_len-1)*_delta.x/2, _y=_center.y-(_len-1)*_delta.y/2; i<_len; ++i, _x += _delta.x, _y += _delta.y) { let it = _subject[i], pos = new Vector2(_x, _y, _center.location || _delta.location ? new SourceCodeLocation(0, 0, null, _center.location, _delta.location) : null); do()}
-		
 	// Prints a message to the console
 	global js void print: logstring text // The text, variables or expressions to print
 		                  SourceCodeLocation location
@@ -1096,86 +1092,69 @@ unit Math
 		for targetRandomValueIndex: randomFloat
 	
 	js void setRandomSeed: string seed
-		Math_randomSeed = seed
-		Math_randomValues.length = 0
-		Math_randomValueIndex = 0
+		// Seeding the random number generator in Javascript
+		// https://stackoverflow.com/a/47593316
+		function xmur3(str) {
+		    for(var i = 0, h = 1779033703 ^ str.length; i < str.length; i++) {
+		        h = Math.imul(h ^ str.charCodeAt(i), 3432918353);
+		        h = h << 13 | h >>> 19;
+		    } return function() {
+		        h = Math.imul(h ^ (h >>> 16), 2246822507);
+		        h = Math.imul(h ^ (h >>> 13), 3266489909);
+		        return (h ^= h >>> 16) >>> 0;
+		    }
+		}
 		
-		// Ported from an algorithm by Johannes Baagøe <baagoe@baagoe.com>
-		// https://github.com/nquinlan/better-random-numbers-for-javascript-mirror
-		function Alea(seed) {
-			var me = this, mash = Mash();
-			var count = 0
-			me.next = function() {
-				if(Math_randomValueIndex < Math_randomValues.length) {
-					var value = Math_randomValues[Math_randomValueIndex]
-					
-					// TEMP: Log every random number
-					Network_eventLog += " ["+Math_randomValueIndex+"/"+Math_randomValues.length+"] replay "+value;
-					
-					Math_randomValueIndex++
-				} else {
-					var t = 2091639 * me.s0 + me.c * 2.3283064365386963e-10; // 2^-32
-					me.s0 = me.s1;
-					me.s1 = me.s2;
-					var value = me.s2 = t - (me.c = t | 0);
-					
-					// TEMP: Log every random number
-					Network_eventLog += " rnd("+Math_randomValueIndex+"/"+Math_randomValues.length+"):"+value;
-					if(Math_randomValueIndex != Math_randomValues.length) {
-						Network_eventLog += " INVALID rnd"
-						alert("Random values out of sync. Please click 'Save Logs' and send me the log file that will be created.")
-					}
-					
-					Math_randomValues[Math_randomValueIndex++] = value;
-				}
-				return value
+		function sfc32(a, b, c, d) {
+		    return function() {
+		      a >>>= 0; b >>>= 0; c >>>= 0; d >>>= 0; 
+		      var t = (a + b) | 0;
+		      a = b ^ b >>> 9;
+		      b = c + (c << 3) | 0;
+		      c = (c << 21 | c >>> 11);
+		      d = d + 1 | 0;
+		      t = t + d | 0;
+		      c = c + t | 0;
+		      return (t >>> 0) / 4294967296;
+		    }
+		}
+		
+		function mulberry32(a) {
+		    return function() {
+		      var t = a += 0x6D2B79F5;
+		      t = Math.imul(t ^ t >>> 15, t | 1);
+		      t ^= t + Math.imul(t ^ t >>> 7, t | 61);
+		      return ((t ^ t >>> 14) >>> 0) / 4294967296;
+		    }
+		}
+		
+		var seed = xmur3(seed);
+		var rand = sfc32(seed(), seed(), seed(), seed());
+		var rand = mulberry32(seed());
+		
+		Math_randomGenerator = function() {
+			let value
+			if(Math_randomValueIndex < Math_randomValues.length) {
+				value = Math_randomValues[Math_randomValueIndex]
+				// Log random numbers for testing
+				// Network_log("rnd("+Math_randomValueIndex+"/"+Math_randomValues.length+") replay "+value)
+				Math_randomValueIndex++
+			} else {
+				value = rand()
+				// Log random numbers for testing
+				// Network_log("rnd("+Math_randomValueIndex+"/"+Math_randomValues.length+"):"+value)
+				Math_randomValues[Math_randomValueIndex++] = value;
 			}
-			
-			// Apply the seeding algorithm from Baagoe.
-			me.c = 1;
-			me.s0 = mash(' ');
-			me.s1 = mash(' ');
-			me.s2 = mash(' ');
-			me.s0 -= mash(seed);
-			if (me.s0 < 0) { me.s0 += 1; }
-			me.s1 -= mash(seed);
-			if (me.s1 < 0) { me.s1 += 1; }
-			me.s2 -= mash(seed);
-			if (me.s2 < 0) { me.s2 += 1; }
-			mash = null;
+			return value
 		}
-		
-		function copy(f, t) {
-			t.c = f.c;
-			t.s0 = f.s0;
-			t.s1 = f.s1;
-			t.s2 = f.s2;
-			return t;
-		}
-		
-		function Mash() {
-			var n = 0xefc8249d;
-			var mash = function(data) {
-				data = String(data);
-				for (var i = 0; i < data.length; i++) {
-					n += data.charCodeAt(i);
-					var h = 0.02519603282416938 * n;
-					n = h >>> 0;
-					h -= n;
-					h *= n;
-					n = h >>> 0;
-					h -= n;
-					n += h * 0x100000000; // 2^32
-				}
-				return (n >>> 0) * 2.3283064365386963e-10; // 2^-32
-			};
-			return mash;
-		}
-		Math_randomGenerator = new Alea(seed).next
-	
+
 	// Generates a random integer
-	inline js int randomInteger: int max // The exclusive upper bound of the random integer to generate
-		((Math_randomGenerator() * max) | 0)
+	js int randomInteger: int max // The exclusive upper bound of the random integer to generate
+		let f = Math_randomGenerator()
+		let i = Math.floor(f * max)
+		// Log random numbers for testing
+		// Network_log("randomInteger float:"+f+"*"+max+" -> "+i)
+		return i
 	
 	// Generates a random float
 	inline js int randomFloat
@@ -1240,19 +1219,19 @@ unit Math
 		if value > fromEnd:   return toEnd
 			                  return toStart + (toEnd-toStart) * (value-fromStart)/(fromEnd-fromStart)
 	
-transient class Time
+js Date
+transient struct Time
 	inline js int year := this.getFullYear()
 	inline js int month := (this.getMonth()+1)
-	inline js int date := this.getDate()
-	inline js int day := this.getDay()
+	inline js int day := this.getDate()
+	inline js int dayOfWeek := this.getDay()
 		
 	inline js int hour := this.getHours()
 	inline js int minute := this.getMinutes()
 	inline js int second := this.getSeconds()
 		
 	inline js string twoDigitMonth := (this.getMonth()+1).toLocaleString('en-US', {minimumIntegerDigits:2})
-	inline js string twoDigitDate := this.getDate().toLocaleString('en-US', {minimumIntegerDigits:2})
-	inline js string twoDigitDay := this.getDay().toLocaleString('en-US', {minimumIntegerDigits:2})
+	inline js string twoDigitDay := this.getDate().toLocaleString('en-US', {minimumIntegerDigits:2})
 	inline js string twoDigitHour := this.getHours().toLocaleString('en-US', {minimumIntegerDigits:2})
 	inline js string twoDigitMinute := this.getMinutes().toLocaleString('en-US', {minimumIntegerDigits:2})
 	inline js string twoDigitSecond := this.getSeconds().toLocaleString('en-US', {minimumIntegerDigits:2})
@@ -1261,21 +1240,26 @@ transient class Time
 	inline js string dayLongMonthNameYearString := (this.getDate().toLocaleString('en-US', {minimumIntegerDigits:2})+" "+this.toLocaleString('en-US', {month: 'long'})+" "+this.getFullYear())
 	inline js string dayShortMonthNameYearString := (this.getDate().toLocaleString('en-US', {minimumIntegerDigits:2})+" "+this.toLocaleString('en-US', {month: 'short'})+" "+this.getFullYear())
 	inline js string hourMinuteSecondString := (this.getHours().toLocaleString('en-US', {minimumIntegerDigits:2}))+"-"+this.getMinutes().toLocaleString('en-US', {minimumIntegerDigits:2})+"-"+this.getSeconds().toLocaleString('en-US', {minimumIntegerDigits:2})
+	inline js string hourMinuteString := (this.getHours().toLocaleString('en-US', {minimumIntegerDigits:2}))+":"+this.getMinutes().toLocaleString('en-US', {minimumIntegerDigits:2})
 	inline js string dayMonthYearHourMinuteSecondString := (this.getDate().toLocaleString('en-US', {minimumIntegerDigits:2})+"."+(this.getMonth()+1).toLocaleString('en-US', {minimumIntegerDigits:2})+"."+this.getFullYear()+" "+this.getHours().toLocaleString('en-US', {minimumIntegerDigits:2}))+"-"+this.getMinutes().toLocaleString('en-US', {minimumIntegerDigits:2})+"-"+this.getSeconds().toLocaleString('en-US', {minimumIntegerDigits:2})
 	
+	// The number of milliseconds elapsed since January 1, 1970
 	inline js int time := this.getTime()
 		
-	static inline js Time current := new Date()
+	// The data and time in ISO 8601 format, for example "2000-12-31T17:30:00.000Z"
+	inline js string isoString := this.toISOString()
 		
-	static inline js Time fromTicks(int ticks) new Date(ticks)
+	static inline js Time realtime := new Date(Time_now)
+	static inline js float preciseTime := performance.now()
+		
+	static inline js Time fromTime(int time) new Date(time)
+	static inline js Time fromDate(int year, int month, int day, int hour = 0, int minute = 0, int second = 0) new Date(year, month-1, day, hour, minute, second)
 	
-	// The current frame	
+	// The current frame
 	static inline js int frame := Network_frame
 		
 	// The number of milliseconds elapsed since January 1, 1970
 	static int now
-	
-	static inline js float preciseTime := performance.now()
 		
 	static measure: void() code
 		let startTime = preciseTime

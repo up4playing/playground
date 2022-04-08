@@ -5,20 +5,28 @@ unit Framework
 	// Evaluate: Immediately remove objects to avoid problems in
 	// - graphics.setUserVideo (updating video object that will be removed)
 	// - Coin.transferToNeighbor (the just removed coin is still their in updateNeighbors)
-	// Object[] toBeRemoved
+	Object[] toBeRemoved
 	
 	clear
-		// toBeRemoved.addRange objects
 		objects.clear
 		
+	clearAtEndOfFrame
+		toBeRemoved.addRange objects
+		
+	removeWhere: bool(Object value) condition
+		for objects -> obj
+			if condition obj
+				toBeRemoved.add obj
+				
 	tick
-		// if toBeRemoved
-		// 	toBeRemoved.each.siblings.remove .
-		// 	toBeRemoved.clear
 		fx.tick
 		objects.each <- .tick
 		objects.each.update
 		Input.onTouchUp:  deselect touch.userId
+		
+		if toBeRemoved
+			toBeRemoved.each.siblings.remove .
+			toBeRemoved.clear
 		
 	isVisibleFor: Vector2 pos, int userId
 		let board = getBoardAt pos
@@ -71,9 +79,10 @@ class Object
 	float scale = 1
 	float alpha = 1
 	int visibleFor = -1
+	int layer = 0
 	
 	visible siblings := Framework.objects
-	internal checksum := 0
+	internal checksum := position.x + position.y + scale + alpha
 	internal debugString := "(Object pos:{position.x} {position.y})"
 	internal tick
 	internal update
@@ -81,9 +90,11 @@ class Object
 	Object
 		siblings.add this
 		
-	remove
+	removeImmediately
 		siblings.remove this
-		// Framework.toBeRemoved.add this
+		
+	removeAtEndOfFrame
+		Framework.toBeRemoved.add this
 		
 	moveTo: Vector2 pos
 		    int duration = 1000
@@ -146,14 +157,16 @@ class Object
 Object RectangleObject
 	Vector2 size
 	Color color = White
+	internal checksum := position.x + position.y + scale + alpha + size.x + size.y
 	tick
-		drawRectangle position, size, color, visibleFor
+		drawRectangle position, size, color, visibleFor, layer
 
 Object CircleObject
 	float radius = 10
 	Color color = White
+	internal checksum := position.x + position.y + scale + alpha + radius
 	tick
-		drawCircle position, radius, fillColor:color, visibleFor
+		drawCircle position, radius, fillColor:color, visibleFor, layer
 		
 	radiusTo: float value
 		      int duration = 200
@@ -168,18 +181,20 @@ Object TextObject
 	Color color = White
 	HorizontalAlignment align = Center // The horizontal alignment of the text
 	VerticalAlignment valign = Middle  // The vertical alignment of the text
+	internal checksum := position.x + position.y + text.length + size
 	tick
-		drawText text, position, size*scale, color, align, valign, font, alpha, visibleFor
+		drawText text, position, size*scale, color, align, valign, font, alpha, visibleFor, layer
 		
 Object ImageObject
 	Image image
 	tick
-		drawImage image, position, scale, alpha, visibleFor
+		drawImage image, position, scale, alpha, visibleFor, layer
 		
 Object VideoObject
 	int userId
 	Vector2 size = {440, 330}
 	float radius
+	internal checksum := position.x + position.y + userId + size.x + size.y + radius
 	tick
 		if radius: drawVideo userId, position, radius
 		else       drawVideo userId, position, size
@@ -530,7 +545,7 @@ Object ParticleSystem
 				particles.removeAt i
 		
 		if particles.length == 0	
-			remove
+			removeImmediately
 			
 enum closestCoinType: None, Neighbor, Over
 Piece Coin
@@ -636,7 +651,7 @@ Piece Coin
 		
 	private mergeWith: Coin coin
 		coin.value += value
-		remove
+		removeImmediately
 		updateNeighbors siblings, isBeingMoved:false
 	
 	private transferToNeighbor: Coin coin, int amount = 1
@@ -648,7 +663,7 @@ Piece Coin
 			if board: board.add neighbor
 		value -= amount
 		neighbor.value += amount
-		if !isInfinate and !allowZero and value <= 0: remove
+		if !isInfinate and !allowZero and value <= 0: removeImmediately
 		updateNeighbors siblings, isBeingMoved:false
 			
 

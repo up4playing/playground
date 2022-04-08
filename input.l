@@ -144,22 +144,23 @@ unit Input
 		}
 		window.onkeydown = e => {
 			let keyCode = e.keyCode
-			if(window.require && e.key == "t" && e.ctrlKey && e.metaKey && e.shiftKey)
+			let ctrlOrCmd = e.ctrlKey || e.metaKey
+			if(window.require && e.key == "t" && e.metaKey && e.shiftKey)
 				require("electron").remote.getCurrentWindow().toggleDevTools()
 			else
-			if(e.ctrlKey && e.key == "o") {
+			if(ctrlOrCmd && e.key == "o") {
 				// Open event stream
 				Network_openEventStream();
 				e.preventDefault();
 			}
 			else
-			if(e.ctrlKey && e.key == "s") {
+			if(ctrlOrCmd && e.key == "s") {
 				// Save event steam
 				Network_saveEventStream();
 				e.preventDefault();
 			}
 			else
-			if(e.ctrlKey && e.key == "l") {
+			if(ctrlOrCmd && e.key == "l") {
 				// Save logs
 				Network_saveLogs();
 				e.preventDefault();
@@ -169,23 +170,28 @@ unit Input
 				let index = e.key - "0"
 				if(e.altKey)         { Network_save(index); e.preventDefault(); } else
 				if(e.ctrlKey)        { Network_restore(index); e.preventDefault(); } else
-				if(Platform_isDebug) { Network_switchUser(index-1); e.preventDefault(); } 
+				if(Platform_isDebug) { 
+					if(Input_isTextInputActive)
+						Input_startTextInput("", -1);
+					Network_switchUser(index-1);
+					e.preventDefault();
+				}
 			}
 			else
 			// Reload
-			if(e.ctrlKey && e.key == "F1") {/*keep room, keep userId*/ ServerNetwork_sendReload(false, false); e.preventDefault();} else
-			if(e.ctrlKey && e.key == "F2") {/*new  room, keep userId*/ ServerNetwork_sendReload(true,  false); e.preventDefault();} else
-			if(e.ctrlKey && e.key == "F3") {/*new  room, new  userId*/ ServerNetwork_sendReload(true,  true);  e.preventDefault();} else
+			if(ctrlOrCmd && e.key == "F1") {/*keep room, keep userId*/ ServerNetwork_sendReload(false, false); e.preventDefault();} else
+			if(ctrlOrCmd && e.key == "F2") {/*new  room, keep userId*/ ServerNetwork_sendReload(true,  false); e.preventDefault();} else
+			if(ctrlOrCmd && e.key == "F3") {/*new  room, new  userId*/ ServerNetwork_sendReload(true,  true);  e.preventDefault();} else
 			
 			// Switch send interval
-			if(e.ctrlKey && e.key == "F5") {Network_switchSendInterval( 3); e.preventDefault();} else
-			if(e.ctrlKey && e.key == "F6") {Network_switchSendInterval(10); e.preventDefault();} else
-			if(e.ctrlKey && e.key == "F7") {Network_switchSendInterval(20); e.preventDefault();} else
-			if(e.ctrlKey && e.key == "F8") {Network_switchSendInterval(30); e.preventDefault();} else
-			if(e.ctrlKey && e.key == "F9") {Network_switchSendInterval(40); e.preventDefault();} else
+			if(ctrlOrCmd && e.key == "F5") {Network_switchSendInterval( 3); e.preventDefault();} else
+			if(ctrlOrCmd && e.key == "F6") {Network_switchSendInterval(10); e.preventDefault();} else
+			if(ctrlOrCmd && e.key == "F7") {Network_switchSendInterval(20); e.preventDefault();} else
+			if(ctrlOrCmd && e.key == "F8") {Network_switchSendInterval(30); e.preventDefault();} else
+			if(ctrlOrCmd && e.key == "F9") {Network_switchSendInterval(40); e.preventDefault();} else
 				
-			if(e.ctrlKey && e.key == "F10") {Network_switchSendInputMode(1); e.preventDefault();} else
-			if(e.ctrlKey && e.key == "F11") {Network_switchSendInputMode(2); e.preventDefault();} else
+			if(ctrlOrCmd && e.key == "F10") {Network_switchSendInputMode(1); e.preventDefault();} else
+			if(ctrlOrCmd && e.key == "F11") {Network_switchSendInputMode(2); e.preventDefault();} else
 				
 			if(e.key == "F9") {
 				if(e.shiftKey) { Network_saveLogs(); }
@@ -804,6 +810,8 @@ unit Input
 						code event
 						if markAsHandled: event.markAsHandled
 		if showTouchArea: drawRectangle position, size, Red
+			
+	bool isTextInputActive = false
 	
 	private js object getOrCreateInputField
 		if(!window._input) {
@@ -815,23 +823,67 @@ unit Input
 			_input.style.height = "1px"
 			_input.style.fontSize = "1px"
 			_input.style.backgroundColor = "#000000"
-			_input.oninput = e => {
-				Input_handleTextInput(7, _input.value)
+			_input.oninput = e => Input_handleTextInput(7, _input.value)
+			_input.onblur = e => {
+				if(Input_isTextInputActive) {
+					_input.focus()
+				}
 			}
 			document.body.appendChild(_input)
 		}
 		return _input
 				
-	js void startTextInput: string initalValue = null
-		let input = Input_getOrCreateInputField()
-		if(initalValue != null) { 
-			input.value = initalValue
+	transient object inputElement
+	
+	js void startTextInput: string initalValue = null, int forUser = -1
+		Input_isTextInputActive = true
+		
+		if(Input_inputElement) document.body.removeChild(Input_inputElement);
+		Input_inputElement = document.createElement('input');
+		Input_inputElement.style.position = 'absolute';
+		Input_inputElement.style.top = "0px";
+		Input_inputElement.style.left = "0px";
+		Input_inputElement.style.height = 0;
+		Input_inputElement.style.opacity = 0;
+		Input_inputElement.oninput = e => Input_handleTextInput(7, Input_inputElement.value)
+		Input_inputElement.onblur = e => {
+			log("onblur "+Input_isTextInputActive)
+			if(Input_isTextInputActive) {
+				Input_inputElement.focus()
+			}
 		}
-		setTimeout(() => _input.focus(), 0)
+		if(initalValue != null) Input_inputElement.value = initalValue
+		document.body.appendChild(Input_inputElement);
+		Input_inputElement.focus();
+		log("startTextInput "+Input_isTextInputActive)
+		
+		// The keyboard is open. Now do a delayed focus on the target element
+		// setTimeout(function() {
+			//el.focus();
+			//el.click();
+			// Remove the temp element
+			// document.body.removeChild(__tempEl__);
+			// Input_isTextInputActive = true
+		// }, 100);
+
+		// if(forUser == -1 || Input_localUser?.id == forUser) {
+		// 	let input = Input_getOrCreateInputField()
+		// 	if(initalValue != null) { 
+		// 		input.value = initalValue
+		// 	}
+		// 	setTimeout(() => {
+		// 		_input.focus()
+		// 		Input_isTextInputActive = true
+		// 	}, 0)
+		// }
+		
+	js void stopTextInput
+		Input_isTextInputActive = false
+		log("stopTextInput "+Input_isTextInputActive)
 		
 	js void setTextInput: string value
-		let input = Input_getOrCreateInputField()
-		input.value = value
+		// let input = Input_getOrCreateInputField()
+		Input_inputElement.value = value
 		Input_handleTextInput(7, value)
 		
 	js void updateCursor
@@ -842,10 +894,15 @@ unit Input
 			for user.textCompositions -> text
 				code text
 				
-	onTextInput: void(string textInput) code
-		for internalUsers -> user
+	onTextInput: int userId = -1, void(string textInput) code
+		if (Network.mode == Connected || Network.simulateConnection) && userId != -1
+			let user = internalUsers[userId]
 			for user.textInputs -> text
 				code text
+		else
+			for internalUsers -> user
+				for user.textInputs -> text
+					code text
 				
 	onKeyDown: int key, int userId = -1, void(int key, int keyUserId) code
 		if (Network.mode == Connected || Network.simulateConnection) && userId != -1
