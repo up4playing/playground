@@ -306,7 +306,7 @@ Object Piece
 			Input.onTouchUp rotateTouch
 				targetAngle = Math.round(angle / (Math.PI/2)) * Math.PI/2
 				rotateTouch = null
-				if !rotatedOverThreshold: targetAngle -= Math.PI/2
+				if !rotatedOverThreshold: targetAngle += Math.PI/2
 				interactingUserId = touch.userId
 		
 		// Flip	
