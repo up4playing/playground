@@ -847,7 +847,6 @@ unit Input
 		Input_inputElement.style.opacity = 0;
 		Input_inputElement.oninput = e => Input_handleTextInput(7, Input_inputElement.value)
 		Input_inputElement.onblur = e => {
-			log("onblur "+Input_isTextInputActive)
 			if(Input_isTextInputActive) {
 				Input_inputElement.focus()
 			}
@@ -855,7 +854,6 @@ unit Input
 		if(initalValue != null) Input_inputElement.value = initalValue
 		document.body.appendChild(Input_inputElement);
 		Input_inputElement.focus();
-		log("startTextInput "+Input_isTextInputActive)
 		
 		// The keyboard is open. Now do a delayed focus on the target element
 		// setTimeout(function() {
@@ -879,7 +877,6 @@ unit Input
 		
 	js void stopTextInput
 		Input_isTextInputActive = false
-		log("stopTextInput "+Input_isTextInputActive)
 		
 	js void setTextInput: string value
 		// let input = Input_getOrCreateInputField()
