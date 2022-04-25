@@ -58,8 +58,20 @@ struct int
 	inline js int incrementAndWrap: int max // When the integer reaches this value, it wraps around to zero
 		(this = (((this+1) % max) + max) % max)
 	
-	inline js int incrementUpTo: int max // When the integer reaches this value, it wraps around to zero
-		(this < max ? this++ : max)
+	inline js int decrementAndWrap: int max // When the integer reaches this value, it wraps around to zero
+		(this = (((this-1) % max) + max) % max)
+	
+	inline js int incrementUpTo: int max
+		(this < max ? ++this : max)
+		
+	inline js int incrementUpToExclusive: int max
+		(this < max-1 ? ++this : max-1)
+		
+	inline js int decrementDownTo: int min
+		(this > min ? --this : min)
+		
+	inline js int decrementDownToExclusive: int min
+		(this > min+1 ? --this : min+1)
 		
 	// inline js int[] to: int max
 	// 	(() => {let list=[]; for(let _i=this; _i<max; _i++) list.push(_i); return list})()
@@ -439,7 +451,7 @@ class List<T>
 	inline js T find: bool(T a) condition // The condition to check
 		this.find(condition)
 		
-	int findIndex: bool(T a) condition // The condition to check
+	int indexWhere: bool(T a) condition // The condition to check
 		for this
 			if condition(.)
 				return i
