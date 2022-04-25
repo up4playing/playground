@@ -267,6 +267,9 @@ class List<T>
 	inline js T set: int index // The index of the item to set
 	                 T value   // The new value to set
 		this[index] = value
+		
+	inline js T[] clone
+		[...this]
 	
 	inline js T getOrSet: int index      
 		                  T initalValue
@@ -294,6 +297,9 @@ class List<T>
 				if ++count >= maxCount: break
 		
 	inline js T pop := this.pop()
+		
+	inline js T popAt: int index
+		this.splice(index, 1)[0]
 		
 	T popWhere: bool(T a) condition
 		for length()
@@ -643,7 +649,6 @@ class List<T>
 				resultItem = .
 		return resultValue != threshold ? resultItem : null
 		
-		
 	withMax: float(T a) selector
 		     float threshold = float.minValue
 		float resultValue = threshold
@@ -654,6 +659,36 @@ class List<T>
 				resultValue = value
 				resultItem = .
 		return resultValue != threshold ? resultItem : null
+		
+	popMax: int(T a) selector
+		    int threshold = int.minValue
+		int resultValue = threshold
+		T resultItem = null
+		int resultIndex = -1
+		for this
+			let value = selector(.)
+			if value > resultValue
+				resultValue = value
+				resultItem = .
+				resultIndex = i
+				
+		if resultIndex != -1: removeAt resultIndex
+		return resultItem
+		
+	popMax: int(T a) selector
+		    float threshold = float.minValue
+		float resultValue = threshold
+		T resultItem = null
+		int resultIndex = -1
+		for this
+			let value = selector(.)
+			if value > resultValue
+				resultValue = value
+				resultItem = .
+				resultIndex = i
+				
+		if resultIndex != -1: removeAt resultIndex
+		return resultItem
 		
 	withMax: int(T a) selector
 		     int threshold = int.minValue
