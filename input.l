@@ -839,10 +839,8 @@ unit Input
 			if(initalValue != null) { 
 				input.value = initalValue
 			}
-			setTimeout(() => {
-				_input.focus()
-				Input_isTextInputActive = true
-			}, 0)
+			_input.focus()
+			Input_isTextInputActive = true
 		}
 		
 	js void stopTextInput
