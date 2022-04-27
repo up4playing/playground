@@ -591,13 +591,12 @@ transient unit Network
 	int roomId
 	string gameId
 	
-	join: string gameId, string roomString, int userId, bool allowRelay
+	join: string gameId, string roomString, int userId
 		initAll
 		log "Network.join "+Platform.url
 		startInLobby = true
 		this.gameId = gameId
 		this.roomString = roomString
-		PeerNetwork.allowRelay = allowRelay
 		Input.localUser = {userId, local:true}
 		ServerNetwork.isLocalhost = Platform.url.contains("localhost")
 		initDatabase

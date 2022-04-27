@@ -15,7 +15,6 @@ transient unit PeerNetwork
 	
 	visible string connectionType
 	visible string error
-	bool allowRelay
 	
 	private js object setupPeerConnection: InternalUser user, bool offerByMe
 		let options = {
