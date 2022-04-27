@@ -836,6 +836,7 @@ unit Input
 	transient object inputElement
 	
 	js void startTextInput: string initalValue = null, int forUser = -1
+		if(forUser != -1 && Input_localUser?.id != forUser) return
 		Input_isTextInputActive = true
 		
 		if(Input_inputElement) document.body.removeChild(Input_inputElement);
