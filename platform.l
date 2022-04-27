@@ -65,7 +65,7 @@ transient unit Platform
 				Platform_onResize();
 				if(Platform_mode == 0/*Pause*/ && Platform_engineStarted) Network_tick(/*draw*/true);
 			}
-		// if(window.app_init) app_init();
+		if(window.app_init) app_init();
 		
 	private js void onResize
 		Platform_canvas = document.getElementById("canvas");
