@@ -306,7 +306,7 @@ Object Piece
 			Input.onTouchUp rotateTouch
 				targetAngle = Math.round(angle / (Math.PI/2)) * Math.PI/2
 				rotateTouch = null
-				if !rotatedOverThreshold: targetAngle -= Math.PI/2
+				if !rotatedOverThreshold: targetAngle += Math.PI/2
 				interactingUserId = touch.userId
 		
 		// Flip	
@@ -557,6 +557,7 @@ Piece Coin
 	bool allowZero
 	int valueVisibleFor = -1
 	int userId = -1
+	Vector2 transferNeighborOffset = {45,58}
 	image = Coin
 	
 	private Coin closestCoin
@@ -658,7 +659,7 @@ Piece Coin
 		Coin neighbor = coin
 		if !neighbor
 			if value <= amount and !isInfinate: return
-			neighbor = {position:position+{45,58}, image:image, userId}
+			neighbor = {position:position+transferNeighborOffset, image:image, userId}
 			if board: board.add neighbor
 		value -= amount
 		neighbor.value += amount

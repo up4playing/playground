@@ -58,8 +58,20 @@ struct int
 	inline js int incrementAndWrap: int max // When the integer reaches this value, it wraps around to zero
 		(this = (((this+1) % max) + max) % max)
 	
-	inline js int incrementUpTo: int max // When the integer reaches this value, it wraps around to zero
-		(this < max ? this++ : max)
+	inline js int decrementAndWrap: int max // When the integer reaches this value, it wraps around to zero
+		(this = (((this-1) % max) + max) % max)
+	
+	inline js int incrementUpTo: int max
+		(this < max ? ++this : max)
+		
+	inline js int incrementUpToExclusive: int max
+		(this < max-1 ? ++this : max-1)
+		
+	inline js int decrementDownTo: int min
+		(this > min ? --this : min)
+		
+	inline js int decrementDownToExclusive: int min
+		(this > min+1 ? --this : min+1)
 		
 	// inline js int[] to: int max
 	// 	(() => {let list=[]; for(let _i=this; _i<max; _i++) list.push(_i); return list})()
@@ -267,6 +279,9 @@ class List<T>
 	inline js T set: int index // The index of the item to set
 	                 T value   // The new value to set
 		this[index] = value
+		
+	inline js T[] clone
+		[...this]
 	
 	inline js T getOrSet: int index      
 		                  T initalValue
@@ -294,6 +309,9 @@ class List<T>
 				if ++count >= maxCount: break
 		
 	inline js T pop := this.pop()
+		
+	inline js T popAt: int index
+		this.splice(index, 1)[0]
 		
 	T popWhere: bool(T a) condition
 		for length()
@@ -433,7 +451,7 @@ class List<T>
 	inline js T find: bool(T a) condition // The condition to check
 		this.find(condition)
 		
-	int findIndex: bool(T a) condition // The condition to check
+	int indexWhere: bool(T a) condition // The condition to check
 		for this
 			if condition(.)
 				return i
@@ -643,7 +661,6 @@ class List<T>
 				resultItem = .
 		return resultValue != threshold ? resultItem : null
 		
-		
 	withMax: float(T a) selector
 		     float threshold = float.minValue
 		float resultValue = threshold
@@ -654,6 +671,36 @@ class List<T>
 				resultValue = value
 				resultItem = .
 		return resultValue != threshold ? resultItem : null
+		
+	popMax: int(T a) selector
+		    int threshold = int.minValue
+		int resultValue = threshold
+		T resultItem = null
+		int resultIndex = -1
+		for this
+			let value = selector(.)
+			if value > resultValue
+				resultValue = value
+				resultItem = .
+				resultIndex = i
+				
+		if resultIndex != -1: removeAt resultIndex
+		return resultItem
+		
+	popMax: int(T a) selector
+		    float threshold = float.minValue
+		float resultValue = threshold
+		T resultItem = null
+		int resultIndex = -1
+		for this
+			let value = selector(.)
+			if value > resultValue
+				resultValue = value
+				resultItem = .
+				resultIndex = i
+				
+		if resultIndex != -1: removeAt resultIndex
+		return resultItem
 		
 	withMax: int(T a) selector
 		     int threshold = int.minValue

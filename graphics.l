@@ -351,9 +351,9 @@ transient global unit graphics
 	// Returns the width of a string in pixels
 	global js int getTextWidth: string text              // The string to get the width of
 		                        size = 18                // The size of the font in pixels
-		                        font = ""                // The font of the text
+		                        Font font = null         // The font of the text
 		                        FontStyle style = Normal // Whether the text should be bold or normal style
-		Platform_context.font = (style ? "bold ":"")+(size || graphics_currentFontSize)+"px "+(font || graphics_currentFont)
+		Platform_context.font = (style ? "bold ":"")+(size || graphics_currentFontSize)+"px "+(font || graphics_currentFont).name;
 		let textSize = Platform_context.measureText(text)
 		return textSize.width
 		
