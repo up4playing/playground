@@ -65,7 +65,7 @@ transient unit Platform
 				Platform_onResize();
 				if(Platform_mode == 0/*Pause*/ && Platform_engineStarted) Network_tick(/*draw*/true);
 			}
-		// if(window.app_init) app_init();
+		if(window.app_init) app_init();
 		
 	private js void onResize
 		Platform_canvas = document.getElementById("canvas");
@@ -119,26 +119,20 @@ transient unit Platform
 		let path = url.split("/")
 		let gameId = path[3]
 		let roomId = path[4]
-		
-		// TEMP: Allow relay
-		bool allowRelay = true
-		let peerIndex = roomId.indexOf("p")
-		if peerIndex != -1
-			allowRelay = false
-			roomId = roomId.substring(0,peerIndex)
 			
 		// TEMP: For testing, support joining a room with a given userId using the format /gameId/roomId-userId
 		// because starting the app in two browser tabs overwrites the userId in the local storage
 		let userId = -1
-		let dashIndex = roomId.indexOf("-")
-		if dashIndex != -1
-			userId = cast roomId.substring(dashIndex+1)
-			roomId = roomId.substring(0,dashIndex)
+		if roomId
+			let dashIndex = roomId.indexOf("-")
+			if dashIndex != -1
+				userId = cast roomId.substring(dashIndex+1)
+				roomId = roomId.substring(0,dashIndex)
 		
 		openMedia
 			startInterval
 			if isDebug || isLocal || roomId == "local" || url.startsWith("file"): Network.startLocal userCount:userCount
-			else                                                                  Network.join gameId, roomId, userId, allowRelay
+			else                                                                  Network.join gameId, roomId, userId
 			this.engineStarted = true
 			sendEvaluateFinished
 			

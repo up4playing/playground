@@ -833,55 +833,22 @@ unit Input
 		}
 		return _input
 				
-	transient object inputElement
-	
 	js void startTextInput: string initalValue = null, int forUser = -1
-		if(forUser != -1 && Input_localUser?.id != forUser) return
-		Input_isTextInputActive = true
-		
-		if(Input_inputElement) document.body.removeChild(Input_inputElement);
-		Input_inputElement = document.createElement('input');
-		Input_inputElement.style.position = 'absolute';
-		Input_inputElement.style.top = "0px";
-		Input_inputElement.style.left = "0px";
-		Input_inputElement.style.height = 0;
-		Input_inputElement.style.opacity = 0;
-		Input_inputElement.oninput = e => Input_handleTextInput(7, Input_inputElement.value)
-		Input_inputElement.onblur = e => {
-			if(Input_isTextInputActive) {
-				Input_inputElement.focus()
+		if(forUser == -1 || Input_localUser?.id == forUser) {
+			let input = Input_getOrCreateInputField()
+			if(initalValue != null) { 
+				input.value = initalValue
 			}
+			_input.focus()
+			Input_isTextInputActive = true
 		}
-		if(initalValue != null) Input_inputElement.value = initalValue
-		document.body.appendChild(Input_inputElement);
-		Input_inputElement.focus();
-		
-		// The keyboard is open. Now do a delayed focus on the target element
-		// setTimeout(function() {
-			//el.focus();
-			//el.click();
-			// Remove the temp element
-			// document.body.removeChild(__tempEl__);
-			// Input_isTextInputActive = true
-		// }, 100);
-
-		// if(forUser == -1 || Input_localUser?.id == forUser) {
-		// 	let input = Input_getOrCreateInputField()
-		// 	if(initalValue != null) { 
-		// 		input.value = initalValue
-		// 	}
-		// 	setTimeout(() => {
-		// 		_input.focus()
-		// 		Input_isTextInputActive = true
-		// 	}, 0)
-		// }
 		
 	js void stopTextInput
 		Input_isTextInputActive = false
 		
 	js void setTextInput: string value
-		// let input = Input_getOrCreateInputField()
-		Input_inputElement.value = value
+		let input = Input_getOrCreateInputField()
+		input.value = value
 		Input_handleTextInput(7, value)
 		
 	js void updateCursor
