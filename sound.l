@@ -83,7 +83,7 @@ transient global unit audio
 			volume = volumeLevels[volumeLevel]
 			playingSounds.each.sound.updateVolume
 	
-	global playSound: Sound sound, int delay = 0, bool smooth = false
+	global playSound: Sound sound, Time delay = 0, bool smooth = false
 		if Time.frame == 0
 			fx.add PlaySoundEffect startTime:Math.ceil(Time.now+Network.targetFrameTime)+delay, sound, smooth
 		else

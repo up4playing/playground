@@ -98,7 +98,7 @@ class Object
 		
 	moveTo: Vector2 pos
 		    int duration = 1000
-		    int delay = 0
+		    Time delay = 0
 		    bool smooth = false
 		Vector2 startValue = position
 		let startTime = Time.now + delay
@@ -117,7 +117,7 @@ class Object
 		
 	moveTo: Vector2 pos
 		    float speed = 1
-		    int delay = 0
+		    Time delay = 0
 		    bool smooth = false
 		let delta = pos - position
 		let duration = Math.floor(delta.length / speed)
@@ -125,14 +125,14 @@ class Object
 		return this
 		
 	fadeIn: int duration = 1000
-		    int delay = 0
+		    Time delay = 0
 		    bool smooth = false
 		alpha = 0
 		fx.add FadeEffect startTime:Time.now+delay, duration, smooth, this, startValue:0, delta:1
 		return this
 		
 	fadeOut: int duration = 1000
-		     int delay = 0
+		     Time delay = 0
 		     bool removeWhenDone = true
 		     bool smooth = false
 		fx.add FadeEffect startTime:Time.now+delay, duration, smooth, this, startValue:1, delta:-1, removeWhenDone
@@ -140,14 +140,14 @@ class Object
 		
 	scaleTo: float scale 
 		     int duration = 1000
-		     int delay = 0
+		     Time delay = 0
 		     bool smooth = false
 		fx.add ScaleEffect startTime:Time.now+delay, duration, smooth, this, startValue:this.scale, delta:scale-this.scale
 		return this
 	
 	fadeAndScaleIn: int duration = 200
 		            float startScale = 3
-		            int delay = 0
+		            Time delay = 0
 		            bool smooth = false
 		alpha = 0
 		fx.add ScaleEffect startTime:Time.now+delay, duration, smooth, this, startValue:startScale, delta:1-startScale
@@ -170,7 +170,7 @@ Object CircleObject
 		
 	radiusTo: float value
 		      int duration = 200
-		      int delay = 0
+		      Time delay = 0
 		      bool smooth = false
 		fx.add RadiusEffect startTime:Time.now+delay, duration, smooth, this, startValue:radius, delta:value-radius
 
@@ -517,7 +517,7 @@ Object ParticleSystem
 	maxSpeed = 25.0
 	particlesPerBurst = 30
 	burstInterval = 500
-	nextBurst = -1
+	Time nextBurst = -1
 	bursts = 10
 	
 	private int burst
@@ -532,7 +532,7 @@ Object ParticleSystem
 					speed: {Math.cos(r), Math.sin(r)} * speedFactor
 					frame: Math.randomInteger(particleImage.frames.length)
 					angle: Math.randomFloat*Math.PI*2
-			nextBurst = ++burst < bursts ? Time.now + burstInterval : int.maxValue
+			nextBurst = ++burst < bursts ? Time.now + burstInterval : Time.maxValue
 
 		for particles <-
 			graphics.move .pos

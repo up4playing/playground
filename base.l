@@ -1066,8 +1066,16 @@ unit Math
 	inline js int ceil: float value // The value to round up
 		Math.ceil(value)
 		
+	// Returns the smallest integer greater than or equal to the given value 
+	inline js Time ceil: Time value // The value to round up
+		Math.ceil(value)
+		
 	// Returns the largest integer less than or equal to the given value
 	inline js int floor: float value // The value to round down
+		Math.floor(value)
+		
+	// Returns the largest integer less than or equal to the given value
+	inline js Time floor: Time value // The value to round down
 		Math.floor(value)
 		
 	// Returns the given value rounded to the nearest integer
@@ -1265,9 +1273,78 @@ unit Math
 		if value < fromStart: return toStart
 		if value > fromEnd:   return toEnd
 			                  return toStart + (toEnd-toStart) * (value-fromStart)/(fromEnd-fromStart)
+
+	interpolate: Time value
+		         Time fromStart = 0
+		         Time fromEnd = 1
+		         float toStart = 0
+		         float toEnd = 1
+		if value < fromStart: return toStart
+		if value > fromEnd:   return toEnd
+			                  return cast(toStart + (toEnd-toStart) * (value-fromStart)/(fromEnd-fromStart))
+
+struct int
+	implicit inline js Time toTime() this
 	
+	inline js Time ms := this
+	inline js Time s := (this*1000)
+	inline js Time min := (this*60000)
+	inline js Time h := (this*3600000)
+	inline js Time days := (this*86400000)
+		
+struct float
+	implicit inline js Time toTime() this
+	
+	inline js Time ms := this
+	inline js Time s := (this*1000)
+	inline js Time min := (this*60000)
+	inline js Time h := (this*3600000)
+	inline js Time days := (this*86400000)
+		
+enum TimeUnit: ms, s, min, h, days
+		
+struct Time
+	inline js Time() 0
+	
+	// The  largest possible value of an integer
+	static inline js Time maxValue: 2147483647
+	
+	// The  smallest possible value of an integer
+	static inline js Time minValue: -2147483648
+	
+	// The number of milliseconds elapsed since January 1, 1970
+	static Time now
+	
+	static inline js float preciseTime := performance.now()
+	
+	// The current frame
+	static inline js int frame := Network_frame
+	
+	inline js Time toFloat() this
+	inline js Time toString() this.toString()
+		
+	inline js Time operator +  (Time a, Time b) a+b
+	inline js Time operator -  (Time a, Time b) a-b
+	inline js Time operator /  (Time a, Time b) a/b
+	inline js Time operator *  (Time a, Time b) a*b
+	inline js Time operator %  (Time a, Time b) a%b
+	
+	inline js Time operator <  (Time a, Time b) a<b
+	inline js Time operator <= (Time a, Time b) a<=b
+	inline js Time operator >  (Time a, Time b) a>b
+	inline js Time operator >= (Time a, Time b) a>=b
+	
+	// Returns true if the integer is not zero
+	inline js bool toBool := this
+
+	static measure: void() code
+		let startTime = preciseTime
+		code
+		return preciseTime - startTime
+		
+		
 js Date
-transient struct Time
+transient struct Date
 	inline js int year := this.getFullYear()
 	inline js int month := (this.getMonth()+1)
 	inline js int day := this.getDate()
@@ -1291,27 +1368,14 @@ transient struct Time
 	inline js string dayMonthYearHourMinuteSecondString := (this.getDate().toLocaleString('en-US', {minimumIntegerDigits:2})+"."+(this.getMonth()+1).toLocaleString('en-US', {minimumIntegerDigits:2})+"."+this.getFullYear()+" "+this.getHours().toLocaleString('en-US', {minimumIntegerDigits:2}))+"-"+this.getMinutes().toLocaleString('en-US', {minimumIntegerDigits:2})+"-"+this.getSeconds().toLocaleString('en-US', {minimumIntegerDigits:2})
 	
 	// The number of milliseconds elapsed since January 1, 1970
-	inline js int time := this.getTime()
+	inline js Time time := this.getTime()
 		
 	// The data and time in ISO 8601 format, for example "2000-12-31T17:30:00.000Z"
 	inline js string isoString := this.toISOString()
 		
-	static inline js Time realtime := new Date(Time_now)
-	static inline js float preciseTime := performance.now()
-		
-	static inline js Time fromTime(int time) new Date(time)
-	static inline js Time fromDate(int year, int month, int day, int hour = 0, int minute = 0, int second = 0) new Date(year, month-1, day, hour, minute, second)
-	
-	// The current frame
-	static inline js int frame := Network_frame
-		
-	// The number of milliseconds elapsed since January 1, 1970
-	static int now
-		
-	static measure: void() code
-		let startTime = preciseTime
-		code
-		return preciseTime - startTime
+	static inline js Date now := new Date(Time_now)
+	static inline js Date fromTime(Time time) new Date(time)
+	static inline js Date fromValues(int year, int month, int day, int hour = 0, int minute = 0, int second = 0) new Date(year, month-1, day, hour, minute, second)
 		
 	static js string dateAndTimeString
 		let d = new Date()

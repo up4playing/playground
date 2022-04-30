@@ -533,10 +533,10 @@ transient unit Network
 				saveLogs
 			
 	internal saveLogs
-		let time = Time.realtime
+		let date = Date.now
 		// Ensure that current eventLog is added to the table even if we haven't processed a single frame
 		logTable += ",,,,,,,,,,,,,,,,,,,,,,,,\"{eventLog.trim}\""
-		Platform.saveTextFile "{Platform.appName} {time.dayShortMonthNameYearString} {time.hourMinuteSecondString} v{Platform.version}.csv", logTable
+		Platform.saveTextFile "{Platform.appName} {date.dayShortMonthNameYearString} {date.hourMinuteSecondString} v{Platform.version}.csv", logTable
 		// Http.post "/saveLog/{gameId}/{roomId}/{userId}", logTable
 		// 	log "save logs"
 		// else
@@ -555,8 +555,8 @@ transient unit Network
 				buffer.writeInt8 .id
 				buffer.writeBool .local
 				buffer.writeBuffer .inputs
-		let time = Time.realtime
-		Platform.saveBinaryFile "{Platform.appName} {time.dayShortMonthNameYearString} {time.hourMinuteSecondString} v{Platform.version}.state", buffer
+		let date = Date.now
+		Platform.saveBinaryFile "{Platform.appName} {date.dayShortMonthNameYearString} {date.hourMinuteSecondString} v{Platform.version}.state", buffer
 		
 	openEventStream
 		Platform.pause
