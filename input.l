@@ -10,7 +10,7 @@ transient class InternalUser
 	
 	visible Touch[] downTouches, movingTouches, upTouches
 	visible WheelEvent[] wheelEvents
-	visible int[] downKeys, upKeys
+	visible Key[] downKeys, upKeys
 	visible string[] pressedKeys, textInputs, textCompositions
 	
 	int[] lastTouchMoveIndex
@@ -96,6 +96,83 @@ transient class WheelEvent
 	Vector2 position := referencePosition.getRelativeTo(graphics.localMatrix)
 	
 	markAsHandled() handled = true
+	
+enum Key
+	None         =   0
+	Backspace    =   8
+	Tab          =   9
+	Enter        =  13
+	Shift        =  16
+	Ctrl         =  17
+	Alt          =  18
+	Pause        =  19
+	CapsLock     =  20
+	Escape       =  27
+	PageUp       =  33
+	PageDown     =  34
+	End          =  35
+	Home         =  36
+	Left         =  37
+	Up           =  38
+	Right        =  39
+	Down         =  40
+	Insert       =  45
+	Delete       =  46
+	LeftMetaKey  =  91
+	RightMetaKey =  92
+	Select       =  93
+	Numpad0      =  96
+	Numpad1      =  97
+	Numpad2      =  98
+	Numpad3      =  99
+	Numpad4      = 100
+	Numpad5      = 101
+	Numpad6      = 102
+	Numpad7      = 103
+	Numpad8      = 104
+	Numpad9      = 105
+	Multiply     = 106
+	Add          = 107
+	Subtract     = 109
+	DecimalPoint = 110
+	Divide       = 111
+	F1           = 112
+	F2           = 113
+	F3           = 114
+	F4           = 115
+	F5           = 116
+	F6           = 117
+	F7           = 118
+	F8           = 119
+	F9           = 120
+	F10          = 121
+	F11          = 122
+	F12          = 123
+	F13          = 124
+	F14          = 125
+	F15          = 126
+	F16          = 127
+	F17          = 128
+	F18          = 129
+	F19          = 130
+	F20          = 131
+	F21          = 132
+	F22          = 133
+	F23          = 134
+	F24          = 135
+	NumLock      = 144
+	ScrollLock   = 145
+	SemiColon    = 186
+	EqualSign    = 187
+	Comma        = 188
+	Dash         = 189
+	Period       = 190
+	ForwardSlash = 191
+	GraveAccent  = 192
+	OpenBracket  = 219
+	BackSlash    = 220
+	CloseBraket  = 221
+	SingleQuote  = 222
 	
 // A collection of methods to receive user input
 unit Input
@@ -393,13 +470,14 @@ unit Input
 						internalUser.textInputs.add textInput
 					else
 					if inputType == KeyDown
-						let keyCode = inputs.readInt32
-						let key = inputs.readString
-						internalUser.downKeys.add keyCode
-						if key: internalUser.pressedKeys.add key
+						Key key = cast inputs.readInt32
+						let keyPressed = inputs.readString
+						internalUser.downKeys.add key
+						if keyPressed: internalUser.pressedKeys.add keyPressed
 					else
 					if inputType == KeyUp
-						internalUser.upKeys.add inputs.readInt32
+						Key key = cast inputs.readInt32
+						internalUser.upKeys.add key
 					else
 					if inputType == Join
 						// Add the user if the user doesn't already exist
@@ -874,7 +952,7 @@ unit Input
 				for user.textInputs -> text
 					code text
 				
-	onKeyDown: int key, int userId = -1, void(int key, int keyUserId) code
+	onKeyDown: Key key, int userId = -1, void(Key key, int keyUserId) code
 		if (Network.mode == Connected || Network.simulateConnection) && userId != -1
 			let user = internalUsers[userId]
 			for user.downKeys
@@ -886,7 +964,7 @@ unit Input
 					if . == key
 						code key, user.id
 				
-	onKeyDown: int userId = -1, void(int key, int keyUserId) code
+	onKeyDown: int userId = -1, void(Key key, int keyUserId) code
 		if (Network.mode == Connected || Network.simulateConnection) && userId != -1
 			let user = internalUsers[userId]
 			for user.downKeys -> key
@@ -896,7 +974,7 @@ unit Input
 				for user.downKeys -> key
 					code key, user.id
 				
-	onKeyUp: int userId = -1, void(int key, int keyUserId) code
+	onKeyUp: int userId = -1, void(Key key, int keyUserId) code
 		if (Network.mode == Connected || Network.simulateConnection) && userId != -1
 			let user = internalUsers[userId]
 			for user.upKeys -> key

@@ -380,7 +380,7 @@ transient global unit graphics
 		                   showTouchArea = false        // Show the area within which the button is touchable
 		                   visibleFor = -1              // Only this user will see the button
 		                   clickableBy = -1             // Only this user can click the button
-		                   hotkey = 0
+		                   hotkey = Key.None
 		                   implicit layer = 0           // Higher layers are drawn in front of lower layers
 		                   alpha = 1.0                  // The opacity of the button 0: fully transpart, 1: fully visible)
 		                   void(Touch touch) onClick    // Execute this code when the user clicks the button
@@ -508,7 +508,7 @@ transient global unit graphics
 		                    showTouchArea = false            // Show the area within which the button is touchable
 		                    visibleFor = -1                  // Only this user will see the button
 		                    clickableBy = -1                 // Only this user can click the button
-		                    hotkey = 0
+		                    hotkey = Key.None
 		                    implicit layer = 0               // Higher layers are drawn in front of lower layers
 		                    alpha = 1.0                      // The opacity of the button 0: fully transpart, 1: fully visible)
 		                    void(Touch touch) onClick        // Execute this code when the user clicks the button
