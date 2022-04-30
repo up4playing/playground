@@ -11,7 +11,7 @@ transient class InternalUser
 	visible Touch[] downTouches, movingTouches, upTouches
 	visible WheelEvent[] wheelEvents
 	visible int[] downKeys, upKeys
-	visible string[] textInputs, textCompositions
+	visible string[] pressedKeys, textInputs, textCompositions
 	
 	int[] lastTouchMoveIndex
 	
@@ -39,6 +39,7 @@ transient class InternalUser
 		textInputs.clear
 		downKeys.clear
 		upKeys.clear
+		pressedKeys.clear
 	
 // The public state of a user
 class NetworkUser
@@ -144,30 +145,31 @@ unit Input
 		}
 		window.onkeydown = e => {
 			let keyCode = e.keyCode
+			let key = e.key
 			let ctrlOrCmd = e.ctrlKey || e.metaKey
-			if(window.require && e.key == "t" && e.metaKey && e.shiftKey)
+			if(window.require && key == "t" && e.metaKey && e.shiftKey)
 				require("electron").remote.getCurrentWindow().toggleDevTools()
 			else
-			if(ctrlOrCmd && e.key == "o") {
+			if(ctrlOrCmd && key == "o") {
 				// Open event stream
 				Network_openEventStream();
 				e.preventDefault();
 			}
 			else
-			if(ctrlOrCmd && e.key == "s") {
+			if(ctrlOrCmd && key == "s") {
 				// Save event steam
 				Network_saveEventStream();
 				e.preventDefault();
 			}
 			else
-			if(ctrlOrCmd && e.key == "l") {
+			if(ctrlOrCmd && key == "l") {
 				// Save logs
 				Network_saveLogs();
 				e.preventDefault();
 			}
 			else
-			if(e.key >= "0" && e.key <= "9") {
-				let index = e.key - "0"
+			if(key >= "0" && key <= "9") {
+				let index = key - "0"
 				if(e.altKey)         { Network_save(index); e.preventDefault(); } else
 				if(e.ctrlKey)        { Network_restore(index); e.preventDefault(); } else
 				if(Platform_isDebug) { 
@@ -179,27 +181,27 @@ unit Input
 			}
 			else
 			// Reload
-			if(ctrlOrCmd && e.key == "F1") {/*keep room, keep userId*/ ServerNetwork_sendReload(false, false); e.preventDefault();} else
-			if(ctrlOrCmd && e.key == "F2") {/*new  room, keep userId*/ ServerNetwork_sendReload(true,  false); e.preventDefault();} else
-			if(ctrlOrCmd && e.key == "F3") {/*new  room, new  userId*/ ServerNetwork_sendReload(true,  true);  e.preventDefault();} else
+			if(ctrlOrCmd && key == "F1") {/*keep room, keep userId*/ ServerNetwork_sendReload(false, false); e.preventDefault();} else
+			if(ctrlOrCmd && key == "F2") {/*new  room, keep userId*/ ServerNetwork_sendReload(true,  false); e.preventDefault();} else
+			if(ctrlOrCmd && key == "F3") {/*new  room, new  userId*/ ServerNetwork_sendReload(true,  true);  e.preventDefault();} else
 			
 			// Switch send interval
-			if(ctrlOrCmd && e.key == "F5") {Network_switchSendInterval( 3); e.preventDefault();} else
-			if(ctrlOrCmd && e.key == "F6") {Network_switchSendInterval(10); e.preventDefault();} else
-			if(ctrlOrCmd && e.key == "F7") {Network_switchSendInterval(20); e.preventDefault();} else
-			if(ctrlOrCmd && e.key == "F8") {Network_switchSendInterval(30); e.preventDefault();} else
-			if(ctrlOrCmd && e.key == "F9") {Network_switchSendInterval(40); e.preventDefault();} else
+			if(ctrlOrCmd && key == "F5") {Network_switchSendInterval( 3); e.preventDefault();} else
+			if(ctrlOrCmd && key == "F6") {Network_switchSendInterval(10); e.preventDefault();} else
+			if(ctrlOrCmd && key == "F7") {Network_switchSendInterval(20); e.preventDefault();} else
+			if(ctrlOrCmd && key == "F8") {Network_switchSendInterval(30); e.preventDefault();} else
+			if(ctrlOrCmd && key == "F9") {Network_switchSendInterval(40); e.preventDefault();} else
 				
-			if(ctrlOrCmd && e.key == "F10") {Network_switchSendInputMode(1); e.preventDefault();} else
-			if(ctrlOrCmd && e.key == "F11") {Network_switchSendInputMode(2); e.preventDefault();} else
+			if(ctrlOrCmd && key == "F10") {Network_switchSendInputMode(1); e.preventDefault();} else
+			if(ctrlOrCmd && key == "F11") {Network_switchSendInputMode(2); e.preventDefault();} else
 				
-			if(e.key == "F9") {
+			if(key == "F9") {
 				if(e.shiftKey) { Network_saveLogs(); }
 				else           { Platform_toggleDebugInfo(); Network_debugString = "" }
 				e.preventDefault();
+			} else {
+				Input_handleKeyEvent(5, keyCode, key?.length == 1 ? key : "")
 			}
-			else
-				Input_handleKeyEvent(5, keyCode)
 		}
 		window.onkeyup = e => {
 			if(e.key == "F1")
@@ -235,13 +237,14 @@ unit Input
 		inputs.writeUnsignedInt16 cast type
 		inputs.writeString text
 			
-	private handleKeyEvent: InputType type, int keyCode
+	private handleKeyEvent: InputType type, int keyCode, string key
 		if Network.mode == None || Platform.mode != Record || !localUser || !localUser.collectInputs: return
 		let inputs = localUser.inputs
 		
 		inputs.writeInt32 localUser.inputFrame
 		inputs.writeUnsignedInt16 cast type
 		inputs.writeInt32 keyCode
+		if type == KeyDown: inputs.writeString key
 		
 	internal handleTouchEvent: InputType inputType, float x, float y, string pointerType, int pointerId, int button
 		int touchType, id
@@ -391,7 +394,9 @@ unit Input
 					else
 					if inputType == KeyDown
 						let keyCode = inputs.readInt32
+						let key = inputs.readString
 						internalUser.downKeys.add keyCode
+						if key: internalUser.pressedKeys.add key
 					else
 					if inputType == KeyUp
 						internalUser.upKeys.add inputs.readInt32
@@ -900,3 +905,14 @@ unit Input
 			for internalUsers -> user
 				for user.upKeys -> key
 					code key, user.id
+					
+	onKeyPressed: int userId = -1, void(string key, int keyUserId) code
+		if (Network.mode == Connected || Network.simulateConnection) && userId != -1
+			let user = internalUsers[userId]
+			for user.pressedKeys -> key
+				code key, userId
+		else
+			for internalUsers -> user
+				for user.pressedKeys -> key
+					code key, user.id
+				
