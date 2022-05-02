@@ -32,6 +32,7 @@ transient unit Platform
 	private object canvas
 	internal object context
 	visible bool isDebug
+	visible bool isStaging
 	visible Vector2 pixelSize, size
 	visible float pixelRatio
 	internal Matrix2D baseMatrix
@@ -124,6 +125,10 @@ transient unit Platform
 		// because starting the app in two browser tabs overwrites the userId in the local storage
 		let userId = -1
 		if roomId
+			if roomId.startsWith "s"
+				this.isStaging = true
+				roomId = roomId.substring(1)
+								
 			let dashIndex = roomId.indexOf("-")
 			if dashIndex != -1
 				userId = cast roomId.substring(dashIndex+1)

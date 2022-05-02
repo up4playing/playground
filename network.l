@@ -605,13 +605,13 @@ transient unit Network
 		ServerNetwork.isLocalhost = Platform.url.contains("localhost")
 		initDatabase
 		setupVideoAndNetwork
-		lobby.enableFullscreen = int(roomString) >= 1000
+		lobby.enableFullscreen = !Platform.isStaging
 		
 	private js void initAll
 		init()
 		
 	private js void setupVideoAndNetwork 
-		await PeerNetwork_setupLocalVideo(/*enableVideo*/!ServerNetwork_isLocalhost, /*enableAudio*/!ServerNetwork_isLocalhost && parseInt(Network_roomString)>=1000)
+		await PeerNetwork_setupLocalVideo(/*enableVideo*/!ServerNetwork_isLocalhost, /*enableAudio*/!ServerNetwork_isLocalhost && !Platform_isStaging)
 		ServerNetwork_setup()
 		
 	internal storeUserId
