@@ -8,8 +8,7 @@ global unit fx
 		for effects <-
 			if now >= .startTime and (not .smooth or Input.isCertain)
 				// TODO: Remove this workaround when finding common base is implemented
-				Time one = 1
-				Time f = .duration ? (now - .startTime)/.duration : one
+				float f = .duration ? (now - .startTime)/.duration : 1
 				if f >= 1: f = 1; effects.removeAt i
 				.tick f
 				

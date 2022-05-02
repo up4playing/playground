@@ -1066,16 +1066,8 @@ unit Math
 	inline js int ceil: float value // The value to round up
 		Math.ceil(value)
 		
-	// Returns the smallest integer greater than or equal to the given value 
-	inline js Time ceil: Time value // The value to round up
-		Math.ceil(value)
-		
 	// Returns the largest integer less than or equal to the given value
 	inline js int floor: float value // The value to round down
-		Math.floor(value)
-		
-	// Returns the largest integer less than or equal to the given value
-	inline js Time floor: Time value // The value to round down
 		Math.floor(value)
 		
 	// Returns the given value rounded to the nearest integer
@@ -1274,15 +1266,6 @@ unit Math
 		if value > fromEnd:   return toEnd
 			                  return toStart + (toEnd-toStart) * (value-fromStart)/(fromEnd-fromStart)
 
-	interpolate: Time value
-		         Time fromStart = 0
-		         Time fromEnd = 1
-		         float toStart = 0
-		         float toEnd = 1
-		if value < fromStart: return toStart
-		if value > fromEnd:   return toEnd
-			                  return cast(toStart + (toEnd-toStart) * (value-fromStart)/(fromEnd-fromStart))
-
 struct int
 	implicit inline js Time toTime() this
 	
@@ -1303,7 +1286,7 @@ struct float
 		
 enum TimeUnit: ms, s, min, h, days
 		
-struct Time
+int Time
 	inline js Time() 0
 	
 	// The  largest possible value of an integer
@@ -1320,28 +1303,39 @@ struct Time
 	// The current frame
 	static inline js int frame := Network_frame
 	
-	inline js Time toFloat() this
+	inline js Time toInt() this
 	inline js Time toString() this.toString()
 		
-	inline js Time operator +  (Time a, Time b) a+b
-	inline js Time operator -  (Time a, Time b) a-b
-	inline js Time operator /  (Time a, Time b) a/b
-	inline js Time operator *  (Time a, Time b) a*b
-	inline js Time operator %  (Time a, Time b) a%b
-	
-	inline js Time operator <  (Time a, Time b) a<b
-	inline js Time operator <= (Time a, Time b) a<=b
-	inline js Time operator >  (Time a, Time b) a>b
-	inline js Time operator >= (Time a, Time b) a>=b
-	
 	// Returns true if the integer is not zero
 	inline js bool toBool := this
-
+		
+	inline js Time  operator +  (Time a, Time b) a+b
+	inline js Time  operator +  (Time a, int b) a+b
+	inline js float operator +  (Time a, float b) a+b
+	
+	inline js Time  operator -  (Time a, Time b) a-b
+	inline js Time  operator -  (Time a, int b) a-b
+	inline js float operator -  (Time a, float b) a-b
+	
+	inline js float operator /  (Time a, Time b) a/b
+	inline js float operator /  (Time a, int b) a/b
+	inline js float operator /  (Time a, float b) a/b
+	
+	inline js Time  operator *  (Time a, int b) a*b
+	inline js float operator *  (Time a, float b) a*b
+	
+	inline js Time  operator %  (Time a, int b) a%b
+	inline js Time  operator %  (Time a, Time b) a%b
+	
+	inline js Time  operator <  (Time a, Time b) a<b
+	inline js Time  operator <= (Time a, Time b) a<=b
+	inline js Time  operator >  (Time a, Time b) a>b
+	inline js Time  operator >= (Time a, Time b) a>=b
+	
 	static measure: void() code
 		let startTime = preciseTime
 		code
 		return preciseTime - startTime
-		
 		
 js Date
 transient struct Date
