@@ -1284,8 +1284,6 @@ struct float
 	inline js Time h := (this*3600000)
 	inline js Time days := (this*86400000)
 		
-enum TimeUnit: ms, s, min, h, days
-		
 int Time
 	inline js Time() 0
 	
@@ -1336,6 +1334,17 @@ int Time
 		let startTime = preciseTime
 		code
 		return preciseTime - startTime
+		
+	inline js float in: TimeUnit unit // Convert the time to this unit
+		(unit == 1 ? (this/1000) : this)
+		
+enum TimeUnit
+	ms   // Milliseconds
+	s    // Seconds
+	min  // Minutes
+	h    // Hours
+	days // Days
+		
 		
 js Date
 transient struct Date
