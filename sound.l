@@ -27,7 +27,7 @@ class Sound
 		let playingSound = audio.playingSounds.find.sound == this and .frame == Time.frame
 		if !playingSound
 			audio.playingSounds.add playingSound = {this, frame:Time.frame, isConfirmed:true}
-			if !(Platform.isDebug and Platform.fastForward) doPlay playingSound
+			if not Network.isReplay: doPlay playingSound
 		else
 			playingSound.isConfirmed = true
 		

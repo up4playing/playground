@@ -83,6 +83,7 @@ transient unit Network
 	private int joinFrame           // The frame the current user joined
 	public float[] checksums
 	bool alertShown
+	bool isReplay
 	
 	private Buffer debugCommonState // Used in debug mode to validate that serialing twice yields the same result 
 
@@ -126,6 +127,7 @@ transient unit Network
 		frames = 0
 		frameWithNewWatches = 0
 		startInLobby = false
+		isReplay = false
 		errorMessage = ""
 		audio.stop
 		goToFrame 0
@@ -167,18 +169,20 @@ transient unit Network
 	
 	// Steps forward when going to a frame in the future
 	// or replays from the beginning when going to a frame in the past
-	// This is called after every code change with replay = true 
+	// This is called after every code change with replayFromStart = true 
 	// to replay all inputs with the new code from the beginning,
-	// and when stepping through the timeline with replay = false
+	// and when stepping through the timeline with replayFromStart = false
 	// to only replay from the beginning when going to a frame in the past
-	goToFrame: int targetFrame, replay = false
-		if replay: frameWithNewWatches = 0
-		if targetFrame < frame or replay: reset
+	goToFrame: int targetFrame, replayFromStart = false
+		isReplay = true
+		if replayFromStart: frameWithNewWatches = 0
+		if targetFrame < frame or replayFromStart: reset
 			
 		while frame < targetFrame
 			step fastFordward:true, draw:false
 		resetStartTime
 		animationFrame
+		isReplay = false
 
 	// Smooth out animations by only executing code when we received inputs from everybody	
 	smooth: int userId
@@ -585,7 +589,7 @@ transient unit Network
 			certainFrame = int.maxValue
 			Platform.sendFrame(frame, frames)
 			Math.setRandomSeed randomSeed
-			goToFrame targetFrame:frame, replay:true
+			goToFrame targetFrame:frame, replayFromStart:true
 		
 	string roomString
 	int roomId

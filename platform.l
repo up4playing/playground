@@ -143,7 +143,7 @@ transient unit Platform
 	private replay() 
 		initMedia
 		openMedia
-			Network.goToFrame Network.frame-1, replay:true
+			Network.goToFrame Network.frame-1, replayFromStart:true
 			
 	object interval
 	private js void startInterval
