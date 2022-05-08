@@ -666,11 +666,6 @@ Piece Coin
 		if !isInfinate and !allowZero and value <= 0: removeImmediately
 		updateNeighbors siblings, isBeingMoved:false
 
-class MenuItem
-	Image image
-	string label
-	void(Touch touch) onClick
-
 Object Menu
 	position = {920, -500}
 	Vector2 popupPosition
@@ -701,3 +696,9 @@ Object Menu
 				
 		drawImage Menu, position
 			active = true
+			
+class MenuItem
+	Image image
+	string label
+	void(Touch touch) onClick
+
