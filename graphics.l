@@ -102,7 +102,7 @@ transient global unit graphics
 		graphics_reset()
 		if(!Platform_fastForward)
 			Platform_context.clearRect(0,0,Platform_pixelSize.x, Platform_pixelSize.y)
-			Platform_context.textBaseline = "hanging"
+			Platform_context.textBaseline = "middle"
 
 	internal reset
 		totalMatrix = Platform.baseMatrix
@@ -466,7 +466,7 @@ transient global unit graphics
 			let w = textSize.width
 			let h = size || graphics_currentFontSize
 			let x = align  == 0 ? position.x : align  == 1 ? position.x-w*.5 : position.x-w
-			let y = valign == 0 ? position.y : valign == 1 ? position.y-h*.365 : position.y-h
+			let y = valign == 0 ? position.y-h*.5 : valign == 1 ? position.y+h*.15 : position.y+h*.5
 			graphics_items.push(new DisplayText(
 				graphics_totalMatrix, x, y, w, h, layer, alpha, graphics_currentClippingPath, text, 
 				position.location, 
