@@ -694,7 +694,7 @@ Object Menu
 				drawImage .image, pos+{-120}
 				drawText .label, pos+{-60}, size:30, align:Left
 				Input.onTouchDownWithin pos, size:{500,60}, code:item.onClick(.)
-			drawRectangle popupPosition, outlineColor:White, fillColor:Black, size:{500,80+items.length*60}, outlineWidth:3
+			drawRectangle popupPosition, outlineColor:White, fillColor:Black, size:{500,60+items.length*60}, outlineWidth:3
 			drawRectangle size:{1920,1080}, fillColor:overlayColor
 			Input.onTouchDownAny
 				active = false
