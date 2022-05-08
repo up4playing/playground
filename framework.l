@@ -8,10 +8,12 @@ unit Framework
 	Object[] toBeRemoved
 	
 	clear
-		objects.clear
+		for objects <-
+			if not .locked: objects.removeAt i
 		
 	clearAtEndOfFrame
-		toBeRemoved.addRange objects
+		for objects
+			if not .locked: toBeRemoved.add .
 		
 	removeWhere: bool(Object value) condition
 		for objects -> obj
@@ -80,6 +82,7 @@ class Object
 	float alpha = 1
 	int visibleFor = -1
 	int layer = 0
+	bool locked
 	
 	visible siblings := Framework.objects
 	internal checksum := position.x + position.y + scale + alpha
@@ -672,6 +675,8 @@ Object Menu
 	MenuItem[] items
 	includeDefaultItems = true
 	overlayColor = Color("000000b0")
+	locked = true
+	
 	visible bool active
 		
 	Menu
