@@ -278,7 +278,7 @@ unit Input
 				e.preventDefault();
 			} else {
 				Input_handleKeyEvent(5, keyCode, key?.length == 1 ? key : "")
-				e.preventDefault();
+				if(keyCode == 9) e.preventDefault();
 			}
 		}
 		window.onkeyup = e => {
