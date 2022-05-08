@@ -280,9 +280,6 @@ class List<T>
 	                 T value   // The new value to set
 		this[index] = value
 		
-	inline js T[] clone
-		[...this]
-	
 	inline js T getOrSet: int index      
 		                  T initalValue
 		this[index] || (this[index] = initalValue)
@@ -313,6 +310,10 @@ class List<T>
 	inline js T popAt: int index
 		this.splice(index, 1)[0]
 		
+	inline js T[] popRange: int index
+		                    int count
+		this.splice(index, count)
+		
 	T popWhere: bool(T a) condition
 		for length()
 			let item = get(i)
@@ -335,6 +336,8 @@ class List<T>
 	
 	// Removes all items from the list
 	inline js void clear := this.length = 0
+	
+	inline js T[] clone() [...this]
 	
 	js string toString()
 		let result = "";
@@ -1139,6 +1142,10 @@ unit Math
 		for targetRandomValueIndex: randomFloat
 	
 	js void setRandomSeed: string seed
+		Math_randomSeed = seed
+		Math_randomValues.length = 0
+		Math_randomValueIndex = 0
+		
 		// Seeding the random number generator in Javascript
 		// https://stackoverflow.com/a/47593316
 		function xmur3(str) {
@@ -1306,6 +1313,13 @@ int Time
 		
 	// Returns true if the integer is not zero
 	inline js bool toBool := this
+	
+	inline js int milliseconds := Math.floor((this %    1000)          ) 
+	inline js int seconds      := Math.floor((this %   60000) /    1000) 
+	inline js int minutes      := Math.floor((this % 3600000) /   60000) 
+	inline js int hours        := Math.floor((this          ) / 3600000)
+		
+	inline js string minutesAndSeconds := (Math.floor((this % 3600000) / 60000) + (this % 60000 < 10000 ? ":0":":") + Math.floor((this % 60000) / 1000))
 		
 	inline js Time  operator +  (Time a, Time b) a+b
 	inline js Time  operator +  (Time a, int b) a+b

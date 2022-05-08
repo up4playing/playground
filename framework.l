@@ -665,5 +665,40 @@ Piece Coin
 		neighbor.value += amount
 		if !isInfinate and !allowZero and value <= 0: removeImmediately
 		updateNeighbors siblings, isBeingMoved:false
+
+Object Menu
+	position = {920, -500}
+	Vector2 popupPosition
+	MenuItem[] items
+	includeDefaultItems = true
+	overlayColor = Color("000000b0")
+	visible bool active
+		
+	Menu
+		if includeDefaultItems
+			items.insert {New,  "New Game",        onClick:startGame}, 0
+			items.add    {Save, "Save Game"        onClick:Network.saveEventStreamAndLogs}
+			items.add    {Quit, "Exit Fullscreen", onClick:Platform.setFullscreen false, forUser:touch.userId}
+		
+	private inline js void startGame
+		if(window.app_start) window.app_startGame(false);
+	
+	tick
+		if active
+			forCentered items, center:popupPosition, delta:{0,60} -> item
+				drawImage .image, pos+{-120}
+				drawText .label, pos+{-60}, size:30, align:Left
+				Input.onTouchDownWithin pos, size:{500,60}, code:item.onClick(.)
+			drawRectangle popupPosition, outlineColor:White, fillColor:Black, size:{500,60+items.length*60}, outlineWidth:3
+			drawRectangle size:{1920,1080}, fillColor:overlayColor
+			Input.onTouchDownAny
+				active = false
+				
+		drawImage Menu, position
+			active = true
 			
+class MenuItem
+	Image image
+	string label
+	void(Touch touch) onClick
 

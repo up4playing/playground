@@ -108,6 +108,7 @@ enum Key
 	Pause        =  19
 	CapsLock     =  20
 	Escape       =  27
+	Space        =  32
 	PageUp       =  33
 	PageDown     =  34
 	End          =  35
@@ -278,7 +279,7 @@ unit Input
 				e.preventDefault();
 			} else {
 				Input_handleKeyEvent(5, keyCode, key?.length == 1 ? key : "")
-				e.preventDefault();
+				if(keyCode == 9) e.preventDefault();
 			}
 		}
 		window.onkeyup = e => {
