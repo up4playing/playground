@@ -676,7 +676,7 @@ Object Menu
 	Vector2 popupPosition
 	MenuItem[] items
 	includeDefaultItems = true
-	overlayColor = Color("000000d0")
+	overlayColor = Color("000000b0")
 	visible bool active
 		
 	Menu
