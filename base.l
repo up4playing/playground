@@ -1305,6 +1305,13 @@ int Time
 		
 	// Returns true if the integer is not zero
 	inline js bool toBool := this
+	
+	inline js int milliseconds := Math.floor((this %    1000)          ) 
+	inline js int seconds      := Math.floor((this %   60000) /    1000) 
+	inline js int minutes      := Math.floor((this % 3600000) /   60000) 
+	inline js int hours        := Math.floor((this          ) / 3600000)
+		
+	inline js string minutesAndSeconds := (Math.floor((this % 3600000) / 60000) + (this % 60000 < 10000 ? ":0":":") + Math.floor((this % 60000) / 1000))
 		
 	inline js Time  operator +  (Time a, Time b) a+b
 	inline js Time  operator +  (Time a, int b) a+b
