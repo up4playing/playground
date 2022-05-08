@@ -310,6 +310,10 @@ class List<T>
 	inline js T popAt: int index
 		this.splice(index, 1)[0]
 		
+	inline js T[] popRange: int index
+		                    int count
+		this.splice(index, count)
+		
 	T popWhere: bool(T a) condition
 		for length()
 			let item = get(i)
