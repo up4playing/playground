@@ -280,9 +280,6 @@ class List<T>
 	                 T value   // The new value to set
 		this[index] = value
 		
-	inline js T[] clone
-		[...this]
-	
 	inline js T getOrSet: int index      
 		                  T initalValue
 		this[index] || (this[index] = initalValue)
@@ -335,6 +332,8 @@ class List<T>
 	
 	// Removes all items from the list
 	inline js void clear := this.length = 0
+	
+	inline js T[] clone() [...this]
 	
 	js string toString()
 		let result = "";
