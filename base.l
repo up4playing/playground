@@ -58,8 +58,20 @@ struct int
 	inline js int incrementAndWrap: int max // When the integer reaches this value, it wraps around to zero
 		(this = (((this+1) % max) + max) % max)
 	
-	inline js int incrementUpTo: int max // When the integer reaches this value, it wraps around to zero
-		(this < max ? this++ : max)
+	inline js int decrementAndWrap: int max // When the integer reaches this value, it wraps around to zero
+		(this = (((this-1) % max) + max) % max)
+	
+	inline js int incrementUpTo: int max
+		(this < max ? ++this : max)
+		
+	inline js int incrementUpToExclusive: int max
+		(this < max-1 ? ++this : max-1)
+		
+	inline js int decrementDownTo: int min
+		(this > min ? --this : min)
+		
+	inline js int decrementDownToExclusive: int min
+		(this > min+1 ? --this : min+1)
 		
 	// inline js int[] to: int max
 	// 	(() => {let list=[]; for(let _i=this; _i<max; _i++) list.push(_i); return list})()
@@ -267,7 +279,7 @@ class List<T>
 	inline js T set: int index // The index of the item to set
 	                 T value   // The new value to set
 		this[index] = value
-	
+		
 	inline js T getOrSet: int index      
 		                  T initalValue
 		this[index] || (this[index] = initalValue)
@@ -295,6 +307,13 @@ class List<T>
 		
 	inline js T pop := this.pop()
 		
+	inline js T popAt: int index
+		this.splice(index, 1)[0]
+		
+	inline js T[] popRange: int index
+		                    int count
+		this.splice(index, count)
+		
 	T popWhere: bool(T a) condition
 		for length()
 			let item = get(i)
@@ -317,6 +336,8 @@ class List<T>
 	
 	// Removes all items from the list
 	inline js void clear := this.length = 0
+	
+	inline js T[] clone() [...this]
 	
 	js string toString()
 		let result = "";
@@ -433,7 +454,7 @@ class List<T>
 	inline js T find: bool(T a) condition // The condition to check
 		this.find(condition)
 		
-	int findIndex: bool(T a) condition // The condition to check
+	int indexWhere: bool(T a) condition // The condition to check
 		for this
 			if condition(.)
 				return i
@@ -643,7 +664,6 @@ class List<T>
 				resultItem = .
 		return resultValue != threshold ? resultItem : null
 		
-		
 	withMax: float(T a) selector
 		     float threshold = float.minValue
 		float resultValue = threshold
@@ -654,6 +674,36 @@ class List<T>
 				resultValue = value
 				resultItem = .
 		return resultValue != threshold ? resultItem : null
+		
+	popMax: int(T a) selector
+		    int threshold = int.minValue
+		int resultValue = threshold
+		T resultItem = null
+		int resultIndex = -1
+		for this
+			let value = selector(.)
+			if value > resultValue
+				resultValue = value
+				resultItem = .
+				resultIndex = i
+				
+		if resultIndex != -1: removeAt resultIndex
+		return resultItem
+		
+	popMax: int(T a) selector
+		    float threshold = float.minValue
+		float resultValue = threshold
+		T resultItem = null
+		int resultIndex = -1
+		for this
+			let value = selector(.)
+			if value > resultValue
+				resultValue = value
+				resultItem = .
+				resultIndex = i
+				
+		if resultIndex != -1: removeAt resultIndex
+		return resultItem
 		
 	withMax: int(T a) selector
 		     int threshold = int.minValue
@@ -1222,9 +1272,96 @@ unit Math
 		if value < fromStart: return toStart
 		if value > fromEnd:   return toEnd
 			                  return toStart + (toEnd-toStart) * (value-fromStart)/(fromEnd-fromStart)
+
+struct int
+	implicit inline js Time toTime() this
 	
+	inline js Time ms := this
+	inline js Time s := (this*1000)
+	inline js Time min := (this*60000)
+	inline js Time h := (this*3600000)
+	inline js Time days := (this*86400000)
+		
+struct float
+	implicit inline js Time toTime() this
+	
+	inline js Time ms := this
+	inline js Time s := (this*1000)
+	inline js Time min := (this*60000)
+	inline js Time h := (this*3600000)
+	inline js Time days := (this*86400000)
+		
+int Time
+	inline js Time() 0
+	
+	// The  largest possible value of an integer
+	static inline js Time maxValue: 2147483647
+	
+	// The  smallest possible value of an integer
+	static inline js Time minValue: -2147483648
+	
+	// The number of milliseconds elapsed since January 1, 1970
+	static Time now
+	
+	static inline js float preciseTime := performance.now()
+	
+	// The current frame
+	static inline js int frame := Network_frame
+	
+	inline js Time toInt() this
+	inline js Time toString() this.toString()
+		
+	// Returns true if the integer is not zero
+	inline js bool toBool := this
+	
+	inline js int milliseconds := Math.floor((this %    1000)          ) 
+	inline js int seconds      := Math.floor((this %   60000) /    1000) 
+	inline js int minutes      := Math.floor((this % 3600000) /   60000) 
+	inline js int hours        := Math.floor((this          ) / 3600000)
+		
+	inline js string minutesAndSeconds := (Math.floor((this % 3600000) / 60000) + (this % 60000 < 10000 ? ":0":":") + Math.floor((this % 60000) / 1000))
+		
+	inline js Time  operator +  (Time a, Time b) a+b
+	inline js Time  operator +  (Time a, int b) a+b
+	inline js float operator +  (Time a, float b) a+b
+	
+	inline js Time  operator -  (Time a, Time b) a-b
+	inline js Time  operator -  (Time a, int b) a-b
+	inline js float operator -  (Time a, float b) a-b
+	
+	inline js float operator /  (Time a, Time b) a/b
+	inline js float operator /  (Time a, int b) a/b
+	inline js float operator /  (Time a, float b) a/b
+	
+	inline js Time  operator *  (Time a, int b) a*b
+	inline js float operator *  (Time a, float b) a*b
+	
+	inline js Time  operator %  (Time a, int b) a%b
+	inline js Time  operator %  (Time a, Time b) a%b
+	
+	inline js Time  operator <  (Time a, Time b) a<b
+	inline js Time  operator <= (Time a, Time b) a<=b
+	inline js Time  operator >  (Time a, Time b) a>b
+	inline js Time  operator >= (Time a, Time b) a>=b
+	
+	static measure: void() code
+		let startTime = preciseTime
+		code
+		return preciseTime - startTime
+		
+	inline js float in: TimeUnit unit // Convert the time to this unit
+		(unit == 1 ? (this/1000) : this)
+		
+enum TimeUnit
+	ms   // Milliseconds
+	s    // Seconds
+	min  // Minutes
+	h    // Hours
+	days // Days
+		
+		
 js Date
-transient struct Time
+transient struct Date
 	inline js int year := this.getFullYear()
 	inline js int month := (this.getMonth()+1)
 	inline js int day := this.getDate()
@@ -1248,27 +1385,14 @@ transient struct Time
 	inline js string dayMonthYearHourMinuteSecondString := (this.getDate().toLocaleString('en-US', {minimumIntegerDigits:2})+"."+(this.getMonth()+1).toLocaleString('en-US', {minimumIntegerDigits:2})+"."+this.getFullYear()+" "+this.getHours().toLocaleString('en-US', {minimumIntegerDigits:2}))+"-"+this.getMinutes().toLocaleString('en-US', {minimumIntegerDigits:2})+"-"+this.getSeconds().toLocaleString('en-US', {minimumIntegerDigits:2})
 	
 	// The number of milliseconds elapsed since January 1, 1970
-	inline js int time := this.getTime()
+	inline js Time time := this.getTime()
 		
 	// The data and time in ISO 8601 format, for example "2000-12-31T17:30:00.000Z"
 	inline js string isoString := this.toISOString()
 		
-	static inline js Time realtime := new Date(Time_now)
-	static inline js float preciseTime := performance.now()
-		
-	static inline js Time fromTime(int time) new Date(time)
-	static inline js Time fromDate(int year, int month, int day, int hour = 0, int minute = 0, int second = 0) new Date(year, month-1, day, hour, minute, second)
-	
-	// The current frame
-	static inline js int frame := Network_frame
-		
-	// The number of milliseconds elapsed since January 1, 1970
-	static int now
-		
-	static measure: void() code
-		let startTime = preciseTime
-		code
-		return preciseTime - startTime
+	static inline js Date now := new Date(Network_startTime + Time_now)
+	static inline js Date fromTime(Time time) new Date(time)
+	static inline js Date fromValues(int year, int month, int day, int hour = 0, int minute = 0, int second = 0) new Date(year, month-1, day, hour, minute, second)
 		
 	static js string dateAndTimeString
 		let d = new Date()

@@ -12,10 +12,10 @@ enum VideoShape: Rectangle, Square, Circle
 transient unit PeerNetwork
 	internal enableVideo = true
 	internal enableAudio = true
+	internal allowRelay = true
 	
 	visible string connectionType
 	visible string error
-	bool allowRelay
 	
 	private js object setupPeerConnection: InternalUser user, bool offerByMe
 		let options = {

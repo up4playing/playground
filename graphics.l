@@ -351,9 +351,9 @@ transient global unit graphics
 	// Returns the width of a string in pixels
 	global js int getTextWidth: string text              // The string to get the width of
 		                        size = 18                // The size of the font in pixels
-		                        font = ""                // The font of the text
+		                        Font font = null         // The font of the text
 		                        FontStyle style = Normal // Whether the text should be bold or normal style
-		Platform_context.font = (style ? "bold ":"")+(size || graphics_currentFontSize)+"px "+(font || graphics_currentFont)
+		Platform_context.font = (style ? "bold ":"")+(size || graphics_currentFontSize)+"px "+(font || graphics_currentFont).name;
 		let textSize = Platform_context.measureText(text)
 		return textSize.width
 		
@@ -380,7 +380,7 @@ transient global unit graphics
 		                   showTouchArea = false        // Show the area within which the button is touchable
 		                   visibleFor = -1              // Only this user will see the button
 		                   clickableBy = -1             // Only this user can click the button
-		                   hotkey = 0
+		                   hotkey = Key.None
 		                   implicit layer = 0           // Higher layers are drawn in front of lower layers
 		                   alpha = 1.0                  // The opacity of the button 0: fully transpart, 1: fully visible)
 		                   void(Touch touch) onClick    // Execute this code when the user clicks the button
@@ -508,7 +508,7 @@ transient global unit graphics
 		                    showTouchArea = false            // Show the area within which the button is touchable
 		                    visibleFor = -1                  // Only this user will see the button
 		                    clickableBy = -1                 // Only this user can click the button
-		                    hotkey = 0
+		                    hotkey = Key.None
 		                    implicit layer = 0               // Higher layers are drawn in front of lower layers
 		                    alpha = 1.0                      // The opacity of the button 0: fully transpart, 1: fully visible)
 		                    void(Touch touch) onClick        // Execute this code when the user clicks the button
@@ -518,13 +518,15 @@ transient global unit graphics
 			
 		// Handle click
 		// Only visible buttons can be clickable
-		let userId = clickableBy != -1 ? clickableBy : visibleFor != -1 ? visibleFor : currentlyVisibleFor
-		Vector2 size = image ? image.size*scale : {getTextWidth(text), fontSize}
-		Input.onTouchDownWithin position, size + touchMargin, userId, showTouchArea
-			onClick touch
-		if hotkey
-			Input.onKeyDown hotkey, userId
-				onClick null
+		let effectiveVisibleFor = visibleFor != -1 ? visibleFor : currentlyVisibleFor
+		if clickableBy == -1 or clickableBy == effectiveVisibleFor
+			let effectiveClickableBy = clickableBy != -1 ? clickableBy : effectiveVisibleFor
+			Vector2 size = image ? image.size*scale : {getTextWidth(text), fontSize}
+			Input.onTouchDownWithin position, size + touchMargin, userId:effectiveClickableBy, showTouchArea
+				onClick touch
+			if hotkey
+				Input.onKeyDown hotkey, userId:effectiveClickableBy
+					onClick null
 			
 	// Draws a rectangle on the screen
 	global js void drawRectangle: position = Vector2()       // The center of the rectangle
@@ -1024,6 +1026,7 @@ transient DisplayItem DisplayVideo
 			let py = (m1 * x + m3 * y + m5) / Platform.pixelRatio
 			let sizeX = w*m0 / Platform.pixelRatio
 			let sizeY = h*m3 / Platform.pixelRatio
+			let radius = this.radius / Platform.pixelRatio
 			PeerNetwork.updateVideoElement videoElement, px, py, sizeX, sizeY, radius
 			user.videoElementIndex++
 
