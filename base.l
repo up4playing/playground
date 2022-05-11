@@ -460,6 +460,12 @@ class List<T>
 				return i
 		return -1
 		
+	int indexWhere: <- bool(T a) condition // The condition to check
+		for this <-
+			if condition(.)
+				return i
+		return -1
+		
 	inline js T[] where: bool(T a) condition // The condition to check
 		this.filter(condition)
 		
