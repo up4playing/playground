@@ -505,6 +505,7 @@ transient unit Network
 	
 	js void startApp
 		lobby_inLobby = false
+		Network_storeUserId()
 		if(window.app_start) app_start()
 		
 	private resetStartTime
@@ -601,6 +602,7 @@ transient unit Network
 		startInLobby = true
 		this.gameId = gameId
 		this.roomString = roomString
+		this.roomId = cast roomString
 		Input.localUser = {userId, local:true}
 		ServerNetwork.isLocalhost = Platform.url.contains("localhost")
 		initDatabase
