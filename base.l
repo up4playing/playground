@@ -1148,6 +1148,10 @@ unit Math
 		for targetRandomValueIndex: randomFloat
 	
 	js void setRandomSeed: string seed
+		Math_randomSeed = seed
+		Math_randomValues.length = 0
+		Math_randomValueIndex = 0
+		
 		// Seeding the random number generator in Javascript
 		// https://stackoverflow.com/a/47593316
 		function xmur3(str) {

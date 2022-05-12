@@ -115,7 +115,9 @@ transient unit Network
 		startInLobby = false
 		certainFrame = -1
 		Input.internalUsers.clear
-		Math.setRandomSeed Math.generateRandomSeed
+		let seed = Math.generateRandomSeed
+		log seed
+		Math.setRandomSeed seed 
 		initDatabase
 		reset
 		resetStartTime
@@ -138,6 +140,7 @@ transient unit Network
 		Platform.initApplication
 		Input.users.clear
 		Input.usersById.clear
+		errorMessage = ""
 		
 		if !startInLobby
 			// When the developer changed Platform.userCount, add or remove internal users accordingly
