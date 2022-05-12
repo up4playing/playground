@@ -83,6 +83,7 @@ transient unit Network
 	private int joinFrame           // The frame the current user joined
 	public float[] checksums
 	bool alertShown
+	bool isReplay
 	
 	private Buffer debugCommonState // Used in debug mode to validate that serialing twice yields the same result 
 
@@ -114,7 +115,9 @@ transient unit Network
 		startInLobby = false
 		certainFrame = -1
 		Input.internalUsers.clear
-		Math.setRandomSeed Math.generateRandomSeed
+		let seed = Math.generateRandomSeed
+		log seed
+		Math.setRandomSeed seed 
 		initDatabase
 		reset
 		resetStartTime
@@ -126,6 +129,7 @@ transient unit Network
 		frames = 0
 		frameWithNewWatches = 0
 		startInLobby = false
+		isReplay = false
 		errorMessage = ""
 		audio.stop
 		goToFrame 0
@@ -136,6 +140,7 @@ transient unit Network
 		Platform.initApplication
 		Input.users.clear
 		Input.usersById.clear
+		errorMessage = ""
 		
 		if !startInLobby
 			// When the developer changed Platform.userCount, add or remove internal users accordingly
@@ -167,18 +172,20 @@ transient unit Network
 	
 	// Steps forward when going to a frame in the future
 	// or replays from the beginning when going to a frame in the past
-	// This is called after every code change with replay = true 
+	// This is called after every code change with replayFromStart = true 
 	// to replay all inputs with the new code from the beginning,
-	// and when stepping through the timeline with replay = false
+	// and when stepping through the timeline with replayFromStart = false
 	// to only replay from the beginning when going to a frame in the past
-	goToFrame: int targetFrame, replay = false
-		if replay: frameWithNewWatches = 0
-		if targetFrame < frame or replay: reset
+	goToFrame: int targetFrame, replayFromStart = false
+		isReplay = true
+		if replayFromStart: frameWithNewWatches = 0
+		if targetFrame < frame or replayFromStart: reset
 			
 		while frame < targetFrame
 			step fastFordward:true, draw:false
 		resetStartTime
 		animationFrame
+		isReplay = false
 
 	// Smooth out animations by only executing code when we received inputs from everybody	
 	smooth: int userId
@@ -501,6 +508,7 @@ transient unit Network
 	
 	js void startApp
 		lobby_inLobby = false
+		Network_storeUserId()
 		if(window.app_start) app_start()
 		
 	private resetStartTime
@@ -533,10 +541,10 @@ transient unit Network
 				saveLogs
 			
 	internal saveLogs
-		let time = Time.realtime
+		let date = Date.now
 		// Ensure that current eventLog is added to the table even if we haven't processed a single frame
 		logTable += ",,,,,,,,,,,,,,,,,,,,,,,,\"{eventLog.trim}\""
-		Platform.saveTextFile "{Platform.appName} {time.dayShortMonthNameYearString} {time.hourMinuteSecondString} v{Platform.version}.csv", logTable
+		Platform.saveTextFile "{Platform.appName} {date.dayShortMonthNameYearString} {date.hourMinuteSecondString} v{Platform.version}.csv", logTable
 		// Http.post "/saveLog/{gameId}/{roomId}/{userId}", logTable
 		// 	log "save logs"
 		// else
@@ -555,8 +563,8 @@ transient unit Network
 				buffer.writeInt8 .id
 				buffer.writeBool .local
 				buffer.writeBuffer .inputs
-		let time = Time.realtime
-		Platform.saveBinaryFile "{Platform.appName} {time.dayShortMonthNameYearString} {time.hourMinuteSecondString} v{Platform.version}.state", buffer
+		let date = Date.now
+		Platform.saveBinaryFile "{Platform.appName} {date.dayShortMonthNameYearString} {date.hourMinuteSecondString} v{Platform.version}.state", buffer
 		
 	openEventStream
 		Platform.pause
@@ -585,30 +593,30 @@ transient unit Network
 			certainFrame = int.maxValue
 			Platform.sendFrame(frame, frames)
 			Math.setRandomSeed randomSeed
-			goToFrame targetFrame:frame, replay:true
+			goToFrame targetFrame:frame, replayFromStart:true
 		
 	string roomString
 	int roomId
 	string gameId
 	
-	join: string gameId, string roomString, int userId, bool allowRelay
+	join: string gameId, string roomString, int userId
 		initAll
 		log "Network.join "+Platform.url
 		startInLobby = true
 		this.gameId = gameId
 		this.roomString = roomString
-		PeerNetwork.allowRelay = allowRelay
+		this.roomId = cast roomString
 		Input.localUser = {userId, local:true}
 		ServerNetwork.isLocalhost = Platform.url.contains("localhost")
 		initDatabase
 		setupVideoAndNetwork
-		lobby.enableFullscreen = int(roomString) >= 1000
+		lobby.enableFullscreen = !Platform.isStaging
 		
 	private js void initAll
 		init()
 		
 	private js void setupVideoAndNetwork 
-		await PeerNetwork_setupLocalVideo(/*enableVideo*/!ServerNetwork_isLocalhost, /*enableAudio*/!ServerNetwork_isLocalhost && parseInt(Network_roomString)>=1000)
+		await PeerNetwork_setupLocalVideo(/*enableVideo*/!ServerNetwork_isLocalhost, /*enableAudio*/!ServerNetwork_isLocalhost && !Platform_isStaging)
 		ServerNetwork_setup()
 		
 	internal storeUserId

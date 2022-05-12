@@ -27,7 +27,7 @@ class Sound
 		let playingSound = audio.playingSounds.find.sound == this and .frame == Time.frame
 		if !playingSound
 			audio.playingSounds.add playingSound = {this, frame:Time.frame, isConfirmed:true}
-			if !(Platform.isDebug and Platform.fastForward) doPlay playingSound
+			if not Network.isReplay: doPlay playingSound
 		else
 			playingSound.isConfirmed = true
 		
@@ -83,7 +83,7 @@ transient global unit audio
 			volume = volumeLevels[volumeLevel]
 			playingSounds.each.sound.updateVolume
 	
-	global playSound: Sound sound, int delay = 0, bool smooth = false
+	global playSound: Sound sound, Time delay = 0, bool smooth = false
 		if Time.frame == 0
 			fx.add PlaySoundEffect startTime:Math.ceil(Time.now+Network.targetFrameTime)+delay, sound, smooth
 		else

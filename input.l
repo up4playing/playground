@@ -10,8 +10,8 @@ transient class InternalUser
 	
 	visible Touch[] downTouches, movingTouches, upTouches
 	visible WheelEvent[] wheelEvents
-	visible int[] downKeys, upKeys
-	visible string[] textInputs, textCompositions
+	visible Key[] downKeys, upKeys
+	visible string[] pressedKeys, textInputs, textCompositions
 	
 	int[] lastTouchMoveIndex
 	
@@ -39,6 +39,7 @@ transient class InternalUser
 		textInputs.clear
 		downKeys.clear
 		upKeys.clear
+		pressedKeys.clear
 	
 // The public state of a user
 class NetworkUser
@@ -96,6 +97,110 @@ transient class WheelEvent
 	
 	markAsHandled() handled = true
 	
+enum Key
+	None         =   0
+	Backspace    =   8
+	Tab          =   9
+	Enter        =  13
+	Shift        =  16
+	Ctrl         =  17
+	Alt          =  18
+	Pause        =  19
+	CapsLock     =  20
+	Escape       =  27
+	Space        =  32
+	PageUp       =  33
+	PageDown     =  34
+	End          =  35
+	Home         =  36
+	Left         =  37
+	Up           =  38
+	Right        =  39
+	Down         =  40
+	Insert       =  45
+	Delete       =  46
+	LeftMetaKey  =  91
+	RightMetaKey =  92
+	Select       =  93
+	Numpad0      =  96
+	Numpad1      =  97
+	Numpad2      =  98
+	Numpad3      =  99
+	Numpad4      = 100
+	Numpad5      = 101
+	Numpad6      = 102
+	Numpad7      = 103
+	Numpad8      = 104
+	Numpad9      = 105
+	Multiply     = 106
+	Add          = 107
+	Subtract     = 109
+	DecimalPoint = 110
+	Divide       = 111
+	F1           = 112
+	F2           = 113
+	F3           = 114
+	F4           = 115
+	F5           = 116
+	F6           = 117
+	F7           = 118
+	F8           = 119
+	F9           = 120
+	F10          = 121
+	F11          = 122
+	F12          = 123
+	F13          = 124
+	F14          = 125
+	F15          = 126
+	F16          = 127
+	F17          = 128
+	F18          = 129
+	F19          = 130
+	F20          = 131
+	F21          = 132
+	F22          = 133
+	F23          = 134
+	F24          = 135
+	NumLock      = 144
+	ScrollLock   = 145
+	SemiColon    = 186
+	EqualSign    = 187
+	Comma        = 188
+	Dash         = 189
+	Period       = 190
+	ForwardSlash = 191
+	GraveAccent  = 192
+	OpenBracket  = 219
+	BackSlash    = 220
+	CloseBraket  = 221
+	SingleQuote  = 222
+	A            = 65
+	B            = 66
+	C            = 67
+	D            = 68
+	E            = 69
+	F            = 70
+	G            = 71
+	H            = 72
+	I            = 73
+	J            = 74
+	K            = 75
+	L            = 76
+	M            = 77
+	N            = 78
+	O            = 79
+	P            = 80
+	Q            = 81
+	R            = 82
+	S            = 83
+	T            = 84
+	U            = 85
+	V            = 86
+	W            = 87
+	X            = 88
+	Y            = 89
+	Z            = 90
+	
 // A collection of methods to receive user input
 unit Input
 	transient visible InternalUser[] internalUsers
@@ -144,30 +249,31 @@ unit Input
 		}
 		window.onkeydown = e => {
 			let keyCode = e.keyCode
+			let key = e.key
 			let ctrlOrCmd = e.ctrlKey || e.metaKey
-			if(window.require && e.key == "t" && e.metaKey && e.shiftKey)
+			if(window.require && key == "t" && e.metaKey && e.shiftKey)
 				require("electron").remote.getCurrentWindow().toggleDevTools()
 			else
-			if(ctrlOrCmd && e.key == "o") {
+			if(ctrlOrCmd && key == "o") {
 				// Open event stream
 				Network_openEventStream();
 				e.preventDefault();
 			}
 			else
-			if(ctrlOrCmd && e.key == "s") {
+			if(ctrlOrCmd && key == "s") {
 				// Save event steam
 				Network_saveEventStream();
 				e.preventDefault();
 			}
 			else
-			if(ctrlOrCmd && e.key == "l") {
+			if(ctrlOrCmd && key == "l") {
 				// Save logs
 				Network_saveLogs();
 				e.preventDefault();
 			}
 			else
-			if(e.key >= "0" && e.key <= "9") {
-				let index = e.key - "0"
+			if(key >= "0" && key <= "9") {
+				let index = key - "0"
 				if(e.altKey)         { Network_save(index); e.preventDefault(); } else
 				if(e.ctrlKey)        { Network_restore(index); e.preventDefault(); } else
 				if(Platform_isDebug) { 
@@ -179,27 +285,28 @@ unit Input
 			}
 			else
 			// Reload
-			if(ctrlOrCmd && e.key == "F1") {/*keep room, keep userId*/ ServerNetwork_sendReload(false, false); e.preventDefault();} else
-			if(ctrlOrCmd && e.key == "F2") {/*new  room, keep userId*/ ServerNetwork_sendReload(true,  false); e.preventDefault();} else
-			if(ctrlOrCmd && e.key == "F3") {/*new  room, new  userId*/ ServerNetwork_sendReload(true,  true);  e.preventDefault();} else
+			if(ctrlOrCmd && key == "F1") {/*keep room, keep userId*/ ServerNetwork_sendReload(false, false); e.preventDefault();} else
+			if(ctrlOrCmd && key == "F2") {/*new  room, keep userId*/ ServerNetwork_sendReload(true,  false); e.preventDefault();} else
+			if(ctrlOrCmd && key == "F3") {/*new  room, new  userId*/ ServerNetwork_sendReload(true,  true);  e.preventDefault();} else
 			
 			// Switch send interval
-			if(ctrlOrCmd && e.key == "F5") {Network_switchSendInterval( 3); e.preventDefault();} else
-			if(ctrlOrCmd && e.key == "F6") {Network_switchSendInterval(10); e.preventDefault();} else
-			if(ctrlOrCmd && e.key == "F7") {Network_switchSendInterval(20); e.preventDefault();} else
-			if(ctrlOrCmd && e.key == "F8") {Network_switchSendInterval(30); e.preventDefault();} else
-			if(ctrlOrCmd && e.key == "F9") {Network_switchSendInterval(40); e.preventDefault();} else
+			if(ctrlOrCmd && key == "F5") {Network_switchSendInterval( 3); e.preventDefault();} else
+			if(ctrlOrCmd && key == "F6") {Network_switchSendInterval(10); e.preventDefault();} else
+			if(ctrlOrCmd && key == "F7") {Network_switchSendInterval(20); e.preventDefault();} else
+			if(ctrlOrCmd && key == "F8") {Network_switchSendInterval(30); e.preventDefault();} else
+			if(ctrlOrCmd && key == "F9") {Network_switchSendInterval(40); e.preventDefault();} else
 				
-			if(ctrlOrCmd && e.key == "F10") {Network_switchSendInputMode(1); e.preventDefault();} else
-			if(ctrlOrCmd && e.key == "F11") {Network_switchSendInputMode(2); e.preventDefault();} else
+			if(ctrlOrCmd && key == "F10") {Network_switchSendInputMode(1); e.preventDefault();} else
+			if(ctrlOrCmd && key == "F11") {Network_switchSendInputMode(2); e.preventDefault();} else
 				
-			if(e.key == "F9") {
+			if(key == "F9") {
 				if(e.shiftKey) { Network_saveLogs(); }
 				else           { Platform_toggleDebugInfo(); Network_debugString = "" }
 				e.preventDefault();
+			} else {
+				Input_handleKeyEvent(5, keyCode, key?.length == 1 ? key : "")
+				if(keyCode == 9) e.preventDefault();
 			}
-			else
-				Input_handleKeyEvent(5, keyCode)
 		}
 		window.onkeyup = e => {
 			if(e.key == "F1")
@@ -235,13 +342,14 @@ unit Input
 		inputs.writeUnsignedInt16 cast type
 		inputs.writeString text
 			
-	private handleKeyEvent: InputType type, int keyCode
+	private handleKeyEvent: InputType type, int keyCode, string key
 		if Network.mode == None || Platform.mode != Record || !localUser || !localUser.collectInputs: return
 		let inputs = localUser.inputs
 		
 		inputs.writeInt32 localUser.inputFrame
 		inputs.writeUnsignedInt16 cast type
 		inputs.writeInt32 keyCode
+		if type == KeyDown: inputs.writeString key
 		
 	internal handleTouchEvent: InputType inputType, float x, float y, string pointerType, int pointerId, int button
 		int touchType, id
@@ -390,11 +498,14 @@ unit Input
 						internalUser.textInputs.add textInput
 					else
 					if inputType == KeyDown
-						let keyCode = inputs.readInt32
-						internalUser.downKeys.add keyCode
+						Key key = cast inputs.readInt32
+						let keyPressed = inputs.readString
+						internalUser.downKeys.add key
+						if keyPressed: internalUser.pressedKeys.add keyPressed
 					else
 					if inputType == KeyUp
-						internalUser.upKeys.add inputs.readInt32
+						Key key = cast inputs.readInt32
+						internalUser.upKeys.add key
 					else
 					if inputType == Join
 						// Add the user if the user doesn't already exist
@@ -833,57 +944,22 @@ unit Input
 		}
 		return _input
 				
-	transient object inputElement
-	
 	js void startTextInput: string initalValue = null, int forUser = -1
-		Input_isTextInputActive = true
-		
-		if(Input_inputElement) document.body.removeChild(Input_inputElement);
-		Input_inputElement = document.createElement('input');
-		Input_inputElement.style.position = 'absolute';
-		Input_inputElement.style.top = "0px";
-		Input_inputElement.style.left = "0px";
-		Input_inputElement.style.height = 0;
-		Input_inputElement.style.opacity = 0;
-		Input_inputElement.oninput = e => Input_handleTextInput(7, Input_inputElement.value)
-		Input_inputElement.onblur = e => {
-			log("onblur "+Input_isTextInputActive)
-			if(Input_isTextInputActive) {
-				Input_inputElement.focus()
+		if(forUser == -1 || Input_localUser?.id == forUser) {
+			let input = Input_getOrCreateInputField()
+			if(initalValue != null) { 
+				input.value = initalValue
 			}
+			_input.focus()
+			Input_isTextInputActive = true
 		}
-		if(initalValue != null) Input_inputElement.value = initalValue
-		document.body.appendChild(Input_inputElement);
-		Input_inputElement.focus();
-		log("startTextInput "+Input_isTextInputActive)
-		
-		// The keyboard is open. Now do a delayed focus on the target element
-		// setTimeout(function() {
-			//el.focus();
-			//el.click();
-			// Remove the temp element
-			// document.body.removeChild(__tempEl__);
-			// Input_isTextInputActive = true
-		// }, 100);
-
-		// if(forUser == -1 || Input_localUser?.id == forUser) {
-		// 	let input = Input_getOrCreateInputField()
-		// 	if(initalValue != null) { 
-		// 		input.value = initalValue
-		// 	}
-		// 	setTimeout(() => {
-		// 		_input.focus()
-		// 		Input_isTextInputActive = true
-		// 	}, 0)
-		// }
 		
 	js void stopTextInput
 		Input_isTextInputActive = false
-		log("stopTextInput "+Input_isTextInputActive)
 		
 	js void setTextInput: string value
-		// let input = Input_getOrCreateInputField()
-		Input_inputElement.value = value
+		let input = Input_getOrCreateInputField()
+		input.value = value
 		Input_handleTextInput(7, value)
 		
 	js void updateCursor
@@ -904,7 +980,7 @@ unit Input
 				for user.textInputs -> text
 					code text
 				
-	onKeyDown: int key, int userId = -1, void(int key, int keyUserId) code
+	onKeyDown: Key key, int userId = -1, void(Key key, int keyUserId) code
 		if (Network.mode == Connected || Network.simulateConnection) && userId != -1
 			let user = internalUsers[userId]
 			for user.downKeys
@@ -916,7 +992,7 @@ unit Input
 					if . == key
 						code key, user.id
 				
-	onKeyDown: int userId = -1, void(int key, int keyUserId) code
+	onKeyDown: int userId = -1, void(Key key, int keyUserId) code
 		if (Network.mode == Connected || Network.simulateConnection) && userId != -1
 			let user = internalUsers[userId]
 			for user.downKeys -> key
@@ -926,7 +1002,7 @@ unit Input
 				for user.downKeys -> key
 					code key, user.id
 				
-	onKeyUp: int userId = -1, void(int key, int keyUserId) code
+	onKeyUp: int userId = -1, void(Key key, int keyUserId) code
 		if (Network.mode == Connected || Network.simulateConnection) && userId != -1
 			let user = internalUsers[userId]
 			for user.upKeys -> key
@@ -935,3 +1011,14 @@ unit Input
 			for internalUsers -> user
 				for user.upKeys -> key
 					code key, user.id
+					
+	onKeyPressed: int userId = -1, void(string key, int keyUserId) code
+		if (Network.mode == Connected || Network.simulateConnection) && userId != -1
+			let user = internalUsers[userId]
+			for user.pressedKeys -> key
+				code key, userId
+		else
+			for internalUsers -> user
+				for user.pressedKeys -> key
+					code key, user.id
+				
