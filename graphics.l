@@ -102,7 +102,7 @@ transient global unit graphics
 		graphics_reset()
 		if(!Platform_fastForward)
 			Platform_context.clearRect(0,0,Platform_pixelSize.x, Platform_pixelSize.y)
-			Platform_context.textBaseline = "hanging"
+			Platform_context.textBaseline = "middle"
 
 	internal reset
 		totalMatrix = Platform.baseMatrix
@@ -380,7 +380,7 @@ transient global unit graphics
 		                   showTouchArea = false        // Show the area within which the button is touchable
 		                   visibleFor = -1              // Only this user will see the button
 		                   clickableBy = -1             // Only this user can click the button
-		                   hotkey = 0
+		                   hotkey = Key.None
 		                   implicit layer = 0           // Higher layers are drawn in front of lower layers
 		                   alpha = 1.0                  // The opacity of the button 0: fully transpart, 1: fully visible)
 		                   void(Touch touch) onClick    // Execute this code when the user clicks the button
@@ -468,7 +468,7 @@ transient global unit graphics
 			let w = textSize.width
 			let h = size || graphics_currentFontSize
 			let x = align  == 0 ? position.x : align  == 1 ? position.x-w*.5 : position.x-w
-			let y = valign == 0 ? position.y : valign == 1 ? position.y-h*.365 : position.y-h
+			let y = valign == 0 ? position.y-h*.5 : valign == 1 ? position.y+h*.15 : position.y+h*.5
 			graphics_items.push(new DisplayText(
 				graphics_totalMatrix, x, y, w, h, layer, alpha, graphics_currentClippingPath, text, 
 				position.location, 
@@ -510,7 +510,7 @@ transient global unit graphics
 		                    showTouchArea = false            // Show the area within which the button is touchable
 		                    visibleFor = -1                  // Only this user will see the button
 		                    clickableBy = -1                 // Only this user can click the button
-		                    hotkey = 0
+		                    hotkey = Key.None
 		                    implicit layer = 0               // Higher layers are drawn in front of lower layers
 		                    alpha = 1.0                      // The opacity of the button 0: fully transpart, 1: fully visible)
 		                    void(Touch touch) onClick        // Execute this code when the user clicks the button
@@ -1028,6 +1028,7 @@ transient DisplayItem DisplayVideo
 			let py = (m1 * x + m3 * y + m5) / Platform.pixelRatio
 			let sizeX = w*m0 / Platform.pixelRatio
 			let sizeY = h*m3 / Platform.pixelRatio
+			let radius = this.radius ? 10000 : 0
 			PeerNetwork.updateVideoElement videoElement, px, py, sizeX, sizeY, radius
 			user.videoElementIndex++
 

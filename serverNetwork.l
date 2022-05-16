@@ -102,7 +102,6 @@ transient unit ServerNetwork
 		Input.localUser.id = userId
 		Math.setRandomSeed seed
 		Network.mode = Ping
-		Network.storeUserId
 		for Input.internalUsers
 			if !.local: PeerNetwork.createOffer .
 				

@@ -32,6 +32,7 @@ transient unit Platform
 	private object canvas
 	internal object context
 	visible bool isDebug
+	visible bool isStaging
 	visible Vector2 pixelSize, size
 	visible float pixelRatio
 	internal Matrix2D baseMatrix
@@ -124,6 +125,10 @@ transient unit Platform
 		// because starting the app in two browser tabs overwrites the userId in the local storage
 		let userId = -1
 		if roomId
+			if roomId.startsWith "s"
+				this.isStaging = true
+				roomId = roomId.substring(1)
+								
 			let dashIndex = roomId.indexOf("-")
 			if dashIndex != -1
 				userId = cast roomId.substring(dashIndex+1)
@@ -143,7 +148,7 @@ transient unit Platform
 	private replay() 
 		initMedia
 		openMedia
-			Network.goToFrame Network.frame-1, replay:true
+			Network.goToFrame Network.frame-1, replayFromStart:true
 			
 	object interval
 	private js void startInterval
@@ -424,19 +429,19 @@ transient unit Http
 		
 	js async string delete: string url 
 		let response = await fetch(url, {method:"DELETE"})
-		return await response.text()
+		return await response.json()
 		
 	js async string delete: string url 
 		                    object body
 		let response = await fetch(url, {method:"DELETE", body:JSON.stringify(body)})
-		return await response.text()
+		return await response.json()
 		
 	js void delete: string url 
 		         void(object result) code
 		         void(string error) else
 		try {
 			let response = await fetch(url, {method:"DELETE"})
-			let result = await response.text()
+			let result = await response.json()
 			code(result)
 		} catch(e) {
 			else(e.message)
@@ -444,14 +449,14 @@ transient unit Http
 		
 	js async void put: string url 
 		let response = await fetch(url, {method:"PUT"})
-		return await response.text()
+		return await response.json()
 		
 	js void put: string url 
 		         void(object result) code
 		         void(string error) else
 		try {
 			let response = await fetch(url, {method:"PUT"})
-			let result = await response.text()
+			let result = await response.json()
 			code(result)
 		} catch(e) {
 			else(e.message)
@@ -460,7 +465,7 @@ transient unit Http
 	js async void put: string url 
 		         string body
 		let response = await fetch(url, {method:"PUT", body})
-		return await response.text()
+		return await response.json()
 		
 	js async void put: string url 
 		         object body
@@ -482,16 +487,16 @@ transient unit Http
 	js async string post: string url 
 		                  string body
 		let response = await fetch(url, {method:"POST", body})
-		return await response.text()
+		return await response.json()
 		
 	js async string post: string url 
 		                  object body
 		let response = await fetch(url, {method:"POST", body:JSON.stringify(body)})
-		return await response.text()
+		return await response.json()
 		
 	js async string post: string url 
 		let response = await fetch(url, {method:"POST"})
-		return await response.text()
+		return await response.json()
 		
 	js void post: string url
 		          string body
@@ -499,7 +504,7 @@ transient unit Http
 		          void(string error) else
 		try {
 			let response = await fetch(url, {method:"POST", body})
-			let result = await response.text()
+			let result = await response.json()
 			code(result)
 		} catch(e) {
 			else(e.message)

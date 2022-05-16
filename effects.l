@@ -1,4 +1,4 @@
-unit fx
+global unit fx
 	internal Effect[] effects
 	add: Effect effect
 		effects.add effect
@@ -7,20 +7,21 @@ unit fx
 		let now = Time.now
 		for effects <-
 			if now >= .startTime and (not .smooth or Input.isCertain)
+				// TODO: Remove this workaround when finding common base is implemented
 				float f = .duration ? (now - .startTime)/.duration : 1
 				if f >= 1: f = 1; effects.removeAt i
 				.tick f
 				
-	run: int delay
+	global delay: Time time
 		 bool smooth = false
-		 stored void() code
-		add RunEffect startTime:Time.now+delay, smooth, code
+		 stored void() do
+		add RunEffect startTime:Time.now+time, smooth, do
 				
 class Effect
-	int startTime
-	int duration
+	Time startTime
+	Time duration
 	bool smooth
-	tick: float f
+	tick: Time f
 
 Effect FadeEffect
 	Object object
@@ -57,7 +58,7 @@ Effect PlaySoundEffect
 	tick(float f) sound.play
 	
 Effect RunEffect
-	void() code
-	tick(float f) code()
+	void() do
+	tick(float f) do()
 	
 
