@@ -285,8 +285,8 @@ transient unit Network
 			aheads.add ahead, maxLength:aheadsLength
 			aheadMax = aheads.percentile(percentile)
 			aheadsMax.add aheadMax maxLength:30
-			
-			Input.localUser.bufferFrames = bufferFrames = Math.round(aheadsMax.average * aheadFactor)
+			bufferFrames = Math.round(aheadsMax.average * aheadFactor) limit max:30
+			Input.localUser.bufferFrames = bufferFrames
 			// We only update bufferFrames if the new value is more than 2 away from the current value
 			// int actualBufferFrames = Math.round(aheadsMax.average * aheadFactor)
 			// if Math.abs(actualBufferFrames - bufferFrames) >= minChange
