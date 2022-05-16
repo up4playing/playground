@@ -388,12 +388,14 @@ transient global unit graphics
 			
 		// Handle click
 		// Only visible buttons can be clickable
-		let userId = clickableBy != -1 ? clickableBy : visibleFor != -1 ? visibleFor : currentlyVisibleFor
-		Input.onTouchDownWithin position, image.size*scale + touchMargin, userId, showTouchArea
-			onClick touch
-		if hotkey
-			Input.onKeyDown hotkey, userId
-				onClick null
+		let effectiveVisibleFor = visibleFor != -1 ? visibleFor : currentlyVisibleFor
+		if clickableBy == -1 or effectiveVisibleFor == -1 or clickableBy == effectiveVisibleFor
+			let effectiveClickableBy = clickableBy != -1 ? clickableBy : effectiveVisibleFor
+			Input.onTouchDownWithin position, image.size*scale + touchMargin, userId:effectiveClickableBy, showTouchArea
+				onClick touch
+			if hotkey
+				Input.onKeyDown hotkey, userId:effectiveClickableBy
+					onClick null
 		
 	// Draws an image on the screen
 	global js void drawImage: Image image          // The image to draw
@@ -519,7 +521,7 @@ transient global unit graphics
 		// Handle click
 		// Only visible buttons can be clickable
 		let effectiveVisibleFor = visibleFor != -1 ? visibleFor : currentlyVisibleFor
-		if clickableBy == -1 or clickableBy == effectiveVisibleFor
+		if clickableBy == -1 or effectiveVisibleFor == -1 or clickableBy == effectiveVisibleFor
 			let effectiveClickableBy = clickableBy != -1 ? clickableBy : effectiveVisibleFor
 			Vector2 size = image ? image.size*scale : {getTextWidth(text), fontSize}
 			Input.onTouchDownWithin position, size + touchMargin, userId:effectiveClickableBy, showTouchArea
