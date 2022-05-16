@@ -43,9 +43,10 @@ transient unit PeerNetwork
 		Network_log("setupPeerConnection userId:"+user.id+" connectionId:"+connectionId+" allowRelay:"+PeerNetwork_allowRelay+" "+JSON.stringify(options))
 		
 		// Event handlers
-		peerConnection.onconnectionstatechange = e => {
-			Network_log("onconnectionstatechange " + peerConnection.connectionState)
-			switch(peerConnection.connectionState) {
+		peerConnection.oniceconnectionstatechange = e => {
+			let state = peerConnection.iceConnectionState
+			Network_log("oniceconnectionstatechange " + state)
+			switch(state) {
 				case "connected":    PeerNetwork_onConnectToPeer(user);              break
 				case "disconnected": PeerNetwork_onDisconnectFromPeer(connectionId); break
 			}
