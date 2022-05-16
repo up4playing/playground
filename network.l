@@ -63,6 +63,7 @@ transient unit Network
 	bool simulateConnection = true
 	bool simulateInputsForTesting = false
 	bool simulateRollback = false
+	bool showVideoForStaging = true
 	int checksumInterval = 30
 	
 	SendInputsMode sendInputsMode = Peer
@@ -606,7 +607,6 @@ transient unit Network
 		this.roomString = roomString
 		this.roomId = cast roomString
 		Input.localUser = {userId, local:true, isConnected:false, connectionId:0}
-		ServerNetwork.isLocalhost = Platform.url.contains("localhost")
 		initDatabase
 		setupVideoAndNetwork
 		lobby.enableFullscreen = !Platform.isStaging
@@ -615,7 +615,7 @@ transient unit Network
 		init()
 		
 	private js void setupVideoAndNetwork 
-		await PeerNetwork_setupLocalVideo(/*enableVideo*/!ServerNetwork_isLocalhost, /*enableAudio*/!ServerNetwork_isLocalhost && !Platform_isStaging)
+		await PeerNetwork_setupLocalVideo(/*enableVideo*/!Platform_isStaging || Network_showVideoForStaging, /*enableAudio*/!Platform_isStaging)
 		ServerNetwork_setup()
 		
 	internal storeUserId

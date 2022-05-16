@@ -3,13 +3,12 @@ enum NetworkMessageType: Join, JoinResponse, Ping, Pong, Signal, Ice, Tick, Swit
 transient unit ServerNetwork
 	private object socket
 	private Buffer sendBuffer
-	bool isLocalhost
 	int nextConnectionId = 1
 	
 	js void setup
 		let socket
-		if(ServerNetwork_isLocalhost) socket = new WebSocket("ws://localhost:3112");
-		else                          socket = new WebSocket("wss://"+location.host+":3112");
+		if(location.href.indexOf("localhost") != -1) socket = new WebSocket("ws://localhost:3112");
+		else                                         socket = new WebSocket("wss://"+location.host+":3112");
 		socket.binaryType = "arraybuffer";
 		socket.onopen = function() {
 			Network_log("Websocket open");
@@ -33,7 +32,7 @@ transient unit ServerNetwork
 		return Input.internalUsers[id] || (Input.internalUsers[id] = {id, local:false})
 		
 	private onConnectedToServer
-		if Input.localUser.id == -1 and !isLocalhost
+		if Input.localUser.id == -1 and !Platform.isStaging
 			// We were in this room before -> connect with the same userId we had before
 			RoomInfo roomInfo = cast Platform.getLocalStorageObject "room"+Network.roomId
 			Input.localUser.id = roomInfo && roomInfo.time > Network.currentTime - 3600000*24 ? roomInfo.userId : -1

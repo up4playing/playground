@@ -225,7 +225,7 @@ transient unit Platform
 		try   {
 			if(forUser == -1 || Input_localUser?.id == forUser) {
 				if(value) {
-					if(!ServerNetwork_isLocalhost && !Platform_isDebug) document.body.requestFullscreen()
+					if(!Platform_isStaging) document.body.requestFullscreen()
 				} else {
 					document.exitFullscreen()
 				}
