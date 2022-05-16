@@ -604,8 +604,8 @@ transient unit Network
 		startInLobby = true
 		this.gameId = gameId
 		this.roomString = roomString
-		Input.localUser = {userId, local:true, isConnected:false, connectionId:0}
 		this.roomId = cast roomString
+		Input.localUser = {userId, local:true, isConnected:false, connectionId:0}
 		ServerNetwork.isLocalhost = Platform.url.contains("localhost")
 		initDatabase
 		setupVideoAndNetwork
