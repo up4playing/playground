@@ -129,6 +129,9 @@ transient unit Platform
 			if dashIndex != -1
 				userId = cast roomId.substring(dashIndex+1)
 				roomId = roomId.substring(0,dashIndex)
+			
+		// If the roomId "staging", "latest" or negative, switch to staging mode (no audio, no fullscreen)
+		isStaging = roomId == "staging" or roomId == "latest" or roomId?.startsWith("-")
 		
 		openMedia
 			startInterval
