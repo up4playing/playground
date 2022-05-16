@@ -121,18 +121,17 @@ transient unit Platform
 		let gameId = path[3]
 		let roomId = path[4]
 			
-		// TEMP: For testing, support joining a room with a given userId using the format /gameId/roomId-userId
+		// For testing, support joining a room with a given userId using the format /gameId/{roomId}u{userId}
 		// because starting the app in two browser tabs overwrites the userId in the local storage
 		let userId = -1
 		if roomId
-			if roomId.startsWith "s"
-				this.isStaging = true
-				roomId = roomId.substring(1)
-								
-			let dashIndex = roomId.indexOf("-")
+			let dashIndex = roomId.indexOf("u")
 			if dashIndex != -1
 				userId = cast roomId.substring(dashIndex+1)
 				roomId = roomId.substring(0,dashIndex)
+			
+		// If the roomId "staging", "latest" or negative, switch to staging mode (no audio, no fullscreen)
+		isStaging = roomId == "staging" or roomId == "latest" or roomId?.startsWith("-")
 		
 		openMedia
 			startInterval
@@ -225,7 +224,7 @@ transient unit Platform
 		try   {
 			if(forUser == -1 || Input_localUser?.id == forUser) {
 				if(value) {
-					if(!ServerNetwork_isLocalhost && !Platform_isDebug) document.body.requestFullscreen()
+					if(!Platform_isStaging) document.body.requestFullscreen()
 				} else {
 					document.exitFullscreen()
 				}
@@ -525,7 +524,6 @@ transient unit IndexedDB
 			}
 			request.onsuccess = e => {
 				IndexedDB_db = e.target.result;
-				Network_log("IndexedDB started successfully");
 			}
 			request.onerror = e => {
 				Network_log("Error in IndexedDB.start: "+request.error);

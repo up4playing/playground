@@ -2,6 +2,7 @@
 transient class InternalUser
 	int id              // The userId stays the same when a user reconnects
 	bool local          // Is this the local user?
+	int connectionId    // The connectionId increases with every connection, even if the same user reconnects
 	
 	bool collectInputs  // When we are done pinging, we add a join event and start collecting inputs
 	int inputFrame      // We got all inputs from this player up to and including this frame
@@ -24,7 +25,9 @@ transient class InternalUser
 	
 	object peerConnection
 	object dataChannel
+	object recreateDataChannelInterval
 	bool offerByMe
+	bool isConnected // Becomes false when the user disconnects, always false for the local user
 	
 	startInputFrame: int index
 		lastTouchMoveIndex.clear
@@ -403,6 +406,22 @@ unit Input
 		inputs.writeUnsignedInt16 cast InputType.SetState
 		inputs.writeBuffer buffer
 		
+	internal handleJoin: int frame
+		let inputs = localUser.inputs
+		inputs.writeInt32 frame
+		inputs.writeInt16 cast InputType.Join
+		let connectedUser = internalUsers.where.isConnected
+		inputs.writeInt16 connectedUser.length
+		for connectedUser: inputs.writeInt16 .id
+				
+	// Write "lost" event to tell everybody that we lost the connection to this user
+	// When all player lost the connection to a user, the user will be removed
+	internal handleLost: int id
+		let inputs = localUser.inputs
+		inputs.writeInt32 localUser.inputFrame
+		inputs.writeInt16 cast InputType.Lost
+		inputs.writeInt16 id
+				
 	internal parseInputs(int frame, bool isCertain)
 		this.isCertain = isCertain
 		if isCertain: Network.parseLog += " c"
@@ -508,35 +527,41 @@ unit Input
 						internalUser.upKeys.add key
 					else
 					if inputType == Join
+						// Read when users the joining user is connected to
+						// TODO: When reconnection, handle connections that finish after join
+						int[] connectedTo 
+						let connectionCount = inputs.readInt16
+						for connectionCount
+							connectedTo.add inputs.readInt16
+						
 						// Add the user if the user doesn't already exist
 						if users.none.id == userId
 							users.add user = {id:userId, index:users.length}
 							usersById[userId] = user
 						
-							// Update user.connectedTo and user.index
-							for users
-								if . and .id != userId
-									.connectedTo.ensure userId
-									user.connectedTo.ensure .id
+							user.connectedTo = connectedTo
+							for connectedTo
+								usersById[.]?.connectedTo.ensure userId
+									
 							updateUserIndices
 							Network.parseLog += " join {userId} connectedTo:{user.connectedTo} userCount:{users.length}"
 							// TEMP logging
-							// Network.log "#{nextFrame}{isCertain ? " certain":""} join {userId} connectedTo:{user.connectedTo} userCount:{users.length}"
+							Network.log "#{nextFrame}{isCertain ? " certain":""} join {userId} connectedTo:{user.connectedTo} userCount:{users.length}"
 						else
 							Network.parseLog += "#{nextFrame}{isCertain ? " certain":""} join {userId} user already exists, userCount:{users.length}"
 							// TEMP logging
-							// Network.log " join {userId} user already exists, userCount:{users.length}"
+							Network.log "#{nextFrame}{isCertain ? " certain":""} join {userId} user already exists, userCount:{users.length}"
 					else
 					if inputType == Lost
 						let lostUserId = inputs.readInt16
 						user.connectedTo.remove lostUserId
+						print "#{nextFrame}{isCertain ? " certain":""} Lost", lostUserId
 						let lostUser = usersById[lostUserId]
 							lostUser.connectedTo.remove userId
-							if lobby.inLobby and lostUser.connectedTo.length == 0
+							if lostUser.connectedTo.length == 0
 								// If all players have lost the connected to a user, we remove this user
 								users.removeAllWhere.id == lostUserId
 								usersById[lostUserId] = null
-								// Network.removeVideoElement lostUserId
 								updateUserIndices
 								Network.parseLog += " lost {lostUserId} by {userId}, removed user, userCount:{users.length}"
 								// TEMP logging
@@ -544,7 +569,7 @@ unit Input
 							else	
 								Network.parseLog += " lost {lostUserId} by {userId}, remaining:{user.connectedTo.length} {user.connectedTo}"
 								// TEMP logging
-								Network.log " lost {lostUserId} by {userId}, removed user, userCount:{users.length}"
+								Network.log " lost {lostUserId} by {userId}, remaining:{user.connectedTo.length} {user.connectedTo}"
 					else
 					if inputType == SetState
 						Network.parseLog += " setState"

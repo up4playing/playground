@@ -63,6 +63,7 @@ transient unit Network
 	bool simulateConnection = true
 	bool simulateInputsForTesting = false
 	bool simulateRollback = false
+	bool showVideoForStaging = true
 	int checksumInterval = 30
 	
 	SendInputsMode sendInputsMode = Peer
@@ -97,17 +98,16 @@ transient unit Network
 		user.startInputFrame 0
 		
 		joinFrame = Math.floor((currentTime - this.startTime)/targetFrameTime)+1
-		user.inputs.writeInt32 joinFrame
-		user.inputs.writeInt16 cast InputType.Join
+		Input.handleJoin joinFrame 
 		user.collectInputs = true
 		writeLog += " #{joinFrame} Join"
 		
 		mode = Connected
 		receivedFrames = -1
 		certainFrame = -1
-		frame = 0
+		frame = joinFrame
 		bufferFrames = 0
-		log "Connected", user.id, frame, startTime, this.startTime
+		log "Connected", user.id, frame, startTime
 		saveState
 		
 	startLocal: userCount = 1
@@ -115,9 +115,7 @@ transient unit Network
 		startInLobby = false
 		certainFrame = -1
 		Input.internalUsers.clear
-		let seed = Math.generateRandomSeed
-		log seed
-		Math.setRandomSeed seed 
+		Math.setRandomSeed Math.generateRandomSeed 
 		initDatabase
 		reset
 		resetStartTime
@@ -292,8 +290,8 @@ transient unit Network
 			aheads.add ahead, maxLength:aheadsLength
 			aheadMax = aheads.percentile(percentile)
 			aheadsMax.add aheadMax maxLength:30
-			
-			Input.localUser.bufferFrames = bufferFrames = Math.round(aheadsMax.average * aheadFactor)
+			bufferFrames = Math.round(aheadsMax.average * aheadFactor) limit max:30
+			Input.localUser.bufferFrames = bufferFrames
 			// We only update bufferFrames if the new value is more than 2 away from the current value
 			// int actualBufferFrames = Math.round(aheadsMax.average * aheadFactor)
 			// if Math.abs(actualBufferFrames - bufferFrames) >= minChange
@@ -502,7 +500,7 @@ transient unit Network
 					
 	log: logstring text
 		eventLog += text + "\n"
-		// print text
+		print text
 		
 	inline js int currentTime := Date.now()
 	
@@ -606,8 +604,7 @@ transient unit Network
 		this.gameId = gameId
 		this.roomString = roomString
 		this.roomId = cast roomString
-		Input.localUser = {userId, local:true}
-		ServerNetwork.isLocalhost = Platform.url.contains("localhost")
+		Input.localUser = {userId, local:true, isConnected:false, connectionId:0}
 		initDatabase
 		setupVideoAndNetwork
 		lobby.enableFullscreen = !Platform.isStaging
@@ -616,15 +613,15 @@ transient unit Network
 		init()
 		
 	private js void setupVideoAndNetwork 
-		await PeerNetwork_setupLocalVideo(/*enableVideo*/!ServerNetwork_isLocalhost, /*enableAudio*/!ServerNetwork_isLocalhost && !Platform_isStaging)
+		await PeerNetwork_setupLocalVideo(/*enableVideo*/!Platform_isStaging || Network_showVideoForStaging, /*enableAudio*/!Platform_isStaging)
 		ServerNetwork_setup()
 		
 	internal storeUserId
 		Platform.setLocalStorageObject "room"+roomId, RoomInfo(currentTime, Input.localUser.id)
 		
 	onWrongChecksum: float mine, float theirs
-		onError {"Out of sync"}
 		checksumLog += " MISMATCH mine:{mine} theirs:{theirs}"
+		onError {"Out of sync"}
 		
 	onError: Error error
 		errorMessage = error.message

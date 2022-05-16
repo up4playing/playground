@@ -293,7 +293,7 @@ Object Piece
 				moveTouch = null
 		
 		// Rotate	
-		Vector2 iconPos = rotatable ? {(image.size.x+image.size.y)/4, (image.size.x+image.size.y)/4} : image.size/2
+		Vector2 iconPos = rotatable ? {(image.size.x+image.size.y)/3.5, (image.size.x+image.size.y)/3.5} : image.size/2
 		if Framework.selectedObjects.contains(this) && rotatable
 			if !rotateTouch || !rotatedOverThreshold
 				drawButton rotateIcon, position:position+iconPos*{1,-1}*scale, touchMargin:{50,50}
