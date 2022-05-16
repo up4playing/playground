@@ -25,6 +25,7 @@ transient class InternalUser
 	
 	object peerConnection
 	object dataChannel
+	object recreateDataChannelInterval
 	bool offerByMe
 	bool isConnected // Becomes false when the user disconnects, always false for the local user
 	

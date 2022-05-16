@@ -524,7 +524,6 @@ transient unit IndexedDB
 			}
 			request.onsuccess = e => {
 				IndexedDB_db = e.target.result;
-				Network_log("IndexedDB started successfully");
 			}
 			request.onerror = e => {
 				Network_log("Error in IndexedDB.start: "+request.error);

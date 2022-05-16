@@ -63,13 +63,12 @@ transient unit PeerNetwork
 		return peerConnection
 			
 	object peerConnection
-	object recreateInterval = null
 	
-	js void stopRecreatingDataChannel
-		Network_log("stopRecreatingDataChannel")
-		if(PeerNetwork_recreateInterval) {
-			clearInterval(PeerNetwork_recreateInterval)
-			PeerNetwork_recreateInterval = null
+	js void stopRecreatingDataChannel: InternalUser user
+		if(user.recreateDataChannelInterval) {
+			Network_log("stopRecreatingDataChannel for user:"+user.id+" connectionId:"+user.connectionId)
+			clearInterval(user.recreateDataChannelInterval)
+			user.recreateDataChannelInterval = null
 		}
 	
 	js void setupDataChannel: InternalUser user
@@ -81,15 +80,15 @@ transient unit PeerNetwork
 		dataChannel.onopen = e => {
 			user.dataChannel = dataChannel
 			Network_log("setupDataChannel: Open data channel for "+user.id)
-			PeerNetwork_stopRecreatingDataChannel()
+			PeerNetwork_stopRecreatingDataChannel(user)
 		}
 		dataChannel.onclosing = e => Network_log("Data channel "+user.id+" closing")
 		dataChannel.onclose = e => {
-			Network_log("setupDataChannel: Close data channel for "+user.id+" recreateInterval:"+PeerNetwork_recreateInterval)
+			Network_log("setupDataChannel: Close data channel for "+user.id+" recreateInterval:"+user.recreateDataChannelInterval)
 			user.dataChannel = null
-			if(!PeerNetwork_recreateInterval) {
+			if(!user.recreateDataChannelInterval) {
 				Network_log("setupDataChannel: Start recreating interval for "+user.id)
-				PeerNetwork_recreateInterval = setInterval(() => PeerNetwork_setupDataChannel(user), 2000)
+				user.recreateDataChannelInterval = setInterval(() => PeerNetwork_setupDataChannel(user), 2000)
 			}
 		}
 		dataChannel.onerror = e => Network_log("DataChannel "+user.id+"error "+e)
@@ -99,7 +98,7 @@ transient unit PeerNetwork
 		try {
 			PeerNetwork_setupPeerConnection(user, /*offerByMe*/true)
 			PeerNetwork_setupRemoteVideo(user)
-			PeerNetwork_stopRecreatingDataChannel()
+			PeerNetwork_stopRecreatingDataChannel(user)
 			PeerNetwork_setupDataChannel(user)
 			
 			// Offer
@@ -136,7 +135,7 @@ transient unit PeerNetwork
 			
 			// When a user reconnects, we receive a new offer and a new data channel,
 			// so we need to stop trying to recreate the old data channel to avoid two open data channels
-			PeerNetwork_stopRecreatingDataChannel()
+			PeerNetwork_stopRecreatingDataChannel(user)
 			
 			// Data channel
 			PeerNetwork_peerConnection.addEventListener('datachannel', e => {
