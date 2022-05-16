@@ -121,15 +121,11 @@ transient unit Platform
 		let gameId = path[3]
 		let roomId = path[4]
 			
-		// TEMP: For testing, support joining a room with a given userId using the format /gameId/roomId-userId
+		// For testing, support joining a room with a given userId using the format /gameId/{roomId}u{userId}
 		// because starting the app in two browser tabs overwrites the userId in the local storage
 		let userId = -1
 		if roomId
-			if roomId.startsWith "s"
-				this.isStaging = true
-				roomId = roomId.substring(1)
-								
-			let dashIndex = roomId.indexOf("-")
+			let dashIndex = roomId.indexOf("u")
 			if dashIndex != -1
 				userId = cast roomId.substring(dashIndex+1)
 				roomId = roomId.substring(0,dashIndex)
