@@ -1,9 +1,10 @@
-enum NetworkMessageType: Join, JoinResponse, Ping, Pong, Signal, Ice, Tick, Switch, Reload, Checksum
+enum NetworkMessageType: Join, JoinResponse, Ping, Pong, Signal, Ice, Tick, Switch, Reload, Checksum, RequestState, State
 
 transient unit ServerNetwork
 	private object socket
 	private Buffer sendBuffer
 	bool isLocalhost
+	int nextConnectionId = 1
 	
 	js void setup
 		let socket
@@ -84,7 +85,7 @@ transient unit ServerNetwork
 			let id = buffer.readInt32
 			InternalUser user
 			if id == userId: user = Input.localUser
-			else             user = {offerByMe:true}
+			else             user = {offerByMe:true, connectionId:nextConnectionId++}
 			user.id = id
 			Input.internalUsers[id] = user
 			buffer.readBuffer user.inputs
@@ -105,7 +106,7 @@ transient unit ServerNetwork
 		for Input.internalUsers
 			if !.local: PeerNetwork.createOffer .
 				
-		Network.log "Joining room {roomId} as user {userId}", seed
+		Network.log "Joining room {roomId} as user {userId}"
 		
 	float nextPingTime, fastestPingPongTime = int.maxValue, lastPingPongTime
 	int pongCount
@@ -139,7 +140,15 @@ transient unit ServerNetwork
 		if Network.mode == Ping and pongCount >= 10 and fastestPingPongTime < 1000
 			// Request the state from the user who has been here the longest (has the lowest connectionId)
 			Network.log "Ping-Pong complete", pongCount, fastestPingPongTime
-			Network.startConnected
+			let master = Input.internalUsers.withMin.id where .isConnected
+			if not master
+				// Start application for first user
+				Network.log "I'm the first user -> startConnected"
+				Network.startConnected
+			else
+				// Request state for others
+				Network.log "The master is {master.id} -> sendRequestState"
+				PeerNetwork.sendRequestState master
 
 		nextPingTime = now + (Network.mode == Ping ? 100 : 10000)
 		
@@ -159,8 +168,14 @@ transient unit ServerNetwork
 		let sdp = buffer.readString
 		
 		let sender = getOrCreateUser senderId
-		if type == "offer":  PeerNetwork.onReceivedOffer sender, sdp; else
-		if type == "answer": PeerNetwork.onReceivedAnswer sender, sdp
+		if type == "offer"
+			// When we receive an offer, a new user is connecting or an old user is reconnecting
+			// -> Assign a new connection id
+			sender.connectionId = nextConnectionId++
+			PeerNetwork.onReceivedOffer sender, sdp
+		else
+		if type == "answer"
+			PeerNetwork.onReceivedAnswer sender, sdp
 			
 	sendIce: int receiverId, string candidate
 		sendBuffer.reset

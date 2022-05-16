@@ -96,17 +96,16 @@ transient unit Network
 		user.startInputFrame 0
 		
 		joinFrame = Math.floor((currentTime - this.startTime)/targetFrameTime)+1
-		user.inputs.writeInt32 joinFrame
-		user.inputs.writeInt16 cast InputType.Join
+		Input.handleJoin joinFrame 
 		user.collectInputs = true
 		writeLog += " #{joinFrame} Join"
 		
 		mode = Connected
 		receivedFrames = -1
 		certainFrame = -1
-		frame = 0
+		frame = joinFrame
 		bufferFrames = 0
-		log "Connected", user.id, frame, startTime, this.startTime
+		log "Connected", user.id, frame, startTime
 		saveState
 		
 	startLocal: userCount = 1
@@ -495,7 +494,7 @@ transient unit Network
 					
 	log: logstring text
 		eventLog += text + "\n"
-		// print text
+		print text
 		
 	inline js int currentTime := Date.now()
 	
@@ -597,7 +596,7 @@ transient unit Network
 		startInLobby = true
 		this.gameId = gameId
 		this.roomString = roomString
-		Input.localUser = {userId, local:true}
+		Input.localUser = {userId, local:true, isConnected:false, connectionId:0}
 		ServerNetwork.isLocalhost = Platform.url.contains("localhost")
 		initDatabase
 		setupVideoAndNetwork
@@ -614,8 +613,8 @@ transient unit Network
 		Platform.setLocalStorageObject "room"+roomId, RoomInfo(currentTime, Input.localUser.id)
 		
 	onWrongChecksum: float mine, float theirs
-		onError {"Out of sync"}
 		checksumLog += " MISMATCH mine:{mine} theirs:{theirs}"
+		onError {"Out of sync"}
 		
 	onError: Error error
 		errorMessage = error.message
