@@ -147,6 +147,7 @@ transient unit ServerNetwork
 				// Request state for others
 				Network.log "The master is {master.id} -> sendRequestState"
 				PeerNetwork.sendRequestState master
+				Network.mode = WaitingForState
 
 		nextPingTime = now + (Network.mode == Ping ? 100 : 10000)
 		

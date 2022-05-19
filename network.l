@@ -1,4 +1,4 @@
-enum NetworkMode: None, Ping, Local, Connected
+enum NetworkMode: None, Ping, Local, Connected, WaitingForState
 transient class RoomInfo: int time, userId
 enum SendInputsMode: None, Peer, Server
 	
@@ -105,6 +105,7 @@ transient unit Network
 		mode = Connected
 		receivedFrames = -1
 		certainFrame = -1
+		uncertainFrame = -1
 		frame = joinFrame
 		bufferFrames = 0
 		log "Connected", user.id, frame, startTime
@@ -458,7 +459,7 @@ transient unit Network
 	// before we start processing the frame.
 	private saveState
 		if mode != Connected and !simulateRollback: return
-		if frame == certainFrame+1
+		if frame == certainFrame+1 or certainFrame == -1
 			for Input.internalUsers: if .: .uncertainReadPos = .inputs.readPos
 			uncertainFrame = frame
 			saveTime = Time.measure
