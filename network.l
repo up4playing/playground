@@ -470,7 +470,10 @@ transient unit Network
 				if(commonState != debugCommonState)
 					onError {"Serializing state failed"}
 
-			parseLog += " save u:{uncertainFrame} c:{Framework.checksum}"
+			parseLog += " save f:{frame} c:{certainFrame} u:{uncertainFrame}"
+		else
+			parseLog += " no-save f:{frame} c:{certainFrame} u:{uncertainFrame}"
+			
 	
 	// Replay all frames from the first uncertain frame until the current frame
 	// when we received all inputs for frames that we were uncertain about before.
@@ -497,6 +500,8 @@ transient unit Network
 			replayTime = Time.measure
 				while frame < targetFrame
 					step fastFordward:true, draw:false
+		else
+			parseLog +=  " no-restore c:{certainFrame} u:{uncertainFrame}"
 					
 	log: logstring text
 		eventLog += text + "\n"
