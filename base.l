@@ -816,6 +816,7 @@ transient class SourceCodeLocation
 js Error
 class Error
 	string message
+	string stack
 	implicit inline js string toString := this.stack
 	
 // A collection of basic system functions

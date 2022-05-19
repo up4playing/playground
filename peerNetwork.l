@@ -40,7 +40,7 @@ transient unit PeerNetwork
 		});
 		let peerConnection = PeerNetwork_peerConnection = new RTCPeerConnection(options);
 		let connectionId = user.connectionId
-		Network_log("setupPeerConnection userId:"+user.id+" connectionId:"+connectionId+" allowRelay:"+PeerNetwork_allowRelay+" "+JSON.stringify(options))
+		Network_log("setupPeerConnection userId:"+user.id+" connectionId:"+connectionId+" allowRelay:"+PeerNetwork_allowRelay)
 		
 		// Event handlers
 		peerConnection.oniceconnectionstatechange = e => {
@@ -185,7 +185,7 @@ transient unit PeerNetwork
 				sendBuffer.writeBuffer inputs, user.inputsSentPos, length
 				Network.tickMessageSize = send ., sendBuffer
 				
-				// Network.sentLog += " <{user.id}> #{inputFrame} {user.inputsSentPos}->{inputs.writePos} {inputs.toRangeString(user.inputsSentPos, inputs.writePos)} ({Network.tickMessageSize} bytes)"
+				Network.sentLog += " <{user.id}> #{inputFrame} {user.inputsSentPos}->{inputs.writePos} {inputs.toRangeString(user.inputsSentPos, inputs.writePos)} ({Network.tickMessageSize} bytes)"
 				if length: print " <{user.id}> #{inputFrame} {user.inputsSentPos}->{inputs.writePos} {inputs.toRangeString(user.inputsSentPos, inputs.writePos)} ({Network.tickMessageSize} bytes)"
 				
 				user.inputsSentPos = inputs.writePos
@@ -218,10 +218,9 @@ transient unit PeerNetwork
 			
 			// TOTO: Is local needed?
 			Network.receivedFrames = Input.internalUsers.min.inputFrame where .isConnected or .local
-			// Network.receivedLog += " [{Network.currentTime}] <{sender.id}> #{inputFrame} buffer:{sender.bufferFrames} {prevWritePos}->{sender.inputs.writePos} {sender.inputs.toRangeString(prevWritePos, sender.inputs.writePos)}"
+			Network.receivedLog += " [{Network.currentTime}] <{sender.id}> #{inputFrame} buffer:{sender.bufferFrames} {prevWritePos}->{sender.inputs.writePos} {sender.inputs.toRangeString(prevWritePos, sender.inputs.writePos)}"
 			if sender.inputs.writePos > prevWritePos: print " [{Network.currentTime}] <{sender.id}> #{inputFrame} buffer:{sender.bufferFrames} {prevWritePos}->{sender.inputs.writePos} {sender.inputs.toRangeString(prevWritePos, sender.inputs.writePos)}"
 		else
-			// Network.receivedLog += " [{Network.currentTime}] <{sender.id}> (ignoring #{inputFrame})"
 			Network.receivedLog += " [{Network.currentTime}] <{sender.id}> (ignoring #{inputFrame})"
 			
 		

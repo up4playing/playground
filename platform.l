@@ -332,7 +332,7 @@ transient unit Platform
 		
 	inline js void sendErrorToEditor: Error error
 		if(window.sendErrorToEditor) sendErrorToEditor(error)
-		else                         console.log(error)
+		else                         console.error(error)
 		
 	inline js void pushState: object state, string title, string url = ""
 		history.pushState(state, title, url)

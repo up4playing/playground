@@ -599,7 +599,8 @@ transient unit Network
 	
 	join: string gameId, string roomString, int userId
 		initAll
-		log "Network.join "+Platform.url
+		log Platform.url
+		log Platform.userAgent
 		startInLobby = true
 		this.gameId = gameId
 		this.roomString = roomString
@@ -624,12 +625,12 @@ transient unit Network
 		onError {"Out of sync"}
 		
 	onError: Error error
-		errorMessage = error.message
+		errorMessage = error.stack
 		eventLog += errorMessage + "\n" 
 		Platform.sendErrorToEditor error
 		
 		if !Platform.isDebug and !alertShown
-			alert "{errorMessage}. Please send me the log file that will be created."
+			alert "Please send me the log file that will be created.\n\n{errorMessage}"
 			saveLogs
 			alertShown = true
 
