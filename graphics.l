@@ -743,14 +743,14 @@ transient global unit graphics
 		                bool showLocalPointer = Input.showLocalPointer
 		if userId != Input.localUser.id or showLocalPointer
 			let user = Input.usersById[userId]
-			if !color: color = user.color
-			for user.touches
-				drawImage finger, .smoothPosition+{11,32}, frame:.isDown ? 1 : 0, layer:int.maxValue
-				if color
-					if color == Black
-						drawRectangle .smoothPosition+{16,80}, size:{26,10}, color, layer:int.maxValue, outlineColor:{"a0a0a0"}, outlineWidth:2
-					else
-						drawRectangle .smoothPosition+{16,78}, size:{26,10}, color, layer:int.maxValue
+				if !color: color = user.color
+				for user.touches
+					drawImage finger, .smoothPosition+{11,32}, frame:.isDown ? 1 : 0, layer:int.maxValue
+					if color
+						if color == Black
+							drawRectangle .smoothPosition+{16,80}, size:{26,10}, color, layer:int.maxValue, outlineColor:{"a0a0a0"}, outlineWidth:2
+						else
+							drawRectangle .smoothPosition+{16,78}, size:{26,10}, color, layer:int.maxValue
 
 	global drawVideo: int userId
 		              Vector2 position = {}
