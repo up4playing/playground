@@ -200,6 +200,8 @@ class string
 	inline js string capitalizeFirstCharacter
 		(this.length > 0 ? this[0].toUpperCase() + this.substring(1) : this)
 		
+	inline js string interleaveWith: int charCode
+		this.split("").join(String.fromCharCode(charCode))
 // A logical data type that can have the value true or false
 enum bool: false, true
 		
