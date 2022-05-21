@@ -909,17 +909,31 @@ transient DisplayItem DisplayRoundedRectangle
 		if(this.clippingPath) this.startClipping()
 		let sizeX = this.w, sizeY = this.h, x = this.x, y = this.y, radius = this.radius
 		
+		// Arcs
 		Platform_context.beginPath();
 		Platform_context.moveTo(x + radius, y);
 		Platform_context.lineTo(x + sizeX - radius, y);
-		Platform_context.quadraticCurveTo(x + sizeX, y, x + sizeX, y + radius);
+		Platform_context.arcTo(x + sizeX, y, x + sizeX, y + radius, radius);
 		Platform_context.lineTo(x + sizeX, y + sizeY - radius);
-		Platform_context.quadraticCurveTo(x + sizeX, y + sizeY, x + sizeX - radius, y + sizeY);
+		Platform_context.arcTo(x + sizeX, y + sizeY, x + sizeX - radius, y + sizeY, radius);
 		Platform_context.lineTo(x + radius, y + sizeY);
-		Platform_context.quadraticCurveTo(x, y + sizeY, x, y + sizeY - radius);
+		Platform_context.arcTo(x, y + sizeY, x, y + sizeY - radius, radius);
 		Platform_context.lineTo(x, y + radius);
-		Platform_context.quadraticCurveTo(x, y, x + radius, y);
+		Platform_context.arcTo(x, y, x + radius, y, radius);
 		Platform_context.closePath();
+		
+		// Quadratic Curves
+		// Platform_context.beginPath();
+		// Platform_context.moveTo(x + radius, y);
+		// Platform_context.lineTo(x + sizeX - radius, y);
+		// Platform_context.quadraticCurveTo(x + sizeX, y, x + sizeX, y + radius);
+		// Platform_context.lineTo(x + sizeX, y + sizeY - radius);
+		// Platform_context.quadraticCurveTo(x + sizeX, y + sizeY, x + sizeX - radius, y + sizeY);
+		// Platform_context.lineTo(x + radius, y + sizeY);
+		// Platform_context.quadraticCurveTo(x, y + sizeY, x, y + sizeY - radius);
+		// Platform_context.lineTo(x, y + radius);
+		// Platform_context.quadraticCurveTo(x, y, x + radius, y);
+		// Platform_context.closePath();
 		
 		if(this.fillColor) {
 			Platform_context.fillStyle = this.fillColor
