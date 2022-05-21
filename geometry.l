@@ -443,6 +443,16 @@ unit Math
 		new Vector2(Math.cos(angle)*radius, Math.sin(angle)*radius)
 	
 global transient unit System
+	global inline js void forPosition: T[] subject  // The list to iterate over
+		                               Vector2 start = {0,0}
+		                               Vector2 delta = {100,0}
+		                               -> void(
+		                                   T it,    // The current item of the list we are iterating over with forCentered
+		                                   Vector2 pos,
+		                                   int i    // The index of the current item of the list we are iterating over with forCentered
+		                               ) do         // The code to execute for each item in a list
+		for(let i=0, _subject=subject, _start = start, _delta = delta, _len=_subject.length, _x = _start.x, _y= _start.y; i<_len; ++i, _x += _delta.x, _y += _delta.y) { let it = _subject[i], pos = new Vector2(_x, _y, _start.location || _delta.location ? new SourceCodeLocation(0, 0, null, _start.location, _delta.location) : null); do()}
+
 	global inline js void forCentered: T[] subject  // The list to iterate over
 		                               Vector2 center = {0,0}
 		                               Vector2 delta = {100,0}
