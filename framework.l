@@ -8,10 +8,12 @@ unit Framework
 	Object[] toBeRemoved
 	
 	clear
-		objects.clear
+		for objects <-
+			if not .locked: objects.removeAt i
 		
 	clearAtEndOfFrame
-		toBeRemoved.addRange objects
+		for objects
+			if not .locked: toBeRemoved.add .
 		
 	removeWhere: bool(Object value) condition
 		for objects -> obj
@@ -80,6 +82,7 @@ class Object
 	float alpha = 1
 	int visibleFor = -1
 	int layer = 0
+	bool locked
 	
 	visible siblings := Framework.objects
 	internal checksum := position.x + position.y + scale + alpha
@@ -290,7 +293,7 @@ Object Piece
 				moveTouch = null
 		
 		// Rotate	
-		Vector2 iconPos = rotatable ? {(image.size.x+image.size.y)/4, (image.size.x+image.size.y)/4} : image.size/2
+		Vector2 iconPos = rotatable ? {(image.size.x+image.size.y)/3.5, (image.size.x+image.size.y)/3.5} : image.size/2
 		if Framework.selectedObjects.contains(this) && rotatable
 			if !rotateTouch || !rotatedOverThreshold
 				drawButton rotateIcon, position:position+iconPos*{1,-1}*scale, touchMargin:{50,50}
@@ -596,9 +599,9 @@ Piece Coin
 			if closestCoinType == Neighbor 
 				drawCircle (position + closestCoin.position)/2, radius:6, fillColor:darkColor, outlineColor:lightColor, outlineWidth:5
 			if !isInfinate
-				if value < 10:  drawText cast value, position+{0, 3}, color:darkColor, size:42, style:Bold, font:ShadowedSerif, visibleFor:valueVisibleFor; else
-				if value < 100: drawText cast value, position+{0, 2}, color:darkColor, size:34, style:Bold, font:ShadowedSerif, visibleFor:valueVisibleFor; else
-				                drawText cast value, position+{0, 2}, color:darkColor, size:24, style:Bold, font:ShadowedSerif, visibleFor:valueVisibleFor;
+				if value < 10:  drawText cast value, position+{0, -4}, color:darkColor, size:42, style:Bold, font:ShadowedSerif, visibleFor:valueVisibleFor; else
+				if value < 100: drawText cast value, position+{0, -4}, color:darkColor, size:30, style:Bold, font:ShadowedSerif, visibleFor:valueVisibleFor; else
+				                drawText cast value, position+{0, -4}, color:darkColor, size:22, style:Bold, font:ShadowedSerif, visibleFor:valueVisibleFor;
 			
 			drawImage image, position, frame:closestCoinType == Over ? 1 : 0
 			
@@ -666,17 +669,14 @@ Piece Coin
 		if !isInfinate and !allowZero and value <= 0: removeImmediately
 		updateNeighbors siblings, isBeingMoved:false
 
-class MenuItem
-	Image image
-	string label
-	void(Touch touch) onClick
-
 Object Menu
 	position = {920, -500}
 	Vector2 popupPosition
 	MenuItem[] items
 	includeDefaultItems = true
-	overlayColor = Color("000000d0")
+	overlayColor = Color("000000b0")
+	locked = true
+	
 	visible bool active
 		
 	Menu
@@ -691,13 +691,19 @@ Object Menu
 	tick
 		if active
 			forCentered items, center:popupPosition, delta:{0,60} -> item
-				drawImage .image, pos+{-120}
-				drawText .label, pos+{-60}, size:30, align:Left
+				drawImage .image, pos+{-120}, layer:int.maxValue
+				drawText .label, pos+{-60}, size:30, align:Left, layer:int.maxValue
 				Input.onTouchDownWithin pos, size:{500,60}, code:item.onClick(.)
-			drawRectangle popupPosition, outlineColor:White, fillColor:Black, size:{500,60+items.length*60}, outlineWidth:3
-			drawRectangle size:{1920,1080}, fillColor:overlayColor
+			drawRectangle popupPosition, outlineColor:White, fillColor:Black, size:{500,60+items.length*60}, outlineWidth:3, layer:int.maxValue
+			drawRectangle size:{1920,1080}, fillColor:overlayColor, layer:int.maxValue
 			Input.onTouchDownAny
 				active = false
 				
 		drawImage Menu, position
 			active = true
+			
+class MenuItem
+	Image image
+	string label
+	void(Touch touch) onClick
+

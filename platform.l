@@ -121,18 +121,17 @@ transient unit Platform
 		let gameId = path[3]
 		let roomId = path[4]
 			
-		// TEMP: For testing, support joining a room with a given userId using the format /gameId/roomId-userId
+		// For testing, support joining a room with a given userId using the format /gameId/{roomId}u{userId}
 		// because starting the app in two browser tabs overwrites the userId in the local storage
 		let userId = -1
 		if roomId
-			if roomId.startsWith "s"
-				this.isStaging = true
-				roomId = roomId.substring(1)
-								
-			let dashIndex = roomId.indexOf("-")
+			let dashIndex = roomId.indexOf("u")
 			if dashIndex != -1
 				userId = cast roomId.substring(dashIndex+1)
 				roomId = roomId.substring(0,dashIndex)
+			
+		// If the roomId "staging", "latest" or negative, switch to staging mode (no audio, no fullscreen)
+		isStaging = roomId == "staging" or roomId == "latest" or roomId?.startsWith("-")
 		
 		openMedia
 			startInterval
@@ -225,7 +224,7 @@ transient unit Platform
 		try   {
 			if(forUser == -1 || Input_localUser?.id == forUser) {
 				if(value) {
-					if(!ServerNetwork_isLocalhost && !Platform_isDebug) document.body.requestFullscreen()
+					if(!Platform_isStaging) document.body.requestFullscreen()
 				} else {
 					document.exitFullscreen()
 				}
@@ -333,7 +332,7 @@ transient unit Platform
 		
 	inline js void sendErrorToEditor: Error error
 		if(window.sendErrorToEditor) sendErrorToEditor(error)
-		else                         console.log(error)
+		else                         console.error(error)
 		
 	inline js void pushState: object state, string title, string url = ""
 		history.pushState(state, title, url)
@@ -429,19 +428,19 @@ transient unit Http
 		
 	js async string delete: string url 
 		let response = await fetch(url, {method:"DELETE"})
-		return await response.text()
+		return await response.json()
 		
 	js async string delete: string url 
 		                    object body
 		let response = await fetch(url, {method:"DELETE", body:JSON.stringify(body)})
-		return await response.text()
+		return await response.json()
 		
 	js void delete: string url 
 		         void(object result) code
 		         void(string error) else
 		try {
 			let response = await fetch(url, {method:"DELETE"})
-			let result = await response.text()
+			let result = await response.json()
 			code(result)
 		} catch(e) {
 			else(e.message)
@@ -449,14 +448,14 @@ transient unit Http
 		
 	js async void put: string url 
 		let response = await fetch(url, {method:"PUT"})
-		return await response.text()
+		return await response.json()
 		
 	js void put: string url 
 		         void(object result) code
 		         void(string error) else
 		try {
 			let response = await fetch(url, {method:"PUT"})
-			let result = await response.text()
+			let result = await response.json()
 			code(result)
 		} catch(e) {
 			else(e.message)
@@ -465,7 +464,7 @@ transient unit Http
 	js async void put: string url 
 		         string body
 		let response = await fetch(url, {method:"PUT", body})
-		return await response.text()
+		return await response.json()
 		
 	js async void put: string url 
 		         object body
@@ -487,16 +486,16 @@ transient unit Http
 	js async string post: string url 
 		                  string body
 		let response = await fetch(url, {method:"POST", body})
-		return await response.text()
+		return await response.json()
 		
 	js async string post: string url 
 		                  object body
 		let response = await fetch(url, {method:"POST", body:JSON.stringify(body)})
-		return await response.text()
+		return await response.json()
 		
 	js async string post: string url 
 		let response = await fetch(url, {method:"POST"})
-		return await response.text()
+		return await response.json()
 		
 	js void post: string url
 		          string body
@@ -504,7 +503,7 @@ transient unit Http
 		          void(string error) else
 		try {
 			let response = await fetch(url, {method:"POST", body})
-			let result = await response.text()
+			let result = await response.json()
 			code(result)
 		} catch(e) {
 			else(e.message)
@@ -525,7 +524,6 @@ transient unit IndexedDB
 			}
 			request.onsuccess = e => {
 				IndexedDB_db = e.target.result;
-				Network_log("IndexedDB started successfully");
 			}
 			request.onerror = e => {
 				Network_log("Error in IndexedDB.start: "+request.error);

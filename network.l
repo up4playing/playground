@@ -1,4 +1,4 @@
-enum NetworkMode: None, Ping, Local, Connected
+enum NetworkMode: None, Ping, Local, Connected, WaitingForState
 transient class RoomInfo: int time, userId
 enum SendInputsMode: None, Peer, Server
 	
@@ -63,6 +63,7 @@ transient unit Network
 	bool simulateConnection = true
 	bool simulateInputsForTesting = false
 	bool simulateRollback = false
+	bool showVideoForStaging = true
 	int checksumInterval = 30
 	
 	SendInputsMode sendInputsMode = Peer
@@ -97,17 +98,17 @@ transient unit Network
 		user.startInputFrame 0
 		
 		joinFrame = Math.floor((currentTime - this.startTime)/targetFrameTime)+1
-		user.inputs.writeInt32 joinFrame
-		user.inputs.writeInt16 cast InputType.Join
+		Input.handleJoin joinFrame 
 		user.collectInputs = true
 		writeLog += " #{joinFrame} Join"
 		
 		mode = Connected
 		receivedFrames = -1
 		certainFrame = -1
-		frame = 0
+		uncertainFrame = -1
+		frame = joinFrame
 		bufferFrames = 0
-		log "Connected", user.id, frame, startTime, this.startTime
+		log "Connected", user.id, frame, startTime
 		saveState
 		
 	startLocal: userCount = 1
@@ -115,7 +116,7 @@ transient unit Network
 		startInLobby = false
 		certainFrame = -1
 		Input.internalUsers.clear
-		Math.setRandomSeed Math.generateRandomSeed
+		Math.setRandomSeed Math.generateRandomSeed 
 		initDatabase
 		reset
 		resetStartTime
@@ -138,6 +139,7 @@ transient unit Network
 		Platform.initApplication
 		Input.users.clear
 		Input.usersById.clear
+		errorMessage = ""
 		
 		if !startInLobby
 			// When the developer changed Platform.userCount, add or remove internal users accordingly
@@ -289,8 +291,8 @@ transient unit Network
 			aheads.add ahead, maxLength:aheadsLength
 			aheadMax = aheads.percentile(percentile)
 			aheadsMax.add aheadMax maxLength:30
-			
-			Input.localUser.bufferFrames = bufferFrames = Math.round(aheadsMax.average * aheadFactor)
+			bufferFrames = Math.round(aheadsMax.average * aheadFactor) limit max:30
+			Input.localUser.bufferFrames = bufferFrames
 			// We only update bufferFrames if the new value is more than 2 away from the current value
 			// int actualBufferFrames = Math.round(aheadsMax.average * aheadFactor)
 			// if Math.abs(actualBufferFrames - bufferFrames) >= minChange
@@ -457,7 +459,7 @@ transient unit Network
 	// before we start processing the frame.
 	private saveState
 		if mode != Connected and !simulateRollback: return
-		if frame == certainFrame+1
+		if frame == certainFrame+1 or certainFrame == -1
 			for Input.internalUsers: if .: .uncertainReadPos = .inputs.readPos
 			uncertainFrame = frame
 			saveTime = Time.measure
@@ -469,7 +471,10 @@ transient unit Network
 				if(commonState != debugCommonState)
 					onError {"Serializing state failed"}
 
-			parseLog += " save u:{uncertainFrame} c:{Framework.checksum}"
+			parseLog += " save f:{frame} c:{certainFrame} u:{uncertainFrame}"
+		else
+			parseLog += " no-save f:{frame} c:{certainFrame} u:{uncertainFrame}"
+			
 	
 	// Replay all frames from the first uncertain frame until the current frame
 	// when we received all inputs for frames that we were uncertain about before.
@@ -496,15 +501,18 @@ transient unit Network
 			replayTime = Time.measure
 				while frame < targetFrame
 					step fastFordward:true, draw:false
+		else
+			parseLog +=  " no-restore c:{certainFrame} u:{uncertainFrame}"
 					
 	log: logstring text
 		eventLog += text + "\n"
-		// print text
+		print text
 		
 	inline js int currentTime := Date.now()
 	
 	js void startApp
 		lobby_inLobby = false
+		Network_storeUserId()
 		if(window.app_start) app_start()
 		
 	private resetStartTime
@@ -597,12 +605,13 @@ transient unit Network
 	
 	join: string gameId, string roomString, int userId
 		initAll
-		log "Network.join "+Platform.url
+		log Platform.url
+		log Platform.userAgent
 		startInLobby = true
 		this.gameId = gameId
 		this.roomString = roomString
-		Input.localUser = {userId, local:true}
-		ServerNetwork.isLocalhost = Platform.url.contains("localhost")
+		this.roomId = cast roomString
+		Input.localUser = {userId, local:true, isConnected:false, connectionId:0}
 		initDatabase
 		setupVideoAndNetwork
 		lobby.enableFullscreen = !Platform.isStaging
@@ -611,23 +620,23 @@ transient unit Network
 		init()
 		
 	private js void setupVideoAndNetwork 
-		await PeerNetwork_setupLocalVideo(/*enableVideo*/!ServerNetwork_isLocalhost, /*enableAudio*/!ServerNetwork_isLocalhost && !Platform_isStaging)
+		await PeerNetwork_setupLocalVideo(/*enableVideo*/!Platform_isStaging || Network_showVideoForStaging, /*enableAudio*/!Platform_isStaging)
 		ServerNetwork_setup()
 		
 	internal storeUserId
 		Platform.setLocalStorageObject "room"+roomId, RoomInfo(currentTime, Input.localUser.id)
 		
 	onWrongChecksum: float mine, float theirs
-		onError {"Out of sync"}
 		checksumLog += " MISMATCH mine:{mine} theirs:{theirs}"
+		onError {"Out of sync"}
 		
 	onError: Error error
-		errorMessage = error.message
+		errorMessage = error.stack
 		eventLog += errorMessage + "\n" 
 		Platform.sendErrorToEditor error
 		
 		if !Platform.isDebug and !alertShown
-			alert "{errorMessage}. Please send me the log file that will be created."
+			alert "Please send me the log file that will be created.\n\n{errorMessage}"
 			saveLogs
 			alertShown = true
 

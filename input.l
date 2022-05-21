@@ -2,6 +2,7 @@
 transient class InternalUser
 	int id              // The userId stays the same when a user reconnects
 	bool local          // Is this the local user?
+	int connectionId    // The connectionId increases with every connection, even if the same user reconnects
 	
 	bool collectInputs  // When we are done pinging, we add a join event and start collecting inputs
 	int inputFrame      // We got all inputs from this player up to and including this frame
@@ -24,7 +25,9 @@ transient class InternalUser
 	
 	object peerConnection
 	object dataChannel
+	object recreateDataChannelInterval
 	bool offerByMe
+	bool isConnected // Becomes false when the user disconnects, always false for the local user
 	
 	startInputFrame: int index
 		lastTouchMoveIndex.clear
@@ -108,6 +111,7 @@ enum Key
 	Pause        =  19
 	CapsLock     =  20
 	Escape       =  27
+	Space        =  32
 	PageUp       =  33
 	PageDown     =  34
 	End          =  35
@@ -173,6 +177,32 @@ enum Key
 	BackSlash    = 220
 	CloseBraket  = 221
 	SingleQuote  = 222
+	A            = 65
+	B            = 66
+	C            = 67
+	D            = 68
+	E            = 69
+	F            = 70
+	G            = 71
+	H            = 72
+	I            = 73
+	J            = 74
+	K            = 75
+	L            = 76
+	M            = 77
+	N            = 78
+	O            = 79
+	P            = 80
+	Q            = 81
+	R            = 82
+	S            = 83
+	T            = 84
+	U            = 85
+	V            = 86
+	W            = 87
+	X            = 88
+	Y            = 89
+	Z            = 90
 	
 // A collection of methods to receive user input
 unit Input
@@ -376,155 +406,176 @@ unit Input
 		inputs.writeUnsignedInt16 cast InputType.SetState
 		inputs.writeBuffer buffer
 		
+	internal handleJoin: int frame
+		let inputs = localUser.inputs
+		inputs.writeInt32 frame
+		inputs.writeInt16 cast InputType.Join
+		let connectedUser = internalUsers.where.isConnected
+		inputs.writeInt16 connectedUser.length
+		for connectedUser: inputs.writeInt16 .id
+				
+	// Write "lost" event to tell everybody that we lost the connection to this user
+	// When all player lost the connection to a user, the user will be removed
+	internal handleLost: int id
+		let inputs = localUser.inputs
+		inputs.writeInt32 localUser.inputFrame
+		inputs.writeInt16 cast InputType.Lost
+		inputs.writeInt16 id
+				
 	internal parseInputs(int frame, bool isCertain)
 		this.isCertain = isCertain
 		if isCertain: Network.parseLog += " c"
 		for internalUsers -> internalUser
-			if internalUser
-				let inputs = internalUser.inputs
-				let userId = internalUser.id
-				let user = usersById[userId]
-				Network.parseLog += " <{userId}>"
+			let inputs = internalUser.inputs
+			let userId = internalUser.id
+			let user = usersById[userId]
+			Network.parseLog += " <{userId}>"
+			
+			while true
+				int nextFrame = inputs.canRead ? inputs.peekInt32 : int.maxValue
+				Network.parseLog += " ({inputs.readPos}/{inputs.writePos})"
+				if inputs.canRead: Network.parseLog += " *{nextFrame}"
+				if nextFrame > frame: break
+				inputs.readPos += 4
 				
-				while true
-					int nextFrame = inputs.canRead ? inputs.peekInt32 : int.maxValue
-					Network.parseLog += " ({inputs.readPos}/{inputs.writePos})"
-					if inputs.canRead: Network.parseLog += " *{nextFrame}"
-					if nextFrame > frame: break
-					inputs.readPos += 4
+				let value = inputs.readUnsignedInt16
+				Network.parseLog += " "+value
+				InputType inputType = cast(value % 32)
+				
+				if inputType >= TouchDown && inputType <= Wheel
+					if !user: Network.parseLog += " Error: user == null"
+					TouchType type = cast((value shiftRight 5) % 8)
+					int id = (value shiftRight 8) % 128
+					Vector2 referencePos = {inputs.readInt16, inputs.readInt16}
+					bool isSmoothPosition = !Network.smoothTouchPosition or isCertain or localUser.id == userId
+					Network.parseLog += " "+id
 					
-					let value = inputs.readUnsignedInt16
-					Network.parseLog += " "+value
-					InputType inputType = cast(value % 32)
+					if inputType == TouchDown
+						let touch = user.touches.find.id == id
+						if touch
+							// Update the touch in user.touches
+							touch.phase = cast inputType
+							touch.referencePosition = referencePos
+							touch.referenceStartPosition = referencePos
+							touch.type = type
+							touch.isDown = true
+							// When we touch down, we start a new touch and reset the "handled" flag
+							// This flag is preserved throughout "TouchMove" and "TouchUp", so if we mark the touch
+							// as handled at any point, the flags stays set to "true" until we touch down again
+							touch.handled = false
+							Network.parseLog += " down {id} {referencePos} {type}"
+							if isSmoothPosition: touch.smoothPosition = referencePos
+						else
+							touch = {id, userId, cast inputType, type, referencePos, referencePos, referencePos, isDown:true}
+							user.touches.add touch
+							Network.parseLog += " down(new) {id} {referencePos} {type}"
+							
+						internalUser.downTouches.add touch
+					else
+					if inputType == TouchMove
+						let touch = user.touches.find.id == id
+						if touch
+							// Update the touch in user.touches
+							touch.phase = cast inputType
+							touch.referencePosition = referencePos
+							touch.type = type
+							if isSmoothPosition: touch.smoothPosition = referencePos
+							Network.parseLog += " move {id} {referencePos} {type}"
+						else
+							touch = {id, userId, cast inputType, type, referencePos, referenceStartPosition:Vector2.none, referencePos, isDown:false}
+							user.touches.add touch
+							Network.parseLog += " move(new) {id} {referencePos} {type}"
+
+						internalUser.movingTouches.add touch
+						cursor = "auto"
+					else
+					if inputType == TouchUp
+						let touch = user.touches.find.id == id
+						if touch
+							// Update the touch in user.touches
+							touch.phase = cast inputType
+							touch.referencePosition = referencePos
+							touch.type = type
+							touch.isDown = false
+							if isSmoothPosition: touch.smoothPosition = referencePos
+							Network.parseLog += " up {id} {referencePos} {type}"
+						else
+							touch = {id, userId, cast inputType, type, referencePos, referenceStartPosition:Vector2.none, referencePos, isDown:false}
+							user.touches.add touch
+							Network.parseLog += " up(new) {id} {referencePos} {type}"
+							
+						internalUser.upTouches.add touch
+					else
+					if inputType == Wheel
+						let delta = inputs.readInt16
+						internalUser.wheelEvents.add {user, delta, referencePosition:referencePos}
+				else
+				if inputType == TextInput
+					let textInput = inputs.readString
+					user.textInput = textInput
+					internalUser.textInputs.add textInput
+				else
+				if inputType == KeyDown
+					Key key = cast inputs.readInt32
+					let keyPressed = inputs.readString
+					internalUser.downKeys.add key
+					if keyPressed: internalUser.pressedKeys.add keyPressed
+				else
+				if inputType == KeyUp
+					Key key = cast inputs.readInt32
+					internalUser.upKeys.add key
+				else
+				if inputType == Join
+					// Read when users the joining user is connected to
+					// TODO: When reconnection, handle connections that finish after join
+					int[] connectedTo 
+					let connectionCount = inputs.readInt16
+					for connectionCount
+						connectedTo.add inputs.readInt16
 					
-					if inputType >= TouchDown && inputType <= Wheel
-						if !user: Network.parseLog += " Error: user == null"
-						TouchType type = cast((value shiftRight 5) % 8)
-						int id = (value shiftRight 8) % 128
-						Vector2 referencePos = {inputs.readInt16, inputs.readInt16}
-						bool isSmoothPosition = !Network.smoothTouchPosition or isCertain or localUser.id == userId
-						Network.parseLog += " "+id
-						
-						if inputType == TouchDown
-							let touch = user.touches.find a.id == id
-							if touch
-								// Update the touch in user.touches
-								touch.phase = cast inputType
-								touch.referencePosition = referencePos
-								touch.referenceStartPosition = referencePos
-								touch.type = type
-								touch.isDown = true
-								// When we touch down, we start a new touch and reset the "handled" flag
-								// This flag is preserved throughout "TouchMove" and "TouchUp", so if we mark the touch
-								// as handled at any point, the flags stays set to "true" until we touch down again
-								touch.handled = false
-								Network.parseLog += " down {id} {referencePos} {type}"
-								if isSmoothPosition: touch.smoothPosition = referencePos
-							else
-								touch = {id, userId, cast inputType, type, referencePos, referencePos, referencePos, isDown:true}
-								user.touches.add touch
-								Network.parseLog += " down(new) {id} {referencePos} {type}"
+					// Add the user if the user doesn't already exist
+					if users.none.id == userId
+						users.add user = {id:userId, index:users.length}
+						usersById[userId] = user
+					
+						user.connectedTo = connectedTo
+						for connectedTo
+							usersById[.]?.connectedTo.ensure userId
 								
-							internalUser.downTouches.add touch
-						else
-						if inputType == TouchMove
-							let touch = user.touches.find a.id == id
-							if touch
-								// Update the touch in user.touches
-								touch.phase = cast inputType
-								touch.referencePosition = referencePos
-								touch.type = type
-								if isSmoothPosition: touch.smoothPosition = referencePos
-								Network.parseLog += " move {id} {referencePos} {type}"
-							else
-								touch = {id, userId, cast inputType, type, referencePos, referenceStartPosition:Vector2.none, referencePos, isDown:false}
-								user.touches.add touch
-								Network.parseLog += " move(new) {id} {referencePos} {type}"
-	
-							internalUser.movingTouches.add touch
-							cursor = "auto"
-						else
-						if inputType == TouchUp
-							let touch = user.touches.find a.id == id
-							if touch
-								// Update the touch in user.touches
-								touch.phase = cast inputType
-								touch.referencePosition = referencePos
-								touch.type = type
-								touch.isDown = false
-								if isSmoothPosition: touch.smoothPosition = referencePos
-								Network.parseLog += " up {id} {referencePos} {type}"
-							else
-								touch = {id, userId, cast inputType, type, referencePos, referenceStartPosition:Vector2.none, referencePos, isDown:false}
-								user.touches.add touch
-								Network.parseLog += " up(new) {id} {referencePos} {type}"
-								
-							internalUser.upTouches.add touch
-						else
-						if inputType == Wheel
-							let delta = inputs.readInt16
-							internalUser.wheelEvents.add {user, delta, referencePosition:referencePos}
+						updateUserIndices
+						Network.parseLog += " join {userId} connectedTo:{user.connectedTo} userCount:{users.length}"
+						// TEMP logging
+						Network.log "#{nextFrame}{isCertain ? " certain":""} join {userId} connectedTo:{user.connectedTo} userCount:{users.length}"
 					else
-					if inputType == TextInput
-						let textInput = inputs.readString
-						user.textInput = textInput
-						internalUser.textInputs.add textInput
-					else
-					if inputType == KeyDown
-						Key key = cast inputs.readInt32
-						let keyPressed = inputs.readString
-						internalUser.downKeys.add key
-						if keyPressed: internalUser.pressedKeys.add keyPressed
-					else
-					if inputType == KeyUp
-						Key key = cast inputs.readInt32
-						internalUser.upKeys.add key
-					else
-					if inputType == Join
-						// Add the user if the user doesn't already exist
-						if users.none.id == userId
-							users.add user = {id:userId, index:users.length}
-							usersById[userId] = user
-						
-							// Update user.connectedTo and user.index
-							for users
-								if . and .id != userId
-									.connectedTo.ensure userId
-									user.connectedTo.ensure .id
+						Network.parseLog += "#{nextFrame}{isCertain ? " certain":""} join {userId} user already exists, userCount:{users.length}"
+						// TEMP logging
+						Network.log "#{nextFrame}{isCertain ? " certain":""} join {userId} user already exists, userCount:{users.length}"
+				else
+				if inputType == Lost
+					let lostUserId = inputs.readInt16
+					user.connectedTo.remove lostUserId
+					print "#{nextFrame}{isCertain ? " certain":""} Lost", lostUserId
+					let lostUser = usersById[lostUserId]
+						lostUser.connectedTo.remove userId
+						if lostUser.connectedTo.length == 0
+							// If all players have lost the connected to a user, we remove this user
+							users.removeAllWhere.id == lostUserId
+							usersById[lostUserId] = null
 							updateUserIndices
-							Network.parseLog += " join {userId} connectedTo:{user.connectedTo} userCount:{users.length}"
+							Network.parseLog += " lost {lostUserId} by {userId}, removed user, userCount:{users.length}"
 							// TEMP logging
-							// Network.log "#{nextFrame}{isCertain ? " certain":""} join {userId} connectedTo:{user.connectedTo} userCount:{users.length}"
-						else
-							Network.parseLog += "#{nextFrame}{isCertain ? " certain":""} join {userId} user already exists, userCount:{users.length}"
+							Network.log " lost {lostUserId} by {userId}, removed user, userCount:{users.length}"
+						else	
+							Network.parseLog += " lost {lostUserId} by {userId}, remaining:{user.connectedTo.length} {user.connectedTo}"
 							// TEMP logging
-							// Network.log " join {userId} user already exists, userCount:{users.length}"
-					else
-					if inputType == Lost
-						let lostUserId = inputs.readInt16
-						user.connectedTo.remove lostUserId
-						let lostUser = usersById[lostUserId]
-							lostUser.connectedTo.remove userId
-							if lobby.inLobby and lostUser.connectedTo.length == 0
-								// If all players have lost the connected to a user, we remove this user
-								users.removeAllWhere.id == lostUserId
-								usersById[lostUserId] = null
-								// Network.removeVideoElement lostUserId
-								updateUserIndices
-								Network.parseLog += " lost {lostUserId} by {userId}, removed user, userCount:{users.length}"
-								// TEMP logging
-								Network.log " lost {lostUserId} by {userId}, removed user, userCount:{users.length}"
-							else	
-								Network.parseLog += " lost {lostUserId} by {userId}, remaining:{user.connectedTo.length} {user.connectedTo}"
-								// TEMP logging
-								Network.log " lost {lostUserId} by {userId}, removed user, userCount:{users.length}"
-					else
-					if inputType == SetState
-						Network.parseLog += " setState"
-						Network.snapshotBuffer.reset
-						inputs.readBuffer Network.snapshotBuffer
-						Snapshot.deserialize Network.snapshotBuffer
-						Math.recreateRandomValues
+							Network.log " lost {lostUserId} by {userId}, remaining:{user.connectedTo.length} {user.connectedTo}"
+				else
+				if inputType == SetState
+					Network.parseLog += " setState"
+					Network.snapshotBuffer.reset
+					inputs.readBuffer Network.snapshotBuffer
+					Snapshot.deserialize Network.snapshotBuffer
+					Math.recreateRandomValues
 						
 	updateUserIndices
 		users.orderBy.id
