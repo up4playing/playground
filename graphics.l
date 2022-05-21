@@ -101,7 +101,12 @@ transient global unit graphics
 	internal js void startFrame
 		graphics_reset()
 		if(!Platform_fastForward)
-			Platform_context.clearRect(0,0,Platform_pixelSize.x, Platform_pixelSize.y)
+			if(graphics_backgroundColor.hex == "#000000") {
+				Platform_context.clearRect(0, 0, Platform_pixelSize.x, Platform_pixelSize.y)
+			} else {
+				Platform_context.fillStyle = graphics_backgroundColor.hex
+				Platform_context.fillRect(0, 0, Platform_pixelSize.x, Platform_pixelSize.y)
+			}
 			Platform_context.textBaseline = "hanging"
 
 	internal reset
@@ -253,6 +258,9 @@ transient global unit graphics
 		Platform_pixelSize.y = prevPixelSizeY
 		graphics_items = prevItems
 		return dataUrl
+		
+	// The default background color
+	Color backgroundColor = Black
 
 	// The default color for all draw operations
 	color
