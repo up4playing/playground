@@ -142,6 +142,13 @@ struct float
 		                                 float epsilon = 0.0175
 		(Math.abs((((this % Math_TwoPI) + Math_TwoPI) % Math_TwoPI) - (((value % Math_TwoPI) + Math_TwoPI) % Math_TwoPI)) < epsilon)
 		
+	inline js float moveTowards: float value
+		                         float speed
+		(this < value ? (this + speed < value ? (this += speed) : value) : (this - speed > value ? (this -= speed) : value))
+		
+	inline js float interpolateTo: float target
+		                           float value
+		(this + (target - this)*value)
 // A sequence of characters
 js String
 class string

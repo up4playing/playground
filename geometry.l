@@ -145,10 +145,10 @@ struct Vector2
 	
 	// Moves the vector towards the given target by the given distance	
 	moveTowards: Vector2 targetPosition // The target to move towards
-		         float distance = 1    // The distance to move by
+		         float speed = 1        // The distance to move by
 		let delta = targetPosition - this
 		if delta.x != 0 || delta.y != 0
-			delta = delta.normalized * distance
+			delta = delta.normalized * speed
 			if delta.x > 0: x = Math.min(x + delta.x, targetPosition.x)
 			else            x = Math.max(x + delta.x, targetPosition.x)
 			if delta.y > 0: y = Math.min(y + delta.y, targetPosition.y)
