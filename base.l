@@ -149,6 +149,19 @@ struct float
 	inline js float interpolateTo: float target
 		                           float value
 		(this + (target - this)*value)
+		
+	inline js float interpolateTo: float target
+		                           float value
+		                           EaseFunction ease
+		(this + (target - this)*ease.function.invoke(value))
+		
+class EaseFunction
+	float(float value) function
+	
+	global const EaseFunction None    = { . }
+	global const EaseFunction InQuad  = { . * . }
+	global const EaseFunction OutBack = { 1 + 2.70158 * Math.pow(. - 1, 3) + 1.70158 * Math.pow(. - 1, 2) }
+	
 // A sequence of characters
 js String
 class string

@@ -132,9 +132,17 @@ struct Vector2
 	angleTo: Vector2 value // The second vector
 		return Math.getAngleForVector(value - this)
 
-	// Interpolates linearly to another vector
+	// Interpolates to another vector
 	interpolateTo: Vector2 target  // The target vector to interpolate to
 		           float value    // The interpolation value, 0 returns the original vector, 1 returns the target vector
+		let ivalue = 1 - value
+		return new Vector2(x * ivalue + target.x * value, y * ivalue + target.y * value)
+
+	// Interpolates to another vector
+	interpolateTo: Vector2 target  // The target vector to interpolate to
+		           float value    // The interpolation value, 0 returns the original vector, 1 returns the target vector
+		           EaseFunction ease
+		value = ease.function(value)
 		let ivalue = 1 - value
 		return new Vector2(x * ivalue + target.x * value, y * ivalue + target.y * value)
 
