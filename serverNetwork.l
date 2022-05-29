@@ -91,7 +91,7 @@ transient unit ServerNetwork
 
 		if roomId != Network.roomId
 			Network.log "Received room id {roomId}"
-			Platform.pushState null, "{Network.gameId} {roomId}", "/{Network.gameId}/{roomId}"
+			Platform.pushState "/{Network.gameId}/{roomId}"
 			Network.roomId = roomId
 			
 		if version != Platform.version
