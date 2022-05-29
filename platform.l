@@ -134,10 +134,10 @@ transient unit Platform
 		isStaging = roomId == "staging" or roomId == "latest" or roomId?.startsWith("-")
 		
 		openMedia
+			this.engineStarted = true
 			startInterval
 			if isDebug || isLocal || roomId == "local" || url.startsWith("file"): Network.startLocal userCount:userCount
 			else                                                                  Network.join gameId, roomId, userId
-			this.engineStarted = true
 			sendEvaluateFinished
 			
 			// When the texture is loaded, we start the app in record mode. This starts processing inputs and ticks.
