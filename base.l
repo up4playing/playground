@@ -1116,6 +1116,10 @@ unit Math
 	inline js float sqrt: float value // The value to return the square root of
 		Math.sqrt(value)
 		
+	inline js float pow: float base
+		                 float exponent
+		Math.pow(base, exponent)
+		
 	// The ratio of a circle's circumference to its diameter
 	float PI = 3.141592653589793
 	
