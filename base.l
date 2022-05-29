@@ -144,7 +144,7 @@ struct float
 		
 	inline js float moveTowards: float value
 		                         float speed
-		(this < value ? (this + speed < value ? (this += speed) : value) : (this - speed > value ? (this -= speed) : value))
+		(this < value ? (this + speed < value ? (this += speed) : (this = value)) : (this - speed > value ? (this -= speed) : (this = value)))
 		
 	inline js float interpolateTo: float target
 		                           float value
