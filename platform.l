@@ -386,6 +386,10 @@ transient unit Platform
 		                      object state = null
 		history.pushState(state, "", url);
 		
+	inline js void replaceState: string url
+		                         object state = null
+		history.replaceState(state, "", url);
+		
 	inline js void back
 		history.back();
 		
