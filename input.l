@@ -13,6 +13,7 @@ transient class InternalUser
 	visible WheelEvent[] wheelEvents
 	visible Key[] downKeys, upKeys
 	visible string[] pressedKeys, textInputs, textCompositions
+	visible string[] navigations
 	
 	int[] lastTouchMoveIndex
 	
@@ -43,6 +44,7 @@ transient class InternalUser
 		downKeys.clear
 		upKeys.clear
 		pressedKeys.clear
+		navigations.clear
 	
 // The public state of a user
 class NetworkUser
@@ -62,7 +64,7 @@ class NetworkUser
 			if (.phase == Up and .type >= Touch) or (hasToch and .type != Touch)
 				touches.remove .
 	
-enum InputType: None, TouchDown, TouchMove, TouchUp, Wheel, KeyDown, KeyUp, TextInput, Stick, Trigger, Grip, ButtonDown, ButtonUp, ControllerTransform, HeadTransform, DeviceRotation, Join, Lost, SetState
+enum InputType: None, TouchDown, TouchMove, TouchUp, Wheel, KeyDown, KeyUp, TextInput, Stick, Trigger, Grip, ButtonDown, ButtonUp, ControllerTransform, HeadTransform, DeviceRotation, Join, Lost, SetState, Navigate
 		
 // Phase of a touch or a click
 enum TouchPhase: Still, Down, Move, Up
@@ -322,6 +324,12 @@ unit Input
 			else
 				Input_handleKeyEvent(6, e.keyCode)
 		}
+			
+		// Handles the user navigating back or forward in the browser	
+		window.onpopstate = e => {
+			Input_handleNavigate(location.pathname);
+		}
+		
 		if(window._input) window._input.value = ""
 		
 	private setLastTouchMoveIndex: int id, int index
@@ -421,6 +429,13 @@ unit Input
 		inputs.writeInt32 localUser.inputFrame
 		inputs.writeInt16 cast InputType.Lost
 		inputs.writeInt16 id
+			
+	// Handles the user navigating back or forward in the browser	
+	internal handleNavigate: string url
+		let inputs = localUser.inputs
+		inputs.writeInt32 localUser.inputFrame
+		inputs.writeInt16 cast InputType.Navigate
+		inputs.writeString url
 				
 	internal parseInputs(int frame, bool isCertain)
 		this.isCertain = isCertain
@@ -524,6 +539,9 @@ unit Input
 				if inputType == KeyUp
 					Key key = cast inputs.readInt32
 					internalUser.upKeys.add key
+				else
+				if inputType == Navigate
+					internalUser.navigations.add inputs.readString
 				else
 				if inputType == Join
 					// Read when users the joining user is connected to
@@ -1045,4 +1063,16 @@ unit Input
 			for internalUsers -> user
 				for user.pressedKeys -> key
 					code key, user.id
+			
+	// Do something when the user navigates back or forward in the browser	
+	onNavigate: int userId = -1
+		        void(string url) do
+		if (Network.mode == Connected || Network.simulateConnection) && userId != -1
+			let user = internalUsers[userId]
+			for user.navigations -> url
+				do url
+		else
+			for internalUsers -> user
+				for user.navigations -> url
+					do url
 				
