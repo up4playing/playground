@@ -134,10 +134,10 @@ transient unit Platform
 		isStaging = roomId == "staging" or roomId == "latest" or roomId?.startsWith("-")
 		
 		openMedia
+			this.engineStarted = true
 			startInterval
 			if isDebug || isLocal || roomId == "local" || url.startsWith("file"): Network.startLocal userCount:userCount
 			else                                                                  Network.join gameId, roomId, userId
-			this.engineStarted = true
 			sendEvaluateFinished
 			
 			// When the texture is loaded, we start the app in record mode. This starts processing inputs and ticks.
@@ -334,9 +334,6 @@ transient unit Platform
 		if(window.sendErrorToEditor) sendErrorToEditor(error)
 		else                         console.error(error)
 		
-	inline js void pushState: object state, string title, string url = ""
-		history.pushState(state, title, url)
-		
 	inline js void schedule: int delay
 		                     void() then
 		setTimeout(then, delay)
@@ -384,6 +381,18 @@ transient unit Platform
 		setInterval(() => do(), interval)
 		
 	inline js string resourcesPath := process.resourcesPath
+	
+	inline js void pushState: string url
+		                      object state = null
+		history.pushState(state, "", url);
+		
+	inline js void replaceState: string url
+		                         object state = null
+		history.replaceState(state, "", url);
+		
+	inline js void back
+		history.back();
+		
 		
 unit File
 	js string readPartial: string filename, int offset=0, int length, void(string result) callback

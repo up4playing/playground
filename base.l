@@ -222,6 +222,11 @@ class string
 		
 	inline js string interleaveWith: int charCode
 		this.split("").join(String.fromCharCode(charCode))
+		
+	inline js string replace: string source
+		                      string target
+		this.replace(new RegExp(source, "g"), target)
+		
 // A logical data type that can have the value true or false
 enum bool: false, true
 		
