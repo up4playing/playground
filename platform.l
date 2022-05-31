@@ -384,15 +384,17 @@ transient unit Platform
 	
 	inline js void pushState: string url
 		                      object state = null
-		history.pushState(state, "", url);
+		if(!Network_isReplay) history.pushState(state, "", url);
 		
 	inline js void replaceState: string url
 		                         object state = null
-		history.replaceState(state, "", url);
+		if(!Network_isReplay) history.replaceState(state, "", url);
 		
 	inline js void back
-		history.back();
+		if(!Network_isReplay) history.back();
 		
+	inline js void reload
+		if(!Platform_isDebug) location.reload();
 		
 unit File
 	js string readPartial: string filename, int offset=0, int length, void(string result) callback
