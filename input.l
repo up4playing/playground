@@ -52,6 +52,7 @@ class NetworkUser
 	int index
 	Color color
 	visible Touch[] touches
+	visible GamePad gamepad = {}
 	string textInput
 	bool enableTouch = true
 	bool isReady
@@ -64,7 +65,7 @@ class NetworkUser
 			if (.phase == Up and .type >= Touch) or (hasToch and .type != Touch)
 				touches.remove .
 	
-enum InputType: None, TouchDown, TouchMove, TouchUp, Wheel, KeyDown, KeyUp, TextInput, Stick, Trigger, Grip, ButtonDown, ButtonUp, ControllerTransform, HeadTransform, DeviceRotation, Join, Lost, SetState, Navigate
+enum InputType: None, TouchDown, TouchMove, TouchUp, Wheel, KeyDown, KeyUp, TextInput, Stick, Trigger, Grip, ButtonDown, ButtonUp, ControllerTransform, HeadTransform, DeviceRotation, Join, Lost, SetState, Navigate, GamePad
 		
 // Phase of a touch or a click
 enum TouchPhase: Still, Down, Move, Up
@@ -206,12 +207,25 @@ enum Key
 	Y            = 89
 	Z            = 90
 	
+class GamePad
+	Vector2 leftStick
+	Vector2 rightStick
+	bool a, b, x, y
+	
+class InternalGamePadButton
+	bool pressed, touched
+	float value
+	
+class InternetGamePad
+	float[] axes
+	InternalGamePadButton[] buttons
+	
 // A collection of methods to receive user input
 unit Input
 	transient visible InternalUser[] internalUsers
 	transient visible bool isCertain
 	transient InternalUser localUser
-	
+
 	NetworkUser[] users
 	internal NetworkUser[] usersById
 	string cursor
@@ -436,7 +450,19 @@ unit Input
 		inputs.writeInt32 localUser.inputFrame
 		inputs.writeInt16 cast InputType.Navigate
 		inputs.writeString url
-				
+		
+	private inline js InternetGamePad[] getGamepads() navigator.getGamepads()
+	
+	updateGamePads
+		let gamepads = getGamepads
+		if gamepads and gamepads[0] and gamepads[0].axes.length >= 2
+			let axes = gamepads[0].axes
+			let inputs = localUser.inputs
+			inputs.writeInt32 localUser.inputFrame
+			inputs.writeInt16 cast InputType.GamePad
+			inputs.writeFloat64 axes[0]
+			inputs.writeFloat64 axes[1]
+			
 	internal parseInputs(int frame, bool isCertain)
 		this.isCertain = isCertain
 		if isCertain: Network.parseLog += " c"
@@ -542,6 +568,10 @@ unit Input
 				else
 				if inputType == Navigate
 					internalUser.navigations.add inputs.readString
+				else
+				if inputType == GamePad
+					user.gamepad.leftStick.x = inputs.readFloat64
+					user.gamepad.leftStick.y = inputs.readFloat64
 				else
 				if inputType == Join
 					// Read when users the joining user is connected to
