@@ -8,79 +8,6 @@ class AStarNode
 	closed = false
 	AStarNode parent
 
-unit astar
-	// Finds the shorted path between two position using the astar
-	AStarNode[] search: IntVector2 startPos
-		                IntVector2 endPos
-		                IntVector2 size
-		                AStarNode[](AStarNode[][] grid, int x, int y) getNeighbors
-		                int(IntVector2 a, IntVector2 b) heuristic
-		
-		AStarNode[][] grid
-		for size.x -> x
-			grid[x] = []
-			for size.y -> y
-				grid[x][y] = {pos:{x,y}}
-				
-		let diagonal = false
-		let start = grid[startPos.x][startPos.y]
-		let end = grid[endPos.x][endPos.y]
-		
-		BinaryHeap openHeap = {}
-		openHeap.push(start)
-
-		while(openHeap.size() > 0)
-
-			// Grab the lowest f(x) to process next.  Heap keeps this sorted for us.
-			let currentNode = openHeap.pop()
-
-			// End case -- result has been found, return the traced path.
-			if currentNode == end
-				let curr = currentNode
-				AStarNode[] result
-				while(curr.parent)
-					result.add curr
-					curr = curr.parent
-				result.add curr
-				return result.reverse()
-
-			// Normal case -- move currentNode from open to closed, process each of its neighbors.
-			currentNode.closed = true
-
-			// Find all neighbors for the current node. Optionally find diagonal neighbors as well (false by default).
-			let neighbors = getNeighbors(grid, currentNode.pos.x, currentNode.pos.y)
-
-			for neighbors.length
-				let neighbor = neighbors[i]
-
-				if neighbor.closed
-					// Not a valid node to process, skip to next neighbor.
-					continue
-
-				// The g score is the shortest distance from start to current node.
-				// We need to check if the path we have arrived at this neighbor is the shortest one we have seen yet.
-				let gScore = currentNode.g + neighbor.cost
-				let beenVisited = neighbor.visited
-
-				if !beenVisited || gScore < neighbor.g
-
-					// Found an optimal (so far) path to this node.  Take score for node to see how good it is.
-					neighbor.visited = true
-					neighbor.parent = currentNode
-					neighbor.h = neighbor.h || heuristic(neighbor.pos, end.pos)
-					neighbor.g = gScore
-					neighbor.f = neighbor.g + neighbor.h
-
-					if !beenVisited
-						// Pushing to heap will put it in proper place based on the 'f' value.
-						openHeap.push(neighbor)
-					else
-						// Already seen the node, but since it has been rescored we need to reorder it in the heap
-						openHeap.rescoreElement(neighbor)
-
-		// No result was found - empty array signifies failure to find path.
-		return []
-
 class BinaryHeap
 	AStarNode[] content
 	
@@ -195,6 +122,78 @@ class BinaryHeap
 				break
 
 unit game
+	// Finds the shorted path between two position using the astar algorithm
+	AStarNode[] findPath: IntVector2 startPos
+		                  IntVector2 endPos
+		                  IntVector2 size
+		                  AStarNode[](AStarNode[][] grid, int x, int y) getNeighbors
+		                  int(IntVector2 a, IntVector2 b) heuristic
+		
+		AStarNode[][] grid
+		for size.x -> x
+			grid[x] = []
+			for size.y -> y
+				grid[x][y] = {pos:{x,y}}
+				
+		let diagonal = false
+		let start = grid[startPos.x][startPos.y]
+		let end = grid[endPos.x][endPos.y]
+		
+		BinaryHeap openHeap = {}
+		openHeap.push(start)
+
+		while(openHeap.size() > 0)
+
+			// Grab the lowest f(x) to process next.  Heap keeps this sorted for us.
+			let currentNode = openHeap.pop()
+
+			// End case -- result has been found, return the traced path.
+			if currentNode == end
+				let curr = currentNode
+				AStarNode[] result
+				while(curr.parent)
+					result.add curr
+					curr = curr.parent
+				result.add curr
+				return result.reverse()
+
+			// Normal case -- move currentNode from open to closed, process each of its neighbors.
+			currentNode.closed = true
+
+			// Find all neighbors for the current node. Optionally find diagonal neighbors as well (false by default).
+			let neighbors = getNeighbors(grid, currentNode.pos.x, currentNode.pos.y)
+
+			for neighbors.length
+				let neighbor = neighbors[i]
+
+				if neighbor.closed
+					// Not a valid node to process, skip to next neighbor.
+					continue
+
+				// The g score is the shortest distance from start to current node.
+				// We need to check if the path we have arrived at this neighbor is the shortest one we have seen yet.
+				let gScore = currentNode.g + neighbor.cost
+				let beenVisited = neighbor.visited
+
+				if !beenVisited || gScore < neighbor.g
+
+					// Found an optimal (so far) path to this node.  Take score for node to see how good it is.
+					neighbor.visited = true
+					neighbor.parent = currentNode
+					neighbor.h = neighbor.h || heuristic(neighbor.pos, end.pos)
+					neighbor.g = gScore
+					neighbor.f = neighbor.g + neighbor.h
+
+					if !beenVisited
+						// Pushing to heap will put it in proper place based on the 'f' value.
+						openHeap.push(neighbor)
+					else
+						// Already seen the node, but since it has been rescored we need to reorder it in the heap
+						openHeap.rescoreElement(neighbor)
+
+		// No result was found - empty array signifies failure to find path.
+		return []
+
 	resolveCollision: Vector2 sourcePosition
 		              Vector2 targetPosition
 		              Rect[] rects
