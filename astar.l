@@ -193,3 +193,110 @@ class BinaryHeap
 			else 
 				// Otherwise, we are done.
 				break
+
+unit game
+	resolveCollision: Vector2 sourcePosition
+		              Vector2 targetPosition
+		              Rect[] rects
+		              float radius
+		              float slideThreshold = 5
+		Collision[] collisions 
+		Line movement = {sourcePosition, targetPosition, Segment}
+		let threshold = radius + slideThreshold
+		for rects -> rect
+			if movement.end.x > movement.start.x
+				// We are moving right -> check left side
+				Line line = {
+					start:rect.position + {-(rect.size.x/2+radius), -(rect.size.y/2+radius)}
+					end:  rect.position + {-(rect.size.x/2+radius),  (rect.size.y/2+radius)}
+					Segment
+				}
+				// drawLine line.start, line.end, color:Red, width:30
+				let p = movement intersectionWith line
+					if (p.y - line.start.y) <= threshold
+						collisions.add {p, TopLeft, regionPoint:line.start-{0,1}}
+					else
+					if (line.end.y - p.y) <= threshold
+						collisions.add {p, BottomLeft, regionPoint:line.end+{0,1}}
+					else
+						collisions.add {p, Left, regionPoint:{line.end.x-1, p.y}}
+			else
+			if movement.end.x < movement.start.x
+				// We are moving left -> check right side
+				Line line = {
+					start:rect.position + {(rect.size.x/2+radius), -(rect.size.y/2+radius)}
+					end:  rect.position + {(rect.size.x/2+radius),  (rect.size.y/2+radius)}
+					Segment
+				}
+				// drawLine line.start, line.end, color:Red, width:30
+				let p = movement intersectionWith line
+					if (p.y - line.start.y) <= threshold
+						collisions.add {p, TopRight, regionPoint:line.start-{0,1}}
+					else
+					if (line.end.y - p.y) <= threshold
+						collisions.add {p, BottomRight, regionPoint:line.end+{0,1}}
+					else
+						collisions.add {p, Right, regionPoint:{line.end.x+1, p.y}}
+				
+			if movement.end.y > movement.start.y
+				// We are moving down -> check top side
+				Line line = {
+					start:rect.position + {-(rect.size.x/2+radius), -(rect.size.y/2+radius)}
+					end:  rect.position + { (rect.size.x/2+radius), -(rect.size.y/2+radius)}
+					Segment
+				}
+				// drawLine line.start, line.end, color:Red, width:30
+				let p = movement intersectionWith line
+					if (p.x - line.start.x) <= threshold
+						collisions.add {p, TopLeft, regionPoint:line.start-{1,0}}
+					else
+					if (line.end.x - p.x) <= threshold
+						collisions.add {p, TopRight, regionPoint:line.end+{1,0}}
+					else
+						collisions.add {p, Top, regionPoint:{p.x, line.end.y-1}}
+			else
+			if movement.end.y < movement.start.y
+				// We are moving up -> check bottom side
+				Line line = {
+					start:rect.position + {-(rect.size.x/2+radius), (rect.size.y/2+radius)}
+					end:  rect.position + { (rect.size.x/2+radius), (rect.size.y/2+radius)}
+					Segment
+				}
+				// drawLine line.start, line.end, color:Red, width:30
+				let p = movement intersectionWith line
+					if (p.x - line.start.x) <= threshold
+						collisions.add {p, BottomLeft, regionPoint:line.start-{1,0}}
+					else
+					if (line.end.x - p.x) <= threshold
+						collisions.add {p, BottomRight, regionPoint:line.end+{1,0}}
+					else
+						collisions.add {p, Bottom, regionPoint:{p.x, line.end.y+1}}
+		
+		if collisions.length > 1: collisions.sort (a.pos distanceTo sourcePosition) - (b.pos distanceTo sourcePosition)
+		let c = collisions[0]
+			// Resolve collision
+			//    → x
+			//  ↓
+			//  y
+			//        TopLeft                Top                TopRight
+			//   adjust dimension          adjust y         adjust dimension 
+			//   which moved less                           which moved less    
+			//              ---  ---------------------------  ---
+			//             |                                     |
+			//           
+			//     Left    |                                     |   Right
+			//   adjust x  |                                     |  adjust x
+			//           
+			//             |                                     |
+			//              ---  ---------------------------  ---		
+			//      BottomLeft              Bottom            BottomRight 	
+			//   adjust dimension          adjust y         adjust dimension 
+			//   which moved less                           which moved less    
+			//
+			if c.region == Top or c.region == Bottom 
+			or (c.region != Left and c.region != Right and Math.abs(targetPosition.x - sourcePosition.x) > Math.abs(targetPosition.y - sourcePosition.y))
+				targetPosition.y = c.regionPoint.y
+			else
+				targetPosition.x = c.regionPoint.x
+				
+		return targetPosition
