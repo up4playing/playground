@@ -870,6 +870,11 @@ global transient unit System
 		                         void() do               // The code to execute while to condition is true
 		while(condition) do()
 	
+	global inline js void do: void() do                   // The code to execute while to condition is true
+		                      nolabel implicit bool while // The condition to check
+		@do do() 
+		@while(while)
+	
 	// Execute code a given number of times or for each item in a list
 	global inline js void for: void subject    // The list to iterate over or the exclusive upper bound to iterate towards
 		                       void do         // The code to execute for each item in a list or a given number of times
