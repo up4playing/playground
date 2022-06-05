@@ -52,10 +52,12 @@ class NetworkUser
 	int index
 	Color color
 	visible Touch[] touches
-	visible GamePad gamepad = {}
+	visible GameController controller = {}
 	string textInput
 	bool enableTouch = true
 	bool isReady
+	Key[] mapKeyToController = [Right, Down, Left, Up, Space]
+	int[] controllerKeyDownFrame = [0, 0, 0, 0, 0]
 	
 	internal int[] connectedTo
 
@@ -65,7 +67,7 @@ class NetworkUser
 			if (.phase == Up and .type >= Touch) or (hasToch and .type != Touch)
 				touches.remove .
 	
-enum InputType: None, TouchDown, TouchMove, TouchUp, Wheel, KeyDown, KeyUp, TextInput, Stick, Trigger, Grip, ButtonDown, ButtonUp, ControllerTransform, HeadTransform, DeviceRotation, Join, Lost, SetState, Navigate, GamePad
+enum InputType: None, TouchDown, TouchMove, TouchUp, Wheel, KeyDown, KeyUp, TextInput, Stick, Trigger, Grip, ButtonDown, ButtonUp, ControllerTransform, HeadTransform, DeviceRotation, Join, Lost, SetState, Navigate, GameController
 		
 // Phase of a touch or a click
 enum TouchPhase: Still, Down, Move, Up
@@ -125,6 +127,32 @@ enum Key
 	Down         =  40
 	Insert       =  45
 	Delete       =  46
+	A            =  65
+	B            =  66
+	C            =  67
+	D            =  68
+	E            =  69
+	F            =  70
+	G            =  71
+	H            =  72
+	I            =  73
+	J            =  74
+	K            =  75
+	L            =  76
+	M            =  77
+	N            =  78
+	O            =  79
+	P            =  80
+	Q            =  81
+	R            =  82
+	S            =  83
+	T            =  84
+	U            =  85
+	V            =  86
+	W            =  87
+	X            =  88
+	Y            =  89
+	Z            =  90
 	LeftMetaKey  =  91
 	RightMetaKey =  92
 	Select       =  93
@@ -180,45 +208,29 @@ enum Key
 	BackSlash    = 220
 	CloseBraket  = 221
 	SingleQuote  = 222
-	A            = 65
-	B            = 66
-	C            = 67
-	D            = 68
-	E            = 69
-	F            = 70
-	G            = 71
-	H            = 72
-	I            = 73
-	J            = 74
-	K            = 75
-	L            = 76
-	M            = 77
-	N            = 78
-	O            = 79
-	P            = 80
-	Q            = 81
-	R            = 82
-	S            = 83
-	T            = 84
-	U            = 85
-	V            = 86
-	W            = 87
-	X            = 88
-	Y            = 89
-	Z            = 90
 	
-class GamePad
+class GameController
 	Vector2 leftStick
 	Vector2 rightStick
 	bool a, b, x, y
 	
-class InternalGamePadButton
+	internal clear
+		leftStick.x = 0
+		leftStick.y = 0
+		rightStick.x = 0
+		rightStick.y = 0
+		a = false
+		b = false
+		x = false
+		y = false
+	
+class InternetGamePadButton
 	bool pressed, touched
 	float value
 	
 class InternetGamePad
 	float[] axes
-	InternalGamePadButton[] buttons
+	InternetGamePadButton[] buttons
 	
 // A collection of methods to receive user input
 unit Input
@@ -459,13 +471,14 @@ unit Input
 			let axes = gamepads[0].axes
 			let inputs = localUser.inputs
 			inputs.writeInt32 localUser.inputFrame
-			inputs.writeInt16 cast InputType.GamePad
+			inputs.writeInt16 cast InputType.GameController
 			inputs.writeFloat64 axes[0]
 			inputs.writeFloat64 axes[1]
 			
 	internal parseInputs(int frame, bool isCertain)
 		this.isCertain = isCertain
 		if isCertain: Network.parseLog += " c"
+		users.each.controller.clear
 		for internalUsers -> internalUser
 			let inputs = internalUser.inputs
 			let userId = internalUser.id
@@ -561,17 +574,22 @@ unit Input
 					let keyPressed = inputs.readString
 					internalUser.downKeys.add key
 					if keyPressed: internalUser.pressedKeys.add keyPressed
+					let keyIndex = user.mapKeyToController.indexOf(key)
+					if keyIndex != -1: user.controllerKeyDownFrame[keyIndex] = frame
+					
 				else
 				if inputType == KeyUp
 					Key key = cast inputs.readInt32
 					internalUser.upKeys.add key
+					let keyIndex = user.mapKeyToController.indexOf(key)
+					if keyIndex != -1: user.controllerKeyDownFrame[keyIndex] = 0
 				else
 				if inputType == Navigate
 					internalUser.navigations.add inputs.readString
 				else
-				if inputType == GamePad
-					user.gamepad.leftStick.x = inputs.readFloat64
-					user.gamepad.leftStick.y = inputs.readFloat64
+				if inputType == GameController
+					user.controller.leftStick.x = inputs.readFloat64
+					user.controller.leftStick.y = inputs.readFloat64
 				else
 				if inputType == Join
 					// Read when users the joining user is connected to
@@ -624,6 +642,15 @@ unit Input
 					inputs.readBuffer Network.snapshotBuffer
 					Snapshot.deserialize Network.snapshotBuffer
 					Math.recreateRandomValues
+	
+		for users
+			let right = .controllerKeyDownFrame[0]
+			let down  = .controllerKeyDownFrame[1]
+			let left  = .controllerKeyDownFrame[2]
+			let up    = .controllerKeyDownFrame[3]
+			if right or left: .controller.leftStick.x = right >= left ? 1 : -1
+			if down  or up:   .controller.leftStick.y = down  >= up   ? 1 : -1
+			if .controllerKeyDownFrame[4]: .controller.a = true
 						
 	updateUserIndices
 		users.orderBy.id
