@@ -229,6 +229,7 @@ transient unit Network
 		
 		if frame < targetFrame
 			animationStartFrame = frame
+			Input.updateGamePads
 			
 			try
 				sendInputs targetFrame-1

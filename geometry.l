@@ -589,5 +589,39 @@ class Direction
 	isParallelTo: Direction value
 		return index%2 == value.index%2
 		
+enum LineType: Line, Ray, Segment
 	
+class Line
+	Vector2 start, end
+	LineType type
 	
+	length
+		return type == Segment ? (start distanceTo end) : float.infinity
+	
+	Vector2 intersectionWith: Line other
+		let x1    = start.x,       y1 = start.y
+		let x2    = end.x,         y2 = end.y
+		let typeA = type
+		let x3    = other.start.x, y3 = other.start.y
+		let x4    = other.end.x,   y4 = other.end.y
+		let typeB = other.type
+		
+		// Check if none of the lines are of length 0
+		if (x1 == x2 && y1 == y2) || (x3 == x4 && y3 == y4) return Vector2.none
+
+		// compute line params
+		let denominator = (y4 - y3) * (x2 - x1) - (x4 - x3) * (y2 - y1)
+		if (denominator == 0) return Vector2.none // lines are parallel
+		let ua = ((x4 - x3) * (y1 - y3) - (y4 - y3) * (x1 - x3)) / denominator
+		let ub = ((x2 - x1) * (y1 - y3) - (y2 - y1) * (x1 - x3)) / denominator
+
+		// is the intersection along the segments
+		if (typeA >= Ray && ua < 0) || (typeA == Segment && ua > 1)
+		|| (typeB >= Ray && ub < 0) || (typeB == Segment && ub > 1)
+			return Vector2.none
+			
+		// Return a object with the x and y coordinates of the intersection
+		return new Vector2(x1 + ua * (x2 - x1), y1 + ua * (y2 - y1))
+
+class Rect
+	Vector2 position, size
