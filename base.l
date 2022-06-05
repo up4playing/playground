@@ -869,6 +869,9 @@ global transient unit System
 	global inline js void while: implicit bool condition // The condition to check
 		                         void() do               // The code to execute while to condition is true
 		while(condition) do()
+			
+	global inline js void loop: void() do
+		for(;;) do()
 	
 	// Execute code a given number of times or for each item in a list
 	global inline js void for: void subject    // The list to iterate over or the exclusive upper bound to iterate towards
