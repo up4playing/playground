@@ -458,7 +458,7 @@ global transient unit System
 		                                   T it,    // The current item of the list we are iterating over with forCentered
 		                                   Vector2 pos,
 		                                   int i    // The index of the current item of the list we are iterating over with forCentered
-		                               ) do         // The code to execute for each item in a list
+		                               ) do         // Do this for each item in a list
 		for(let i=0, _subject=subject, _start = start, _delta = delta, _len=_subject.length, _x = _start.x, _y= _start.y; i<_len; ++i, _x += _delta.x, _y += _delta.y) { let it = _subject[i], pos = new Vector2(_x, _y, _start.location || _delta.location ? new SourceCodeLocation(0, 0, null, _start.location, _delta.location) : null); do()}
 
 	global inline js void forPosition: T[] subject  // The list to iterate over
@@ -469,7 +469,7 @@ global transient unit System
 		                                   T it,    // The current item of the list we are iterating over with forCentered
 		                                   Vector2 pos,
 		                                   int i    // The index of the current item of the list we are iterating over with forCentered
-		                               ) do         // The code to execute for each item in a list
+		                               ) do         // Do this for each item in a list
 		for(let i=0, _subject=subject, _start = start, _delta = delta, _width = width, _len=_subject.length, _x = _start.x, _y= _start.y; i<_len; ++i, _x += _delta.x) { if(_x >= _start.x+_width) {_x = _start.x; _y += _delta.y} let it = _subject[i], pos = new Vector2(_x, _y, _start.location || _delta.location ? new SourceCodeLocation(0, 0, null, _start.location, _delta.location) : null); do()}
 
 	global inline js void forCentered: T[] subject  // The list to iterate over
@@ -479,7 +479,7 @@ global transient unit System
 		                                   T it,    // The current item of the list we are iterating over with forCentered
 		                                   Vector2 pos,
 		                                   int i    // The index of the current item of the list we are iterating over with forCentered
-		                               ) do         // The code to execute for each item in a list
+		                               ) do         // Do this for each item in a list
 		for(let i=0, _subject=subject, _center = center, _delta = delta, _len=_subject.length, _x = _center.x-(_len-1)*_delta.x/2, _y=_center.y-(_len-1)*_delta.y/2; i<_len; ++i, _x += _delta.x, _y += _delta.y) { let it = _subject[i], pos = new Vector2(_x, _y, _center.location || _delta.location ? new SourceCodeLocation(0, 0, null, _center.location, _delta.location) : null); do()}
 
 	global inline js void forCentered: int subject  // The list to iterate over
@@ -489,7 +489,7 @@ global transient unit System
 		                                   T it,    // The current item of the list we are iterating over with forCentered
 		                                   Vector2 pos,
 		                                   int i    // The index of the current item of the list we are iterating over with forCentered
-		                               ) do         // The code to execute for each item in a list
+		                               ) do         // Do this for each item in a list
 		for(let i=0, _center = center, _delta = delta, _len=subject, _x = _center.x-(_len-1)*_delta.x/2, _y=_center.y-(_len-1)*_delta.y/2; i<_len; ++i, _x += _delta.x, _y += _delta.y) { let pos = new Vector2(_x, _y, _center.location || _delta.location ? new SourceCodeLocation(0, 0, null, _center.location, _delta.location) : null); do()}
 
 // Converts positions within an isomatic grid with the origin in the north

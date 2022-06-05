@@ -693,7 +693,7 @@ Object Menu
 			forCentered items, center:popupPosition, delta:{0,60} -> item
 				drawImage .image, pos+{-120}, layer:int.maxValue
 				drawText .label, pos+{-60}, size:30, align:Left, layer:int.maxValue
-				Input.onTouchDownWithin pos, size:{500,60}, code:item.onClick(.)
+				Input.onTouchDownWithin pos, size:{500,60}, do:item.onClick(.)
 			drawRectangle popupPosition, outlineColor:White, fillColor:Black, size:{500,60+items.length*60}, outlineWidth:3, layer:int.maxValue
 			drawRectangle size:{1920,1080}, fillColor:overlayColor, layer:int.maxValue
 			Input.onTouchDownAny

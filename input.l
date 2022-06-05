@@ -629,14 +629,14 @@ unit Input
 		users.orderBy.id
 		for users: .index = i
 				
-	// Executes code when the user touches or clicks within a given area
+	// Do something when the user touches or clicks within a given area
 	onTouchDownWithin: Vector2 position           // The center of the touch area
 		               Vector2 size               // The size of a rectangular touch area
 		               int userId = -1            // Only consider touches or clicks from this user  
 		               string cursor = ""         // Change the mouse cursor image when hovering over this area
 		               bool showTouchArea = false // Draw a red rectangle to visualize that area to touch
 		               bool markAsHandled = true  // Mark the touch as handled so it won't trigger more touch events
-		               void(Touch touch) code     // The code to execute for each touch or click
+		               void(Touch touch) do       // Do this for each touch or click
 		Vector2[] poly = [
 			{ position.x-size.x/2, position.y-size.y/2 }.transform(graphics.localMatrix),
 			{ position.x+size.x/2, position.y-size.y/2 }.transform(graphics.localMatrix),
@@ -649,7 +649,7 @@ unit Input
 					if !touch.handled and (user.enableTouch or touch.type != Touch)
 					and touch.referencePosition.isInsidePoygon(poly)
 						log "down", touch.referencePosition
-						code touch
+						do touch
 						if markAsHandled: touch.handled = true
 		else
 			for users -> user
@@ -657,7 +657,7 @@ unit Input
 					if !touch.handled and (user.enableTouch or touch.type != Touch)
 					and touch.referencePosition.isInsidePoygon(poly)
 						log "down", touch.referencePosition
-						code touch
+						do touch
 						if markAsHandled: touch.handled = true
 			if cursor
 				for localUser.movingTouches -> touch
@@ -666,7 +666,7 @@ unit Input
 				
 		if showTouchArea: drawRectangle position, size, fillColor:{"ff000080"}
 
-	// Executes code when the user touches or clicks within a given area
+	// Do something when the user touches or clicks within a given area
 	onTouchDownWithin: Vector2 position           // The center of the touch area
 		               Vector2 size               // The size of a rectangular touch area
 		               float angle                // Rotate the touch area by this angle
@@ -674,7 +674,7 @@ unit Input
 		               string cursor = ""         // Change the mouse cursor image when hovering over this area
 		               bool showTouchArea = false // Draw a red rectangle to visualize that area to touch
 		               bool markAsHandled = true  // Mark the touch as handled so it won't trigger more touch events
-		               void(Touch touch) code     // The code to execute for each touch or click
+		               void(Touch touch) do       // Do this for each touch or click
 		Vector2[] poly = [
 			(position + Vector2( -size.x/2, -size.y/2 ).rotate(angle)).transform(graphics.localMatrix),
 			(position + Vector2( +size.x/2, -size.y/2 ).rotate(angle)).transform(graphics.localMatrix),
@@ -687,7 +687,7 @@ unit Input
 					if !touch.handled and (user.enableTouch or touch.type != Touch) 
 					and touch.referencePosition.isInsidePoygon(poly)
 						log "down", touch.referencePosition
-						code touch
+						do touch
 						if markAsHandled: touch.handled = true
 		else
 			for users -> user
@@ -695,7 +695,7 @@ unit Input
 					if !touch.handled and (user.enableTouch or touch.type != Touch)
 					and touch.referencePosition.isInsidePoygon(poly)
 						log "down", touch.referencePosition
-						code touch
+						do touch
 						if markAsHandled: touch.handled = true
 			if cursor
 				for localUser.movingTouches -> touch
@@ -704,14 +704,14 @@ unit Input
 				
 		if showTouchArea: drawRectangle position, size, fillColor:{"ff000080"}
 
-	// Executes code when the user touches or clicks within a given circle
+	// Do something when the user touches or clicks within a given circle
 	onTouchDownWithin: Vector2 position           // The center of the touch area
 		               float radius               // The radius of a round touch area
 		               int userId = -1            // Only consider touches or clicks from this user  
 		               string cursor = ""         // Change the mouse cursor image when hovering over this circle
 		               bool showTouchArea = false // Draw a red circle to visualize that area to touch
 		               bool markAsHandled = true  // Mark the touch as handled so it won't trigger more touch events
-		               void(Touch touch) code     // The code to execute for each touch or click
+		               void(Touch touch) do       // Do this for each touch or click
 		let referencePosition = position.getTransformed(graphics.localMatrix)
 		let referenceRadius = radius * graphics.localMatrix.scaleVector.x
 		if (Network.mode == Connected || Network.simulateConnection) && userId != -1
@@ -720,7 +720,7 @@ unit Input
 					if !touch.handled  and (user.enableTouch or touch.type != Touch)
 					and (touch.referencePosition distanceTo referencePosition) <= referenceRadius
 						log "down", touch.referencePosition
-						code touch
+						do touch
 						if markAsHandled: touch.handled = true
 		else
 			for users -> user
@@ -728,7 +728,7 @@ unit Input
 					if !touch.handled and (user.enableTouch or touch.type != Touch)
 					and (touch.referencePosition distanceTo referencePosition) <= referenceRadius
 						log "down", touch.referencePosition
-						code touch
+						do touch
 						if markAsHandled: touch.handled = true
 			if cursor
 				for localUser.movingTouches -> touch
@@ -737,14 +737,14 @@ unit Input
 				
 		if showTouchArea: drawCircle position, radius, fillColor:{"ff000080"}
 
-	// Executes code when the user touches or clicks within a given polygon
+	// Do something when the user touches or clicks within a given polygon
 	onTouchDownWithin: Vector2 position           // The center of the touch area
 		               Vector2[] points           // The points that define the touch area
 		               int userId = -1            // Only consider touches or clicks from this user  
 		               string cursor = ""         // Change the mouse cursor image when hovering over this polygon
 		               bool showTouchArea = false // Draw a red polygon to visualize that area to touch
 		               bool markAsHandled = true  // Mark the touch as handled so it won't trigger more touch events
-		               void(Touch touch) code     // The code to execute for each touch or click
+		               void(Touch touch) do       // Do this for each touch or click
 		Vector2[] poly
 		for points: poly.add (position + .).transform(graphics.localMatrix)
 			
@@ -754,7 +754,7 @@ unit Input
 					if !touch.handled and (user.enableTouch or touch.type != Touch)
 					and touch.referencePosition.isInsidePoygon(poly)
 						log "down", touch.referencePosition
-						code touch
+						do touch
 						if markAsHandled: touch.handled = true
 		else
 			for users -> user
@@ -762,7 +762,7 @@ unit Input
 					if !touch.handled and (user.enableTouch or touch.type != Touch)
 					and touch.referencePosition.isInsidePoygon(poly)
 						log "down", touch.referencePosition
-						code touch
+						do touch
 						if markAsHandled: touch.handled = true
 			if cursor
 				for localUser.movingTouches -> touch
@@ -771,13 +771,13 @@ unit Input
 				
 		if showTouchArea: drawPolygon position, points, fillColor:{"ff0000b0"}
 
-	// Executes code when the user touches or clicks within a given area
+	// Do something when the user touches or clicks within a given area
 	onTouchUpWithin: Vector2 position           // The center of the touch area
 		             Vector2 size               // The size of a rectangular touch area
 		             int userId = -1            // Only consider touches or clicks from this user
 		             bool showTouchArea = false // Draw a red rectangle to visualize that area to touch
 		             bool markAsHandled = true  // Mark the touch as handled so it won't trigger more touch events
-		             void(Touch touch) code     // The code to execute for each touch or click
+		             void(Touch touch) do       // Do this for each touch or click
 		Vector2[] poly = [
 			{ position.x-size.x/2, position.y-size.y/2 }.transform(graphics.localMatrix),
 			{ position.x+size.x/2, position.y-size.y/2 }.transform(graphics.localMatrix),
@@ -789,7 +789,7 @@ unit Input
 			for user.upTouches -> touch
 				if !touch.handled && touch.referencePosition.isInsidePoygon(poly)
 					log "up", touch.referencePosition
-					code touch
+					do touch
 					if markAsHandled: touch.handled = true
 					Snapshot.autoSave
 		else
@@ -797,19 +797,19 @@ unit Input
 				for user.upTouches -> touch
 					if !touch.handled && touch.referencePosition.isInsidePoygon(poly)
 						log "up", touch.referencePosition
-						code touch
+						do touch
 						if markAsHandled: touch.handled = true
 						Snapshot.autoSave
 		if showTouchArea: drawRectangle position, size, fillColor:{"ff000080"}
 
-	// Executes code when the user touches or clicks within a given area
+	// Do something when the user touches or clicks within a given area
 	onTouchUpWithin: Vector2 position           // The center of the touch area
 		             float radius               // The radius of a round touch area
 		             int userId = -1            // Only consider touches or clicks from this user  
 		             string cursor = ""         // Change the mouse cursor image when hovering over this area
 		             bool showTouchArea = false // Draw a red circle to visualize that area to touch
 		             bool markAsHandled = true  // Mark the touch as handled so it won't trigger more touch events
-		             void(Touch touch) code     // The code to execute for each touch or click
+		             void(Touch touch) do       // Do this for each touch or click
 		let referencePosition = position.transform(graphics.localMatrix)
 		let referenceRadius = radius * graphics.localMatrix.scaleVector.x
 		if (Network.mode == Connected || Network.simulateConnection) && userId != -1
@@ -817,7 +817,7 @@ unit Input
 			for user.upTouches -> touch
 				if !touch.handled && (touch.referencePosition distanceTo referencePosition) <= referenceRadius
 					log "up", touch.referencePosition
-					code touch
+					do touch
 					if markAsHandled: touch.handled = true
 					Snapshot.autoSave
 		else
@@ -825,7 +825,7 @@ unit Input
 				for user.upTouches -> touch
 					if !touch.handled && (touch.referencePosition distanceTo referencePosition) <= referenceRadius
 						log "up", touch.referencePosition
-						code touch
+						do touch
 						if markAsHandled: touch.handled = true
 						Snapshot.autoSave
 			if cursor
@@ -841,7 +841,7 @@ unit Input
 		         string cursor = ""         // Change the mouse cursor image when hovering over this area
 		         bool showTouchArea = false // Draw a red rectangle to visualize that area to touch
 		         bool markAsHandled = true  // Mark the touch as handled so it won't trigger more touch events
-		         void(Touch touch) code     // The code to execute for each touch or click
+		         void(Touch touch) do       // Do this for each touch or click
 		Vector2[] poly = [
 			{ position.x-size.x/2, position.y-size.y/2 }.transform(graphics.localMatrix),
 			{ position.x+size.x/2, position.y-size.y/2 }.transform(graphics.localMatrix),
@@ -853,13 +853,13 @@ unit Input
 				for user.touches -> touch
 					if !touch.handled && touch.referencePosition.isInsidePoygon(poly)
 						log "over", touch.referencePosition
-						code touch
+						do touch
 		else
 			for users -> user
 				for user.touches -> touch
 					if touch.referencePosition.isInsidePoygon(poly)
 						log "over", touch.referencePosition
-						code touch
+						do touch
 			if cursor
 				for localUser.movingTouches -> touch
 					if !touch.handled && touch.referencePosition.isInsidePoygon(poly)
@@ -867,111 +867,111 @@ unit Input
 				
 		if showTouchArea: drawRectangle position, size, fillColor:{"ff000080"}
 
-	// Executes code when the user touches or clicks
-	onTouchDown: int userId = -1        // Only consider touches or clicks from this user
-		         void(Touch touch) code // The code to execute for each touch or click
+	// Do something when the user touches or clicks
+	onTouchDown: int userId = -1      // Only consider touches or clicks from this user
+		         void(Touch touch) do // Do this for each touch or click
 		if (Network.mode == Connected || Network.simulateConnection) && userId != -1
 			let user = usersById[userId]
 				for internalUsers[userId].downTouches -> touch
 					if !touch.handled and (user.enableTouch or touch.type != Touch)
 						log "down", touch.referencePosition
-						code touch
+						do touch
 		else
 			for users -> user
 				for internalUsers[user.id].downTouches -> touch
 					if !touch.handled and (user.enableTouch or touch.type != Touch)
 						log "down", touch.referencePosition
-						code touch
+						do touch
 
-	// Executes code when the user touches, even if the touch is already handled
-	onTouchDownAny: int userId = -1        // Only consider touches or clicks from this user
-		            void(Touch touch) code // The code to execute for each touch or click
+	// Do something when the user touches, even if the touch is already handled
+	onTouchDownAny: int userId = -1      // Only consider touches or clicks from this user
+		            void(Touch touch) do // Do this for each touch or click
 		if (Network.mode == Connected || Network.simulateConnection) && userId != -1
 			let user = usersById[userId]
 				for internalUsers[userId].downTouches -> touch
 					if user.enableTouch or touch.type != Touch
 						log "down", touch.referencePosition
-						code touch
+						do touch
 		else
 			for users -> user
 				for internalUsers[user.id].downTouches -> touch
 					if user.enableTouch or touch.type != Touch
 						log "down", touch.referencePosition
-						code touch
+						do touch
 			
-	// Executes code when a touch or click moves
-	onTouchMove: Touch touch            // Only execute the given code if this particular touch or click moves
-		         void(Touch touch) code // The code to execute for each touch or click
+	// Do something when a touch or click moves
+	onTouchMove: Touch touch          // Only do this if this particular touch or click moves
+		         void(Touch touch) do // Do this for each touch or click
 		if !touch: return
 		let touchId = touch.id, user = internalUsers[touch.userId]
 		for user.movingTouches
 			if .id == touchId
 				log "move", .referencePosition
-				code .
+				do .
 	
-	// Executes code when a touch or click moves
-	onTouchMove: int userId = -1        // Only consider touches or clicks from this user
-		         void(Touch touch) code // The code to execute for each touch or click
+	// Do something when a touch or click moves
+	onTouchMove: int userId = -1      // Only consider touches or clicks from this user
+		         void(Touch touch) do // Do this for each touch or click
 		if (Network.mode == Connected || Network.simulateConnection) && userId != -1
 			let user = internalUsers[userId]
 			for user.movingTouches -> t
 				if !t.handled
 					log "move", t.referencePosition
-					code t
+					do t
 		else
 			for internalUsers -> user
 				for user.movingTouches -> t
 					if !t.handled
 						log "move", t.referencePosition
-						code t
+						do t
 					
-	onTouchUp: Touch touch               // Only execute the given code if this particular touch or click ended
+	onTouchUp: Touch touch               // Only do this if this particular touch or click ended
 		       bool markAsHandled = true // Mark the touch as handled so it won't trigger more touch events
-		       void(Touch touch) code    // The code to execute for each touch or click
+		       void(Touch touch) do      // Do this for each touch or click
 		if !touch: return
 		let touchId = touch.id, user = internalUsers[touch.userId]
 		for user.upTouches
 			if .id == touchId
 				log "up", .referencePosition
-				code .
+				do .
 				Snapshot.autoSave
 				if markAsHandled: .handled = true
 				
-	// Executes code when a touch or click ends
+	// Do something when a touch or click ends
 	onTouchUp: int userId = -1
 		       bool markAsHandled = true // Mark the touch as handled so it won't trigger more touch events
-		       void(Touch touch) code    // The code to execute for each touch or click
+		       void(Touch touch) do      // Do this for each touch or click
 		if (Network.mode == Connected || Network.simulateConnection) && userId != -1
 			let user = internalUsers[userId]
 			for user.upTouches -> t
 				if !t.handled
 					log "up", t.referencePosition
-					code t
+					do t
 					Snapshot.autoSave
 		else
 			for internalUsers -> user
 				for user.upTouches -> t
 					if !t.handled
 						log "up", t.referencePosition
-						code t
+						do t
 						Snapshot.autoSave
 						
 	private log: string text, Vector2 pos
 		Network.touchLog += " #{Network.frame}{isCertain ? " c" : ""} {text} {pos}"
 
-	// Executes code when a touch or click ends
-	onWheel: void(WheelEvent event) code // The code to execute for each touch or click
+	// Do something when a user moves the mouse wheel
+	onWheel: void(WheelEvent event) do // Do this for each mouse wheel movement
 		for internalUsers -> user
 			for user.wheelEvents
-				code .
+				do .
 	
-	// Executes code when a user moves the mouse wheel within a given rectangle
+	// Do something when a user moves the mouse wheel within a given rectangle
 	onWheelWithin: Vector2 position            // The center of the rectangle
 		           Vector2 size                // The size of the rectangle
 		           int userId = -1             // Only consider wheel movments from this user
 		           bool showTouchArea = false  // Draw a red rectangle to visualize that area to touch
 		           bool markAsHandled = true   // Mark the touch as handled so it won't trigger more touch events
-		           void(WheelEvent event) code // The code to execute
+		           void(WheelEvent event) do   // Do this for each mouse wheel movement
 		Vector2[] poly = [
 			{ position.x-size.x/2, position.y-size.y/2 }.transform(graphics.localMatrix),
 			{ position.x+size.x/2, position.y-size.y/2 }.transform(graphics.localMatrix),
@@ -983,14 +983,14 @@ unit Input
 			for user.wheelEvents -> event
 				if !event.handled && event.referencePosition.isInsidePoygon(poly)
 					log "wheel", event.referencePosition
-					code event
+					do event
 					if markAsHandled: event.markAsHandled
 		else
 			for internalUsers -> user
 				for user.wheelEvents -> event
 					if !event.handled && event.referencePosition.isInsidePoygon(poly)
 						log "wheel", event.referencePosition
-						code event
+						do event
 						if markAsHandled: event.markAsHandled
 		if showTouchArea: drawRectangle position, size, Red
 			
@@ -1037,62 +1037,62 @@ unit Input
 	js void updateCursor
 		document.body.style.cursor = Input_cursor
 
-	onTextComposition: void(string characters) code
+	onTextComposition: void(string characters) do
 		for internalUsers -> user
 			for user.textCompositions -> text
-				code text
+				do text
 				
-	onTextInput: int userId = -1, void(string textInput) code
+	onTextInput: int userId = -1, void(string textInput) do
 		if (Network.mode == Connected || Network.simulateConnection) && userId != -1
 			let user = internalUsers[userId]
 			for user.textInputs -> text
-				code text
+				do text
 		else
 			for internalUsers -> user
 				for user.textInputs -> text
-					code text
+					do text
 				
-	onKeyDown: Key key, int userId = -1, void(Key key, int keyUserId) code
+	onKeyDown: Key key, int userId = -1, void(Key key, int keyUserId) do
 		if (Network.mode == Connected || Network.simulateConnection) && userId != -1
 			let user = internalUsers[userId]
 			for user.downKeys
 				if . == key
-					code key, userId
+					do key, userId
 		else
 			for internalUsers -> user
 				for user.downKeys
 					if . == key
-						code key, user.id
+						do key, user.id
 				
-	onKeyDown: int userId = -1, void(Key key, int keyUserId) code
+	onKeyDown: int userId = -1, void(Key key, int keyUserId) do
 		if (Network.mode == Connected || Network.simulateConnection) && userId != -1
 			let user = internalUsers[userId]
 			for user.downKeys -> key
-				code key, userId
+				do key, userId
 		else
 			for internalUsers -> user
 				for user.downKeys -> key
-					code key, user.id
+					do key, user.id
 				
-	onKeyUp: int userId = -1, void(Key key, int keyUserId) code
+	onKeyUp: int userId = -1, void(Key key, int keyUserId) do
 		if (Network.mode == Connected || Network.simulateConnection) && userId != -1
 			let user = internalUsers[userId]
 			for user.upKeys -> key
-				code key, userId
+				do key, userId
 		else
 			for internalUsers -> user
 				for user.upKeys -> key
-					code key, user.id
+					do key, user.id
 					
-	onKeyPressed: int userId = -1, void(string key, int keyUserId) code
+	onKeyPressed: int userId = -1, void(string key, int keyUserId) do
 		if (Network.mode == Connected || Network.simulateConnection) && userId != -1
 			let user = internalUsers[userId]
 			for user.pressedKeys -> key
-				code key, userId
+				do key, userId
 		else
 			for internalUsers -> user
 				for user.pressedKeys -> key
-					code key, user.id
+					do key, user.id
 			
 	// Do something when the user navigates back or forward in the browser	
 	onNavigate: int userId = -1
