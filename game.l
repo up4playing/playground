@@ -122,10 +122,43 @@ class BinaryHeap
 				break
 class BoxCollider
 	Vector2 position, size
-	right = true
-	bottom = true
-	left = true
-	top = true
+	Line rightLine, bottomLine, leftLine, topLine
+	bottomRight = true
+	bottomLeft = true
+	topLeft = true
+	topRight = true	
+	
+	BoxCollider: Vector2 position
+		         Vector2 size
+		         float radius
+		         right = true
+		         bottom = true
+		         left = true
+		         top = true
+		if left
+			leftLine = {
+				start:position + {-(size.x/2+radius), -(size.y/2+(topLeft    ? radius : 0))}
+				end:  position + {-(size.x/2+radius),  (size.y/2+(bottomLeft ? radius : 0))}
+				Segment
+			}
+		if right
+			rightLine = {
+				start:position + {(size.x/2+radius), -(size.y/2+(topRight    ? radius : 0))}
+				end:  position + {(size.x/2+radius),  (size.y/2+(bottomRight ? radius : 0))}
+				Segment
+			}
+		if top
+			topLine = {
+				start:position + {-(size.x/2+(topLeft  ? radius : 0)), -(size.y/2+radius)}
+				end:  position + { (size.x/2+(topRight ? radius : 0)), -(size.y/2+radius)}
+				Segment
+			}
+		if bottom
+			bottomLine = {
+				start:position + {-(size.x/2+(bottomLeft  ? radius : 0)), (size.y/2+radius)}
+				end:  position + { (size.x/2+(bottomRight ? radius : 0)), (size.y/2+radius)}
+				Segment
+			}
  	
 unit game
 	// Finds the shorted path between two position using the astar algorithm
@@ -199,6 +232,8 @@ unit game
 
 		// No result was found - empty array signifies failure to find path.
 		return []
+		
+	showColliders = false
 
 	resolveCollision: Vector2 sourcePosition
 		              Vector2 targetPosition
@@ -209,16 +244,18 @@ unit game
 		let primarilyX = Math.abs(targetPosition.x - sourcePosition.x) > Math.abs(targetPosition.y - sourcePosition.y)
 		Line movement = {sourcePosition, targetPosition, Segment}
 		for colliders -> c
-			if c.left and movement.end.x > movement.start.x
+			if showColliders
+				if c.leftLine: drawLine c.leftLine.start, c.leftLine.end, color:Red, width:5
+				if c.rightLine: drawLine c.rightLine.start, c.rightLine.end, color:Red, width:5
+				if c.topLine: drawLine c.topLine.start, c.topLine.end, color:Red, width:5
+				if c.bottomLine: drawLine c.bottomLine.start, c.bottomLine.end, color:Red, width:5
+			
+			if c.leftLine and movement.end.x > movement.start.x
 				// We are moving right -> check left side
-				Line line = {
-					start:c.position + {-(c.size.x/2+radius), -(c.size.y/2+radius)}
-					end:  c.position + {-(c.size.x/2+radius),  (c.size.y/2+radius)}
-					Segment
-				}
-				drawLine line.start, line.end, color:Red, width:10
+				Line line = c.leftLine
+				// drawLine line.start, line.end, color:Red, width:10
 				let p = movement intersectionWith line
-					if c.top and (p.y - line.start.y) <= threshold
+					if c.topLeft and (p.y - line.start.y) <= threshold
 						// collisions.add {p, TopLeft, regionPoint:line.start-{0,1}}
 						watch "Move Right, Hit TopLeft Corner, {primarilyX ? "primarilyX":"primarilyY"}"
 						//           o
@@ -232,7 +269,7 @@ unit game
 						//                         ⬅  ┌─
 						else           targetPosition.x = Math.min(targetPosition.x, line.start.x-1)
 					else
-					if c.bottom and (line.end.y - p.y) <= threshold
+					if c.bottomLeft and (line.end.y - p.y) <= threshold
 						// collisions.add {p, BottomLeft, regionPoint:line.end+{0,1}}
 						watch "Move Right, Hit BottomLeft Corner, {primarilyX ? "primarilyX":"primarilyY"}"
 						//                             └─
@@ -253,16 +290,12 @@ unit game
 						//                              │
 						targetPosition.x = Math.min(targetPosition.x, line.end.x-1)
 			else
-			if c.right and movement.end.x < movement.start.x
+			if c.rightLine and movement.end.x < movement.start.x
 				// We are moving left -> check right side
-				Line line = {
-					start:c.position + {(c.size.x/2+radius), -(c.size.y/2+radius)}
-					end:  c.position + {(c.size.x/2+radius),  (c.size.y/2+radius)}
-					Segment
-				}
-				drawLine line.start, line.end, color:Red, width:10
+				Line line = c.rightLine
+				// drawLine line.start, line.end, color:Red, width:10
 				let p = movement intersectionWith line
-					if c.top and (p.y - line.start.y) <= threshold
+					if c.topRight and (p.y - line.start.y) <= threshold
 						// collisions.add {p, TopRight, regionPoint:line.start-{0,1}}
 						watch "Move Left, Hit TopRight Corner, {primarilyX ? "primarilyX":"primarilyY"}"
 						//                                                 o
@@ -276,7 +309,7 @@ unit game
 						//                              ─┐  ⮕
 						else           targetPosition.x = Math.max(targetPosition.x, line.start.x+1)
 					else
-					if c.bottom and (line.end.y - p.y) <= threshold
+					if c.bottomRight and (line.end.y - p.y) <= threshold
 						// collisions.add {p, BottomRight, regionPoint:line.end+{0,1}}
 						watch "Move Left, Hit BottomRight Corner, {primarilyX ? "primarilyX":"primarilyY"}"
 						//                               ─┘
@@ -297,16 +330,12 @@ unit game
 						//                              │
 						targetPosition.x = Math.max(targetPosition.x, line.end.x+1)
 				
-			if c.top and movement.end.y > movement.start.y
+			if c.topLine and movement.end.y > movement.start.y
 				// We are moving down -> check top side
-				Line line = {
-					start:c.position + {-(c.size.x/2+radius), -(c.size.y/2+radius)}
-					end:  c.position + { (c.size.x/2+radius), -(c.size.y/2+radius)}
-					Segment
-				}
-				drawLine line.start, line.end, color:Red, width:10
+				Line line = c.topLine
+				// drawLine line.start, line.end, color:Red, width:10
 				let p = movement intersectionWith line
-					if c.left and (p.x - line.start.x) <= threshold
+					if c.topLeft and (p.x - line.start.x) <= threshold
 						// collisions.add {p, TopLeft, regionPoint:line.start-{1,0}}
 						watch "Move Down, Hit TopLeft Corner, {primarilyX ? "primarilyX":"primarilyY"}"
 						//           o
@@ -320,7 +349,7 @@ unit game
 						//                         ⬅  ┌─
 						else           targetPosition.x = Math.min(targetPosition.x, line.start.x-1)
 					else
-					if c.right and (line.end.x - p.x) <= threshold
+					if c.topRight and (line.end.x - p.x) <= threshold
 						// collisions.add {p, TopRight, regionPoint:line.end+{1,0}}
 						watch "Move Down, Hit TopRight Corner, {primarilyX ? "primarilyX":"primarilyY"}"
 						//                                                 o
@@ -342,16 +371,12 @@ unit game
 						//                           ───────
 						targetPosition.y = Math.min(targetPosition.y, line.end.y-1)
 			else
-			if c.bottom and movement.end.y < movement.start.y
+			if c.bottomLine and movement.end.y < movement.start.y
 				// We are moving up -> check bottom side
-				Line line = {
-					start:c.position + {-(c.size.x/2+radius), (c.size.y/2+radius)}
-					end:  c.position + { (c.size.x/2+radius), (c.size.y/2+radius)}
-					Segment
-				}
-				drawLine line.start, line.end, color:Red, width:10
+				Line line = c.bottomLine
+				// drawLine line.start, line.end, color:Red, width:10
 				let p = movement intersectionWith line
-					if c.left and (p.x - line.start.x) <= threshold
+					if c.bottomLeft and (p.x - line.start.x) <= threshold
 						// collisions.add {p, BottomLeft, regionPoint:line.start-{1,0}}
 						watch "Move Up, Hit BottomLeft Corner, {primarilyX ? "primarilyX":"primarilyY"}"
 						//                             └─
@@ -365,7 +390,7 @@ unit game
 						//                          o
 						else           targetPosition.x = Math.min(targetPosition.x, line.start.x-1)
 					else
-					if c.right and (line.end.x - p.x) <= threshold
+					if c.bottomRight and (line.end.x - p.x) <= threshold
 						// collisions.add {p, BottomRight, regionPoint:line.end+{1,0}}
 						watch "Move Up, Hit BottomRight Corner, {primarilyX ? "primarilyX":"primarilyY"}"
 						//                               ─┘
@@ -386,7 +411,7 @@ unit game
 						//                              o
 						//                              o
 						targetPosition.y = Math.max(targetPosition.y, line.end.y+1)
-		
+			
 		// Resolve collision
 		//    → x
 		//  ↓
