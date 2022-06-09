@@ -370,7 +370,7 @@ transient global unit graphics
 		
 	// Draws an image on the screen
 	global void drawImage: Image image            // The image to draw
-		                   Vector2 position = {}   // The position to draw to
+		                   Vector2 position = {}  // The position to draw to
 		                   framesPerSecond = 0    // Animate the image with this speed
 		                   scale = 1.0            // Scale the image by this factor
 		                   visibleFor = -1        // Only this user will see the image
@@ -378,6 +378,20 @@ transient global unit graphics
 		                   alpha = 1.0            // The opacity of the image (0: fully transpart, 1: fully visible)
 		var frame = Math.floor(Network.frame * Math.max(framesPerSecond, 0) / Network.targetFps) % image.frames.length;
 		drawImage image, position, frame, scale, visibleFor, layer, alpha
+	
+	// Draws an image on the screen
+	global void drawImage: Image image            // The image to draw
+		                   Vector2 position = {}  // The position to draw to
+		                   framesPerSecond = 0    // Animate the image with this speed
+		                   scale = 1.0            // Scale the image by this factor
+		                   angle = 0.0          // Rotate the image by this angle in radians
+		                   flipX = false         // Mirror the image horizontally
+		                   flipY = false         // Mirror the image vertically
+		                   visibleFor = -1        // Only this user will see the image
+		                   implicit int layer = 0 // Higher layers are drawn in front of lower layers
+		                   alpha = 1.0            // The opacity of the image (0: fully transpart, 1: fully visible)
+		var frame = Math.floor(Network.frame * Math.max(framesPerSecond, 0) / Network.targetFps) % image.frames.length;
+		drawImage image, position, frame, scale, angle, flipX, flipY, visibleFor, layer, alpha
 	
 	// Draws an image on the screen
 	global void drawImage: Image image                  // The image to draw
@@ -406,13 +420,13 @@ transient global unit graphics
 					onClick null
 		
 	// Draws an image on the screen
-	global js void drawImage: Image image          // The image to draw
+	global js void drawImage: Image image           // The image to draw
 		                      Vector2 position = {} // The position to draw to
-		                      frame = 0            // The frame of the image to draw
-		                      scale = 1.0          // Scale the image by this factor
-		                      visibleFor = -1      // Only this user will see the image
-		                      implicit layer = 0   // Higher layers are drawn in front of lower layers
-		                      alpha = 1.0          // The opacity of the image (0: fully transpart, 1: fully visible)
+		                      frame = 0             // The frame of the image to draw
+		                      scale = 1.0           // Scale the image by this factor
+		                      visibleFor = -1       // Only this user will see the image
+		                      implicit layer = 0    // Higher layers are drawn in front of lower layers
+		                      alpha = 1.0           // The opacity of the image (0: fully transpart, 1: fully visible)
 		if(!image.texture?.ensureIsAvailable()) return
 		if(graphics_isVisibleFor(visibleFor)) {
 			let f = image.frames[frame % image.frames.length]
@@ -434,6 +448,8 @@ transient global unit graphics
 		                      frame = 0            // The frame of the image to draw
 		                      scale = 1.0          // Scale the image by this factor
 		                      angle = 0.0          // Rotate the image by this angle in radians
+		                      flipX = false         // Mirror the image horizontally
+		                      flipY = false         // Mirror the image vertically
 		                      visibleFor = -1      // Only this user will see the image
 		                      implicit layer = 0   // Higher layers are drawn in front of lower layers
 		                      alpha = 1.0          // The opacity of the image (0: fully transpart, 1: fully visible)
@@ -443,6 +459,7 @@ transient global unit graphics
 			let matrix = graphics_totalMatrix.clone()
 			matrix.move(position)
 			matrix.rotate(angle)
+			if(flipX || flipY) matrix.scale(new Vector2(flipX ? -1:1, flipY ? -1:1	))
 			graphics_items.push(new DisplayImage(
 				matrix,
 				-f.w/2*scale,
