@@ -508,11 +508,11 @@ class List<T>
 	inline js T[] subList: int start, int count
 		this.slice(start, count)
 		
-	// js int sum: int(T a) selector
-	// 	let sum = 0
-	// 	for(let i=0; i<this.length; i++)
-	// 		sum += selector(this[i])
-	// 	return sum
+	js int total: int(T a) selector
+		let sum = 0
+		for(let i=0; i<this.length; i++)
+			sum += selector(this[i])
+		return sum
 		
 	js int sum
 		let sum = 0;
