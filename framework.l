@@ -490,9 +490,11 @@ Piece Board
 			let spotPos = spot.getClosestPoint position, this.position
 			let delta = (spotPos - position).abs
 			let distance = delta.length
-			if delta < threshold and distance < minDistance and !objects.find.position == spotPos and . != currentObject
+			if delta < threshold and distance < minDistance
 				minDistance = distance
 				closestSpotPos = spotPos
+				while objects.find.position == closestSpotPos and . != currentObject
+					closestSpotPos += {6,10}
 		return closestSpotPos
 		
 class Spot
