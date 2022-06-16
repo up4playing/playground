@@ -8,10 +8,12 @@ unit Framework
 	Object[] toBeRemoved
 	
 	clear
-		objects.clear
+		for objects <-
+			if not .locked: objects.removeAt i
 		
 	clearAtEndOfFrame
-		toBeRemoved.addRange objects
+		for objects
+			if not .locked: toBeRemoved.add .
 		
 	removeWhere: bool(Object value) condition
 		for objects -> obj
@@ -80,6 +82,7 @@ class Object
 	float alpha = 1
 	int visibleFor = -1
 	int layer = 0
+	bool locked
 	
 	visible siblings := Framework.objects
 	internal checksum := position.x + position.y + scale + alpha
@@ -98,7 +101,7 @@ class Object
 		
 	moveTo: Vector2 pos
 		    int duration = 1000
-		    int delay = 0
+		    Time delay = 0
 		    bool smooth = false
 		Vector2 startValue = position
 		let startTime = Time.now + delay
@@ -117,7 +120,7 @@ class Object
 		
 	moveTo: Vector2 pos
 		    float speed = 1
-		    int delay = 0
+		    Time delay = 0
 		    bool smooth = false
 		let delta = pos - position
 		let duration = Math.floor(delta.length / speed)
@@ -125,14 +128,14 @@ class Object
 		return this
 		
 	fadeIn: int duration = 1000
-		    int delay = 0
+		    Time delay = 0
 		    bool smooth = false
 		alpha = 0
 		fx.add FadeEffect startTime:Time.now+delay, duration, smooth, this, startValue:0, delta:1
 		return this
 		
 	fadeOut: int duration = 1000
-		     int delay = 0
+		     Time delay = 0
 		     bool removeWhenDone = true
 		     bool smooth = false
 		fx.add FadeEffect startTime:Time.now+delay, duration, smooth, this, startValue:1, delta:-1, removeWhenDone
@@ -140,14 +143,14 @@ class Object
 		
 	scaleTo: float scale 
 		     int duration = 1000
-		     int delay = 0
+		     Time delay = 0
 		     bool smooth = false
 		fx.add ScaleEffect startTime:Time.now+delay, duration, smooth, this, startValue:this.scale, delta:scale-this.scale
 		return this
 	
 	fadeAndScaleIn: int duration = 200
 		            float startScale = 3
-		            int delay = 0
+		            Time delay = 0
 		            bool smooth = false
 		alpha = 0
 		fx.add ScaleEffect startTime:Time.now+delay, duration, smooth, this, startValue:startScale, delta:1-startScale
@@ -170,7 +173,7 @@ Object CircleObject
 		
 	radiusTo: float value
 		      int duration = 200
-		      int delay = 0
+		      Time delay = 0
 		      bool smooth = false
 		fx.add RadiusEffect startTime:Time.now+delay, duration, smooth, this, startValue:radius, delta:value-radius
 
@@ -214,7 +217,7 @@ Object Button
     clickableBy = -1                 // Only this user can click the button
     implicit layer = 0               // Higher layers are drawn in front of lower layers
     alpha = 1.0                      // The opacity of the button 0: fully transpart, 1: fully visible)
-	int hotkey
+	Key hotkey
     void(Touch touch) onClick        // Execute this code when the user clicks the button
 	tick
 		drawButton image, text, position, textColor, frame, scale, fontSize, touchMargin, textOffset, showTouchArea, visibleFor, clickableBy, hotkey, layer, alpha, onClick(touch)
@@ -290,7 +293,7 @@ Object Piece
 				moveTouch = null
 		
 		// Rotate	
-		Vector2 iconPos = rotatable ? {(image.size.x+image.size.y)/4, (image.size.x+image.size.y)/4} : image.size/2
+		Vector2 iconPos = rotatable ? {(image.size.x+image.size.y)/3.5, (image.size.x+image.size.y)/3.5} : image.size/2
 		if Framework.selectedObjects.contains(this) && rotatable
 			if !rotateTouch || !rotatedOverThreshold
 				drawButton rotateIcon, position:position+iconPos*{1,-1}*scale, touchMargin:{50,50}
@@ -306,7 +309,7 @@ Object Piece
 			Input.onTouchUp rotateTouch
 				targetAngle = Math.round(angle / (Math.PI/2)) * Math.PI/2
 				rotateTouch = null
-				if !rotatedOverThreshold: targetAngle -= Math.PI/2
+				if !rotatedOverThreshold: targetAngle += Math.PI/2
 				interactingUserId = touch.userId
 		
 		// Flip	
@@ -529,7 +532,7 @@ Object ParticleSystem
 	maxSpeed = 25.0
 	particlesPerBurst = 30
 	burstInterval = 500
-	nextBurst = -1
+	Time nextBurst = -1
 	bursts = 10
 	
 	private int burst
@@ -544,7 +547,7 @@ Object ParticleSystem
 					speed: {Math.cos(r), Math.sin(r)} * speedFactor
 					frame: Math.randomInteger(particleImage.frames.length)
 					angle: Math.randomFloat*Math.PI*2
-			nextBurst = ++burst < bursts ? Time.now + burstInterval : int.maxValue
+			nextBurst = ++burst < bursts ? Time.now + burstInterval : Time.maxValue
 
 		for particles <-
 			graphics.move .pos
@@ -608,9 +611,9 @@ Piece Coin
 			if closestCoinType == Neighbor 
 				drawCircle (position + closestCoin.position)/2, radius:6, fillColor:darkColor, outlineColor:lightColor, outlineWidth:5
 			if !isInfinate
-				if value < 10:  drawText cast value, position+{0, 3}, color:darkColor, size:42, style:Bold, font:ShadowedSerif, visibleFor:valueVisibleFor; else
-				if value < 100: drawText cast value, position+{0, 2}, color:darkColor, size:34, style:Bold, font:ShadowedSerif, visibleFor:valueVisibleFor; else
-				                drawText cast value, position+{0, 2}, color:darkColor, size:24, style:Bold, font:ShadowedSerif, visibleFor:valueVisibleFor;
+				if value < 10:  drawText cast value, position+{0, -4}, color:darkColor, size:42, style:Bold, font:ShadowedSerif, visibleFor:valueVisibleFor; else
+				if value < 100: drawText cast value, position+{0, -4}, color:darkColor, size:30, style:Bold, font:ShadowedSerif, visibleFor:valueVisibleFor; else
+				                drawText cast value, position+{0, -4}, color:darkColor, size:22, style:Bold, font:ShadowedSerif, visibleFor:valueVisibleFor;
 			
 			drawImage image, position, frame:closestCoinType == Over ? 1 : 0
 			
@@ -677,5 +680,42 @@ Piece Coin
 		neighbor.value += amount
 		if !isInfinate and !allowZero and value <= 0: removeImmediately
 		updateNeighbors siblings, isBeingMoved:false
+
+Object Menu
+	position = {920, -500}
+	Vector2 popupPosition
+	MenuItem[] items
+	includeDefaultItems = true
+	overlayColor = Color("000000b0")
+	locked = true
+	
+	visible bool active
+		
+	Menu
+		if includeDefaultItems
+			items.insert {New,  "New Game",        onClick:startGame}, 0
+			items.add    {Save, "Save Game"        onClick:Network.saveEventStreamAndLogs}
+			items.add    {Quit, "Exit Fullscreen", onClick:Platform.setFullscreen false, forUser:touch.userId}
+		
+	private inline js void startGame
+		if(window.app_start) window.app_startGame(false);
+	
+	tick
+		if active
+			forCentered items, center:popupPosition, delta:{0,60} -> item
+				drawImage .image, pos+{-120}, layer:int.maxValue
+				drawText .label, pos+{-60}, size:30, align:Left, layer:int.maxValue
+				Input.onTouchDownWithin pos, size:{500,60}, do:item.onClick(.)
+			drawRectangle popupPosition, outlineColor:White, fillColor:Black, size:{500,60+items.length*60}, outlineWidth:3, layer:int.maxValue
+			drawRectangle size:{1920,1080}, fillColor:overlayColor, layer:int.maxValue
+			Input.onTouchDownAny
+				active = false
+				
+		drawImage Menu, position
+			active = true
 			
+class MenuItem
+	Image image
+	string label
+	void(Touch touch) onClick
 

@@ -1,4 +1,4 @@
-enum NetworkMode: None, Ping, Local, Connected
+enum NetworkMode: None, Ping, Local, Connected, WaitingForState
 transient class RoomInfo: int time, userId
 enum SendInputsMode: None, Peer, Server
 	
@@ -63,6 +63,7 @@ transient unit Network
 	bool simulateConnection = true
 	bool simulateInputsForTesting = false
 	bool simulateRollback = false
+	bool showVideoForStaging = true
 	int checksumInterval = 30
 	
 	SendInputsMode sendInputsMode = Peer
@@ -83,6 +84,7 @@ transient unit Network
 	private int joinFrame           // The frame the current user joined
 	public float[] checksums
 	bool alertShown
+	bool isReplay
 	
 	private Buffer debugCommonState // Used in debug mode to validate that serialing twice yields the same result 
 
@@ -96,17 +98,17 @@ transient unit Network
 		user.startInputFrame 0
 		
 		joinFrame = Math.floor((currentTime - this.startTime)/targetFrameTime)+1
-		user.inputs.writeInt32 joinFrame
-		user.inputs.writeInt16 cast InputType.Join
+		Input.handleJoin joinFrame 
 		user.collectInputs = true
 		writeLog += " #{joinFrame} Join"
 		
 		mode = Connected
 		receivedFrames = -1
 		certainFrame = -1
-		frame = 0
+		uncertainFrame = -1
+		frame = joinFrame
 		bufferFrames = 0
-		log "Connected", user.id, frame, startTime, this.startTime
+		log "Connected", user.id, frame, startTime
 		saveState
 		
 	startLocal: userCount = 1
@@ -114,7 +116,7 @@ transient unit Network
 		startInLobby = false
 		certainFrame = -1
 		Input.internalUsers.clear
-		Math.setRandomSeed Math.generateRandomSeed
+		Math.setRandomSeed Math.generateRandomSeed 
 		initDatabase
 		reset
 		resetStartTime
@@ -126,6 +128,7 @@ transient unit Network
 		frames = 0
 		frameWithNewWatches = 0
 		startInLobby = false
+		isReplay = false
 		errorMessage = ""
 		audio.stop
 		goToFrame 0
@@ -136,6 +139,7 @@ transient unit Network
 		Platform.initApplication
 		Input.users.clear
 		Input.usersById.clear
+		errorMessage = ""
 		
 		if !startInLobby
 			// When the developer changed Platform.userCount, add or remove internal users accordingly
@@ -167,18 +171,20 @@ transient unit Network
 	
 	// Steps forward when going to a frame in the future
 	// or replays from the beginning when going to a frame in the past
-	// This is called after every code change with replay = true 
+	// This is called after every code change with replayFromStart = true 
 	// to replay all inputs with the new code from the beginning,
-	// and when stepping through the timeline with replay = false
+	// and when stepping through the timeline with replayFromStart = false
 	// to only replay from the beginning when going to a frame in the past
-	goToFrame: int targetFrame, replay = false
-		if replay: frameWithNewWatches = 0
-		if targetFrame < frame or replay: reset
+	goToFrame: int targetFrame, replayFromStart = false
+		isReplay = true
+		if replayFromStart: frameWithNewWatches = 0
+		if targetFrame < frame or replayFromStart: reset
 			
 		while frame < targetFrame
 			step fastFordward:true, draw:false
 		resetStartTime
 		animationFrame
+		isReplay = false
 
 	// Smooth out animations by only executing code when we received inputs from everybody	
 	smooth: int userId
@@ -223,6 +229,7 @@ transient unit Network
 		
 		if frame < targetFrame
 			animationStartFrame = frame
+			Input.updateGamePads
 			
 			try
 				sendInputs targetFrame-1
@@ -285,8 +292,8 @@ transient unit Network
 			aheads.add ahead, maxLength:aheadsLength
 			aheadMax = aheads.percentile(percentile)
 			aheadsMax.add aheadMax maxLength:30
-			
-			Input.localUser.bufferFrames = bufferFrames = Math.round(aheadsMax.average * aheadFactor)
+			bufferFrames = Math.round(aheadsMax.average * aheadFactor) limit max:30
+			Input.localUser.bufferFrames = bufferFrames
 			// We only update bufferFrames if the new value is more than 2 away from the current value
 			// int actualBufferFrames = Math.round(aheadsMax.average * aheadFactor)
 			// if Math.abs(actualBufferFrames - bufferFrames) >= minChange
@@ -453,7 +460,7 @@ transient unit Network
 	// before we start processing the frame.
 	private saveState
 		if mode != Connected and !simulateRollback: return
-		if frame == certainFrame+1
+		if frame == certainFrame+1 or certainFrame == -1
 			for Input.internalUsers: if .: .uncertainReadPos = .inputs.readPos
 			uncertainFrame = frame
 			saveTime = Time.measure
@@ -465,7 +472,10 @@ transient unit Network
 				if(commonState != debugCommonState)
 					onError {"Serializing state failed"}
 
-			parseLog += " save u:{uncertainFrame} c:{Framework.checksum}"
+			parseLog += " save f:{frame} c:{certainFrame} u:{uncertainFrame}"
+		else
+			parseLog += " no-save f:{frame} c:{certainFrame} u:{uncertainFrame}"
+			
 	
 	// Replay all frames from the first uncertain frame until the current frame
 	// when we received all inputs for frames that we were uncertain about before.
@@ -492,15 +502,18 @@ transient unit Network
 			replayTime = Time.measure
 				while frame < targetFrame
 					step fastFordward:true, draw:false
+		else
+			parseLog +=  " no-restore c:{certainFrame} u:{uncertainFrame}"
 					
 	log: logstring text
 		eventLog += text + "\n"
-		// print text
+		print text
 		
 	inline js int currentTime := Date.now()
 	
 	js void startApp
 		lobby_inLobby = false
+		Network_storeUserId()
 		if(window.app_start) app_start()
 		
 	private resetStartTime
@@ -533,10 +546,10 @@ transient unit Network
 				saveLogs
 			
 	internal saveLogs
-		let time = Time.realtime
+		let date = Date.now
 		// Ensure that current eventLog is added to the table even if we haven't processed a single frame
 		logTable += ",,,,,,,,,,,,,,,,,,,,,,,,\"{eventLog.trim}\""
-		Platform.saveTextFile "{Platform.appName} {time.dayShortMonthNameYearString} {time.hourMinuteSecondString} v{Platform.version}.csv", logTable
+		Platform.saveTextFile "{Platform.appName} {date.dayShortMonthNameYearString} {date.hourMinuteSecondString} v{Platform.version}.csv", logTable
 		// Http.post "/saveLog/{gameId}/{roomId}/{userId}", logTable
 		// 	log "save logs"
 		// else
@@ -555,8 +568,8 @@ transient unit Network
 				buffer.writeInt8 .id
 				buffer.writeBool .local
 				buffer.writeBuffer .inputs
-		let time = Time.realtime
-		Platform.saveBinaryFile "{Platform.appName} {time.dayShortMonthNameYearString} {time.hourMinuteSecondString} v{Platform.version}.state", buffer
+		let date = Date.now
+		Platform.saveBinaryFile "{Platform.appName} {date.dayShortMonthNameYearString} {date.hourMinuteSecondString} v{Platform.version}.state", buffer
 		
 	openEventStream
 		Platform.pause
@@ -585,46 +598,46 @@ transient unit Network
 			certainFrame = int.maxValue
 			Platform.sendFrame(frame, frames)
 			Math.setRandomSeed randomSeed
-			goToFrame targetFrame:frame, replay:true
+			goToFrame targetFrame:frame, replayFromStart:true
 		
 	string roomString
 	int roomId
 	string gameId
 	
-	join: string gameId, string roomString, int userId, bool allowRelay
+	join: string gameId, string roomString, int userId
 		initAll
-		log "Network.join "+Platform.url
+		log Platform.url
+		log Platform.userAgent
 		startInLobby = true
 		this.gameId = gameId
 		this.roomString = roomString
-		PeerNetwork.allowRelay = allowRelay
-		Input.localUser = {userId, local:true}
-		ServerNetwork.isLocalhost = Platform.url.contains("localhost")
+		this.roomId = cast roomString
+		Input.localUser = {userId, local:true, isConnected:false, connectionId:0}
 		initDatabase
 		setupVideoAndNetwork
-		lobby.enableFullscreen = int(roomString) >= 1000
+		lobby.enableFullscreen = !Platform.isStaging
 		
 	private js void initAll
 		init()
 		
 	private js void setupVideoAndNetwork 
-		await PeerNetwork_setupLocalVideo(/*enableVideo*/!ServerNetwork_isLocalhost, /*enableAudio*/!ServerNetwork_isLocalhost && parseInt(Network_roomString)>=1000)
+		await PeerNetwork_setupLocalVideo(/*enableVideo*/!Platform_isStaging || Network_showVideoForStaging, /*enableAudio*/!Platform_isStaging)
 		ServerNetwork_setup()
 		
 	internal storeUserId
 		Platform.setLocalStorageObject "room"+roomId, RoomInfo(currentTime, Input.localUser.id)
 		
 	onWrongChecksum: float mine, float theirs
-		onError {"Out of sync"}
 		checksumLog += " MISMATCH mine:{mine} theirs:{theirs}"
+		onError {"Out of sync"}
 		
 	onError: Error error
-		errorMessage = error.message
+		errorMessage = error.stack
 		eventLog += errorMessage + "\n" 
 		Platform.sendErrorToEditor error
 		
 		if !Platform.isDebug and !alertShown
-			alert "{errorMessage}. Please send me the log file that will be created."
+			alert "Please send me the log file that will be created.\n\n{errorMessage}"
 			saveLogs
 			alertShown = true
 

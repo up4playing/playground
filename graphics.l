@@ -101,8 +101,13 @@ transient global unit graphics
 	internal js void startFrame
 		graphics_reset()
 		if(!Platform_fastForward)
-			Platform_context.clearRect(0,0,Platform_pixelSize.x, Platform_pixelSize.y)
-			Platform_context.textBaseline = "hanging"
+			if(!graphics_backgroundColor || graphics_backgroundColor.hex == "#000000") {
+				Platform_context.clearRect(0, 0, Platform_pixelSize.x, Platform_pixelSize.y)
+			} else {
+				Platform_context.fillStyle = graphics_backgroundColor.hex
+				Platform_context.fillRect(0, 0, Platform_pixelSize.x, Platform_pixelSize.y)
+			}
+			Platform_context.textBaseline = "middle"
 
 	internal reset
 		totalMatrix = Platform.baseMatrix
@@ -253,6 +258,9 @@ transient global unit graphics
 		Platform_pixelSize.y = prevPixelSizeY
 		graphics_items = prevItems
 		return dataUrl
+		
+	// The default background color
+	Color backgroundColor = Black
 
 	// The default color for all draw operations
 	color
@@ -351,9 +359,9 @@ transient global unit graphics
 	// Returns the width of a string in pixels
 	global js int getTextWidth: string text              // The string to get the width of
 		                        size = 18                // The size of the font in pixels
-		                        font = ""                // The font of the text
+		                        Font font = null         // The font of the text
 		                        FontStyle style = Normal // Whether the text should be bold or normal style
-		Platform_context.font = (style ? "bold ":"")+(size || graphics_currentFontSize)+"px "+(font || graphics_currentFont)
+		Platform_context.font = (style ? "bold ":"")+(size || graphics_currentFontSize)+"px "+(font || graphics_currentFont).name;
 		let textSize = Platform_context.measureText(text)
 		return textSize.width
 		
@@ -362,7 +370,7 @@ transient global unit graphics
 		
 	// Draws an image on the screen
 	global void drawImage: Image image            // The image to draw
-		                   Vector2 position = {}   // The position to draw to
+		                   Vector2 position = {}  // The position to draw to
 		                   framesPerSecond = 0    // Animate the image with this speed
 		                   scale = 1.0            // Scale the image by this factor
 		                   visibleFor = -1        // Only this user will see the image
@@ -370,6 +378,20 @@ transient global unit graphics
 		                   alpha = 1.0            // The opacity of the image (0: fully transpart, 1: fully visible)
 		var frame = Math.floor(Network.frame * Math.max(framesPerSecond, 0) / Network.targetFps) % image.frames.length;
 		drawImage image, position, frame, scale, visibleFor, layer, alpha
+	
+	// Draws an image on the screen
+	global void drawImage: Image image            // The image to draw
+		                   Vector2 position = {}  // The position to draw to
+		                   framesPerSecond = 0    // Animate the image with this speed
+		                   scale = 1.0            // Scale the image by this factor
+		                   angle = 0.0          // Rotate the image by this angle in radians
+		                   flipX = false         // Mirror the image horizontally
+		                   flipY = false         // Mirror the image vertically
+		                   visibleFor = -1        // Only this user will see the image
+		                   implicit int layer = 0 // Higher layers are drawn in front of lower layers
+		                   alpha = 1.0            // The opacity of the image (0: fully transpart, 1: fully visible)
+		var frame = Math.floor(Network.frame * Math.max(framesPerSecond, 0) / Network.targetFps) % image.frames.length;
+		drawImage image, position, frame, scale, angle, flipX, flipY, visibleFor, layer, alpha
 	
 	// Draws an image on the screen
 	global void drawImage: Image image                  // The image to draw
@@ -380,7 +402,7 @@ transient global unit graphics
 		                   showTouchArea = false        // Show the area within which the button is touchable
 		                   visibleFor = -1              // Only this user will see the button
 		                   clickableBy = -1             // Only this user can click the button
-		                   hotkey = 0
+		                   hotkey = Key.None
 		                   implicit layer = 0           // Higher layers are drawn in front of lower layers
 		                   alpha = 1.0                  // The opacity of the button 0: fully transpart, 1: fully visible)
 		                   void(Touch touch) onClick    // Execute this code when the user clicks the button
@@ -388,21 +410,23 @@ transient global unit graphics
 			
 		// Handle click
 		// Only visible buttons can be clickable
-		let userId = clickableBy != -1 ? clickableBy : visibleFor != -1 ? visibleFor : currentlyVisibleFor
-		Input.onTouchDownWithin position, image.size*scale + touchMargin, userId, showTouchArea
-			onClick touch
-		if hotkey
-			Input.onKeyDown hotkey, userId
-				onClick null
+		let effectiveVisibleFor = visibleFor != -1 ? visibleFor : currentlyVisibleFor
+		if clickableBy == -1 or effectiveVisibleFor == -1 or clickableBy == effectiveVisibleFor
+			let effectiveClickableBy = clickableBy != -1 ? clickableBy : effectiveVisibleFor
+			Input.onTouchDownWithin position, image.size*scale + touchMargin, userId:effectiveClickableBy, showTouchArea
+				onClick touch
+			if hotkey
+				Input.onKeyDown hotkey, userId:effectiveClickableBy
+					onClick null
 		
 	// Draws an image on the screen
-	global js void drawImage: Image image          // The image to draw
+	global js void drawImage: Image image           // The image to draw
 		                      Vector2 position = {} // The position to draw to
-		                      frame = 0            // The frame of the image to draw
-		                      scale = 1.0          // Scale the image by this factor
-		                      visibleFor = -1      // Only this user will see the image
-		                      implicit layer = 0   // Higher layers are drawn in front of lower layers
-		                      alpha = 1.0          // The opacity of the image (0: fully transpart, 1: fully visible)
+		                      frame = 0             // The frame of the image to draw
+		                      scale = 1.0           // Scale the image by this factor
+		                      visibleFor = -1       // Only this user will see the image
+		                      implicit layer = 0    // Higher layers are drawn in front of lower layers
+		                      alpha = 1.0           // The opacity of the image (0: fully transpart, 1: fully visible)
 		if(!image.texture?.ensureIsAvailable()) return
 		if(graphics_isVisibleFor(visibleFor)) {
 			let f = image.frames[frame % image.frames.length]
@@ -424,6 +448,8 @@ transient global unit graphics
 		                      frame = 0            // The frame of the image to draw
 		                      scale = 1.0          // Scale the image by this factor
 		                      angle = 0.0          // Rotate the image by this angle in radians
+		                      flipX = false         // Mirror the image horizontally
+		                      flipY = false         // Mirror the image vertically
 		                      visibleFor = -1      // Only this user will see the image
 		                      implicit layer = 0   // Higher layers are drawn in front of lower layers
 		                      alpha = 1.0          // The opacity of the image (0: fully transpart, 1: fully visible)
@@ -433,6 +459,7 @@ transient global unit graphics
 			let matrix = graphics_totalMatrix.clone()
 			matrix.move(position)
 			matrix.rotate(angle)
+			if(flipX || flipY) matrix.scale(new Vector2(flipX ? -1:1, flipY ? -1:1	))
 			graphics_items.push(new DisplayImage(
 				matrix,
 				-f.w/2*scale,
@@ -466,7 +493,7 @@ transient global unit graphics
 			let w = textSize.width
 			let h = size || graphics_currentFontSize
 			let x = align  == 0 ? position.x : align  == 1 ? position.x-w*.5 : position.x-w
-			let y = valign == 0 ? position.y : valign == 1 ? position.y-h*.365 : position.y-h
+			let y = valign == 0 ? position.y-h*.5 : valign == 1 ? position.y+h*.15 : position.y+h*.5
 			graphics_items.push(new DisplayText(
 				graphics_totalMatrix, x, y, w, h, layer, alpha, graphics_currentClippingPath, text, 
 				position.location, 
@@ -508,7 +535,7 @@ transient global unit graphics
 		                    showTouchArea = false            // Show the area within which the button is touchable
 		                    visibleFor = -1                  // Only this user will see the button
 		                    clickableBy = -1                 // Only this user can click the button
-		                    hotkey = 0
+		                    hotkey = Key.None
 		                    implicit layer = 0               // Higher layers are drawn in front of lower layers
 		                    alpha = 1.0                      // The opacity of the button 0: fully transpart, 1: fully visible)
 		                    void(Touch touch) onClick        // Execute this code when the user clicks the button
@@ -518,13 +545,15 @@ transient global unit graphics
 			
 		// Handle click
 		// Only visible buttons can be clickable
-		let userId = clickableBy != -1 ? clickableBy : visibleFor != -1 ? visibleFor : currentlyVisibleFor
-		Vector2 size = image ? image.size*scale : {getTextWidth(text), fontSize}
-		Input.onTouchDownWithin position, size + touchMargin, userId, showTouchArea
-			onClick touch
-		if hotkey
-			Input.onKeyDown hotkey, userId
-				onClick null
+		let effectiveVisibleFor = visibleFor != -1 ? visibleFor : currentlyVisibleFor
+		if clickableBy == -1 or effectiveVisibleFor == -1 or clickableBy == effectiveVisibleFor
+			let effectiveClickableBy = clickableBy != -1 ? clickableBy : effectiveVisibleFor
+			Vector2 size = image ? image.size*scale : {getTextWidth(text), fontSize}
+			Input.onTouchDownWithin position, size + touchMargin, userId:effectiveClickableBy, showTouchArea
+				onClick touch
+			if hotkey
+				Input.onKeyDown hotkey, userId:effectiveClickableBy
+					onClick null
 			
 	// Draws a rectangle on the screen
 	global js void drawRectangle: position = Vector2()       // The center of the rectangle
@@ -739,14 +768,14 @@ transient global unit graphics
 		                bool showLocalPointer = Input.showLocalPointer
 		if userId != Input.localUser.id or showLocalPointer
 			let user = Input.usersById[userId]
-			if !color: color = user.color
-			for user.touches
-				drawImage finger, .smoothPosition+{11,32}, frame:.isDown ? 1 : 0, layer:int.maxValue
-				if color
-					if color == Black
-						drawRectangle .smoothPosition+{16,80}, size:{26,10}, color, layer:int.maxValue, outlineColor:{"a0a0a0"}, outlineWidth:2
-					else
-						drawRectangle .smoothPosition+{16,78}, size:{26,10}, color, layer:int.maxValue
+				if !color: color = user.color
+				for user.touches
+					drawImage finger, .smoothPosition+{11,32}, frame:.isDown ? 1 : 0, layer:int.maxValue
+					if color
+						if color == Black
+							drawRectangle .smoothPosition+{16,80}, size:{26,10}, color, layer:int.maxValue, outlineColor:{"a0a0a0"}, outlineWidth:2
+						else
+							drawRectangle .smoothPosition+{16,78}, size:{26,10}, color, layer:int.maxValue
 
 	global drawVideo: int userId
 		              Vector2 position = {}
@@ -897,17 +926,31 @@ transient DisplayItem DisplayRoundedRectangle
 		if(this.clippingPath) this.startClipping()
 		let sizeX = this.w, sizeY = this.h, x = this.x, y = this.y, radius = this.radius
 		
+		// Arcs
 		Platform_context.beginPath();
 		Platform_context.moveTo(x + radius, y);
 		Platform_context.lineTo(x + sizeX - radius, y);
-		Platform_context.quadraticCurveTo(x + sizeX, y, x + sizeX, y + radius);
+		Platform_context.arcTo(x + sizeX, y, x + sizeX, y + radius, radius);
 		Platform_context.lineTo(x + sizeX, y + sizeY - radius);
-		Platform_context.quadraticCurveTo(x + sizeX, y + sizeY, x + sizeX - radius, y + sizeY);
+		Platform_context.arcTo(x + sizeX, y + sizeY, x + sizeX - radius, y + sizeY, radius);
 		Platform_context.lineTo(x + radius, y + sizeY);
-		Platform_context.quadraticCurveTo(x, y + sizeY, x, y + sizeY - radius);
+		Platform_context.arcTo(x, y + sizeY, x, y + sizeY - radius, radius);
 		Platform_context.lineTo(x, y + radius);
-		Platform_context.quadraticCurveTo(x, y, x + radius, y);
+		Platform_context.arcTo(x, y, x + radius, y, radius);
 		Platform_context.closePath();
+		
+		// Quadratic Curves
+		// Platform_context.beginPath();
+		// Platform_context.moveTo(x + radius, y);
+		// Platform_context.lineTo(x + sizeX - radius, y);
+		// Platform_context.quadraticCurveTo(x + sizeX, y, x + sizeX, y + radius);
+		// Platform_context.lineTo(x + sizeX, y + sizeY - radius);
+		// Platform_context.quadraticCurveTo(x + sizeX, y + sizeY, x + sizeX - radius, y + sizeY);
+		// Platform_context.lineTo(x + radius, y + sizeY);
+		// Platform_context.quadraticCurveTo(x, y + sizeY, x, y + sizeY - radius);
+		// Platform_context.lineTo(x, y + radius);
+		// Platform_context.quadraticCurveTo(x, y, x + radius, y);
+		// Platform_context.closePath();
 		
 		if(this.fillColor) {
 			Platform_context.fillStyle = this.fillColor
@@ -1024,6 +1067,7 @@ transient DisplayItem DisplayVideo
 			let py = (m1 * x + m3 * y + m5) / Platform.pixelRatio
 			let sizeX = w*m0 / Platform.pixelRatio
 			let sizeY = h*m3 / Platform.pixelRatio
+			let radius = this.radius ? 10000 : 0
 			PeerNetwork.updateVideoElement videoElement, px, py, sizeX, sizeY, radius
 			user.videoElementIndex++
 
