@@ -504,6 +504,16 @@ Spot SpotGrid
 	getClosestPoint: Vector2 touchPos, Vector2 boardPos
 		return ((touchPos-boardPos)/cellSize).rounded*cellSize + boardPos
 		
+Spot SpotHexGrid
+	Vector2 cellSize
+	getClosestPoint: Vector2 touchPos, Vector2 boardPos
+		let cellX = ((touchPos.x-boardPos.x)/cellSize.x).round
+		let x = cellX * cellSize.x + boardPos.x
+		let a = cellX%2 == 0 ? cellSize.y/2 : 0
+		let cellY = ((touchPos.y-boardPos.y-a)/cellSize.y).round
+		let y = cellY * cellSize.y + boardPos.y+a
+		return Vector2(x, y)
+		
 struct Particle
 	Vector2 pos, speed
 	int frame
