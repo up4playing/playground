@@ -240,9 +240,11 @@ unit game
 		              BoxCollider[] colliders
 		              float radius
 		              float slideThreshold = 5
+		watch "{sourcePosition}->{targetPosition}"
 		let threshold = radius + slideThreshold
 		let primarilyX = Math.abs(targetPosition.x - sourcePosition.x) > Math.abs(targetPosition.y - sourcePosition.y)
 		Line movement = {sourcePosition, targetPosition, Segment}
+		bool hasCollided
 		for colliders -> c
 			if showColliders
 				if c.leftLine: drawLine c.leftLine.start, c.leftLine.end, color:Red, width:5
@@ -255,9 +257,10 @@ unit game
 				Line line = c.leftLine
 				// drawLine line.start, line.end, color:Red, width:10
 				let p = movement intersectionWith line
+					hasCollided = true
 					if c.topLeft and (p.y - line.start.y) <= threshold
 						// collisions.add {p, TopLeft, regionPoint:line.start-{0,1}}
-						// watch "Move Right, Hit TopLeft Corner, {primarilyX ? "primarilyX":"primarilyY"}"
+						watch "Move Right, Hit TopLeft Corner, {primarilyX ? "primarilyX":"primarilyY"}"
 						//           o
 						//                 o
 						//                       o     ⬆
@@ -271,7 +274,7 @@ unit game
 					else
 					if c.bottomLeft and (line.end.y - p.y) <= threshold
 						// collisions.add {p, BottomLeft, regionPoint:line.end+{0,1}}
-						// watch "Move Right, Hit BottomLeft Corner, {primarilyX ? "primarilyX":"primarilyY"}"
+						watch "Move Right, Hit BottomLeft Corner, {primarilyX ? "primarilyX":"primarilyY"}"
 						//                             └─
 						//                       o     ⬇
 						//                 o
@@ -284,20 +287,21 @@ unit game
 						else           targetPosition.x = Math.min(targetPosition.x, line.end.x-1)
 					else
 						// collisions.add {p, Left, regionPoint:{line.end.x-1, p.y}}
-						// watch "Move Right, Hit Left Side"
 						//                              │
 						//            o     o     o     │ ⬅
 						//                              │
 						targetPosition.x = Math.min(targetPosition.x, line.end.x-1)
+						watch "Move Right, Hit Left Side -> {targetPosition}"
 			else
 			if c.rightLine and movement.end.x < movement.start.x
 				// We are moving left -> check right side
 				Line line = c.rightLine
 				// drawLine line.start, line.end, color:Red, width:10
 				let p = movement intersectionWith line
+					hasCollided = true
 					if c.topRight and (p.y - line.start.y) <= threshold
 						// collisions.add {p, TopRight, regionPoint:line.start-{0,1}}
-						// watch "Move Left, Hit TopRight Corner, {primarilyX ? "primarilyX":"primarilyY"}"
+						watch "Move Left, Hit TopRight Corner, {primarilyX ? "primarilyX":"primarilyY"}"
 						//                                                 o
 						//                                           o     
 						//                               ⬆    o
@@ -311,7 +315,7 @@ unit game
 					else
 					if c.bottomRight and (line.end.y - p.y) <= threshold
 						// collisions.add {p, BottomRight, regionPoint:line.end+{0,1}}
-						// watch "Move Left, Hit BottomRight Corner, {primarilyX ? "primarilyX":"primarilyY"}"
+						watch "Move Left, Hit BottomRight Corner, {primarilyX ? "primarilyX":"primarilyY"}"
 						//                               ─┘
 						//                               ⬇    o
 						//                                           o     
@@ -324,7 +328,7 @@ unit game
 						else           targetPosition.x = Math.max(targetPosition.x, line.end.x+1)
 					else
 						// collisions.add {p, Right, regionPoint:{line.end.x+1, p.y}}
-						// watch "Move Left, Hit Right Side"
+						watch "Move Left, Hit Right Side"
 						//                              │
 						//                              │ ⮕   o      o      o
 						//                              │
@@ -335,9 +339,10 @@ unit game
 				Line line = c.topLine
 				// drawLine line.start, line.end, color:Red, width:10
 				let p = movement intersectionWith line
+					hasCollided = true
 					if c.topLeft and (p.x - line.start.x) <= threshold
 						// collisions.add {p, TopLeft, regionPoint:line.start-{1,0}}
-						// watch "Move Down, Hit TopLeft Corner, {primarilyX ? "primarilyX":"primarilyY"}"
+						watch "Move Down, Hit TopLeft Corner, {primarilyX ? "primarilyX":"primarilyY"}"
 						//           o
 						//                 o
 						//                       o     ⬆
@@ -351,7 +356,7 @@ unit game
 					else
 					if c.topRight and (line.end.x - p.x) <= threshold
 						// collisions.add {p, TopRight, regionPoint:line.end+{1,0}}
-						// watch "Move Down, Hit TopRight Corner, {primarilyX ? "primarilyX":"primarilyY"}"
+						watch "Move Down, Hit TopRight Corner, {primarilyX ? "primarilyX":"primarilyY"}"
 						//                                                 o
 						//                                           o     
 						//                               ⬆    o
@@ -364,7 +369,7 @@ unit game
 						else           targetPosition.x = Math.max(targetPosition.x, line.end.x+1)
 					else
 						// collisions.add {p, Top, regionPoint:{p.x, line.end.y-1}}
-						// watch "Move Down, Hit Top Side"
+						watch "Move Down, Hit Top Side"
 						//                              o
 						//                              o
 						//                              o
@@ -376,9 +381,10 @@ unit game
 				Line line = c.bottomLine
 				// drawLine line.start, line.end, color:Red, width:10
 				let p = movement intersectionWith line
+					hasCollided = true
 					if c.bottomLeft and (p.x - line.start.x) <= threshold
 						// collisions.add {p, BottomLeft, regionPoint:line.start-{1,0}}
-						// watch "Move Up, Hit BottomLeft Corner, {primarilyX ? "primarilyX":"primarilyY"}"
+						watch "Move Up, Hit BottomLeft Corner, {primarilyX ? "primarilyX":"primarilyY"}"
 						//                             └─
 						//                       o     ⬇
 						//                 o
@@ -392,7 +398,7 @@ unit game
 					else
 					if c.bottomRight and (line.end.x - p.x) <= threshold
 						// collisions.add {p, BottomRight, regionPoint:line.end+{1,0}}
-						// watch "Move Up, Hit BottomRight Corner, {primarilyX ? "primarilyX":"primarilyY"}"
+						watch "Move Up, Hit BottomRight Corner, {primarilyX ? "primarilyX":"primarilyY"}"
 						//                               ─┘
 						//                               ⬇    o
 						//                                           o     
@@ -405,12 +411,69 @@ unit game
 						else           targetPosition.x = Math.max(targetPosition.x, line.end.x+1)
 					else
 						// collisions.add {p, Bottom, regionPoint:{p.x, line.end.y+1}}
-						// watch "Move Up, Hit Bottom Side"
+						watch "Move Up, Hit Bottom Side"
 						//                           ───────
 						//                              o
 						//                              o
 						//                              o
 						targetPosition.y = Math.max(targetPosition.y, line.end.y+1)
+						
+		if hasCollided
+			// If we collided, we need to check if we weren't pushed into another collider
+			// This time, we only check the sides (not the corners)
+			// This prevents beeing pushed through a collider by being pushed around corners twice
+			let primarilyX = Math.abs(targetPosition.x - sourcePosition.x) > Math.abs(targetPosition.y - sourcePosition.y)
+			Line movement = {sourcePosition, targetPosition, Segment}
+			for colliders -> c
+				if c.leftLine and movement.end.x > movement.start.x
+					// We are moving right -> check left side
+					Line line = c.leftLine
+					// drawLine line.start, line.end, color:Red, width:10
+					let p = movement intersectionWith line
+						// collisions.add {p, Left, regionPoint:{line.end.x-1, p.y}}
+						//                              │
+						//            o     o     o     │ ⬅
+						//                              │
+						targetPosition.x = Math.min(targetPosition.x, line.end.x-1)
+						watch "Move Right, Hit Left Side -> {targetPosition}"
+				else
+				if c.rightLine and movement.end.x < movement.start.x
+					// We are moving left -> check right side
+					Line line = c.rightLine
+					// drawLine line.start, line.end, color:Red, width:10
+					let p = movement intersectionWith line
+						// collisions.add {p, Right, regionPoint:{line.end.x+1, p.y}}
+						watch "Move Left, Hit Right Side"
+						//                              │
+						//                              │ ⮕   o      o      o
+						//                              │
+						targetPosition.x = Math.max(targetPosition.x, line.end.x+1)
+					
+				if c.topLine and movement.end.y > movement.start.y
+					// We are moving down -> check top side
+					Line line = c.topLine
+					// drawLine line.start, line.end, color:Red, width:10
+					let p = movement intersectionWith line
+						// collisions.add {p, Top, regionPoint:{p.x, line.end.y-1}}
+						watch "Move Down, Hit Top Side"
+						//                              o
+						//                              o
+						//                              o
+						//                           ───────
+						targetPosition.y = Math.min(targetPosition.y, line.end.y-1)
+				else
+				if c.bottomLine and movement.end.y < movement.start.y
+					// We are moving up -> check bottom side
+					Line line = c.bottomLine
+					let p = movement intersectionWith line
+						// collisions.add {p, Bottom, regionPoint:{p.x, line.end.y+1}}
+						watch "Move Up, Hit Bottom Side"
+						//                           ───────
+						//                              o
+						//                              o
+						//                              o
+						targetPosition.y = Math.max(targetPosition.y, line.end.y+1)
+			
 			
 		// Resolve collision
 		//    → x
