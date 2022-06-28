@@ -1104,43 +1104,43 @@ global transient unit System
 		
 		
 // A collection of mathematical functions and constants
-unit Math
+global unit Math
 	// Returns the absolute value
-	inline js int abs: int value // The value to return the absolute value of
+	global inline js int abs: int value // The value to return the absolute value of
 		Math.abs(value)
 		
 	// Returns the absolute value
-	inline js float abs: float value // The value to return the absolute value of
+	global inline js float abs: float value // The value to return the absolute value of
 		Math.abs(value)
 		
 	// Returns the smallest integer greater than or equal to the given value 
-	inline js int ceil: float value // The value to round up
+	global inline js int ceil: float value // The value to round up
 		Math.ceil(value)
 		
 	// Returns the largest integer less than or equal to the given value
-	inline js int floor: float value // The value to round down
+	global inline js int floor: float value // The value to round down
 		Math.floor(value)
 		
 	// Returns the given value rounded to the nearest integer
-	inline js int round: float value // The value to round
+	global inline js int round: float value // The value to round
 		Math.round(value)
 		
-	inline js int min: int a // The first value
+	global inline js int min: int a // The first value
 		               int b // The second value
 		Math.min(a, b)
 		
 	// Returns the smallest of the given values
-	inline js float min: float a // The first value
+	global inline js float min: float a // The first value
 		                 float b // The second value
 		Math.min(a, b)
 		
 	// Returns the largest of the given values
-	inline js int max: int a // The first value
+	global inline js int max: int a // The first value
 		               int b // The second value
 		Math.max(a, b)
 		
 	// Returns the largest of the given values
-	inline js float max: float a // The first value
+	global inline js float max: float a // The first value
 		                 float b // The second value
 		Math.max(a, b)
 		
