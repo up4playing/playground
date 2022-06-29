@@ -218,6 +218,8 @@ class DigitalButton
 		state = false
 	
 class GameController
+	static deadZone = .1
+	
 	Vector2 leftStick
 	Vector2 rightStick
 	DigitalButton a = {}
@@ -481,6 +483,8 @@ unit Input
 		if gamepads and gamepads[0] and gamepads[0].axes.length >= 2
 			let gp = gamepads[0]
 			let axes = gp.axes
+			let leftStickX = axes[0]
+			let leftStickY = axes[1]
 			let inputs = localUser.inputs
 			let buttons = (gp.buttons[0].pressed ? 1:0)
 			            + (gp.buttons[1].pressed ? 2:0)
@@ -488,8 +492,8 @@ unit Input
 			            + (gp.buttons[3].pressed ? 8:0)
 			inputs.writeInt32 localUser.inputFrame
 			inputs.writeInt16 cast InputType.GameController
-			inputs.writeFloat64 axes[0]
-			inputs.writeFloat64 axes[1]
+			inputs.writeFloat64 abs(leftStickX) > GameController.deadZone ? leftStickX : 0
+			inputs.writeFloat64 abs(leftStickY) > GameController.deadZone ? leftStickY : 0
 			inputs.writeUnsignedInt8 buttons
 			
 	internal parseInputs(int frame, bool isCertain)
