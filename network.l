@@ -229,7 +229,6 @@ transient unit Network
 		
 		if frame < targetFrame
 			animationStartFrame = frame
-			Input.updateGamePads
 			
 			try
 				sendInputs targetFrame-1
@@ -381,6 +380,9 @@ transient unit Network
 				
 			// Save a snapshot when we are about to start the frame after the last certain frame where we got all inputs
 			saveState
+			
+			// Update gamepads
+			Input.updateGamePads
 			
 			// Parse inputs
 			Input.parseInputs(frame, isCertain)

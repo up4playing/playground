@@ -56,8 +56,8 @@ class NetworkUser
 	string textInput
 	bool enableTouch = true
 	bool isReady
-	Key[] mapKeyToController = [Right, Down, Left, Up, Space]
-	int[] controllerKeyDownFrame = [0, 0, 0, 0, 0]
+	Key[] mapKeyToController = Platform.os == Mac ?  [Right, Down, Left, Up, Space, LeftMetaKey, Alt, Ctrl] : [Right, Down, Left, Up, Space, Alt, LeftMetaKey, Ctrl]
+	int[] controllerKeyDownFrame = [0, 0, 0, 0, 0, 0]
 	
 	internal int[] connectedTo
 
@@ -209,20 +209,31 @@ enum Key
 	CloseBraket  = 221
 	SingleQuote  = 222
 	
+class DigitalButton
+	bool state, prevState
+	bool down := state and not prevState
+	bool up   := not state and prevState 
+	internal startFrame
+		prevState = state
+		state = false
+	
 class GameController
 	Vector2 leftStick
 	Vector2 rightStick
-	bool a, b, x, y
+	DigitalButton a = {}
+	DigitalButton b = {}
+	DigitalButton x = {}
+	DigitalButton y = {}
 	
-	internal clear
+	internal startFrame
 		leftStick.x = 0
 		leftStick.y = 0
 		rightStick.x = 0
 		rightStick.y = 0
-		a = false
-		b = false
-		x = false
-		y = false
+		a.startFrame
+		b.startFrame
+		x.startFrame
+		y.startFrame
 	
 class InternetGamePadButton
 	bool pressed, touched
@@ -468,22 +479,28 @@ unit Input
 	updateGamePads
 		let gamepads = getGamepads
 		if gamepads and gamepads[0] and gamepads[0].axes.length >= 2
-			let axes = gamepads[0].axes
+			let gp = gamepads[0]
+			let axes = gp.axes
 			let inputs = localUser.inputs
+			let buttons = (gp.buttons[0].pressed ? 1:0)
+			            + (gp.buttons[1].pressed ? 2:0)
+			            + (gp.buttons[2].pressed ? 4:0)
+			            + (gp.buttons[3].pressed ? 8:0)
 			inputs.writeInt32 localUser.inputFrame
 			inputs.writeInt16 cast InputType.GameController
 			inputs.writeFloat64 axes[0]
 			inputs.writeFloat64 axes[1]
+			inputs.writeUnsignedInt8 buttons
 			
 	internal parseInputs(int frame, bool isCertain)
 		this.isCertain = isCertain
 		if isCertain: Network.parseLog += " c"
-		users.each.controller.clear
 		for internalUsers -> internalUser
 			let inputs = internalUser.inputs
 			let userId = internalUser.id
 			let user = usersById[userId]
 			Network.parseLog += " <{userId}>"
+			user?.controller.startFrame
 			
 			while true
 				int nextFrame = inputs.canRead ? inputs.peekInt32 : int.maxValue
@@ -590,6 +607,11 @@ unit Input
 				if inputType == GameController
 					user.controller.leftStick.x = inputs.readFloat64
 					user.controller.leftStick.y = inputs.readFloat64
+					let buttons = inputs.readUnsignedInt
+					user.controller.a.state = (buttons bitwiseAnd 1) != 0
+					user.controller.b.state = (buttons bitwiseAnd 2) != 0
+					user.controller.x.state = (buttons bitwiseAnd 4) != 0
+					user.controller.y.state = (buttons bitwiseAnd 8) != 0
 				else
 				if inputType == Join
 					// Read when users the joining user is connected to
@@ -650,7 +672,10 @@ unit Input
 			let up    = .controllerKeyDownFrame[3]
 			if right or left: .controller.leftStick.x = right >= left ? 1 : -1
 			if down  or up:   .controller.leftStick.y = down  >= up   ? 1 : -1
-			if .controllerKeyDownFrame[4]: .controller.a = true
+			if .controllerKeyDownFrame[4]: .controller.a.state = true
+			if .controllerKeyDownFrame[5]: .controller.b.state = true
+			if .controllerKeyDownFrame[6]: .controller.x.state = true
+			if .controllerKeyDownFrame[7]: .controller.y.state = true
 						
 	updateUserIndices
 		users.orderBy.id
