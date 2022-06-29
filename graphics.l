@@ -757,11 +757,11 @@ transient global unit graphics
 			))
 		}
 		
-	const Color[] defaultUserColors = [{"398CA9"},{"C01352"},{"FFD166"},{"16C66E"}]
+	const Color[] defaultColors = [{"398CA9"},{"C01352"},{"16C66E"},{"FFD166"}]
 	setUserColor: int userId
 		          Color color = null
 		let user = Input.usersById[userId]
-			user.color = color || defaultUserColors[user.index]
+			user.color = color || defaultColors[user.index]
 		
 	global drawPointer: int userId
 		                Color color = null
