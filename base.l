@@ -282,7 +282,7 @@ class List<T>
 				return .
 		return null
 		
-	removeAllWhere: bool(T a) condition // The condition to check
+	removeWhere: bool(T a) condition // The condition to check
 		for this <-
 			if condition(.)
 				removeAt i

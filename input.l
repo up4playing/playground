@@ -651,7 +651,7 @@ unit Input
 						lostUser.connectedTo.remove userId
 						if lostUser.connectedTo.length == 0
 							// If all players have lost the connected to a user, we remove this user
-							users.removeAllWhere.id == lostUserId
+							users.removeWhere.id == lostUserId
 							usersById[lostUserId] = null
 							updateUserIndices
 							Network.parseLog += " lost {lostUserId} by {userId}, removed user, userCount:{users.length}"
