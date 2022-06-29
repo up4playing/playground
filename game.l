@@ -402,18 +402,25 @@ unit game
 						//                              o
 						//                              o
 						targetPosition.y = Math.max(targetPosition.y, line.end.y+1)
-						
-		if hasCollided
-			// If we collided, we need to check if we weren't pushed into another collider
-			// This time, we only check the sides (not the corners)
-			// This prevents beeing pushed through a collider by being pushed around corners twice
+				
+		int iterations
+		while hasCollided
+			// If we collided, we check if we weren't pushed into another collider,
+			// until there are no more collision. This time, we only check the sides (not the corners).
+			// This prevents beeing pushed through a collider by being pushed around two corners.
 			let primarilyX = Math.abs(targetPosition.x - sourcePosition.x) > Math.abs(targetPosition.y - sourcePosition.y)
 			Line movement = {sourcePosition, targetPosition, Segment}
+			hasCollided = false
+			
+			// Prevent endless loops: If we are still colliding after 3 iteration, we don't move at all
+			if ++iterations > 3: return sourcePosition
+				
 			for colliders -> c
 				if c.leftLine and movement.end.x > movement.start.x
 					// We are moving right -> check left side
 					Line line = c.leftLine
 					let p = movement intersectionWith line
+						hasCollided = true
 						if log: watch "Check after collision, Hit Left Side"
 						//                              │
 						//            o     o     o     │ ⬅
@@ -424,6 +431,7 @@ unit game
 					// We are moving left -> check right side
 					Line line = c.rightLine
 					let p = movement intersectionWith line
+						hasCollided = true
 						if log: watch "Check after collision, Hit Right Side"
 						//                              │
 						//                              │ ⮕   o      o      o
@@ -434,6 +442,7 @@ unit game
 					// We are moving down -> check top side
 					Line line = c.topLine
 					let p = movement intersectionWith line
+						hasCollided = true
 						if log: watch "Check after collision, Hit Top Side"
 						//                              o
 						//                              o
@@ -445,6 +454,7 @@ unit game
 					// We are moving up -> check bottom side
 					Line line = c.bottomLine
 					let p = movement intersectionWith line
+						hasCollided = true
 						if log: watch "Check after collision, Hit Bottom Side"
 						//                           ───────
 						//                              o
