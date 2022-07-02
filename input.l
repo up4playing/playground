@@ -226,6 +226,7 @@ class GameController
 	DigitalButton b = {}
 	DigitalButton x = {}
 	DigitalButton y = {}
+	bool inMotion
 	
 	internal startFrame
 		leftStick.x = 0
@@ -670,16 +671,20 @@ unit Input
 					Math.recreateRandomValues
 	
 		for users
-			let right = .controllerKeyDownFrame[0]
-			let down  = .controllerKeyDownFrame[1]
-			let left  = .controllerKeyDownFrame[2]
-			let up    = .controllerKeyDownFrame[3]
-			if right or left: .controller.leftStick.x = right >= left ? 1 : -1
-			if down  or up:   .controller.leftStick.y = down  >= up   ? 1 : -1
-			if .controllerKeyDownFrame[4]: .controller.a.state = true
-			if .controllerKeyDownFrame[5]: .controller.b.state = true
-			if .controllerKeyDownFrame[6]: .controller.x.state = true
-			if .controllerKeyDownFrame[7]: .controller.y.state = true
+			let internalUser = internalUsers[.id]
+			if frame <= internalUser.inputFrame
+				let right = .controllerKeyDownFrame[0]
+				let down  = .controllerKeyDownFrame[1]
+				let left  = .controllerKeyDownFrame[2]
+				let up    = .controllerKeyDownFrame[3]
+				if right or left: .controller.leftStick.x = right >= left ? 1 : -1
+				if down  or up:   .controller.leftStick.y = down  >= up   ? 1 : -1
+				if .controllerKeyDownFrame[4]: .controller.a.state = true
+				if .controllerKeyDownFrame[5]: .controller.b.state = true
+				if .controllerKeyDownFrame[6]: .controller.x.state = true
+				if .controllerKeyDownFrame[7]: .controller.y.state = true
+				.controller.inMotion = abs(.controller.leftStick.x) >= GameController.deadZone
+				                    or abs(.controller.leftStick.y) >= GameController.deadZone
 						
 	updateUserIndices
 		users.orderBy.id
