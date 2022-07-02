@@ -288,10 +288,10 @@ transient unit Network
 				aheads.add ahead, maxLength:200
 				aheadMax = aheads.percentile(80)
 				aheadsMax.add aheadMax maxLength:600
-				int actualBufferFrames = Math.round(aheadsMax.average * 1.5) limit max:30
+				int actualBufferFrames = ceil(aheadsMax.average * 1.25) limit max:30
 				
-				// We only update bufferFrames if the new value is more than 2 away from the current value
-				if Math.abs(actualBufferFrames - bufferFrames) >= 2: bufferFrames = actualBufferFrames
+				// We only update bufferFrames if the new value is smaller or at least 2 larger
+				if actualBufferFrames < bufferFrames or actualBufferFrames > bufferFrames+1: bufferFrames = actualBufferFrames
 			else
 				aheads.add ahead, maxLength:200
 				aheadMax = aheads.percentile(50)
@@ -676,7 +676,7 @@ transient unit statisticsGraph
 			
 		Vector2 startPos = position + size/2
 		Vector2 labelPos = position - size/2 - {0,13}
-		for series -> s
+		for series -> s, seriesIndex
 			string text = cast .lastValue
 			drawRectangle labelPos, {8,8}, fillColor:.color, align:Left, layer:1000000
 			drawText text, labelPos+{11, -2}, align:Left, layer:1000000, size:12
@@ -686,7 +686,7 @@ transient unit statisticsGraph
 			float prevY = 0
 			for len
 				let value = s.values[len-1-i]
-				Vector2 pos = {startPos.x - i, startPos.y - value/maxValue*size.y}
+				Vector2 pos = {startPos.x - i, startPos.y - value/maxValue*size.y + seriesIndex*3}
 				if i: drawRectangle pos, size:{4, prevY-pos.y+4}, fillColor:s.color, layer:1000000, valign:Top
 				prevY = pos.y
 				
