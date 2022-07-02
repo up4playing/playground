@@ -652,8 +652,8 @@ class StatisticsGraphSeries
 	float lastValue := values.length > 0 ? values[values.length-1] : 0
 	
 transient unit statisticsGraph
-	Vector2 position = {0, 450}
-	Vector2 size = {880, 180}
+	Vector2 position = {500, 450}
+	Vector2 size = {390, 180}
 	
 	private StatisticsGraphSeries[] series
 	float maxValue
