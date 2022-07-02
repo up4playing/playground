@@ -57,7 +57,7 @@ transient unit Snapshot
 			autoSaveAtEndOfStep = false
 	
 transient unit Network
-	int sendInterval = 3
+	int sendInterval = 1
 	int smoothStrength = 90
 	bool smoothTouchPosition = true
 	bool simulateConnection = true
@@ -274,11 +274,6 @@ transient unit Network
 	private int replayFrames
 	int tickMessageSize
 	
-	const aheadsLength = 200
-	const percentile = 50
-	const aheadFactor = 2.0
-	const minChange = 1
-	
 	bool isLag100 = false
 	int lag100Count = 0
 	
@@ -288,15 +283,22 @@ transient unit Network
 	collectStatistics
 		if mode == Connected and Input.users.length > 1 and frame > joinFrame + 30
 			ahead = frame - receivedFrames
-			aheads.add ahead, maxLength:aheadsLength
-			aheadMax = aheads.percentile(percentile)
-			aheadsMax.add aheadMax maxLength:30
-			bufferFrames = Math.round(aheadsMax.average * aheadFactor) limit max:30
+			
+			if sendInterval == 1
+				aheads.add ahead, maxLength:200
+				aheadMax = aheads.percentile(80)
+				aheadsMax.add aheadMax maxLength:600
+				int actualBufferFrames = Math.round(aheadsMax.average * 1.5) limit max:30
+				
+				// We only update bufferFrames if the new value is more than 2 away from the current value
+				if Math.abs(actualBufferFrames - bufferFrames) >= 2: bufferFrames = actualBufferFrames
+			else
+				aheads.add ahead, maxLength:200
+				aheadMax = aheads.percentile(50)
+				aheadsMax.add aheadMax maxLength:30
+				bufferFrames = Math.round(aheadsMax.average * 2.0) limit max:30
+			
 			Input.localUser.bufferFrames = bufferFrames
-			// We only update bufferFrames if the new value is more than 2 away from the current value
-			// int actualBufferFrames = Math.round(aheadsMax.average * aheadFactor)
-			// if Math.abs(actualBufferFrames - bufferFrames) >= minChange
-			// 	localPlayer.bufferFrames = bufferFrames = actualBufferFrames
 			
 			let prevIsLag100 = isLag100
 			isLag100 = ahead > 100
