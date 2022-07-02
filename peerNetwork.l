@@ -8,28 +8,29 @@ transient class IceMessage
 	object iceCandidate
 	
 enum VideoShape: Rectangle, Square, Circle
+enum RelayMode: Never, Auto, Always
 
 transient unit PeerNetwork
+	RelayMode relayMode = Auto
+	
 	internal enableVideo = true
 	internal enableAudio = true
-	internal allowRelay = true
 	
 	visible string connectionType
 	visible string error
 	
 	private js object setupPeerConnection: InternalUser user, bool offerByMe
 		let options = {
-			// Set the ice transport policy to "relay" to test a turn server
-			// iceTransportPolicy: "relay",
-			iceTransportPolicy: "all",
+			// We use the ice transport policy "relay" to test our turn server
+			iceTransportPolicy: PeerNetwork_relayMode == 2 ? "relay" : "all",
 			iceServers: [],
 			// iceCandidatePoolSize: 10,
 		}
-		if(PeerNetwork_allowRelay) {
+		if(PeerNetwork_relayMode > 0) {
 			options.iceServers.push({
 				urls: 'turn:81.169.197.127',
-				username: 'app',
-				credential: 'cyancircle'
+				username: 'play-user-x8env28gx41odbxzwjyut2hx82jyzdk7qm6d-ok',
+				credential: '9y4vm5vxj3uyqvc8wkyzrm26ygebxutkd52bymr8zsmy6qa8-ok'
 			});
 		}
 		options.iceServers.push({
@@ -40,7 +41,7 @@ transient unit PeerNetwork
 		});
 		let peerConnection = PeerNetwork_peerConnection = new RTCPeerConnection(options);
 		let connectionId = user.connectionId
-		Network_log("setupPeerConnection userId:"+user.id+" connectionId:"+connectionId+" allowRelay:"+PeerNetwork_allowRelay)
+		Network_log("setupPeerConnection userId:"+user.id+" connectionId:"+connectionId+" relayMode:"+PeerNetwork_relayMode)
 		
 		// Event handlers
 		peerConnection.oniceconnectionstatechange = e => {
