@@ -2,6 +2,7 @@ enum PlatformMode: Pause, Pointer, Slide, Play, Record
 enum ScaleMode: Auto, FixedWidth, FixedHeight, None
 enum AnchorMode: TopLeft, TopCenter, Center
 enum OperatingSystem: Windows, Mac, Linux, Android, iOS
+enum TickMode: Interval, AnimationFrame
 
 // Basic platform functionality
 // Screen space
@@ -20,6 +21,7 @@ transient unit Platform
 	public bool showSafeArea = true
 	public bool showDebugInfo = false
 	public bool isLocal = false
+	public TickMode tickMode = Interval
 	
 	public inline js string url := location.href
 	public inline js int version := version
@@ -156,7 +158,19 @@ transient unit Platform
 	object interval
 	private js void startInterval
 		if(Platform_interval) clearInterval(Platform_interval)
-		Platform_interval = setInterval(() => Platform_tick(), 1000/Network_targetFps)
+		if(window.tick) return
+			
+		if(Platform_tickMode == 0) {
+			Network_log("TickMode: Interval")
+			Platform_interval = setInterval(() => Platform_tick(), 1000/Network_targetFps)
+		} else {
+			Network_log("TickMode: Animation Frame")
+			window.tick = function() {
+				Platform_tick();
+				window.requestAnimationFrame(window.tick);
+			}
+			window.tick();
+		}
 	
 	// This is called every animation frame
 	private tick()   if mode == Play or mode == Record: Network.animationFrame
