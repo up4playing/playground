@@ -201,6 +201,9 @@ transient unit PeerNetwork
 			return 0
 		}
 		
+	// private js void onMessage: InternalUser user, Buffer buffer
+	// 	setTimeout(() => PeerNetwork_onMessageDo(user, buffer), 1000)
+		
 	private onMessage: InternalUser user, Buffer buffer
 		NetworkMessageType type = cast buffer.readInt8
 		if type == Tick:         onTick user, buffer; else
