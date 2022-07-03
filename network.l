@@ -383,8 +383,8 @@ transient unit Network
 			// Save a snapshot when we are about to start the frame after the last certain frame where we got all inputs
 			saveState
 			
-			// Update gamepads
-			Input.updateGamePads
+			// Update game controllers
+			Input.updateGameControllers
 			
 			// Parse inputs
 			Input.parseInputs(frame, isCertain)

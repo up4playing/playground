@@ -56,10 +56,16 @@ class NetworkUser
 	string textInput
 	bool enableTouch = true
 	bool isReady
-	Key[] mapKeyToController = Platform.os == Mac ?  [Right, Down, Left, Up, Space, LeftMetaKey, Alt, Ctrl] : [Right, Down, Left, Up, Space, Alt, LeftMetaKey, Ctrl]
+	Key[] mapKeyToController = [Right, Down, Left, Up, Space, X, Alt, Ctrl]
 	int[] controllerKeyDownFrame = [0, 0, 0, 0, 0, 0]
 	
 	internal int[] connectedTo
+	
+	NetworkUser
+		controller.a.name = "SPACE"
+		controller.b.name = "X"
+		controller.x.name = "ALT"
+		controller.y.name = "CTRL"
 
 	internal clearEvents
 		bool hasToch = touches.any.type == Touch
@@ -212,10 +218,14 @@ enum Key
 class DigitalButton
 	bool state, prevState
 	bool down := state and not prevState
-	bool up   := not state and prevState 
+	bool up   := not state and prevState
+	string name
+	
 	internal startFrame
 		prevState = state
 		state = false
+	
+enum GameControllerType: Keyboard, Xbox, PlayStation
 	
 class GameController
 	static deadZone = .1
@@ -227,6 +237,7 @@ class GameController
 	DigitalButton x = {}
 	DigitalButton y = {}
 	bool inMotion
+	GameControllerType type
 	
 	internal startFrame
 		leftStick.x = 0
@@ -245,6 +256,7 @@ class InternetGamePadButton
 class InternetGamePad
 	float[] axes
 	InternetGamePadButton[] buttons
+	string id
 	
 // A collection of methods to receive user input
 unit Input
@@ -479,23 +491,44 @@ unit Input
 		
 	private inline js InternetGamePad[] getGamepads() navigator.getGamepads()
 	
-	updateGamePads
+	internal updateGameControllers
 		let gamepads = getGamepads
 		if gamepads and gamepads[0] and gamepads[0].axes.length >= 2
 			let gp = gamepads[0]
+			let isPlayStation = gp.id.contains("54c") or gp.id.contains("810")
+			
+			// Controller axis
 			let axes = gp.axes
 			let leftStickX = axes[0]
 			let leftStickY = axes[1]
+			
+			// Controller buttons
+			let buttons = (gp.buttons[ 0].pressed ?     1:0)
+			            + (gp.buttons[ 1].pressed ?     2:0)
+			            + (gp.buttons[ 2].pressed ?     4:0)
+			            + (gp.buttons[ 3].pressed ?     8:0)
+			
+			            + (gp.buttons[ 4].pressed ?    16:0)
+			            + (gp.buttons[ 5].pressed ?    32:0)
+			            + (gp.buttons[ 8].pressed ?    64:0)
+			            + (gp.buttons[ 9].pressed ?   128:0)
+			
+			            + (gp.buttons[10].pressed ?   256:0)
+			            + (gp.buttons[11].pressed ?   512:0)
+			            + (gp.buttons[12].pressed ?  1024:0)
+			            + (gp.buttons[13].pressed ?  2048:0)
+			
+			            + (gp.buttons[14].pressed ?  4096:0)
+			            + (gp.buttons[15].pressed ?  8192:0)
+			            + (isPlayStation          ? 16384:0)
+			
+			// Write to event stream
 			let inputs = localUser.inputs
-			let buttons = (gp.buttons[0].pressed ? 1:0)
-			            + (gp.buttons[1].pressed ? 2:0)
-			            + (gp.buttons[2].pressed ? 4:0)
-			            + (gp.buttons[3].pressed ? 8:0)
 			inputs.writeInt32 localUser.inputFrame
 			inputs.writeInt16 cast InputType.GameController
-			inputs.writeFloat64 abs(leftStickX) > GameController.deadZone ? leftStickX : 0
-			inputs.writeFloat64 abs(leftStickY) > GameController.deadZone ? leftStickY : 0
-			inputs.writeUnsignedInt8 buttons
+			inputs.writeFloat32 abs(leftStickX) > GameController.deadZone ? leftStickX : 0
+			inputs.writeFloat32 abs(leftStickY) > GameController.deadZone ? leftStickY : 0
+			inputs.writeUnsignedInt16 buttons
 			
 	internal parseInputs(int frame, bool isCertain)
 		this.isCertain = isCertain
@@ -610,13 +643,32 @@ unit Input
 					internalUser.navigations.add inputs.readString
 				else
 				if inputType == GameController
-					user.controller.leftStick.x = inputs.readFloat64
-					user.controller.leftStick.y = inputs.readFloat64
-					let buttons = inputs.readUnsignedInt
-					user.controller.a.state = (buttons bitwiseAnd 1) != 0
-					user.controller.b.state = (buttons bitwiseAnd 2) != 0
-					user.controller.x.state = (buttons bitwiseAnd 4) != 0
-					user.controller.y.state = (buttons bitwiseAnd 8) != 0
+					GameController c = user.controller
+					
+					// Controller axix
+					c.leftStick.x = inputs.readFloat32
+					c.leftStick.y = inputs.readFloat32
+					
+					// Controller buttons
+					let buttons = inputs.readUnsignedInt16
+					c.a.state = (buttons bitwiseAnd 1) != 0
+					c.b.state = (buttons bitwiseAnd 2) != 0
+					c.x.state = (buttons bitwiseAnd 4) != 0
+					c.y.state = (buttons bitwiseAnd 8) != 0
+					c.type = (buttons bitwiseAnd 16384) != 0 ? PlayStation : Xbox
+					
+					// Controller button names
+					if c.type == Xbox
+						c.a.name = "A"
+						c.b.name = "B"
+						c.x.name = "X"
+						c.y.name = "Y"
+					else
+						c.a.name = "X"
+						c.b.name = "O"
+						c.x.name = "SQUARE"
+						c.y.name = "TRIANGLE"
+						
 				else
 				if inputType == Join
 					// Read when users the joining user is connected to
