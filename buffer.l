@@ -228,6 +228,12 @@ transient struct Buffer
 		this.dataView.setInt32(this.writePos, value)
 		this.writePos += 4
 	
+	js void writeFloat32: float value
+		if(this.writePos+4 > this.buffer.byteLength)
+			this.expandBuffer(this.writePos+4)
+		this.dataView.setFloat32(this.writePos, value)
+		this.writePos += 4
+		
 	js void writeFloat64: float value
 		if(this.writePos+8 > this.buffer.byteLength)
 			this.expandBuffer(this.writePos+8)
@@ -303,6 +309,11 @@ transient struct Buffer
 		this.readPos += 4
 		return value
 
+	js float readFloat32
+		let value = this.dataView.getFloat32(this.readPos)
+		this.readPos += 4
+		return value
+		
 	js float readFloat64
 		let value = this.dataView.getFloat64(this.readPos)
 		this.readPos += 8
