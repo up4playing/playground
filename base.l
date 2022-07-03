@@ -391,6 +391,14 @@ class List<T>
 		int index = indexOf(currentItem)
 		return this.get((index+1)%length)
 		
+	T next: T currentItem
+		    bool(T item) where
+		int baseIndex = indexOf(currentItem)
+		for this.length
+			let item = this.get((baseIndex+i+1)%length)
+			if(where(item)) return item
+		return null
+		
 	T prev: T currentItem
 		int index = indexOf(currentItem)
 		return index != -1 ? this.get((index-1)%length) : this.get(length-1)
