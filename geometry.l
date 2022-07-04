@@ -555,10 +555,10 @@ class Direction
 	global const Direction Left  = {"Left",  2, {-1, 0}, 180°, 150°} // negative x direction (-1,0)
 	global const Direction Up    = {"Up",    3,  {0,-1}, 270°, 210°} // negative y direction (0,-1)
 	
-	const Direction UpRight   = {"UpRight",   1, { 1,-1}, 315°} // positive x, negative y direction (1,-1)
-	const Direction DownRight = {"DownRight", 3, { 1, 1},  45°} // positive x, positive y direction (1,1)
-	const Direction DownLeft  = {"DownLeft",  2, {-1, 1}, 135°} // negative x, positive y direction (-1,1)
-	const Direction UpLeft    = {"UpLeft",    0, {-1,-1}, 225°} // negative x, negative y direction (-1,-1)
+	const Direction DownRight = {"DownRight", 0, { 1, 1},  45°} // positive x, positive y direction (1,1)
+	const Direction DownLeft  = {"DownLeft",  1, {-1, 1}, 135°} // negative x, positive y direction (-1,1)
+	const Direction UpLeft    = {"UpLeft",    2, {-1,-1}, 225°} // negative x, negative y direction (-1,-1)
+	const Direction UpRight   = {"UpRight",   3, { 1,-1}, 315°} // positive x, negative y direction (1,-1)
 	
 	// List of the four primary direction: Right, Down, Left, Up
 	const Direction[] allFourDirections = [Right, Down, Left, Up]
@@ -567,7 +567,7 @@ class Direction
 	const Direction[] allEightDirections = [Right, DownRight, Down, DownLeft, Left, UpLeft, Up, UpRight]
 	
 	// List of the four diagonals: UpLeft, UpRight, DownLeft, DownRight
-	const Direction[] allDiagonals = [UpRight, DownRight, DownLeft, UpLeft]
+	const Direction[] allDiagonals = [DownRight, DownLeft, UpLeft, UpRight]
 
 	string name
 	int index
@@ -622,6 +622,8 @@ class Line
 			
 		// Return a object with the x and y coordinates of the intersection
 		return new Vector2(x1 + ua * (x2 - x1), y1 + ua * (y2 - y1))
+		
+	toString := "{start.x.format(fractionDigits:2)} {start.y.format(fractionDigits:2)} -> {end.x.format(fractionDigits:2)} {end.y.format(fractionDigits:2)}"
 
 class Rect
 	Vector2 position, size

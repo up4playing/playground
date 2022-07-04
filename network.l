@@ -57,7 +57,7 @@ transient unit Snapshot
 			autoSaveAtEndOfStep = false
 	
 transient unit Network
-	int sendInterval = 3
+	int sendInterval = 1
 	int smoothStrength = 90
 	bool smoothTouchPosition = true
 	bool simulateConnection = true
@@ -229,7 +229,6 @@ transient unit Network
 		
 		if frame < targetFrame
 			animationStartFrame = frame
-			Input.updateGamePads
 			
 			try
 				sendInputs targetFrame-1
@@ -269,16 +268,11 @@ transient unit Network
 	private float now               // The time at the beginning of animationFrame
 	
 	// Logs
-	string logTable = "frame,ahead,receivedFrames,frameMinusBuffer,certainFrame,sendInterval,id,frame,buffer,id,frame,buffer,id,frame,buffer,messageSize,now,animTime,networkTime,tickTime,drawTime,iteration,restoreTime,replayFrames,replayTime,saveTime,pingPong,checksums,events,send,receive,write,parse,touch\n"
+	string logTable = "frame,ahead,receivedFrames,frameMinusBuffer,certainFrame,sendInterval,id,frame,buffer,id,frame,buffer,id,frame,buffer,messageSize,now,animTime,networkTime,tickTime,drawTime,iteration,restoreTime,replayFrames,replayTime,saveTime,pingPong,checksums,events,controller,send,receive,write,parse,touch\n"
 	public string eventLog = ""; sentLog = "", receivedLog="", writeLog="", parseLog = "", touchLog = "", checksumLog = ""
 	private float lastNetworkFrame, lastAnimationFrame, drawTime, tickTime, restoreTime, replayTime, saveTime
 	private int replayFrames
 	int tickMessageSize
-	
-	const aheadsLength = 200
-	const percentile = 50
-	const aheadFactor = 2.0
-	const minChange = 1
 	
 	bool isLag100 = false
 	int lag100Count = 0
@@ -289,15 +283,22 @@ transient unit Network
 	collectStatistics
 		if mode == Connected and Input.users.length > 1 and frame > joinFrame + 30
 			ahead = frame - receivedFrames
-			aheads.add ahead, maxLength:aheadsLength
-			aheadMax = aheads.percentile(percentile)
-			aheadsMax.add aheadMax maxLength:30
-			bufferFrames = Math.round(aheadsMax.average * aheadFactor) limit max:30
+			
+			if sendInterval == 1
+				aheads.add ahead, maxLength:200
+				aheadMax = aheads.percentile(80)
+				aheadsMax.add aheadMax maxLength:600
+				int actualBufferFrames = ceil(aheadsMax.average * 1.25) limit max:30
+				
+				// We only update bufferFrames if the new value is smaller or at least 2 larger
+				if actualBufferFrames < bufferFrames or actualBufferFrames > bufferFrames+1: bufferFrames = actualBufferFrames
+			else
+				aheads.add ahead, maxLength:200
+				aheadMax = aheads.percentile(50)
+				aheadsMax.add aheadMax maxLength:30
+				bufferFrames = Math.round(aheadsMax.average * 2.0) limit max:30
+			
 			Input.localUser.bufferFrames = bufferFrames
-			// We only update bufferFrames if the new value is more than 2 away from the current value
-			// int actualBufferFrames = Math.round(aheadsMax.average * aheadFactor)
-			// if Math.abs(actualBufferFrames - bufferFrames) >= minChange
-			// 	localPlayer.bufferFrames = bufferFrames = actualBufferFrames
 			
 			let prevIsLag100 = isLag100
 			isLag100 = ahead > 100
@@ -325,7 +326,7 @@ transient unit Network
 				
 			logTable += ",{tickMessageSize},{now},{now - lastAnimationFrame},{now - lastNetworkFrame},{tickTime.format(fractionDigits:2)},{drawTime.format(fractionDigits:2)},{frame-animationStartFrame}"
 			logTable += ",{restoreTime.format(fractionDigits:2)},{replayFrames},{replayTime.format(fractionDigits:2)},{saveTime.format(fractionDigits:2)},{ServerNetwork.lastPingPongTime}"
-			logTable += ",\"{checksumLog.trim}\",\"{eventLog.trim}\",\"{sentLog.trim}\",\"{receivedLog.trim}\",\"{writeLog.trim}\",\"{parseLog.trim}\",\"{touchLog.trim}\"\n"
+			logTable += ",\"{checksumLog.trim}\",\"{eventLog.trim}\",\"{Input.users[0]?.controller?.leftStick}\",\"{sentLog.trim}\",\"{receivedLog.trim}\",\"{writeLog.trim}\",\"{parseLog.trim}\",\"{touchLog.trim}\"\n"
 		catch
 			onError error
 			
@@ -382,6 +383,9 @@ transient unit Network
 			// Save a snapshot when we are about to start the frame after the last certain frame where we got all inputs
 			saveState
 			
+			// Update game controllers
+			Input.updateGameControllers
+			
 			// Parse inputs
 			Input.parseInputs(frame, isCertain)
 			
@@ -428,7 +432,7 @@ transient unit Network
 		if draw
 			let isPlayback = Platform.mode == Play or frame+1 < frames
 			if Input.showPointers or isPlayback
-				Input.users.each drawPointer .id, showLocalPointer:isPlayback
+				Input.users.each drawPointer .id, showLocalPointer:isPlayback or Input.showLocalPointer
 		audio.startFrame
 		
 		try
@@ -448,7 +452,7 @@ transient unit Network
 				if errorMessage
 					drawText errorMessage, statisticsGraph.position+{statisticsGraph.size.x/2, -statisticsGraph.size.y/2-15}, align:Right, layer:1000001, size:12, color:{"ffff00"}
 				else
-					drawText "v{Platform.version} {lag100Count}-{lag200Count} #{frame} {sendInterval}{sendInputsMode==Peer ? "p" : "s"} {aheadsLength} {PeerNetwork.connectionType}{statisticsGraph.maxValue}", statisticsGraph.position+{statisticsGraph.size.x/2, -statisticsGraph.size.y/2-15}, align:Right, layer:1000001, size:12
+					drawText "v{Platform.version} {lag100Count}-{lag200Count} #{frame} {sendInterval}{sendInputsMode==Peer ? "p" : "s"} {PeerNetwork.connectionType}{statisticsGraph.maxValue}", statisticsGraph.position+{statisticsGraph.size.x/2, -statisticsGraph.size.y/2-12}, align:Right, layer:1000001, size:14
 			drawTime = Time.measure
 				graphics.finishFrame
 		audio.finishFrame
@@ -648,8 +652,8 @@ class StatisticsGraphSeries
 	float lastValue := values.length > 0 ? values[values.length-1] : 0
 	
 transient unit statisticsGraph
-	Vector2 position = {0, 450}
-	Vector2 size = {880, 180}
+	Vector2 position = {500, 450}
+	Vector2 size = {390, 180}
 	
 	private StatisticsGraphSeries[] series
 	float maxValue
@@ -672,7 +676,7 @@ transient unit statisticsGraph
 			
 		Vector2 startPos = position + size/2
 		Vector2 labelPos = position - size/2 - {0,13}
-		for series -> s
+		for series -> s, seriesIndex
 			string text = cast .lastValue
 			drawRectangle labelPos, {8,8}, fillColor:.color, align:Left, layer:1000000
 			drawText text, labelPos+{11, -2}, align:Left, layer:1000000, size:12
@@ -682,7 +686,7 @@ transient unit statisticsGraph
 			float prevY = 0
 			for len
 				let value = s.values[len-1-i]
-				Vector2 pos = {startPos.x - i, startPos.y - value/maxValue*size.y}
+				Vector2 pos = {startPos.x - i, startPos.y - value/maxValue*size.y + seriesIndex*3}
 				if i: drawRectangle pos, size:{4, prevY-pos.y+4}, fillColor:s.color, layer:1000000, valign:Top
 				prevY = pos.y
 				

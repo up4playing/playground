@@ -6,7 +6,7 @@ class Color
 	global const Color Yellow  = {"ffd166"}
 	global const Color Green   = {"06d6a0"}
 	global const Color Blue    = {"118ab2"}
-	global const Color Gray    = {"073b4c"}
+	global const Color Gray    = {"3d3d3d"}
 	global const Color TransparentRed   = {"ff000080"}
 	string hex
 	
@@ -757,11 +757,11 @@ transient global unit graphics
 			))
 		}
 		
-	const Color[] defaultUserColors = [{"398CA9"},{"C01352"},{"FFD166"},{"16C66E"}]
+	const Color[] defaultColors = [{"398CA9"},{"C01352"},{"16C66E"},{"FFD166"}]
 	setUserColor: int userId
 		          Color color = null
 		let user = Input.usersById[userId]
-			user.color = color || defaultUserColors[user.index]
+			user.color = color || defaultColors[user.index]
 		
 	global drawPointer: int userId
 		                Color color = null
