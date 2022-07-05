@@ -258,7 +258,7 @@ class List<T>
 		if(this.length > maxLength) this.splice(0, 1)
 			
 	inline js void insert: T item // The item to add
-		                   int index
+		                   index = 0
 		this.splice(index, 0, item)
 		
 	// Removes an item from the list
@@ -791,6 +791,9 @@ class List<T>
 			if !predicate(.)
 				count++
 		return count
+		
+	rotate
+		insert pop
 		
 // A data container that stores key-value pairs
 js Map
