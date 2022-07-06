@@ -281,13 +281,13 @@ transient unit Network
 	int lag200Count = 0
 	
 	collectStatistics
-		if mode == Connected and Input.users.length > 1 and frame > joinFrame + 30
+		if mode == Connected and Input.users.length > 1 and frame > joinFrame + 120
 			ahead = frame - receivedFrames
 			
 			if sendInterval == 1
-				aheads.add ahead, maxLength:200
-				aheadMax = aheads.percentile(80)
-				aheadsMax.add aheadMax maxLength:600
+				aheads.add ahead, maxLength:400
+				aheadMax = aheads.percentile(50)
+				aheadsMax.add aheadMax maxLength:400
 				int actualBufferFrames = ceil(aheadsMax.average * 1.25) limit max:30
 				
 				// We only update bufferFrames if the new value is smaller or at least 2 larger
