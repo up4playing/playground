@@ -676,7 +676,7 @@ class List<T>
 		
 	withMin: int(T a) selector
 		     int threshold = int.maxValue
-		     bool(T a) where
+		     label bool(T a) where
 		int resultValue = threshold
 		T resultItem
 		for this
@@ -689,7 +689,7 @@ class List<T>
 		
 	withMin: float(T a) selector
 		     float threshold = float.maxValue
-		     bool(T a) where
+		     label bool(T a) where
 		float resultValue = threshold
 		T resultItem
 		for this
