@@ -36,7 +36,7 @@ unit Framework
 			
 	getBoardAt: Vector2 pos
 		for Framework.objects -> object
-			if object.type == Board
+			if object is Board
 				Board b = cast object
 				if pos >= b.position - b.size/2 && pos < b.position + b.size/2
 					return b
@@ -244,6 +244,7 @@ Object Piece
 	private Vector2 touchOffset
 	private bool isBeingMoved
 	private Object overStackable
+	private Vector2 snappedAt = Vector2.none
 	
 	// Rotate
 	private Touch rotateTouch
@@ -251,7 +252,7 @@ Object Piece
 	private float targetAngle
 	private bool rotatedOverThreshold
 	
-	visible Vector2 size
+	public Vector2 size
 	public Board board, nextBoard
 	private int interactingUserId
 	
@@ -259,9 +260,10 @@ Object Piece
 	onBoardChanged
 	
 	Piece
-		size = image ? image.size : {}
-		if size.x < minSize: size.x = minSize
-		if size.y < minSize: size.y = minSize
+		if image
+			size = image.size
+			if size.x < minSize: size.x = minSize
+			if size.y < minSize: size.y = minSize
 		this.targetAngle = angle
 		this.nextBoard = board
 		
@@ -282,10 +284,7 @@ Object Piece
 				Network.smooth moveTouch.userId
 					position = touch.position + touchOffset
 					if touch.position - touch.startPosition > 8: isBeingMoved = true
-					if board
-						let closestSpotPos = board.getSpotAt touch.position, threshold:size * scale, currentObject:this
-						if closestSpotPos
-							position = closestSpotPos
+					if board: board.snap this, touch.position
 					checkBoardsWhileMoving touch
 								
 			Input.onTouchUp moveTouch
@@ -296,7 +295,7 @@ Object Piece
 		Vector2 iconPos = rotatable ? {(image.size.x+image.size.y)/3.5, (image.size.x+image.size.y)/3.5} : image.size/2
 		if Framework.selectedObjects.contains(this) && rotatable
 			if !rotateTouch || !rotatedOverThreshold
-				drawButton rotateIcon, position:position+iconPos*{1,-1}*scale, touchMargin:{50,50}
+				drawButton rotateIcon, position:position+iconPos*{1,-1}*scale, touchMargin:{50,50}, layer:10000
 					rotateTouch = touch
 					rotateOffset = angle - Math.getAngleForVector(touch.position - position)
 					rotatedOverThreshold = false
@@ -319,7 +318,10 @@ Object Piece
 		
 		Network.smooth interactingUserId
 			if angle != targetAngle: angle = Math.moveTowards(angle, targetAngle, .2)
-			
+		
+		draw
+				
+	draw
 		// Draw
 		if image
 			if side == Front || !backImage: drawImage image, position, frame:frame%image.frames.length, scale, angle
@@ -410,9 +412,6 @@ Piece Board
 	bool panable
 	bool zoomable
 	
-	private Spot[] spots
-	private Spot overSpot
-	
 	private Touch panTouch
 	private Matrix2D downMatrix
 	
@@ -422,8 +421,6 @@ Piece Board
 		1,1.001,1.0020009999999997,1.0030030009999997,1.0040060040009995,1.0050100100050003,1.0060150200150053,1.0070210350350202,1.0080280560700552,1.009036084126125,1.0100451202102512,1.0110551653304611,1.0120662204957915,1.0130782867162873,1.0140913650030035,1.0151054563680064,1.0161205618243743,1.0171366823861985,1.0181538190685846,1.0191719728876532,
 		1.0201911448605405,1.021211336005401,1.0222325473414062,1.0232547798887477,1.0242780346686362,1.0253023127033047,1.0263276150160079,1.0273539426310239,1.0283812965736547,1.0294096778702282,1.0304390875480984,1.0314695266356464,1.032500996162282,1.033533497158444,1.0345670306556025,1.0356015976862578,1.036637199283944,1.0376738364832279,1.038711510319711,1.0397502218300305
 	]
-	Board: Vector2 size
-		this.size = size
 		
 	debugString
 		string children
@@ -439,9 +436,6 @@ Piece Board
 		objects.add object
 		object.board = object.nextBoard = this
 		Framework.objects.remove object
-		
-	addSpot: Spot spot
-		spots.add spot
 		
 	isVisibleFor: int userId
 		return visibleForOthers == Always or visibleForOthers == On or owner == userId
@@ -467,7 +461,7 @@ Piece Board
 		// Zoom
 		if zoomable	
 			Input.onWheelWithin position, size
-				float factor = zoomLookupTable[Math.limit event.delta+40 min:0 max:zoomLookupTable.length-1]
+				float factor = zoomLookupTable[Math.limit event.delta+40, min:0, max:zoomLookupTable.length-1]
 				Network.touchLog += "[{Network.frame}] zoom value:{event.delta} factor:{factor} matrix:{matrix}"
 				matrix.move event.position
 				matrix.scale {factor, factor}
@@ -485,8 +479,42 @@ Piece Board
 			
 	update
 		objects.each.update
+		
+	snap: Object currentObject, Vector2 position
+		
+Board SmartBoard
+	Grid<Piece> grid = {{8, 8}}
+	Vector2 cellSize = {150, 150}
+
+	Vector2[] getValidPositions: Piece currentObject
+		return []
 			
-	getSpotAt: Vector2 position, Vector2 threshold, Object currentObject
+	snap: Piece currentObject, Vector2 position
+		Vector2 closestSpotPos = Vector2.none
+		float minDistance = int.maxValue
+		let positions = getValidPositions currentObject
+		
+		let snapToPosition = (positions.withMin (. - position).length, cellSize.length) or Vector2.none
+			currentObject.position = snapToPosition
+			
+		if snapToPosition != currentObject.snappedAt
+			if currentObject.snappedAt
+				grid.set (currentObject.snappedAt/cellSize).rounded, null
+				
+			if snapToPosition
+				grid.set (snapToPosition/cellSize).rounded, currentObject
+				
+			currentObject.snappedAt = snapToPosition
+		
+Board SpotBoard
+	threshold = 100
+	private Spot[] spots
+	private Spot overSpot
+	
+	addSpot: Spot spot
+		spots.add spot
+	
+	snap: Object currentObject, Vector2 position
 		Vector2 closestSpotPos = Vector2.none
 		float minDistance = int.maxValue
 		for spots -> spot
@@ -498,7 +526,9 @@ Piece Board
 				closestSpotPos = spotPos
 				while objects.find.position == closestSpotPos and . != currentObject
 					closestSpotPos += {6,10}
-		return closestSpotPos
+					
+		if closestSpotPos
+			currentObject.position = closestSpotPos
 		
 class Spot
 	Vector2 pos

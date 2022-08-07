@@ -626,7 +626,20 @@ class Line
 	toString := "{start.x.format(fractionDigits:2)} {start.y.format(fractionDigits:2)} -> {end.x.format(fractionDigits:2)} {end.y.format(fractionDigits:2)}"
 
 class Rect
-	Vector2 position, sizeglobal transient unit System
+	Vector2 position, size
+	
+class Grid<T>
+	IntVector2 size
+	T[] items
+	
+	get: IntVector2 pos
+		return items[pos.y*size.x + pos.x]
+	
+	set: IntVector2 pos
+		 T value
+		items[pos.y*size.x + pos.x] = value
+			
+global transient unit System
 	global inline js void for: IntVector2 subject    // The exclusive upper bound to iterate towards
 		                       -> void(
 		                           IntVector2 pos, // The current position of the vector we are iterating over with the for-loop
@@ -642,3 +655,20 @@ class Rect
 		                           int y           // The y component of the current position we are iterating over with the for-loop
 		                       ) do           // Do this the given number of times
 		for(let _size=subject, y=_size.y-1; y>=0; --y) for(let x=_size.x-1; x>=0; --x) { let pos = new IntVector2(x,y); do()}
+			
+	global inline js void for: Grid<T> subject    // The grid to iterate over
+		                       -> void(
+		                           T it,      // The current item of the list we are iterating over with the for-loop
+		                           IntVector2 pos,
+		                           int i      // The index of the current item of the list we are iterating over with the for-loop
+		                       ) do           // Do this for each item in a list
+		for(let i=0, _subject=subject.items, _len=_subject.length; i<_len; ++i) { let it = _subject[i]; if(it) { let pos = new IntVector2(i%subject.size.x, Math.floor(i/subject.size.x)); do()}}
+			
+	global inline js void for: Grid<T> subject    // The grid to iterate over
+		                       includeEmpty = false
+		                       -> void(
+		                           T it,      // The current item of the list we are iterating over with the for-loop
+		                           IntVector2 pos,
+		                           int i      // The index of the current item of the list we are iterating over with the for-loop
+		                       ) do           // Do this for each item in a list
+		for(let _size=subject.size, y=0, _items=subject.items; y<_size.y; ++y) for(let x=0; x<_size.x; ++x) { let it = _items[y*_size.x + x]; let pos = new IntVector2(x,y); do()}
