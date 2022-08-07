@@ -1266,7 +1266,7 @@ global unit Math
 		}
 
 	// Generates a random integer
-	js int randomInteger: int max // The exclusive upper bound of the random integer to generate
+	global js int randomInteger: int max // The exclusive upper bound of the random integer to generate
 		let f = Math_randomGenerator()
 		let i = Math.floor(f * max)
 		// Log random numbers for testing
@@ -1274,7 +1274,7 @@ global unit Math
 		return i
 	
 	// Generates a random float
-	inline js int randomFloat
+	global inline js int randomFloat
 		Math_randomGenerator()
 	
 	float operator °(float angle) return angle*PI/180
