@@ -626,4 +626,19 @@ class Line
 	toString := "{start.x.format(fractionDigits:2)} {start.y.format(fractionDigits:2)} -> {end.x.format(fractionDigits:2)} {end.y.format(fractionDigits:2)}"
 
 class Rect
-	Vector2 position, size
+	Vector2 position, sizeglobal transient unit System
+	global inline js void for: IntVector2 subject    // The exclusive upper bound to iterate towards
+		                       -> void(
+		                           IntVector2 pos, // The current position of the vector we are iterating over with the for-loop
+		                           int x,          // The x component of the current position we are iterating over with the for-loop
+		                           int y           // The y component of the current position we are iterating over with the for-loop
+		                       ) do           // Do this the given number of times
+		for(let _size=subject, y=0; y<_size.y; ++y) for(let x=0; x<_size.x; ++x) { let pos = new IntVector2(x,y); do()}
+			
+	global inline js void for: IntVector2 subject    // The exclusive upper bound to iterate towards
+		                       <- void(
+		                           IntVector2 pos, // The current position of the vector we are iterating over with the for-loop
+		                           int x,          // The x component of the current position we are iterating over with the for-loop
+		                           int y           // The y component of the current position we are iterating over with the for-loop
+		                       ) do           // Do this the given number of times
+		for(let _size=subject, y=_size.y-1; y>=0; --y) for(let x=_size.x-1; x>=0; --x) { let pos = new IntVector2(x,y); do()}
