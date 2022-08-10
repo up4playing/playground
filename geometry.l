@@ -7,6 +7,9 @@ struct Vector2
 	// Used to specify that the vector is not set or invalid
 	const Vector2 none = new Vector2(float.infinity, float.infinity)
 	
+	// {0,0}
+	const Vector2 zero = {0,0}
+		
 	// A string representation of the vector
 	string toString := "({x} {y})"
 	
@@ -228,6 +231,9 @@ struct IntVector2
 	
 	// Used to specify that the vector is not set or invalid
 	const IntVector2 none = new IntVector2(int.minValue, int.minValue)
+		
+	// {0,0}
+	const IntVector2 zero = {0,0}
 	
 	// Creates a copy of the vector with the same values
 	IntVector2 clone := IntVector2(x, y)

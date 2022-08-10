@@ -243,7 +243,6 @@ Object Piece
 	private Vector2 touchOffset
 	private bool isBeingMoved
 	private Object overStackable
-	private Vector2 snappedAt = Vector2.none
 	
 	// Rotate
 	private Touch rotateTouch
@@ -260,6 +259,12 @@ Object Piece
 	
 	private siblings := board ? board.objects : Framework.objects
 	onBoardChanged
+		
+	// Snap
+	private Vector2 snappedAt = Vector2.none
+	onSnap
+	onUnsnap
+	onRotate
 	
 	Piece
 		if image
@@ -507,12 +512,15 @@ Board SmartBoard
 			
 		if snapToPosition != currentObject.snappedAt
 			if currentObject.snappedAt
-				grid.set (currentObject.snappedAt/cellSize).rounded, null
-				
-			if snapToPosition
-				grid.set (snapToPosition/cellSize).rounded, currentObject
+				grid[(currentObject.snappedAt/cellSize).rounded] = null
+				currentObject.onUnsnap
 				
 			currentObject.snappedAt = snapToPosition
+				
+			if snapToPosition
+				grid[(snapToPosition/cellSize).rounded] = currentObject
+				currentObject.onUnsnap
+				
 		
 Board SpotBoard
 	threshold = 100
