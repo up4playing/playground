@@ -251,6 +251,9 @@ Object Piece
 	private float targetAngle
 	private bool rotatedOverThreshold
 	
+	Vector2 iconPos = Vector2.none
+	Vector2 touchMargin = {50,50}
+	
 	public Vector2 size
 	public Board board, nextBoard
 	private int interactingUserId
@@ -271,9 +274,29 @@ Object Piece
 	checksum := position.x + position.y + frame + scale + angle + cast side
 		
 	tick
+		// Rotate	
+		Vector2 iconPos = this.iconPos or (rotatable ? {(image.size.x+image.size.y)/3.5, (image.size.x+image.size.y)/3.5}*{1,-1} : image.size/2*{1,-1})
+		if rotatable and Framework.selectedObjects.contains(this)
+			Input.onTouchDownWithin position:position+iconPos*scale, size:Image.rotateIcon.size+touchMargin, userId:visibleFor
+				rotateTouch = touch
+				rotateOffset = angle - Math.getAngleForVector(touch.position - position)
+				rotatedOverThreshold = false
+				
+			Input.onTouchMove rotateTouch
+				Network.smooth touch.userId
+					angle = targetAngle = Math.getAngleForVector(touch.position - position) + rotateOffset
+				if (touch.position - touch.startPosition).length > 16: rotatedOverThreshold = true
+				
+			Input.onTouchUp rotateTouch
+				targetAngle = Math.round(angle / (Math.PI/2)) * Math.PI/2
+				rotateTouch = null
+				if !rotatedOverThreshold: targetAngle += Math.PI/2
+				interactingUserId = touch.userId
+				if angle == targetAngle: onRotate
+		
 		// Move
 		if movable
-			Input.onTouchDownWithin position, size * scale, angle
+			Input.onTouchDownWithin position, size * scale, angle, visibleFor
 				moveTouch = touch
 				touchOffset = position - touch.position
 				siblings.moveToBack this
@@ -290,38 +313,24 @@ Object Piece
 				Framework.selectedObjects[touch.userId] = this
 				moveTouch = null
 		
-		// Rotate	
-		Vector2 iconPos = rotatable ? {(image.size.x+image.size.y)/3.5, (image.size.x+image.size.y)/3.5} : image.size/2
-		if Framework.selectedObjects.contains(this) && rotatable
-			if !rotateTouch || !rotatedOverThreshold
-				drawButton rotateIcon, position:position+iconPos*{1,-1}*scale, touchMargin:{50,50}, layer:10000
-					rotateTouch = touch
-					rotateOffset = angle - Math.getAngleForVector(touch.position - position)
-					rotatedOverThreshold = false
-				
-			Input.onTouchMove rotateTouch
-				Network.smooth touch.userId
-					angle = targetAngle = Math.getAngleForVector(touch.position - position) + rotateOffset
-				if (touch.position - touch.startPosition).length > 16: rotatedOverThreshold = true
-				
-			Input.onTouchUp rotateTouch
-				targetAngle = Math.round(angle / (Math.PI/2)) * Math.PI/2
-				rotateTouch = null
-				if !rotatedOverThreshold: targetAngle += Math.PI/2
-				interactingUserId = touch.userId
-		
 		// Flip	
 		if Framework.selectedObjects.contains(this) && flipable
 			drawButton flipIcon, position:position+iconPos*{-1,1}*scale, touchMargin:{50,50}
 				side = side == Back ? Front : Back
 		
-		Network.smooth interactingUserId
-			if angle != targetAngle: angle = Math.moveTowards(angle, targetAngle, .2)
+		// Animate rotation
+		if angle != targetAngle
+			Network.smooth interactingUserId
+				angle = Math.moveTowards(angle, targetAngle, .2)
+				if angle == targetAngle: onRotate
+		
+		// Draw rotation icon
+		if rotatable and Framework.selectedObjects.contains(this) and not (rotateTouch and rotatedOverThreshold)
+			drawImage rotateIcon, position:position+iconPos*{1,-1}*scale, layer:10000
 		
 		draw
 				
 	draw
-		// Draw
 		if image
 			if side == Front || !backImage: drawImage image, position, frame:frame%image.frames.length, scale, angle
 			else                            drawImage backImage, position, frame:frame%backImage.frames.length, scale, angle
