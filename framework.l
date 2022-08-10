@@ -80,7 +80,7 @@ class Object
 	Vector2 position
 	float scale = 1
 	float alpha = 1
-	int visibleFor = -1
+	int[] visibleFor
 	int layer = 0
 	bool locked
 	
@@ -213,8 +213,7 @@ Object Button
     touchMargin = Vector2(16,16)     // The margin around the button within which it is touchable
     textOffset = Vector2(0,-2)
     showTouchArea = false            // Show the area within which the button is touchable
-    visibleFor = -1                  // Only this user will see the button
-    clickableBy = -1                 // Only this user can click the button
+    int[] clickableBy                // Only this user can click the button
     implicit layer = 0               // Higher layers are drawn in front of lower layers
     alpha = 1.0                      // The opacity of the button 0: fully transpart, 1: fully visible)
 	Key hotkey
