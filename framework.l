@@ -747,21 +747,38 @@ Object Menu
 		if(window.app_start) window.app_startGame(false);
 	
 	tick
+		bool doNotClose
 		if active
 			forCentered items, center:popupPosition, delta:{0,60} -> item
-				drawImage .image, pos+{-120}, layer:int.maxValue
 				drawText .label, pos+{-60}, size:30, align:Left, layer:int.maxValue
-				Input.onTouchDownWithin pos, size:{500,60}, do:item.onClick(.)
+				if item.type == Button
+					drawImage .image, pos+{-120}, layer:int.maxValue
+					Input.onTouchDownWithin pos, size:{500,60}, do:item.onClick(true, touch)
+				else
+				if item.type == Check
+					drawImage Checkbox, pos+{-120}, layer:int.maxValue, frame:item.value ? 1 : 0
+					Input.onTouchDownWithin pos, size:{500,60}
+						item.value = !item.value
+						item.onClick(item.value, touch)
+						doNotClose = true
+					
 			drawRectangle popupPosition, outlineColor:White, fillColor:Black, size:{500,60+items.length*60}, outlineWidth:3, layer:int.maxValue
 			drawRectangle size:{1920,1080}, fillColor:overlayColor, layer:int.maxValue
-			Input.onTouchDownAny
-				active = false
+			
+			if not doNotClose
+				Input.onTouchDownAny
+					active = false
 				
 		drawImage Menu, position
 			active = true
-			
+		
+enum MenuItemType: Button, Check, Radio
+		
 class MenuItem
 	Image image
 	string label
-	void(Touch touch) onClick
+	bool value
+	MenuItemType type = Button
+	void(bool value, Touch touch) onClick
+
 
