@@ -795,6 +795,19 @@ class List<T>
 	rotate
 		insert pop
 		
+	js T[] intersectWith: T[] other
+		const a = this || []
+		const b = other || []
+		const result = [];
+		const map = {};
+		for (let i = 0, length = b.length; i < length; ++i) {
+			map[b[i]] = true;
+		}
+		for (let i = 0, length = a.length; i < length; ++i) {
+			if (a[i] in map) result.push(a[i]);
+		}
+		return result;
+		
 // A data container that stores key-value pairs
 js Map
 class Map<T>
