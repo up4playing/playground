@@ -421,7 +421,7 @@ Piece Board
 	Object[] objects
 	Matrix2D matrix
 	Color color
-	BoardVisiblity visibleForOthers = Always
+	BoardVisiblity contentVisibleForOthers = Always
 	int owner
 	bool panable
 	bool zoomable
@@ -442,7 +442,7 @@ Piece Board
 		return "(Board pos:{position.x} {position.y} children:{children})"
 		
 	checksum
-		let result = position.x + position.y + cast(visibleForOthers) + matrix.m0 + matrix.m1 + matrix.m2 + matrix.m3 + matrix.m4 + matrix.m5
+		let result = position.x + position.y + cast(contentVisibleForOthers) + matrix.m0 + matrix.m1 + matrix.m2 + matrix.m3 + matrix.m4 + matrix.m5
 		for objects: result += .checksum
 		return result
 		
@@ -452,11 +452,11 @@ Piece Board
 		Framework.objects.remove object
 		
 	isVisibleFor: int userId
-		return visibleForOthers == Always or visibleForOthers == On or owner == userId
+		return contentVisibleForOthers == Always or contentVisibleForOthers == On or owner == userId
 		
 	tick
 		// Children
-		graphics.visibleFor visibleForOthers == Never or visibleForOthers == Off ? owner : -1
+		graphics.visibleFor contentVisibleForOthers == Never or contentVisibleForOthers == Off ? owner : -1
 			graphics.applyMatrix matrix
 				objects.each <- .tick
 		
@@ -483,10 +483,10 @@ Piece Board
 				Network.touchLog += " -> {matrix}"
 			
 		// Visiblity icon
-		if visibleForOthers == On or visibleForOthers == Off
-			Image icon =  visibleForOthers == On ? visibleIcon : hiddenIcon
+		if contentVisibleForOthers == On or contentVisibleForOthers == Off
+			Image icon =  contentVisibleForOthers == On ? visibleIcon : hiddenIcon
 			drawButton icon, position:position+{size.x/2-32, -size.y/2+32}, clickableBy:owner
-				visibleForOthers = visibleForOthers == On ? Off : On
+				contentVisibleForOthers = contentVisibleForOthers == On ? Off : On
 				
 		if color: drawRectangle position, size, fillColor:color, layer:-1
 		if image: drawImage image, position, scale
