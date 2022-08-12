@@ -584,7 +584,7 @@ transient global unit graphics
 		                     int[] visibleFor                   // Only this user will see the image
 		                     implicit layer = 0                 // Higher layers are drawn in front of lower layers
 		                     alpha = 1.0                        // The opacity of the text (0: fully transpart, 1: fully visible)
-		if(graphics_isVisibleFor(visibleFor)) {
+		if(graphics_isVisibleFor2(visibleFor)) {
 			let contextFont = (style ? "bold ":"")+(size || graphics_currentFontSize)+"px "+(font || graphics_currentFont).name;
 			Platform_context.font = contextFont
 			let textSize = Platform_context.measureText(text)
@@ -976,8 +976,45 @@ transient global unit graphics
 				
 	global drawVideo: int userId
 		              Vector2 position = {}
+		              Vector2 size = {440, 330}
+		              int[] visibleFor          // Only clear the rectangle for this user
+		              implicit layer = 0        // Higher layers are process after lower layers
+		if isVisibleFor(visibleFor)
+			if not size.y: size.y = size.x * 3/4
+			if Network.mode == Local or !PeerNetwork.enableVideo
+				NetworkUser user = Input.usersById[userId]
+				drawImage VideoScreen, position, scale:size.x/440, frame:0, layer:1000000
+			else
+				items.add DisplayVideo(
+					m: totalMatrix,
+					x: position.x, y: position.y,
+					w: size.x,     h: size.y,
+					layer, alpha:1.0, currentClippingPath, "Video",
+					userId, radius:0
+				)
+				
+	global drawVideo: int userId
+		              Vector2 position = {}
 		              float radius = 440
-		              visibleFor = -1      // Only clear the rectangle for this user
+		              visibleFor = -1      
+		              implicit layer = 0   // Higher layers are process after lower layers
+		if isVisibleFor(visibleFor)
+			if Network.mode == Local or !PeerNetwork.enableVideo
+				NetworkUser user = Input.usersById[userId]
+				drawImage VideoScreen, position, scale:radius/220, frame:1, layer:1000000
+			else
+				items.add DisplayVideo(
+					m: totalMatrix,
+					x: position.x, y: position.y,
+					w: radius*2,   h: radius*2,
+					layer, alpha:1.0, currentClippingPath, "Video",
+					userId, radius
+				)
+				
+	global drawVideo: int userId
+		              Vector2 position = {}
+		              float radius = 440
+		              int[] visibleFor     
 		              implicit layer = 0   // Higher layers are process after lower layers
 		if isVisibleFor(visibleFor)
 			if Network.mode == Local or !PeerNetwork.enableVideo

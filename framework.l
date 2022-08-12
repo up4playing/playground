@@ -31,14 +31,15 @@ unit Framework
 			toBeRemoved.clear
 		
 	isVisibleFor: Vector2 pos, int userId
-		let board = getBoardAt pos
+		let board = getBoardAt pos, userId
 		return !board or board.isVisibleFor userId
 			
-	getBoardAt: Vector2 pos
+	getBoardAt: Vector2 pos, int userId
 		for Framework.objects -> object
 			if object is Board
 				Board b = cast object
-				if pos >= b.position - b.size/2 && pos < b.position + b.size/2
+				if (b.visibleFor == null or b.visibleFor contains userId)
+				and pos >= b.position - b.size/2 and pos < b.position + b.size/2
 					return b
 		return null
 		
@@ -261,7 +262,7 @@ Object Piece
 	onBoardChanged
 		
 	// Snap
-	private Vector2 snappedAt = Vector2.none
+	visible Vector2 snappedAt = Vector2.none
 	onSnap
 	onUnsnap
 	onRotate
@@ -331,7 +332,7 @@ Object Piece
 		
 		// Draw rotation icon
 		if rotatable and Framework.selectedObjects.contains(this) and not (rotateTouch and rotatedOverThreshold)
-			drawImage rotateIcon, position:position+iconPos*{1,-1}*scale, layer:10000
+			drawImage rotateIcon, position:position+iconPos*{1,-1}*scale, layer:10000, visibleFor
 		
 		draw
 				
@@ -343,7 +344,7 @@ Object Piece
 	private checkBoardsWhileMoving: Touch touch
 		Vector2 pos = position
 		if board: pos = position * board.matrix
-		nextBoard = Framework.getBoardAt pos
+		nextBoard = Framework.getBoardAt pos, touch.userId
 		
 	update
 		if nextBoard != board
@@ -461,7 +462,7 @@ Piece Board
 		
 		// Pan
 		if panable	
-			Input.onTouchDownWithin position, size
+			Input.onTouchDownWithin position, size, visibleFor
 				panTouch = touch
 				downMatrix = matrix
 			Input.onTouchMove panTouch
@@ -473,7 +474,7 @@ Piece Board
 				
 		// Zoom
 		if zoomable	
-			Input.onWheelWithin position, size
+			Input.onWheelWithin position, size, visibleFor
 				float factor = zoomLookupTable[Math.limit event.delta+40, min:0, max:zoomLookupTable.length-1]
 				Network.touchLog += "[{Network.frame}] zoom value:{event.delta} factor:{factor} matrix:{matrix}"
 				matrix.move event.position
@@ -519,7 +520,7 @@ Board SmartBoard
 				
 			if snapToPosition
 				grid[(snapToPosition/cellSize).rounded] = currentObject
-				currentObject.onUnsnap
+				currentObject.onSnap
 				
 		
 Board SpotBoard

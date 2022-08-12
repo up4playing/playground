@@ -796,7 +796,7 @@ unit Input
 			userId = null
 			
 		for users -> user
-			if not userId or userId contains .id
+			if userId contains .id
 				for internalUsers[user.id].downTouches -> touch
 					if !touch.handled and (user.enableTouch or touch.type != Touch)
 					and touch.referencePosition.isInsidePoygon(poly)
@@ -866,7 +866,7 @@ unit Input
 			userId = null
 			
 		for users -> user
-			if not userId or userId contains .id
+			if userId contains .id
 				for internalUsers[user.id].downTouches -> touch
 					if !touch.handled and (user.enableTouch or touch.type != Touch)
 					and touch.referencePosition.isInsidePoygon(poly)
@@ -993,7 +993,7 @@ unit Input
 		if not (Network.mode == Connected || Network.simulateConnection)
 			userId = null
 		for internalUsers -> user
-			if not userId or userId.contains(.id)
+			if userId.contains(.id)
 				for user.upTouches -> touch
 					if !touch.handled && touch.referencePosition.isInsidePoygon(poly)
 						log "up", touch.referencePosition
@@ -1194,6 +1194,30 @@ unit Input
 						if markAsHandled: event.markAsHandled
 		if showTouchArea: drawRectangle position, size, Red
 			
+	onWheelWithin: Vector2 position            // The center of the rectangle
+		           Vector2 size                // The size of the rectangle
+		           int[] userId               // Only consider wheel movments from this user
+		           bool showTouchArea = false  // Draw a red rectangle to visualize that area to touch
+		           bool markAsHandled = true   // Mark the touch as handled so it won't trigger more touch events
+		           void(WheelEvent event) do   // Do this for each mouse wheel movement
+		Vector2[] poly = [
+			{ position.x-size.x/2, position.y-size.y/2 }.transform(graphics.localMatrix),
+			{ position.x+size.x/2, position.y-size.y/2 }.transform(graphics.localMatrix),
+			{ position.x+size.x/2, position.y+size.y/2 }.transform(graphics.localMatrix),
+			{ position.x-size.x/2, position.y+size.y/2 }.transform(graphics.localMatrix),
+		]
+		if not (Network.mode == Connected || Network.simulateConnection)
+			userId = null
+
+		for internalUsers -> user
+			if userId contains .id
+				for user.wheelEvents -> event
+					if !event.handled && event.referencePosition.isInsidePoygon(poly)
+						log "wheel", event.referencePosition
+						do event
+						if markAsHandled: event.markAsHandled
+		if showTouchArea: drawRectangle position, size, Red
+			
 	bool isTextInputActive = false
 	
 	private js object getOrCreateInputField
@@ -1272,7 +1296,7 @@ unit Input
 		if not (Network.mode == Connected || Network.simulateConnection)
 			userId = null
 		for internalUsers -> user
-			if not userId or userId.contains(.id)
+			if userId.contains(.id)
 				for user.downKeys
 					if . == key
 						do key, user.id
