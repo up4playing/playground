@@ -250,9 +250,10 @@ unit Input
 				let index = key - "0"
 				if(e.altKey)         { Network_save(index); e.preventDefault(); } else
 				if(e.ctrlKey)        { Network_restore(index); e.preventDefault(); } else
-				if(Platform_isDebug) { 
-					if(Input_isTextInputActive)
-						Input_startTextInput("", -1);
+				if(Platform_isDebug) {
+					// Disabled, because on mobile show keyboard is shown every time you switch tabs
+					// if(Input_isTextInputActive)
+					// 	Input_startTextInput("", -1);
 					Network_switchUser(index-1);
 					e.preventDefault();
 				}
