@@ -1308,8 +1308,8 @@ int Time
 	// The current frame
 	static inline js int frame := Network_frame
 	
-	inline js Time toInt() this
-	inline js Time toString() this.toString()
+	inline js int toInt() this
+	inline js string toString() this.toString()
 		
 	// Returns true if the integer is not zero
 	inline js bool toBool := this
