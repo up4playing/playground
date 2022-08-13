@@ -7,6 +7,9 @@ struct Vector2
 	// Used to specify that the vector is not set or invalid
 	const Vector2 none = new Vector2(float.infinity, float.infinity)
 	
+	// {0,0}
+	const Vector2 zero = {0,0}
+		
 	// A string representation of the vector
 	string toString := "({x} {y})"
 	
@@ -132,9 +135,17 @@ struct Vector2
 	angleTo: Vector2 value // The second vector
 		return Math.getAngleForVector(value - this)
 
-	// Interpolates linearly to another vector
+	// Interpolates to another vector
 	interpolateTo: Vector2 target  // The target vector to interpolate to
 		           float value    // The interpolation value, 0 returns the original vector, 1 returns the target vector
+		let ivalue = 1 - value
+		return new Vector2(x * ivalue + target.x * value, y * ivalue + target.y * value)
+
+	// Interpolates to another vector
+	interpolateTo: Vector2 target  // The target vector to interpolate to
+		           float value    // The interpolation value, 0 returns the original vector, 1 returns the target vector
+		           EaseFunction ease
+		value = ease.function(value)
 		let ivalue = 1 - value
 		return new Vector2(x * ivalue + target.x * value, y * ivalue + target.y * value)
 
@@ -145,10 +156,10 @@ struct Vector2
 	
 	// Moves the vector towards the given target by the given distance	
 	moveTowards: Vector2 targetPosition // The target to move towards
-		         float distance = 1    // The distance to move by
+		         float speed = 1        // The distance to move by
 		let delta = targetPosition - this
 		if delta.x != 0 || delta.y != 0
-			delta = delta.normalized * distance
+			delta = delta.normalized * speed
 			if delta.x > 0: x = Math.min(x + delta.x, targetPosition.x)
 			else            x = Math.max(x + delta.x, targetPosition.x)
 			if delta.y > 0: y = Math.min(y + delta.y, targetPosition.y)
@@ -220,6 +231,9 @@ struct IntVector2
 	
 	// Used to specify that the vector is not set or invalid
 	const IntVector2 none = new IntVector2(int.minValue, int.minValue)
+		
+	// {0,0}
+	const IntVector2 zero = {0,0}
 	
 	// Creates a copy of the vector with the same values
 	IntVector2 clone := IntVector2(x, y)
@@ -443,6 +457,27 @@ unit Math
 		new Vector2(Math.cos(angle)*radius, Math.sin(angle)*radius)
 	
 global transient unit System
+	global inline js void forPosition: T[] subject  // The list to iterate over
+		                               Vector2 start = {0,0}
+		                               Vector2 delta = {100,0}
+		                               -> void(
+		                                   T it,    // The current item of the list we are iterating over with forCentered
+		                                   Vector2 pos,
+		                                   int i    // The index of the current item of the list we are iterating over with forCentered
+		                               ) do         // Do this for each item in a list
+		for(let i=0, _subject=subject, _start = start, _delta = delta, _len=_subject.length, _x = _start.x, _y= _start.y; i<_len; ++i, _x += _delta.x, _y += _delta.y) { let it = _subject[i], pos = new Vector2(_x, _y, _start.location || _delta.location ? new SourceCodeLocation(0, 0, null, _start.location, _delta.location) : null); do()}
+
+	global inline js void forPosition: T[] subject  // The list to iterate over
+		                               Vector2 start = {0,0}
+		                               Vector2 delta = {100,0}
+		                               float width
+		                               -> void(
+		                                   T it,    // The current item of the list we are iterating over with forCentered
+		                                   Vector2 pos,
+		                                   int i    // The index of the current item of the list we are iterating over with forCentered
+		                               ) do         // Do this for each item in a list
+		for(let i=0, _subject=subject, _start = start, _delta = delta, _width = width, _len=_subject.length, _x = _start.x, _y= _start.y; i<_len; ++i, _x += _delta.x) { if(_x >= _start.x+_width) {_x = _start.x; _y += _delta.y} let it = _subject[i], pos = new Vector2(_x, _y, _start.location || _delta.location ? new SourceCodeLocation(0, 0, null, _start.location, _delta.location) : null); do()}
+
 	global inline js void forCentered: T[] subject  // The list to iterate over
 		                               Vector2 center = {0,0}
 		                               Vector2 delta = {100,0}
@@ -450,7 +485,7 @@ global transient unit System
 		                                   T it,    // The current item of the list we are iterating over with forCentered
 		                                   Vector2 pos,
 		                                   int i    // The index of the current item of the list we are iterating over with forCentered
-		                               ) do         // The code to execute for each item in a list
+		                               ) do         // Do this for each item in a list
 		for(let i=0, _subject=subject, _center = center, _delta = delta, _len=_subject.length, _x = _center.x-(_len-1)*_delta.x/2, _y=_center.y-(_len-1)*_delta.y/2; i<_len; ++i, _x += _delta.x, _y += _delta.y) { let it = _subject[i], pos = new Vector2(_x, _y, _center.location || _delta.location ? new SourceCodeLocation(0, 0, null, _center.location, _delta.location) : null); do()}
 
 	global inline js void forCentered: int subject  // The list to iterate over
@@ -460,7 +495,7 @@ global transient unit System
 		                                   T it,    // The current item of the list we are iterating over with forCentered
 		                                   Vector2 pos,
 		                                   int i    // The index of the current item of the list we are iterating over with forCentered
-		                               ) do         // The code to execute for each item in a list
+		                               ) do         // Do this for each item in a list
 		for(let i=0, _center = center, _delta = delta, _len=subject, _x = _center.x-(_len-1)*_delta.x/2, _y=_center.y-(_len-1)*_delta.y/2; i<_len; ++i, _x += _delta.x, _y += _delta.y) { let pos = new Vector2(_x, _y, _center.location || _delta.location ? new SourceCodeLocation(0, 0, null, _center.location, _delta.location) : null); do()}
 
 // Converts positions within an isomatic grid with the origin in the north
@@ -526,10 +561,10 @@ class Direction
 	global const Direction Left  = {"Left",  2, {-1, 0}, 180°, 150°} // negative x direction (-1,0)
 	global const Direction Up    = {"Up",    3,  {0,-1}, 270°, 210°} // negative y direction (0,-1)
 	
-	const Direction UpRight   = {"UpRight",   1, { 1,-1}, 315°} // positive x, negative y direction (1,-1)
-	const Direction DownRight = {"DownRight", 3, { 1, 1},  45°} // positive x, positive y direction (1,1)
-	const Direction DownLeft  = {"DownLeft",  2, {-1, 1}, 135°} // negative x, positive y direction (-1,1)
-	const Direction UpLeft    = {"UpLeft",    0, {-1,-1}, 225°} // negative x, negative y direction (-1,-1)
+	const Direction DownRight = {"DownRight", 0, { 1, 1},  45°} // positive x, positive y direction (1,1)
+	const Direction DownLeft  = {"DownLeft",  1, {-1, 1}, 135°} // negative x, positive y direction (-1,1)
+	const Direction UpLeft    = {"UpLeft",    2, {-1,-1}, 225°} // negative x, negative y direction (-1,-1)
+	const Direction UpRight   = {"UpRight",   3, { 1,-1}, 315°} // positive x, negative y direction (1,-1)
 	
 	// List of the four primary direction: Right, Down, Left, Up
 	const Direction[] allFourDirections = [Right, Down, Left, Up]
@@ -538,7 +573,7 @@ class Direction
 	const Direction[] allEightDirections = [Right, DownRight, Down, DownLeft, Left, UpLeft, Up, UpRight]
 	
 	// List of the four diagonals: UpLeft, UpRight, DownLeft, DownRight
-	const Direction[] allDiagonals = [UpRight, DownRight, DownLeft, UpLeft]
+	const Direction[] allDiagonals = [DownRight, DownLeft, UpLeft, UpRight]
 
 	string name
 	int index
@@ -560,5 +595,86 @@ class Direction
 	isParallelTo: Direction value
 		return index%2 == value.index%2
 		
+enum LineType: Line, Ray, Segment
 	
+class Line
+	Vector2 start, end
+	LineType type
 	
+	length
+		return type == Segment ? (start distanceTo end) : float.infinity
+	
+	Vector2 intersectionWith: Line other
+		let x1    = start.x,       y1 = start.y
+		let x2    = end.x,         y2 = end.y
+		let typeA = type
+		let x3    = other.start.x, y3 = other.start.y
+		let x4    = other.end.x,   y4 = other.end.y
+		let typeB = other.type
+		
+		// Check if none of the lines are of length 0
+		if (x1 == x2 && y1 == y2) || (x3 == x4 && y3 == y4) return Vector2.none
+
+		// compute line params
+		let denominator = (y4 - y3) * (x2 - x1) - (x4 - x3) * (y2 - y1)
+		if (denominator == 0) return Vector2.none // lines are parallel
+		let ua = ((x4 - x3) * (y1 - y3) - (y4 - y3) * (x1 - x3)) / denominator
+		let ub = ((x2 - x1) * (y1 - y3) - (y2 - y1) * (x1 - x3)) / denominator
+
+		// is the intersection along the segments
+		if (typeA >= Ray && ua < 0) || (typeA == Segment && ua > 1)
+		|| (typeB >= Ray && ub < 0) || (typeB == Segment && ub > 1)
+			return Vector2.none
+			
+		// Return a object with the x and y coordinates of the intersection
+		return new Vector2(x1 + ua * (x2 - x1), y1 + ua * (y2 - y1))
+		
+	toString := "{start.x.format(fractionDigits:2)} {start.y.format(fractionDigits:2)} -> {end.x.format(fractionDigits:2)} {end.y.format(fractionDigits:2)}"
+
+class Rect
+	Vector2 position, size
+	
+class Grid<T>
+	IntVector2 size
+	T[] items
+	
+	get: IntVector2 pos
+		return items[pos.y*size.x + pos.x]
+	
+	set: IntVector2 pos
+		 T value
+		items[pos.y*size.x + pos.x] = value
+			
+global transient unit System
+	global inline js void for: IntVector2 subject    // The exclusive upper bound to iterate towards
+		                       -> void(
+		                           IntVector2 pos, // The current position of the vector we are iterating over with the for-loop
+		                           int x,          // The x component of the current position we are iterating over with the for-loop
+		                           int y           // The y component of the current position we are iterating over with the for-loop
+		                       ) do           // Do this the given number of times
+		for(let _size=subject, y=0; y<_size.y; ++y) for(let x=0; x<_size.x; ++x) { let pos = new IntVector2(x,y); do()}
+			
+	global inline js void for: IntVector2 subject    // The exclusive upper bound to iterate towards
+		                       <- void(
+		                           IntVector2 pos, // The current position of the vector we are iterating over with the for-loop
+		                           int x,          // The x component of the current position we are iterating over with the for-loop
+		                           int y           // The y component of the current position we are iterating over with the for-loop
+		                       ) do           // Do this the given number of times
+		for(let _size=subject, y=_size.y-1; y>=0; --y) for(let x=_size.x-1; x>=0; --x) { let pos = new IntVector2(x,y); do()}
+			
+	global inline js void for: Grid<T> subject    // The grid to iterate over
+		                       -> void(
+		                           T it,      // The current item of the list we are iterating over with the for-loop
+		                           IntVector2 pos,
+		                           int i      // The index of the current item of the list we are iterating over with the for-loop
+		                       ) do           // Do this for each item in a list
+		for(let i=0, _subject=subject.items, _len=_subject.length; i<_len; ++i) { let it = _subject[i]; if(it) { let pos = new IntVector2(i%subject.size.x, Math.floor(i/subject.size.x)); do()}}
+			
+	global inline js void for: Grid<T> subject    // The grid to iterate over
+		                       includeEmpty = false
+		                       -> void(
+		                           T it,      // The current item of the list we are iterating over with the for-loop
+		                           IntVector2 pos,
+		                           int i      // The index of the current item of the list we are iterating over with the for-loop
+		                       ) do           // Do this for each item in a list
+		for(let _size=subject.size, y=0, _items=subject.items; y<_size.y; ++y) for(let x=0; x<_size.x; ++x) { let it = _items[y*_size.x + x]; let pos = new IntVector2(x,y); do()}
