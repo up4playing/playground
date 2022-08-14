@@ -301,23 +301,23 @@ Object Piece
 				if angle == targetAngle: onRotate
 		
 		// Move
-		if movable
-			Input.onTouchDownWithin position, size * scale, angle, visibleFor
+		Input.onTouchDownWithin position, size * scale, angle, visibleFor
+			if movable
 				moveTouch = touch
 				touchOffset = position - touch.position
 				siblings.moveToBack this
 				isBeingMoved = false
-				
-			Input.onTouchMove moveTouch
-				Network.smooth moveTouch.userId
-					position = touch.position + touchOffset
-					if touch.position - touch.startPosition > 8: isBeingMoved = true
-					if board: board.snap this, touch.position
-					checkBoardsWhileMoving touch
-								
-			Input.onTouchUp moveTouch
-				Framework.selectedObjects[touch.userId] = this
-				moveTouch = null
+			
+		Input.onTouchMove moveTouch
+			Network.smooth moveTouch.userId
+				position = touch.position + touchOffset
+				if touch.position - touch.startPosition > 8: isBeingMoved = true
+				if board: board.snap this, touch.position
+				checkBoardsWhileMoving touch
+							
+		Input.onTouchUp moveTouch
+			Framework.selectedObjects[touch.userId] = this
+			moveTouch = null
 		
 		// Flip	
 		if Framework.selectedObjects.contains(this) && flipable
