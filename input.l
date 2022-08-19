@@ -800,7 +800,6 @@ unit Input
 				for internalUsers[user.id].downTouches -> touch
 					if !touch.handled and (user.enableTouch or touch.type != Touch)
 					and touch.referencePosition.isInsidePoygon(poly)
-						log "down", touch.referencePosition
 						do touch
 						if markAsHandled: touch.handled = true
 		if cursor
