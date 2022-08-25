@@ -333,9 +333,10 @@ unit Input
 				let index = key - "0"
 				if(e.altKey)         { Network_save(index); e.preventDefault(); } else
 				if(e.ctrlKey)        { Network_restore(index); e.preventDefault(); } else
-				if(Platform_isDebug) { 
-					if(Input_isTextInputActive)
-						Input_startTextInput("", -1);
+				if(Platform_isDebug) {
+					// Disabled, because on mobile show keyboard is shown every time you switch tabs
+					// if(Input_isTextInputActive)
+					// 	Input_startTextInput("", -1);
 					Network_switchUser(index-1);
 					e.preventDefault();
 				}
@@ -779,6 +780,36 @@ unit Input
 				
 		if showTouchArea: drawRectangle position, size, fillColor:{"ff000080"}
 
+	onTouchDownWithin: Vector2 position           // The center of the touch area
+		               Vector2 size               // The size of a rectangular touch area
+		               int[] userId               // Only consider touches or clicks from this user  
+		               string cursor = ""         // Change the mouse cursor image when hovering over this area
+		               bool showTouchArea = false // Draw a red rectangle to visualize that area to touch
+		               bool markAsHandled = true  // Mark the touch as handled so it won't trigger more touch events
+		               void(Touch touch) do       // Do this for each touch or click
+		Vector2[] poly = [
+			{ position.x-size.x/2, position.y-size.y/2 }.transform(graphics.localMatrix),
+			{ position.x+size.x/2, position.y-size.y/2 }.transform(graphics.localMatrix),
+			{ position.x+size.x/2, position.y+size.y/2 }.transform(graphics.localMatrix),
+			{ position.x-size.x/2, position.y+size.y/2 }.transform(graphics.localMatrix),
+		]
+		if not (Network.mode == Connected || Network.simulateConnection)
+			userId = null
+			
+		for users -> user
+			if userId contains .id
+				for internalUsers[user.id].downTouches -> touch
+					if !touch.handled and (user.enableTouch or touch.type != Touch)
+					and touch.referencePosition.isInsidePoygon(poly)
+						do touch
+						if markAsHandled: touch.handled = true
+		if cursor
+			for localUser.movingTouches -> touch
+				if !touch.handled && touch.referencePosition.isInsidePoygon(poly)
+					this.cursor = cursor
+				
+		if showTouchArea: drawRectangle position, size, fillColor:{"ff000080"}
+
 	// Do something when the user touches or clicks within a given area
 	onTouchDownWithin: Vector2 position           // The center of the touch area
 		               Vector2 size               // The size of a rectangular touch area
@@ -804,6 +835,38 @@ unit Input
 						if markAsHandled: touch.handled = true
 		else
 			for users -> user
+				for internalUsers[user.id].downTouches -> touch
+					if !touch.handled and (user.enableTouch or touch.type != Touch)
+					and touch.referencePosition.isInsidePoygon(poly)
+						log "down", touch.referencePosition
+						do touch
+						if markAsHandled: touch.handled = true
+			if cursor
+				for localUser.movingTouches -> touch
+					if !touch.handled && touch.referencePosition.isInsidePoygon(poly)
+						this.cursor = cursor
+				
+		if showTouchArea: drawRectangle position, size, fillColor:{"ff000080"}
+
+	onTouchDownWithin: Vector2 position           // The center of the touch area
+		               Vector2 size               // The size of a rectangular touch area
+		               float angle                // Rotate the touch area by this angle
+		               int[] userId            // Only consider touches or clicks from this user  
+		               string cursor = ""         // Change the mouse cursor image when hovering over this area
+		               bool showTouchArea = false // Draw a red rectangle to visualize that area to touch
+		               bool markAsHandled = true  // Mark the touch as handled so it won't trigger more touch events
+		               void(Touch touch) do       // Do this for each touch or click
+		Vector2[] poly = [
+			(position + Vector2( -size.x/2, -size.y/2 ).rotate(angle)).transform(graphics.localMatrix),
+			(position + Vector2( +size.x/2, -size.y/2 ).rotate(angle)).transform(graphics.localMatrix),
+			(position + Vector2( +size.x/2, +size.y/2 ).rotate(angle)).transform(graphics.localMatrix),
+			(position + Vector2( -size.x/2, +size.y/2 ).rotate(angle)).transform(graphics.localMatrix),
+		]
+		if not (Network.mode == Connected || Network.simulateConnection)
+			userId = null
+			
+		for users -> user
+			if userId contains .id
 				for internalUsers[user.id].downTouches -> touch
 					if !touch.handled and (user.enableTouch or touch.type != Touch)
 					and touch.referencePosition.isInsidePoygon(poly)
@@ -907,6 +970,30 @@ unit Input
 					Snapshot.autoSave
 		else
 			for internalUsers -> user
+				for user.upTouches -> touch
+					if !touch.handled && touch.referencePosition.isInsidePoygon(poly)
+						log "up", touch.referencePosition
+						do touch
+						if markAsHandled: touch.handled = true
+						Snapshot.autoSave
+		if showTouchArea: drawRectangle position, size, fillColor:{"ff000080"}
+
+	onTouchUpWithin: Vector2 position           // The center of the touch area
+		             Vector2 size               // The size of a rectangular touch area
+		             int[] userId               // Only consider touches or clicks from this user
+		             bool showTouchArea = false // Draw a red rectangle to visualize that area to touch
+		             bool markAsHandled = true  // Mark the touch as handled so it won't trigger more touch events
+		             void(Touch touch) do       // Do this for each touch or click
+		Vector2[] poly = [
+			{ position.x-size.x/2, position.y-size.y/2 }.transform(graphics.localMatrix),
+			{ position.x+size.x/2, position.y-size.y/2 }.transform(graphics.localMatrix),
+			{ position.x+size.x/2, position.y+size.y/2 }.transform(graphics.localMatrix),
+			{ position.x-size.x/2, position.y+size.y/2 }.transform(graphics.localMatrix),
+		]
+		if not (Network.mode == Connected || Network.simulateConnection)
+			userId = null
+		for internalUsers -> user
+			if userId.contains(.id)
 				for user.upTouches -> touch
 					if !touch.handled && touch.referencePosition.isInsidePoygon(poly)
 						log "up", touch.referencePosition
@@ -1107,6 +1194,30 @@ unit Input
 						if markAsHandled: event.markAsHandled
 		if showTouchArea: drawRectangle position, size, Red
 			
+	onWheelWithin: Vector2 position            // The center of the rectangle
+		           Vector2 size                // The size of the rectangle
+		           int[] userId               // Only consider wheel movments from this user
+		           bool showTouchArea = false  // Draw a red rectangle to visualize that area to touch
+		           bool markAsHandled = true   // Mark the touch as handled so it won't trigger more touch events
+		           void(WheelEvent event) do   // Do this for each mouse wheel movement
+		Vector2[] poly = [
+			{ position.x-size.x/2, position.y-size.y/2 }.transform(graphics.localMatrix),
+			{ position.x+size.x/2, position.y-size.y/2 }.transform(graphics.localMatrix),
+			{ position.x+size.x/2, position.y+size.y/2 }.transform(graphics.localMatrix),
+			{ position.x-size.x/2, position.y+size.y/2 }.transform(graphics.localMatrix),
+		]
+		if not (Network.mode == Connected || Network.simulateConnection)
+			userId = null
+
+		for internalUsers -> user
+			if userId contains .id
+				for user.wheelEvents -> event
+					if !event.handled && event.referencePosition.isInsidePoygon(poly)
+						log "wheel", event.referencePosition
+						do event
+						if markAsHandled: event.markAsHandled
+		if showTouchArea: drawRectangle position, size, Red
+			
 	bool isTextInputActive = false
 	
 	private js object getOrCreateInputField
@@ -1165,7 +1276,9 @@ unit Input
 				for user.textInputs -> text
 					do text
 				
-	onKeyDown: Key key, int userId = -1, void(Key key, int keyUserId) do
+	onKeyDown: Key key
+		       int userId = -1
+		       void(Key key, int keyUserId) do
 		if (Network.mode == Connected || Network.simulateConnection) && userId != -1
 			let user = internalUsers[userId]
 			for user.downKeys
@@ -1173,6 +1286,17 @@ unit Input
 					do key, userId
 		else
 			for internalUsers -> user
+				for user.downKeys
+					if . == key
+						do key, user.id
+				
+	onKeyDown: Key key
+		       int[] userId
+		       void(Key key, int keyUserId) do
+		if not (Network.mode == Connected || Network.simulateConnection)
+			userId = null
+		for internalUsers -> user
+			if userId.contains(.id)
 				for user.downKeys
 					if . == key
 						do key, user.id

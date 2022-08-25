@@ -31,14 +31,15 @@ unit Framework
 			toBeRemoved.clear
 		
 	isVisibleFor: Vector2 pos, int userId
-		let board = getBoardAt pos
+		let board = getBoardAt pos, userId
 		return !board or board.isVisibleFor userId
 			
-	getBoardAt: Vector2 pos
+	getBoardAt: Vector2 pos, int userId
 		for Framework.objects -> object
-			if object.type == Board
+			if object is Board
 				Board b = cast object
-				if pos >= b.position - b.size/2 && pos < b.position + b.size/2
+				if (b.visibleFor == null or b.visibleFor contains userId)
+				and pos >= b.position - b.size/2 and pos < b.position + b.size/2
 					return b
 		return null
 		
@@ -80,7 +81,7 @@ class Object
 	Vector2 position
 	float scale = 1
 	float alpha = 1
-	int visibleFor = -1
+	int[] visibleFor
 	int layer = 0
 	bool locked
 	
@@ -213,8 +214,7 @@ Object Button
     touchMargin = Vector2(16,16)     // The margin around the button within which it is touchable
     textOffset = Vector2(0,-2)
     showTouchArea = false            // Show the area within which the button is touchable
-    visibleFor = -1                  // Only this user will see the button
-    clickableBy = -1                 // Only this user can click the button
+    int[] clickableBy                // Only this user can click the button
     implicit layer = 0               // Higher layers are drawn in front of lower layers
     alpha = 1.0                      // The opacity of the button 0: fully transpart, 1: fully visible)
 	Key hotkey
@@ -251,17 +251,27 @@ Object Piece
 	private float targetAngle
 	private bool rotatedOverThreshold
 	
-	visible Vector2 size
+	Vector2 iconPos = Vector2.none
+	Vector2 touchMargin = {50,50}
+	
+	public Vector2 size
 	public Board board, nextBoard
 	private int interactingUserId
 	
 	private siblings := board ? board.objects : Framework.objects
 	onBoardChanged
+		
+	// Snap
+	visible Vector2 snappedAt = Vector2.none
+	onSnap
+	onUnsnap
+	onRotate
 	
 	Piece
-		size = image ? image.size : {}
-		if size.x < minSize: size.x = minSize
-		if size.y < minSize: size.y = minSize
+		if image
+			size = image.size
+			if size.x < minSize: size.x = minSize
+			if size.y < minSize: size.y = minSize
 		this.targetAngle = angle
 		this.nextBoard = board
 		
@@ -270,36 +280,13 @@ Object Piece
 	checksum := position.x + position.y + frame + scale + angle + cast side
 		
 	tick
-		// Move
-		if movable
-			Input.onTouchDownWithin position, size * scale, angle
-				moveTouch = touch
-				touchOffset = position - touch.position
-				siblings.moveToBack this
-				isBeingMoved = false
-				
-			Input.onTouchMove moveTouch
-				Network.smooth moveTouch.userId
-					position = touch.position + touchOffset
-					if touch.position - touch.startPosition > 8: isBeingMoved = true
-					if board
-						let closestSpotPos = board.getSpotAt touch.position, threshold:size * scale, currentObject:this
-						if closestSpotPos
-							position = closestSpotPos
-					checkBoardsWhileMoving touch
-								
-			Input.onTouchUp moveTouch
-				Framework.selectedObjects[touch.userId] = this
-				moveTouch = null
-		
 		// Rotate	
-		Vector2 iconPos = rotatable ? {(image.size.x+image.size.y)/3.5, (image.size.x+image.size.y)/3.5} : image.size/2
-		if Framework.selectedObjects.contains(this) && rotatable
-			if !rotateTouch || !rotatedOverThreshold
-				drawButton rotateIcon, position:position+iconPos*{1,-1}*scale, touchMargin:{50,50}
-					rotateTouch = touch
-					rotateOffset = angle - Math.getAngleForVector(touch.position - position)
-					rotatedOverThreshold = false
+		Vector2 iconPos = this.iconPos or (rotatable ? {(image.size.x+image.size.y)/3.5, (image.size.x+image.size.y)/3.5}*{1,-1} : image.size/2*{1,-1})
+		if rotatable and Framework.selectedObjects.contains(this)
+			Input.onTouchDownWithin position:position+iconPos*scale, size:Image.rotateIcon.size+touchMargin, userId:visibleFor
+				rotateTouch = touch
+				rotateOffset = angle - Math.getAngleForVector(touch.position - position)
+				rotatedOverThreshold = false
 				
 			Input.onTouchMove rotateTouch
 				Network.smooth touch.userId
@@ -311,16 +298,45 @@ Object Piece
 				rotateTouch = null
 				if !rotatedOverThreshold: targetAngle += Math.PI/2
 				interactingUserId = touch.userId
+				if angle == targetAngle: onRotate
+		
+		// Move
+		Input.onTouchDownWithin position, size * scale, angle, visibleFor
+			if movable
+				moveTouch = touch
+				touchOffset = position - touch.position
+				siblings.moveToBack this
+				isBeingMoved = false
+			
+		Input.onTouchMove moveTouch
+			Network.smooth moveTouch.userId
+				position = touch.position + touchOffset
+				if touch.position - touch.startPosition > 8: isBeingMoved = true
+				if board: board.snap this, touch.position
+				checkBoardsWhileMoving touch
+							
+		Input.onTouchUp moveTouch
+			Framework.selectedObjects[touch.userId] = this
+			moveTouch = null
 		
 		// Flip	
 		if Framework.selectedObjects.contains(this) && flipable
 			drawButton flipIcon, position:position+iconPos*{-1,1}*scale, touchMargin:{50,50}
 				side = side == Back ? Front : Back
 		
-		Network.smooth interactingUserId
-			if angle != targetAngle: angle = Math.moveTowards(angle, targetAngle, .2)
-			
-		// Draw
+		// Animate rotation
+		if angle != targetAngle
+			Network.smooth interactingUserId
+				angle = Math.moveTowards(angle, targetAngle, .2)
+				if angle == targetAngle: onRotate
+		
+		// Draw rotation icon
+		if rotatable and Framework.selectedObjects.contains(this) and not (rotateTouch and rotatedOverThreshold)
+			drawImage rotateIcon, position:position+iconPos*{1,-1}*scale, layer:10000, visibleFor
+		
+		draw
+				
+	draw
 		if image
 			if side == Front || !backImage: drawImage image, position, frame:frame%image.frames.length, scale, angle
 			else                            drawImage backImage, position, frame:frame%backImage.frames.length, scale, angle
@@ -328,7 +344,7 @@ Object Piece
 	private checkBoardsWhileMoving: Touch touch
 		Vector2 pos = position
 		if board: pos = position * board.matrix
-		nextBoard = Framework.getBoardAt pos
+		nextBoard = Framework.getBoardAt pos, touch.userId
 		
 	update
 		if nextBoard != board
@@ -405,13 +421,10 @@ Piece Board
 	Object[] objects
 	Matrix2D matrix
 	Color color
-	BoardVisiblity visibleForOthers = Always
+	BoardVisiblity contentVisibleForOthers = Always
 	int owner
 	bool panable
 	bool zoomable
-	
-	private Spot[] spots
-	private Spot overSpot
 	
 	private Touch panTouch
 	private Matrix2D downMatrix
@@ -422,8 +435,6 @@ Piece Board
 		1,1.001,1.0020009999999997,1.0030030009999997,1.0040060040009995,1.0050100100050003,1.0060150200150053,1.0070210350350202,1.0080280560700552,1.009036084126125,1.0100451202102512,1.0110551653304611,1.0120662204957915,1.0130782867162873,1.0140913650030035,1.0151054563680064,1.0161205618243743,1.0171366823861985,1.0181538190685846,1.0191719728876532,
 		1.0201911448605405,1.021211336005401,1.0222325473414062,1.0232547798887477,1.0242780346686362,1.0253023127033047,1.0263276150160079,1.0273539426310239,1.0283812965736547,1.0294096778702282,1.0304390875480984,1.0314695266356464,1.032500996162282,1.033533497158444,1.0345670306556025,1.0356015976862578,1.036637199283944,1.0376738364832279,1.038711510319711,1.0397502218300305
 	]
-	Board: Vector2 size
-		this.size = size
 		
 	debugString
 		string children
@@ -431,7 +442,7 @@ Piece Board
 		return "(Board pos:{position.x} {position.y} children:{children})"
 		
 	checksum
-		let result = position.x + position.y + cast(visibleForOthers) + matrix.m0 + matrix.m1 + matrix.m2 + matrix.m3 + matrix.m4 + matrix.m5
+		let result = position.x + position.y + cast(contentVisibleForOthers) + matrix.m0 + matrix.m1 + matrix.m2 + matrix.m3 + matrix.m4 + matrix.m5
 		for objects: result += .checksum
 		return result
 		
@@ -440,21 +451,18 @@ Piece Board
 		object.board = object.nextBoard = this
 		Framework.objects.remove object
 		
-	addSpot: Spot spot
-		spots.add spot
-		
 	isVisibleFor: int userId
-		return visibleForOthers == Always or visibleForOthers == On or owner == userId
+		return contentVisibleForOthers == Always or contentVisibleForOthers == On or owner == userId
 		
 	tick
 		// Children
-		graphics.visibleFor visibleForOthers == Never or visibleForOthers == Off ? owner : -1
+		graphics.visibleFor contentVisibleForOthers == Never or contentVisibleForOthers == Off ? owner : -1
 			graphics.applyMatrix matrix
 				objects.each <- .tick
 		
 		// Pan
 		if panable	
-			Input.onTouchDownWithin position, size
+			Input.onTouchDownWithin position, size, visibleFor
 				panTouch = touch
 				downMatrix = matrix
 			Input.onTouchMove panTouch
@@ -466,8 +474,8 @@ Piece Board
 				
 		// Zoom
 		if zoomable	
-			Input.onWheelWithin position, size
-				float factor = zoomLookupTable[Math.limit event.delta+40 min:0 max:zoomLookupTable.length-1]
+			Input.onWheelWithin position, size, visibleFor
+				float factor = zoomLookupTable[Math.limit event.delta+40, min:0, max:zoomLookupTable.length-1]
 				Network.touchLog += "[{Network.frame}] zoom value:{event.delta} factor:{factor} matrix:{matrix}"
 				matrix.move event.position
 				matrix.scale {factor, factor}
@@ -475,18 +483,55 @@ Piece Board
 				Network.touchLog += " -> {matrix}"
 			
 		// Visiblity icon
-		if visibleForOthers == On or visibleForOthers == Off
-			Image icon =  visibleForOthers == On ? visibleIcon : hiddenIcon
+		if contentVisibleForOthers == On or contentVisibleForOthers == Off
+			Image icon =  contentVisibleForOthers == On ? visibleIcon : hiddenIcon
 			drawButton icon, position:position+{size.x/2-32, -size.y/2+32}, clickableBy:owner
-				visibleForOthers = visibleForOthers == On ? Off : On
+				contentVisibleForOthers = contentVisibleForOthers == On ? Off : On
 				
 		if color: drawRectangle position, size, fillColor:color, layer:-1
 		if image: drawImage image, position, scale
 			
 	update
 		objects.each.update
+		
+	snap: Object currentObject, Vector2 position
+		
+Board SmartBoard
+	Grid<Piece> grid = {{8, 8}}
+	Vector2 cellSize = {150, 150}
+
+	Vector2[] getValidPositions: Piece currentObject
+		return []
 			
-	getSpotAt: Vector2 position, Vector2 threshold, Object currentObject
+	snap: Piece currentObject, Vector2 position
+		Vector2 closestSpotPos = Vector2.none
+		float minDistance = int.maxValue
+		let positions = getValidPositions currentObject
+		
+		let snapToPosition = (positions.withMin (. - position).length, cellSize.length) or Vector2.none
+			currentObject.position = snapToPosition
+			
+		if snapToPosition != currentObject.snappedAt
+			if currentObject.snappedAt
+				grid[(currentObject.snappedAt/cellSize).rounded] = null
+				currentObject.onUnsnap
+				
+			currentObject.snappedAt = snapToPosition
+				
+			if snapToPosition
+				grid[(snapToPosition/cellSize).rounded] = currentObject
+				currentObject.onSnap
+				
+		
+Board SpotBoard
+	threshold = 100
+	private Spot[] spots
+	private Spot overSpot
+	
+	addSpot: Spot spot
+		spots.add spot
+	
+	snap: Object currentObject, Vector2 position
 		Vector2 closestSpotPos = Vector2.none
 		float minDistance = int.maxValue
 		for spots -> spot
@@ -498,7 +543,9 @@ Piece Board
 				closestSpotPos = spotPos
 				while objects.find.position == closestSpotPos and . != currentObject
 					closestSpotPos += {6,10}
-		return closestSpotPos
+					
+		if closestSpotPos
+			currentObject.position = closestSpotPos
 		
 class Spot
 	Vector2 pos
@@ -701,21 +748,38 @@ Object Menu
 		if(window.app_start) window.app_startGame(false);
 	
 	tick
+		bool doNotClose
 		if active
 			forCentered items, center:popupPosition, delta:{0,60} -> item
-				drawImage .image, pos+{-120}, layer:int.maxValue
 				drawText .label, pos+{-60}, size:30, align:Left, layer:int.maxValue
-				Input.onTouchDownWithin pos, size:{500,60}, do:item.onClick(.)
+				if item.type == Button
+					drawImage .image, pos+{-120}, layer:int.maxValue
+					Input.onTouchDownWithin pos, size:{500,60}, do:item.onClick(true, touch)
+				else
+				if item.type == Check
+					drawImage Checkbox, pos+{-120}, layer:int.maxValue, frame:item.value ? 1 : 0
+					Input.onTouchDownWithin pos, size:{500,60}
+						item.value = !item.value
+						item.onClick(item.value, touch)
+						doNotClose = true
+					
 			drawRectangle popupPosition, outlineColor:White, fillColor:Black, size:{500,60+items.length*60}, outlineWidth:3, layer:int.maxValue
 			drawRectangle size:{1920,1080}, fillColor:overlayColor, layer:int.maxValue
-			Input.onTouchDownAny
-				active = false
+			
+			if not doNotClose
+				Input.onTouchDownAny
+					active = false
 				
 		drawImage Menu, position
 			active = true
-			
+		
+enum MenuItemType: Button, Check, Radio
+		
 class MenuItem
 	Image image
 	string label
-	void(Touch touch) onClick
+	bool value
+	MenuItemType type = Button
+	void(bool value, Touch touch) onClick
+
 

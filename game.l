@@ -161,7 +161,7 @@ class BoxCollider
 			}
  	
 unit game
-	// Finds the shorted path between two position using the astar algorithm
+	// Finds the shortest path between two position using the astar algorithm
 	AStarNode[] findPath: IntVector2 startPos
 		                  IntVector2 endPos
 		                  IntVector2 size

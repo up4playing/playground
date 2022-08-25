@@ -258,7 +258,7 @@ class List<T>
 		if(this.length > maxLength) this.splice(0, 1)
 			
 	inline js void insert: T item // The item to add
-		                   int index
+		                   index = 0
 		this.splice(index, 0, item)
 		
 	// Removes an item from the list
@@ -676,7 +676,7 @@ class List<T>
 		
 	withMin: int(T a) selector
 		     int threshold = int.maxValue
-		     bool(T a) where
+		     label bool(T a) where
 		int resultValue = threshold
 		T resultItem
 		for this
@@ -689,7 +689,7 @@ class List<T>
 		
 	withMin: float(T a) selector
 		     float threshold = float.maxValue
-		     bool(T a) where
+		     label bool(T a) where
 		float resultValue = threshold
 		T resultItem
 		for this
@@ -791,6 +791,22 @@ class List<T>
 			if !predicate(.)
 				count++
 		return count
+		
+	rotate
+		insert pop
+		
+	js T[] intersectWith: T[] other
+		const a = this || []
+		const b = other || []
+		const result = [];
+		const map = {};
+		for (let i = 0, length = b.length; i < length; ++i) {
+			map[b[i]] = true;
+		}
+		for (let i = 0, length = a.length; i < length; ++i) {
+			if (a[i] in map) result.push(a[i]);
+		}
+		return result;
 		
 // A data container that stores key-value pairs
 js Map
@@ -946,22 +962,6 @@ global transient unit System
 		                       ) do           // Do this for each character in the given string
 		for(let _subject=subject, i=_subject.length-1; i>=0; --i) { let it = _subject[i]; do()}
 				
-	global inline js void for: IntVector2 subject    // The exclusive upper bound to iterate towards
-		                       -> void(
-		                           IntVector2 pos, // The current position of the vector we are iterating over with the for-loop
-		                           int x,          // The x component of the current position we are iterating over with the for-loop
-		                           int y           // The y component of the current position we are iterating over with the for-loop
-		                       ) do           // Do this the given number of times
-		for(let _size=subject, y=0; y<_size.y; ++y) for(let x=0; x<_size.x; ++x) { let pos = new IntVector2(x,y); do()}
-			
-	global inline js void for: IntVector2 subject    // The exclusive upper bound to iterate towards
-		                       <- void(
-		                           IntVector2 pos, // The current position of the vector we are iterating over with the for-loop
-		                           int x,          // The x component of the current position we are iterating over with the for-loop
-		                           int y           // The y component of the current position we are iterating over with the for-loop
-		                       ) do           // Do this the given number of times
-		for(let _size=subject, y=_size.y-1; y>=0; --y) for(let x=_size.x-1; x>=0; --x) { let pos = new IntVector2(x,y); do()}
-			
 	// [a,b,c] -> (a, next:b), (b, next:c), (c, next:null)
 	global inline js void forLookAhead: T[] subject    // The list to iterate over
 		                                    -> void(
@@ -1263,7 +1263,7 @@ global unit Math
 		}
 
 	// Generates a random integer
-	js int randomInteger: int max // The exclusive upper bound of the random integer to generate
+	global js int randomInteger: int max // The exclusive upper bound of the random integer to generate
 		let f = Math_randomGenerator()
 		let i = Math.floor(f * max)
 		// Log random numbers for testing
@@ -1271,7 +1271,7 @@ global unit Math
 		return i
 	
 	// Generates a random float
-	inline js int randomFloat
+	global inline js int randomFloat
 		Math_randomGenerator()
 	
 	float operator °(float angle) return angle*PI/180
@@ -1368,8 +1368,8 @@ int Time
 	// The current frame
 	static inline js int frame := Network_frame
 	
-	inline js Time toInt() this
-	inline js Time toString() this.toString()
+	inline js int toInt() this
+	inline js string toString() this.toString()
 		
 	// Returns true if the integer is not zero
 	inline js bool toBool := this

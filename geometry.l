@@ -7,6 +7,9 @@ struct Vector2
 	// Used to specify that the vector is not set or invalid
 	const Vector2 none = new Vector2(float.infinity, float.infinity)
 	
+	// {0,0}
+	const Vector2 zero = {0,0}
+		
 	// A string representation of the vector
 	string toString := "({x} {y})"
 	
@@ -228,6 +231,9 @@ struct IntVector2
 	
 	// Used to specify that the vector is not set or invalid
 	const IntVector2 none = new IntVector2(int.minValue, int.minValue)
+		
+	// {0,0}
+	const IntVector2 zero = {0,0}
 	
 	// Creates a copy of the vector with the same values
 	IntVector2 clone := IntVector2(x, y)
@@ -627,3 +633,48 @@ class Line
 
 class Rect
 	Vector2 position, size
+	
+class Grid<T>
+	IntVector2 size
+	T[] items
+	
+	get: IntVector2 pos
+		return items[pos.y*size.x + pos.x]
+	
+	set: IntVector2 pos
+		 T value
+		items[pos.y*size.x + pos.x] = value
+			
+global transient unit System
+	global inline js void for: IntVector2 subject    // The exclusive upper bound to iterate towards
+		                       -> void(
+		                           IntVector2 pos, // The current position of the vector we are iterating over with the for-loop
+		                           int x,          // The x component of the current position we are iterating over with the for-loop
+		                           int y           // The y component of the current position we are iterating over with the for-loop
+		                       ) do           // Do this the given number of times
+		for(let _size=subject, y=0; y<_size.y; ++y) for(let x=0; x<_size.x; ++x) { let pos = new IntVector2(x,y); do()}
+			
+	global inline js void for: IntVector2 subject    // The exclusive upper bound to iterate towards
+		                       <- void(
+		                           IntVector2 pos, // The current position of the vector we are iterating over with the for-loop
+		                           int x,          // The x component of the current position we are iterating over with the for-loop
+		                           int y           // The y component of the current position we are iterating over with the for-loop
+		                       ) do           // Do this the given number of times
+		for(let _size=subject, y=_size.y-1; y>=0; --y) for(let x=_size.x-1; x>=0; --x) { let pos = new IntVector2(x,y); do()}
+			
+	global inline js void for: Grid<T> subject    // The grid to iterate over
+		                       -> void(
+		                           T it,      // The current item of the list we are iterating over with the for-loop
+		                           IntVector2 pos,
+		                           int i      // The index of the current item of the list we are iterating over with the for-loop
+		                       ) do           // Do this for each item in a list
+		for(let i=0, _subject=subject.items, _len=_subject.length; i<_len; ++i) { let it = _subject[i]; if(it) { let pos = new IntVector2(i%subject.size.x, Math.floor(i/subject.size.x)); do()}}
+			
+	global inline js void for: Grid<T> subject    // The grid to iterate over
+		                       includeEmpty = false
+		                       -> void(
+		                           T it,      // The current item of the list we are iterating over with the for-loop
+		                           IntVector2 pos,
+		                           int i      // The index of the current item of the list we are iterating over with the for-loop
+		                       ) do           // Do this for each item in a list
+		for(let _size=subject.size, y=0, _items=subject.items; y<_size.y; ++y) for(let x=0; x<_size.x; ++x) { let it = _items[y*_size.x + x]; let pos = new IntVector2(x,y); do()}
