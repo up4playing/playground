@@ -653,7 +653,7 @@ class StatisticsGraphSeries
 	
 transient unit statisticsGraph
 	Vector2 position = {500, 450}
-	Vector2 size = {390, 180}
+	Vector2 size = {300, 180}
 	
 	private StatisticsGraphSeries[] series
 	float maxValue
