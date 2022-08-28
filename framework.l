@@ -85,7 +85,7 @@ class Object
 	Vector2 position
 	float scale = 1
 	float alpha = 1
-	int[] visibleFor
+	int[] visibleFor = null
 	int layer = 0
 	bool locked
 	
@@ -492,7 +492,7 @@ Piece Board
 			drawButton icon, position:position+{size.x/2-32, -size.y/2+32}, clickableBy:owner
 				contentVisibleForOthers = contentVisibleForOthers == On ? Off : On
 				
-		if color: drawRectangle position, size, fillColor:color, layer:-1
+		if color: drawRectangle position, size, fillColor:color, layer:-1, visibleFor
 		if image: drawImage image, position, scale
 			
 	update

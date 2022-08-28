@@ -112,7 +112,7 @@ transient global unit graphics
 	internal reset
 		totalMatrix = Platform.baseMatrix
 		localMatrix.clear
-		currentlyVisibleFor = -1
+		currentlyVisibleFor = null
 		items.clear
 
 	internal finishFrame
@@ -133,12 +133,12 @@ transient global unit graphics
 	private isVisibleFor: int visibleFor
 		if(Platform.fastForward) return false
 		if visibleFor != -1: return visibleFor == Input.localUser.id
-		else                 return currentlyVisibleFor == -1 or currentlyVisibleFor == Input.localUser.id
+		else                 return currentlyVisibleFor == null or currentlyVisibleFor.contains(Input.localUser.id)
 			
 	private isVisibleFor: int[] visibleFor
 		if(Platform.fastForward) return false
-		if visibleFor: return visibleFor.indexOf(Input.localUser.id) != -1
-		else           return currentlyVisibleFor == Input.localUser.id
+		let effectiveVisibleFor = visibleFor or currentlyVisibleFor
+		return effectiveVisibleFor == null or visibleFor.contains(Input.localUser.id)
 			
 	internal js void drawSafeArea
 		Platform_context.fillStyle = "#404040"
@@ -350,17 +350,24 @@ transient global unit graphics
 	// The default user for which all draw operations will be visible
 	visibleFor
 		return currentlyVisibleFor
-	visibleFor: int user
-		currentlyVisibleFor = user
-		return currentlyVisibleFor
-	visibleFor: int user
+		
+	visibleFor: int visibleFor
 		        void() code
 		let prev = currentlyVisibleFor
-		currentlyVisibleFor = user
+		currentlyVisibleFor = [visibleFor]
 		code()
 		currentlyVisibleFor = prev
 		return currentlyVisibleFor
-	private currentlyVisibleFor = -1
+		
+	visibleFor: int[] visibleFor
+		        void() code
+		let prev = currentlyVisibleFor
+		currentlyVisibleFor = visibleFor
+		code()
+		currentlyVisibleFor = prev
+		return currentlyVisibleFor
+		
+	private int[] currentlyVisibleFor = null
 		
 	// Returns the width of a string in pixels
 	global js int getTextWidth: string text              // The string to get the width of
@@ -427,14 +434,16 @@ transient global unit graphics
 			
 		// Handle click
 		// Only visible buttons can be clickable
-		let effectiveVisibleFor = visibleFor != -1 ? visibleFor : currentlyVisibleFor
-		if clickableBy == -1 or effectiveVisibleFor == -1 or clickableBy == effectiveVisibleFor
-			let effectiveClickableBy = clickableBy != -1 ? clickableBy : effectiveVisibleFor
-			Input.onTouchDownWithin position, image.size*scale + touchMargin, userId:effectiveClickableBy, showTouchArea
-				onClick touch
-			if hotkey
-				Input.onKeyDown hotkey, userId:effectiveClickableBy
-					onClick null
+		int[] effectiveVisibleBy = visibleFor != -1 ? [visibleFor] : currentlyVisibleFor
+		int[] effectiveClickableBy = (effectiveVisibleBy and clickableBy != -1)
+		                          ? (effectiveVisibleBy.contains(clickableBy) ? [clickableBy] : [])
+		                          : (effectiveVisibleBy or (clickableBy != -1 ? [clickableBy] : null))
+		
+		Input.onTouchDownWithin position, image.size + touchMargin, userId:effectiveClickableBy, showTouchArea
+			onClick touch
+		if hotkey
+			Input.onKeyDown hotkey, userId:effectiveClickableBy
+				onClick null
 		
 	// Draws an image on the screen
 	global js void drawImage: Image image           // The image to draw
@@ -644,15 +653,17 @@ transient global unit graphics
 			
 		// Handle click
 		// Only visible buttons can be clickable
-		let effectiveVisibleFor = visibleFor != -1 ? visibleFor : currentlyVisibleFor
-		if clickableBy == -1 or effectiveVisibleFor == -1 or clickableBy == effectiveVisibleFor
-			let effectiveClickableBy = clickableBy != -1 ? clickableBy : effectiveVisibleFor
-			Vector2 size = image ? image.size*scale : {getTextWidth(text), fontSize}
-			Input.onTouchDownWithin position, size + touchMargin, userId:effectiveClickableBy, showTouchArea
-				onClick touch
-			if hotkey
-				Input.onKeyDown hotkey, userId:effectiveClickableBy
-					onClick null
+		int[] effectiveVisibleBy = visibleFor != -1 ? [visibleFor] : currentlyVisibleFor
+		int[] effectiveClickableBy = (effectiveVisibleBy and clickableBy != -1)
+		                          ? (effectiveVisibleBy.contains(clickableBy) ? [clickableBy] : [])
+		                          : (effectiveVisibleBy or [clickableBy])
+		
+		Vector2 size = image ? image.size*scale : {getTextWidth(text), fontSize}
+		Input.onTouchDownWithin position, size + touchMargin, userId:effectiveClickableBy, showTouchArea
+			onClick touch
+		if hotkey
+			Input.onKeyDown hotkey, userId:effectiveClickableBy
+				onClick null
 			
 	global void drawButton: Image image = null               // The image of the button
 		                    text = ""                        // The text of the button
@@ -676,9 +687,10 @@ transient global unit graphics
 			
 		// Handle click
 		// Only visible buttons can be clickable
-		int[] effectiveClickableBy = visibleFor and clickableBy
-		                           ? visibleFor intersectWith clickableBy 
-		                           : visibleFor or clickableBy
+		int[] effectiveVisibleBy = visibleFor or currentlyVisibleFor
+		int[] effectiveClickableBy = effectiveVisibleBy and clickableBy
+		                           ? effectiveVisibleBy intersectWith clickableBy 
+		                           : effectiveVisibleBy or clickableBy
 		Vector2 size = image ? image.size*scale : {getTextWidth(text), fontSize}
 		Input.onTouchDownWithin position, size + touchMargin, userId:effectiveClickableBy, showTouchArea
 			onClick touch

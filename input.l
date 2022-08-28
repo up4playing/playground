@@ -798,7 +798,7 @@ unit Input
 			userId = null
 			
 		for users -> user
-			if userId contains .id
+			if userId == null or userId.contains(.id)
 				for internalUsers[user.id].downTouches -> touch
 					if !touch.handled and (user.enableTouch or touch.type != Touch)
 					and touch.referencePosition.isInsidePoygon(poly)
@@ -867,7 +867,7 @@ unit Input
 			userId = null
 			
 		for users -> user
-			if userId contains .id
+			if userId == null or userId.contains(.id)
 				for internalUsers[user.id].downTouches -> touch
 					if !touch.handled and (user.enableTouch or touch.type != Touch)
 					and touch.referencePosition.isInsidePoygon(poly)
@@ -994,7 +994,7 @@ unit Input
 		if not (Network.mode == Connected || Network.simulateConnection)
 			userId = null
 		for internalUsers -> user
-			if userId.contains(.id)
+			if userId == null or userId.contains(.id)
 				for user.upTouches -> touch
 					if !touch.handled && touch.referencePosition.isInsidePoygon(poly)
 						log "up", touch.referencePosition
@@ -1211,7 +1211,7 @@ unit Input
 			userId = null
 
 		for internalUsers -> user
-			if userId contains .id
+			if userId == null or userId.contains(.id)
 				for user.wheelEvents -> event
 					if !event.handled && event.referencePosition.isInsidePoygon(poly)
 						log "wheel", event.referencePosition
@@ -1297,7 +1297,7 @@ unit Input
 		if not (Network.mode == Connected || Network.simulateConnection)
 			userId = null
 		for internalUsers -> user
-			if userId.contains(.id)
+			if userId == null or userId.contains(.id)
 				for user.downKeys
 					if . == key
 						do key, user.id
