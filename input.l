@@ -22,6 +22,7 @@ transient class InternalUser
 	
 	object mediaStream
 	object[] videoElements
+	object audioElement
 	int videoElementIndex = 0
 	
 	object peerConnection

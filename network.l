@@ -64,6 +64,7 @@ transient unit Network
 	bool simulateInputsForTesting = false
 	bool simulateRollback = false
 	bool showVideoForStaging = true
+	bool muteInvisibleUsers = false
 	int checksumInterval = 30
 	
 	SendInputsMode sendInputsMode = Peer

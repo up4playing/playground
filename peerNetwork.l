@@ -338,7 +338,7 @@ transient unit PeerNetwork
 		user.mediaStream = new MediaStream();
 		
 		// Create audio element so we always hear the remote user, event if no video is shown
-		let audioElement = document.createElement('audio')
+		let audioElement = user.audioElement = document.createElement('audio')
 		audioElement.srcObject = user.mediaStream
 		document.body.appendChild(audioElement)
 		
@@ -349,7 +349,7 @@ transient unit PeerNetwork
 			});
 		});
 
-	// --------------------------------------------- Video element ---------------------------------------------
+	// --------------------------------------------- Video/Audio element ---------------------------------------------
 	
 	js object createVideoElement: object stream, bool local
 		let el = document.createElement('video')
@@ -372,6 +372,9 @@ transient unit PeerNetwork
 		videoElement.style.height = sizeY+"px"
 		videoElement.style.visibility = "visible"
 		videoElement.style.borderRadius = radius+"px"
+		
+	js void setAudioMuted: object audioElement, bool muted
+		if(audioElement) audioElement.muted = muted
 		
 	// --------------------------------------------- Send state ---------------------------------------------
 		
