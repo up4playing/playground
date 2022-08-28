@@ -22,8 +22,8 @@ unit Framework
 				
 	tick
 		fx.tick
-		objects.each <- .tick
-		objects.each <- .update
+		objects.each.tick
+		objects.each.update
 		Input.onTouchUp:  deselect touch.userId
 		
 		if toBeRemoved
