@@ -43,6 +43,10 @@ unit Framework
 					return b
 		return null
 		
+	deselect
+		for Input.users
+			selectedObjects[.id] = null
+		
 	deselect: int userId
 		selectedObjects[userId] = null
 		
