@@ -124,6 +124,7 @@ transient global unit graphics
 			for user.videoElementIndex to user.videoElements.length
 				PeerNetwork.removeVideoElement user.videoElements[.]
 			user.videoElements.setLength user.videoElementIndex
+			PeerNetwork.setAudioMuted user.audioElement, muted:Network.muteInvisibleUsers and user.videoElementIndex == 0
 		
 	private drawItems
 		items.sort b.layer - a.layer
