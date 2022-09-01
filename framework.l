@@ -167,7 +167,7 @@ Object RectangleObject
 	Color color = White
 	internal checksum := position.x + position.y + scale + alpha + size.x + size.y
 	tick
-		drawRectangle position, size, color, visibleFor, layer
+		drawRectangle position, size, color, visibleFor, layer, alpha
 
 Object CircleObject
 	float radius = 10
