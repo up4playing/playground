@@ -5,10 +5,10 @@ class Sound
 	
 	js void open
 		return new Promise((resolve, reject) => {
-			this.audio = new Audio();
-			this.audio.oncanplaythrough = () => resolve();
-			this.audio.onerror = () => reject();
-			this.audio.src = this.file;			
+			this.nextAudio = new Audio();
+			this.nextAudio.oncanplaythrough = () => resolve();
+			this.nextAudio.onerror = () => reject();
+			this.nextAudio.src = this.file;			
 		})
 		
 	js void volume: float value
@@ -30,22 +30,26 @@ class Sound
 			if not Network.isReplay: doPlay playingSound
 		else
 			playingSound.isConfirmed = true
+			
+	js void currentTime: float value
+		this.audio.currentTime = value
 		
 	private js void doPlay: PlayingSound ps
 		this.fadeVolume = 1;
+		this.audio = this.nextAudio;
 		this.audio.volume = audio_volume;
 		this.audio.onended = () => audio_playingSounds.remove(ps);
 		this.audio.play();
 		
 		// Preload file for next playback
-		this.audio = new Audio();
-		this.audio.src = this.file;
+		this.nextAudio = new Audio();
+		this.nextAudio.src = this.file;
 		
 	isPlaying
 		return audio.playingSounds.any.sound == this and .frame < Time.frame
 		
-	fadeOut: int duration = 3000
-		     int delay = 0
+	fadeOut: Time duration = 3000
+		     Time delay = 0
 		fx.add FadeSoundEffect startTime:Time.now+delay, duration, smooth:false, this, startValue:1, delta:-1
 		return this
 
