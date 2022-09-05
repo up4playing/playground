@@ -44,12 +44,22 @@ transient unit PeerNetwork
 		Network_log("setupPeerConnection userId:"+user.id+" connectionId:"+connectionId+" relayMode:"+PeerNetwork_relayMode)
 		
 		// Event handlers
+		let disconnectTimeout
 		peerConnection.oniceconnectionstatechange = e => {
 			let state = peerConnection.iceConnectionState
 			Network_log("oniceconnectionstatechange " + state)
 			switch(state) {
-				case "connected":    PeerNetwork_onConnectToPeer(user);              break
-				case "disconnected": PeerNetwork_onDisconnectFromPeer(connectionId); break
+				case "disconnected":
+					disconnectTimeout = setTimeout(() => {
+						Network_log("oniceconnectionstatechange: disconnect after timeout")
+						PeerNetwork_onDisconnectFromPeer(connectionId)
+					}, 7000)
+					break
+				case "connected":
+					Network_log("oniceconnectionstatechange: clear timeout")
+					clearTimeout(disconnectTimeout)
+					PeerNetwork_onConnectToPeer(user)
+					break
 			}
 		}
 		

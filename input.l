@@ -536,6 +536,7 @@ unit Input
 		this.isCertain = isCertain
 		if isCertain: Network.parseLog += " c"
 		for internalUsers -> internalUser
+			if not internalUser: continue
 			let inputs = internalUser.inputs
 			let userId = internalUser.id
 			let user = usersById[userId]
