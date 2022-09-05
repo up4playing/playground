@@ -168,8 +168,6 @@ class string
 	// Returns the number of characters in the string
 	inline js int length := this.length
 	
-	inline js string get(int index) this[index]
-	
 	// Returns a string with each character converted to uppercase
 	inline js string toUpperCase := this.toUpperCase()
 		
@@ -226,6 +224,15 @@ class string
 	inline js string replace: string source
 		                      string target
 		this.replace(new RegExp(source, "g"), target)
+		
+	inline js string get: int index
+		(index >= 0 ? this[index] : this[this.length+index])
+	
+	inline js string get: int from
+		                  int to
+		this.substring(from, to)
+	
+	
 		
 // A logical data type that can have the value true or false
 enum bool: false, true
