@@ -1299,12 +1299,12 @@ global unit Math
 		}
 
 	// Generates a random integer
-	global js int randomInteger: int max // The exclusive upper bound of the random integer to generate
-		let f = Math_randomGenerator()
-		let i = Math.floor(f * max)
-		// Log random numbers for testing
-		// Network_log("randomInteger float:"+f+"*"+max+" -> "+i)
-		return i
+	global js int randomInteger: int min // The inclusive lower bound of the random integer
+		                         int max // The exclusive upper bound of the random integer
+		return min + Math.floor(Math_randomGenerator() * (max-min))
+	
+	global js int randomInteger: int max // The exclusive upper bound of the random integer
+		return Math.floor(Math_randomGenerator() * max)
 	
 	// Generates a random float
 	global inline js int randomFloat
