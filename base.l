@@ -43,15 +43,15 @@ struct int
 		(this & value)
 	
 	inline js int limit: int min
-		(this < min ? min : this)
-	
+		                 int max
+		(this < min ? min : this > max ? max : this)
+		
 	inline js int limit: int max
 		(this > max ? max : this)
 	
 	inline js int limit: int min
-		                 int max
-		(this < min ? min : this > max ? max : this)
-		
+		(this < min ? min : this)
+	
 	inline js int setIfLarger: int newValue
 		(this = Math.max(newValue, this))
 		
@@ -125,15 +125,15 @@ struct float
 		Math.round(this)
 		
 	inline js float limit: float min
-		(this < min ? min : this)
-	
+		                   float max
+		(this < min ? min : this > max ? max : this)
+		
 	inline js float limit: float max
 		(this > max ? max : this)
 	
 	inline js float limit: float min
-		                   float max
-		(this < min ? min : this > max ? max : this)
-		
+		(this < min ? min : this)
+	
 	inline js bool isApproximately: float value
 		                            float epsilon = 0.00001
 		(Math.abs(this - value) < epsilon)
@@ -1328,7 +1328,9 @@ global unit Math
 			
 	limit: int value
 		   int min
+		   int max
 		if value < min: return min
+		if value > max: return max
 			            return value
 	
 	limit: int value
@@ -1338,28 +1340,26 @@ global unit Math
 	
 	limit: int value
 		   int min
-		   int max
 		if value < min: return min
-		if value > max: return max
-			            return value
-	
-	limit: float value
-		   float min
-		if value < min: return min
-			            return value
-	
-	limit: float value
-		   float max
-		if value > max: return max
 			            return value
 	
 	limit: float value
 		   float min
 		   float max
 		if value < min: return min
+		if value > max: return max
+			            return value
+	
+	limit: float value
+		   float max
 		if value > max: return max
 			            return value
 			
+	limit: float value
+		   float min
+		if value < min: return min
+			            return value
+	
 	interpolate: float value
 		         float fromStart = 0
 		         float fromEnd = 1

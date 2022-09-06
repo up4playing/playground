@@ -297,9 +297,10 @@ struct IntVector2
 	min := x < y ? x : y
 	
 	limit: IntVector2 min
+		   IntVector2 max
 		return IntVector2(
-			Math.limit x, min:min.x
-			Math.limit y, min:min.y
+			Math.limit x, min:min.x, max:max.x
+			Math.limit y, min:min.y, max:max.y
 		)
 		
 	limit: IntVector2 max
@@ -308,10 +309,10 @@ struct IntVector2
 			Math.limit y, max:max.y
 		)
 		
-	limit: IntVector2 min, IntVector2 max
+	limit: IntVector2 min
 		return IntVector2(
-			Math.limit x, min:min.x, max:max.x
-			Math.limit y, min:min.y, max:max.y
+			Math.limit x, min:min.x
+			Math.limit y, min:min.y
 		)
 		
 	// Interpolates linearly to another vector
