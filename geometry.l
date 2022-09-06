@@ -90,7 +90,7 @@ struct Vector2
 	length := Math.sqrt(x * x + y * y)
 		
 	// A vector that is orthogonal to the existing vector
-	orthogonal := Vector2(-y, x)
+	orthogonal := Vector2(x:-y, y:x)
 		
 	// A vector with the sign of each coordinate flipped
 	inverse := Vector2(-x, -y)
@@ -282,7 +282,7 @@ struct IntVector2
 	length := Math.sqrt(x * x + y * y)
 		
 	// A vector that is orthogonal to the existing vector
-	orthogonal := IntVector2(-y, x)
+	orthogonal := IntVector2(x:-y, y:x)
 		
 	// A vector with the sign of each coordinate flipped
 	inverse := IntVector2(-x, -y)
