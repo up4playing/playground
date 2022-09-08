@@ -228,10 +228,12 @@ class string
 	inline js string get: int index
 		(index >= 0 ? this[index] : this[this.length+index])
 	
-	inline js string get: int from
+	inline js string get: int from = 0
 		                  int to
-		this.substring(from, to)
-	
+		this.substring(from >= 0 ? from : this.length+from, to >= 0 ? to : this.length+to)
+		
+	inline js string get: int from = 0
+		this.substring(from >= 0 ? from : this.length+from)	
 	
 		
 // A logical data type that can have the value true or false
