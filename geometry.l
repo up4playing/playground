@@ -639,8 +639,17 @@ class Grid<T>
 	IntVector2 size
 	T[] items
 	
+	get: int x
+		 int y
+		return items[y*size.x + x]
+	
 	get: IntVector2 pos
 		return items[pos.y*size.x + pos.x]
+	
+	set: int x
+		 int y
+		 T value
+		items[y*size.x + x] = value
 	
 	set: IntVector2 pos
 		 T value
