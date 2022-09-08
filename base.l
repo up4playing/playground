@@ -855,7 +855,12 @@ class List<T>
 		
 // A data container that stores key-value pairs
 js Map
-class Map<T>
+class Map<TKey, TValue>
+	inline js TValue get: TKey key
+		this.get(key)
+	inline js void set: TKey key
+		                TValue value
+		this.set(key, value)
 
 // Specifies that a function doesn't return a value
 struct void
