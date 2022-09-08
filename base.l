@@ -808,6 +808,13 @@ class List<T>
 	inline js T get: int index // The index of the item to get
 		(index >= 0 ? this[index] : this[this.length+index])
 		
+	inline js T get: int from = 0
+		             int to
+		this.slice(from, to)
+	
+	inline js T get: int from = 0
+		this.slice(from)
+	
 	inline js T set: int index // The index of the item to set
 		             T value   // The new value to set
 		(index >= 0 ? this[index] = value : this[this.length+index] = value)
