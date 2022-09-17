@@ -1143,7 +1143,7 @@ global transient unit System
 		log(text, location.row, location.column, location.file)
 	
 	// Display a message in the timeline
-	global js void watch: string text // The text to display
+	global js void watch: logstring text // The text, variables or expressions to watch
 		                  SourceCodeLocation location
 		if(Platform_isDebug && Network_frame >= Network_frameWithNewWatches) {
 			Platform_sendWatch(Network_frame, text, location.row, location.column, location.file)
