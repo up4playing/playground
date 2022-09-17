@@ -161,10 +161,8 @@ transient unit Platform
 		if(window.tick) return
 			
 		if(Platform_tickMode == 0) {
-			Network_log("TickMode: Interval")
 			Platform_interval = setInterval(() => Platform_tick(), 1000/Network_targetFps)
 		} else {
-			Network_log("TickMode: Animation Frame")
 			window.tick = function() {
 				Platform_tick();
 				window.requestAnimationFrame(window.tick);
