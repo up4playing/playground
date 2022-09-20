@@ -106,6 +106,11 @@ transient unit ServerNetwork
 				
 		Network.log "Joining room {roomId} as user {userId}"
 		
+		
+		// The first person in the room triggers sending an notification with the link to everybody
+		if userCount <= 1: Http.get "https://up4playing.com:3114/sendGamedayNotification/{Network.gameId}/{Network.roomId}/hasStarted"
+
+		
 	float nextPingTime, fastestPingPongTime = int.maxValue, lastPingPongTime
 	int pongCount
 	
