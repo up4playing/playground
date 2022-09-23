@@ -1,4 +1,4 @@
-enum NetworkMessageType: Join, JoinResponse, Ping, Pong, Signal, Ice, Tick, Switch, Reload, Checksum, RequestState, State
+enum NetworkMessageType: Join, JoinResponse, Ping, Pong, Signal, Ice, Tick, Switch, Reload, ReadyForStateRequests, MakePrimary, RequestState, State, Checksum
 
 transient unit ServerNetwork
 	private object socket
@@ -62,7 +62,9 @@ transient unit ServerNetwork
 		if type == Ice:          onIce buffer; else
 		if type == Tick:         onTick buffer; else
 		if type == Switch:       onSwitch buffer; else
-		if type == Reload:       onReload buffer;
+		if type == Reload:       onReload buffer; else
+		if type == MakePrimary:  onMakePrimary buffer;
+		if type == RequestState: onRequestState buffer;
 		
 	private void sendJoinMessage: string roomId, int userId, int version
 		print roomId, userId, version
@@ -143,18 +145,50 @@ transient unit ServerNetwork
 		if Network.mode == Ping and pongCount >= 10 and fastestPingPongTime < 1000
 			// Request the state from the user who has been here the longest (has the lowest connectionId)
 			Network.log "Ping-Pong complete", pongCount, fastestPingPongTime
-			let master = Input.internalUsers.withMin.id where .isConnected
-			if not master
-				// Start application for first user
-				Network.log "I'm the first user -> startConnected"
-				Network.startConnected
-			else
-				// Request state for others
-				Network.log "The master is {master.id} -> sendRequestState"
-				PeerNetwork.sendRequestState master
-				Network.mode = WaitingForState
+			requestStateTryNumber = 0
+			resolveState
 
 		nextPingTime = now + (Network.mode == Ping ? 100 : 10000)
+		
+	private Time nextResolveStateTime
+	private int requestStateTryNumber
+		
+	resolveState
+		Network.mode = ResolveState
+		let now = Network.currentTime
+		if now < nextResolveStateTime: return
+		print "resolveState: sending request state to server", requestStateTryNumber
+		sendRequestState requestStateTryNumber++
+		nextResolveStateTime = now + 5s
+			
+		// for Input.internalUsers
+		// 	print "    {.id} isConnected:{.isConnected}"
+			
+		// let master = Input.internalUsers.withMin.id where .isConnected and .dataChannel
+		// // if not masterId: masterId = Input.internalUsers.min.id
+		// // let masterId = Input.users.min.id
+			
+		// if master
+		// 	// Request state for master
+		// 	Network.log "ResolveState: The master is {master.id} -> sendRequestState"
+		// 	if master.isConnected and master.dataChannel: PeerNetwork.sendRequestState master
+		// else
+		// 	// Start application for first user
+		// 	Network.log "ResolveState: I'm the first user -> startConnected"
+		// 	let frame = Math.floor((now - Network.startTime)/Network.targetFrameTime)+3
+		// 	Network.startConnected frame
+			
+		// nextResolveStateTime = now + 5s
+		
+	private onRequestState: Buffer buffer
+		int requestedById = buffer.readInt16
+		Network.log "{requestedById} is requesting the state"
+		PeerNetwork.stateRequestedBy requestedById
+		
+	private onMakePrimary: Buffer buffer
+		Network.log "I'm the primary user -> startConnected"
+		let frame = Math.floor((Network.currentTime - Network.startTime)/Network.targetFrameTime)+3
+		Network.startConnected frame
 		
 	sendSignal:	int receiverId, string type, string sdp
 		sendBuffer.reset
@@ -163,6 +197,17 @@ transient unit ServerNetwork
 		sendBuffer.writeInt32 Input.localUser.id
 		sendBuffer.writeString type
 		sendBuffer.writeString sdp
+		send sendBuffer
+		
+	sendRequestState: int tryNumber
+		sendBuffer.reset
+		sendBuffer.writeInt8 cast NetworkMessageType.RequestState
+		sendBuffer.writeInt16 tryNumber
+		send sendBuffer
+		
+	sendReadyForStateRequests
+		sendBuffer.reset
+		sendBuffer.writeInt8 cast NetworkMessageType.ReadyForStateRequests
 		send sendBuffer
 		
 	private onSignal: Buffer buffer

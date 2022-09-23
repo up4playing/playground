@@ -1,4 +1,4 @@
-enum NetworkMode: None, Ping, Local, Connected, WaitingForState
+enum NetworkMode: None, Ping, Local, Connected, ResolveState
 transient class RoomInfo: int time, userId
 enum SendInputsMode: None, Peer, Server
 	
@@ -92,22 +92,23 @@ transient unit Network
 	initDatabase
 		IndexedDB.start "up4playing", "snapshot", 5
 
-	startConnected
+	startConnected: int frame
 		if mode == Connected: return
 				
 		let user = Input.localUser
 		user.startInputFrame 0
 		
-		joinFrame = Math.floor((currentTime - this.startTime)/targetFrameTime)+1
-		Input.handleJoin joinFrame 
+		// joinFrame = Math.floor((now - this.startTime)/targetFrameTime)+1
+		Input.handleJoin frame 
 		user.collectInputs = true
 		writeLog += " #{joinFrame} Join"
+		print "startConnected", joinFrame
 		
+		this.frame = frame
 		mode = Connected
 		receivedFrames = -1
 		certainFrame = -1
 		uncertainFrame = -1
-		frame = joinFrame
 		bufferFrames = 0
 		log "Connected", user.id, frame, startTime
 		saveState
@@ -209,10 +210,11 @@ transient unit Network
 
 		// Ping
 		ServerNetwork.ping
-		if mode == None || mode == Ping
+		if mode == None || mode == Ping || mode == ResolveState
 			graphics.startFrame
 			lobby.tick
 			graphics.finishFrame
+			if mode == ResolveState: ServerNetwork.resolveState
 			return
 
 		let targetFrame = Math.floor((now - startTime)/targetFrameTime)+1
@@ -547,7 +549,7 @@ transient unit Network
 	saveEventStreamAndLogs
 		if Input.isCertain
 			saveEventStream
-			Platform.schedule delay:1000
+			Platform.delay 1s
 				saveLogs
 			
 	internal saveLogs

@@ -219,7 +219,6 @@ transient unit PeerNetwork
 		NetworkMessageType type = cast buffer.readInt8
 		if type == Tick:         onTick user, buffer; else
 		if type == Checksum:     onChecksum user, buffer; else
-		if type == RequestState: onRequestState user, buffer; else
 		if type == State:        onState user, buffer
 			
 	private onTick: InternalUser sender, Buffer buffer
@@ -390,18 +389,38 @@ transient unit PeerNetwork
 	// --------------------------------------------- Send state ---------------------------------------------
 		
 	Buffer snapshotBuffer
+	int[] sendStateQueue
 	
-	sendRequestState: InternalUser to
-		Network.log "Sending state request to {to.id}"
-		sendBuffer.reset
-		sendBuffer.writeInt8 cast NetworkMessageType.RequestState
-		send to, sendBuffer
+	stateRequestedBy: int id
+		sendStateQueue.add id
+		if Network.mode == Connected: processSendStateQueue
+	
+	processSendStateQueue
+		Network.log "Processing send state queue", sendStateQueue.length
+		if sendStateQueue.length > 0
+			snapshotBuffer.reset
+			Snapshot.serialize snapshotBuffer
+			for sendStateQueue <-
+				let user = Input.internalUsers[.]
+				if user and user.dataChannel
+					sendState user, snapshotBuffer
+					sendStateQueue.removeAt i
+	
+	// sendRequestState: InternalUser to
+	// 	Network.log "Sending state request to {to.id}"
+	// 	sendBuffer.reset
+	// 	sendBuffer.writeInt8 cast NetworkMessageType.RequestState
+	// 	send to, sendBuffer
 		
-	private onRequestState: InternalUser to, Buffer buffer
-		Network.log "Received request state from {to.id}"
-		snapshotBuffer.reset
-		Snapshot.serialize snapshotBuffer
-		sendState to, snapshotBuffer
+	// private onRequestState: InternalUser to, Buffer buffer
+	// 	if Network.mode == Connected
+	// 		Network.log "Received request state from {to.id} -> sending state"
+	// 		snapshotBuffer.reset
+	// 		Snapshot.serialize snapshotBuffer
+	// 		sendState to, snapshotBuffer
+	// 	else
+	// 		Network.log "Received request state from {to.id} -> queueing"
+	// 		sendStateQueue.add to.id
 		
 	private sendState: InternalUser to, Buffer buffer
 		Network.log "Sending state to {to.id}"
@@ -419,6 +438,9 @@ transient unit PeerNetwork
 		send to, sendBuffer
 		
 	private onState: InternalUser c, Buffer buffer
+		if Network.mode == Connected:
+			Network.log "Ignoring received state from {c.id} because we are already connected"
+			return
 		Network.log "Received state from {c.id}"
 		let frame = buffer.readInt32
 		let userCount = buffer.readInt32
@@ -436,7 +458,9 @@ transient unit PeerNetwork
 		buffer.readBuffer snapshotBuffer
 		Snapshot.deserialize snapshotBuffer
 		Math.recreateRandomValues
-		Network.startConnected
+		Network.startConnected frame+1
+		
+		ServerNetwork.sendReadyForStateRequests
 		
 					
 	// private float nextPingTime
