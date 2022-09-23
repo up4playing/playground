@@ -197,7 +197,7 @@ transient unit PeerNetwork
 				Network.tickMessageSize = send ., sendBuffer
 				
 				Network.sentLog += " <{user.id}> #{inputFrame} {user.inputsSentPos}->{inputs.writePos} {inputs.toRangeString(user.inputsSentPos, inputs.writePos)} ({Network.tickMessageSize} bytes)"
-				if length: print " <{user.id}> #{inputFrame} {user.inputsSentPos}->{inputs.writePos} {inputs.toRangeString(user.inputsSentPos, inputs.writePos)} ({Network.tickMessageSize} bytes)"
+				// if length: print " <{user.id}> #{inputFrame} {user.inputsSentPos}->{inputs.writePos} {inputs.toRangeString(user.inputsSentPos, inputs.writePos)} ({Network.tickMessageSize} bytes)"
 				
 				user.inputsSentPos = inputs.writePos
 			
@@ -207,7 +207,8 @@ transient unit PeerNetwork
 			user.dataChannel.send(data)
 			return data.byteLength
 		} catch(e) {
-			Network_log(e)
+			console.error(e)
+			Network_log(e.stack)
 			return 0
 		}
 		
@@ -233,7 +234,7 @@ transient unit PeerNetwork
 			// TOTO: Is local needed?
 			Network.receivedFrames = Input.internalUsers.min.inputFrame where .isConnected or .local
 			Network.receivedLog += " [{Network.currentTime}] <{sender.id}> #{inputFrame} buffer:{sender.bufferFrames} {prevWritePos}->{sender.inputs.writePos} {sender.inputs.toRangeString(prevWritePos, sender.inputs.writePos)}"
-			if sender.inputs.writePos > prevWritePos: print " [{Network.currentTime}] <{sender.id}> #{inputFrame} buffer:{sender.bufferFrames} {prevWritePos}->{sender.inputs.writePos} {sender.inputs.toRangeString(prevWritePos, sender.inputs.writePos)}"
+			// if sender.inputs.writePos > prevWritePos: print " [{Network.currentTime}] <{sender.id}> #{inputFrame} buffer:{sender.bufferFrames} {prevWritePos}->{sender.inputs.writePos} {sender.inputs.toRangeString(prevWritePos, sender.inputs.writePos)}"
 		else
 			Network.receivedLog += " [{Network.currentTime}] <{sender.id}> (ignoring #{inputFrame})"
 			

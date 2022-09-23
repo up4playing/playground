@@ -555,7 +555,7 @@ unit Input
 				InputType inputType = cast(value % 32)
 				
 				if inputType >= TouchDown && inputType <= Wheel
-					if !user: Network.parseLog += " Error: user == null"
+					if !user: Network.log " ERROR: userId {userId} not in usersById"
 					TouchType type = cast((value shiftRight 5) % 8)
 					int id = (value shiftRight 8) % 128
 					Vector2 referencePos = {inputs.readInt16, inputs.readInt16}
@@ -693,16 +693,16 @@ unit Input
 						updateUserIndices
 						Network.parseLog += " join {userId} connectedTo:{user.connectedTo} userCount:{users.length}"
 						// TEMP logging
-						Network.log "#{nextFrame}{isCertain ? " certain":""} join {userId} connectedTo:{user.connectedTo} userCount:{users.length}"
+						// Network.log "#{nextFrame}{isCertain ? " certain":""} join {userId} connectedTo:{user.connectedTo} userCount:{users.length}"
 					else
 						Network.parseLog += "#{nextFrame}{isCertain ? " certain":""} join {userId} user already exists, userCount:{users.length}"
 						// TEMP logging
-						Network.log "#{nextFrame}{isCertain ? " certain":""} join {userId} user already exists, userCount:{users.length}"
+						// Network.log "#{nextFrame}{isCertain ? " certain":""} join {userId} user already exists, userCount:{users.length}"
 				else
 				if inputType == Lost
 					let lostUserId = inputs.readInt16
 					user.connectedTo.remove lostUserId
-					print "#{nextFrame}{isCertain ? " certain":""} Lost", lostUserId
+					// print "#{nextFrame}{isCertain ? " certain":""} Lost", lostUserId
 					let lostUser = usersById[lostUserId]
 						lostUser.connectedTo.remove userId
 						if lostUser.connectedTo.length == 0
@@ -712,11 +712,11 @@ unit Input
 							updateUserIndices
 							Network.parseLog += " lost {lostUserId} by {userId}, removed user, userCount:{users.length}"
 							// TEMP logging
-							Network.log " lost {lostUserId} by {userId}, removed user, userCount:{users.length}"
+							// Network.log " lost {lostUserId} by {userId}, removed user, userCount:{users.length}"
 						else	
 							Network.parseLog += " lost {lostUserId} by {userId}, remaining:{user.connectedTo.length} {user.connectedTo}"
 							// TEMP logging
-							Network.log " lost {lostUserId} by {userId}, remaining:{user.connectedTo.length} {user.connectedTo}"
+							// Network.log " lost {lostUserId} by {userId}, remaining:{user.connectedTo.length} {user.connectedTo}"
 				else
 				if inputType == SetState
 					Network.parseLog += " setState"
