@@ -146,7 +146,7 @@ transient unit Network
 		if !startInLobby
 			// When the developer changed Platform.userCount, add or remove internal users accordingly
 			for Input.internalUsers.length to Platform.userCount
-				Input.internalUsers.add {id:i, local:true, collectInputs:true}
+				Input.internalUsers.add {id:i, local:true, isConnected:true, collectInputs:true}
 			if Input.internalUsers.length > Platform.userCount
 				Input.internalUsers.removeRange Platform.userCount, count: Input.internalUsers.length - Platform.userCount
 			
@@ -389,6 +389,9 @@ transient unit Network
 			// Update game controllers
 			Input.updateGameControllers
 			
+			// Post lost messages and remove users if nobody disagrees
+			Input.handleLost
+			
 			// Parse inputs
 			Input.parseInputs(frame, isCertain)
 			
@@ -520,7 +523,6 @@ transient unit Network
 	
 	js void startApp
 		lobby_inLobby = false
-		Network_storeUserId()
 		if(window.app_start) app_start()
 		
 	private resetStartTime
@@ -619,7 +621,7 @@ transient unit Network
 		this.gameId = gameId
 		this.roomString = roomString
 		this.roomId = cast roomString
-		Input.localUser = {userId, local:true, isConnected:false, connectionId:0}
+		Input.localUser = {userId, local:true, isConnected:true, connectionId:0}
 		initDatabase
 		setupVideoAndNetwork
 		lobby.enableFullscreen = !Platform.isStaging

@@ -105,9 +105,9 @@ transient unit ServerNetwork
 		Network.mode = Ping
 		for Input.internalUsers
 			if !.local: PeerNetwork.createOffer .
+		Network.storeUserId
 				
 		Network.log "Joining room {roomId} as user {userId}"
-		
 		
 		// The first person in the room triggers sending an notification with the link to everybody
 		if userCount <= 1: Http.get "https://up4playing.com:3114/sendGamedayNotification/{Network.gameId}/{Network.roomId}/hasStarted"
@@ -288,7 +288,7 @@ transient unit ServerNetwork
 			Network.sendInputsMode = mode
 	
 	sendReload: bool newRoom, bool newUserId
-		string url = "/{Network.gameId}/{newRoom ? Network.roomId+1 : Network.roomId}"
+		string url = "/{Network.gameId}/{newRoom ? Network.roomId+(Network.roomId < 0 ? -1 : 1) : Network.roomId}"
 		sendBuffer.reset
 		sendBuffer.writeInt8 cast NetworkMessageType.Reload
 		sendBuffer.writeString url
@@ -298,6 +298,6 @@ transient unit ServerNetwork
 	onReload: Buffer buffer
 		let url = buffer.readString
 		let newUserId = buffer.readBool
-		if !newUserId: url += "-{Input.localUser.id}"
+		if !newUserId: url += "u{Input.localUser.id}"
 		Platform.setLocation url
 			

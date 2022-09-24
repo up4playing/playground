@@ -29,7 +29,8 @@ transient class InternalUser
 	object dataChannel
 	object recreateDataChannelInterval
 	bool offerByMe
-	bool isConnected // Becomes false when the user disconnects, always false for the local user
+	bool isConnected // Becomes false when the user disconnects, always true for the local users
+	int nextLostMessageAtFrame
 	
 	startInputFrame: int index
 		lastTouchMoveIndex.clear
@@ -47,20 +48,26 @@ transient class InternalUser
 		pressedKeys.clear
 		navigations.clear
 	
-// The public state of a user
+// The public state of a user. This is the same accross all clients.
 class NetworkUser
 	int id
 	int index
 	Color color
-	visible Touch[] touches
-	visible GameController controller = {}
-	string textInput
-	bool enableTouch = true
 	bool isReady
+	string textInput
+	
+	// Touch
+	visible Touch[] touches
+	bool enableTouch = true
+	
+	// Controller
+	visible GameController controller = {}
 	Key[] mapKeyToController = [Right, Down, Left, Up, Space, X, Alt, Ctrl]
 	int[] controllerKeyDownFrame = [0, 0, 0, 0, 0, 0]
 	
-	internal int[] connectedTo
+	// If a user was lost by anybody and nobody who is still connected to that user
+	// disagrees within a certrain time, we will remove this user in "handleLost"
+	int lostAtFrame
 	
 	NetworkUser
 		controller.a.name = "SPACE"
@@ -74,7 +81,7 @@ class NetworkUser
 			if (.phase == Up and .type >= Touch) or (hasToch and .type != Touch)
 				touches.remove .
 	
-enum InputType: None, TouchDown, TouchMove, TouchUp, Wheel, KeyDown, KeyUp, TextInput, Stick, Trigger, Grip, ButtonDown, ButtonUp, ControllerTransform, HeadTransform, DeviceRotation, Join, Lost, SetState, Navigate, GameController
+enum InputType: None, TouchDown, TouchMove, TouchUp, Wheel, KeyDown, KeyUp, TextInput, Stick, Trigger, Grip, ButtonDown, ButtonUp, ControllerTransform, HeadTransform, DeviceRotation, Join, Lost, StillConnected, SetState, Navigate, GameController
 		
 // Phase of a touch or a click
 enum TouchPhase: Still, Down, Move, Up
@@ -472,18 +479,7 @@ unit Input
 		let inputs = localUser.inputs
 		inputs.writeInt32 frame
 		inputs.writeInt16 cast InputType.Join
-		let connectedUser = internalUsers.where.isConnected
-		inputs.writeInt16 connectedUser.length
-		for connectedUser: inputs.writeInt16 .id
 				
-	// Write "lost" event to tell everybody that we lost the connection to this user
-	// When all player lost the connection to a user, the user will be removed
-	internal handleLost: int id
-		let inputs = localUser.inputs
-		inputs.writeInt32 localUser.inputFrame
-		inputs.writeInt16 cast InputType.Lost
-		inputs.writeInt16 id
-			
 	// Handles the user navigating back or forward in the browser	
 	internal handleNavigate: string url
 		let inputs = localUser.inputs
@@ -491,6 +487,33 @@ unit Input
 		inputs.writeInt16 cast InputType.Navigate
 		inputs.writeString url
 		
+	// Post lost messages and remove users if nobody disagrees
+	internal handleLost
+		for internalUsers -> internalUser
+			let user = usersById[internalUser.id]
+				if user.lostAtFrame and Network.frame >= user.lostAtFrame + Network.targetFps * 3
+					// If a user was lost by anybody and nobody who is still connected to that user
+					// disagrees within a certrain time, we remove this user
+					Network.log "Removing user {user.id} at frame {Network.frame}, user was lost at frame {user.lostAtFrame} and nobody disagreed", isCertain
+					users.remove user
+					usersById[user.id] = null
+					updateUserIndices
+				else	
+				if not internalUser.isConnected and Network.frame >= internalUser.nextLostMessageAtFrame
+					// If we lost the connection to a user, we post a lost message to everybody every 5 seconds
+					Network.log "Sending lost message for user {user.id} at frame {Network.frame}"
+					let inputs = localUser.inputs
+					inputs.writeInt32 localUser.inputFrame
+					inputs.writeInt16 cast InputType.Lost
+					inputs.writeInt16 user.id
+					internalUser.nextLostMessageAtFrame = Network.frame + Network.targetFps * 5
+	
+	private handleStillConnected: int userId
+		let inputs = localUser.inputs
+		inputs.writeInt32 localUser.inputFrame
+		inputs.writeInt16 cast InputType.StillConnected
+		inputs.writeInt16 userId
+				
 	private inline js InternetGamePad[] getGamepads() navigator.getGamepads()
 	
 	internal updateGameControllers
@@ -549,6 +572,14 @@ unit Input
 				if inputs.canRead: Network.parseLog += " *{nextFrame}"
 				if nextFrame > frame: break
 				inputs.readPos += 4
+				
+				// We create the user as soon as receive the first input from that user,
+				// which is typically the "Join" message that is sent in "startConnected",
+				// but could also be a user reconnecting that was previously kicked out
+				if not user
+					Network.log "Adding user {userId}"
+					users.add user = {id:userId, index:users.length}
+					usersById[userId] = user
 				
 				let value = inputs.readUnsignedInt16
 				Network.parseLog += " "+value
@@ -674,49 +705,39 @@ unit Input
 						
 				else
 				if inputType == Join
-					// Read when users the joining user is connected to
-					// TODO: When reconnection, handle connections that finish after join
-					int[] connectedTo 
-					let connectionCount = inputs.readInt16
-					for connectionCount
-						connectedTo.add inputs.readInt16
-					
-					// Add the user if the user doesn't already exist
-					if users.none.id == userId
-						users.add user = {id:userId, index:users.length}
-						usersById[userId] = user
-					
-						user.connectedTo = connectedTo
-						for connectedTo
-							usersById[.]?.connectedTo.ensure userId
-								
-						updateUserIndices
-						Network.parseLog += " join {userId} connectedTo:{user.connectedTo} userCount:{users.length}"
-						// TEMP logging
-						// Network.log "#{nextFrame}{isCertain ? " certain":""} join {userId} connectedTo:{user.connectedTo} userCount:{users.length}"
-					else
-						Network.parseLog += "#{nextFrame}{isCertain ? " certain":""} join {userId} user already exists, userCount:{users.length}"
-						// TEMP logging
-						// Network.log "#{nextFrame}{isCertain ? " certain":""} join {userId} user already exists, userCount:{users.length}"
+					// We created the user above as soon as received the first input from that user,
+					// which is typically the "Join" message that is sent in "startConnected",
+					// but could also be a user reconnecting that was previously kicked out
+					Network.log "Join {userId}", isCertain
 				else
 				if inputType == Lost
 					let lostUserId = inputs.readInt16
-					user.connectedTo.remove lostUserId
-					// print "#{nextFrame}{isCertain ? " certain":""} Lost", lostUserId
+					let lostInternalUser = internalUsers[lostUserId]
+						let lostUser = usersById[lostUserId]
+						
+						// If a user was lost by anybody and nobody who is still connected to that user
+						// disagrees within a certrain time, we will remove this user in "handleLost"
+						if lostUser and lostUser.lostAtFrame == 0
+							lostUser.lostAtFrame = frame
+							Network.log "Lost {lostUserId} by {userId} -> Set lostAtFrame to {lostUser.lostAtFrame}"
+							
+						// If we are still connected to that user, we disagree to their removal
+						// by posting the "StillConnected" message
+						if lostInternalUser.isConnected
+							Network.log "Lost {lostUserId} by {userId} -> We are still connected, sending StillConnected"
+							handleStillConnected lostUserId
+						else
+							Network.log "Lost {lostUserId} by {userId} -> We also aren't connected"
+					else
+						Network.log "Lost {lostUserId} by {userId} -> No internal user!"
+				else
+				if inputType == StillConnected
+					// Somebody disagreed with the removal of that user because they are still connected,
+					// so we cancel the removal
+					let lostUserId = inputs.readInt16
+					Network.log "Still connected to {lostUserId} by {userId}"
 					let lostUser = usersById[lostUserId]
-						lostUser.connectedTo.remove userId
-						if lostUser.connectedTo.length == 0
-							// If all players have lost the connected to a user, we remove this user
-							users.removeWhere.id == lostUserId
-							usersById[lostUserId] = null
-							updateUserIndices
-							Network.parseLog += " lost {lostUserId} by {userId}, removed user, userCount:{users.length}"
-							// TEMP logging
-							// Network.log " lost {lostUserId} by {userId}, removed user, userCount:{users.length}"
-						else	
-							Network.parseLog += " lost {lostUserId} by {userId}, remaining:{user.connectedTo.length} {user.connectedTo}"
-							// TEMP logging
-							// Network.log " lost {lostUserId} by {userId}, remaining:{user.connectedTo.length} {user.connectedTo}"
+						lostUser.lostAtFrame = 0
 				else
 				if inputType == SetState
 					Network.parseLog += " setState"

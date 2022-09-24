@@ -3,7 +3,14 @@ unit lobby
 	bool enableFullscreen = true
 	// Vector2[] points
 	
+	int ticks
+	
 	tick
+		if Platform.isStaging
+			// The delta value has to be the same for all users, we use it to check if everybody is in sync
+			drawText "delta:{ticks-Time.frame} ticks:{ticks}", size:40, position:{-900, -520}, align:Left
+			ticks++
+		
 		if PeerNetwork.error or Network.errorMessage
 			drawText PeerNetwork.error, size:40
 			drawText Network.errorMessage, size:14, position:{0,40}

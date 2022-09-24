@@ -44,20 +44,21 @@ transient unit PeerNetwork
 		Network_log("setupPeerConnection userId:"+user.id+" connectionId:"+connectionId+" relayMode:"+PeerNetwork_relayMode)
 		
 		// Event handlers
-		let disconnectTimeout
+		// let disconnectTimeout
 		peerConnection.oniceconnectionstatechange = e => {
 			let state = peerConnection.iceConnectionState
 			Network_log("oniceconnectionstatechange " + state)
 			switch(state) {
 				case "disconnected":
-					disconnectTimeout = setTimeout(() => {
-						Network_log("oniceconnectionstatechange: disconnect after timeout")
-						PeerNetwork_onDisconnectFromPeer(connectionId)
-					}, 7000)
+					PeerNetwork_onDisconnectFromPeer(connectionId)
+					// disconnectTimeout = setTimeout(() => {
+					// 	Network_log("oniceconnectionstatechange: disconnect after timeout")
+					// 	PeerNetwork_onDisconnectFromPeer(connectionId)
+					// }, 3000)
 					break
 				case "connected":
-					Network_log("oniceconnectionstatechange: clear timeout")
-					clearTimeout(disconnectTimeout)
+					// Network_log("oniceconnectionstatechange: clear timeout")
+					// clearTimeout(disconnectTimeout)
 					PeerNetwork_onConnectToPeer(user)
 					break
 			}
@@ -231,7 +232,7 @@ transient unit PeerNetwork
 			buffer.readBuffer sender.inputs, prevWritePos
 			
 			// TOTO: Is local needed?
-			Network.receivedFrames = Input.internalUsers.min.inputFrame where .isConnected or .local
+			Network.receivedFrames = Input.internalUsers.min.inputFrame where .isConnected
 			Network.receivedLog += " [{Network.currentTime}] <{sender.id}> #{inputFrame} buffer:{sender.bufferFrames} {prevWritePos}->{sender.inputs.writePos} {sender.inputs.toRangeString(prevWritePos, sender.inputs.writePos)}"
 			// if sender.inputs.writePos > prevWritePos: print " [{Network.currentTime}] <{sender.id}> #{inputFrame} buffer:{sender.bufferFrames} {prevWritePos}->{sender.inputs.writePos} {sender.inputs.toRangeString(prevWritePos, sender.inputs.writePos)}"
 		else
@@ -256,14 +257,9 @@ transient unit PeerNetwork
 		
 	private onDisconnectFromPeer: int connectionId
 		let user = Input.internalUsers.find.connectionId == connectionId
-			Network.log "disconnect", connectionId, user.id
 			user.isConnected = false
-			
-			// Write "lost" event to tell everybody that we lost the connection to this user
-			// When all player lost the connection to a user, the user will be removed
-			Input.handleLost user.id
-		else
-			Network.log "disconnect old user that already reconnected", connectionId
+			// user.nextLostMessageAtFrame = Network.frame + Network.targetFps * 2
+			Network.log "disconnect", connectionId, user.id
 				
 	private js void logConnectionType
 		setTimeout(async () => {
