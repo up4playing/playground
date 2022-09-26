@@ -445,11 +445,11 @@ struct FileFilter
 	string[] extensions
 
 transient unit Http	
-	js async object get: string url
+	js async dynamic get: string url
 		let response = await fetch(url)
 		return response.json()
 		
-	js void get: string url, void(object result) code
+	js void get: string url, void(dynamic result) code
 		let response = await fetch(url)
 		code(await response.json())
 		
@@ -458,12 +458,12 @@ transient unit Http
 		return await response.json()
 		
 	js async string delete: string url 
-		                    object body
+		                    dynamic body
 		let response = await fetch(url, {method:"DELETE", body:JSON.stringify(body)})
 		return await response.json()
 		
 	js void delete: string url 
-		         void(object result) code
+		         void(dynamic result) code
 		         void(string error) else
 		try {
 			let response = await fetch(url, {method:"DELETE"})
@@ -478,7 +478,7 @@ transient unit Http
 		return await response.json()
 		
 	js void put: string url 
-		         void(object result) code
+		         void(dynamic result) code
 		         void(string error) else
 		try {
 			let response = await fetch(url, {method:"PUT"})
@@ -494,13 +494,13 @@ transient unit Http
 		return await response.json()
 		
 	js async void put: string url 
-		         object body
+		         dynamic body
 		let response = await fetch(url, {method:"PUT", body:JSON.stringify(body)})
 		return await response.json()
 		
 	js void put: string url
-		         object body
-		         void(object result) code
+		         dynamic body
+		         void(dynamic result) code
 		         void(string error) else
 		try {
 			let response = await fetch(url, {method:"PUT", body:JSON.stringify(body)})
@@ -516,7 +516,7 @@ transient unit Http
 		return await response.json()
 		
 	js async string post: string url 
-		                  object body
+		                  dynamic body
 		let response = await fetch(url, {method:"POST", body:JSON.stringify(body)})
 		return await response.json()
 		
@@ -526,7 +526,7 @@ transient unit Http
 		
 	js void post: string url
 		          string body
-		          void(object result) code
+		          void(dynamic result) code
 		          void(string error) else
 		try {
 			let response = await fetch(url, {method:"POST", body})
