@@ -498,7 +498,7 @@ Piece Board
 	update
 		objects.each.update
 		
-	snap: Object currentObject, Vector2 position
+	snap: Piece currentObject, Vector2 position
 		
 Board SmartBoard
 	Grid<Piece> grid = {{8, 8}}
@@ -535,7 +535,7 @@ Board SpotBoard
 	addSpot: Spot spot
 		spots.add spot
 	
-	snap: Object currentObject, Vector2 position
+	snap: Piece currentObject, Vector2 position
 		Vector2 closestSpotPos = Vector2.none
 		float minDistance = int.maxValue
 		for spots -> spot

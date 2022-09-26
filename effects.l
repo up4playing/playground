@@ -27,38 +27,38 @@ Effect FadeEffect
 	Object object
 	float startValue, delta
 	bool removeWhenDone
-	tick(float f) 
+	tick(Time f) 
 		object.alpha = startValue + delta * f
 		if f >= 1 and removeWhenDone: Framework.objects.remove object
 		
 Effect MoveEffect
 	Object object
 	Vector2 startValue, delta
-	tick(float f) object.position = startValue + delta * f
+	tick(Time f) object.position = startValue + delta * f
 		
 Effect ScaleEffect
 	Object object
 	float startValue, delta
-	tick(float f) object.scale = startValue + delta * f
+	tick(Time f) object.scale = startValue + delta * f
 		
 Effect RadiusEffect
 	CircleObject object
 	float startValue, delta
-	tick(float f) object.radius = startValue + delta * f
+	tick(Time f) object.radius = startValue + delta * f
 	
 Effect FadeSoundEffect
 	Sound sound
 	float startValue, delta
-	tick(float f) 
+	tick(Time f) 
 		sound.volume = startValue + delta * f
 		if f >= 1: sound.stop
 			
 Effect PlaySoundEffect
 	Sound sound
-	tick(float f) sound.play
+	tick(Time f) sound.play
 	
 Effect RunEffect
 	void() do
-	tick(float f) do()
+	tick(Time f) do()
 	
 

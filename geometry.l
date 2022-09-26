@@ -34,6 +34,7 @@ struct Vector2
 	
 	js Vector2 operator * (Vector2 a, Vector2 b) return new Vector2(a.x*b.x, a.y*b.y, a.location || b.location ? new SourceCodeLocation(0, 0, null, a.location, b.location) : null)
 	js Vector2 operator * (Vector2 a, float b) return new Vector2(a.x*b, a.y*b, a.location || b.location ? new SourceCodeLocation(0, 0, null, a.location, b.location) : null)
+	js Vector2 operator * (Vector2 a, Time b) return new Vector2(a.x*b, a.y*b, a.location || b.location ? new SourceCodeLocation(0, 0, null, a.location, b.location) : null)
 	js Vector2 operator * (float a, Vector2 b) return new Vector2(a*b.x, a*b.y, a.location || b.location ? new SourceCodeLocation(0, 0, null, a.location, b.location) : null)
 	js Vector2 operator * (Vector2 vector, Matrix2D matrix)
 		return new Vector2(
