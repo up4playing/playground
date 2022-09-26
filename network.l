@@ -1,4 +1,4 @@
-enum NetworkMode: None, Ping, Local, Connected, WaitingForState
+enum NetworkMode: None, Ping, Local, Connected, ResolveState
 transient class RoomInfo: int time, userId
 enum SendInputsMode: None, Peer, Server
 	
@@ -92,22 +92,23 @@ transient unit Network
 	initDatabase
 		IndexedDB.start "up4playing", "snapshot", 5
 
-	startConnected
+	startConnected: int frame
 		if mode == Connected: return
 				
 		let user = Input.localUser
 		user.startInputFrame 0
 		
-		joinFrame = Math.floor((currentTime - this.startTime)/targetFrameTime)+1
-		Input.handleJoin joinFrame 
+		// joinFrame = Math.floor((now - this.startTime)/targetFrameTime)+1
+		Input.handleJoin frame 
 		user.collectInputs = true
 		writeLog += " #{joinFrame} Join"
+		print "startConnected", joinFrame
 		
+		this.frame = frame
 		mode = Connected
 		receivedFrames = -1
 		certainFrame = -1
 		uncertainFrame = -1
-		frame = joinFrame
 		bufferFrames = 0
 		log "Connected", user.id, frame, startTime
 		saveState
@@ -145,7 +146,7 @@ transient unit Network
 		if !startInLobby
 			// When the developer changed Platform.userCount, add or remove internal users accordingly
 			for Input.internalUsers.length to Platform.userCount
-				Input.internalUsers.add {id:i, local:true, collectInputs:true}
+				Input.internalUsers.add {id:i, local:true, isConnected:true, collectInputs:true}
 			if Input.internalUsers.length > Platform.userCount
 				Input.internalUsers.removeRange Platform.userCount, count: Input.internalUsers.length - Platform.userCount
 			
@@ -209,10 +210,11 @@ transient unit Network
 
 		// Ping
 		ServerNetwork.ping
-		if mode == None || mode == Ping
+		if mode == None || mode == Ping || mode == ResolveState
 			graphics.startFrame
 			lobby.tick
 			graphics.finishFrame
+			if mode == ResolveState: ServerNetwork.resolveState
 			return
 
 		let targetFrame = Math.floor((now - startTime)/targetFrameTime)+1
@@ -387,6 +389,9 @@ transient unit Network
 			// Update game controllers
 			Input.updateGameControllers
 			
+			// Post lost messages and remove users if nobody disagrees
+			Input.handleLost
+			
 			// Parse inputs
 			Input.parseInputs(frame, isCertain)
 			
@@ -518,7 +523,6 @@ transient unit Network
 	
 	js void startApp
 		lobby_inLobby = false
-		Network_storeUserId()
 		if(window.app_start) app_start()
 		
 	private resetStartTime
@@ -547,7 +551,7 @@ transient unit Network
 	saveEventStreamAndLogs
 		if Input.isCertain
 			saveEventStream
-			Platform.schedule delay:1000
+			Platform.delay 1s
 				saveLogs
 			
 	internal saveLogs
@@ -617,7 +621,7 @@ transient unit Network
 		this.gameId = gameId
 		this.roomString = roomString
 		this.roomId = cast roomString
-		Input.localUser = {userId, local:true, isConnected:false, connectionId:0}
+		Input.localUser = {userId, local:true, isConnected:true, connectionId:0}
 		initDatabase
 		setupVideoAndNetwork
 		lobby.enableFullscreen = !Platform.isStaging

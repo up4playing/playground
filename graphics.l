@@ -139,6 +139,18 @@ transient global unit graphics
 		if(Platform.fastForward) return false
 		let effectiveVisibleFor = visibleFor or currentlyVisibleFor
 		return effectiveVisibleFor == null or visibleFor.contains(Input.localUser.id)
+		
+	private int[] getClickableBy: int visibleFor, int clickableBy
+		int[] effectiveVisibleBy = visibleFor != -1 ? [visibleFor] : currentlyVisibleFor
+		return (effectiveVisibleBy and clickableBy != -1)
+		     ? (effectiveVisibleBy.contains(clickableBy) ? [clickableBy] : [])
+		     : (effectiveVisibleBy or (clickableBy != -1 ? [clickableBy] : null))
+			
+	private int[] getClickableBy: int[] visibleFor, int[] clickableBy
+		int[] effectiveVisibleBy = visibleFor or currentlyVisibleFor
+		return effectiveVisibleBy and clickableBy
+		     ? effectiveVisibleBy intersectWith clickableBy 
+		     : effectiveVisibleBy or clickableBy
 			
 	internal js void drawSafeArea
 		Platform_context.fillStyle = "#404040"
@@ -432,13 +444,8 @@ transient global unit graphics
 		                   void(Touch touch) onClick    // Execute this code when the user clicks the button
 		drawImage image, position, frame, scale, visibleFor, layer, alpha
 			
-		// Handle click
-		// Only visible buttons can be clickable
-		int[] effectiveVisibleBy = visibleFor != -1 ? [visibleFor] : currentlyVisibleFor
-		int[] effectiveClickableBy = (effectiveVisibleBy and clickableBy != -1)
-		                          ? (effectiveVisibleBy.contains(clickableBy) ? [clickableBy] : [])
-		                          : (effectiveVisibleBy or (clickableBy != -1 ? [clickableBy] : null))
-		
+		// Handle click (only visible buttons are clickable)
+		int[] effectiveClickableBy = getClickableBy(visibleFor, clickableBy)
 		Input.onTouchDownWithin position, image.size + touchMargin, userId:effectiveClickableBy, showTouchArea
 			onClick touch
 		if hotkey
@@ -651,13 +658,8 @@ transient global unit graphics
 			if text:  drawText text, position+textOffset, fontSize, textColor, visibleFor, layer, alpha
 			if image: drawImage image, position, frame, scale, visibleFor, layer, alpha
 			
-		// Handle click
-		// Only visible buttons can be clickable
-		int[] effectiveVisibleBy = visibleFor != -1 ? [visibleFor] : currentlyVisibleFor
-		int[] effectiveClickableBy = (effectiveVisibleBy and clickableBy != -1)
-		                          ? (effectiveVisibleBy.contains(clickableBy) ? [clickableBy] : [])
-		                          : (effectiveVisibleBy or [clickableBy])
-		
+		// Handle click (only visible buttons are clickable)
+		int[] effectiveClickableBy = getClickableBy(visibleFor, clickableBy)
 		Vector2 size = image ? image.size*scale : {getTextWidth(text), fontSize}
 		Input.onTouchDownWithin position, size + touchMargin, userId:effectiveClickableBy, showTouchArea
 			onClick touch
@@ -685,12 +687,8 @@ transient global unit graphics
 			if text:  drawText text, position+textOffset, fontSize, textColor, visibleFor, layer, alpha
 			if image: drawImage image, position, frame, scale, visibleFor, layer, alpha
 			
-		// Handle click
-		// Only visible buttons can be clickable
-		int[] effectiveVisibleBy = visibleFor or currentlyVisibleFor
-		int[] effectiveClickableBy = effectiveVisibleBy and clickableBy
-		                           ? effectiveVisibleBy intersectWith clickableBy 
-		                           : effectiveVisibleBy or clickableBy
+		// Handle click (only visible buttons are clickable)
+		int[] effectiveClickableBy = getClickableBy(visibleFor, clickableBy)
 		Vector2 size = image ? image.size*scale : {getTextWidth(text), fontSize}
 		Input.onTouchDownWithin position, size + touchMargin, userId:effectiveClickableBy, showTouchArea
 			onClick touch
