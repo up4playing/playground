@@ -1445,6 +1445,8 @@ int Time
 	
 	inline js Time  operator *  (Time a, int b) a*b
 	inline js float operator *  (Time a, float b) a*b
+	inline js float operator *  (int a, Time b) a*b
+	inline js float operator *  (float a, Time b) a*b
 	
 	inline js Time  operator %  (Time a, int b) a%b
 	inline js Time  operator %  (Time a, Time b) a%b

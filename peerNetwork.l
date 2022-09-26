@@ -44,20 +44,21 @@ transient unit PeerNetwork
 		Network_log("setupPeerConnection userId:"+user.id+" connectionId:"+connectionId+" relayMode:"+PeerNetwork_relayMode)
 		
 		// Event handlers
-		let disconnectTimeout
+		// let disconnectTimeout
 		peerConnection.oniceconnectionstatechange = e => {
 			let state = peerConnection.iceConnectionState
 			Network_log("oniceconnectionstatechange " + state)
 			switch(state) {
 				case "disconnected":
-					disconnectTimeout = setTimeout(() => {
-						Network_log("oniceconnectionstatechange: disconnect after timeout")
-						PeerNetwork_onDisconnectFromPeer(connectionId)
-					}, 7000)
+					PeerNetwork_onDisconnectFromPeer(connectionId)
+					// disconnectTimeout = setTimeout(() => {
+					// 	Network_log("oniceconnectionstatechange: disconnect after timeout")
+					// 	PeerNetwork_onDisconnectFromPeer(connectionId)
+					// }, 3000)
 					break
 				case "connected":
-					Network_log("oniceconnectionstatechange: clear timeout")
-					clearTimeout(disconnectTimeout)
+					// Network_log("oniceconnectionstatechange: clear timeout")
+					// clearTimeout(disconnectTimeout)
 					PeerNetwork_onConnectToPeer(user)
 					break
 			}
@@ -197,7 +198,7 @@ transient unit PeerNetwork
 				Network.tickMessageSize = send ., sendBuffer
 				
 				Network.sentLog += " <{user.id}> #{inputFrame} {user.inputsSentPos}->{inputs.writePos} {inputs.toRangeString(user.inputsSentPos, inputs.writePos)} ({Network.tickMessageSize} bytes)"
-				if length: print " <{user.id}> #{inputFrame} {user.inputsSentPos}->{inputs.writePos} {inputs.toRangeString(user.inputsSentPos, inputs.writePos)} ({Network.tickMessageSize} bytes)"
+				// if length: print " <{user.id}> #{inputFrame} {user.inputsSentPos}->{inputs.writePos} {inputs.toRangeString(user.inputsSentPos, inputs.writePos)} ({Network.tickMessageSize} bytes)"
 				
 				user.inputsSentPos = inputs.writePos
 			
@@ -207,7 +208,8 @@ transient unit PeerNetwork
 			user.dataChannel.send(data)
 			return data.byteLength
 		} catch(e) {
-			Network_log(e)
+			console.error(e)
+			Network_log(e.stack)
 			return 0
 		}
 		
@@ -218,7 +220,6 @@ transient unit PeerNetwork
 		NetworkMessageType type = cast buffer.readInt8
 		if type == Tick:         onTick user, buffer; else
 		if type == Checksum:     onChecksum user, buffer; else
-		if type == RequestState: onRequestState user, buffer; else
 		if type == State:        onState user, buffer
 			
 	private onTick: InternalUser sender, Buffer buffer
@@ -231,9 +232,9 @@ transient unit PeerNetwork
 			buffer.readBuffer sender.inputs, prevWritePos
 			
 			// TOTO: Is local needed?
-			Network.receivedFrames = Input.internalUsers.min.inputFrame where .isConnected or .local
+			Network.receivedFrames = Input.internalUsers.min.inputFrame where .isConnected
 			Network.receivedLog += " [{Network.currentTime}] <{sender.id}> #{inputFrame} buffer:{sender.bufferFrames} {prevWritePos}->{sender.inputs.writePos} {sender.inputs.toRangeString(prevWritePos, sender.inputs.writePos)}"
-			if sender.inputs.writePos > prevWritePos: print " [{Network.currentTime}] <{sender.id}> #{inputFrame} buffer:{sender.bufferFrames} {prevWritePos}->{sender.inputs.writePos} {sender.inputs.toRangeString(prevWritePos, sender.inputs.writePos)}"
+			// if sender.inputs.writePos > prevWritePos: print " [{Network.currentTime}] <{sender.id}> #{inputFrame} buffer:{sender.bufferFrames} {prevWritePos}->{sender.inputs.writePos} {sender.inputs.toRangeString(prevWritePos, sender.inputs.writePos)}"
 		else
 			Network.receivedLog += " [{Network.currentTime}] <{sender.id}> (ignoring #{inputFrame})"
 			
@@ -256,14 +257,9 @@ transient unit PeerNetwork
 		
 	private onDisconnectFromPeer: int connectionId
 		let user = Input.internalUsers.find.connectionId == connectionId
-			Network.log "disconnect", connectionId, user.id
 			user.isConnected = false
-			
-			// Write "lost" event to tell everybody that we lost the connection to this user
-			// When all player lost the connection to a user, the user will be removed
-			Input.handleLost user.id
-		else
-			Network.log "disconnect old user that already reconnected", connectionId
+			// user.nextLostMessageAtFrame = Network.frame + Network.targetFps * 2
+			Network.log "disconnect", connectionId, user.id
 				
 	private js void logConnectionType
 		setTimeout(async () => {
@@ -389,18 +385,38 @@ transient unit PeerNetwork
 	// --------------------------------------------- Send state ---------------------------------------------
 		
 	Buffer snapshotBuffer
+	int[] sendStateQueue
 	
-	sendRequestState: InternalUser to
-		Network.log "Sending state request to {to.id}"
-		sendBuffer.reset
-		sendBuffer.writeInt8 cast NetworkMessageType.RequestState
-		send to, sendBuffer
+	stateRequestedBy: int id
+		sendStateQueue.add id
+		if Network.mode == Connected: processSendStateQueue
+	
+	processSendStateQueue
+		Network.log "Processing send state queue", sendStateQueue.length
+		if sendStateQueue.length > 0
+			snapshotBuffer.reset
+			Snapshot.serialize snapshotBuffer
+			for sendStateQueue <-
+				let user = Input.internalUsers[.]
+				if user and user.dataChannel
+					sendState user, snapshotBuffer
+					sendStateQueue.removeAt i
+	
+	// sendRequestState: InternalUser to
+	// 	Network.log "Sending state request to {to.id}"
+	// 	sendBuffer.reset
+	// 	sendBuffer.writeInt8 cast NetworkMessageType.RequestState
+	// 	send to, sendBuffer
 		
-	private onRequestState: InternalUser to, Buffer buffer
-		Network.log "Received request state from {to.id}"
-		snapshotBuffer.reset
-		Snapshot.serialize snapshotBuffer
-		sendState to, snapshotBuffer
+	// private onRequestState: InternalUser to, Buffer buffer
+	// 	if Network.mode == Connected
+	// 		Network.log "Received request state from {to.id} -> sending state"
+	// 		snapshotBuffer.reset
+	// 		Snapshot.serialize snapshotBuffer
+	// 		sendState to, snapshotBuffer
+	// 	else
+	// 		Network.log "Received request state from {to.id} -> queueing"
+	// 		sendStateQueue.add to.id
 		
 	private sendState: InternalUser to, Buffer buffer
 		Network.log "Sending state to {to.id}"
@@ -418,6 +434,9 @@ transient unit PeerNetwork
 		send to, sendBuffer
 		
 	private onState: InternalUser c, Buffer buffer
+		if Network.mode == Connected:
+			Network.log "Ignoring received state from {c.id} because we are already connected"
+			return
 		Network.log "Received state from {c.id}"
 		let frame = buffer.readInt32
 		let userCount = buffer.readInt32
@@ -435,7 +454,9 @@ transient unit PeerNetwork
 		buffer.readBuffer snapshotBuffer
 		Snapshot.deserialize snapshotBuffer
 		Math.recreateRandomValues
-		Network.startConnected
+		Network.startConnected frame+1
+		
+		ServerNetwork.sendReadyForStateRequests
 		
 					
 	// private float nextPingTime

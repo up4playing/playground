@@ -350,9 +350,9 @@ transient unit Platform
 		if(window.sendErrorToEditor) sendErrorToEditor(error)
 		else                         console.error(error)
 		
-	inline js void schedule: int delay
-		                     void() then
-		setTimeout(then, delay)
+	inline js void delay: Time time
+		                  void() then
+		setTimeout(then, time)
 		
 	inline js void copyToClipboard(string text)
 		navigator.clipboard.writeText(text)
