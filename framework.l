@@ -350,7 +350,7 @@ Object Piece
 		if board: pos = position * board.matrix
 		nextBoard = Framework.getBoardAt pos, touch.userId
 		
-	update
+	override update
 		if nextBoard != board
 			if board: board.objects.remove this; position = position * board.matrix; touchOffset = touchOffset * board.matrix.scaleVector
 			else      Framework.objects.remove this
@@ -458,7 +458,7 @@ Piece Board
 	isVisibleFor: int userId
 		return contentVisibleForOthers == Always or contentVisibleForOthers == On or owner == userId
 		
-	tick
+	override tick
 		// Children
 		graphics.visibleFor contentVisibleForOthers == Never or contentVisibleForOthers == Off ? owner : -1
 			graphics.applyMatrix matrix
@@ -495,7 +495,7 @@ Piece Board
 		if color: drawRectangle position, size, fillColor:color, layer:-1, visibleFor
 		if image: drawImage image, position, scale
 			
-	update
+	override update
 		objects.each.update
 		
 	snap: Piece currentObject, Vector2 position
