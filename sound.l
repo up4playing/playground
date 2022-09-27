@@ -19,7 +19,7 @@ class Sound
 		if(this.audio) this.audio.volume = this.fadeVolume * audio_volume
 		
 	js void stop
-		this.audio?.pause()
+		if(this.audio) this.audio.pause()
 		
 	play
 		// We can play sounds immediately to ensure there is no lag
@@ -32,16 +32,21 @@ class Sound
 			playingSound.isConfirmed = true
 			
 	js void currentTime: float value
-		this.audio.currentTime = value
+		if(this.audio) this.audio.currentTime = value
 		
 	private js void doPlay: PlayingSound ps
+		// Recreate audio if it was lost during serialization
+		if(!this.nextAudio) this.preloadForNextPlayback();
+			
+		// Play audio
 		this.fadeVolume = 1;
 		this.audio = this.nextAudio;
 		this.audio.volume = audio_volume;
 		this.audio.onended = () => audio_playingSounds.remove(ps);
 		this.audio.play();
+		this.preloadForNextPlayback()
 		
-		// Preload file for next playback
+	private js void preloadForNextPlayback()
 		this.nextAudio = new Audio();
 		this.nextAudio.src = this.file;
 		
