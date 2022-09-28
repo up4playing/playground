@@ -1494,6 +1494,7 @@ transient struct Date
 	inline js string dayShortMonthNameYearString := (this.getDate().toLocaleString('en-US', {minimumIntegerDigits:2})+" "+this.toLocaleString('en-US', {month: 'short'})+" "+this.getFullYear())
 	inline js string hourMinuteSecondString := (this.getHours().toLocaleString('en-US', {minimumIntegerDigits:2}))+"-"+this.getMinutes().toLocaleString('en-US', {minimumIntegerDigits:2})+"-"+this.getSeconds().toLocaleString('en-US', {minimumIntegerDigits:2})
 	inline js string hourMinuteString := (this.getHours().toLocaleString('en-US', {minimumIntegerDigits:2}))+":"+this.getMinutes().toLocaleString('en-US', {minimumIntegerDigits:2})
+	inline js string dayMonthYearHourMinuteString := (this.getDate().toLocaleString('en-US', {minimumIntegerDigits:2})+"."+(this.getMonth()+1).toLocaleString('en-US', {minimumIntegerDigits:2})+"."+this.getFullYear()+" "+this.getHours().toLocaleString('en-US', {minimumIntegerDigits:2}))+"-"+this.getMinutes().toLocaleString('en-US', {minimumIntegerDigits:2})
 	inline js string dayMonthYearHourMinuteSecondString := (this.getDate().toLocaleString('en-US', {minimumIntegerDigits:2})+"."+(this.getMonth()+1).toLocaleString('en-US', {minimumIntegerDigits:2})+"."+this.getFullYear()+" "+this.getHours().toLocaleString('en-US', {minimumIntegerDigits:2}))+"-"+this.getMinutes().toLocaleString('en-US', {minimumIntegerDigits:2})+"-"+this.getSeconds().toLocaleString('en-US', {minimumIntegerDigits:2})
 	
 	// The number of milliseconds elapsed since January 1, 1970
@@ -1506,8 +1507,15 @@ transient struct Date
 	static inline js Date fromTime(Time time) new Date(time)
 	static inline js Date fromValues(int year, int month, int day, int hour = 0, int minute = 0, int second = 0) new Date(year, month-1, day, hour, minute, second)
 		
-	static js string dateAndTimeString
-		let d = new Date()
-		let min = d.getMinutes()
-		return d.getDate()+"."+(d.getMonth()+1)+"."+d.getFullYear()+" "+d.getHours()+":"+(min < 10 ? "0"+min : min)
+	static string currentHourMinuteSecondString
+		Date data
+		return data.hourMinuteSecondString
+		
+	static string currentDayMonthYearHourMinuteString
+		Date data
+		return data.dayMonthYearHourMinuteString
+		
+	static string currentDayMonthYearHourMinuteSecondString
+		Date data
+		return data.dayMonthYearHourMinuteSecondString
 
