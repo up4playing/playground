@@ -154,10 +154,10 @@ transient unit ServerNetwork
 	resolveState
 		Network.mode = ResolveState
 		let now = Network.currentTime
-		if now < nextResolveStateTime: return
-		Network.log "resolveState: sending request state to server", requestStateTryNumber
-		sendRequestState requestStateTryNumber++
-		nextResolveStateTime = now + 12s
+		if now > nextResolveStateTime
+			Network.log "resolveState: sending request state to server", requestStateTryNumber
+			sendRequestState requestStateTryNumber++
+			nextResolveStateTime = now + 7s
 			
 		// for Input.internalUsers
 		// 	print "    {.id} isConnected:{.isConnected}"

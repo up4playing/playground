@@ -217,7 +217,10 @@ transient unit Network
 			graphics.finishFrame
 			if mode == ResolveState: ServerNetwork.resolveState
 			return
-
+		else
+		if mode == Connected
+			PeerNetwork.processSendStateQueue
+			
 		let targetFrame = Math.floor((now - startTime)/targetFrameTime)+1
 		frameMinusBuffer = targetFrame - bufferFrames
 		if mode == Connected: certainFrame = Math.min(frameMinusBuffer, receivedFrames); else
