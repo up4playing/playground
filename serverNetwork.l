@@ -157,7 +157,7 @@ transient unit ServerNetwork
 		if now < nextResolveStateTime: return
 		Network.log "resolveState: sending request state to server", requestStateTryNumber
 		sendRequestState requestStateTryNumber++
-		nextResolveStateTime = now + 5s
+		nextResolveStateTime = now + 10s
 			
 		// for Input.internalUsers
 		// 	print "    {.id} isConnected:{.isConnected}"
