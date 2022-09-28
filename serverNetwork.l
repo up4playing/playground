@@ -108,7 +108,7 @@ transient unit ServerNetwork
 		Network.log "Joining room {roomId} as user {userId}"
 		
 		// The first person in the room triggers sending an notification with the link to everybody
-		if userCount <= 1: Http.get "https://up4playing.com:3114/sendGamedayNotification/{Network.gameId}/{Network.roomId}/hasStarted"
+		if userCount <= 1 and !Platform.isStaging: Http.get "https://up4playing.com:3114/sendGamedayNotification/{Network.gameId}/{Network.roomId}/hasStarted"
 
 		
 	float nextPingTime, fastestPingPongTime = int.maxValue, lastPingPongTime
@@ -120,7 +120,7 @@ transient unit ServerNetwork
 			sendBuffer.reset
 			sendBuffer.writeInt8 cast NetworkMessageType.Ping
 			sendBuffer.writeFloat64 now
-			sendBuffer.writeInt32 Network.certainFrame                    // The last certain frame with inputs from everybody
+			sendBuffer.writeInt32 Network.certainFrame                            // The last certain frame with inputs from everybody
 			sendBuffer.writeFloat64 Network.checksums[Network.certainFrame] || 0  // The checksum of the last certain frame
 			send sendBuffer
 			nextPingTime = now + 5000
