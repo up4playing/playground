@@ -102,7 +102,7 @@ transient unit Network
 		Input.handleJoin frame 
 		user.collectInputs = true
 		writeLog += " #{joinFrame} Join"
-		print "startConnected", joinFrame
+		log "startConnected", joinFrame
 		
 		this.frame = frame
 		mode = Connected
@@ -516,9 +516,10 @@ transient unit Network
 		else
 			parseLog +=  " no-restore c:{certainFrame} u:{uncertainFrame}"
 					
-	log: logstring text
-		eventLog += text + "\n"
-		print text
+	js void log: logstring text
+		let str = Date_currentHourMinuteSecondString() + " " + text
+		Network_eventLog += str + "\n"
+		log(str)
 		
 	inline js int currentTime := Date.now()
 	
@@ -618,6 +619,7 @@ transient unit Network
 	join: string gameId, string roomString, int userId
 		initAll
 		log Platform.url
+		log Date.currentDayMonthYearHourMinuteSecondString
 		log Platform.userAgent
 		startInLobby = true
 		this.gameId = gameId

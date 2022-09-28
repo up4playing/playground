@@ -67,8 +67,6 @@ transient unit ServerNetwork
 		if type == RequestState: onRequestState buffer;
 		
 	private void sendJoinMessage: string roomId, int userId, int version
-		print roomId, userId, version
-		
 		sendBuffer.reset
 		sendBuffer.writeInt8 cast NetworkMessageType.Join
 		sendBuffer.writeString roomId
@@ -157,7 +155,7 @@ transient unit ServerNetwork
 		Network.mode = ResolveState
 		let now = Network.currentTime
 		if now < nextResolveStateTime: return
-		print "resolveState: sending request state to server", requestStateTryNumber
+		Network.log "resolveState: sending request state to server", requestStateTryNumber
 		sendRequestState requestStateTryNumber++
 		nextResolveStateTime = now + 5s
 			
