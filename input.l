@@ -489,6 +489,7 @@ unit Input
 		
 	// Post lost messages and remove users if nobody disagrees
 	internal handleLost
+		if Network.mode != Connected: return
 		for internalUsers -> internalUser
 			let user = usersById[internalUser.id]
 				if user.lostAtFrame and Network.frame >= user.lostAtFrame + Network.targetFps * 3

@@ -166,6 +166,7 @@ transient unit Network
 		Math.randomValueIndex = 0
 		frame = 0
 		certainFrame = int.maxValue
+		uncertainFrame = -1
 		lobby.inLobby = startInLobby
 		if !startInLobby: startApp
 			
@@ -594,6 +595,7 @@ transient unit Network
 				InternalUser user = {
 					id: buffer.readInt8
 					local: buffer.readBool
+					isConnected: true
 				}
 				buffer.readBuffer user.inputs
 				Input.internalUsers[user.id] = user
