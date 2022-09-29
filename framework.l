@@ -166,14 +166,14 @@ Object RectangleObject
 	Vector2 size
 	Color color = White
 	internal checksum := position.x + position.y + scale + alpha + size.x + size.y
-	tick
+	override tick
 		drawRectangle position, size, color, visibleFor, layer, alpha
 
 Object CircleObject
 	float radius = 10
 	Color color = White
 	internal checksum := position.x + position.y + scale + alpha + radius
-	tick
+	override tick
 		drawCircle position, radius, fillColor:color, visibleFor, layer
 		
 	radiusTo: float value
@@ -190,12 +190,12 @@ Object TextObject
 	HorizontalAlignment align = Center // The horizontal alignment of the text
 	VerticalAlignment valign = Middle  // The vertical alignment of the text
 	internal checksum := position.x + position.y + text.length + size
-	tick
+	override tick
 		drawText text, position, size*scale, color, align, valign, font, alpha, visibleFor, layer
 		
 Object ImageObject
 	Image image
-	tick
+	override tick
 		drawImage image, position, scale, alpha, visibleFor, layer
 		
 Object VideoObject
@@ -203,7 +203,7 @@ Object VideoObject
 	Vector2 size = {440, 330}
 	float radius
 	internal checksum := position.x + position.y + userId + size.x + size.y + radius
-	tick
+	override tick
 		if radius: drawVideo userId, position, radius
 		else       drawVideo userId, position, size
 			
@@ -223,7 +223,7 @@ Object Button
     alpha = 1.0                      // The opacity of the button 0: fully transpart, 1: fully visible)
 	Key hotkey
     void(Touch touch) onClick        // Execute this code when the user clicks the button
-	tick
+	override tick
 		drawButton image, text, position, textColor, frame, scale, fontSize, touchMargin, textOffset, showTouchArea, visibleFor, clickableBy, hotkey, layer, alpha, onClick(touch)
 
 		
@@ -283,7 +283,7 @@ Object Piece
 	
 	checksum := position.x + position.y + frame + scale + angle + cast side
 		
-	tick
+	override tick
 		// Rotate	
 		Vector2 iconPos = this.iconPos or (rotatable ? {(image.size.x+image.size.y)/3.5, (image.size.x+image.size.y)/3.5}*{1,-1} : image.size/2*{1,-1})
 		if rotatable and Framework.selectedObjects.contains(this)
@@ -402,7 +402,7 @@ Piece Stack
 		let b = objects[objects.length-1]
 		size = (b.position+{b.size.x/2, -b.image.size.y/2}) - (a.position-{a.size.x/2, -a.size.y/2})
 	
-	tick
+	override tick
 		for Math.limit(objects.length-shownObjectCount, min:0) to objects.length <- i
 			let obj = objects[i]
 			let image = obj.backImage || obj.image
@@ -588,7 +588,7 @@ Object ParticleSystem
 	
 	private int burst
 	
-	tick
+	override tick
 		if Time.now > nextBurst
 			for particlesPerBurst
 				let r = -(Math.randomFloat) * Math.PI*2
@@ -633,7 +633,7 @@ Piece Coin
 	debugString := "(Coin {value} pos:{position.x} {position.y} dis:{distanceToClosest})"
 	checksum := position.x + position.y + frame + value
 	
-	tick
+	override tick
 		if movable
 			Input.onTouchDownWithin position, radius:40, userId
 				moveTouch = touch
@@ -751,7 +751,7 @@ Object Menu
 	private inline js void startGame
 		if(window.app_start) window.app_startGame(false);
 	
-	tick
+	override tick
 		bool doNotClose
 		if active
 			forCentered items, center:popupPosition, delta:{0,60} -> item
