@@ -1521,3 +1521,6 @@ transient struct Date
 		Date data
 		return data.dayMonthYearHourMinuteSecondString
 
+unit Json
+	inline js dynamic parse(string str) JSON.parse(str)
+	inline js string stringify(dynamic object) JSON.stringify(object)
