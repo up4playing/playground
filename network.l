@@ -75,7 +75,7 @@ transient unit Network
 	visible string errorMessage     // The error message if we caught any exceptions in the main loop
 	public float startTime          // The time the room was created, syncroniced between all clients
 	visible int frame               // Current frame, will increase by 1 at the end of every step (every targetFrameTime ms)
-	private int frames              // Total number of frames we have inputs for
+	internal int frames             // Total number of frames we have inputs for
 	public int receivedFrames       // We received all remote inputs up to this frame (lowest of all user frames)
 	private int uncertainFrame = -1 // The first frame where we don't have inputs from all players
 	public int certainFrame = -1    // The last frame where we have inputs from all players

@@ -81,7 +81,7 @@ class NetworkUser
 			if (.phase == Up and .type >= Touch) or (hasToch and .type != Touch)
 				touches.remove .
 	
-enum InputType: None, TouchDown, TouchMove, TouchUp, Wheel, KeyDown, KeyUp, TextInput, Stick, Trigger, Grip, ButtonDown, ButtonUp, ControllerTransform, HeadTransform, DeviceRotation, Join, Lost, StillConnected, SetState, Navigate, GameController
+enum InputType: None, TouchDown, TouchMove, TouchUp, Wheel, KeyDown, KeyUp, TextInput, Stick, Trigger, Grip, ButtonDown, ButtonUp, ControllerTransform, HeadTransform, DeviceRotation, Join, Lost, StillConnected, SetState, Navigate, GameController, Data
 		
 // Phase of a touch or a click
 enum TouchPhase: Still, Down, Move, Up
@@ -309,6 +309,7 @@ unit Input
 		window.onwheel = e => {
 			e.preventDefault();
 			e.stopPropagation();
+			if(e.button == 0 && Platform_mode == 0) Platform_record();
 			Input_handleWheelEvent(e.pageX, e.pageY, e.deltaY)
 			return false;			
 		}
@@ -482,6 +483,7 @@ unit Input
 				
 	// Handles the user navigating back or forward in the browser	
 	internal handleNavigate: string url
+		if Network.mode == None || Platform.mode != Record || !localUser || !localUser.collectInputs: return
 		let inputs = localUser.inputs
 		inputs.writeInt32 localUser.inputFrame
 		inputs.writeInt16 cast InputType.Navigate
@@ -515,6 +517,16 @@ unit Input
 		inputs.writeInt16 cast InputType.StillConnected
 		inputs.writeInt16 userId
 				
+	internal handleData: int id, string data
+		// let write = not (Network.mode == None || Network.frames > Network.frame || !localUser || !localUser.collectInputs)
+		// print Network.frame, Network.frames, localUser.inputFrame, Platform.mode, write
+		if Network.mode == None || Network.frames > Network.frame || !localUser || !localUser.collectInputs: return
+		let inputs = localUser.inputs
+		inputs.writeInt32 localUser.inputFrame
+		inputs.writeInt16 cast InputType.Data
+		inputs.writeInt id
+		inputs.writeString data
+		
 	private inline js InternetGamePad[] getGamepads() navigator.getGamepads()
 	
 	internal updateGameControllers
@@ -746,6 +758,13 @@ unit Input
 					inputs.readBuffer Network.snapshotBuffer
 					Snapshot.deserialize Network.snapshotBuffer
 					Math.recreateRandomValues
+				else
+				if inputType == Data
+					int id = inputs.readInt
+					string value = inputs.readString
+					Network.parseLog += " data {id}: {value}"
+					let object = Json.parse(value)
+					networkData.call id, object
 	
 		for users
 			let internalUser = internalUsers[.id]
