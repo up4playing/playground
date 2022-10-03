@@ -74,6 +74,8 @@ transient unit Network
 	NetworkMode mode                // Whether we are in local or connected mode
 	visible string errorMessage     // The error message if we caught any exceptions in the main loop
 	public float startTime          // The time the room was created, syncroniced between all clients
+	// public float timeOffset
+	public float serverStartTime
 	visible int frame               // Current frame, will increase by 1 at the end of every step (every targetFrameTime ms)
 	internal int frames             // Total number of frames we have inputs for
 	public int receivedFrames       // We received all remote inputs up to this frame (lowest of all user frames)
@@ -110,7 +112,7 @@ transient unit Network
 		certainFrame = -1
 		uncertainFrame = -1
 		bufferFrames = 0
-		log "Connected", user.id, frame, startTime
+		log "Connected", user.id, frame, startTime, serverStartTime
 		saveState
 		
 	startLocal: userCount = 1
@@ -120,11 +122,12 @@ transient unit Network
 		Input.internalUsers.clear
 		Math.setRandomSeed Math.generateRandomSeed 
 		initDatabase
+		startTime = serverStartTime = currentTime
+		// timeOffset = 0
 		reset
-		resetStartTime
 		animationFrame
 		
-	// Clears all inputs and resets the application to the first frame
+	// Clear all inputs and reset the application to the first frame
 	stop
 		for Input.internalUsers: if .: .inputs.reset; .startInputFrame 0
 		frames = 0
@@ -135,7 +138,7 @@ transient unit Network
 		audio.stop
 		goToFrame 0
 		
-	// Calls init functions, creates the local users, resets read positions and starts app
+	// Keep inputs, call init functions, create the local users, reset read positions and start app
 	// This is called on startup, after every code change and when going backwards in the timeline
 	reset
 		Platform.initApplication
@@ -168,6 +171,7 @@ transient unit Network
 		certainFrame = int.maxValue
 		uncertainFrame = -1
 		lobby.inLobby = startInLobby
+		Time.now = serverStartTime
 		if !startInLobby: startApp
 			
 		if simulateRollback: saveState
@@ -185,7 +189,7 @@ transient unit Network
 			
 		while frame < targetFrame
 			step fastFordward:true, draw:false
-		resetStartTime
+		adjustStartTime
 		animationFrame
 		isReplay = false
 
@@ -221,6 +225,7 @@ transient unit Network
 		if mode == Connected
 			PeerNetwork.processSendStateQueue
 			
+		// let targetFrame = Math.floor((now - startTime - timeOffset)/targetFrameTime)+1
 		let targetFrame = Math.floor((now - startTime)/targetFrameTime)+1
 		frameMinusBuffer = targetFrame - bufferFrames
 		if mode == Connected: certainFrame = Math.min(frameMinusBuffer, receivedFrames); else
@@ -255,12 +260,11 @@ transient unit Network
 					Vector2 pixelPos = Input.logicalToPixelPosition(pos)
 					Input.handleTouchEvent inputType:TouchMove, x:pixelPos.x, y:pixelPos.y, pointerType:"mouse", pointerId:0, button:0
 
+				for Input.internalUsers: if .local: .startInputFrame frame+1
 				step fastFordward:false, draw:frame == targetFrame-1
 				collectStatistics
 				lastNetworkFrame = now
 				
-			for Input.internalUsers: if .local: .startInputFrame targetFrame	
-			
 		lastAnimationFrame = now
 		if Platform.mode == Play and frame >= frames: Platform.record()
 			
@@ -378,7 +382,7 @@ transient unit Network
 		          bool draw         // We don't draw if we are stepping multiple frames in one animation frame
 		try
 			// Set time
-			Time.now = Math.round(frame * targetFrameTime)
+			Time.now = serverStartTime + Math.round(frame * targetFrameTime)
 			Platform.fastForward = fastFordward
 			
 			// Log
@@ -530,11 +534,12 @@ transient unit Network
 		lobby_inLobby = false
 		if(window.app_start) app_start()
 		
-	private resetStartTime
+	private adjustStartTime
 		startTime = Math.round(currentTime - frame*targetFrameTime - (targetFrameTime*.5))
+		// timeOffset = Math.round(currentTime - frame*targetFrameTime - (targetFrameTime*.5)) - startTime
 		
-	resetStartTimeIfNeeded
-		if Platform.mode < Play: resetStartTime
+	adjustStartTimeIfNeeded
+		if Platform.mode < Play: adjustStartTime
 		
 	Buffer snapshotBuffer
 		

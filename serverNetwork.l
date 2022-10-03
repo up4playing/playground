@@ -79,6 +79,7 @@ transient unit ServerNetwork
 		let userId = buffer.readInt32
 		let version = buffer.readInt32
 		let seed = buffer.readString
+		let serverStartTime = buffer.readFloat64
 		let userCount = buffer.readInt16
 		for userCount
 			let id = buffer.readInt32
@@ -100,6 +101,7 @@ transient unit ServerNetwork
 		inputsSentPos = Input.localUser.inputs.writePos
 		Input.localUser.id = userId
 		Math.setRandomSeed seed
+		Network.serverStartTime = serverStartTime
 		Network.mode = Ping
 		for Input.internalUsers
 			if !.local: PeerNetwork.createOffer .

@@ -177,8 +177,8 @@ transient unit Platform
 	
 	internal stop()    mode = Pause;  Network.stop; sendMode
 	internal pause()   mode = Pause;  audio.stop(); sendMode
-	internal record()  Network.resetStartTimeIfNeeded; mode = Record; sendMode
-	internal play()    Network.resetStartTimeIfNeeded; mode = Play;   sendMode
+	internal record()  Network.adjustStartTimeIfNeeded; mode = Record; sendMode
+	internal play()    Network.adjustStartTimeIfNeeded; mode = Play;   sendMode
 	
 	private goToFrame(int targetFrame) Network.goToFrame(targetFrame)
 		

@@ -1401,7 +1401,7 @@ struct float
 	inline js Time h := (this*3600000)
 	inline js Time days := (this*86400000)
 		
-int Time
+transient int Time
 	inline js Time() 0
 	
 	// The  largest possible value of an integer
