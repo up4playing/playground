@@ -1175,8 +1175,16 @@ global unit Math
 	global inline js int ceil: float value // The value to round up
 		Math.ceil(value)
 		
+	// Returns the smallest integer greater than or equal to the given value 
+	global inline js Time ceil: Time value // The value to round up
+		Math.ceil(value)
+		
 	// Returns the largest integer less than or equal to the given value
 	global inline js int floor: float value // The value to round down
+		Math.floor(value)
+		
+	// Returns the largest integer less than or equal to the given value
+	global inline js Time floor: Time value // The value to round down
 		Math.floor(value)
 		
 	// Returns the given value rounded to the nearest integer
@@ -1401,7 +1409,7 @@ struct float
 	inline js Time h := (this*3600000)
 	inline js Time days := (this*86400000)
 		
-transient int Time
+transient float Time
 	inline js Time() 0
 	
 	// The  largest possible value of an integer
@@ -1435,20 +1443,20 @@ transient int Time
 			
 	inline js Time  operator +  (Time a, Time b) a+b
 	inline js Time  operator +  (Time a, int b) a+b
-	inline js float operator +  (Time a, float b) a+b
+	inline js Time  operator +  (Time a, float b) a+b
 	
 	inline js Time  operator -  (Time a, Time b) a-b
 	inline js Time  operator -  (Time a, int b) a-b
-	inline js float operator -  (Time a, float b) a-b
+	inline js Time  operator -  (Time a, float b) a-b
 	
 	inline js float operator /  (Time a, Time b) a/b
-	inline js float operator /  (Time a, int b) a/b
-	inline js float operator /  (Time a, float b) a/b
+	inline js Time  operator /  (Time a, int b) a/b
+	inline js Time  operator /  (Time a, float b) a/b
 	
 	inline js Time  operator *  (Time a, int b) a*b
-	inline js float operator *  (Time a, float b) a*b
-	inline js float operator *  (int a, Time b) a*b
-	inline js float operator *  (float a, Time b) a*b
+	inline js Time  operator *  (Time a, float b) a*b
+	inline js Time  operator *  (int a, Time b) a*b
+	inline js Time  operator *  (float a, Time b) a*b
 	
 	inline js Time  operator %  (Time a, int b) a%b
 	inline js Time  operator %  (Time a, Time b) a%b

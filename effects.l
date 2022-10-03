@@ -7,7 +7,6 @@ global unit fx
 		let now = Time.now
 		for effects <-
 			if now >= .startTime and (not .smooth or Input.isCertain)
-				// TODO: Remove this workaround when finding common base is implemented
 				float f = .duration ? (now - .startTime)/.duration : 1
 				if f >= 1: f = 1; effects.removeAt i
 				.tick f
@@ -21,44 +20,44 @@ class Effect
 	Time startTime
 	Time duration
 	bool smooth
-	tick: Time f
+	tick: float f
 
 Effect FadeEffect
 	Object object
 	float startValue, delta
 	bool removeWhenDone
-	tick(Time f) 
+	tick(float f) 
 		object.alpha = startValue + delta * f
 		if f >= 1 and removeWhenDone: Framework.objects.remove object
 		
 Effect MoveEffect
 	Object object
 	Vector2 startValue, delta
-	tick(Time f) object.position = startValue + delta * f
+	tick(float f) object.position = startValue + delta * f
 		
 Effect ScaleEffect
 	Object object
 	float startValue, delta
-	tick(Time f) object.scale = startValue + delta * f
+	tick(float f) object.scale = startValue + delta * f
 		
 Effect RadiusEffect
 	CircleObject object
 	float startValue, delta
-	tick(Time f) object.radius = startValue + delta * f
+	tick(float f) object.radius = startValue + delta * f
 	
 Effect FadeSoundEffect
 	Sound sound
 	float startValue, delta
-	tick(Time f) 
+	tick(float f) 
 		sound.volume = startValue + delta * f
 		if f >= 1: sound.stop
 			
 Effect PlaySoundEffect
 	Sound sound
-	tick(Time f) sound.play
+	tick(float f) sound.play
 	
 Effect RunEffect
 	void() do
-	tick(Time f) do()
+	tick(float f) do()
 	
 
