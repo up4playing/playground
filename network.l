@@ -382,7 +382,9 @@ transient unit Network
 		          bool draw         // We don't draw if we are stepping multiple frames in one animation frame
 		try
 			// Set time
-			Time.now = serverStartTime + Math.round(frame * targetFrameTime)
+			// TEMP
+			// Time.now = serverStartTime + Math.round(frame * targetFrameTime)
+			Time.now = Math.round(frame * targetFrameTime)
 			Platform.fastForward = fastFordward
 			
 			// Log

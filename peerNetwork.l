@@ -392,8 +392,8 @@ transient unit PeerNetwork
 		if Network.mode == Connected: processSendStateQueue
 	
 	processSendStateQueue
-		Network.log "Processing send state queue", sendStateQueue.length
 		if sendStateQueue.length > 0
+			Network.log "Processing send state queue", sendStateQueue.length
 			snapshotBuffer.reset
 			Snapshot.serialize snapshotBuffer
 			for sendStateQueue <-
