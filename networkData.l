@@ -13,5 +13,6 @@ unit localStorage
 	get: string key, stored void(dynamic data) do
 		let id = networkData.callbacks.length
 		networkData.callbacks.add do(data)
-		Input.handleData id, getStringDirectly(key)
+		let value = getStringDirectly(key)
+		if(value) Input.handleData id, value
 		
