@@ -203,6 +203,12 @@ class string
 		                        int end
 		this.substring(start, end)
 		
+	js string getUntil: string value
+		                int start = 0
+		let index = this.indexOf(value)
+		if(index != -1) return this.substring(start, index)
+		else            return this
+		
 	// Returns 0 for an exact match, 1 if first is larger, -1 if second is larger
 	inline js int compareTo: string value // The string to compare to
 		this.localeCompare(value)

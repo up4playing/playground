@@ -123,7 +123,7 @@ transient unit Platform
 		onResize
 		if !isDebug: Network.simulateConnection = false
 		if mode >= Play: mode = Pause
-		let path = url.split("/")
+		let path = url.getUntil("?").split("/")
 		let gameId = path[3]
 		let roomId = path[4]
 			
