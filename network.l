@@ -323,8 +323,8 @@ transient unit Network
 			for Input.users
 				let internalUser = Input.internalUsers[.id]
 				statisticsGraph.add cast .id, internalUser.bufferFrames, .color
-			statisticsGraph.add "interval", sendInterval, {"808080"}
-			statisticsGraph.add "ahead", ahead, Gray
+			// statisticsGraph.add "interval", sendInterval, {"808080"}
+			// statisticsGraph.add "ahead", ahead, Gray
 			
 		// Logs
 		try
@@ -466,7 +466,7 @@ transient unit Network
 				if errorMessage
 					drawText errorMessage, statisticsGraph.position+{statisticsGraph.size.x/2, -statisticsGraph.size.y/2-15}, align:Right, layer:1000001, size:12, color:{"ffff00"}
 				else
-					drawText "v{Platform.version} {lag100Count}-{lag200Count} #{frame} {sendInterval}{sendInputsMode==Peer ? "p" : "s"} {PeerNetwork.connectionType}{statisticsGraph.maxValue}", statisticsGraph.position+{statisticsGraph.size.x/2, -statisticsGraph.size.y/2-12}, align:Right, layer:1000001, size:14
+					drawText "{lag100Count}-{lag200Count} #{frame} {PeerNetwork.connectionType}{statisticsGraph.maxValue}", statisticsGraph.position+{statisticsGraph.size.x/2, -statisticsGraph.size.y/2-12}, align:Right, layer:1000001, size:10
 			drawTime = Time.measure
 				graphics.finishFrame
 		audio.finishFrame
@@ -670,7 +670,7 @@ class StatisticsGraphSeries
 	
 transient unit statisticsGraph
 	Vector2 position = {500, 450}
-	Vector2 size = {300, 180}
+	Vector2 size = {500, 180}
 	
 	private StatisticsGraphSeries[] series
 	float maxValue
