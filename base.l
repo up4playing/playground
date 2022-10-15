@@ -73,8 +73,11 @@ struct int
 	inline js int decrementDownToExclusive: int min
 		(this > min+1 ? --this : min+1)
 		
-	// inline js int[] to: int max
-	// 	(() => {let list=[]; for(let _i=this; _i<max; _i++) list.push(_i); return list})()
+	inline js bool within: Range range
+		(this >= range.from && this < range.to)
+		
+	inline js bool withinInclusively: Range range
+		(this >= range.from && this <= range.to)
 	
 // A number stored as a double precision 64-bit floating point value
 struct float
@@ -1534,6 +1537,15 @@ transient struct Date
 	static string currentDayMonthYearHourMinuteSecondString
 		Date data
 		return data.dayMonthYearHourMinuteSecondString
+		
+class Range
+	int from, to
+	
+	inline js bool contains: int value
+		(value >= this.from && value < this.from)
+	
+	inline js bool containsInclusively: int value
+		(value >= this.from && value <= this.from)
 
 unit Json
 	inline js dynamic parse(string str) JSON.parse(str)
