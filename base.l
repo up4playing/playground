@@ -814,7 +814,7 @@ class List<T>
 		return result;
 		
 	// Gets an item from the list
-	inline js T get: int index // The index of the item to get
+	inline js T get: implicit int index // The index of the item to get
 		(index >= 0 ? this[index] : this[this.length+index])
 		
 	inline js T get: int from = 0
@@ -1550,3 +1550,9 @@ class Range
 unit Json
 	inline js dynamic parse(string str) JSON.parse(str)
 	inline js string stringify(dynamic object) JSON.stringify(object)
+		
+enum Language: English, German, Spanish, Frensh, Italian, Portuguese, Japanese, Chinese, Korean, Dutch, Turkish, Polish, Russian, Hindi, Arabic, Bengali, Urdu, Indonesian
+
+unit Loca
+	Language[] supportedLanguages = [English, German]
+	Language language = English
