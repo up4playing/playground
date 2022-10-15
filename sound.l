@@ -5,10 +5,10 @@ class Sound
 	
 	js void open
 		return new Promise((resolve, reject) => {
-			this.audio = new Audio();
-			this.audio.oncanplaythrough = () => resolve();
-			this.audio.onerror = () => reject();
-			this.audio.src = this.file;			
+			this.nextAudio = new Audio();
+			this.nextAudio.oncanplaythrough = () => resolve();
+			this.nextAudio.onerror = () => reject();
+			this.nextAudio.src = this.file;			
 		})
 		
 	js void volume: float value
@@ -19,7 +19,7 @@ class Sound
 		if(this.audio) this.audio.volume = this.fadeVolume * audio_volume
 		
 	js void stop
-		this.audio?.pause()
+		if(this.audio) this.audio.pause()
 		
 	play
 		// We can play sounds immediately to ensure there is no lag
@@ -30,22 +30,31 @@ class Sound
 			if not Network.isReplay: doPlay playingSound
 		else
 			playingSound.isConfirmed = true
+			
+	js void currentTime: float value
+		if(this.audio) this.audio.currentTime = value
 		
 	private js void doPlay: PlayingSound ps
+		// Recreate audio if it was lost during serialization
+		if(!this.nextAudio) this.preloadForNextPlayback();
+			
+		// Play audio
 		this.fadeVolume = 1;
+		this.audio = this.nextAudio;
 		this.audio.volume = audio_volume;
 		this.audio.onended = () => audio_playingSounds.remove(ps);
 		this.audio.play();
+		this.preloadForNextPlayback()
 		
-		// Preload file for next playback
-		this.audio = new Audio();
-		this.audio.src = this.file;
+	private js void preloadForNextPlayback()
+		this.nextAudio = new Audio();
+		this.nextAudio.src = this.file;
 		
 	isPlaying
 		return audio.playingSounds.any.sound == this and .frame < Time.frame
 		
-	fadeOut: int duration = 3000
-		     int delay = 0
+	fadeOut: Time duration = 3000
+		     Time delay = 0
 		fx.add FadeSoundEffect startTime:Time.now+delay, duration, smooth:false, this, startValue:1, delta:-1
 		return this
 
@@ -57,7 +66,7 @@ transient class PlayingSound
 // A collection of functions for playing audio
 transient global unit audio
 	const float[] volumeLevels = [0, 0.0001, 0.0002, 0.0005, 0.001, 0.002, 0.005, .01, .02, .04, .08, .16, .32, .64, 1]
-	int volumeLevel = 11
+	int volumeLevel = 10
 	float volume = volumeLevels[volumeLevel]
 	PlayingSound[] playingSounds
 	

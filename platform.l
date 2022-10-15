@@ -123,7 +123,7 @@ transient unit Platform
 		onResize
 		if !isDebug: Network.simulateConnection = false
 		if mode >= Play: mode = Pause
-		let path = url.split("/")
+		let path = url.getUntil("?").split("/")
 		let gameId = path[3]
 		let roomId = path[4]
 			
@@ -161,10 +161,8 @@ transient unit Platform
 		if(window.tick) return
 			
 		if(Platform_tickMode == 0) {
-			Network_log("TickMode: Interval")
 			Platform_interval = setInterval(() => Platform_tick(), 1000/Network_targetFps)
 		} else {
-			Network_log("TickMode: Animation Frame")
 			window.tick = function() {
 				Platform_tick();
 				window.requestAnimationFrame(window.tick);
@@ -179,8 +177,8 @@ transient unit Platform
 	
 	internal stop()    mode = Pause;  Network.stop; sendMode
 	internal pause()   mode = Pause;  audio.stop(); sendMode
-	internal record()  Network.resetStartTimeIfNeeded; mode = Record; sendMode
-	internal play()    Network.resetStartTimeIfNeeded; mode = Play;   sendMode
+	internal record()  Network.adjustStartTimeIfNeeded; mode = Record; sendMode
+	internal play()    Network.adjustStartTimeIfNeeded; mode = Play;   sendMode
 	
 	private goToFrame(int targetFrame) Network.goToFrame(targetFrame)
 		
@@ -352,9 +350,9 @@ transient unit Platform
 		if(window.sendErrorToEditor) sendErrorToEditor(error)
 		else                         console.error(error)
 		
-	inline js void schedule: int delay
-		                     void() then
-		setTimeout(then, delay)
+	inline js void delay: Time time
+		                  void() then
+		setTimeout(then, time)
 		
 	inline js void copyToClipboard(string text)
 		navigator.clipboard.writeText(text)
@@ -447,11 +445,11 @@ struct FileFilter
 	string[] extensions
 
 transient unit Http	
-	js async object get: string url
+	js async dynamic get: string url
 		let response = await fetch(url)
 		return response.json()
 		
-	js void get: string url, void(object result) code
+	js void get: string url, void(dynamic result) code
 		let response = await fetch(url)
 		code(await response.json())
 		
@@ -460,12 +458,12 @@ transient unit Http
 		return await response.json()
 		
 	js async string delete: string url 
-		                    object body
+		                    dynamic body
 		let response = await fetch(url, {method:"DELETE", body:JSON.stringify(body)})
 		return await response.json()
 		
 	js void delete: string url 
-		         void(object result) code
+		         void(dynamic result) code
 		         void(string error) else
 		try {
 			let response = await fetch(url, {method:"DELETE"})
@@ -480,7 +478,7 @@ transient unit Http
 		return await response.json()
 		
 	js void put: string url 
-		         void(object result) code
+		         void(dynamic result) code
 		         void(string error) else
 		try {
 			let response = await fetch(url, {method:"PUT"})
@@ -496,13 +494,13 @@ transient unit Http
 		return await response.json()
 		
 	js async void put: string url 
-		         object body
+		         dynamic body
 		let response = await fetch(url, {method:"PUT", body:JSON.stringify(body)})
 		return await response.json()
 		
 	js void put: string url
-		         object body
-		         void(object result) code
+		         dynamic body
+		         void(dynamic result) code
 		         void(string error) else
 		try {
 			let response = await fetch(url, {method:"PUT", body:JSON.stringify(body)})
@@ -518,7 +516,7 @@ transient unit Http
 		return await response.json()
 		
 	js async string post: string url 
-		                  object body
+		                  dynamic body
 		let response = await fetch(url, {method:"POST", body:JSON.stringify(body)})
 		return await response.json()
 		
@@ -528,7 +526,7 @@ transient unit Http
 		
 	js void post: string url
 		          string body
-		          void(object result) code
+		          void(dynamic result) code
 		          void(string error) else
 		try {
 			let response = await fetch(url, {method:"POST", body})

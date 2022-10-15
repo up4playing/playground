@@ -34,6 +34,7 @@ struct Vector2
 	
 	js Vector2 operator * (Vector2 a, Vector2 b) return new Vector2(a.x*b.x, a.y*b.y, a.location || b.location ? new SourceCodeLocation(0, 0, null, a.location, b.location) : null)
 	js Vector2 operator * (Vector2 a, float b) return new Vector2(a.x*b, a.y*b, a.location || b.location ? new SourceCodeLocation(0, 0, null, a.location, b.location) : null)
+	js Vector2 operator * (Vector2 a, Time b) return new Vector2(a.x*b, a.y*b, a.location || b.location ? new SourceCodeLocation(0, 0, null, a.location, b.location) : null)
 	js Vector2 operator * (float a, Vector2 b) return new Vector2(a*b.x, a*b.y, a.location || b.location ? new SourceCodeLocation(0, 0, null, a.location, b.location) : null)
 	js Vector2 operator * (Vector2 vector, Matrix2D matrix)
 		return new Vector2(
@@ -90,7 +91,7 @@ struct Vector2
 	length := Math.sqrt(x * x + y * y)
 		
 	// A vector that is orthogonal to the existing vector
-	orthogonal := Vector2(-y, x)
+	orthogonal := Vector2(x:-y, y:x)
 		
 	// A vector with the sign of each coordinate flipped
 	inverse := Vector2(-x, -y)
@@ -282,7 +283,7 @@ struct IntVector2
 	length := Math.sqrt(x * x + y * y)
 		
 	// A vector that is orthogonal to the existing vector
-	orthogonal := IntVector2(-y, x)
+	orthogonal := IntVector2(x:-y, y:x)
 		
 	// A vector with the sign of each coordinate flipped
 	inverse := IntVector2(-x, -y)
@@ -297,9 +298,10 @@ struct IntVector2
 	min := x < y ? x : y
 	
 	limit: IntVector2 min
+		   IntVector2 max
 		return IntVector2(
-			Math.limit x, min:min.x
-			Math.limit y, min:min.y
+			Math.limit x, min:min.x, max:max.x
+			Math.limit y, min:min.y, max:max.y
 		)
 		
 	limit: IntVector2 max
@@ -308,10 +310,10 @@ struct IntVector2
 			Math.limit y, max:max.y
 		)
 		
-	limit: IntVector2 min, IntVector2 max
+	limit: IntVector2 min
 		return IntVector2(
-			Math.limit x, min:min.x, max:max.x
-			Math.limit y, min:min.y, max:max.y
+			Math.limit x, min:min.x
+			Math.limit y, min:min.y
 		)
 		
 	// Interpolates linearly to another vector
@@ -638,8 +640,17 @@ class Grid<T>
 	IntVector2 size
 	T[] items
 	
+	get: int x
+		 int y
+		return items[y*size.x + x]
+	
 	get: IntVector2 pos
 		return items[pos.y*size.x + pos.x]
+	
+	set: int x
+		 int y
+		 T value
+		items[y*size.x + x] = value
 	
 	set: IntVector2 pos
 		 T value

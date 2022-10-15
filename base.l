@@ -43,15 +43,15 @@ struct int
 		(this & value)
 	
 	inline js int limit: int min
-		(this < min ? min : this)
-	
+		                 int max
+		(this < min ? min : this > max ? max : this)
+		
 	inline js int limit: int max
 		(this > max ? max : this)
 	
 	inline js int limit: int min
-		                 int max
-		(this < min ? min : this > max ? max : this)
-		
+		(this < min ? min : this)
+	
 	inline js int setIfLarger: int newValue
 		(this = Math.max(newValue, this))
 		
@@ -125,15 +125,15 @@ struct float
 		Math.round(this)
 		
 	inline js float limit: float min
-		(this < min ? min : this)
-	
+		                   float max
+		(this < min ? min : this > max ? max : this)
+		
 	inline js float limit: float max
 		(this > max ? max : this)
 	
 	inline js float limit: float min
-		                   float max
-		(this < min ? min : this > max ? max : this)
-		
+		(this < min ? min : this)
+	
 	inline js bool isApproximately: float value
 		                            float epsilon = 0.00001
 		(Math.abs(this - value) < epsilon)
@@ -167,8 +167,6 @@ js String
 class string
 	// Returns the number of characters in the string
 	inline js int length := this.length
-	
-	inline js string get(int index) this[index]
 	
 	// Returns a string with each character converted to uppercase
 	inline js string toUpperCase := this.toUpperCase()
@@ -205,6 +203,12 @@ class string
 		                        int end
 		this.substring(start, end)
 		
+	js string getUntil: string value
+		                int start = 0
+		let index = this.indexOf(value)
+		if(index != -1) return this.substring(start, index)
+		else            return this
+		
 	// Returns 0 for an exact match, 1 if first is larger, -1 if second is larger
 	inline js int compareTo: string value // The string to compare to
 		this.localeCompare(value)
@@ -226,6 +230,17 @@ class string
 	inline js string replace: string source
 		                      string target
 		this.replace(new RegExp(source, "g"), target)
+		
+	inline js string get: int index
+		(index >= 0 ? this[index] : this[this.length+index])
+	
+	inline js string get: int from = 0
+		                  int to
+		this.substring(from >= 0 ? from : this.length+from, to >= 0 ? to : this.length+to)
+		
+	inline js string get: int from = 0
+		this.substring(from >= 0 ? from : this.length+from)	
+	
 		
 // A logical data type that can have the value true or false
 enum bool: false, true
@@ -297,19 +312,6 @@ class List<T>
 			
 	inline js bool contains: T item
 		(this.indexOf(item) != -1)
-		
-	// Gets an item from the list
-	inline js T get: int index // The index of the item to get
-		this[index]
-	
-	// Sets an item at a given index
-	inline js T set: int index // The index of the item to set
-	                 T value   // The new value to set
-		this[index] = value
-		
-	inline js T getOrSet: int index      
-		                  T initalValue
-		this[index] || (this[index] = initalValue)
 		
 	inline js int indexOf: T item
 		this.indexOf(item)
@@ -808,9 +810,63 @@ class List<T>
 		}
 		return result;
 		
+	// Gets an item from the list
+	inline js T get: int index // The index of the item to get
+		(index >= 0 ? this[index] : this[this.length+index])
+		
+	inline js T get: int from = 0
+		             int to
+		this.slice(from, to)
+	
+	inline js T get: int from = 0
+		this.slice(from)
+	
+	inline js T set: int index // The index of the item to set
+		             T value   // The new value to set
+		(index >= 0 ? this[index] = value : this[this.length+index] = value)
+		
+	// Tries to get an item from the list. If it doesn't exist, it sets it.
+	inline js T getOrSet: int index
+		                  T value
+		(this.hasOwnProperty(index) ? this[index] : this[index] = value)
+		
+	// Add a value to an item of the list
+	inline js T addToItem: int index // The index of the item to change
+		                   T value   // The value to add to the item
+		(index >= 0 ? this[index] += value : this[this.length+index] += value)
+		
+	// Subtract a value from an item of the list
+	inline js T subtractFromItem: int index // The index of the item to change
+		                          T value   // The value to subtract from the item
+		(index >= 0 ? this[index] -= value : this[this.length+index] -= value)
+		
+	// Multiply an item of the list by a value
+	inline js T multiplyItem: int index // The index of the item to change
+		                      T value   // The value to multiply the item by
+		(index >= 0 ? this[index] *= value : this[this.length+index] *= value)
+		
+	// Divide an item of the list by a value
+	inline js T divideItem: int index // The index of the item to change
+		                    T value   // The value to divide the item by
+		(index >= 0 ? this[index] /= value : this[this.length+index] /= value)
+		
+	// Add 1 to item of the list
+	inline js T incrementItem: int index // The index of the item to change
+		(index >= 0 ? this[index]++ : this[this.length+index]++)
+		
+	// Subtract 1 from an item of the list
+	inline js T decrementItem: int index // The index of the item to change
+		(index >= 0 ? this[index]-- : this[this.length+index]--)
+	
+		
 // A data container that stores key-value pairs
 js Map
-class Map<T>
+class Map<TKey, TValue>
+	inline js TValue get: TKey key
+		this.get(key)
+	inline js void set: TKey key
+		                TValue value
+		this.set(key, value)
 
 // Specifies that a function doesn't return a value
 struct void
@@ -1093,7 +1149,7 @@ global transient unit System
 		log(text, location.row, location.column, location.file)
 	
 	// Display a message in the timeline
-	global js void watch: string text // The text to display
+	global js void watch: logstring text // The text, variables or expressions to watch
 		                  SourceCodeLocation location
 		if(Platform_isDebug && Network_frame >= Network_frameWithNewWatches) {
 			Platform_sendWatch(Network_frame, text, location.row, location.column, location.file)
@@ -1125,8 +1181,16 @@ global unit Math
 	global inline js int ceil: float value // The value to round up
 		Math.ceil(value)
 		
+	// Returns the smallest integer greater than or equal to the given value 
+	global inline js Time ceil: Time value // The value to round up
+		Math.ceil(value)
+		
 	// Returns the largest integer less than or equal to the given value
 	global inline js int floor: float value // The value to round down
+		Math.floor(value)
+		
+	// Returns the largest integer less than or equal to the given value
+	global inline js Time floor: Time value // The value to round down
 		Math.floor(value)
 		
 	// Returns the given value rounded to the nearest integer
@@ -1263,12 +1327,12 @@ global unit Math
 		}
 
 	// Generates a random integer
-	global js int randomInteger: int max // The exclusive upper bound of the random integer to generate
-		let f = Math_randomGenerator()
-		let i = Math.floor(f * max)
-		// Log random numbers for testing
-		// Network_log("randomInteger float:"+f+"*"+max+" -> "+i)
-		return i
+	global js int randomInteger: int min // The inclusive lower bound of the random integer
+		                         int max // The exclusive upper bound of the random integer
+		return min + Math.floor(Math_randomGenerator() * (max-min))
+	
+	global js int randomInteger: int max = 2147483647 // The exclusive upper bound of the random integer
+		return Math.floor(Math_randomGenerator() * max)
 	
 	// Generates a random float
 	global inline js int randomFloat
@@ -1292,7 +1356,9 @@ global unit Math
 			
 	limit: int value
 		   int min
+		   int max
 		if value < min: return min
+		if value > max: return max
 			            return value
 	
 	limit: int value
@@ -1302,28 +1368,26 @@ global unit Math
 	
 	limit: int value
 		   int min
-		   int max
 		if value < min: return min
-		if value > max: return max
-			            return value
-	
-	limit: float value
-		   float min
-		if value < min: return min
-			            return value
-	
-	limit: float value
-		   float max
-		if value > max: return max
 			            return value
 	
 	limit: float value
 		   float min
 		   float max
 		if value < min: return min
+		if value > max: return max
+			            return value
+	
+	limit: float value
+		   float max
 		if value > max: return max
 			            return value
 			
+	limit: float value
+		   float min
+		if value < min: return min
+			            return value
+	
 	interpolate: float value
 		         float fromStart = 0
 		         float fromEnd = 1
@@ -1351,7 +1415,7 @@ struct float
 	inline js Time h := (this*3600000)
 	inline js Time days := (this*86400000)
 		
-int Time
+transient float Time
 	inline js Time() 0
 	
 	// The  largest possible value of an integer
@@ -1380,21 +1444,25 @@ int Time
 	inline js int hours        := Math.floor((this          ) / 3600000)
 		
 	inline js string minutesAndSeconds := (Math.floor((this % 3600000) / 60000) + (this % 60000 < 10000 ? ":0":":") + Math.floor((this % 60000) / 1000))
-		
+	
+	inline js string dayMonthYearHourMinuteString() new Date(this).dayMonthYearHourMinuteString()
+			
 	inline js Time  operator +  (Time a, Time b) a+b
 	inline js Time  operator +  (Time a, int b) a+b
-	inline js float operator +  (Time a, float b) a+b
+	inline js Time  operator +  (Time a, float b) a+b
 	
 	inline js Time  operator -  (Time a, Time b) a-b
 	inline js Time  operator -  (Time a, int b) a-b
-	inline js float operator -  (Time a, float b) a-b
+	inline js Time  operator -  (Time a, float b) a-b
 	
 	inline js float operator /  (Time a, Time b) a/b
-	inline js float operator /  (Time a, int b) a/b
-	inline js float operator /  (Time a, float b) a/b
+	inline js Time  operator /  (Time a, int b) a/b
+	inline js Time  operator /  (Time a, float b) a/b
 	
 	inline js Time  operator *  (Time a, int b) a*b
-	inline js float operator *  (Time a, float b) a*b
+	inline js Time  operator *  (Time a, float b) a*b
+	inline js Time  operator *  (int a, Time b) a*b
+	inline js Time  operator *  (float a, Time b) a*b
 	
 	inline js Time  operator %  (Time a, int b) a%b
 	inline js Time  operator %  (Time a, Time b) a%b
@@ -1437,12 +1505,13 @@ transient struct Date
 	inline js string twoDigitMinute := this.getMinutes().toLocaleString('en-US', {minimumIntegerDigits:2})
 	inline js string twoDigitSecond := this.getSeconds().toLocaleString('en-US', {minimumIntegerDigits:2})
 	
-	inline js string dayMonthYearString := (this.getDate().toLocaleString('en-US', {minimumIntegerDigits:2})+"."+(this.getMonth()+1).toLocaleString('en-US', {minimumIntegerDigits:2})+"."+this.getFullYear())
-	inline js string dayLongMonthNameYearString := (this.getDate().toLocaleString('en-US', {minimumIntegerDigits:2})+" "+this.toLocaleString('en-US', {month: 'long'})+" "+this.getFullYear())
-	inline js string dayShortMonthNameYearString := (this.getDate().toLocaleString('en-US', {minimumIntegerDigits:2})+" "+this.toLocaleString('en-US', {month: 'short'})+" "+this.getFullYear())
-	inline js string hourMinuteSecondString := (this.getHours().toLocaleString('en-US', {minimumIntegerDigits:2}))+"-"+this.getMinutes().toLocaleString('en-US', {minimumIntegerDigits:2})+"-"+this.getSeconds().toLocaleString('en-US', {minimumIntegerDigits:2})
-	inline js string hourMinuteString := (this.getHours().toLocaleString('en-US', {minimumIntegerDigits:2}))+":"+this.getMinutes().toLocaleString('en-US', {minimumIntegerDigits:2})
-	inline js string dayMonthYearHourMinuteSecondString := (this.getDate().toLocaleString('en-US', {minimumIntegerDigits:2})+"."+(this.getMonth()+1).toLocaleString('en-US', {minimumIntegerDigits:2})+"."+this.getFullYear()+" "+this.getHours().toLocaleString('en-US', {minimumIntegerDigits:2}))+"-"+this.getMinutes().toLocaleString('en-US', {minimumIntegerDigits:2})+"-"+this.getSeconds().toLocaleString('en-US', {minimumIntegerDigits:2})
+	js string dayMonthYearString() return (this.getDate().toLocaleString('en-US', {minimumIntegerDigits:2})+"."+(this.getMonth()+1).toLocaleString('en-US', {minimumIntegerDigits:2})+"."+this.getFullYear())
+	js string dayLongMonthNameYearString() return (this.getDate().toLocaleString('en-US', {minimumIntegerDigits:2})+" "+this.toLocaleString('en-US', {month: 'long'})+" "+this.getFullYear())
+	js string dayShortMonthNameYearString() return (this.getDate().toLocaleString('en-US', {minimumIntegerDigits:2})+" "+this.toLocaleString('en-US', {month: 'short'})+" "+this.getFullYear())
+	js string hourMinuteSecondString() return (this.getHours().toLocaleString('en-US', {minimumIntegerDigits:2}))+"-"+this.getMinutes().toLocaleString('en-US', {minimumIntegerDigits:2})+"-"+this.getSeconds().toLocaleString('en-US', {minimumIntegerDigits:2})
+	js string hourMinuteString() return (this.getHours().toLocaleString('en-US', {minimumIntegerDigits:2}))+":"+this.getMinutes().toLocaleString('en-US', {minimumIntegerDigits:2})
+	js string dayMonthYearHourMinuteString() return (this.getDate().toLocaleString('en-US', {minimumIntegerDigits:2})+"."+(this.getMonth()+1).toLocaleString('en-US', {minimumIntegerDigits:2})+"."+this.getFullYear()+" "+this.getHours().toLocaleString('en-US', {minimumIntegerDigits:2}))+"-"+this.getMinutes().toLocaleString('en-US', {minimumIntegerDigits:2})
+	js string dayMonthYearHourMinuteSecondString() return (this.getDate().toLocaleString('en-US', {minimumIntegerDigits:2})+"."+(this.getMonth()+1).toLocaleString('en-US', {minimumIntegerDigits:2})+"."+this.getFullYear()+" "+this.getHours().toLocaleString('en-US', {minimumIntegerDigits:2}))+"-"+this.getMinutes().toLocaleString('en-US', {minimumIntegerDigits:2})+"-"+this.getSeconds().toLocaleString('en-US', {minimumIntegerDigits:2})
 	
 	// The number of milliseconds elapsed since January 1, 1970
 	inline js Time time := this.getTime()
@@ -1454,8 +1523,18 @@ transient struct Date
 	static inline js Date fromTime(Time time) new Date(time)
 	static inline js Date fromValues(int year, int month, int day, int hour = 0, int minute = 0, int second = 0) new Date(year, month-1, day, hour, minute, second)
 		
-	static js string dateAndTimeString
-		let d = new Date()
-		let min = d.getMinutes()
-		return d.getDate()+"."+(d.getMonth()+1)+"."+d.getFullYear()+" "+d.getHours()+":"+(min < 10 ? "0"+min : min)
+	static string currentHourMinuteSecondString
+		Date data
+		return data.hourMinuteSecondString
+		
+	static string currentDayMonthYearHourMinuteString
+		Date data
+		return data.dayMonthYearHourMinuteString
+		
+	static string currentDayMonthYearHourMinuteSecondString
+		Date data
+		return data.dayMonthYearHourMinuteSecondString
 
+unit Json
+	inline js dynamic parse(string str) JSON.parse(str)
+	inline js string stringify(dynamic object) JSON.stringify(object)

@@ -7,7 +7,6 @@ global unit fx
 		let now = Time.now
 		for effects <-
 			if now >= .startTime and (not .smooth or Input.isCertain)
-				// TODO: Remove this workaround when finding common base is implemented
 				float f = .duration ? (now - .startTime)/.duration : 1
 				if f >= 1: f = 1; effects.removeAt i
 				.tick f
@@ -21,7 +20,7 @@ class Effect
 	Time startTime
 	Time duration
 	bool smooth
-	tick: Time f
+	tick: float f
 
 Effect FadeEffect
 	Object object

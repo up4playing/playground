@@ -1,4 +1,4 @@
-enum NetworkMode: None, Ping, Local, Connected, WaitingForState
+enum NetworkMode: None, Ping, Local, Connected, ResolveState
 transient class RoomInfo: int time, userId
 enum SendInputsMode: None, Peer, Server
 	
@@ -64,6 +64,7 @@ transient unit Network
 	bool simulateInputsForTesting = false
 	bool simulateRollback = false
 	bool showVideoForStaging = true
+	bool muteInvisibleUsers = false
 	int checksumInterval = 30
 	
 	SendInputsMode sendInputsMode = Peer
@@ -73,8 +74,10 @@ transient unit Network
 	NetworkMode mode                // Whether we are in local or connected mode
 	visible string errorMessage     // The error message if we caught any exceptions in the main loop
 	public float startTime          // The time the room was created, syncroniced between all clients
+	// public float timeOffset
+	public float serverStartTime
 	visible int frame               // Current frame, will increase by 1 at the end of every step (every targetFrameTime ms)
-	private int frames              // Total number of frames we have inputs for
+	internal int frames             // Total number of frames we have inputs for
 	public int receivedFrames       // We received all remote inputs up to this frame (lowest of all user frames)
 	private int uncertainFrame = -1 // The first frame where we don't have inputs from all players
 	public int certainFrame = -1    // The last frame where we have inputs from all players
@@ -91,24 +94,25 @@ transient unit Network
 	initDatabase
 		IndexedDB.start "up4playing", "snapshot", 5
 
-	startConnected
+	startConnected: int frame
 		if mode == Connected: return
 				
 		let user = Input.localUser
 		user.startInputFrame 0
 		
-		joinFrame = Math.floor((currentTime - this.startTime)/targetFrameTime)+1
-		Input.handleJoin joinFrame 
+		// joinFrame = Math.floor((now - this.startTime)/targetFrameTime)+1
+		Input.handleJoin frame 
 		user.collectInputs = true
 		writeLog += " #{joinFrame} Join"
+		log "startConnected", joinFrame
 		
+		this.frame = frame
 		mode = Connected
 		receivedFrames = -1
 		certainFrame = -1
 		uncertainFrame = -1
-		frame = joinFrame
 		bufferFrames = 0
-		log "Connected", user.id, frame, startTime
+		log "Connected", user.id, frame, startTime, serverStartTime
 		saveState
 		
 	startLocal: userCount = 1
@@ -118,11 +122,12 @@ transient unit Network
 		Input.internalUsers.clear
 		Math.setRandomSeed Math.generateRandomSeed 
 		initDatabase
+		startTime = serverStartTime = currentTime
+		// timeOffset = 0
 		reset
-		resetStartTime
 		animationFrame
 		
-	// Clears all inputs and resets the application to the first frame
+	// Clear all inputs and reset the application to the first frame
 	stop
 		for Input.internalUsers: if .: .inputs.reset; .startInputFrame 0
 		frames = 0
@@ -133,7 +138,7 @@ transient unit Network
 		audio.stop
 		goToFrame 0
 		
-	// Calls init functions, creates the local users, resets read positions and starts app
+	// Keep inputs, call init functions, create the local users, reset read positions and start app
 	// This is called on startup, after every code change and when going backwards in the timeline
 	reset
 		Platform.initApplication
@@ -144,7 +149,7 @@ transient unit Network
 		if !startInLobby
 			// When the developer changed Platform.userCount, add or remove internal users accordingly
 			for Input.internalUsers.length to Platform.userCount
-				Input.internalUsers.add {id:i, local:true, collectInputs:true}
+				Input.internalUsers.add {id:i, local:true, isConnected:true, collectInputs:true}
 			if Input.internalUsers.length > Platform.userCount
 				Input.internalUsers.removeRange Platform.userCount, count: Input.internalUsers.length - Platform.userCount
 			
@@ -163,8 +168,10 @@ transient unit Network
 			
 		Math.randomValueIndex = 0
 		frame = 0
-		certainFrame = -1
+		certainFrame = int.maxValue
+		uncertainFrame = -1
 		lobby.inLobby = startInLobby
+		Time.now = serverStartTime
 		if !startInLobby: startApp
 			
 		if simulateRollback: saveState
@@ -182,7 +189,7 @@ transient unit Network
 			
 		while frame < targetFrame
 			step fastFordward:true, draw:false
-		resetStartTime
+		adjustStartTime
 		animationFrame
 		isReplay = false
 
@@ -208,12 +215,17 @@ transient unit Network
 
 		// Ping
 		ServerNetwork.ping
-		if mode == None || mode == Ping
+		if mode == None || mode == Ping || mode == ResolveState
 			graphics.startFrame
 			lobby.tick
 			graphics.finishFrame
+			if mode == ResolveState: ServerNetwork.resolveState
 			return
-
+		else
+		if mode == Connected
+			PeerNetwork.processSendStateQueue
+			
+		// let targetFrame = Math.floor((now - startTime - timeOffset)/targetFrameTime)+1
 		let targetFrame = Math.floor((now - startTime)/targetFrameTime)+1
 		frameMinusBuffer = targetFrame - bufferFrames
 		if mode == Connected: certainFrame = Math.min(frameMinusBuffer, receivedFrames); else
@@ -248,12 +260,11 @@ transient unit Network
 					Vector2 pixelPos = Input.logicalToPixelPosition(pos)
 					Input.handleTouchEvent inputType:TouchMove, x:pixelPos.x, y:pixelPos.y, pointerType:"mouse", pointerId:0, button:0
 
+				for Input.internalUsers: if .local: .startInputFrame frame+1
 				step fastFordward:false, draw:frame == targetFrame-1
 				collectStatistics
 				lastNetworkFrame = now
 				
-			for Input.internalUsers: if .local: .startInputFrame targetFrame	
-			
 		lastAnimationFrame = now
 		if Platform.mode == Play and frame >= frames: Platform.record()
 			
@@ -312,8 +323,8 @@ transient unit Network
 			for Input.users
 				let internalUser = Input.internalUsers[.id]
 				statisticsGraph.add cast .id, internalUser.bufferFrames, .color
-			statisticsGraph.add "interval", sendInterval, {"808080"}
-			statisticsGraph.add "ahead", ahead, Gray
+			// statisticsGraph.add "interval", sendInterval, {"808080"}
+			// statisticsGraph.add "ahead", ahead, Gray
 			
 		// Logs
 		try
@@ -371,7 +382,7 @@ transient unit Network
 		          bool draw         // We don't draw if we are stepping multiple frames in one animation frame
 		try
 			// Set time
-			Time.now = Math.round(frame * targetFrameTime)
+			Time.now = serverStartTime + Math.round(frame * targetFrameTime)
 			Platform.fastForward = fastFordward
 			
 			// Log
@@ -385,6 +396,9 @@ transient unit Network
 			
 			// Update game controllers
 			Input.updateGameControllers
+			
+			// Post lost messages and remove users if nobody disagrees
+			Input.handleLost
 			
 			// Parse inputs
 			Input.parseInputs(frame, isCertain)
@@ -452,7 +466,7 @@ transient unit Network
 				if errorMessage
 					drawText errorMessage, statisticsGraph.position+{statisticsGraph.size.x/2, -statisticsGraph.size.y/2-15}, align:Right, layer:1000001, size:12, color:{"ffff00"}
 				else
-					drawText "v{Platform.version} {lag100Count}-{lag200Count} #{frame} {sendInterval}{sendInputsMode==Peer ? "p" : "s"} {PeerNetwork.connectionType}{statisticsGraph.maxValue}", statisticsGraph.position+{statisticsGraph.size.x/2, -statisticsGraph.size.y/2-12}, align:Right, layer:1000001, size:14
+					drawText "{lag100Count}-{lag200Count} #{frame} {PeerNetwork.connectionType}{statisticsGraph.maxValue}", statisticsGraph.position+{statisticsGraph.size.x/2, -statisticsGraph.size.y/2-12}, align:Right, layer:1000001, size:10
 			drawTime = Time.measure
 				graphics.finishFrame
 		audio.finishFrame
@@ -509,22 +523,23 @@ transient unit Network
 		else
 			parseLog +=  " no-restore c:{certainFrame} u:{uncertainFrame}"
 					
-	log: logstring text
-		eventLog += text + "\n"
-		print text
+	js void log: logstring text
+		let str = Date_currentHourMinuteSecondString() + " " + text
+		Network_eventLog += str + "\n"
+		log(str)
 		
 	inline js int currentTime := Date.now()
 	
 	js void startApp
 		lobby_inLobby = false
-		Network_storeUserId()
 		if(window.app_start) app_start()
 		
-	private resetStartTime
+	private adjustStartTime
 		startTime = Math.round(currentTime - frame*targetFrameTime - (targetFrameTime*.5))
+		// timeOffset = Math.round(currentTime - frame*targetFrameTime - (targetFrameTime*.5)) - startTime
 		
-	resetStartTimeIfNeeded
-		if Platform.mode < Play: resetStartTime
+	adjustStartTimeIfNeeded
+		if Platform.mode < Play: adjustStartTime
 		
 	Buffer snapshotBuffer
 		
@@ -546,7 +561,7 @@ transient unit Network
 	saveEventStreamAndLogs
 		if Input.isCertain
 			saveEventStream
-			Platform.schedule delay:1000
+			Platform.delay 1s
 				saveLogs
 			
 	internal saveLogs
@@ -589,6 +604,7 @@ transient unit Network
 				InternalUser user = {
 					id: buffer.readInt8
 					local: buffer.readBool
+					isConnected: true
 				}
 				buffer.readBuffer user.inputs
 				Input.internalUsers[user.id] = user
@@ -611,12 +627,13 @@ transient unit Network
 	join: string gameId, string roomString, int userId
 		initAll
 		log Platform.url
+		log Date.currentDayMonthYearHourMinuteSecondString
 		log Platform.userAgent
 		startInLobby = true
 		this.gameId = gameId
 		this.roomString = roomString
 		this.roomId = cast roomString
-		Input.localUser = {userId, local:true, isConnected:false, connectionId:0}
+		Input.localUser = {userId, local:true, isConnected:true, connectionId:0}
 		initDatabase
 		setupVideoAndNetwork
 		lobby.enableFullscreen = !Platform.isStaging
@@ -653,7 +670,7 @@ class StatisticsGraphSeries
 	
 transient unit statisticsGraph
 	Vector2 position = {500, 450}
-	Vector2 size = {390, 180}
+	Vector2 size = {500, 180}
 	
 	private StatisticsGraphSeries[] series
 	float maxValue
