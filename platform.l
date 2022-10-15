@@ -21,6 +21,7 @@ transient unit Platform
 	public bool showSafeArea = true
 	public bool showDebugInfo = false
 	public bool isLocal = false
+	
 	public TickMode tickMode = Interval
 	
 	public inline js string url := location.href
@@ -117,11 +118,10 @@ transient unit Platform
 		initPlatform
 		this.engineStarted = false
 		this.isDebug = isDebug
-		if !isDebug: showSafeArea = false
+		if !isDebug: showSafeArea = false; Network.simulateConnection = false
 		showDebugInfo = getLocalStorageObject("showDebugInfo") == "true"
 		
 		onResize
-		if !isDebug: Network.simulateConnection = false
 		if mode >= Play: mode = Pause
 		let path = url.getUntil("?").split("/")
 		let gameId = path[3]
@@ -137,7 +137,7 @@ transient unit Platform
 				roomId = roomId.substring(0,dashIndex)
 			
 		// If the roomId "staging", "latest" or negative, switch to staging mode (no audio, no fullscreen)
-		isStaging = roomId == "staging" or roomId == "latest" or roomId?.startsWith("-")
+		isStaging = isDebug or roomId == "staging" or roomId == "latest" or roomId?.startsWith("-")
 		
 		openMedia
 			this.engineStarted = true

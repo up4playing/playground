@@ -146,7 +146,7 @@ transient unit Network
 		Input.usersById.clear
 		errorMessage = ""
 		
-		if !startInLobby
+		if !startInLobby or Platform.isDebug
 			// When the developer changed Platform.userCount, add or remove internal users accordingly
 			for Input.internalUsers.length to Platform.userCount
 				Input.internalUsers.add {id:i, local:true, isConnected:true, collectInputs:true}
