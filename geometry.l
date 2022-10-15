@@ -114,7 +114,7 @@ struct Vector2
 	// The smaller of the two coordinates
 	min := x < y ? x : y
 	
-	rotate: float angle
+	rotate: Angle angle // The angle in turns (one full rotation is 1)
 		let x = this.x, y = this.y
 		let sn = Math.sin(angle)
 		let cs = Math.cos(angle)
@@ -132,7 +132,7 @@ struct Vector2
 	manhattanDistanceTo: Vector2 value // The second vector
 		return Math.abs(x - value.x) + Math.abs(y - value.y)
 
-	// The angle to another vector in radians
+	// The angle to another vector in turns (one full rotation is 1)
 	angleTo: Vector2 value // The second vector
 		return Math.getAngleForVector(value - this)
 
@@ -338,7 +338,7 @@ struct IntVector2
 	manhattanDistanceTo: IntVector2 value // The second vector
 		return Math.abs(x - value.x) + Math.abs(y - value.y)
 
-	// The angle to another vector in radians
+	// The angle to another vector in turns (one full rotation is 1)
 	angleTo: IntVector2 value // The second vector
 		return Math.getAngleForVector(value - this)
 		
@@ -409,8 +409,8 @@ struct Matrix2D
 		m5 += m1 * x + m3 * y		
 		return this	
 		
-	// Rotates the matrix by a given angle	
-	rotate: float angle // The angle in radians to rotate by
+	// Rotates the matrix by a given angle
+	rotate: Angle angle // The angle in turns (one full rotation is 1)
 		let a0 = m0, a1 = m1, a2 = m2, a3 = m3
 		let sin = Math.sin(angle), cos = Math.cos(angle)
 		m0 = a0 *  cos + a2 * sin
@@ -452,10 +452,11 @@ struct Matrix2D
 
 unit Math
 	// Returns the arctangent of the quotient of the given values
-	inline js float getAngleForVector: Vector2 vector
+	Angle getAngleForVector: Vector2 vector
 		Math.atan2(vector.y, vector.x)
 		
-	inline js Vector2 getVectorForAngle: float angle, float radius = 1
+	inline js Vector2 getVectorForAngle: Angle angle      // The angle in turns (one full rotation is 1)
+		                                 float radius = 1
 		new Vector2(Math.cos(angle)*radius, Math.sin(angle)*radius)
 	
 global transient unit System
@@ -589,8 +590,8 @@ class Direction
 	string name
 	int index
 	IntVector2 vector
-	float angle
-	float isoAngle
+	Angle angle
+	Angle isoAngle
 	
 	toString := name
 	

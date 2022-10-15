@@ -862,7 +862,7 @@ unit Input
 	// Do something when the user touches or clicks within a given area
 	onTouchDownWithin: Vector2 position           // The center of the touch area
 		               Vector2 size               // The size of a rectangular touch area
-		               float angle                // Rotate the touch area by this angle
+		               Angle angle                // Rotate the touch area by this angle
 		               int userId = -1            // Only consider touches or clicks from this user  
 		               string cursor = ""         // Change the mouse cursor image when hovering over this area
 		               bool showTouchArea = false // Draw a red rectangle to visualize that area to touch
@@ -899,8 +899,8 @@ unit Input
 
 	onTouchDownWithin: Vector2 position           // The center of the touch area
 		               Vector2 size               // The size of a rectangular touch area
-		               float angle                // Rotate the touch area by this angle
-		               int[] userId            // Only consider touches or clicks from this user  
+		               Angle angle                // Rotate the touch area by this angle
+		               int[] userId               // Only consider touches or clicks from this user  
 		               string cursor = ""         // Change the mouse cursor image when hovering over this area
 		               bool showTouchArea = false // Draw a red rectangle to visualize that area to touch
 		               bool markAsHandled = true  // Mark the touch as handled so it won't trigger more touch events

@@ -189,12 +189,12 @@ transient global unit graphics
 		totalMatrix.m0 = b0; totalMatrix.m1 = b1; totalMatrix.m2 = b2; totalMatrix.m3 = b3; totalMatrix.m4 = b4; totalMatrix.m5 = b5 
 							
 	// Rotates all subsequent operations by a given angle	
-	rotate: float angle // The angle in radians
+	rotate: Angle angle // The angle in turns (one full rotation is 1)
 		localMatrix.rotate angle
 		totalMatrix.rotate angle
 		
 	// Rotates all operation in a block by a given angle				
-	rotate: float angle  // The angle in radians
+	rotate: Angle angle  // The angle in turns (one full rotation is 1)
 		    void() block // All operations within this block will be rotated
 		if angle == 0: block; return
 		let a0 = localMatrix.m0, a1 = localMatrix.m1, a2 = localMatrix.m2, a3 = localMatrix.m3, a4 = localMatrix.m4, a5 = localMatrix.m5
@@ -420,9 +420,9 @@ transient global unit graphics
 		                   Vector2 position = {}  // The position to draw to
 		                   framesPerSecond = 0    // Animate the image with this speed
 		                   scale = 1.0            // Scale the image by this factor
-		                   angle = 0.0          // Rotate the image by this angle in radians
-		                   flipX = false         // Mirror the image horizontally
-		                   flipY = false         // Mirror the image vertically
+		                   Angle angle = 0.0      // Rotate the image by this angle in turns (one full rotation is 1)
+		                   flipX = false          // Mirror the image horizontally
+		                   flipY = false          // Mirror the image vertically
 		                   visibleFor = -1        // Only this user will see the image
 		                   implicit int layer = 0 // Higher layers are drawn in front of lower layers
 		                   alpha = 1.0            // The opacity of the image (0: fully transpart, 1: fully visible)
@@ -498,16 +498,16 @@ transient global unit graphics
 		}
 	
 	// Draws an image on the screen
-	global js void drawImage: Image image          // The image to draw
+	global js void drawImage: Image image           // The image to draw
 		                      Vector2 position = {} // The position to draw to
-		                      frame = 0            // The frame of the image to draw
-		                      scale = 1.0          // Scale the image by this factor
-		                      angle = 0.0          // Rotate the image by this angle in radians
+		                      frame = 0             // The frame of the image to draw
+		                      scale = 1.0           // Scale the image by this factor
+		                      Angle angle = 0.0     // Rotate the image by this angle in turns (one full rotation is 1)
 		                      flipX = false         // Mirror the image horizontally
 		                      flipY = false         // Mirror the image vertically
-		                      visibleFor = -1      // Only this user will see the image
-		                      implicit layer = 0   // Higher layers are drawn in front of lower layers
-		                      alpha = 1.0          // The opacity of the image (0: fully transpart, 1: fully visible)
+		                      visibleFor = -1       // Only this user will see the image
+		                      implicit layer = 0    // Higher layers are drawn in front of lower layers
+		                      alpha = 1.0           // The opacity of the image (0: fully transpart, 1: fully visible)
 		if(!image.texture?.ensureIsAvailable()) return
 		if(graphics_isVisibleFor(visibleFor)) {
 			let f = image.frames[frame % image.frames.length]
@@ -527,16 +527,16 @@ transient global unit graphics
 			))
 		}
 	
-	global js void drawImage: Image image          // The image to draw
+	global js void drawImage: Image image           // The image to draw
 		                      Vector2 position = {} // The position to draw to
-		                      frame = 0            // The frame of the image to draw
-		                      scale = 1.0          // Scale the image by this factor
-		                      angle = 0.0          // Rotate the image by this angle in radians
+		                      frame = 0             // The frame of the image to draw
+		                      scale = 1.0           // Scale the image by this factor
+		                      Angle angle = 0.0     // Rotate the image by this angle in turns (one full rotation is 1)
 		                      flipX = false         // Mirror the image horizontally
 		                      flipY = false         // Mirror the image vertically
-		                      int[] visibleFor     // Only this user will see the image
-		                      implicit layer = 0   // Higher layers are drawn in front of lower layers
-		                      alpha = 1.0          // The opacity of the image (0: fully transpart, 1: fully visible)
+		                      int[] visibleFor      // Only this user will see the image
+		                      implicit layer = 0    // Higher layers are drawn in front of lower layers
+		                      alpha = 1.0           // The opacity of the image (0: fully transpart, 1: fully visible)
 		if(!image.texture?.ensureIsAvailable()) return
 		if(graphics_isVisibleFor2(visibleFor)) {
 			let f = image.frames[frame % image.frames.length]
@@ -744,14 +744,14 @@ transient global unit graphics
 		}
 		
 	// Draws a circle on the screen
-	global js void drawCircle: position = Vector2()       // The center of the circle
+	global js void drawCircle: position = Vector2()      // The center of the circle
 		                       radius = 32.0             // The radius of the circle
 		                       Color fillColor = null    // The color of the area within the circle
 		                       Color outlineColor = null // The color of the outline around the circle
 		                       outlineWidth = 0          // The width of the outline around the circle
-		                       startAngle = 0.0          // Draws an arc with this start angle in radians, measured from the positive x-axis
-		                       endAngle = Math.PI * 2    // Draws an arc with this end angle in radians, measured from the positive x-axis
-		                       RotationDirection direction = Clockwise
+		                       Angle startAngle = 0.0    // Draws an arc with this start angle in turns, measured from the positive x-axis
+		                       Angle endAngle = 1.0      // Draws an arc with this end angle in turns, measured from the positive x-axis
+		                       RotationDirection direction = Clockwise // The circle is drawn in this direction
 		                       visibleFor = -1           // Only this user will see the circle
 		                       implicit layer = 0        // Higher layers are drawn in front of lower layers
 		                       alpha = 1.0               // The opacity of the circle (0: fully transpart, 1: fully visible)
@@ -769,14 +769,14 @@ transient global unit graphics
 			))
 		}
 		
-	global js void drawCircle: position = Vector2()       // The center of the circle
+	global js void drawCircle: position = Vector2()      // The center of the circle
 		                       radius = 32.0             // The radius of the circle
 		                       Color fillColor = null    // The color of the area within the circle
 		                       Color outlineColor = null // The color of the outline around the circle
 		                       outlineWidth = 0          // The width of the outline around the circle
-		                       startAngle = 0.0          // Draws an arc with this start angle in radians, measured from the positive x-axis
-		                       endAngle = Math.PI * 2    // Draws an arc with this end angle in radians, measured from the positive x-axis
-		                       RotationDirection direction = Clockwise
+		                       Angle startAngle = 0.0    // Draws an arc with this start angle in radians, measured from the positive x-axis
+		                       Angle endAngle = 1.0      // Draws an arc with this end angle in radians, measured from the positive x-axis
+		                       RotationDirection direction = Clockwise // The circle is drawn in this direction
 		                       int[] visibleFor          // Only this user will see the circle
 		                       implicit layer = 0        // Higher layers are drawn in front of lower layers
 		                       alpha = 1.0               // The opacity of the circle (0: fully transpart, 1: fully visible)
@@ -1250,7 +1250,7 @@ transient DisplayItem DisplayCircle
 		if(this.clippingPath) this.startClipping()
 			
 		Platform_context.beginPath();
-		Platform_context.arc(this.x, this.y, this.radius, this.startAngle, this.endAngle, this.direction);
+		Platform_context.arc(this.x, this.y, this.radius, this.startAngle*Math_TwoPI, this.endAngle*Math_TwoPI, this.direction);
 		if(this.fillColor) {
 			Platform_context.fillStyle = this.fillColor
 			Platform_context.fill()

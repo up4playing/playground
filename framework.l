@@ -231,8 +231,8 @@ Object Piece
 	const Vector2 stackOffset = {8,8}
 	const minSize = 75
 	
-	Image image
-	float angle
+	Image image // The image of the piece
+	Angle angle // The rotation of the piece in turns (one full rotation is 1)
 	
 	bool stackable
 	bool movable = true
@@ -251,8 +251,8 @@ Object Piece
 	
 	// Rotate
 	private Touch rotateTouch
-	private float rotateOffset
-	private float targetAngle
+	private Angle rotateOffset
+	private Angle targetAngle
 	private bool rotatedOverThreshold
 	
 	Vector2 iconPos = Vector2.none
@@ -573,7 +573,7 @@ Spot SpotHexGrid
 struct Particle
 	Vector2 pos, speed
 	int frame
-	float angle
+	Angle angle     // The rotation of the particle in turns (one full rotation is 1)
 	float scale = 1
 
 Object ParticleSystem

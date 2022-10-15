@@ -158,6 +158,43 @@ struct float
 		                           EaseFunction ease
 		(this + (target - this)*ease.function.invoke(value))
 		
+	// ------------------------------------------- Time -------------------------------------------
+	
+	implicit inline js Time toTime() this
+	
+	// Milliseconds
+	inline js Time ms := this
+	
+	// Seconds
+	inline js Time s := (this*1000)
+		
+	// Minutes
+	inline js Time min := (this*60000)
+		
+	// Hours
+	inline js Time h := (this*3600000)
+	
+	// Days
+	inline js Time days := (this*86400000)
+		
+	// ------------------------------------------- Angle -------------------------------------------
+	
+	implicit inline js Angle toAngle() this
+	
+	inline js Angle operator °(float angle) (angle/360)
+	
+	// Turns (one full rotation is 1)
+	inline js Angle turns() this
+	
+	// Radians (one full rotation is 1π) 
+	inline js Angle rad() (this/Math_TwoPI)
+		
+	// Degrees (one full rotation is 360)
+	inline js Angle deg() (this/360)
+		
+	// Gradians (one full rotation is 360)
+	inline js Angle grad() (this/400)
+		
 class EaseFunction
 	float(float value) function
 	
@@ -1180,12 +1217,20 @@ global unit Math
 	global inline js float abs: float value // The value to return the absolute value of
 		Math.abs(value)
 		
+	// Returns the absolute value
+	global inline js Angle abs: Angle value // The angle to return the absolute value of
+		Math.abs(value)
+		
 	// Returns the smallest integer greater than or equal to the given value 
 	global inline js int ceil: float value // The value to round up
 		Math.ceil(value)
 		
 	// Returns the smallest integer greater than or equal to the given value 
 	global inline js Time ceil: Time value // The value to round up
+		Math.ceil(value)
+		
+	// Returns the smallest integer greater than or equal to the given value 
+	global inline js Angle ceil: Angle value // The angle to round up
 		Math.ceil(value)
 		
 	// Returns the largest integer less than or equal to the given value
@@ -1196,27 +1241,45 @@ global unit Math
 	global inline js Time floor: Time value // The value to round down
 		Math.floor(value)
 		
+	// Returns the largest integer less than or equal to the given value
+	global inline js Angle floor: Angle value // The angle to round down
+		Math.floor(value)
+		
 	// Returns the given value rounded to the nearest integer
 	global inline js int round: float value // The value to round
 		Math.round(value)
 		
+	// Returns the given value rounded to the nearest integer
+	global inline js Angle round: Angle value // The angle to round
+		Math.round(value)
+		
 	global inline js int min: int a // The first value
-		               int b // The second value
+		                      int b // The second value
 		Math.min(a, b)
 		
 	// Returns the smallest of the given values
 	global inline js float min: float a // The first value
-		                 float b // The second value
+		                        float b // The second value
+		Math.min(a, b)
+		
+	// Returns the smallest of the given values
+	global inline js Angle min: Angle a // The first angle
+		                        Angle b // The second angle
 		Math.min(a, b)
 		
 	// Returns the largest of the given values
 	global inline js int max: int a // The first value
-		               int b // The second value
+		                      int b // The second value
 		Math.max(a, b)
 		
 	// Returns the largest of the given values
 	global inline js float max: float a // The first value
-		                 float b // The second value
+		                        float b // The second value
+		Math.max(a, b)
+		
+	// Returns the largest of the given values
+	global inline js Angle max: Angle a // The first angle
+		                        Angle b // The second angle
 		Math.max(a, b)
 		
 	// Returns the positive square root of the given value
@@ -1233,17 +1296,46 @@ global unit Math
 	// The ratio of a circle's radius to its diameter
 	float TwoPI = 6.283185307179586
 	
-	// Returns the sine of an angle in radians
-	inline js float sin: float angle // The angle in radians
+	internal inline js float nativeSin: float angle // The angle in radians
 		Math.sin(angle)
 		
-	// Returns the cosine of an angle in radians
-	inline js float cos: float angle // The angle in radians
+	internal inline js float nativeCos: float angle // The angle in radians
 		Math.cos(angle)
 		
-	// Returns the tangent of an angle in radians
-	inline js float tan: float angle // The angle in radians
+	internal inline js float nativeTan: float angle // The angle in radians
 		Math.tan(angle)
+		
+	// Returns the sine of an angle in turns
+	sin: Angle angle // The angle in turns (one full rotation is 1)
+	    float result = cast(angle - .5 - Math.floor(angle))
+	    result *= 16 * (Math.abs(result) - .5)
+	    result += .225 * result * (Math.abs(result) - 1)
+	    return result
+
+	// Returns the cosine of an angle in turns
+	cos: Angle angle // The angle in turns (one full rotation is 1)
+	    float result = cast(angle - .25 - Math.floor(angle + .25))
+	    result *= 16 * (Math.abs(result) - .5)
+	    result += .225 * result * (Math.abs(result) - 1)
+	    return result
+	
+	// Returns the tangent of an angle in turns
+	tan: Angle angle
+		return sin(angle) / cos(angle)
+		
+	// Returns the inverse tangent in turns
+	atan2: float y, float x
+		float r, angle;
+		float abs_y = Math.abs(y) + .00000000001
+		if x < 0.0
+			r = (x + abs_y) / (abs_y - x);
+			angle = .375;
+		else
+			r = (x - abs_y) / (x + abs_y);
+			angle = .125;
+		angle += (.03124211533 * r * r - .1562424076) * r;
+		if y < 0.0: return -angle
+		else        return angle	
 		
 	init
 		initDefaultRandomGenerator
@@ -1341,8 +1433,6 @@ global unit Math
 	global inline js int randomFloat
 		Math_randomGenerator()
 	
-	float operator °(float angle) return angle*PI/180
-	
 	inline js int shiftLeft: int value
 		                     int count
 		(value << count)
@@ -1354,6 +1444,12 @@ global unit Math
 	moveTowards: float value
 		         float targetValue
 		         float speed = 1
+		if targetValue > value: return Math.min(value + speed, targetValue) else
+		if targetValue < value: return Math.max(value - speed, targetValue)
+			
+	moveTowards: Angle value
+		         Angle targetValue
+		         Angle speed = 1
 		if targetValue > value: return Math.min(value + speed, targetValue) else
 		if targetValue < value: return Math.max(value - speed, targetValue)
 			
@@ -1399,24 +1495,13 @@ global unit Math
 		if value < fromStart: return toStart
 		if value > fromEnd:   return toEnd
 			                  return toStart + (toEnd-toStart) * (value-fromStart)/(fromEnd-fromStart)
-
-struct int
-	implicit inline js Time toTime() this
-	
-	inline js Time ms := this
-	inline js Time s := (this*1000)
-	inline js Time min := (this*60000)
-	inline js Time h := (this*3600000)
-	inline js Time days := (this*86400000)
 		
-struct float
-	implicit inline js Time toTime() this
-	
-	inline js Time ms := this
-	inline js Time s := (this*1000)
-	inline js Time min := (this*60000)
-	inline js Time h := (this*3600000)
-	inline js Time days := (this*86400000)
+enum TimeUnit
+	ms   // Milliseconds
+	s    // Seconds
+	min  // Minutes
+	h    // Hours
+	days // Days
 		
 transient float Time
 	inline js Time() 0
@@ -1435,10 +1520,10 @@ transient float Time
 	// The current frame
 	static inline js int frame := Network_frame
 	
-	inline js int toInt() this
+	inline js float toFloat() this
 	inline js string toString() this.toString()
 		
-	// Returns true if the integer is not zero
+	// Returns true if the time is not zero
 	inline js bool toBool := this
 	
 	inline js int milliseconds := Math.floor((this %    1000)          ) 
@@ -1475,22 +1560,63 @@ transient float Time
 	inline js bool  operator >  (Time a, Time b) a>b
 	inline js bool  operator >= (Time a, Time b) a>=b
 	
-	static measure: void() code
+	static measure: void() do
 		let startTime = preciseTime
-		code
+		do
 		return preciseTime - startTime
 		
 	inline js float in: TimeUnit unit // Convert the time to this unit
-		(unit == 1 ? (this/1000) : this)
+		(unit==1 ? this/1000 : unit==2 ? this/60000 : unit==3 ? this/3600000 : unit==4 ? this/86400000 : this)
 		
-enum TimeUnit
-	ms   // Milliseconds
-	s    // Seconds
-	min  // Minutes
-	h    // Hours
-	days // Days
+enum AngleUnit
+	turns // Turn (one full rotation is 1)
+	rad   // Radians (one full rotation is 2π)
+	deg   // Degrees (one full rotation is 360)
+	grad  // Gradiants (one full rotation is 400)
+	
+transient float Angle
+	inline js float toFloat() this
+	inline js string toString() this.toString()
 		
-		
+	// Returns true if the angle is not zero
+	inline js bool toBool := this
+	
+	inline js Angle operator +  (Angle a, Angle b) a+b
+	inline js Angle operator +  (Angle a, int b) a+b
+	inline js Angle operator +  (Angle a, float b) a+b
+	
+	inline js Angle operator -  (Angle a, Angle b) a-b
+	inline js Angle operator -  (Angle a, int b) a-b
+	inline js Angle operator -  (Angle a, float b) a-b
+	
+	inline js float operator /  (Angle a, Angle b) a/b
+	inline js Angle operator /  (Angle a, int b) a/b
+	inline js Angle operator /  (Angle a, float b) a/b
+	
+	inline js Angle operator *  (Angle a, int b) a*b
+	inline js Angle operator *  (Angle a, float b) a*b
+	inline js Angle operator *  (int a, Angle b) a*b
+	inline js Angle operator *  (float a, Angle b) a*b
+	
+	inline js Angle operator %  (Angle a, int b) a%b
+	inline js Angle operator %  (Angle a, Angle b) a%b
+	
+	inline js bool  operator <  (Angle a, Angle b) a<b
+	inline js bool  operator <= (Angle a, Angle b) a<=b
+	inline js bool  operator >  (Angle a, Angle b) a>b
+	inline js bool  operator >= (Angle a, Angle b) a>=b
+	
+	inline js bool  operator == (Angle a, Angle b) a==b
+	inline js bool  operator == (Angle a, int b) a==b
+	inline js bool  operator == (Angle a, float b) a==b
+	
+	inline js bool  operator != (Angle a, Angle b) a!=b
+	inline js bool  operator != (Angle a, int b) a!=b
+	inline js bool  operator != (Angle a, float b) a!=b
+	
+	inline js float in: AngleUnit unit
+		(unit==1 ? this*Math_TwoPI : unit==2 ? this*360 : unit==3 ? this*400 : this)
+	
 js Date
 transient struct Date
 	inline js int year := this.getFullYear()
@@ -1508,13 +1634,13 @@ transient struct Date
 	inline js string twoDigitMinute := this.getMinutes().toLocaleString('en-US', {minimumIntegerDigits:2})
 	inline js string twoDigitSecond := this.getSeconds().toLocaleString('en-US', {minimumIntegerDigits:2})
 	
-	js string dayMonthYearString() return (this.getDate().toLocaleString('en-US', {minimumIntegerDigits:2})+"."+(this.getMonth()+1).toLocaleString('en-US', {minimumIntegerDigits:2})+"."+this.getFullYear())
-	js string dayLongMonthNameYearString() return (this.getDate().toLocaleString('en-US', {minimumIntegerDigits:2})+" "+this.toLocaleString('en-US', {month: 'long'})+" "+this.getFullYear())
-	js string dayShortMonthNameYearString() return (this.getDate().toLocaleString('en-US', {minimumIntegerDigits:2})+" "+this.toLocaleString('en-US', {month: 'short'})+" "+this.getFullYear())
-	js string hourMinuteSecondString() return (this.getHours().toLocaleString('en-US', {minimumIntegerDigits:2}))+"-"+this.getMinutes().toLocaleString('en-US', {minimumIntegerDigits:2})+"-"+this.getSeconds().toLocaleString('en-US', {minimumIntegerDigits:2})
-	js string hourMinuteString() return (this.getHours().toLocaleString('en-US', {minimumIntegerDigits:2}))+":"+this.getMinutes().toLocaleString('en-US', {minimumIntegerDigits:2})
-	js string dayMonthYearHourMinuteString() return (this.getDate().toLocaleString('en-US', {minimumIntegerDigits:2})+"."+(this.getMonth()+1).toLocaleString('en-US', {minimumIntegerDigits:2})+"."+this.getFullYear()+" "+this.getHours().toLocaleString('en-US', {minimumIntegerDigits:2}))+"-"+this.getMinutes().toLocaleString('en-US', {minimumIntegerDigits:2})
-	js string dayMonthYearHourMinuteSecondString() return (this.getDate().toLocaleString('en-US', {minimumIntegerDigits:2})+"."+(this.getMonth()+1).toLocaleString('en-US', {minimumIntegerDigits:2})+"."+this.getFullYear()+" "+this.getHours().toLocaleString('en-US', {minimumIntegerDigits:2}))+"-"+this.getMinutes().toLocaleString('en-US', {minimumIntegerDigits:2})+"-"+this.getSeconds().toLocaleString('en-US', {minimumIntegerDigits:2})
+	js string dayMonthYearString() return this.getDate().toLocaleString('en-US', {minimumIntegerDigits:2})+"."+(this.getMonth()+1).toLocaleString('en-US', {minimumIntegerDigits:2})+"."+this.getFullYear()
+	js string dayLongMonthNameYearString() return this.getDate().toLocaleString('en-US', {minimumIntegerDigits:2})+" "+this.toLocaleString('en-US', {month: 'long'})+" "+this.getFullYear()
+	js string dayShortMonthNameYearString() return this.getDate().toLocaleString('en-US', {minimumIntegerDigits:2})+" "+this.toLocaleString('en-US', {month: 'short'})+" "+this.getFullYear()
+	js string hourMinuteSecondString() return this.getHours().toLocaleString('en-US', {minimumIntegerDigits:2})+"-"+this.getMinutes().toLocaleString('en-US', {minimumIntegerDigits:2})+"-"+this.getSeconds().toLocaleString('en-US', {minimumIntegerDigits:2})
+	js string hourMinuteString() return this.getHours().toLocaleString('en-US', {minimumIntegerDigits:2})+":"+this.getMinutes().toLocaleString('en-US', {minimumIntegerDigits:2})
+	js string dayMonthYearHourMinuteString() return this.getDate().toLocaleString('en-US', {minimumIntegerDigits:2})+"."+(this.getMonth()+1).toLocaleString('en-US', {minimumIntegerDigits:2})+"."+this.getFullYear()+" "+this.getHours().toLocaleString('en-US', {minimumIntegerDigits:2})+"-"+this.getMinutes().toLocaleString('en-US', {minimumIntegerDigits:2})
+	js string dayMonthYearHourMinuteSecondString() return this.getDate().toLocaleString('en-US', {minimumIntegerDigits:2})+"."+(this.getMonth()+1).toLocaleString('en-US', {minimumIntegerDigits:2})+"."+this.getFullYear()+" "+this.getHours().toLocaleString('en-US', {minimumIntegerDigits:2})+"-"+this.getMinutes().toLocaleString('en-US', {minimumIntegerDigits:2})+"-"+this.getSeconds().toLocaleString('en-US', {minimumIntegerDigits:2})
 	
 	// The number of milliseconds elapsed since January 1, 1970
 	inline js Time time := this.getTime()
