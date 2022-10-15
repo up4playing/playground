@@ -11,6 +11,7 @@ enum VideoShape: Rectangle, Square, Circle
 enum RelayMode: Never, Auto, Always
 
 transient unit PeerNetwork
+	const userIsLostAfter = 1s
 	RelayMode relayMode = Auto
 	
 	internal enableVideo = true
@@ -50,15 +51,15 @@ transient unit PeerNetwork
 			Network_log("oniceconnectionstatechange " + state)
 			switch(state) {
 				case "disconnected":
-					// PeerNetwork_onDisconnectFromPeer(connectionId)
-					disconnectTimeout = setTimeout(() => {
-						Network_log("oniceconnectionstatechange: disconnect after timeout")
-						PeerNetwork_onDisconnectFromPeer(connectionId)
-					}, 7000)
+					PeerNetwork_onDisconnectFromPeer(connectionId)
+					// disconnectTimeout = setTimeout(() => {
+					// 	Network_log("oniceconnectionstatechange: disconnect after timeout")
+					// 	PeerNetwork_onDisconnectFromPeer(connectionId)
+					// }, PeerNetwork_userIsLostAfter)
 					break
 				case "connected":
 					Network_log("oniceconnectionstatechange: clear timeout")
-					clearTimeout(disconnectTimeout)
+					// clearTimeout(disconnectTimeout)
 					PeerNetwork_onConnectToPeer(user)
 					break
 			}

@@ -500,7 +500,7 @@ unit Input
 		if Network.mode != Connected: return
 		for internalUsers -> internalUser
 			let user = usersById[internalUser.id]
-				if user.lostAtFrame and Network.frame >= user.lostAtFrame + Network.targetFps * 3
+				if user.lostAtFrame and Network.frame >= user.lostAtFrame + Network.targetFps * 8
 					// If a user was lost by anybody and nobody who is still connected to that user
 					// disagrees within a certrain time, we remove this user
 					Network.log "Removing user {user.id} at frame {Network.frame}, user was lost at frame {user.lostAtFrame} and nobody disagreed", isCertain
@@ -515,7 +515,7 @@ unit Input
 					inputs.writeInt32 localUser.inputFrame
 					inputs.writeInt16 cast InputType.Lost
 					inputs.writeInt16 user.id
-					internalUser.nextLostMessageAtFrame = Network.frame + Network.targetFps * 5
+					internalUser.nextLostMessageAtFrame = Network.frame + Network.targetFps * 10
 	
 	private handleStillConnected: int userId
 		let inputs = localUser.inputs
