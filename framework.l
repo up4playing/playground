@@ -754,7 +754,7 @@ Object Menu
 	override tick
 		bool doNotClose
 		if active
-			forCentered items, center:popupPosition, delta:{0,60} -> item
+			forPositions items, center:popupPosition, delta:{0,60} -> item
 				drawText .label, pos+{-60}, size:30, align:Left, layer:int.maxValue
 				if item.type == Button
 					drawImage .image, pos+{-120}, layer:int.maxValue
