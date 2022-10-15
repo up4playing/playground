@@ -18,6 +18,8 @@ enum TickMode: Interval, AnimationFrame
 // - the origin in the top left corner
 transient unit Platform
 	public userCount = 2
+	public supportedUserCount = Range 2..4
+	
 	public bool showSafeArea = true
 	public bool showDebugInfo = false
 	public bool isLocal = false

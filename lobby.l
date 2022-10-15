@@ -30,9 +30,9 @@ unit lobby
 		// points.each drawCircle ., radius:50
 			
 		if Network.mode == Ping
-			drawText "Connecting...", {0,450}
+			drawText "Connecting..."
 		else
-		if Network.mode == Connected or Network.mode == Local
+		if Input.users.length withinInclusively Platform.supportedUserCount
 			for Input.users
 				if !.isReady
 					drawButton Button, "Start", {0, 450}, visibleFor:.id
