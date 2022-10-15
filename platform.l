@@ -324,7 +324,7 @@ transient unit Platform
 		return result.toLowerCase()
 		
 	inline js void vibrate: int duration = 100
-		navigator.vibrate(duration)
+		if(navigator.vibrate) navigator.vibrate(duration)
 		
 	js void saveImage: string dataUrl, string file
 		var base64Data = dataUrl.replace(/data:image\/png;base64,/, "");

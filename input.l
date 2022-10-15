@@ -294,12 +294,18 @@ unit Input
 		window.onpointerdown = e => {
 			if(e.button == 0 && Platform_mode == 0) Platform_record();
 			Input_handleTouchEvent(1, e.pageX, e.pageY, e.pointerType, e.pointerId, e.button);
+			e.preventDefault();
+			e.stopPropagation();
 		}
 		window.onpointermove = e => {
 			Input_handleTouchEvent(2, e.pageX, e.pageY, e.pointerType, e.pointerId, e.button);
+			e.preventDefault();
+			e.stopPropagation();
 		}
 		window.onpointerup = e => {
 			Input_handleTouchEvent(3, e.pageX, e.pageY, e.pointerType, e.pointerId, e.button);
+			e.preventDefault();
+			e.stopPropagation();
 		}
 		window.oncontextmenu = e => {
 			e.preventDefault();
