@@ -453,11 +453,11 @@ struct Matrix2D
 unit Math
 	// Returns the arctangent of the quotient of the given values
 	Angle getAngleForVector: Vector2 vector
-		Math.atan2(vector.y, vector.x)
+		return Math.atan2(vector.y, vector.x)
 		
-	inline js Vector2 getVectorForAngle: Angle angle      // The angle in turns (one full rotation is 1)
-		                                 float radius = 1
-		new Vector2(Math.cos(angle)*radius, Math.sin(angle)*radius)
+	Vector2 getVectorForAngle: Angle angle      // The angle in turns (one full rotation is 1)
+		                       float radius = 1
+		return new Vector2(Math.cos(angle)*radius, Math.sin(angle)*radius)
 	
 global transient unit System
 	global inline js void forPositions: T[] subject               // The list to iterate over

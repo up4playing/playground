@@ -1324,7 +1324,7 @@ global unit Math
 		return sin(angle) / cos(angle)
 		
 	// Returns the inverse tangent in turns
-	atan2: float y, float x
+	Angle atan2: float y, float x
 		float r, angle;
 		float abs_y = Math.abs(y) + .00000000001
 		if x < 0.0
@@ -1334,8 +1334,8 @@ global unit Math
 			r = (x - abs_y) / (x + abs_y);
 			angle = .125;
 		angle += (.03124211533 * r * r - .1562424076) * r;
-		if y < 0.0: return -angle
-		else        return angle	
+		if y < 0.0: return cast -angle
+		else        return cast angle
 		
 	init
 		initDefaultRandomGenerator
@@ -1504,8 +1504,6 @@ enum TimeUnit
 	days // Days
 		
 transient float Time
-	inline js Time() 0
-	
 	// The  largest possible value of an integer
 	static inline js Time maxValue: 2147483647
 	

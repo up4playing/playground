@@ -285,7 +285,7 @@ Object Piece
 		
 	override tick
 		// Rotate	
-		Vector2 iconPos = this.iconPos or (rotatable ? {(image.size.x+image.size.y)/3.5, (image.size.x+image.size.y)/3.5}*{1,-1} : image.size/2*{1,-1})
+		Vector2 iconPos = this.iconPos ? this.iconPos : (rotatable ? {(image.size.x+image.size.y)/3.5, (image.size.x+image.size.y)/3.5}*{1,-1} : image.size/2*{1,-1})
 		if rotatable and Framework.selectedObjects.contains(this)
 			Input.onTouchDownWithin position:position+iconPos*scale, size:Image.rotateIcon.size+touchMargin, userId:visibleFor
 				rotateTouch = touch
@@ -298,9 +298,9 @@ Object Piece
 				if (touch.position - touch.startPosition).length > 16: rotatedOverThreshold = true
 				
 			Input.onTouchUp rotateTouch
-				targetAngle = Math.round(angle / (Math.PI/2)) * Math.PI/2
+				targetAngle = Math.round(angle / .25) * .25
 				rotateTouch = null
-				if !rotatedOverThreshold: targetAngle += Math.PI/2
+				if !rotatedOverThreshold: targetAngle += .25
 				interactingUserId = touch.userId
 				if angle == targetAngle: onRotate
 		
@@ -331,12 +331,12 @@ Object Piece
 		// Animate rotation
 		if angle != targetAngle
 			Network.smooth interactingUserId
-				angle = Math.moveTowards(angle, targetAngle, .2)
+				angle = Math.moveTowards(angle, targetAngle, .03)
 				if angle == targetAngle: onRotate
 		
 		// Draw rotation icon
 		if rotatable and Framework.selectedObjects.contains(this) and not (rotateTouch and rotatedOverThreshold)
-			drawImage rotateIcon, position:position+iconPos*{1,-1}*scale, layer:10000, visibleFor
+			drawImage rotateIcon, position:position+iconPos*scale, layer:10000, visibleFor
 		
 		draw
 				
@@ -591,13 +591,13 @@ Object ParticleSystem
 	override tick
 		if Time.now > nextBurst
 			for particlesPerBurst
-				let r = -(Math.randomFloat) * Math.PI*2
+				let r = -Math.randomFloat
 				let speedFactor = Math.randomFloat*(maxSpeed-minSpeed) + minSpeed
 				particles.add Particle
 					pos: position
 					speed: {Math.cos(r), Math.sin(r)} * speedFactor
 					frame: Math.randomInteger(particleImage.frames.length)
-					angle: Math.randomFloat*Math.PI*2
+					angle: Math.randomFloat
 			nextBurst = ++burst < bursts ? Time.now + burstInterval : Time.maxValue
 
 		for particles <-
