@@ -45,26 +45,7 @@ transient unit PeerNetwork
 		Network_log("setupPeerConnection userId:"+user.id+" connectionId:"+connectionId+" relayMode:"+PeerNetwork_relayMode)
 		
 		// Event handlers
-		// let disconnectTimeout
-		peerConnection.oniceconnectionstatechange = e => {
-			let state = peerConnection.iceConnectionState
-			Network_log("oniceconnectionstatechange " + state)
-			switch(state) {
-				case "disconnected":
-					PeerNetwork_onDisconnectFromPeer(connectionId)
-					// disconnectTimeout = setTimeout(() => {
-					// 	Network_log("oniceconnectionstatechange: disconnect after timeout")
-					// 	PeerNetwork_onDisconnectFromPeer(connectionId)
-					// }, PeerNetwork_userIsLostAfter)
-					break
-				case "connected":
-					Network_log("oniceconnectionstatechange: clear timeout")
-					// clearTimeout(disconnectTimeout)
-					PeerNetwork_onConnectToPeer(user)
-					break
-			}
-		}
-		
+		peerConnection.oniceconnectionstatechange = e => Network_log("oniceconnectionstatechange " + peerConnection.iceConnectionState)
 		peerConnection.onicecandidate = async event => {
 			if (event.candidate)
 				ServerNetwork_sendIce(user.id, JSON.stringify(event.candidate))
@@ -188,7 +169,7 @@ transient unit PeerNetwork
 	
 	sendInputs: int inputFrame
 		for Input.internalUsers -> user
-			if .dataChannel
+			if user?.dataChannel
 				let inputs = Input.localUser.inputs
 				let length = inputs.writePos - user.inputsSentPos
 				sendBuffer.reset
@@ -217,6 +198,14 @@ transient unit PeerNetwork
 	// private js void onMessage: InternalUser user, Buffer buffer
 	// 	setTimeout(() => PeerNetwork_onMessageDo(user, buffer), 1000)
 		
+	private getMinReceivedFrames
+		let minReceivedFrames = int.maxValue
+		for Input.users
+			let internalUser = Input.internalUsers[.id]
+				if internalUser.inputFrame < minReceivedFrames
+					minReceivedFrames = internalUser.inputFrame
+		return minReceivedFrames
+								
 	private onMessage: InternalUser user, Buffer buffer
 		NetworkMessageType type = cast buffer.readInt8
 		if type == Tick:         onTick user, buffer; else
@@ -232,13 +221,11 @@ transient unit PeerNetwork
 			let prevWritePos = sender.inputs.writePos
 			buffer.readBuffer sender.inputs, prevWritePos
 			
-			// TOTO: Is local needed?
-			Network.receivedFrames = Input.internalUsers.min.inputFrame where .isConnected
+			Network.receivedFrames = getMinReceivedFrames
 			Network.receivedLog += " [{Network.currentTime}] <{sender.id}> #{inputFrame} buffer:{sender.bufferFrames} {prevWritePos}->{sender.inputs.writePos} {sender.inputs.toRangeString(prevWritePos, sender.inputs.writePos)}"
 			// if sender.inputs.writePos > prevWritePos: print " [{Network.currentTime}] <{sender.id}> #{inputFrame} buffer:{sender.bufferFrames} {prevWritePos}->{sender.inputs.writePos} {sender.inputs.toRangeString(prevWritePos, sender.inputs.writePos)}"
 		else
 			Network.receivedLog += " [{Network.currentTime}] <{sender.id}> (ignoring #{inputFrame})"
-			
 		
 	js void onReceivedAnswer: InternalUser user, string sdp
 		await user.peerConnection.setRemoteDescription(new RTCSessionDescription({type: "answer", sdp}));
@@ -251,17 +238,7 @@ transient unit PeerNetwork
 			Network_log("onIce failed " + e.message)
 			Network_log(e.stack);
 		}
-	
-	private onConnectToPeer: InternalUser user
-		Network.log "connect to peer", user.id
-		user.isConnected = true
 		
-	private onDisconnectFromPeer: int connectionId
-		let user = Input.internalUsers.find.connectionId == connectionId
-			user.isConnected = false
-			// user.nextLostMessageAtFrame = Network.frame + Network.targetFps * 2
-			Network.log "disconnect", connectionId, user.id
-				
 	private js void logConnectionType
 		setTimeout(async () => {
 			let stats = await PeerNetwork_peerConnection.getStats()

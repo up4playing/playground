@@ -29,7 +29,6 @@ transient class InternalUser
 	object dataChannel
 	object recreateDataChannelInterval
 	bool offerByMe
-	bool isConnected // Becomes false when the user disconnects, always true for the local users
 	int nextLostMessageAtFrame
 	
 	startInputFrame: int index
@@ -498,9 +497,9 @@ unit Input
 	// Post lost messages and remove users if nobody disagrees
 	internal handleLost
 		if Network.mode != Connected: return
-		for internalUsers -> internalUser
-			let user = usersById[internalUser.id]
-				if user.lostAtFrame and Network.frame >= user.lostAtFrame + Network.targetFps * 8
+		for users <- user
+			let internalUser = internalUsers[.id]
+				if user.lostAtFrame and Network.frame > user.lostAtFrame + Network.targetFps * 3
 					// If a user was lost by anybody and nobody who is still connected to that user
 					// disagrees within a certrain time, we remove this user
 					Network.log "Removing user {user.id} at frame {Network.frame}, user was lost at frame {user.lostAtFrame} and nobody disagreed", isCertain
@@ -508,14 +507,15 @@ unit Input
 					usersById[user.id] = null
 					updateUserIndices
 				else	
-				if not internalUser.isConnected and Network.frame >= internalUser.nextLostMessageAtFrame
+				if Network.frame > internalUser.inputFrame + Network.targetFps * 8
+				and Network.frame > internalUser.nextLostMessageAtFrame
 					// If we lost the connection to a user, we post a lost message to everybody every 5 seconds
-					Network.log "Sending lost message for user {user.id} at frame {Network.frame}"
+					Network.log "Sending lost message for user {user.id} at frame {Network.frame}", internalUser.inputFrame
 					let inputs = localUser.inputs
 					inputs.writeInt32 localUser.inputFrame
 					inputs.writeInt16 cast InputType.Lost
 					inputs.writeInt16 user.id
-					internalUser.nextLostMessageAtFrame = Network.frame + Network.targetFps * 10
+					internalUser.nextLostMessageAtFrame = Network.frame + Network.targetFps * 12
 	
 	private handleStillConnected: int userId
 		let inputs = localUser.inputs
@@ -742,7 +742,7 @@ unit Input
 							
 						// If we are still connected to that user, we disagree to their removal
 						// by posting the "StillConnected" message
-						if lostInternalUser.isConnected
+						if Network.frame < lostInternalUser.inputFrame + Network.targetFps * 5
 							Network.log "Lost {lostUserId} by {userId} -> We are still connected, sending StillConnected"
 							handleStillConnected lostUserId
 						else

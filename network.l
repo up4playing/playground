@@ -149,7 +149,7 @@ transient unit Network
 		if !startInLobby or Platform.isDebug
 			// When the developer changed Platform.userCount, add or remove internal users accordingly
 			for Input.internalUsers.length to Platform.userCount
-				Input.internalUsers.add {id:i, local:true, isConnected:true, collectInputs:true}
+				Input.internalUsers.add {id:i, local:true, collectInputs:true}
 			if Input.internalUsers.length > Platform.userCount
 				Input.internalUsers.removeRange Platform.userCount, count: Input.internalUsers.length - Platform.userCount
 			
@@ -260,7 +260,8 @@ transient unit Network
 					Vector2 pixelPos = Input.logicalToPixelPosition(pos)
 					Input.handleTouchEvent inputType:TouchMove, x:pixelPos.x, y:pixelPos.y, pointerType:"mouse", pointerId:0, button:0
 
-				for Input.internalUsers: if .local: .startInputFrame frame+1
+				for Input.internalUsers -> user
+					if user?.local: user.startInputFrame frame+1
 				step fastFordward:false, draw:frame == targetFrame-1
 				collectStatistics
 				lastNetworkFrame = now
@@ -604,7 +605,6 @@ transient unit Network
 				InternalUser user = {
 					id: buffer.readInt8
 					local: buffer.readBool
-					isConnected: true
 				}
 				buffer.readBuffer user.inputs
 				Input.internalUsers[user.id] = user
@@ -633,7 +633,7 @@ transient unit Network
 		this.gameId = gameId
 		this.roomString = roomString
 		this.roomId = cast roomString
-		Input.localUser = {userId, local:true, isConnected:true, connectionId:0}
+		Input.localUser = {userId, local:true, connectionId:0}
 		initDatabase
 		setupVideoAndNetwork
 		lobby.enableFullscreen = !Platform.isStaging
