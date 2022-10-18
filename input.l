@@ -609,7 +609,7 @@ unit Input
 					TouchType type = cast((value shiftRight 5) % 8)
 					int id = (value shiftRight 8) % 128
 					Vector2 referencePos = {inputs.readInt16, inputs.readInt16}
-					bool isSmoothPosition = !Network.smoothTouchPosition or isCertain or localUser.id == userId
+					bool isSmoothPosition = !Network.smoothTouchPosition or Network.isSmooth or localUser.id == userId
 					Network.parseLog += " "+id
 					
 					if inputType == TouchDown

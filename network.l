@@ -88,6 +88,7 @@ transient unit Network
 	public float[] checksums
 	bool alertShown
 	bool isReplay
+	bool isSmooth
 	
 	private Buffer debugCommonState // Used in debug mode to validate that serialing twice yields the same result 
 
@@ -196,11 +197,11 @@ transient unit Network
 	// Smooth out animations by only executing code when we received inputs from everybody	
 	smooth: int userId
 		    void() do
-		if Input.isCertain or Input.localUser.id == userId: do
+		if isSmooth or Input.localUser.id == userId: do
 	
 	smooth: void() do
-		if Input.isCertain: do
-			
+		if isSmooth: do
+
 	// animationFrame --> step --> tick
 
 	// animationFrame  Send tick message, replay state, and call step
@@ -384,13 +385,17 @@ transient unit Network
 		try
 			// Set time
 			Time.now = serverStartTime + Math.round(frame * targetFrameTime)
+			
+			// Flags
 			Platform.fastForward = fastFordward
+			bool isCertain = frame <= certainFrame
+			isSmooth = frame <= frameMinusBuffer
 			
 			// Log
-			parseLog += " #{frame}"
-			bool isCertain = frame <= certainFrame
+			parseLog += " #{frame} (fmb{frameMinusBuffer})"
 			if fastFordward: parseLog += "f"
 			if isCertain: parseLog += "c"
+			if isSmooth: parseLog += "s"
 				
 			// Save a snapshot when we are about to start the frame after the last certain frame where we got all inputs
 			saveState
