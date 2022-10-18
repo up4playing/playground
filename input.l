@@ -357,9 +357,10 @@ unit Input
 			}
 			else
 			// Reload
-			if(ctrlOrCmd && key == "F1") {/*keep room, keep userId*/ ServerNetwork_sendReload(false, false); e.preventDefault();} else
-			if(ctrlOrCmd && key == "F2") {/*new  room, keep userId*/ ServerNetwork_sendReload(true,  false); e.preventDefault();} else
-			if(ctrlOrCmd && key == "F3") {/*new  room, new  userId*/ ServerNetwork_sendReload(true,  true);  e.preventDefault();} else
+			if(ctrlOrCmd && key == "F1") {/*keep room, keep userId, keep master*/ ServerNetwork_sendReload(false, false, true ); e.preventDefault();} else
+			if(ctrlOrCmd && key == "F2") {/*keep room, keep userId, everybody*/   ServerNetwork_sendReload(false, false, false); e.preventDefault();} else
+			if(ctrlOrCmd && key == "F3") {/*new  room, keep userId, everybody*/   ServerNetwork_sendReload(true,  false, false); e.preventDefault();} else
+			if(ctrlOrCmd && key == "F4") {/*new  room, new  userId, everybody*/   ServerNetwork_sendReload(true,  true,  false);  e.preventDefault();} else
 			
 			// Switch send interval
 			if(ctrlOrCmd && key == "F5") {Network_switchSendInterval( 3); e.preventDefault();} else

@@ -287,17 +287,19 @@ transient unit ServerNetwork
 		if mode != Network.sendInputsMode
 			Network.sendInputsMode = mode
 	
-	sendReload: bool newRoom, bool newUserId
+	sendReload: bool newRoom, bool newUserId, bool keepMaster
 		string url = "/{Network.gameId}/{newRoom ? Network.roomId+(Network.roomId < 0 ? -1 : 1) : Network.roomId}"
 		sendBuffer.reset
 		sendBuffer.writeInt8 cast NetworkMessageType.Reload
-		sendBuffer.writeString url
+		sendBuffer.writeBool keepMaster
 		sendBuffer.writeBool newUserId
+		sendBuffer.writeString url
 		send sendBuffer
 
 	onReload: Buffer buffer
-		let url = buffer.readString
+		let keepMaster = buffer.readBool
 		let newUserId = buffer.readBool
+		let url = buffer.readString
 		if !newUserId: url += "u{Input.localUser.id}"
 		Platform.setLocation url
 			
