@@ -63,6 +63,7 @@ transient unit Platform
 		Math_init();
 		Network_init();
 		Input_init();
+		Network_log("Loading...")
 		Platform_isMobile = false;
 		let platform = navigator.platform
 		Platform_os = platform.startsWith("Win") ? 0 : platform.startsWith("Mac") ? 1 : 2
@@ -89,6 +90,14 @@ transient unit Platform
 		Platform_canvas.imageSmoothingEnabled = true;
 		Platform_canvas.imageSmoothingQuality = "high";
 		Platform_updateBaseMatrix();
+		
+	private js void drawLoading
+		let text = "Loading..."
+		Platform_context.font = "24px Arial"
+		Platform_context.fillStyle = "#ffffff"
+		Platform_context.textBaseline = "middle"
+		let textSize = Platform_context.measureText(text)
+		Platform_context.fillText(text, (Platform_pixelSize.x-textSize.width)/2, Platform_pixelSize.y/2)
 		
 	// Update the base matrix
 	// Called when resizing and after calling init() because we could change the scaleMode and anchor in App.init
@@ -124,6 +133,7 @@ transient unit Platform
 		showDebugInfo = getLocalStorageObject("showDebugInfo") == "true"
 		
 		onResize
+		drawLoading
 		if mode >= Play: mode = Pause
 		let path = url.getUntil("?").split("/")
 		let gameId = path[3]
