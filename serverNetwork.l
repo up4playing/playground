@@ -104,7 +104,7 @@ transient unit ServerNetwork
 		Network.serverStartTime = serverStartTime
 		Network.mode = Ping
 		for Input.internalUsers
-			if !.local: PeerNetwork.createOffer .
+			if . and !.local: PeerNetwork.createOffer .
 		Network.storeUserId
 				
 		Network.log "Joining room {roomId} as user {userId}"

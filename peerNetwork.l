@@ -263,8 +263,8 @@ transient unit PeerNetwork
 		sendBuffer.writeInt checksumFor
 		sendBuffer.writeFloat64 checksum
 		
-		for Input.internalUsers
-			if .dataChannel		
+		for Input.internalUsers -> user
+			if user?.dataChannel		
 				send ., sendBuffer
 
 	onChecksum: InternalUser user, Buffer buffer
@@ -376,7 +376,7 @@ transient unit PeerNetwork
 			Snapshot.serialize snapshotBuffer
 			for sendStateQueue <-
 				let user = Input.internalUsers[.]
-				if user and user.dataChannel
+				if user?.dataChannel
 					sendState user, snapshotBuffer
 					sendStateQueue.removeAt i
 	
@@ -404,7 +404,7 @@ transient unit PeerNetwork
 		sendBuffer.writeInt32 Network.frame-1
 		let userCount = Input.internalUsers.count . != null
 		sendBuffer.writeInt32 userCount
-		for Input.internalUsers -> user
+		for Input.internalUsers -> user if user
 			sendBuffer.writeInt32 .id
 			sendBuffer.writeInt32 .inputs.readPos
 		to.inputsSentPos = localPlayer.inputs.readPos
@@ -425,7 +425,7 @@ transient unit PeerNetwork
 				user.inputFrame = frame
 				user.inputs.readPos = user.inputs.writePos = readPos
 				
-		for Input.internalUsers
+		for Input.internalUsers if .
 			.inputsSentPos = Input.localUser.inputs.writePos
 			
 		snapshotBuffer.reset

@@ -130,7 +130,9 @@ transient unit Network
 		
 	// Clear all inputs and reset the application to the first frame
 	stop
-		for Input.internalUsers: if .: .inputs.reset; .startInputFrame 0
+		for Input.internalUsers if .
+			.inputs.reset
+			.startInputFrame 0
 		frames = 0
 		frameWithNewWatches = 0
 		startInLobby = false
@@ -165,7 +167,8 @@ transient unit Network
 			Input.localUser = Input.localUser?.id < Input.internalUsers.length ? Input.internalUsers[Input.localUser.id] : Input.internalUsers[0]
 			
 		// Reset read pos to replay inputs from the beginning
-		Input.internalUsers.each.inputs.readPos = 0
+		for Input.internalUsers if .
+			.inputs.readPos = 0
 			
 		Math.randomValueIndex = 0
 		frame = 0
@@ -435,7 +438,8 @@ transient unit Network
 			onError error
 			
 		// Cleanup
-		Input.internalUsers.each.clearEvent
+		for Input.internalUsers if .
+			.clearEvent
 		Input.users.each.clearEvents
 		
 		// Send current frame to editor	
@@ -485,7 +489,8 @@ transient unit Network
 	private saveState
 		if mode != Connected and !simulateRollback: return
 		if frame == certainFrame+1 or certainFrame == -1
-			for Input.internalUsers: if .: .uncertainReadPos = .inputs.readPos
+			for Input.internalUsers if .
+				.uncertainReadPos = .inputs.readPos
 			uncertainFrame = frame
 			saveTime = Time.measure
 				Snapshot.serialize commonState
@@ -508,7 +513,8 @@ transient unit Network
 		if (mode != Connected and !simulateRollback) or Input.internalUsers.length == 1: return
 		if uncertainFrame != -1 and certainFrame >= uncertainFrame
 			// Restore state
-			for Input.internalUsers: if .: .inputs.readPos = .uncertainReadPos
+			for Input.internalUsers if .
+				.inputs.readPos = .uncertainReadPos
 			restoreTime = Time.measure
 				Snapshot.deserialize commonState
 			parseLog +=  " restore u:{uncertainFrame} c:{Framework.checksum}"
@@ -588,11 +594,10 @@ transient unit Network
 		buffer.writeBool startInLobby
 		let userCount = Input.internalUsers.count . != null
 		buffer.writeInt8 userCount
-		for Input.internalUsers
-			if .
-				buffer.writeInt8 .id
-				buffer.writeBool .local
-				buffer.writeBuffer .inputs
+		for Input.internalUsers if .
+			buffer.writeInt8 .id
+			buffer.writeBool .local
+			buffer.writeBuffer .inputs
 		let date = Date.now
 		Platform.saveBinaryFile "{Platform.appName} {date.dayShortMonthNameYearString} {date.hourMinuteSecondString} v{Platform.version}.state", buffer
 		
@@ -611,15 +616,15 @@ transient unit Network
 					id: buffer.readInt8
 					local: buffer.readBool
 				}
+				if user.local: Input.localUser = user
 				buffer.readBuffer user.inputs
 				Input.internalUsers[user.id] = user
 				
 			// Replay
-			for Input.internalUsers
+			for Input.internalUsers if .
 				.collectInputs = true
 				if Platform.isDebug: .local = true
 				.startInputFrame frames
-			Input.localUser = Input.internalUsers.find.local
 			certainFrame = int.maxValue
 			Platform.sendFrame(frame, frames)
 			Math.setRandomSeed randomSeed

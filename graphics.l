@@ -117,10 +117,11 @@ transient global unit graphics
 
 	internal finishFrame
 		if(Platform.fastForward) return
-		Input.internalUsers.each.videoElementIndex = 0
+		for Input.internalUsers if .
+			.videoElementIndex = 0
 		drawItems
 		drawSafeArea
-		for Input.internalUsers -> user
+		for Input.internalUsers -> user if .
 			for user.videoElementIndex to user.videoElements.length
 				PeerNetwork.removeVideoElement user.videoElements[.]
 			user.videoElements.setLength user.videoElementIndex

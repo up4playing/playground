@@ -578,8 +578,7 @@ unit Input
 	internal parseInputs(int frame, bool isCertain)
 		this.isCertain = isCertain
 		if isCertain: Network.parseLog += " c"
-		for internalUsers -> internalUser
-			if not internalUser: continue
+		for internalUsers -> internalUser if internalUser
 			let inputs = internalUser.inputs
 			let userId = internalUser.id
 			let user = usersById[userId]
@@ -1019,8 +1018,8 @@ unit Input
 					if markAsHandled: touch.handled = true
 					Snapshot.autoSave
 		else
-			for internalUsers -> user
-				for user.upTouches -> touch
+			for users -> user
+				for internalUsers[user.id].upTouches -> touch
 					if !touch.handled && touch.referencePosition.isInsidePoygon(poly)
 						log "up", touch.referencePosition
 						do touch
@@ -1169,7 +1168,7 @@ unit Input
 					log "move", t.referencePosition
 					do t
 		else
-			for internalUsers -> user
+			for internalUsers -> user if .
 				for user.movingTouches -> t
 					if !t.handled
 						log "move", t.referencePosition
@@ -1193,13 +1192,13 @@ unit Input
 		       void(Touch touch) do      // Do this for each touch or click
 		if (Network.mode == Connected || Network.simulateConnection) && userId != -1
 			let user = internalUsers[userId]
-			for user.upTouches -> t
-				if !t.handled
-					log "up", t.referencePosition
-					do t
-					Snapshot.autoSave
+				for user.upTouches -> t
+					if !t.handled
+						log "up", t.referencePosition
+						do t
+						Snapshot.autoSave
 		else
-			for internalUsers -> user
+			for internalUsers -> user if .
 				for user.upTouches -> t
 					if !t.handled
 						log "up", t.referencePosition
@@ -1211,7 +1210,7 @@ unit Input
 
 	// Do something when a user moves the mouse wheel
 	onWheel: void(WheelEvent event) do // Do this for each mouse wheel movement
-		for internalUsers -> user
+		for internalUsers -> user if .
 			for user.wheelEvents
 				do .
 	
@@ -1230,13 +1229,13 @@ unit Input
 		]
 		if (Network.mode == Connected || Network.simulateConnection) && userId != -1
 			let user = internalUsers[userId]
-			for user.wheelEvents -> event
-				if !event.handled && event.referencePosition.isInsidePoygon(poly)
-					log "wheel", event.referencePosition
-					do event
-					if markAsHandled: event.markAsHandled
+				for user.wheelEvents -> event
+					if !event.handled && event.referencePosition.isInsidePoygon(poly)
+						log "wheel", event.referencePosition
+						do event
+						if markAsHandled: event.markAsHandled
 		else
-			for internalUsers -> user
+			for internalUsers -> user if .
 				for user.wheelEvents -> event
 					if !event.handled && event.referencePosition.isInsidePoygon(poly)
 						log "wheel", event.referencePosition
@@ -1260,7 +1259,7 @@ unit Input
 			userId = null
 
 		for internalUsers -> user
-			if userId == null or userId.contains(.id)
+			if user and (userId == null or userId.contains(.id))
 				for user.wheelEvents -> event
 					if !event.handled && event.referencePosition.isInsidePoygon(poly)
 						log "wheel", event.referencePosition
@@ -1312,17 +1311,17 @@ unit Input
 		document.body.style.cursor = Input_cursor
 
 	onTextComposition: void(string characters) do
-		for internalUsers -> user
+		for internalUsers -> user if .
 			for user.textCompositions -> text
 				do text
 				
 	onTextInput: int userId = -1, void(string textInput) do
 		if (Network.mode == Connected || Network.simulateConnection) && userId != -1
 			let user = internalUsers[userId]
-			for user.textInputs -> text
-				do text
+				for user.textInputs -> text
+					do text
 		else
-			for internalUsers -> user
+			for internalUsers -> user if .
 				for user.textInputs -> text
 					do text
 				
@@ -1331,11 +1330,11 @@ unit Input
 		       void(Key key, int keyUserId) do
 		if (Network.mode == Connected || Network.simulateConnection) && userId != -1
 			let user = internalUsers[userId]
-			for user.downKeys
-				if . == key
-					do key, userId
+				for user.downKeys
+					if . == key
+						do key, userId
 		else
-			for internalUsers -> user
+			for internalUsers -> user if .
 				for user.downKeys
 					if . == key
 						do key, user.id
@@ -1346,7 +1345,7 @@ unit Input
 		if not (Network.mode == Connected || Network.simulateConnection)
 			userId = null
 		for internalUsers -> user
-			if userId == null or userId.contains(.id)
+			if user and (userId == null or userId.contains(.id))
 				for user.downKeys
 					if . == key
 						do key, user.id
@@ -1354,30 +1353,30 @@ unit Input
 	onKeyDown: int userId = -1, void(Key key, int keyUserId) do
 		if (Network.mode == Connected || Network.simulateConnection) && userId != -1
 			let user = internalUsers[userId]
-			for user.downKeys -> key
-				do key, userId
+				for user.downKeys -> key
+					do key, userId
 		else
-			for internalUsers -> user
+			for internalUsers -> user if .
 				for user.downKeys -> key
 					do key, user.id
 				
 	onKeyUp: int userId = -1, void(Key key, int keyUserId) do
 		if (Network.mode == Connected || Network.simulateConnection) && userId != -1
 			let user = internalUsers[userId]
-			for user.upKeys -> key
-				do key, userId
+				for user.upKeys -> key
+					do key, userId
 		else
-			for internalUsers -> user
+			for internalUsers -> user if .
 				for user.upKeys -> key
 					do key, user.id
 					
 	onKeyPressed: int userId = -1, void(string key, int keyUserId) do
 		if (Network.mode == Connected || Network.simulateConnection) && userId != -1
 			let user = internalUsers[userId]
-			for user.pressedKeys -> key
-				do key, userId
+				for user.pressedKeys -> key
+					do key, userId
 		else
-			for internalUsers -> user
+			for internalUsers -> user if .
 				for user.pressedKeys -> key
 					do key, user.id
 			
@@ -1386,10 +1385,10 @@ unit Input
 		        void(string url) do
 		if (Network.mode == Connected || Network.simulateConnection) && userId != -1
 			let user = internalUsers[userId]
-			for user.navigations -> url
-				do url
+				for user.navigations -> url
+					do url
 		else
-			for internalUsers -> user
+			for internalUsers -> user if .
 				for user.navigations -> url
 					do url
 				
