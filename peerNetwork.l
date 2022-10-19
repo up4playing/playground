@@ -404,7 +404,7 @@ transient unit PeerNetwork
 		sendBuffer.writeInt32 Network.frame-1
 		let userCount = Input.internalUsers.count . != null
 		sendBuffer.writeInt32 userCount
-		for Input.internalUsers -> user if user
+		for Input.internalUsers if .
 			sendBuffer.writeInt32 .id
 			sendBuffer.writeInt32 .inputs.readPos
 		to.inputsSentPos = localPlayer.inputs.readPos

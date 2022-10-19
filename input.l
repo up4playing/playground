@@ -1011,12 +1011,12 @@ unit Input
 		]
 		if (Network.mode == Connected || Network.simulateConnection) && userId != -1
 			let user = internalUsers[userId]
-			for user.upTouches -> touch
-				if !touch.handled && touch.referencePosition.isInsidePoygon(poly)
-					log "up", touch.referencePosition
-					do touch
-					if markAsHandled: touch.handled = true
-					Snapshot.autoSave
+				for user.upTouches -> touch
+					if !touch.handled && touch.referencePosition.isInsidePoygon(poly)
+						log "up", touch.referencePosition
+						do touch
+						if markAsHandled: touch.handled = true
+						Snapshot.autoSave
 		else
 			for users -> user
 				for internalUsers[user.id].upTouches -> touch
@@ -1042,7 +1042,7 @@ unit Input
 		if not (Network.mode == Connected || Network.simulateConnection)
 			userId = null
 		for internalUsers -> user
-			if userId == null or userId.contains(.id)
+			if user and (userId == null or userId.contains(.id))
 				for user.upTouches -> touch
 					if !touch.handled && touch.referencePosition.isInsidePoygon(poly)
 						log "up", touch.referencePosition
@@ -1063,15 +1063,15 @@ unit Input
 		let referenceRadius = radius * graphics.localMatrix.scaleVector.x
 		if (Network.mode == Connected || Network.simulateConnection) && userId != -1
 			let user = internalUsers[userId]
-			for user.upTouches -> touch
-				if !touch.handled && (touch.referencePosition distanceTo referencePosition) <= referenceRadius
-					log "up", touch.referencePosition
-					do touch
-					if markAsHandled: touch.handled = true
-					Snapshot.autoSave
-		else
-			for internalUsers -> user
 				for user.upTouches -> touch
+					if !touch.handled && (touch.referencePosition distanceTo referencePosition) <= referenceRadius
+						log "up", touch.referencePosition
+						do touch
+						if markAsHandled: touch.handled = true
+						Snapshot.autoSave
+		else
+			for users -> user
+				for internalUsers[user.id].upTouches -> touch
 					if !touch.handled && (touch.referencePosition distanceTo referencePosition) <= referenceRadius
 						log "up", touch.referencePosition
 						do touch
@@ -1152,21 +1152,22 @@ unit Input
 	onTouchMove: Touch touch          // Only do this if this particular touch or click moves
 		         void(Touch touch) do // Do this for each touch or click
 		if !touch: return
-		let touchId = touch.id, user = internalUsers[touch.userId]
-		for user.movingTouches
-			if .id == touchId
-				log "move", .referencePosition
-				do .
+		let touchId = touch.id
+		let user = internalUsers[touch.userId]
+			for user.movingTouches
+				if .id == touchId
+					log "move", .referencePosition
+					do .
 	
 	// Do something when a touch or click moves
 	onTouchMove: int userId = -1      // Only consider touches or clicks from this user
 		         void(Touch touch) do // Do this for each touch or click
 		if (Network.mode == Connected || Network.simulateConnection) && userId != -1
 			let user = internalUsers[userId]
-			for user.movingTouches -> t
-				if !t.handled
-					log "move", t.referencePosition
-					do t
+				for user.movingTouches -> t
+					if !t.handled
+						log "move", t.referencePosition
+						do t
 		else
 			for internalUsers -> user if .
 				for user.movingTouches -> t
@@ -1178,13 +1179,14 @@ unit Input
 		       bool markAsHandled = true // Mark the touch as handled so it won't trigger more touch events
 		       void(Touch touch) do      // Do this for each touch or click
 		if !touch: return
-		let touchId = touch.id, user = internalUsers[touch.userId]
-		for user.upTouches
-			if .id == touchId
-				log "up", .referencePosition
-				do .
-				Snapshot.autoSave
-				if markAsHandled: .handled = true
+		let touchId = touch.id
+		let user = internalUsers[touch.userId]
+			for user.upTouches
+				if .id == touchId
+					log "up", .referencePosition
+					do .
+					Snapshot.autoSave
+					if markAsHandled: .handled = true
 				
 	// Do something when a touch or click ends
 	onTouchUp: int userId = -1

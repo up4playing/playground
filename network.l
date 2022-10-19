@@ -327,7 +327,7 @@ transient unit Network
 			// Statistics graph
 			for Input.users
 				let internalUser = Input.internalUsers[.id]
-				statisticsGraph.add cast .id, internalUser.bufferFrames, .color
+					statisticsGraph.add cast .id, internalUser.bufferFrames, .color
 			// statisticsGraph.add "interval", sendInterval, {"808080"}
 			// statisticsGraph.add "ahead", ahead, Gray
 			
