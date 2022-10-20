@@ -6,6 +6,7 @@ transient unit ServerNetwork
 	int nextConnectionId = 1
 	
 	js void setup
+		let startTime = Date.now()
 		let socket
 		if(location.href.indexOf("localhost") != -1) socket = new WebSocket("ws://localhost:3112");
 		else                                         socket = new WebSocket("wss://"+location.host+":3112");
@@ -21,6 +22,9 @@ transient unit ServerNetwork
 		socket.onclose = function(ev) {
 			Network_log("Websocket closed "+ev.code+" "+ev.reason)
 			ServerNetwork_socket = null
+			if(Date.now() - startTime < 30000) {
+				location.href = "/{Network_gameId}/{Network_roomId}"
+			}
 		}
 		socket.onerror = error => {
 			Network_error = "Can't connect to server."
