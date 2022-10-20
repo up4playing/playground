@@ -24,7 +24,7 @@ unit Framework
 		fx.tick
 		objects.each.tick
 		objects.each.update
-		Input.onTouchUp:  deselect touch.userId
+		Input.onTouchUp: deselect touch.userId
 		
 		if toBeRemoved
 			toBeRemoved.each.siblings.remove .
