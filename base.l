@@ -1,9 +1,9 @@
 // A number stored as a 32-bit integer
 struct int
-	// The  largest possible value of an integer
+	// The largest possible integer value
 	const maxValue = 2147483647
 	
-	// The  smallest possible value of an integer
+	// The smallest possible integer value
 	const minValue = -2147483648
 	
 	inline js int operator ** (int a, int b) 
@@ -81,9 +81,11 @@ struct int
 	
 // A number stored as a double precision 64-bit floating point value
 struct float
-	const inline js float minValue := Number.MIN_VALUE
-	
+	// The largest possible floating point value
 	const inline js float maxValue := Number.MAX_VALUE
+	
+	// The smallest possible floating point value
+	const inline js float minValue := Number.MIN_VALUE
 	
 	const inline js float infinity := Number.POSITIVE_INFINITY
 	
@@ -1533,11 +1535,11 @@ enum TimeUnit
 	days // Days
 		
 transient float Time
-	// The  largest possible value of an integer
-	static inline js Time maxValue: 2147483647
+	// The largest possible time value
+	const inline js Time maxValue := Number.MAX_VALUE
 	
-	// The  smallest possible value of an integer
-	static inline js Time minValue: -2147483648
+	// The smallest possible time value
+	const inline js Time minValue := Number.MIN_VALUE
 	
 	// The number of milliseconds elapsed since January 1, 1970
 	static Time now
