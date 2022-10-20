@@ -11,7 +11,7 @@ global unit fx
 				if f >= 1: f = 1; effects.removeAt i
 				.tick f
 				
-	global delay: Time time
+	global delay: Time time = 0
 		 bool smooth = false
 		 stored void() do
 		add RunEffect startTime:Time.now+time, smooth, do

@@ -93,7 +93,6 @@ class Object
 	internal checksum := position.x + position.y + scale + alpha
 	internal debugString := "(Object pos:{position.x} {position.y})"
 	internal tick
-	internal update
 	
 	Object
 		siblings.add this
@@ -259,7 +258,7 @@ Object Piece
 	Vector2 touchMargin = {50,50}
 	
 	public Vector2 size
-	public Board board, nextBoard
+	public Board board
 	private int interactingUserId
 	
 	private siblings := board ? board.objects : Framework.objects
@@ -277,7 +276,6 @@ Object Piece
 			if size.x < minSize: size.x = minSize
 			if size.y < minSize: size.y = minSize
 		this.targetAngle = angle
-		this.nextBoard = board
 		
 	debugString := "(Piece pos:{position.x} {position.y} frame:{frame} side:{side} image:{image?.file} board:{board.toBool})"
 	
@@ -348,16 +346,15 @@ Object Piece
 	private checkBoardsWhileMoving: Touch touch
 		Vector2 pos = position
 		if board: pos = position * board.matrix
-		nextBoard = Framework.getBoardAt pos, touch.userId
-		
-	override update
+		let nextBoard = Framework.getBoardAt pos, touch.userId
 		if nextBoard != board
-			if board: board.objects.remove this; position = position * board.matrix; touchOffset = touchOffset * board.matrix.scaleVector
-			else      Framework.objects.remove this
-			board = nextBoard
-			if board: board.objects.add this;    position = position / board.matrix; touchOffset = touchOffset / board.matrix.scaleVector
-			else      Framework.objects.add this
-			onBoardChanged
+			delay
+				if board: board.objects.remove this; position = position * board.matrix; touchOffset = touchOffset * board.matrix.scaleVector
+				else      Framework.objects.remove this
+				board = nextBoard
+				if board: board.objects.insert this; position = position / board.matrix; touchOffset = touchOffset / board.matrix.scaleVector
+				else      Framework.objects.insert this
+				onBoardChanged
 					
 Piece Stack
 	private Piece[] objects
@@ -452,7 +449,7 @@ Piece Board
 		
 	add: Piece object
 		objects.add object
-		object.board = object.nextBoard = this
+		object.board = this
 		Framework.objects.remove object
 		
 	isVisibleFor: int userId
@@ -494,9 +491,6 @@ Piece Board
 				
 		if color: drawRectangle position, size, fillColor:color, layer:-1, visibleFor
 		if image: drawImage image, position, scale
-			
-	override update
-		objects.each.update
 		
 	snap: Piece currentObject, Vector2 position
 		
