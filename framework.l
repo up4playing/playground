@@ -22,8 +22,7 @@ unit Framework
 				
 	tick
 		fx.tick
-		objects.each.tick
-		objects.each.update
+		objects.eachChangable.tick
 		Input.onTouchUp:  deselect touch.userId
 		
 		if toBeRemoved
@@ -307,7 +306,7 @@ Object Piece
 			if movable
 				moveTouch = touch
 				touchOffset = position - touch.position
-				siblings.moveToBack this
+				siblings.moveToFront this
 				isBeingMoved = false
 			
 		Input.onTouchMove moveTouch
@@ -382,7 +381,7 @@ Piece Stack
 		
 	private pop
 		let topObject = objects.pop
-		Framework.objects.add topObject
+		Framework.objects.insert topObject
 		topObject.position += stackOffset
 		topObject.side = sideWhenRemoving
 		if objects.length == 0: Framework.objects.remove this
@@ -459,7 +458,7 @@ Piece Board
 		// Children
 		graphics.visibleFor contentVisibleForOthers == Never or contentVisibleForOthers == Off ? owner : -1
 			graphics.applyMatrix matrix
-				objects.each <- .tick
+				objects.eachChangable.tick
 		
 		// Pan
 		if panable	
@@ -632,7 +631,7 @@ Piece Coin
 			Input.onTouchDownWithin position, radius:40, userId
 				moveTouch = touch
 				touchOffset = position - touch.position
-				siblings.moveToBack this
+				siblings.moveToFront this
 				isBeingMoved = false
 			
 			Input.onTouchMove moveTouch

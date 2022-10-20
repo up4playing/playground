@@ -303,6 +303,19 @@ class List<T>
 		                   ) do           // Do this for each item in a list
 		for(let _subject=this, i=_subject.length-1; i>=0; --i) { let it = _subject[i]; do()}
 		
+	// Do something for each item in a list. You can add or remove items inside the loop.
+	inline js void eachChangable -> void(
+		                       T it,      // The current item of the list we are iterating over
+		                       int i      // The index of the current item of the list we are iterating over
+		                   ) do           // Do this for each item in a list
+		for(let i=0, _subject=[...this], _len=_subject.length; i<_len; ++i) { let it = _subject[i]; do()}
+		
+	inline js void eachChangable <- void(
+		                       T it,      // The current item of the list we are iterating over
+		                       int i      // The index of the current item of the list we are iterating over
+		                   ) do           // Do this for each item in a list
+		for(let _subject=[...this], i=_subject.length-1; i>=0; --i) { let it = _subject[i]; do()}
+		
 	// Adds an item to the end of the list
 	inline js void add: T item // The item to add
 		this.push(item)
@@ -1017,6 +1030,22 @@ global transient unit System
 		                           int i      // The index of the current item of the list we are iterating over with the for-loop
 		                       ) do           // Do this for each item in a list
 		for(let _subject=subject, i=_subject.length-1; i>=0; --i) { let it = _subject[i]; do()}
+		
+	// Do something for each item in a list. You can add or remove items inside the loop.
+	global inline js void forChangeable: T[] subject    // The list to iterate over
+		                       -> void(
+		                           T it,      // The current item of the list we are iterating over with the for-loop
+		                           int i      // The index of the current item of the list we are iterating over with the for-loop
+		                       ) do           // Do this for each item in a list
+		for(let i=0, _subject=[...subject], _len=_subject.length; i<_len; ++i) { let it = _subject[i]; do()}
+		
+	// Do something for each item in a list. You can add or remove items inside the loop.
+	global inline js void forChangeable: T[] subject    // The list to iterate over
+		                       <- void(
+		                           T it,      // The current item of the list we are iterating over with the for-loop
+		                           int i      // The index of the current item of the list we are iterating over with the for-loop
+		                       ) do           // Do this for each item in a list
+		for(let _subject=[...subject], i=_subject.length-1; i>=0; --i) { let it = _subject[i]; do()}
 		
 	global inline js void for: int subject    // The exclusive upper bound to iterate towards
 		                       -> void(
