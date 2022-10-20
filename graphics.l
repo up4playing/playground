@@ -139,7 +139,7 @@ transient global unit graphics
 	private isVisibleFor: int[] visibleFor
 		if(Platform.fastForward) return false
 		let effectiveVisibleFor = visibleFor or currentlyVisibleFor
-		return effectiveVisibleFor == null or visibleFor.contains(Input.localUser.id)
+		return effectiveVisibleFor == null or effectiveVisibleFor.contains(Input.localUser.id)
 		
 	private int[] getClickableBy: int visibleFor, int clickableBy
 		int[] effectiveVisibleBy = visibleFor != -1 ? [visibleFor] : currentlyVisibleFor
@@ -367,7 +367,7 @@ transient global unit graphics
 	visibleFor: int visibleFor
 		        void() code
 		let prev = currentlyVisibleFor
-		currentlyVisibleFor = [visibleFor]
+		currentlyVisibleFor = visibleFor != -1 ? [visibleFor] : null
 		code()
 		currentlyVisibleFor = prev
 		return currentlyVisibleFor
