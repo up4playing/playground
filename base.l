@@ -1527,6 +1527,55 @@ global unit Math
 		if value > fromEnd:   return toEnd
 			                  return toStart + (toEnd-toStart) * (value-fromStart)/(fromEnd-fromStart)
 		
+enum AngleUnit
+	turns // Turn (one full rotation is 1)
+	rad   // Radians (one full rotation is 2π)
+	deg   // Degrees (one full rotation is 360)
+	grad  // Gradiants (one full rotation is 400)
+	
+transient float Angle
+	inline js float toFloat() this
+	inline js string toString() this.toString()
+		
+	// Returns true if the angle is not zero
+	inline js bool toBool := this
+	
+	inline js Angle operator +  (Angle a, Angle b) a+b
+	inline js Angle operator +  (Angle a, int b) a+b
+	inline js Angle operator +  (Angle a, float b) a+b
+	
+	inline js Angle operator -  (Angle a, Angle b) a-b
+	inline js Angle operator -  (Angle a, int b) a-b
+	inline js Angle operator -  (Angle a, float b) a-b
+	
+	inline js float operator /  (Angle a, Angle b) a/b
+	inline js Angle operator /  (Angle a, int b) a/b
+	inline js Angle operator /  (Angle a, float b) a/b
+	
+	inline js Angle operator *  (Angle a, int b) a*b
+	inline js Angle operator *  (Angle a, float b) a*b
+	inline js Angle operator *  (int a, Angle b) a*b
+	inline js Angle operator *  (float a, Angle b) a*b
+	
+	inline js Angle operator %  (Angle a, int b) a%b
+	inline js Angle operator %  (Angle a, Angle b) a%b
+	
+	inline js bool  operator <  (Angle a, Angle b) a<b
+	inline js bool  operator <= (Angle a, Angle b) a<=b
+	inline js bool  operator >  (Angle a, Angle b) a>b
+	inline js bool  operator >= (Angle a, Angle b) a>=b
+	
+	inline js bool  operator == (Angle a, Angle b) a==b
+	inline js bool  operator == (Angle a, int b) a==b
+	inline js bool  operator == (Angle a, float b) a==b
+	
+	inline js bool  operator != (Angle a, Angle b) a!=b
+	inline js bool  operator != (Angle a, int b) a!=b
+	inline js bool  operator != (Angle a, float b) a!=b
+	
+	inline js float in: AngleUnit unit
+		(unit==1 ? this*Math_TwoPI : unit==2 ? this*360 : unit==3 ? this*400 : this)
+		
 enum TimeUnit
 	ms   // Milliseconds
 	s    // Seconds
@@ -1597,57 +1646,11 @@ transient float Time
 	inline js float in: TimeUnit unit // Convert the time to this unit
 		(unit==1 ? this/1000 : unit==2 ? this/60000 : unit==3 ? this/3600000 : unit==4 ? this/86400000 : this)
 		
-enum AngleUnit
-	turns // Turn (one full rotation is 1)
-	rad   // Radians (one full rotation is 2π)
-	deg   // Degrees (one full rotation is 360)
-	grad  // Gradiants (one full rotation is 400)
-	
-transient float Angle
-	inline js float toFloat() this
-	inline js string toString() this.toString()
-		
-	// Returns true if the angle is not zero
-	inline js bool toBool := this
-	
-	inline js Angle operator +  (Angle a, Angle b) a+b
-	inline js Angle operator +  (Angle a, int b) a+b
-	inline js Angle operator +  (Angle a, float b) a+b
-	
-	inline js Angle operator -  (Angle a, Angle b) a-b
-	inline js Angle operator -  (Angle a, int b) a-b
-	inline js Angle operator -  (Angle a, float b) a-b
-	
-	inline js float operator /  (Angle a, Angle b) a/b
-	inline js Angle operator /  (Angle a, int b) a/b
-	inline js Angle operator /  (Angle a, float b) a/b
-	
-	inline js Angle operator *  (Angle a, int b) a*b
-	inline js Angle operator *  (Angle a, float b) a*b
-	inline js Angle operator *  (int a, Angle b) a*b
-	inline js Angle operator *  (float a, Angle b) a*b
-	
-	inline js Angle operator %  (Angle a, int b) a%b
-	inline js Angle operator %  (Angle a, Angle b) a%b
-	
-	inline js bool  operator <  (Angle a, Angle b) a<b
-	inline js bool  operator <= (Angle a, Angle b) a<=b
-	inline js bool  operator >  (Angle a, Angle b) a>b
-	inline js bool  operator >= (Angle a, Angle b) a>=b
-	
-	inline js bool  operator == (Angle a, Angle b) a==b
-	inline js bool  operator == (Angle a, int b) a==b
-	inline js bool  operator == (Angle a, float b) a==b
-	
-	inline js bool  operator != (Angle a, Angle b) a!=b
-	inline js bool  operator != (Angle a, int b) a!=b
-	inline js bool  operator != (Angle a, float b) a!=b
-	
-	inline js float in: AngleUnit unit
-		(unit==1 ? this*Math_TwoPI : unit==2 ? this*360 : unit==3 ? this*400 : this)
 	
 js Date
 transient struct Date
+	inline js Date() new Date(Time_now)
+	
 	inline js int year := this.getFullYear()
 	inline js int month := (this.getMonth()+1)
 	inline js int day := this.getDate()
@@ -1663,13 +1666,35 @@ transient struct Date
 	inline js string twoDigitMinute := this.getMinutes().toLocaleString('en-US', {minimumIntegerDigits:2})
 	inline js string twoDigitSecond := this.getSeconds().toLocaleString('en-US', {minimumIntegerDigits:2})
 	
-	js string dayMonthYearString() return this.getDate().toLocaleString('en-US', {minimumIntegerDigits:2})+"."+(this.getMonth()+1).toLocaleString('en-US', {minimumIntegerDigits:2})+"."+this.getFullYear()
-	js string dayLongMonthNameYearString() return this.getDate().toLocaleString('en-US', {minimumIntegerDigits:2})+" "+this.toLocaleString('en-US', {month: 'long'})+" "+this.getFullYear()
-	js string dayShortMonthNameYearString() return this.getDate().toLocaleString('en-US', {minimumIntegerDigits:2})+" "+this.toLocaleString('en-US', {month: 'short'})+" "+this.getFullYear()
-	js string hourMinuteSecondString() return this.getHours().toLocaleString('en-US', {minimumIntegerDigits:2})+"-"+this.getMinutes().toLocaleString('en-US', {minimumIntegerDigits:2})+"-"+this.getSeconds().toLocaleString('en-US', {minimumIntegerDigits:2})
-	js string hourMinuteString() return this.getHours().toLocaleString('en-US', {minimumIntegerDigits:2})+":"+this.getMinutes().toLocaleString('en-US', {minimumIntegerDigits:2})
-	js string dayMonthYearHourMinuteString() return this.getDate().toLocaleString('en-US', {minimumIntegerDigits:2})+"."+(this.getMonth()+1).toLocaleString('en-US', {minimumIntegerDigits:2})+"."+this.getFullYear()+" "+this.getHours().toLocaleString('en-US', {minimumIntegerDigits:2})+"-"+this.getMinutes().toLocaleString('en-US', {minimumIntegerDigits:2})
-	js string dayMonthYearHourMinuteSecondString() return this.getDate().toLocaleString('en-US', {minimumIntegerDigits:2})+"."+(this.getMonth()+1).toLocaleString('en-US', {minimumIntegerDigits:2})+"."+this.getFullYear()+" "+this.getHours().toLocaleString('en-US', {minimumIntegerDigits:2})+"-"+this.getMinutes().toLocaleString('en-US', {minimumIntegerDigits:2})+"-"+this.getSeconds().toLocaleString('en-US', {minimumIntegerDigits:2})
+	// (31.12.2000)
+	js string dayMonthYearString: language = Loca.language
+		return this.getDate().toLocaleString('en-US', {minimumIntegerDigits:2})+"."+(this.getMonth()+1).toLocaleString('en-US', {minimumIntegerDigits:2})+"."+this.getFullYear()
+	
+	// (31 December 2000)
+	js string dayLongMonthNameYearString: language = Loca.language
+		return this.getDate().toLocaleString('en-US', {minimumIntegerDigits:2})+" "+this.toLocaleString('en-US', {month: 'long'})+" "+this.getFullYear()
+	
+	// (31 Dec 2000)
+	js string dayShortMonthNameYearString: language = Loca.language
+		return this.getDate().toLocaleString('en-US', {minimumIntegerDigits:2})+" "+this.toLocaleString('en-US', {month: 'short'})+" "+this.getFullYear()
+	
+	// (23:59)
+	js string hourMinuteString: language = Loca.language
+		return this.getHours().toLocaleString('en-US', {minimumIntegerDigits:2})+":"+this.getMinutes().toLocaleString('en-US', {minimumIntegerDigits:2})
+	
+	// (23:59:59)
+	js string hourMinuteSecondString: language = Loca.language
+		return this.getHours().toLocaleString('en-US', {minimumIntegerDigits:2})+"-"+this.getMinutes().toLocaleString('en-US', {minimumIntegerDigits:2})+"-"+this.getSeconds().toLocaleString('en-US', {minimumIntegerDigits:2})
+	
+	// (31.12.2000 23:59)
+	js string dayMonthYearHourMinuteString: language = Loca.language
+		if(language == 1000) return this.getDate().toLocaleString('en-US', {minimumIntegerDigits:2})+"-"+(this.getMonth()+1).toLocaleString('en-US', {minimumIntegerDigits:2})+"-"+this.getFullYear()+" "+this.getHours().toLocaleString('en-US', {minimumIntegerDigits:2})+"-"+this.getMinutes().toLocaleString('en-US', {minimumIntegerDigits:2})
+		else                 return this.getDate().toLocaleString('en-US', {minimumIntegerDigits:2})+"."+(this.getMonth()+1).toLocaleString('en-US', {minimumIntegerDigits:2})+"."+this.getFullYear()+" "+this.getHours().toLocaleString('en-US', {minimumIntegerDigits:2})+":"+this.getMinutes().toLocaleString('en-US', {minimumIntegerDigits:2})
+	
+	// (31.12.2000 23:59:59)
+	js string dayMonthYearHourMinuteSecondString: language = Loca.language
+		if(language == 1000) return this.getDate().toLocaleString('en-US', {minimumIntegerDigits:2})+"-"+(this.getMonth()+1).toLocaleString('en-US', {minimumIntegerDigits:2})+"-"+this.getFullYear()+" "+this.getHours().toLocaleString('en-US', {minimumIntegerDigits:2})+"-"+this.getMinutes().toLocaleString('en-US', {minimumIntegerDigits:2})+"-"+this.getSeconds().toLocaleString('en-US', {minimumIntegerDigits:2})
+		else                 return this.getDate().toLocaleString('en-US', {minimumIntegerDigits:2})+"."+(this.getMonth()+1).toLocaleString('en-US', {minimumIntegerDigits:2})+"."+this.getFullYear()+" "+this.getHours().toLocaleString('en-US', {minimumIntegerDigits:2})+":"+this.getMinutes().toLocaleString('en-US', {minimumIntegerDigits:2})+":"+this.getSeconds().toLocaleString('en-US', {minimumIntegerDigits:2})
 	
 	// The number of milliseconds elapsed since January 1, 1970
 	inline js Time time := this.getTime()
@@ -1677,22 +1702,10 @@ transient struct Date
 	// The data and time in ISO 8601 format, for example "2000-12-31T17:30:00.000Z"
 	inline js string isoString := this.toISOString()
 		
-	static inline js Date now := new Date(Network_startTime + Time_now)
+	static inline js Date now := new Date(Time_now)
 	static inline js Date fromTime(Time time) new Date(time)
 	static inline js Date fromValues(int year, int month, int day, int hour = 0, int minute = 0, int second = 0) new Date(year, month-1, day, hour, minute, second)
-		
-	static string currentHourMinuteSecondString
-		Date data
-		return data.hourMinuteSecondString
-		
-	static string currentDayMonthYearHourMinuteString
-		Date data
-		return data.dayMonthYearHourMinuteString
-		
-	static string currentDayMonthYearHourMinuteSecondString
-		Date data
-		return data.dayMonthYearHourMinuteSecondString
-		
+
 class Range
 	int from, to
 	
@@ -1706,7 +1719,7 @@ unit Json
 	inline js dynamic parse(string str) JSON.parse(str)
 	inline js string stringify(dynamic object) JSON.stringify(object)
 		
-enum Language: English, German, Spanish, Frensh, Italian, Portuguese, Japanese, Chinese, Korean, Dutch, Turkish, Polish, Russian, Hindi, Arabic, Bengali, Urdu, Indonesian
+enum Language: English, German, Spanish, Frensh, Italian, Portuguese, Japanese, Chinese, Korean, Dutch, Turkish, Polish, Russian, Hindi, Arabic, Bengali, Urdu, Indonesian, Invariant = 1000
 
 unit Loca
 	Language[] supportedLanguages = [English, German]

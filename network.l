@@ -536,7 +536,7 @@ transient unit Network
 			parseLog +=  " no-restore c:{certainFrame} u:{uncertainFrame}"
 					
 	js void log: logstring text
-		let str = Date_currentHourMinuteSecondString() + " " + text
+		let str = new Date().hourMinuteSecondString() + " " + text
 		Network_eventLog += str + "\n"
 		log(str)
 		
@@ -577,10 +577,9 @@ transient unit Network
 				saveLogs
 			
 	internal saveLogs
-		let date = Date.now
 		// Ensure that current eventLog is added to the table even if we haven't processed a single frame
 		logTable += ",,,,,,,,,,,,,,,,,,,,,,,,\"{eventLog.trim}\""
-		Platform.saveTextFile "{Platform.appName} {date.dayShortMonthNameYearString} {date.hourMinuteSecondString} v{Platform.version}.csv", logTable
+		Platform.saveTextFile "{Platform.appName} {Date.now.dayMonthYearHourMinuteSecondString(language:Invariant)} v{Platform.version}.csv", logTable
 		// Http.post "/saveLog/{gameId}/{roomId}/{userId}", logTable
 		// 	log "save logs"
 		// else
@@ -637,7 +636,7 @@ transient unit Network
 	join: string gameId, string roomString, int userId
 		initAll
 		log Platform.url
-		log Date.currentDayMonthYearHourMinuteSecondString
+		log Date.now.dayMonthYearHourMinuteSecondString
 		log Platform.userAgent
 		startInLobby = true
 		this.gameId = gameId
