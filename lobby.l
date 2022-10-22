@@ -72,7 +72,7 @@ unit lobby
 					drawText .label, pos, size:18, align:Left, color:PeerNetwork.audioInputId == .deviceId ? Green : White
 					Input.onTouchDownWithin pos+{200,0}, size:{400,30}, showTouchArea:false, userId:Input.localUser.id
 						PeerNetwork.setAudioInput device.deviceId
-				pos += {450}
+				pos += {550}
 				
 			if PeerNetwork.devices.audioOutput	
 				drawImage speakerIcon, pos
