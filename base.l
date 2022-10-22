@@ -275,7 +275,7 @@ class string
 		
 	inline js string replace: string source
 		                      string target
-		(this = this.replace(new RegExp(source, "g"), target))
+		this.replace(new RegExp(source, "g"), target)
 		
 	inline js string get: int index
 		(index >= 0 ? this[index] : this[this.length+index])
