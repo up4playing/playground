@@ -33,7 +33,7 @@ unit lobby
 		// points.each drawCircle ., radius:50
 		
 		if Loca.supportedLanguages.length > 1
-			forPositions Loca.supportedLanguages, right:{930,-510}, delta:{40}
+			forPositions Loca.supportedLanguages, end:{930,-510}, delta:{40}
 				drawImage Flag[i], pos, frame:Loca.language == cast(i) ? 1 : 0
 					Loca.language = cast(i)
 			
@@ -60,7 +60,7 @@ unit lobby
 			
 			if PeerNetwork.devices.videoInput
 				drawImage cameraIcon, pos
-				forPositions PeerNetwork.devices.videoInput left:pos+{36} delta:{0,26} -> device
+				forPositions PeerNetwork.devices.videoInput start:pos+{36} delta:{0,26} -> device
 					drawText .label, pos, size:18, align:Left, color:PeerNetwork.videoInputId == .deviceId ? Green : White
 					Input.onTouchDownWithin pos+{200,0}, size:{400,30}, showTouchArea:false, userId:Input.localUser.id
 						PeerNetwork.setVideoInput device.deviceId
@@ -68,7 +68,7 @@ unit lobby
 			
 			if PeerNetwork.devices.audioInput
 				drawImage microphoneIcon, pos
-				forPositions PeerNetwork.devices.audioInput left:pos+{36} delta:{0,26} -> device
+				forPositions PeerNetwork.devices.audioInput start:pos+{36} delta:{0,26} -> device
 					drawText .label, pos, size:18, align:Left, color:PeerNetwork.audioInputId == .deviceId ? Green : White
 					Input.onTouchDownWithin pos+{200,0}, size:{400,30}, showTouchArea:false, userId:Input.localUser.id
 						PeerNetwork.setAudioInput device.deviceId
@@ -76,7 +76,7 @@ unit lobby
 				
 			if PeerNetwork.devices.audioOutput	
 				drawImage speakerIcon, pos
-				forPositions PeerNetwork.devices.audioOutput left:pos+{36} delta:{0,26} -> device
+				forPositions PeerNetwork.devices.audioOutput start:pos+{36} delta:{0,26} -> device
 					drawText .label, pos, size:18, align:Left, color:PeerNetwork.audioOutputId == .deviceId ? Green : White
 					Input.onTouchDownWithin pos+{200,0}, size:{400,30}, showTouchArea:false, userId:Input.localUser.id
 						PeerNetwork.setAudioOutput device.deviceId
