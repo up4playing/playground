@@ -9,7 +9,18 @@ transient class IceMessage
 	
 enum VideoShape: Rectangle, Square, Circle
 enum RelayMode: Never, Auto, Always
+		
+class MediaDeviceInfo
+	string deviceId
+	string groupId
+	string kind
+	string label
 
+class MediaDevices
+	MediaDeviceInfo[] audioInput
+	MediaDeviceInfo[] audioOutput
+	MediaDeviceInfo[] videoInput
+	
 transient unit PeerNetwork
 	const userIsLostAfter = 1s
 	RelayMode relayMode = Auto
@@ -91,7 +102,7 @@ transient unit PeerNetwork
 	js void createOffer: InternalUser user
 		try {
 			PeerNetwork_setupPeerConnection(user, /*offerByMe*/true)
-			PeerNetwork_setupRemoteVideo(user)
+			PeerNetwork_setupRemoteMedia(user)
 			PeerNetwork_stopRecreatingDataChannel(user)
 			PeerNetwork_setupDataChannel(user)
 			
@@ -125,7 +136,7 @@ transient unit PeerNetwork
 	js void onReceivedOffer: InternalUser user, string sdp
 		try {
 			PeerNetwork_setupPeerConnection(user, /*offerByMe*/false)
-			PeerNetwork_setupRemoteVideo(user)
+			PeerNetwork_setupRemoteMedia(user)
 			
 			// When a user reconnects, we receive a new offer and a new data channel,
 			// so we need to stop trying to recreate the old data channel to avoid two open data channels
@@ -279,22 +290,37 @@ transient unit PeerNetwork
 		if !myChecksum.isApproximately(checksum)
 			Network.onWrongChecksum mine:myChecksum theirs:checksum
 				
-	// --------------------------------------------- Setup video ---------------------------------------------
+	// --------------------------------------------- Media Setup ---------------------------------------------
 	
-	private js void setupLocalVideo: bool enableVideo, bool enableAudio
+	MediaDevices devices = {}
+	string videoInputId, audioInputId, audioOutputId	
+	
+	private js void setupLocalMedia: bool enableVideo, bool enableAudio
 		PeerNetwork_enableVideo = enableVideo
 		PeerNetwork_enableAudio = enableAudio
 		if(!enableVideo && !enableAudio) return
 			
 		try {
+			// Create local media stream
 			Input_localUser.mediaStream = await navigator.mediaDevices.getUserMedia({
-				video: {
-					width: 500,
-					height: 375,
-				},
+				video: {width: 500, height: 375},
 				audio: enableAudio
 			});
-			Network_log("setupLocalVideo: success")
+			
+			// Enummerate local devices
+			let devices = await navigator.mediaDevices.enumerateDevices();
+			for(let device of devices) {
+				switch(device.kind) {
+					case "videoinput":  PeerNetwork_devices.videoInput.push(device); break;
+					case "audioinput":  PeerNetwork_devices.audioInput.push(device); break;
+					case "audiooutput": PeerNetwork_devices.audioOutput.push(device); break;
+				}
+			}
+			PeerNetwork_videoInputId = PeerNetwork_devices.videoInput[0]?.deviceId
+			PeerNetwork_audioInputId = PeerNetwork_devices.audioInput[0]?.deviceId
+			PeerNetwork_audioOutputId = PeerNetwork_devices.audioInput[0]?.deviceId
+			Network_log("setupLocalMedia: success")
+			
 		} catch(error) {
 			Network_log(error.message)
 			if(error.name == "NotAllowedError") {
@@ -305,8 +331,61 @@ transient unit PeerNetwork
 			Network_errorMessage = error.message
 			throw error
 		}
+	
+	js void setVideoInput: string videoInputId
+		if(PeerNetwork_videoInputId == videoInputId) return;
+		PeerNetwork_videoInputId = videoInputId;
+		
+		// Create local media stream
+		Input_localUser.mediaStream = await navigator.mediaDevices.getUserMedia({
+			audio: {deviceId: PeerNetwork_audioInputId},
+			video: {deviceId: PeerNetwork_videoInputId},
+		});
+		
+		// Update video elements and tracks
+		for(let el of Input_localUser.videoElements) {
+			el.srcObject = Input_localUser.mediaStream;
+		}
+		const [videoTrack] = Input_localUser.mediaStream.getVideoTracks();
+		for(let user of Input_internalUsers) {
+			if(user?.peerConnection) {
+				const sender = user.peerConnection.getSenders().find((s) => s.track.kind === videoTrack.kind);
+				sender.replaceTrack(videoTrack);
+			}
+		}
 			
-	private js void setupRemoteVideo: InternalUser user
+	js void setAudioInput: string audioInputId
+		if(PeerNetwork_audioInputId == audioInputId) return;
+		PeerNetwork_audioInputId = audioInputId;
+		
+		// Create local media stream
+		Input_localUser.mediaStream = await navigator.mediaDevices.getUserMedia({
+			audio: {deviceId: PeerNetwork_audioInputId},
+			video: {deviceId: PeerNetwork_videoInputId},
+		});
+		
+		// Update tracks
+		const [audioTrack] = Input_localUser.mediaStream.getAudioTracks();
+		for(let user of Input_internalUsers) {
+			if(user?.peerConnection) {
+				const sender = user.peerConnection.getSenders().find((s) => s.track.kind === audioTrack.kind);
+				log('Found sender:', sender);
+				sender.replaceTrack(audioTrack);
+			}
+		}
+			
+	js void setAudioOutput: string audioOutputId
+		PeerNetwork_audioOutputId = audioOutputId;
+		
+		// Update audio elements
+		for(let user of Input_internalUsers) {
+			if(user?.audioElement) {
+				user.audioElement.setSinkId(PeerNetwork_audioOutputId);
+			}
+		}
+		audio_reload();
+		
+	private js void setupRemoteMedia: InternalUser user
 		// Remove old video elements
 		for(let videoElement of user.videoElements)
 			videoElement.remove()
@@ -324,7 +403,8 @@ transient unit PeerNetwork
 		// Create audio element so we always hear the remote user, event if no video is shown
 		let audioElement = user.audioElement = document.createElement('audio')
 		audioElement.srcObject = user.mediaStream
-		document.body.appendChild(audioElement)
+		audioElement.setSinkId(PeerNetwork_audioOutputId);
+		document.body.appendChild(audioElement);
 		
 		// Add incoming tracks to media stream for remote player
 		user.peerConnection.addEventListener('track', event => {
@@ -333,7 +413,7 @@ transient unit PeerNetwork
 			});
 		});
 
-	// --------------------------------------------- Video/Audio element ---------------------------------------------
+	// --------------------------------------------- Media elements ---------------------------------------------
 	
 	js object createVideoElement: object stream, bool local
 		let el = document.createElement('video')
