@@ -1,5 +1,5 @@
 // A sound
-class Sound
+skipInit class Sound
 	string file
 	float fadeVolume = 1
 	
@@ -64,7 +64,7 @@ transient class PlayingSound
 	bool isConfirmed
 	
 // A collection of functions for playing audio
-transient global unit audio
+transient global skipInit unit audio
 	const float[] volumeLevels = [0, 0.0001, 0.0002, 0.0005, 0.001, 0.002, 0.005, .01, .02, .04, .08, .16, .32, .64, 1]
 	int volumeLevel = 10
 	float volume = volumeLevels[volumeLevel]

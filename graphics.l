@@ -62,7 +62,7 @@ class Texture
 		}
 		
 // A font that can be used to draw text
-class Font
+skipInit class Font
 	string name
 	string file
 	
@@ -82,7 +82,7 @@ struct ImageFrame
 	float x1, y1, x2, y2, w, h
 
 // An image that can be drawn on the screen and can have several frames of animation
-class Image
+skipInit class Image
 	Texture texture
 	Vector2 size
 	ImageFrame[] frames

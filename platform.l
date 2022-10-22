@@ -16,7 +16,7 @@ enum TickMode: Interval, AnimationFrame
 // Pixel space
 // - the size in the screen size in pixels of the target platform
 // - the origin in the top left corner
-transient unit Platform
+transient skipInit unit Platform
 	public userCount = 2
 	public supportedUserCount = Range 2..4
 	

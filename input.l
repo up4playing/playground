@@ -266,7 +266,7 @@ class InternetGamePad
 	string id
 	
 // A collection of methods to receive user input
-unit Input
+skipInit unit Input
 	transient visible InternalUser[] internalUsers
 	transient visible bool isCertain
 	transient InternalUser localUser

@@ -56,7 +56,7 @@ transient unit Snapshot
 			
 			autoSaveAtEndOfStep = false
 	
-transient unit Network
+transient skipInit unit Network
 	int sendInterval = 1
 	int smoothStrength = 90
 	bool smoothTouchPosition = true
