@@ -450,7 +450,7 @@ struct Matrix2D
 		result.m5 = b1 * a4 + b3 * a5 + b5
 		return result
 
-skipInit unit Math
+unit Math
 	// Returns the arctangent of the quotient of the given values
 	Angle getAngleForVector: Vector2 vector
 		return Math.atan2(vector.y, vector.x)

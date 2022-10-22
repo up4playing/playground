@@ -1239,7 +1239,7 @@ global transient unit System
 		
 		
 // A collection of mathematical functions and constants
-global unit Math
+global skipInit unit Math
 	// Returns the absolute value
 	global inline js int abs: int value // The value to return the absolute value of
 		Math.abs(value)
