@@ -316,8 +316,8 @@ transient unit PeerNetwork
 					case "audiooutput": PeerNetwork_devices.audioOutput.push(device); break;
 				}
 			}
-			PeerNetwork_videoInputId = PeerNetwork_devices.videoInput[0]?.deviceId
-			PeerNetwork_audioInputId = PeerNetwork_devices.audioInput[0]?.deviceId
+			PeerNetwork_videoInputId = Input_localUser.mediaStream.getVideoTracks()[0]?.getSettings().deviceId || PeerNetwork_devices.videoInput[0]?.deviceId
+			PeerNetwork_audioInputId = Input_localUser.mediaStream.getAudioTracks()[0]?.getSettings().deviceId || PeerNetwork_devices.audioInput[0]?.deviceId
 			PeerNetwork_audioOutputId = PeerNetwork_devices.audioInput[0]?.deviceId
 			Network_log("setupLocalMedia: success")
 			
