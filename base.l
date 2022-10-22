@@ -178,6 +178,9 @@ struct float
 	
 	// Days
 	inline js Time days := (this*86400000)
+	
+	// Weeks	
+	inline js Time weeks := (this*604800000)
 		
 	// ------------------------------------------- Angle -------------------------------------------
 	
@@ -231,6 +234,7 @@ class string
 	inline js bool startsWith(string str) (this.indexOf(str) == 0)
 		
 	inline js int indexOf(string str) this.indexOf(str)
+	inline js int indexOf(string str, int startPos) this.indexOf(str, startPos)
 		
 	inline js bool contains(string str) (this.indexOf(str) != -1)
 		
@@ -271,7 +275,7 @@ class string
 		
 	inline js string replace: string source
 		                      string target
-		this.replace(new RegExp(source, "g"), target)
+		(this = this.replace(new RegExp(source, "g"), target))
 		
 	inline js string get: int index
 		(index >= 0 ? this[index] : this[this.length+index])
@@ -665,6 +669,15 @@ class List<T>
 			if value > resultValue: resultValue = value
 		return resultValue != threshold ? resultValue : default
 		
+	max: Time(T a) selector
+		 Time threshold = float.minValue
+		 Time default = 0
+		Time resultValue = threshold
+		for this
+			let value = selector(.)
+			if value > resultValue: resultValue = value
+		return resultValue != threshold ? resultValue : default
+		
 	max: int(T a) selector
 		 int threshold = int.minValue
 		 int default = 0
@@ -681,6 +694,17 @@ class List<T>
 		 float default = 0
 		 bool(T a) where
 		float resultValue = threshold
+		for this
+			if where(.)
+				let value = selector(.)
+				if value > resultValue: resultValue = value
+		return resultValue != threshold ? resultValue : default
+		
+	max: Time(T a) selector
+		 Time threshold = float.minValue
+		 Time default = 0
+		 bool(T a) where
+		Time resultValue = threshold
 		for this
 			if where(.)
 				let value = selector(.)
@@ -731,6 +755,17 @@ class List<T>
 				resultItem = .
 		return resultValue != threshold ? resultItem : null
 		
+	withMin: Time(T a) selector
+		     Time threshold = float.maxValue
+		Time resultValue = threshold
+		T resultItem
+		for this
+			let value = selector(.)
+			if value < resultValue
+				resultValue = value
+				resultItem = .
+		return resultValue != threshold ? resultItem : null
+		
 	withMin: int(T a) selector
 		     int threshold = int.maxValue
 		     label bool(T a) where
@@ -757,6 +792,19 @@ class List<T>
 					resultItem = .
 		return resultValue != threshold ? resultItem : null
 		
+	withMin: Time(T a) selector
+		     Time threshold = float.maxValue
+		     bool(T a) where
+		Time resultValue = threshold
+		T resultItem
+		for this
+			if where(.)
+				let value = selector(.)
+				if value < resultValue
+					resultValue = value
+					resultItem = .
+		return resultValue != threshold ? resultItem : null
+		
 	withMax: int(T a) selector
 		     int threshold = int.minValue
 		int resultValue = threshold
@@ -771,6 +819,17 @@ class List<T>
 	withMax: float(T a) selector
 		     float threshold = float.minValue
 		float resultValue = threshold
+		T resultItem
+		for this
+			let value = selector(.)
+			if value > resultValue
+				resultValue = value
+				resultItem = .
+		return resultValue != threshold ? resultItem : null
+		
+	withMax: Time(T a) selector
+		     Time threshold = float.minValue
+		Time resultValue = threshold
 		T resultItem
 		for this
 			let value = selector(.)
@@ -1284,6 +1343,10 @@ global skipInit unit Math
 	global inline js Angle round: Angle value // The angle to round
 		Math.round(value)
 		
+	// Returns the given value rounded to the nearest integer
+	global inline js Time round: Time value // The angle to round
+		Math.round(value)
+		
 	global inline js int min: int a // The first value
 		                      int b // The second value
 		Math.min(a, b)
@@ -1598,6 +1661,24 @@ transient float Time
 	// The current frame
 	static inline js int frame := Network_frame
 	
+	static Time fromTimeString(string timeString)
+		Time value = 0
+		int colon1 = timeString.indexOf(":")
+		if(colon1 == -1)
+			value += int(timeString)*3600000
+		else
+			value += int(timeString.substring(0, colon1))*3600000
+			int colon2 = timeString.indexOf(":", colon1+1)
+			if(colon2 == -1)
+				value += int(timeString.substring(colon1+1))*60000
+			else
+				value += int(timeString.substring(colon1+1, colon2))*60000
+				value += int(timeString.substring(colon2+1))*1000
+		return value
+		
+	static inline js Time fromIsoString: string isoString
+		new Date(isoString).getTime()
+		
 	inline js float toFloat() this
 	inline js string toString() this.toString()
 		
@@ -1700,8 +1781,23 @@ transient struct Date
 	inline js Time time := this.getTime()
 		
 	// The data and time in ISO 8601 format, for example "2000-12-31T17:30:00.000Z"
-	inline js string isoString := this.toISOString()
+	js string isoString()
+		let tzo = -this.getTimezoneOffset()
+		let dif = tzo >= 0 ? '+' : '-'
 		
+		function pad (num) {
+			return (num < 10 ? '0' : '') + num;
+		}
+		
+		return this.getFullYear() +
+			'-' + pad(this.getMonth() + 1) +
+			'-' + pad(this.getDate()) +
+			'T' + pad(this.getHours()) +
+			':' + pad(this.getMinutes()) +
+			':' + pad(this.getSeconds()) +
+			dif + pad(Math.floor(Math.abs(tzo) / 60)) +
+			':' + pad(Math.abs(tzo) % 60);
+
 	static inline js Date now := new Date(Time_now)
 	static inline js Date fromTime(Time time) new Date(time)
 	static inline js Date fromValues(int year, int month, int day, int hour = 0, int minute = 0, int second = 0) new Date(year, month-1, day, hour, minute, second)
