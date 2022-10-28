@@ -270,6 +270,7 @@ Object Piece
 	onSnap
 	onUnsnap
 	onRotate
+	onDrop
 	
 	Piece
 		if image
@@ -322,6 +323,7 @@ Object Piece
 		Input.onTouchUp moveTouch
 			Framework.selectedObjects[touch.userId] = this
 			moveTouch = null
+			onDrop
 		
 		// Flip	
 		if Framework.selectedObjects.contains(this) && flipable
