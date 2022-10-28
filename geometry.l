@@ -114,7 +114,7 @@ struct Vector2
 	// The smaller of the two coordinates
 	min := x < y ? x : y
 	
-	rotate: float angle
+	rotate: Angle angle // The angle in turns (one full rotation is 1)
 		let x = this.x, y = this.y
 		let sn = Math.sin(angle)
 		let cs = Math.cos(angle)
@@ -132,7 +132,7 @@ struct Vector2
 	manhattanDistanceTo: Vector2 value // The second vector
 		return Math.abs(x - value.x) + Math.abs(y - value.y)
 
-	// The angle to another vector in radians
+	// The angle to another vector in turns (one full rotation is 1)
 	angleTo: Vector2 value // The second vector
 		return Math.getAngleForVector(value - this)
 
@@ -338,7 +338,7 @@ struct IntVector2
 	manhattanDistanceTo: IntVector2 value // The second vector
 		return Math.abs(x - value.x) + Math.abs(y - value.y)
 
-	// The angle to another vector in radians
+	// The angle to another vector in turns (one full rotation is 1)
 	angleTo: IntVector2 value // The second vector
 		return Math.getAngleForVector(value - this)
 		
@@ -409,8 +409,8 @@ struct Matrix2D
 		m5 += m1 * x + m3 * y		
 		return this	
 		
-	// Rotates the matrix by a given angle	
-	rotate: float angle // The angle in radians to rotate by
+	// Rotates the matrix by a given angle
+	rotate: Angle angle // The angle in turns (one full rotation is 1)
 		let a0 = m0, a1 = m1, a2 = m2, a3 = m3
 		let sin = Math.sin(angle), cos = Math.cos(angle)
 		m0 = a0 *  cos + a2 * sin
@@ -452,53 +452,63 @@ struct Matrix2D
 
 unit Math
 	// Returns the arctangent of the quotient of the given values
-	inline js float getAngleForVector: Vector2 vector
-		Math.atan2(vector.y, vector.x)
+	Angle getAngleForVector: Vector2 vector
+		return Math.atan2(vector.y, vector.x)
 		
-	inline js Vector2 getVectorForAngle: float angle, float radius = 1
-		new Vector2(Math.cos(angle)*radius, Math.sin(angle)*radius)
+	Vector2 getVectorForAngle: Angle angle      // The angle in turns (one full rotation is 1)
+		                       float radius = 1
+		return new Vector2(Math.cos(angle)*radius, Math.sin(angle)*radius)
 	
 global transient unit System
-	global inline js void forPosition: T[] subject  // The list to iterate over
-		                               Vector2 start = {0,0}
-		                               Vector2 delta = {100,0}
-		                               -> void(
-		                                   T it,    // The current item of the list we are iterating over with forCentered
-		                                   Vector2 pos,
-		                                   int i    // The index of the current item of the list we are iterating over with forCentered
-		                               ) do         // Do this for each item in a list
+	global inline js void forPositions: T[] subject               // The list to iterate over
+		                                Vector2 start = {0,0}     // Left or top align items at this position
+		                                Vector2 delta = {100,0}   // Distance between items
+		                                -> void(
+		                                    T it,                 // The current item of the list we are iterating over with forCentered
+		                                    Vector2 pos,          // The position of the current item
+		                                    int i                 // The index of the current item of the list we are iterating over with forCentered
+		                                ) do                      // Do this for each item in a list
 		for(let i=0, _subject=subject, _start = start, _delta = delta, _len=_subject.length, _x = _start.x, _y= _start.y; i<_len; ++i, _x += _delta.x, _y += _delta.y) { let it = _subject[i], pos = new Vector2(_x, _y, _start.location || _delta.location ? new SourceCodeLocation(0, 0, null, _start.location, _delta.location) : null); do()}
 
-	global inline js void forPosition: T[] subject  // The list to iterate over
-		                               Vector2 start = {0,0}
-		                               Vector2 delta = {100,0}
-		                               float width
-		                               -> void(
-		                                   T it,    // The current item of the list we are iterating over with forCentered
-		                                   Vector2 pos,
-		                                   int i    // The index of the current item of the list we are iterating over with forCentered
-		                               ) do         // Do this for each item in a list
+	global inline js void forPositions: T[] subject               // The list to iterate over
+		                                Vector2 start = {0,0}     // Left or top align items at this position
+		                                Vector2 delta = {100,100} // Distance between items
+		                                float width               // Wrap to the next row when we reach this width
+		                                -> void(
+		                                    T it,                 // The current item of the list we are iterating over with forCentered
+		                                    Vector2 pos,          // The position of the current item
+		                                    int i                 // The index of the current item of the list we are iterating over with forCentered
+		                                ) do                      // Do this for each item in a list
 		for(let i=0, _subject=subject, _start = start, _delta = delta, _width = width, _len=_subject.length, _x = _start.x, _y= _start.y; i<_len; ++i, _x += _delta.x) { if(_x >= _start.x+_width) {_x = _start.x; _y += _delta.y} let it = _subject[i], pos = new Vector2(_x, _y, _start.location || _delta.location ? new SourceCodeLocation(0, 0, null, _start.location, _delta.location) : null); do()}
 
-	global inline js void forCentered: T[] subject  // The list to iterate over
-		                               Vector2 center = {0,0}
-		                               Vector2 delta = {100,0}
-		                               -> void(
-		                                   T it,    // The current item of the list we are iterating over with forCentered
-		                                   Vector2 pos,
-		                                   int i    // The index of the current item of the list we are iterating over with forCentered
-		                               ) do         // Do this for each item in a list
+	global inline js void forPositions: T[] subject               // The list to iterate over
+		                                Vector2 center = {0,0}    // Center items at this position
+		                                Vector2 delta = {100,0}   // Distance between items
+		                                -> void(
+		                                    T it,                 // The current item of the list we are iterating over with forCentered
+		                                    Vector2 pos,          // The position of the current item
+		                                    int i                 // The index of the current item of the list we are iterating over with forCentered
+		                                ) do                      // Do this for each item in a list
 		for(let i=0, _subject=subject, _center = center, _delta = delta, _len=_subject.length, _x = _center.x-(_len-1)*_delta.x/2, _y=_center.y-(_len-1)*_delta.y/2; i<_len; ++i, _x += _delta.x, _y += _delta.y) { let it = _subject[i], pos = new Vector2(_x, _y, _center.location || _delta.location ? new SourceCodeLocation(0, 0, null, _center.location, _delta.location) : null); do()}
 
-	global inline js void forCentered: int subject  // The list to iterate over
-		                               Vector2 center = {0,0}
-		                               Vector2 delta = {100,0}
-		                               -> void(
-		                                   T it,    // The current item of the list we are iterating over with forCentered
-		                                   Vector2 pos,
-		                                   int i    // The index of the current item of the list we are iterating over with forCentered
-		                               ) do         // Do this for each item in a list
+	global inline js void forPositions: int subject               // The exclusive upper bound to iterate towards
+		                                Vector2 center = {0,0}    // Center items at this position
+		                                Vector2 delta = {100,0}   // Distance between items
+		                                -> void(
+		                                    int i,                // The index of the current item of the list we are iterating over with forCentered
+		                                    Vector2 pos           // The position of the current item
+		                                ) do                      // Do this for each item in a list
 		for(let i=0, _center = center, _delta = delta, _len=subject, _x = _center.x-(_len-1)*_delta.x/2, _y=_center.y-(_len-1)*_delta.y/2; i<_len; ++i, _x += _delta.x, _y += _delta.y) { let pos = new Vector2(_x, _y, _center.location || _delta.location ? new SourceCodeLocation(0, 0, null, _center.location, _delta.location) : null); do()}
+
+	global inline js void forPositions: T[] subject               // The list to iterate over
+		                                Vector2 end = {0,0}       // Right or bottom align items at this position
+		                                Vector2 delta = {100,0}   // Distance between items
+		                                -> void(
+		                                    T it,                 // The current item of the list we are iterating over with forCentered
+		                                    Vector2 pos,          // The position of the current item
+		                                    int i                 // The index of the current item of the list we are iterating over with forCentered
+		                                ) do                      // Do this for each item in a list
+		for(let i=0, _subject=subject, _end = end, _delta = delta, _len=_subject.length, _x = _end.x-(_len-1)*_delta.x, _y=_end.y-(_len-1)*_delta.y; i<_len; ++i, _x += _delta.x, _y += _delta.y) { let it = _subject[i], pos = new Vector2(_x, _y, _end.location || _delta.location ? new SourceCodeLocation(0, 0, null, _end.location, _delta.location) : null); do()}
 
 // Converts positions within an isomatic grid with the origin in the north
 // Tilt your head slighly to the right to visualize the directions
@@ -580,8 +590,8 @@ class Direction
 	string name
 	int index
 	IntVector2 vector
-	float angle
-	float isoAngle
+	Angle angle
+	Angle isoAngle
 	
 	toString := name
 	

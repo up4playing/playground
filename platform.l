@@ -16,11 +16,14 @@ enum TickMode: Interval, AnimationFrame
 // Pixel space
 // - the size in the screen size in pixels of the target platform
 // - the origin in the top left corner
-transient unit Platform
+transient skipInit unit Platform
 	public userCount = 2
+	public supportedUserCount = Range 2..4
+	
 	public bool showSafeArea = true
 	public bool showDebugInfo = false
 	public bool isLocal = false
+	
 	public TickMode tickMode = Interval
 	
 	public inline js string url := location.href
@@ -60,6 +63,7 @@ transient unit Platform
 		Math_init();
 		Network_init();
 		Input_init();
+		Network_log("Loading...")
 		Platform_isMobile = false;
 		let platform = navigator.platform
 		Platform_os = platform.startsWith("Win") ? 0 : platform.startsWith("Mac") ? 1 : 2
@@ -86,6 +90,14 @@ transient unit Platform
 		Platform_canvas.imageSmoothingEnabled = true;
 		Platform_canvas.imageSmoothingQuality = "high";
 		Platform_updateBaseMatrix();
+		
+	private js void drawLoading
+		let text = "Loading..."
+		Platform_context.font = "24px Arial"
+		Platform_context.fillStyle = "#ffffff"
+		Platform_context.textBaseline = "middle"
+		let textSize = Platform_context.measureText(text)
+		Platform_context.fillText(text, (Platform_pixelSize.x-textSize.width)/2, Platform_pixelSize.y/2)
 		
 	// Update the base matrix
 	// Called when resizing and after calling init() because we could change the scaleMode and anchor in App.init
@@ -117,11 +129,11 @@ transient unit Platform
 		initPlatform
 		this.engineStarted = false
 		this.isDebug = isDebug
-		if !isDebug: showSafeArea = false
+		if !isDebug: showSafeArea = false; Network.simulateConnection = false
 		showDebugInfo = getLocalStorageObject("showDebugInfo") == "true"
 		
 		onResize
-		if !isDebug: Network.simulateConnection = false
+		drawLoading
 		if mode >= Play: mode = Pause
 		let path = url.getUntil("?").split("/")
 		let gameId = path[3]
@@ -137,7 +149,7 @@ transient unit Platform
 				roomId = roomId.substring(0,dashIndex)
 			
 		// If the roomId "staging", "latest" or negative, switch to staging mode (no audio, no fullscreen)
-		isStaging = roomId == "staging" or roomId == "latest" or roomId?.startsWith("-")
+		isStaging = isDebug or roomId == "staging" or roomId == "latest" or roomId?.startsWith("-")
 		
 		openMedia
 			this.engineStarted = true
@@ -322,7 +334,7 @@ transient unit Platform
 		return result.toLowerCase()
 		
 	inline js void vibrate: int duration = 100
-		navigator.vibrate(duration)
+		if(navigator.vibrate) navigator.vibrate(duration)
 		
 	js void saveImage: string dataUrl, string file
 		var base64Data = dataUrl.replace(/data:image\/png;base64,/, "");

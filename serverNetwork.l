@@ -6,6 +6,7 @@ transient unit ServerNetwork
 	int nextConnectionId = 1
 	
 	js void setup
+		let startTime = Date.now()
 		let socket
 		if(location.href.indexOf("localhost") != -1) socket = new WebSocket("ws://localhost:3112");
 		else                                         socket = new WebSocket("wss://"+location.host+":3112");
@@ -21,6 +22,9 @@ transient unit ServerNetwork
 		socket.onclose = function(ev) {
 			Network_log("Websocket closed "+ev.code+" "+ev.reason)
 			ServerNetwork_socket = null
+			if(Date.now() - startTime < 30000) {
+				location.href = "/{Network_gameId}/{Network_roomId}"
+			}
 		}
 		socket.onerror = error => {
 			Network_error = "Can't connect to server."
@@ -35,7 +39,7 @@ transient unit ServerNetwork
 		if Input.localUser.id == -1 and !Platform.isStaging
 			// We were in this room before -> connect with the same userId we had before
 			RoomInfo roomInfo = cast Platform.getLocalStorageObject "room"+Network.roomId
-			Input.localUser.id = roomInfo && roomInfo.time > Network.currentTime - 3600000*24 ? roomInfo.userId : -1
+			Input.localUser.id = roomInfo && roomInfo.time > Network.currentTime - 3600000*6 ? roomInfo.userId : -1
 			Network.log roomInfo, Input.localUser.id
 		
 		Network.log "onConnectedToServer as {Input.localUser.id} {Network.roomId}"
@@ -104,7 +108,7 @@ transient unit ServerNetwork
 		Network.serverStartTime = serverStartTime
 		Network.mode = Ping
 		for Input.internalUsers
-			if !.local: PeerNetwork.createOffer .
+			if . and !.local: PeerNetwork.createOffer .
 		Network.storeUserId
 				
 		Network.log "Joining room {roomId} as user {userId}"
@@ -287,17 +291,19 @@ transient unit ServerNetwork
 		if mode != Network.sendInputsMode
 			Network.sendInputsMode = mode
 	
-	sendReload: bool newRoom, bool newUserId
+	sendReload: bool newRoom, bool newUserId, bool keepMaster
 		string url = "/{Network.gameId}/{newRoom ? Network.roomId+(Network.roomId < 0 ? -1 : 1) : Network.roomId}"
 		sendBuffer.reset
 		sendBuffer.writeInt8 cast NetworkMessageType.Reload
-		sendBuffer.writeString url
+		sendBuffer.writeBool keepMaster
 		sendBuffer.writeBool newUserId
+		sendBuffer.writeString url
 		send sendBuffer
 
 	onReload: Buffer buffer
-		let url = buffer.readString
+		let keepMaster = buffer.readBool
 		let newUserId = buffer.readBool
+		let url = buffer.readString
 		if !newUserId: url += "u{Input.localUser.id}"
 		Platform.setLocation url
 			

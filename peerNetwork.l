@@ -9,8 +9,20 @@ transient class IceMessage
 	
 enum VideoShape: Rectangle, Square, Circle
 enum RelayMode: Never, Auto, Always
+		
+class MediaDeviceInfo
+	string deviceId
+	string groupId
+	string kind
+	string label
 
+class MediaDevices
+	MediaDeviceInfo[] audioInput
+	MediaDeviceInfo[] audioOutput
+	MediaDeviceInfo[] videoInput
+	
 transient unit PeerNetwork
+	const userIsLostAfter = 1s
 	RelayMode relayMode = Auto
 	
 	internal enableVideo = true
@@ -44,26 +56,7 @@ transient unit PeerNetwork
 		Network_log("setupPeerConnection userId:"+user.id+" connectionId:"+connectionId+" relayMode:"+PeerNetwork_relayMode)
 		
 		// Event handlers
-		// let disconnectTimeout
-		peerConnection.oniceconnectionstatechange = e => {
-			let state = peerConnection.iceConnectionState
-			Network_log("oniceconnectionstatechange " + state)
-			switch(state) {
-				case "disconnected":
-					PeerNetwork_onDisconnectFromPeer(connectionId)
-					// disconnectTimeout = setTimeout(() => {
-					// 	Network_log("oniceconnectionstatechange: disconnect after timeout")
-					// 	PeerNetwork_onDisconnectFromPeer(connectionId)
-					// }, 3000)
-					break
-				case "connected":
-					// Network_log("oniceconnectionstatechange: clear timeout")
-					// clearTimeout(disconnectTimeout)
-					PeerNetwork_onConnectToPeer(user)
-					break
-			}
-		}
-		
+		peerConnection.oniceconnectionstatechange = e => Network_log("oniceconnectionstatechange " + peerConnection.iceConnectionState)
 		peerConnection.onicecandidate = async event => {
 			if (event.candidate)
 				ServerNetwork_sendIce(user.id, JSON.stringify(event.candidate))
@@ -109,7 +102,7 @@ transient unit PeerNetwork
 	js void createOffer: InternalUser user
 		try {
 			PeerNetwork_setupPeerConnection(user, /*offerByMe*/true)
-			PeerNetwork_setupRemoteVideo(user)
+			PeerNetwork_setupRemoteMedia(user)
 			PeerNetwork_stopRecreatingDataChannel(user)
 			PeerNetwork_setupDataChannel(user)
 			
@@ -143,7 +136,7 @@ transient unit PeerNetwork
 	js void onReceivedOffer: InternalUser user, string sdp
 		try {
 			PeerNetwork_setupPeerConnection(user, /*offerByMe*/false)
-			PeerNetwork_setupRemoteVideo(user)
+			PeerNetwork_setupRemoteMedia(user)
 			
 			// When a user reconnects, we receive a new offer and a new data channel,
 			// so we need to stop trying to recreate the old data channel to avoid two open data channels
@@ -187,7 +180,7 @@ transient unit PeerNetwork
 	
 	sendInputs: int inputFrame
 		for Input.internalUsers -> user
-			if .dataChannel
+			if user?.dataChannel
 				let inputs = Input.localUser.inputs
 				let length = inputs.writePos - user.inputsSentPos
 				sendBuffer.reset
@@ -216,6 +209,14 @@ transient unit PeerNetwork
 	// private js void onMessage: InternalUser user, Buffer buffer
 	// 	setTimeout(() => PeerNetwork_onMessageDo(user, buffer), 1000)
 		
+	private getMinReceivedFrames
+		let minReceivedFrames = int.maxValue
+		for Input.users
+			let internalUser = Input.internalUsers[.id]
+				if internalUser.inputFrame < minReceivedFrames
+					minReceivedFrames = internalUser.inputFrame
+		return minReceivedFrames
+								
 	private onMessage: InternalUser user, Buffer buffer
 		NetworkMessageType type = cast buffer.readInt8
 		if type == Tick:         onTick user, buffer; else
@@ -231,13 +232,11 @@ transient unit PeerNetwork
 			let prevWritePos = sender.inputs.writePos
 			buffer.readBuffer sender.inputs, prevWritePos
 			
-			// TOTO: Is local needed?
-			Network.receivedFrames = Input.internalUsers.min.inputFrame where .isConnected
+			Network.receivedFrames = getMinReceivedFrames
 			Network.receivedLog += " [{Network.currentTime}] <{sender.id}> #{inputFrame} buffer:{sender.bufferFrames} {prevWritePos}->{sender.inputs.writePos} {sender.inputs.toRangeString(prevWritePos, sender.inputs.writePos)}"
 			// if sender.inputs.writePos > prevWritePos: print " [{Network.currentTime}] <{sender.id}> #{inputFrame} buffer:{sender.bufferFrames} {prevWritePos}->{sender.inputs.writePos} {sender.inputs.toRangeString(prevWritePos, sender.inputs.writePos)}"
 		else
 			Network.receivedLog += " [{Network.currentTime}] <{sender.id}> (ignoring #{inputFrame})"
-			
 		
 	js void onReceivedAnswer: InternalUser user, string sdp
 		await user.peerConnection.setRemoteDescription(new RTCSessionDescription({type: "answer", sdp}));
@@ -250,17 +249,7 @@ transient unit PeerNetwork
 			Network_log("onIce failed " + e.message)
 			Network_log(e.stack);
 		}
-	
-	private onConnectToPeer: InternalUser user
-		Network.log "connect to peer", user.id
-		user.isConnected = true
 		
-	private onDisconnectFromPeer: int connectionId
-		let user = Input.internalUsers.find.connectionId == connectionId
-			user.isConnected = false
-			// user.nextLostMessageAtFrame = Network.frame + Network.targetFps * 2
-			Network.log "disconnect", connectionId, user.id
-				
 	private js void logConnectionType
 		setTimeout(async () => {
 			let stats = await PeerNetwork_peerConnection.getStats()
@@ -285,8 +274,8 @@ transient unit PeerNetwork
 		sendBuffer.writeInt checksumFor
 		sendBuffer.writeFloat64 checksum
 		
-		for Input.internalUsers
-			if .dataChannel		
+		for Input.internalUsers -> user
+			if user?.dataChannel		
 				send ., sendBuffer
 
 	onChecksum: InternalUser user, Buffer buffer
@@ -301,22 +290,37 @@ transient unit PeerNetwork
 		if !myChecksum.isApproximately(checksum)
 			Network.onWrongChecksum mine:myChecksum theirs:checksum
 				
-	// --------------------------------------------- Setup video ---------------------------------------------
+	// --------------------------------------------- Media Setup ---------------------------------------------
 	
-	private js void setupLocalVideo: bool enableVideo, bool enableAudio
+	MediaDevices devices = {}
+	string videoInputId, audioInputId, audioOutputId	
+	
+	private js void setupLocalMedia: bool enableVideo, bool enableAudio
 		PeerNetwork_enableVideo = enableVideo
 		PeerNetwork_enableAudio = enableAudio
 		if(!enableVideo && !enableAudio) return
 			
 		try {
+			// Create local media stream
 			Input_localUser.mediaStream = await navigator.mediaDevices.getUserMedia({
-				video: {
-					width: 500,
-					height: 375,
-				},
+				video: {width: 500, height: 375},
 				audio: enableAudio
 			});
-			Network_log("setupLocalVideo: success")
+			
+			// Enummerate local devices
+			let devices = await navigator.mediaDevices.enumerateDevices();
+			for(let device of devices) {
+				switch(device.kind) {
+					case "videoinput":  PeerNetwork_devices.videoInput.push(device); break;
+					case "audioinput":  PeerNetwork_devices.audioInput.push(device); break;
+					case "audiooutput": PeerNetwork_devices.audioOutput.push(device); break;
+				}
+			}
+			PeerNetwork_videoInputId = Input_localUser.mediaStream.getVideoTracks()[0]?.getSettings().deviceId || PeerNetwork_devices.videoInput[0]?.deviceId
+			PeerNetwork_audioInputId = Input_localUser.mediaStream.getAudioTracks()[0]?.getSettings().deviceId || PeerNetwork_devices.audioInput[0]?.deviceId
+			PeerNetwork_audioOutputId = PeerNetwork_devices.audioInput[0]?.deviceId
+			Network_log("setupLocalMedia: success")
+			
 		} catch(error) {
 			Network_log(error.message)
 			if(error.name == "NotAllowedError") {
@@ -327,8 +331,61 @@ transient unit PeerNetwork
 			Network_errorMessage = error.message
 			throw error
 		}
+	
+	js void setVideoInput: string videoInputId
+		if(PeerNetwork_videoInputId == videoInputId) return;
+		PeerNetwork_videoInputId = videoInputId;
+		
+		// Create local media stream
+		Input_localUser.mediaStream = await navigator.mediaDevices.getUserMedia({
+			audio: {deviceId: PeerNetwork_audioInputId},
+			video: {deviceId: PeerNetwork_videoInputId},
+		});
+		
+		// Update video elements and tracks
+		for(let el of Input_localUser.videoElements) {
+			el.srcObject = Input_localUser.mediaStream;
+		}
+		const [videoTrack] = Input_localUser.mediaStream.getVideoTracks();
+		for(let user of Input_internalUsers) {
+			if(user?.peerConnection) {
+				const sender = user.peerConnection.getSenders().find((s) => s.track.kind === videoTrack.kind);
+				sender.replaceTrack(videoTrack);
+			}
+		}
 			
-	private js void setupRemoteVideo: InternalUser user
+	js void setAudioInput: string audioInputId
+		if(PeerNetwork_audioInputId == audioInputId) return;
+		PeerNetwork_audioInputId = audioInputId;
+		
+		// Create local media stream
+		Input_localUser.mediaStream = await navigator.mediaDevices.getUserMedia({
+			audio: {deviceId: PeerNetwork_audioInputId},
+			video: {deviceId: PeerNetwork_videoInputId},
+		});
+		
+		// Update tracks
+		const [audioTrack] = Input_localUser.mediaStream.getAudioTracks();
+		for(let user of Input_internalUsers) {
+			if(user?.peerConnection) {
+				const sender = user.peerConnection.getSenders().find((s) => s.track.kind === audioTrack.kind);
+				log('Found sender:', sender);
+				sender.replaceTrack(audioTrack);
+			}
+		}
+			
+	js void setAudioOutput: string audioOutputId
+		PeerNetwork_audioOutputId = audioOutputId;
+		
+		// Update audio elements
+		for(let user of Input_internalUsers) {
+			if(user?.audioElement) {
+				user.audioElement.setSinkId(PeerNetwork_audioOutputId);
+			}
+		}
+		audio_reload();
+		
+	private js void setupRemoteMedia: InternalUser user
 		// Remove old video elements
 		for(let videoElement of user.videoElements)
 			videoElement.remove()
@@ -346,7 +403,8 @@ transient unit PeerNetwork
 		// Create audio element so we always hear the remote user, event if no video is shown
 		let audioElement = user.audioElement = document.createElement('audio')
 		audioElement.srcObject = user.mediaStream
-		document.body.appendChild(audioElement)
+		audioElement.setSinkId(PeerNetwork_audioOutputId);
+		document.body.appendChild(audioElement);
 		
 		// Add incoming tracks to media stream for remote player
 		user.peerConnection.addEventListener('track', event => {
@@ -355,7 +413,7 @@ transient unit PeerNetwork
 			});
 		});
 
-	// --------------------------------------------- Video/Audio element ---------------------------------------------
+	// --------------------------------------------- Media elements ---------------------------------------------
 	
 	js object createVideoElement: object stream, bool local
 		let el = document.createElement('video')
@@ -398,7 +456,7 @@ transient unit PeerNetwork
 			Snapshot.serialize snapshotBuffer
 			for sendStateQueue <-
 				let user = Input.internalUsers[.]
-				if user and user.dataChannel
+				if user?.dataChannel
 					sendState user, snapshotBuffer
 					sendStateQueue.removeAt i
 	
@@ -426,7 +484,7 @@ transient unit PeerNetwork
 		sendBuffer.writeInt32 Network.frame-1
 		let userCount = Input.internalUsers.count . != null
 		sendBuffer.writeInt32 userCount
-		for Input.internalUsers -> user
+		for Input.internalUsers if .
 			sendBuffer.writeInt32 .id
 			sendBuffer.writeInt32 .inputs.readPos
 		to.inputsSentPos = localPlayer.inputs.readPos
@@ -447,7 +505,7 @@ transient unit PeerNetwork
 				user.inputFrame = frame
 				user.inputs.readPos = user.inputs.writePos = readPos
 				
-		for Input.internalUsers
+		for Input.internalUsers if .
 			.inputsSentPos = Input.localUser.inputs.writePos
 			
 		snapshotBuffer.reset

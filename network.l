@@ -56,7 +56,7 @@ transient unit Snapshot
 			
 			autoSaveAtEndOfStep = false
 	
-transient unit Network
+transient skipInit unit Network
 	int sendInterval = 1
 	int smoothStrength = 90
 	bool smoothTouchPosition = true
@@ -83,11 +83,12 @@ transient unit Network
 	public int certainFrame = -1    // The last frame where we have inputs from all players
 	private Buffer commonState      // A snapshot taken before the first uncertain frame
 	internal int frameWithNewWatches = 0 // First frame with new watches, do not send watches for frames below this
-	private bool startInLobby       // Connected sessions usually start in the lobby, local sessions start in the app
+	internal bool startInLobby      // Connected sessions usually start in the lobby, local sessions start in the app
 	private int joinFrame           // The frame the current user joined
 	public float[] checksums
 	bool alertShown
 	bool isReplay
+	bool isSmooth
 	
 	private Buffer debugCommonState // Used in debug mode to validate that serialing twice yields the same result 
 
@@ -129,7 +130,9 @@ transient unit Network
 		
 	// Clear all inputs and reset the application to the first frame
 	stop
-		for Input.internalUsers: if .: .inputs.reset; .startInputFrame 0
+		for Input.internalUsers if .
+			.inputs.reset
+			.startInputFrame 0
 		frames = 0
 		frameWithNewWatches = 0
 		startInLobby = false
@@ -146,10 +149,10 @@ transient unit Network
 		Input.usersById.clear
 		errorMessage = ""
 		
-		if !startInLobby
+		if !startInLobby or Platform.isDebug
 			// When the developer changed Platform.userCount, add or remove internal users accordingly
 			for Input.internalUsers.length to Platform.userCount
-				Input.internalUsers.add {id:i, local:true, isConnected:true, collectInputs:true}
+				Input.internalUsers.add {id:i, local:true, collectInputs:true}
 			if Input.internalUsers.length > Platform.userCount
 				Input.internalUsers.removeRange Platform.userCount, count: Input.internalUsers.length - Platform.userCount
 			
@@ -164,7 +167,8 @@ transient unit Network
 			Input.localUser = Input.localUser?.id < Input.internalUsers.length ? Input.internalUsers[Input.localUser.id] : Input.internalUsers[0]
 			
 		// Reset read pos to replay inputs from the beginning
-		Input.internalUsers.each.inputs.readPos = 0
+		for Input.internalUsers if .
+			.inputs.readPos = 0
 			
 		Math.randomValueIndex = 0
 		frame = 0
@@ -196,11 +200,11 @@ transient unit Network
 	// Smooth out animations by only executing code when we received inputs from everybody	
 	smooth: int userId
 		    void() do
-		if Input.isCertain or Input.localUser.id == userId: do
+		if isSmooth or Input.localUser.id == userId: do
 	
 	smooth: void() do
-		if Input.isCertain: do
-			
+		if isSmooth: do
+
 	// animationFrame --> step --> tick
 
 	// animationFrame  Send tick message, replay state, and call step
@@ -260,7 +264,8 @@ transient unit Network
 					Vector2 pixelPos = Input.logicalToPixelPosition(pos)
 					Input.handleTouchEvent inputType:TouchMove, x:pixelPos.x, y:pixelPos.y, pointerType:"mouse", pointerId:0, button:0
 
-				for Input.internalUsers: if .local: .startInputFrame frame+1
+				for Input.internalUsers -> user
+					if user?.local: user.startInputFrame frame+1
 				step fastFordward:false, draw:frame == targetFrame-1
 				collectStatistics
 				lastNetworkFrame = now
@@ -322,9 +327,9 @@ transient unit Network
 			// Statistics graph
 			for Input.users
 				let internalUser = Input.internalUsers[.id]
-				statisticsGraph.add cast .id, internalUser.bufferFrames, .color
-			statisticsGraph.add "interval", sendInterval, {"808080"}
-			statisticsGraph.add "ahead", ahead, Gray
+					statisticsGraph.add cast .id, internalUser.bufferFrames, .color
+			// statisticsGraph.add "interval", sendInterval, {"808080"}
+			// statisticsGraph.add "ahead", ahead, Gray
 			
 		// Logs
 		try
@@ -383,13 +388,17 @@ transient unit Network
 		try
 			// Set time
 			Time.now = serverStartTime + Math.round(frame * targetFrameTime)
+			
+			// Flags
 			Platform.fastForward = fastFordward
+			bool isCertain = frame <= certainFrame
+			isSmooth = frame <= frameMinusBuffer
 			
 			// Log
-			parseLog += " #{frame}"
-			bool isCertain = frame <= certainFrame
+			parseLog += " #{frame} (fmb{frameMinusBuffer})"
 			if fastFordward: parseLog += "f"
 			if isCertain: parseLog += "c"
+			if isSmooth: parseLog += "s"
 				
 			// Save a snapshot when we are about to start the frame after the last certain frame where we got all inputs
 			saveState
@@ -429,7 +438,8 @@ transient unit Network
 			onError error
 			
 		// Cleanup
-		Input.internalUsers.each.clearEvent
+		for Input.internalUsers if .
+			.clearEvent
 		Input.users.each.clearEvents
 		
 		// Send current frame to editor	
@@ -466,7 +476,7 @@ transient unit Network
 				if errorMessage
 					drawText errorMessage, statisticsGraph.position+{statisticsGraph.size.x/2, -statisticsGraph.size.y/2-15}, align:Right, layer:1000001, size:12, color:{"ffff00"}
 				else
-					drawText "v{Platform.version} {lag100Count}-{lag200Count} #{frame} {sendInterval}{sendInputsMode==Peer ? "p" : "s"} {PeerNetwork.connectionType}{statisticsGraph.maxValue}", statisticsGraph.position+{statisticsGraph.size.x/2, -statisticsGraph.size.y/2-12}, align:Right, layer:1000001, size:14
+					drawText "{lag100Count}-{lag200Count} #{frame} {PeerNetwork.connectionType}{statisticsGraph.maxValue}", statisticsGraph.position+{statisticsGraph.size.x/2, -statisticsGraph.size.y/2-12}, align:Right, layer:1000001, size:10
 			drawTime = Time.measure
 				graphics.finishFrame
 		audio.finishFrame
@@ -479,7 +489,8 @@ transient unit Network
 	private saveState
 		if mode != Connected and !simulateRollback: return
 		if frame == certainFrame+1 or certainFrame == -1
-			for Input.internalUsers: if .: .uncertainReadPos = .inputs.readPos
+			for Input.internalUsers if .
+				.uncertainReadPos = .inputs.readPos
 			uncertainFrame = frame
 			saveTime = Time.measure
 				Snapshot.serialize commonState
@@ -502,7 +513,8 @@ transient unit Network
 		if (mode != Connected and !simulateRollback) or Input.internalUsers.length == 1: return
 		if uncertainFrame != -1 and certainFrame >= uncertainFrame
 			// Restore state
-			for Input.internalUsers: if .: .inputs.readPos = .uncertainReadPos
+			for Input.internalUsers if .
+				.inputs.readPos = .uncertainReadPos
 			restoreTime = Time.measure
 				Snapshot.deserialize commonState
 			parseLog +=  " restore u:{uncertainFrame} c:{Framework.checksum}"
@@ -524,7 +536,7 @@ transient unit Network
 			parseLog +=  " no-restore c:{certainFrame} u:{uncertainFrame}"
 					
 	js void log: logstring text
-		let str = Date_currentHourMinuteSecondString() + " " + text
+		let str = new Date().hourMinuteSecondString() + " " + text
 		Network_eventLog += str + "\n"
 		log(str)
 		
@@ -565,10 +577,9 @@ transient unit Network
 				saveLogs
 			
 	internal saveLogs
-		let date = Date.now
 		// Ensure that current eventLog is added to the table even if we haven't processed a single frame
 		logTable += ",,,,,,,,,,,,,,,,,,,,,,,,\"{eventLog.trim}\""
-		Platform.saveTextFile "{Platform.appName} {date.dayShortMonthNameYearString} {date.hourMinuteSecondString} v{Platform.version}.csv", logTable
+		Platform.saveTextFile "{Platform.appName} {Date.now.dayMonthYearHourMinuteSecondString(language:Invariant)} v{Platform.version}.csv", logTable
 		// Http.post "/saveLog/{gameId}/{roomId}/{userId}", logTable
 		// 	log "save logs"
 		// else
@@ -582,11 +593,10 @@ transient unit Network
 		buffer.writeBool startInLobby
 		let userCount = Input.internalUsers.count . != null
 		buffer.writeInt8 userCount
-		for Input.internalUsers
-			if .
-				buffer.writeInt8 .id
-				buffer.writeBool .local
-				buffer.writeBuffer .inputs
+		for Input.internalUsers if .
+			buffer.writeInt8 .id
+			buffer.writeBool .local
+			buffer.writeBuffer .inputs
 		let date = Date.now
 		Platform.saveBinaryFile "{Platform.appName} {date.dayShortMonthNameYearString} {date.hourMinuteSecondString} v{Platform.version}.state", buffer
 		
@@ -604,17 +614,16 @@ transient unit Network
 				InternalUser user = {
 					id: buffer.readInt8
 					local: buffer.readBool
-					isConnected: true
 				}
+				if user.local: Input.localUser = user
 				buffer.readBuffer user.inputs
 				Input.internalUsers[user.id] = user
 				
 			// Replay
-			for Input.internalUsers
+			for Input.internalUsers if .
 				.collectInputs = true
 				if Platform.isDebug: .local = true
 				.startInputFrame frames
-			Input.localUser = Input.internalUsers.find.local
 			certainFrame = int.maxValue
 			Platform.sendFrame(frame, frames)
 			Math.setRandomSeed randomSeed
@@ -627,13 +636,13 @@ transient unit Network
 	join: string gameId, string roomString, int userId
 		initAll
 		log Platform.url
-		log Date.currentDayMonthYearHourMinuteSecondString
+		log Date.now.dayMonthYearHourMinuteSecondString
 		log Platform.userAgent
 		startInLobby = true
 		this.gameId = gameId
 		this.roomString = roomString
 		this.roomId = cast roomString
-		Input.localUser = {userId, local:true, isConnected:true, connectionId:0}
+		Input.localUser = {userId, local:true, connectionId:0}
 		initDatabase
 		setupVideoAndNetwork
 		lobby.enableFullscreen = !Platform.isStaging
@@ -642,7 +651,7 @@ transient unit Network
 		init()
 		
 	private js void setupVideoAndNetwork 
-		await PeerNetwork_setupLocalVideo(/*enableVideo*/!Platform_isStaging || Network_showVideoForStaging, /*enableAudio*/!Platform_isStaging)
+		await PeerNetwork_setupLocalMedia(/*enableVideo*/!Platform_isStaging || Network_showVideoForStaging, /*enableAudio*/!Platform_isStaging)
 		ServerNetwork_setup()
 		
 	internal storeUserId
@@ -670,7 +679,7 @@ class StatisticsGraphSeries
 	
 transient unit statisticsGraph
 	Vector2 position = {500, 450}
-	Vector2 size = {300, 180}
+	Vector2 size = {500, 180}
 	
 	private StatisticsGraphSeries[] series
 	float maxValue

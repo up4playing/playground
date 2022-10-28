@@ -22,8 +22,7 @@ unit Framework
 				
 	tick
 		fx.tick
-		objects.each.tick
-		objects.each.update
+		objects.eachChangable.tick
 		Input.onTouchUp:  deselect touch.userId
 		
 		if toBeRemoved
@@ -96,7 +95,6 @@ class Object
 	internal checksum := position.x + position.y + scale + alpha
 	internal debugString := "(Object pos:{position.x} {position.y})"
 	internal tick
-	internal update
 	
 	Object
 		siblings.add this
@@ -234,8 +232,8 @@ Object Piece
 	const Vector2 stackOffset = {8,8}
 	const minSize = 75
 	
-	Image image
-	float angle
+	Image image // The image of the piece
+	Angle angle // The rotation of the piece in turns (one full rotation is 1)
 	
 	bool stackable
 	bool movable = true
@@ -254,15 +252,15 @@ Object Piece
 	
 	// Rotate
 	private Touch rotateTouch
-	private float rotateOffset
-	private float targetAngle
+	private Angle rotateOffset
+	private Angle targetAngle
 	private bool rotatedOverThreshold
 	
 	Vector2 iconPos = Vector2.none
 	Vector2 touchMargin = {50,50}
 	
 	public Vector2 size
-	public Board board, nextBoard
+	public Board board
 	private int interactingUserId
 	
 	private siblings := board ? board.objects : Framework.objects
@@ -281,7 +279,6 @@ Object Piece
 			if size.x < minSize: size.x = minSize
 			if size.y < minSize: size.y = minSize
 		this.targetAngle = angle
-		this.nextBoard = board
 		
 	debugString := "(Piece pos:{position.x} {position.y} frame:{frame} side:{side} image:{image?.file} board:{board.toBool})"
 	
@@ -293,7 +290,7 @@ Object Piece
 		
 	override tick
 		// Rotate	
-		Vector2 iconPos = this.iconPos or (rotatable ? {(image.size.x+image.size.y)/3.5, (image.size.x+image.size.y)/3.5}*{1,-1} : image.size/2*{1,-1})
+		Vector2 iconPos = this.iconPos ? this.iconPos : (rotatable ? {(image.size.x+image.size.y)/3.5, (image.size.x+image.size.y)/3.5}*{1,-1} : image.size/2*{1,-1})
 		if rotatable and Framework.selectedObjects.contains(this)
 			Input.onTouchDownWithin position:position+iconPos*scale, size:Image.rotateIcon.size+touchMargin, userId:visibleFor
 				rotateTouch = touch
@@ -306,9 +303,9 @@ Object Piece
 				if (touch.position - touch.startPosition).length > 16: rotatedOverThreshold = true
 				
 			Input.onTouchUp rotateTouch
-				targetAngle = Math.round(angle / (Math.PI/2)) * Math.PI/2
+				targetAngle = Math.round(angle / .25) * .25
 				rotateTouch = null
-				if !rotatedOverThreshold: targetAngle += Math.PI/2
+				if !rotatedOverThreshold: targetAngle += .25
 				interactingUserId = touch.userId
 				if angle == targetAngle: onRotate
 		
@@ -317,7 +314,7 @@ Object Piece
 			if movable
 				moveTouch = touch
 				touchOffset = position - touch.position
-				siblings.moveToBack this
+				siblings.moveToFront this
 				isBeingMoved = false
 			
 		Input.onTouchMove moveTouch
@@ -340,12 +337,12 @@ Object Piece
 		// Animate rotation
 		if angle != targetAngle
 			Network.smooth interactingUserId
-				angle = Math.moveTowards(angle, targetAngle, .2)
+				angle = Math.moveTowards(angle, targetAngle, .03)
 				if angle == targetAngle: onRotate
 		
 		// Draw rotation icon
 		if rotatable and Framework.selectedObjects.contains(this) and not (rotateTouch and rotatedOverThreshold)
-			drawImage rotateIcon, position:position+iconPos*{1,-1}*scale, layer:10000, visibleFor
+			drawImage rotateIcon, position:position+iconPos*scale, layer:10000, visibleFor
 		
 		draw
 				
@@ -357,16 +354,15 @@ Object Piece
 	private checkBoardsWhileMoving: Touch touch
 		Vector2 pos = position
 		if board: pos = position * board.matrix
-		nextBoard = Framework.getBoardAt pos, touch.userId
-		
-	override update
+		let nextBoard = Framework.getBoardAt pos, touch.userId
 		if nextBoard != board
-			if board: board.objects.remove this; position = position * board.matrix; touchOffset = touchOffset * board.matrix.scaleVector
-			else      Framework.objects.remove this
-			board = nextBoard
-			if board: board.objects.add this;    position = position / board.matrix; touchOffset = touchOffset / board.matrix.scaleVector
-			else      Framework.objects.add this
-			onBoardChanged
+			delay
+				if board: board.objects.remove this; position = position * board.matrix; touchOffset = touchOffset * board.matrix.scaleVector
+				else      Framework.objects.remove this
+				board = nextBoard
+				if board: board.objects.insert this; position = position / board.matrix; touchOffset = touchOffset / board.matrix.scaleVector
+				else      Framework.objects.insert this
+				onBoardChanged
 					
 Piece Stack
 	private Piece[] objects
@@ -394,7 +390,7 @@ Piece Stack
 		
 	private pop
 		let topObject = objects.pop
-		Framework.objects.add topObject
+		Framework.objects.insert topObject
 		topObject.position += stackOffset
 		topObject.side = sideWhenRemoving
 		if objects.length == 0: Framework.objects.remove this
@@ -467,7 +463,7 @@ Piece Board
 						
 	add: Piece object
 		objects.add object
-		object.board = object.nextBoard = this
+		object.board = this
 		Framework.objects.remove object
 		
 	isVisibleFor: int userId
@@ -477,7 +473,7 @@ Piece Board
 		// Children
 		graphics.visibleFor contentVisibleForOthers == Never or contentVisibleForOthers == Off ? owner : -1
 			graphics.applyMatrix matrix
-				objects.each <- .tick
+				objects.eachChangable.tick
 		
 		// Pan
 		if panable	
@@ -509,9 +505,6 @@ Piece Board
 				
 		if color: drawRectangle position, size, fillColor:color, layer:-1, visibleFor
 		if image: drawImage image, position, scale
-			
-	override update
-		objects.each.update
 		
 	snap: Piece currentObject, Vector2 position
 		
@@ -588,7 +581,7 @@ Spot SpotHexGrid
 struct Particle
 	Vector2 pos, speed
 	int frame
-	float angle
+	Angle angle     // The rotation of the particle in turns (one full rotation is 1)
 	float scale = 1
 
 Object ParticleSystem
@@ -606,13 +599,13 @@ Object ParticleSystem
 	override tick
 		if Time.now > nextBurst
 			for particlesPerBurst
-				let r = -(Math.randomFloat) * Math.PI*2
+				let r = -Math.randomFloat
 				let speedFactor = Math.randomFloat*(maxSpeed-minSpeed) + minSpeed
 				particles.add Particle
 					pos: position
 					speed: {Math.cos(r), Math.sin(r)} * speedFactor
 					frame: Math.randomInteger(particleImage.frames.length)
-					angle: Math.randomFloat*Math.PI*2
+					angle: Math.randomFloat
 			nextBurst = ++burst < bursts ? Time.now + burstInterval : Time.maxValue
 
 		for particles <-
@@ -653,7 +646,7 @@ Piece Coin
 			Input.onTouchDownWithin position, radius:40, userId
 				moveTouch = touch
 				touchOffset = position - touch.position
-				siblings.moveToBack this
+				siblings.moveToFront this
 				isBeingMoved = false
 			
 			Input.onTouchMove moveTouch
@@ -740,7 +733,7 @@ Piece Coin
 		Coin neighbor = coin
 		if !neighbor
 			if value <= amount and !isInfinate: return
-			neighbor = {position:position+transferNeighborOffset, image:image, userId}
+			neighbor = {position:position+transferNeighborOffset, image:image}
 			if board: board.add neighbor
 		value -= amount
 		neighbor.value += amount
@@ -769,7 +762,7 @@ Object Menu
 	override tick
 		bool doNotClose
 		if active
-			forCentered items, center:popupPosition, delta:{0,60} -> item
+			forPositions items, center:popupPosition, delta:{0,60} -> item
 				drawText .label, pos+{-60}, size:30, align:Left, layer:int.maxValue
 				if item.type == Button
 					drawImage .image, pos+{-120}, layer:int.maxValue

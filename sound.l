@@ -1,7 +1,10 @@
 // A sound
-class Sound
+skipInit class Sound
 	string file
 	float fadeVolume = 1
+	
+	Sound
+		audio.sounds.add this
 	
 	js void open
 		return new Promise((resolve, reject) => {
@@ -46,8 +49,9 @@ class Sound
 		this.audio.play();
 		this.preloadForNextPlayback()
 		
-	private js void preloadForNextPlayback()
+	internal js void preloadForNextPlayback
 		this.nextAudio = new Audio();
+		await this.nextAudio.setSinkId(PeerNetwork_audioOutputId);
 		this.nextAudio.src = this.file;
 		
 	isPlaying
@@ -64,11 +68,13 @@ transient class PlayingSound
 	bool isConfirmed
 	
 // A collection of functions for playing audio
-transient global unit audio
+transient global skipInit unit audio
 	const float[] volumeLevels = [0, 0.0001, 0.0002, 0.0005, 0.001, 0.002, 0.005, .01, .02, .04, .08, .16, .32, .64, 1]
 	int volumeLevel = 10
 	float volume = volumeLevels[volumeLevel]
+	
 	PlayingSound[] playingSounds
+	Sound[] sounds
 	
 	internal startFrame
 		playingSounds.each.isConfirmed = false
@@ -76,6 +82,9 @@ transient global unit audio
 	internal finishFrame
 		// Stop sounds that turned out to be wrong after receiving new inputs
 		playingSounds.each: if .frame == Time.frame and !.isConfirmed: .sound.stop
+		
+	internal reload
+		sounds.each.preloadForNextPlayback
 		
 	stop
 		playingSounds.each.sound.stop
