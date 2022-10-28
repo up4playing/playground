@@ -44,8 +44,11 @@ unit Framework
 		return null
 		
 	deselect
-		for Input.users
-			selectedObjects[.id] = null
+		selectedObjects.clear
+		for objects
+			if . is Piece
+				Piece piece = cast .
+				piece.cancelTouch
 		
 	deselect: int userId
 		selectedObjects[userId] = null
@@ -284,6 +287,10 @@ Object Piece
 	
 	checksum := position.x + position.y + frame + scale + angle + cast side
 		
+	cancelTouch
+		moveTouch = null
+		rotateTouch = null
+		
 	override tick
 		// Rotate	
 		Vector2 iconPos = this.iconPos or (rotatable ? {(image.size.x+image.size.y)/3.5, (image.size.x+image.size.y)/3.5}*{1,-1} : image.size/2*{1,-1})
@@ -452,6 +459,12 @@ Piece Board
 		for objects: result += .checksum
 		return result
 		
+	cancelTouch
+		for objects
+			if . is Piece
+				Piece piece = cast .
+				piece.cancelTouch
+						
 	add: Piece object
 		objects.add object
 		object.board = object.nextBoard = this
