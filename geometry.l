@@ -467,6 +467,15 @@ global transient unit System
 		                                ) do                      // Do this for each item in a list
 		for(let i=0, _subject=subject, _start = start, _delta = delta, _len=_subject.length, _x = _start.x, _y= _start.y; i<_len; ++i, _x += _delta.x, _y += _delta.y) { let it = _subject[i], pos = new Vector2(_x, _y, _start.location || _delta.location ? new SourceCodeLocation(0, 0, null, _start.location, _delta.location) : null); do()}
 
+	global inline js void forPositions: int to                    // The exclusive upper bound to iterate towards
+		                                Vector2 start = {0,0}     // Left or top align items at this position
+		                                Vector2 delta = {100,0}   // Distance between items
+		                                -> void(
+		                                    int i,                // The index of the current item of the list we are iterating over with forCentered
+		                                    Vector2 pos,          // The position of the current item
+		                                ) do                      // Do this for each item in a list
+		for(let i=0, _start = start, _delta = delta, _len=to, _x = _start.x, _y= _start.y; i<_len; ++i, _x += _delta.x, _y += _delta.y) { let pos = new Vector2(_x, _y, _start.location || _delta.location ? new SourceCodeLocation(0, 0, null, _start.location, _delta.location) : null); do()}
+
 	global inline js void forPositions: T[] subject               // The list to iterate over
 		                                Vector2 start = {0,0}     // Left or top align items at this position
 		                                Vector2 delta = {100,100} // Distance between items
@@ -488,14 +497,14 @@ global transient unit System
 		                                ) do                      // Do this for each item in a list
 		for(let i=0, _subject=subject, _center = center, _delta = delta, _len=_subject.length, _x = _center.x-(_len-1)*_delta.x/2, _y=_center.y-(_len-1)*_delta.y/2; i<_len; ++i, _x += _delta.x, _y += _delta.y) { let it = _subject[i], pos = new Vector2(_x, _y, _center.location || _delta.location ? new SourceCodeLocation(0, 0, null, _center.location, _delta.location) : null); do()}
 
-	global inline js void forPositions: int subject               // The exclusive upper bound to iterate towards
+	global inline js void forPositions: int to                    // The exclusive upper bound to iterate towards
 		                                Vector2 center = {0,0}    // Center items at this position
 		                                Vector2 delta = {100,0}   // Distance between items
 		                                -> void(
 		                                    int i,                // The index of the current item of the list we are iterating over with forCentered
 		                                    Vector2 pos           // The position of the current item
 		                                ) do                      // Do this for each item in a list
-		for(let i=0, _center = center, _delta = delta, _len=subject, _x = _center.x-(_len-1)*_delta.x/2, _y=_center.y-(_len-1)*_delta.y/2; i<_len; ++i, _x += _delta.x, _y += _delta.y) { let pos = new Vector2(_x, _y, _center.location || _delta.location ? new SourceCodeLocation(0, 0, null, _center.location, _delta.location) : null); do()}
+		for(let i=0, _center = center, _delta = delta, _len=to, _x = _center.x-(_len-1)*_delta.x/2, _y=_center.y-(_len-1)*_delta.y/2; i<_len; ++i, _x += _delta.x, _y += _delta.y) { let pos = new Vector2(_x, _y, _center.location || _delta.location ? new SourceCodeLocation(0, 0, null, _center.location, _delta.location) : null); do()}
 
 	global inline js void forPositions: T[] subject               // The list to iterate over
 		                                Vector2 end = {0,0}       // Right or bottom align items at this position
