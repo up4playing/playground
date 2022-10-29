@@ -1833,5 +1833,13 @@ unit Json
 enum Language: English, German, Spanish, Frensh, Italian, Portuguese, Japanese, Chinese, Korean, Dutch, Turkish, Polish, Russian, Hindi, Arabic, Bengali, Urdu, Indonesian, Invariant = 1000
 
 unit Loca
-	Language[] supportedLanguages = [English, German]
-	Language language = English
+	visible Language[] supportedLanguages = [English, German]
+	visible string[] defaultLocaleForLanguage = ["en-001", "de-DE", "es-ES", "fr-FR", "it-IT", "pt-PT", "ja-JP", "zh-Hans-CN", "ko-KR", "nl-NL", "tr-TR", "pl-PL", "ru-RU", "hi-IN", "ar-001", "bn-BD", "ur-IN", "id-ID"]
+	visible Language language = English
+	visible string locale = defaultLocaleForLanguage[language]
+	
+	set: Language language, string locale = null
+		this.language = language
+		this.locale = locale or defaultLocaleForLanguage[language]
+	
+	
