@@ -216,7 +216,9 @@ transient skipInit unit Platform
 										locations.add .
 					
 					if locations.length
-						let selectedLocation = locations[locationIndex++ % locations.length]
+						// EVALUATE: This relies on the index wrapping around, update when we change this
+						// let selectedLocation = locations[locationIndex++ % locations.length]
+						let selectedLocation = locations[locationIndex++]
 						row = selectedLocation.row
 						column = selectedLocation.column
 						file = selectedLocation.file
