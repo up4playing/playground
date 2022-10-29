@@ -935,13 +935,8 @@ class List<T>
 		return result;
 		
 	// Gets an item from the list
-	// js T get: implicit int index // The index of the item to get
-	// 	return index >= 0 ? this[index] : this[this.length+index]
-		
-	// Gets an item from the list
-	// EVALUATE: Is wrapping the index around a good idea?
 	js T get: implicit int index // The index of the item to get
-		return this[((index % this.length) + this.length) % this.length]
+		return index >= 0 ? this[index] : this[this.length+index]
 		
 	js T get: int from = 0
 		             int to
