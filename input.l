@@ -534,46 +534,49 @@ skipInit unit Input
 		inputs.writeInt id
 		inputs.writeString data
 		
-	private inline js InternetGamePad[] getGamepads() navigator.getGamepads()
+	// Returns a "GamepadList" (which doesn't have the functions of a LiveTime list)
+	private inline js dynamic getGamepads() navigator.getGamepads()
 	
 	internal updateGameControllers
 		let gamepads = getGamepads
-		if gamepads and gamepads[0] and gamepads[0].axes.length >= 2
-			let gp = gamepads[0]
-			let isPlayStation = gp.id.contains("54c") or gp.id.contains("810")
+		if gamepads == null: return
+		InternetGamePad gp = gamepads[0]
+		if !gp or gp.axes.length < 2: return
 			
-			// Controller axis
-			let axes = gp.axes
-			let leftStickX = axes[0]
-			let leftStickY = axes[1]
-			
-			// Controller buttons
-			let buttons = (gp.buttons[ 0].pressed ?     1:0)
-			            + (gp.buttons[ 1].pressed ?     2:0)
-			            + (gp.buttons[ 2].pressed ?     4:0)
-			            + (gp.buttons[ 3].pressed ?     8:0)
-			
-			            + (gp.buttons[ 4].pressed ?    16:0)
-			            + (gp.buttons[ 5].pressed ?    32:0)
-			            + (gp.buttons[ 8].pressed ?    64:0)
-			            + (gp.buttons[ 9].pressed ?   128:0)
-			
-			            + (gp.buttons[10].pressed ?   256:0)
-			            + (gp.buttons[11].pressed ?   512:0)
-			            + (gp.buttons[12].pressed ?  1024:0)
-			            + (gp.buttons[13].pressed ?  2048:0)
-			
-			            + (gp.buttons[14].pressed ?  4096:0)
-			            + (gp.buttons[15].pressed ?  8192:0)
-			            + (isPlayStation          ? 16384:0)
-			
-			// Write to event stream
-			let inputs = localUser.inputs
-			inputs.writeInt32 localUser.inputFrame
-			inputs.writeInt16 cast InputType.GameController
-			inputs.writeFloat32 abs(leftStickX) > GameController.deadZone ? leftStickX : 0
-			inputs.writeFloat32 abs(leftStickY) > GameController.deadZone ? leftStickY : 0
-			inputs.writeUnsignedInt16 buttons
+		let isPlayStation = gp.id.contains("54c") or gp.id.contains("810")
+		
+		// Controller axis
+		let axes = gp.axes
+		let leftStickX = axes[0]
+		let leftStickY = axes[1]
+		
+		// Controller buttons
+		let buttons = (gp.buttons[ 0].pressed ?     1:0)
+		            + (gp.buttons[ 1].pressed ?     2:0)
+		            + (gp.buttons[ 2].pressed ?     4:0)
+		            + (gp.buttons[ 3].pressed ?     8:0)
+		
+		            + (gp.buttons[ 4].pressed ?    16:0)
+		            + (gp.buttons[ 5].pressed ?    32:0)
+		            + (gp.buttons[ 8].pressed ?    64:0)
+		            + (gp.buttons[ 9].pressed ?   128:0)
+		
+		            + (gp.buttons[10].pressed ?   256:0)
+		            + (gp.buttons[11].pressed ?   512:0)
+		            + (gp.buttons[12].pressed ?  1024:0)
+		            + (gp.buttons[13].pressed ?  2048:0)
+		
+		            + (gp.buttons[14].pressed ?  4096:0)
+		            + (gp.buttons[15].pressed ?  8192:0)
+		            + (isPlayStation          ? 16384:0)
+		
+		// Write to event stream
+		let inputs = localUser.inputs
+		inputs.writeInt32 localUser.inputFrame
+		inputs.writeInt16 cast InputType.GameController
+		inputs.writeFloat32 abs(leftStickX) > GameController.deadZone ? leftStickX : 0
+		inputs.writeFloat32 abs(leftStickY) > GameController.deadZone ? leftStickY : 0
+		inputs.writeUnsignedInt16 buttons
 			
 	internal parseInputs(int frame, bool isCertain)
 		this.isCertain = isCertain
