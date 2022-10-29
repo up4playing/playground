@@ -47,10 +47,6 @@ transient skipInit unit Platform
 	internal bool fastForward
 	visible bool isMobile = true
 	visible OperatingSystem os
-	
-	internal inline js void initApplication
-		init()
-		Platform_updateBaseMatrix();
 		
 	private inline js void initMedia
 		audio_init();
@@ -412,14 +408,14 @@ transient skipInit unit Platform
 	
 	inline js void pushState: string url
 		                      object state = null
-		if(!Network_isReplay) history.pushState(state, "", url);
+		if(Network_isPremiere) history.pushState(state, "", url);
 		
 	inline js void replaceState: string url
 		                         object state = null
-		if(!Network_isReplay) history.replaceState(state, "", url);
+		if(Network_isPremiere) history.replaceState(state, "", url);
 		
 	inline js void back
-		if(!Network_isReplay) history.back();
+		if(Network_isPremiere) history.back();
 		
 	inline js void reload
 		if(!Platform_isDebug) location.reload();

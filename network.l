@@ -87,7 +87,7 @@ transient skipInit unit Network
 	private int joinFrame           // The frame the current user joined
 	public float[] checksums
 	bool alertShown
-	bool isReplay
+	bool isPremiere
 	bool isSmooth
 	
 	private Buffer debugCommonState // Used in debug mode to validate that serialing twice yields the same result 
@@ -136,7 +136,6 @@ transient skipInit unit Network
 		frames = 0
 		frameWithNewWatches = 0
 		startInLobby = false
-		isReplay = false
 		errorMessage = ""
 		audio.stop
 		goToFrame 0
@@ -144,7 +143,6 @@ transient skipInit unit Network
 	// Keep inputs, call init functions, create the local users, reset read positions and start app
 	// This is called on startup, after every code change and when going backwards in the timeline
 	reset
-		Platform.initApplication
 		Input.users.clear
 		Input.usersById.clear
 		errorMessage = ""
@@ -176,6 +174,8 @@ transient skipInit unit Network
 		uncertainFrame = -1
 		lobby.inLobby = startInLobby
 		Time.now = serverStartTime
+		
+		initAll
 		if !startInLobby: startApp
 			
 		if simulateRollback: saveState
@@ -187,7 +187,6 @@ transient skipInit unit Network
 	// and when stepping through the timeline with replayFromStart = false
 	// to only replay from the beginning when going to a frame in the past
 	goToFrame: int targetFrame, replayFromStart = false
-		isReplay = true
 		if replayFromStart: frameWithNewWatches = 0
 		if targetFrame < frame or replayFromStart: reset
 			
@@ -195,7 +194,6 @@ transient skipInit unit Network
 			step fastForward:true, draw:false
 		adjustStartTime
 		animationFrame
-		isReplay = false
 
 	// Smooth out animations by only executing code when we received inputs from everybody	
 	smooth: int userId
@@ -393,6 +391,7 @@ transient skipInit unit Network
 			Platform.fastForward = fastForward
 			bool isCertain = frame <= certainFrame
 			isSmooth = frame <= frameMinusBuffer
+			isPremiere = frame >= frames
 			
 			// Log
 			parseLog += " #{frame} (fmb{frameMinusBuffer})"
@@ -648,7 +647,10 @@ transient skipInit unit Network
 		lobby.enableFullscreen = !Platform.isStaging
 		
 	private js void initAll
+		Network_isPremiere = Network_frame >= Network_frames
 		init()
+		// TODO: Is this needed?
+		Platform_updateBaseMatrix();
 		
 	private js void setupVideoAndNetwork 
 		await PeerNetwork_setupLocalMedia(/*enableVideo*/!Platform_isStaging || Network_showVideoForStaging, /*enableAudio*/!Platform_isStaging)

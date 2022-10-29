@@ -30,7 +30,7 @@ skipInit class Sound
 		let playingSound = audio.playingSounds.find.sound == this and .frame == Time.frame
 		if !playingSound
 			audio.playingSounds.add playingSound = {this, frame:Time.frame, isConfirmed:true}
-			if not Network.isReplay: doPlay playingSound
+			if Network.isPremiere: doPlay playingSound
 		else
 			playingSound.isConfirmed = true
 			
