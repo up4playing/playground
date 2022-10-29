@@ -491,6 +491,9 @@ class List<T>
 	
 	// Reverses the order of the items of the list
 	inline js T[] reverse() this.reverse()
+		
+	// Return a list with all unique items of the original list
+	inline js T[] distinct() [...new Set(this)]
 	
 	// Moves an item to the end of the list
 	js T moveToBack: T item // The item to move to the end of the list
