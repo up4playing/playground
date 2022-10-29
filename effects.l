@@ -12,8 +12,8 @@ global unit fx
 				.tick f
 				
 	global delay: Time time = 0
-		 bool smooth = false
-		 stored void() do
+		          bool smooth = false
+		          stored void() do
 		add RunEffect startTime:Time.now+time, smooth, do
 				
 class Effect

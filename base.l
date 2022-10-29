@@ -1625,6 +1625,7 @@ transient float Angle
 	inline js Angle operator -  (Angle a, Angle b) a-b
 	inline js Angle operator -  (Angle a, int b) a-b
 	inline js Angle operator -  (Angle a, float b) a-b
+	inline js Angle operator -  (Angle a) -a
 	
 	inline js float operator /  (Angle a, Angle b) a/b
 	inline js Angle operator /  (Angle a, int b) a/b

@@ -43,8 +43,11 @@ unit Framework
 		return null
 		
 	deselect
-		for Input.users
-			selectedObjects[.id] = null
+		selectedObjects.clear
+		for objects
+			if . is Piece
+				Piece piece = cast .
+				piece.cancelTouch
 		
 	deselect: int userId
 		selectedObjects[userId] = null
@@ -268,6 +271,7 @@ Object Piece
 	onSnap
 	onUnsnap
 	onRotate
+	onDrop
 	
 	Piece
 		if image
@@ -279,6 +283,10 @@ Object Piece
 	debugString := "(Piece pos:{position.x} {position.y} frame:{frame} side:{side} image:{image?.file} board:{board.toBool})"
 	
 	checksum := position.x + position.y + frame + scale + angle + cast side
+		
+	cancelTouch
+		moveTouch = null
+		rotateTouch = null
 		
 	override tick
 		// Rotate	
@@ -319,6 +327,7 @@ Object Piece
 		Input.onTouchUp moveTouch
 			Framework.selectedObjects[touch.userId] = this
 			moveTouch = null
+			onDrop
 		
 		// Flip	
 		if Framework.selectedObjects.contains(this) && flipable
@@ -446,6 +455,12 @@ Piece Board
 		for objects: result += .checksum
 		return result
 		
+	cancelTouch
+		for objects
+			if . is Piece
+				Piece piece = cast .
+				piece.cancelTouch
+						
 	add: Piece object
 		objects.add object
 		object.board = this
