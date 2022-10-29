@@ -487,9 +487,8 @@ class List<T>
 			
 	// Returns true if the list is not null and not empty	
 	inline js bool toBool := (this != null && this.length != 0) 
-		
 	
-	// Reverses the order of the items of the list
+	// Reverses the order of the items of the list in place
 	inline js T[] reverse() this.reverse()
 		
 	// Return a list with all unique items of the original list
@@ -518,7 +517,7 @@ class List<T>
 		
 	// Sort the list
 	inline js T[] sort
-		this.sort()
+		this.sort((a,b) => a - b)
 	
 	inline js T[] sort: float(T a, T b) comparer // A function returning 1 if "a" is larger, -1 if "b" is larger, 0 if they are equal
 		this.sort(comparer)
@@ -538,7 +537,7 @@ class List<T>
 		
 	// Sort the list by a given expression
 	T[] orderBy: float(T a) expression // The expression to order by
-		     SortingOrder order    // Specifies if you want to sort in ascending or descending order
+		         SortingOrder order    // Specifies if you want to sort in ascending or descending order
 		if order == Ascending: return this.sort(expression(a) - expression(b))
 		else                   return this.sort(expression(b) - expression(a))
 		
