@@ -105,6 +105,9 @@ class Object
 	removeAtEndOfFrame
 		Framework.toBeRemoved.add this
 		
+	moveToFront := siblings.moveToFront this
+	moveToBack  := siblings.moveToBack this
+		
 	moveTo: Vector2 pos
 		    int duration = 1000
 		    Time delay = 0
@@ -735,6 +738,7 @@ Piece Coin
 			if value <= amount and !isInfinate: return
 			neighbor = {position:position+transferNeighborOffset, image:image}
 			if board: board.add neighbor
+			neighbor.moveToFront
 		value -= amount
 		neighbor.value += amount
 		if !isInfinate and !allowZero and value <= 0: removeImmediately
