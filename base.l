@@ -941,14 +941,14 @@ class List<T>
 	// Gets an item from the list
 	// EVALUATE: Is wrapping the index around a good idea?
 	js T get: implicit int index // The index of the item to get
-		this[((index % this.length) + this.length) % this.length]
+		return this[((index % this.length) + this.length) % this.length]
 		
 	js T get: int from = 0
 		             int to
-		this.slice(from, to)
+		return this.slice(from, to)
 	
 	js T get: int from = 0
-		this.slice(from)
+		return this.slice(from)
 	
 	js T set: int index // The index of the item to set
 		      T value   // The new value to set
