@@ -594,6 +594,14 @@ class List<T>
 	js float average
 		return this.length > 0 ? this.sum() / this.length : 0
 		
+	string concat: string(T a) selector
+		           string separator = ", "
+		let result = ""
+		for this
+			if result: result += separator
+			result += selector(.)
+		return result
+		
 	shuffle
 		for 1 to length <- i
 			var j = Math.floor(Math.randomFloat * (i + 1))
