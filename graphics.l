@@ -130,6 +130,12 @@ transient global unit graphics
 	private drawItems
 		items.sort b.layer - a.layer
 		items.each <- .draw
+		resetTransform
+		// items.each.drawGizmo
+		
+	private js void resetTransform
+		Platform_context.resetTransform()
+		Platform_context.globalAlpha = 1
 				
 	private isVisibleFor: int visibleFor
 		if(Platform.fastForward) return false
@@ -154,9 +160,8 @@ transient global unit graphics
 		     : effectiveVisibleBy or clickableBy
 			
 	internal js void drawSafeArea
+		graphics_resetTransform()
 		Platform_context.fillStyle = "#404040"
-		Platform_context.setTransform(1,0,0,1,0,0)
-		Platform_context.globalAlpha = 1
 		if(Platform_showSafeArea) {
 			if(Platform_effectiveScaleMode == 1) {
 				// Fixed width
@@ -1082,6 +1087,20 @@ transient class DisplayItem
 	js void endClipping
 		if(this.clippingPath.points.length >= 2)
 			Platform_context.restore()
+			
+	js void drawGizmo
+		if(!this.poly) return
+		let poly = this.poly
+		Platform_context.beginPath();
+		let p = poly[poly.length-1]
+		Platform_context.moveTo(p.x, p.y)
+		for(let i=0, len = poly.length; i<len; ++i) {
+			let p = poly[i]
+			Platform_context.lineTo(p.x, p.y)
+		}
+		Platform_context.closePath()
+		Platform_context.fillStyle = "#ff000040"
+		Platform_context.fill()
 	
 transient DisplayItem DisplayImage
 	object htmlImage
