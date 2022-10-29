@@ -26,16 +26,13 @@ struct Vector2
 		a.location = b.location ? b.location.clone : null
 		return a
 	
-	js Vector2 operator + (Vector2 a, Vector2 b)
-		return new Vector2(a.x+b.x, a.y+b.y, a.location || b.location ? new SourceCodeLocation(0, 0, null, a.location, b.location) : null)
-		
-	js Vector2 operator - (Vector2 a, Vector2 b)
-		return new Vector2(a.x-b.x, a.y-b.y, a.location || b.location ? new SourceCodeLocation(0, 0, null, a.location, b.location) : null)
+	js Vector2 operator + (Vector2 a, Vector2 b) return new Vector2(a.x+b.x, a.y+b.y, a.location || b.location ? new SourceCodeLocation(0, 0, null, a.location, b.location) : null)
+	js Vector2 operator - (Vector2 a, Vector2 b) return new Vector2(a.x-b.x, a.y-b.y, a.location || b.location ? new SourceCodeLocation(0, 0, null, a.location, b.location) : null)
 	
 	js Vector2 operator * (Vector2 a, Vector2 b) return new Vector2(a.x*b.x, a.y*b.y, a.location || b.location ? new SourceCodeLocation(0, 0, null, a.location, b.location) : null)
-	js Vector2 operator * (Vector2 a, float b) return new Vector2(a.x*b, a.y*b, a.location || b.location ? new SourceCodeLocation(0, 0, null, a.location, b.location) : null)
-	js Vector2 operator * (Vector2 a, Time b) return new Vector2(a.x*b, a.y*b, a.location || b.location ? new SourceCodeLocation(0, 0, null, a.location, b.location) : null)
-	js Vector2 operator * (float a, Vector2 b) return new Vector2(a*b.x, a*b.y, a.location || b.location ? new SourceCodeLocation(0, 0, null, a.location, b.location) : null)
+	js Vector2 operator * (Vector2 a, float b)   return new Vector2(a.x*b, a.y*b, a.location || b.location ? new SourceCodeLocation(0, 0, null, a.location, b.location) : null)
+	js Vector2 operator * (Vector2 a, Time b)    return new Vector2(a.x*b, a.y*b, a.location || b.location ? new SourceCodeLocation(0, 0, null, a.location, b.location) : null)
+	js Vector2 operator * (float a, Vector2 b)   return new Vector2(a*b.x, a*b.y, a.location || b.location ? new SourceCodeLocation(0, 0, null, a.location, b.location) : null)
 	js Vector2 operator * (Vector2 vector, Matrix2D matrix)
 		return new Vector2(
 			matrix.m0 * vector.x + matrix.m2 * vector.y + matrix.m4,
@@ -44,7 +41,7 @@ struct Vector2
 		)
 		
 	js Vector2 operator / (Vector2 a, Vector2 b) return new Vector2(a.x/b.x, a.y/b.y, a.location || b.location ? new SourceCodeLocation(0, 0, null, a.location, b.location) : null)
-	js Vector2 operator / (Vector2 a, float b) return new Vector2(a.x/b, a.y/b, a.location || b.location ? new SourceCodeLocation(0, 0, null, a.location, b.location) : null)
+	js Vector2 operator / (Vector2 a, float b)   return new Vector2(a.x/b, a.y/b, a.location || b.location ? new SourceCodeLocation(0, 0, null, a.location, b.location) : null)
 	js Vector2 operator / (Vector2 vector, Matrix2D matrix)
 		var aa = matrix.m0, ab = matrix.m1, ac = matrix.m2, ad = matrix.m3, atx = matrix.m4, aty = matrix.m5
 
@@ -59,12 +56,12 @@ struct Vector2
 		)			
 	
 	js Vector2 operator % (Vector2 a, Vector2 b) return new Vector2(((a.x % b.x) + b.x) % b.x, ((a.y % b.y) + b.y) % b.y, a.location || b.location ? new SourceCodeLocation(0, 0, null, a.location, b.location) : null)
-	js Vector2 operator % (Vector2 a, float b) return new Vector2(((a.x % b) + b) % b, ((a.y % b) + b) % b, a.location || b.location ? new SourceCodeLocation(0, 0, null, a.location, b.location) : null)
+	js Vector2 operator % (Vector2 a, float b)   return new Vector2(((a.x % b) + b) % b, ((a.y % b) + b) % b, a.location || b.location ? new SourceCodeLocation(0, 0, null, a.location, b.location) : null)
 	
-	Vector2 operator += (Vector2 a, Vector2 b) a.x += b.x; a.y += b.y; return a
-	Vector2 operator -= (Vector2 a, Vector2 b) a.x -= b.x; a.y -= b.y; return a
-	Vector2 operator *= (Vector2 a, Vector2 b) a.x *= b.x; a.y *= b.y; return a
-	Vector2 operator /= (Vector2 a, Vector2 b) a.x /= b.x; a.y /= b.y; return a
+	js Vector2 operator += (Vector2 a, Vector2 b) a.x += b.x; a.y += b.y; if(a.location || b.location) {a.location = new SourceCodeLocation(0, 0, null, a.location, b.location)} return a
+	js Vector2 operator -= (Vector2 a, Vector2 b) a.x -= b.x; a.y -= b.y; if(a.location || b.location) {a.location = new SourceCodeLocation(0, 0, null, a.location, b.location)} return a
+	js Vector2 operator *= (Vector2 a, Vector2 b) a.x *= b.x; a.y *= b.y; if(a.location || b.location) {a.location = new SourceCodeLocation(0, 0, null, a.location, b.location)} return a
+	js Vector2 operator /= (Vector2 a, Vector2 b) a.x /= b.x; a.y /= b.y; if(a.location || b.location) {a.location = new SourceCodeLocation(0, 0, null, a.location, b.location)} return a
 	
 	bool operator == (Vector2 a, Vector2 b) return a.x == b.x && a.y == b.y
 	bool operator != (Vector2 a, Vector2 b) return a.x != b.x || a.y != b.y
