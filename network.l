@@ -15,19 +15,19 @@ transient unit Snapshot
 	inline js void serialize(Buffer buffer) serialize_internal(buffer)
 	inline js void deserialize(Buffer buffer) deserialize_internal(buffer)
 		
-	js string toString: object value
+	js string toString: dynamic value
 		let buffer = new Buffer(null, 1024, 0, 0);
 		setup_serialize();
 		value.serialize_external(buffer);
 		return btoa(String.fromCharCode(...new Uint8Array(buffer.buffer, 0, buffer.writePos)));	
 		
-	js void fromString: object value, string base64String
+	js void fromString: dynamic value, string base64String
 		let bytes = Uint8Array.from(atob(base64String), c => c.charCodeAt(0))
 		let buffer = new Buffer(bytes.buffer,0,0,0);
 		setup_deserialize();
 		value.deserialize_external(buffer);
 		
-	js void fromBase64: object value, string base64String
+	js void fromBase64: dynamic value, string base64String
 		let bytes = Uint8Array.from(atob(base64String), c => c.charCodeAt(0))
 		let buffer = new Buffer(bytes.buffer,0,0,0);
 		setup_deserialize();
@@ -192,7 +192,7 @@ transient skipInit unit Network
 		if targetFrame < frame or replayFromStart: reset
 			
 		while frame < targetFrame
-			step fastFordward:true, draw:false
+			step fastForward:true, draw:false
 		adjustStartTime
 		animationFrame
 		isReplay = false
@@ -266,7 +266,7 @@ transient skipInit unit Network
 
 				for Input.internalUsers -> user
 					if user?.local: user.startInputFrame frame+1
-				step fastFordward:false, draw:frame == targetFrame-1
+				step fastForward:false, draw:frame == targetFrame-1
 				collectStatistics
 				lastNetworkFrame = now
 				
@@ -383,20 +383,20 @@ transient skipInit unit Network
 	// All steps except the very last of an animation frame are fast forwared, which means that nothing is drawn.
 	// The frame is increment at the end of this function. This means that while processing the frame,
 	// frame will point to the current frame. After processing, frame will point to the next frame.
-	private step: bool fastFordward // If we are replaying after a rollack or a code change
-		          bool draw         // We don't draw if we are stepping multiple frames in one animation frame
+	private step: bool fastForward // If we are replaying after a rollack or a code change
+		          bool draw        // We don't draw if we are stepping multiple frames in one animation frame
 		try
 			// Set time
 			Time.now = serverStartTime + Math.round(frame * targetFrameTime)
 			
 			// Flags
-			Platform.fastForward = fastFordward
+			Platform.fastForward = fastForward
 			bool isCertain = frame <= certainFrame
 			isSmooth = frame <= frameMinusBuffer
 			
 			// Log
 			parseLog += " #{frame} (fmb{frameMinusBuffer})"
-			if fastFordward: parseLog += "f"
+			if fastForward: parseLog += "f"
 			if isCertain: parseLog += "c"
 			if isSmooth: parseLog += "s"
 				
@@ -445,7 +445,7 @@ transient skipInit unit Network
 		// Send current frame to editor	
 		if frames < frame+1: frames = frame+1
 		if frameWithNewWatches < frame+1: frameWithNewWatches = frame+1
-		if Platform.isDebug and !fastFordward and (Platform.mode == Record or Platform.mode == Play): Platform.sendFrame(frame, frames)
+		if Platform.isDebug and !fastForward and (Platform.mode == Record or Platform.mode == Play): Platform.sendFrame(frame, frames)
 		
 		frame++
 		
@@ -531,7 +531,7 @@ transient skipInit unit Network
 			replayFrames = targetFrame - frame
 			replayTime = Time.measure
 				while frame < targetFrame
-					step fastFordward:true, draw:false
+					step fastForward:true, draw:false
 		else
 			parseLog +=  " no-restore c:{certainFrame} u:{uncertainFrame}"
 					
@@ -579,7 +579,7 @@ transient skipInit unit Network
 	internal saveLogs
 		// Ensure that current eventLog is added to the table even if we haven't processed a single frame
 		logTable += ",,,,,,,,,,,,,,,,,,,,,,,,\"{eventLog.trim}\""
-		Platform.saveTextFile "{Platform.appName} {Date.now.dayMonthYearHourMinuteSecondString(language:Invariant)} v{Platform.version}.csv", logTable
+		Platform.saveTextFile "{Platform.appName} {Date.now.invariantDayMonthYearHourMinuteSecondString} v{Platform.version}.csv", logTable
 		// Http.post "/saveLog/{gameId}/{roomId}/{userId}", logTable
 		// 	log "save logs"
 		// else

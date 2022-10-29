@@ -527,7 +527,7 @@ skipInit unit Input
 	internal handleData: int id, string data
 		// let write = not (Network.mode == None || Network.frames > Network.frame || !localUser || !localUser.collectInputs)
 		// print Network.frame, Network.frames, localUser.inputFrame, Platform.mode, write
-		if Network.mode == None || Network.frames > Network.frame || !localUser || !localUser.collectInputs: return
+		if !data || Network.mode == None || Network.frames > Network.frame || !localUser || !localUser.collectInputs: return
 		let inputs = localUser.inputs
 		inputs.writeInt32 localUser.inputFrame
 		inputs.writeInt16 cast InputType.Data
