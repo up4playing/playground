@@ -277,14 +277,14 @@ class string
 		                      string target
 		this.replace(new RegExp(source, "g"), target)
 		
-	inline js string get: int index
+	js string get: int index
 		(index >= 0 ? this[index] : this[this.length+index])
 	
-	inline js string get: int from = 0
+	js string get: int from = 0
 		                  int to
 		this.substring(from >= 0 ? from : this.length+from, to >= 0 ? to : this.length+to)
 		
-	inline js string get: int from = 0
+	js string get: int from = 0
 		this.substring(from >= 0 ? from : this.length+from)	
 	
 		
@@ -938,50 +938,50 @@ class List<T>
 	inline js T get: implicit int index // The index of the item to get
 		(index >= 0 ? this[index] : this[this.length+index])
 		
-	inline js T get: int from = 0
+	js T get: int from = 0
 		             int to
 		this.slice(from, to)
 	
-	inline js T get: int from = 0
+	js T get: int from = 0
 		this.slice(from)
 	
-	inline js T set: int index // The index of the item to set
-		             T value   // The new value to set
-		(index >= 0 ? this[index] = value : this[this.length+index] = value)
+	js T set: int index // The index of the item to set
+		      T value   // The new value to set
+		return index >= 0 ? this[index] = value : this[this.length+index] = value
 		
 	// Tries to get an item from the list. If it doesn't exist, it sets it.
+	// TODO: Support index with side effect (e.g. list[index++] ?= 0)
 	inline js T getOrSet: int index
 		                  T value
 		(this.hasOwnProperty(index) ? this[index] : this[index] = value)
 		
 	// Add a value to an item of the list
-	inline js T addToItem: int index // The index of the item to change
-		                   T value   // The value to add to the item
-		(index >= 0 ? this[index] += value : this[this.length+index] += value)
+	js T addToItem: int index // The index of the item to change
+		            T value   // The value to add to the item
+		return index >= 0 ? this[index] += value : this[this.length+index] += value
 		
 	// Subtract a value from an item of the list
-	inline js T subtractFromItem: int index // The index of the item to change
-		                          T value   // The value to subtract from the item
-		(index >= 0 ? this[index] -= value : this[this.length+index] -= value)
+	js T subtractFromItem: int index // The index of the item to change
+		                   T value   // The value to subtract from the item
+		return index >= 0 ? this[index] -= value : this[this.length+index] -= value
 		
 	// Multiply an item of the list by a value
-	inline js T multiplyItem: int index // The index of the item to change
-		                      T value   // The value to multiply the item by
-		(index >= 0 ? this[index] *= value : this[this.length+index] *= value)
+	js T multiplyItem: int index // The index of the item to change
+		               T value   // The value to multiply the item by
+		return index >= 0 ? this[index] *= value : this[this.length+index] *= value
 		
 	// Divide an item of the list by a value
-	inline js T divideItem: int index // The index of the item to change
-		                    T value   // The value to divide the item by
-		(index >= 0 ? this[index] /= value : this[this.length+index] /= value)
+	js T divideItem: int index // The index of the item to change
+		             T value   // The value to divide the item by
+		return index >= 0 ? this[index] /= value : this[this.length+index] /= value
 		
 	// Add 1 to item of the list
-	inline js T incrementItem: int index // The index of the item to change
-		(index >= 0 ? this[index]++ : this[this.length+index]++)
-		
-	// Subtract 1 from an item of the list
-	inline js T decrementItem: int index // The index of the item to change
-		(index >= 0 ? this[index]-- : this[this.length+index]--)
+	js T incrementItem: int index // The index of the item to change
+		return index >= 0 ? this[index]++ : this[this.length+index]++
 	
+	// Subtract 1 from an item of the list
+	js T decrementItem: int index // The index of the item to change
+		return index >= 0 ? this[index]-- : this[this.length+index]--
 		
 // A data container that stores key-value pairs
 js Map
