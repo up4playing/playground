@@ -1666,9 +1666,7 @@ transient float Time
 	
 	// The number of milliseconds elapsed since January 1, 1970
 	static Time now
-	
-	static inline js float preciseTime := performance.now()
-	
+
 	// The current frame
 	static inline js int frame := Network_frame
 	
@@ -1739,6 +1737,9 @@ transient float Time
 	inline js float in: TimeUnit unit // Convert the time to this unit
 		(unit==1 ? this/1000 : unit==2 ? this/60000 : unit==3 ? this/3600000 : unit==4 ? this/86400000 : this)
 		
+	js static void startTimer() window._timerStart = performance.now()
+	js static void printTimer(string text) log(text+": "+(performance.now()-window._timerStart))
+	static inline js float preciseTime := performance.now()
 	
 js Date
 transient struct Date
