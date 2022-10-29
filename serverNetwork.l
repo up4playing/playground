@@ -123,6 +123,7 @@ transient unit ServerNetwork
 	ping
 		let now = Network.currentTime
 		if (Network.mode == Ping or Network.mode == Connected) and now >= nextPingTime
+			Network.log ">>> Ping {now}"
 			sendBuffer.reset
 			sendBuffer.writeInt8 cast NetworkMessageType.Ping
 			sendBuffer.writeFloat64 now
@@ -136,6 +137,8 @@ transient unit ServerNetwork
 		float timeSinceStart = buffer.readFloat64
 		float pingTime = buffer.readFloat64
 		float pingPongTime = now - pingTime
+		Network.log "<<< Pong ({pongCount}) {pingTime}", pingPongTime
+			
 		if pingPongTime < fastestPingPongTime
 			// Use the fastest ping-pong-time we have ever seen to calculate the start time
 			fastestPingPongTime = pingPongTime
