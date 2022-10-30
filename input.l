@@ -796,7 +796,7 @@ skipInit unit Input
 		for users: .index = i
 				
 	// Do something when the user touches or clicks within a given area
-	onTouchDownWithin: Vector2 position           // The center of the touch area
+	onTouchDownWithin: Vector2 position = {}      // The center of the touch area
 		               Vector2 size               // The size of a rectangular touch area
 		               int userId = -1            // Only consider touches or clicks from this user  
 		               string cursor = ""         // Change the mouse cursor image when hovering over this area
