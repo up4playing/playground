@@ -1763,6 +1763,11 @@ transient struct Date
 	inline js string twoDigitHour := this.getHours().toLocaleString('en-US', {minimumIntegerDigits:2})
 	inline js string twoDigitMinute := this.getMinutes().toLocaleString('en-US', {minimumIntegerDigits:2})
 	inline js string twoDigitSecond := this.getSeconds().toLocaleString('en-US', {minimumIntegerDigits:2})
+		
+	inline js Time timeOfDay := this.getHours()*3600000 + this.getMinutes()*60000
+	
+	private static string toTwoDigitString: int value
+		return value < 10 ? "0"+value.toString : value.toString
 	
 	// (31.12.2000)
 	js string dayMonthYearString: language = Loca.language
@@ -1774,19 +1779,27 @@ transient struct Date
 	
 	// (31 Dec 2000)
 	js string dayShortMonthNameYearString: language = Loca.language
-		return this.getDate().toLocaleString('en-US', {minimumIntegerDigits:2})+" "+this.toLocaleString('en-US', {month: 'short'})+" "+this.getFullYear()
+		return this.getDate()+" "+this.toLocaleString('en-US', {month: 'short'})+" "+this.getFullYear()
 	
 	// (Monday)
 	string weekdayString: language = Loca.language
 		return dayStrings[language][dayOfWeek]
 	
 	// (23:59)
-	js string hourMinuteString: language = Loca.language
-		return this.getHours().toLocaleString('en-US', {minimumIntegerDigits:2})+":"+this.getMinutes().toLocaleString('en-US', {minimumIntegerDigits:2})
+	string hourMinuteString: language = Loca.language
+		if language == English
+			let h = hour
+			return ""+((h-1)%12+1)+":"+toTwoDigitString(minute)+(h < 12 ? " am":" pm")
+		else
+			return ""+hour+":"+toTwoDigitString(minute)
 	
 	// (23:59:59)
-	js string hourMinuteSecondString: language = Loca.language
-		return this.getHours().toLocaleString('en-US', {minimumIntegerDigits:2})+"-"+this.getMinutes().toLocaleString('en-US', {minimumIntegerDigits:2})+"-"+this.getSeconds().toLocaleString('en-US', {minimumIntegerDigits:2})
+	string hourMinuteSecondString: language = Loca.language
+		if language == English
+			let h = hour
+			return ""+((h-1)%12+1)+":"+toTwoDigitString(minute)+":"+toTwoDigitString(second)+(h < 12 ? " am":" pm")
+		else
+			return ""+hour+":"+toTwoDigitString(minute)+":"+toTwoDigitString(second)
 	
 	// (31.12.2000 23:59)
 	js string dayMonthYearHourMinuteString: language = Loca.language
@@ -1844,8 +1857,9 @@ enum Language: English, German, Spanish, Frensh, Italian, Portuguese, Japanese, 
 unit Loca
 	visible Language[] supportedLanguages = [English, German]
 	visible string[] defaultLocaleForLanguage = ["en-001", "de-DE", "es-ES", "fr-FR", "it-IT", "pt-PT", "ja-JP", "zh-Hans-CN", "ko-KR", "nl-NL", "tr-TR", "pl-PL", "ru-RU", "hi-IN", "ar-001", "bn-BD", "ur-IN", "id-ID"]
-	visible Language language = English
-	visible string locale = defaultLocaleForLanguage[language]
+	
+	Language language = English
+	string locale = defaultLocaleForLanguage[language]
 	
 	set: Language language, string locale = null
 		this.language = language
