@@ -390,7 +390,7 @@ transient skipInit unit Network
 			// Flags
 			Platform.fastForward = fastForward
 			bool isCertain = frame <= certainFrame
-			isSmooth = frame <= frameMinusBuffer
+			isSmooth = mode == Local or frame <= frameMinusBuffer
 			isPremiere = frame >= frames
 			
 			// Log
