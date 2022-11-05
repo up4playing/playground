@@ -168,6 +168,7 @@ transient skipInit unit Network
 		for Input.internalUsers if .
 			.inputs.readPos = 0
 			
+		HTMLElement.clear
 		Math.randomValueIndex = 0
 		frame = 0
 		certainFrame = int.maxValue
@@ -416,6 +417,8 @@ transient skipInit unit Network
 			
 			// Tick
 			tick draw
+			
+			HTMLElement.elements.each.tick
 			
 			if mode != Local and (frame % checksumInterval)==0 and isCertain
 				// Calculate checksum if we received all inputs for this frame
