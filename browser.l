@@ -1,8 +1,9 @@
 HTMLElement
-	static HTMLElement[] elements
-	dynamic element
 	Vector2 position, size = {1920,100}
 	Color color
+	
+	internal static HTMLElement[] elements
+	private transient dynamic element
 	
 	HTMLElement
 		elements.add this
@@ -15,39 +16,56 @@ HTMLElement
 			}
 		}
 		
-HTMLElement HTMLField
+HTMLElement HTMLInput
 	fontSize = 50
-	void(string value) onEnterKey
+	visible string value
 	
-	HTMLField
-		setup
-		this.element.type = "text"
-		this.element.value = ""
-		this.element.style = "font:{fontSize/Platform.pixelRatio}px OpenSans;margin:0;padding:0;position:absolute;border:none;text-align:center;outline: none;background-color:#00000000"
+	void(string value) onEnterKey
+	private int changeCallbackId, enterCallbackId
+	
+	HTMLInput
+		changeCallbackId = networkData.addCallback
+			value = .
+			if not Network.isPremiere: this.element.value = .
+				
+		enterCallbackId = networkData.addCallback
+			value = .
+			onEnterKey .
+			
+		ensureElement
+		focus
 		
-	js void setup
+	private js void ensureElement
+		if(this.element) return
 		this.element = document.createElement('input')
-		this.element.onkeydown = e => {
+		this.element.type = "text"
+		this.element.style = "margin:0;padding:0;position:absolute;border:none;text-align:center;outline:none;background-color:#00000000"
+		this.element.value = this.value
+		let prevValue = this.value
+		this.element.onkeyup = e => {
+			let value = this.element.value
+			if(value != prevValue) {
+				Input_handleString(this.changeCallbackId, value);
+				prevValue = value;
+			}
 			if(e.keyCode == 13) {
-				log("click")
-				this.onEnterKey.invoke();
+				Input_handleString(this.enterCallbackId, value);
 			}
 		}
 		document.body.appendChild(this.element)
-		this.element.focus()
 		
-	js void remove
-		this.element?.remove()
+	js void remove() this.element?.remove()
+	js void focus() this.element?.focus()
 		
-	js string value
-		return this.element.value
-		
-	tick
+	internal tick
+		ensureElement
 		let pos = graphics.getPixelPosition(this.position)
 		let size = graphics.getPixelSize(this.size)
 		let fontSize = this.fontSize * graphics.totalMatrix.m0 / Platform.pixelRatio
+		this.element.style.font = "{fontSize/Platform.pixelRatio}px OpenSans"
 		this.element.style.left = "{pos.x-size.x/2}px"
 		this.element.style.top = "{pos.y-size.y/2}px"		
 		this.element.style.width = "{size.x}px"
 		this.element.style.height = "{size.y}px"
 		this.element.style.font = "{fontSize}px OpenSans"
+		

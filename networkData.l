@@ -18,7 +18,7 @@ unit localStorage
 	get: string key, stored void(dynamic data) do
 		let id = networkData.addCallback do
 		let data = getStringDirectly(key)
-		Input.handleData id, data
+		Input.handleObject id, data
 		
 unit http
 	// Perform an http get request
@@ -28,7 +28,7 @@ unit http
 		if(Network_isPremiere) {
 			let data = await (await fetch(url)).text()
 			log("Actually fetching data: GET "+url+" -> "+data?.length+" bytes")
-			Input_handleData(id, data)
+			Input_handleObject(id, data, 1)
 		}
 		
 	internal js void getInternal: string url
@@ -41,7 +41,7 @@ unit http
 		if(Network_isPremiere) {
 			let data = await (await fetch(url, {method:"POST"})).text()
 			log("Actually fetching data: POST "+url+" -> "+data?.length+" bytes")
-			Input_handleData(id, data)
+			Input_handleObject(id, data)
 		}
 		
 	// Perform an http post request
@@ -52,7 +52,7 @@ unit http
 		if(Network_isPremiere) {
 			let data = await (await fetch(url, {method:"POST", body:JSON.stringify(body)})).text()
 			log("Actually fetching data: POST "+url+" -> "+data?.length+" bytes")
-			Input_handleData(id, data)
+			Input_handleObject(id, data)
 		}
 		
 	// Perform an http put request
@@ -62,7 +62,7 @@ unit http
 		if(Network_isPremiere) {
 			let data = await (await fetch(url, {method:"PUT"})).text()
 			log("Actually fetching data: PUT "+url+" -> "+data?.length+" bytes")
-			Input_handleData(id, data)
+			Input_handleObject(id, data)
 		}
 		
 	// Perform an http put request
@@ -73,7 +73,7 @@ unit http
 		if(Network_isPremiere) {
 			let data = await (await fetch(url, {method:"PUT", body:JSON.stringify(body)})).text()
 			log("Actually fetching data: PUT "+url+" -> "+data?.length+" bytes")
-			Input_handleData(id, data)
+			Input_handleObject(id, data)
 		}
 		
 	// Perform an http delete request
@@ -83,7 +83,7 @@ unit http
 		if(Network_isPremiere) {
 			let data = await (await fetch(url, {method:"DELETE"})).text()
 			log("Actually fetching data: DELETE "+url+" -> "+data?.length+" bytes")
-			Input_handleData(id, data)
+			Input_handleObject(id, data)
 		}
 		
 	// Perform an http delete request
@@ -94,5 +94,5 @@ unit http
 		if(Network_isPremiere) {
 			let data = await (await fetch(url, {method:"DELETE", body:JSON.stringify(body)})).text()
 			log("Actually fetching data: DELETE "+url+" -> "+data?.length+" bytes")
-			Input_handleData(id, data)
+			Input_handleObject(id, data)
 		}

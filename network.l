@@ -418,7 +418,7 @@ transient skipInit unit Network
 			// Tick
 			tick draw
 			
-			HTMLElement.elements.each.tick
+			if HTMLElement.elements: HTMLElement.elements.each.tick
 			
 			if mode != Local and (frame % checksumInterval)==0 and isCertain
 				// Calculate checksum if we received all inputs for this frame

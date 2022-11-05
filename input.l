@@ -80,7 +80,7 @@ class NetworkUser
 			if (.phase == Up and .type >= Touch) or (hasToch and .type != Touch)
 				touches.remove .
 	
-enum InputType: None, TouchDown, TouchMove, TouchUp, Wheel, KeyDown, KeyUp, TextInput, Stick, Trigger, Grip, ButtonDown, ButtonUp, ControllerTransform, HeadTransform, DeviceRotation, Join, Lost, StillConnected, SetState, Navigate, GameController, Data
+enum InputType: None, TouchDown, TouchMove, TouchUp, Wheel, KeyDown, KeyUp, TextInput, Stick, Trigger, Grip, ButtonDown, ButtonUp, ControllerTransform, HeadTransform, DeviceRotation, Join, Lost, StillConnected, SetState, Navigate, GameController, String, Json, Object
 		
 // Phase of a touch or a click
 enum TouchPhase: Still, Down, Move, Up
@@ -518,13 +518,27 @@ skipInit unit Input
 		inputs.writeInt16 cast InputType.StillConnected
 		inputs.writeInt16 userId
 				
-	internal handleData: int id, string data
-		// let write = not (Network.mode == None || Network.frames > Network.frame || !localUser || !localUser.collectInputs)
-		// print Network.frame, Network.frames, localUser.inputFrame, Platform.mode, write
+	internal handleString: int id, string data
 		if !data || Network.mode == None || Network.frames > Network.frame || !localUser || !localUser.collectInputs: return
 		let inputs = localUser.inputs
 		inputs.writeInt32 localUser.inputFrame
-		inputs.writeInt16 cast InputType.Data
+		inputs.writeInt16 cast InputType.String
+		inputs.writeInt id
+		inputs.writeString data
+		
+	internal handleJson: int id, string data
+		if !data || Network.mode == None || Network.frames > Network.frame || !localUser || !localUser.collectInputs: return
+		let inputs = localUser.inputs
+		inputs.writeInt32 localUser.inputFrame
+		inputs.writeInt16 cast InputType.Json
+		inputs.writeInt id
+		inputs.writeString data
+		
+	internal handleObject: int id, string data
+		if !data || Network.mode == None || Network.frames > Network.frame || !localUser || !localUser.collectInputs: return
+		let inputs = localUser.inputs
+		inputs.writeInt32 localUser.inputFrame
+		inputs.writeInt16 cast InputType.Object
 		inputs.writeInt id
 		inputs.writeString data
 		
@@ -762,11 +776,24 @@ skipInit unit Input
 					Snapshot.deserialize Network.snapshotBuffer
 					Math.recreateRandomValues
 				else
-				if inputType == Data
+				if inputType == String
 					int id = inputs.readInt
 					string value = inputs.readString
-					Network.parseLog += " data {id}: {value}"
-					let object = Json.parse(value)
+					Network.parseLog += " string {id}: {value}"
+					networkData.call id, value
+				else
+				if inputType == Json
+					int id = inputs.readInt
+					string value = inputs.readString
+					Network.parseLog += " json {id}: {value}"
+					dynamic object = Json.parse value
+					networkData.call id, object
+				else
+				if inputType == Object
+					int id = inputs.readInt
+					string value = inputs.readString
+					Network.parseLog += " object {id}: {value}"
+					dynamic object = Json.parse value
 					networkData.call id, object
 	
 		for users
