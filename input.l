@@ -375,17 +375,17 @@ skipInit unit Input
 				if(keyCode == 9) e.preventDefault();
 			}
 		}
-		window.onkeyup = e => {
-			if(e.key == "F1")
-				// TEMP for testing
-				Network_skipAnimationFrame = false;
-			else
-			if(e.key == "F2")
-				// TEMP for testing
-				Network_skipSending = false;
-			else
-				Input_handleKeyEvent(6, e.keyCode)
-		}
+		// window.onkeyup = e => {
+		// 	if(e.key == "F1")
+		// 		// TEMP for testing
+		// 		Network_skipAnimationFrame = false;
+		// 	else
+		// 	if(e.key == "F2")
+		// 		// TEMP for testing
+		// 		Network_skipSending = false;
+		// 	else
+		// 		Input_handleKeyEvent(6, e.keyCode)
+		// }
 			
 		// Handles the user navigating back or forward in the browser	
 		window.onpopstate = e => {
