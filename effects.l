@@ -46,11 +46,15 @@ Effect RadiusEffect
 	tick(float f) object.radius = startValue + delta * f
 	
 Effect FadeSoundEffect
-	Sound sound
 	float startValue, delta
-	tick(float f) 
-		sound.volume = startValue + delta * f
-		if f >= 1: sound.stop
+	private dynamic audioElement
+	
+	FadeSoundEffect: Sound sound
+		this.audioElement = sound.audioElement
+	tick(float f)
+		if audioElement == null: return
+		audioElement.volume = (startValue + delta * f) * audio.volume
+		if f >= 1: audioElement.pause
 			
 Effect PlaySoundEffect
 	Sound sound

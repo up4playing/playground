@@ -130,7 +130,7 @@ transient unit ServerNetwork
 			sendBuffer.writeInt32 Network.certainFrame                            // The last certain frame with inputs from everybody
 			sendBuffer.writeFloat64 Network.checksums[Network.certainFrame] || 0  // The checksum of the last certain frame
 			send sendBuffer
-			nextPingTime = now + 5000
+			nextPingTime = now + (Network.mode == Ping ? 200 : pongCount < 20 ? 1000 : 30000)
 			
 	private onPong: Buffer buffer
 		float now = Network.currentTime
@@ -148,15 +148,13 @@ transient unit ServerNetwork
 		pongCount++
 		lastPingPongTime = pingPongTime
 		
-		// Finish pinging after the 20th pong
-		if Network.mode == Ping and pongCount >= 10 and fastestPingPongTime < 1000
+		// Finish pinging after the 5th pong
+		if Network.mode == Ping and pongCount >= 5 and fastestPingPongTime < 1000
 			// Request the state from the user who has been here the longest (has the lowest connectionId)
 			Network.log "Ping-Pong complete", pongCount, fastestPingPongTime
 			requestStateTryNumber = 0
 			resolveState
 
-		nextPingTime = now + (Network.mode == Ping ? 100 : 10000)
-		
 	private Time nextResolveStateTime
 	private int requestStateTryNumber
 		

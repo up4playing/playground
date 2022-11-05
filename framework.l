@@ -80,6 +80,7 @@ transient global unit graphics
 		videoObject.position = pos
 		videoObject.radius = radius
 		videoObject.size = {width, width*3/4}
+		videoObject.locked = true
 		
 enum Side: Front, Back
 		

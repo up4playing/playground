@@ -2,32 +2,33 @@
 skipInit class Sound
 	string file
 	float fadeVolume = 1
+	transient dynamic audioElement
 	
 	Sound
 		audio.sounds.add this
 	
 	js void open
 		return new Promise((resolve, reject) => {
-			this.nextAudio = new Audio();
-			this.nextAudio.oncanplaythrough = () => resolve();
-			this.nextAudio.onerror = () => reject();
-			this.nextAudio.src = this.file;			
+			this.nextAudioElement = new Audio();
+			this.nextAudioElement.oncanplaythrough = () => resolve();
+			this.nextAudioElement.onerror = () => reject();
+			this.nextAudioElement.src = this.file;			
 		})
 		
 	js void volume: float value
 		this.fadeVolume = value
-		if(this.audio) this.audio.volume = this.fadeVolume * audio_volume
+		if(this.audioElement) this.audioElement.volume = this.fadeVolume * audio_volume
 		
 	js void updateVolume
-		if(this.audio) this.audio.volume = this.fadeVolume * audio_volume
+		if(this.audioElement) this.audioElement.volume = this.fadeVolume * audio_volume
 		
 	js void stop
-		if(this.audio) this.audio.pause()
+		if(this.audioElement) this.audioElement.pause()
 		
 	play
 		// We can play sounds immediately to ensure there is no lag
 		// If a sound turns out to be wrong after receiving new inputs, we stop it
-		let playingSound = audio.playingSounds.find.sound == this and .frame == Time.frame
+		let playingSound = audio.playingSounds.find(.sound == this and .frame == Time.frame)
 		if !playingSound
 			audio.playingSounds.add playingSound = {this, frame:Time.frame, isConfirmed:true}
 			if Network.isPremiere: doPlay playingSound
@@ -35,31 +36,31 @@ skipInit class Sound
 			playingSound.isConfirmed = true
 			
 	js void currentTime: float value
-		if(this.audio) this.audio.currentTime = value
+		if(this.audioElement) this.audioElement.currentTime = value
 		
 	private js void doPlay: PlayingSound ps
 		// Recreate audio if it was lost during serialization
-		if(!this.nextAudio) this.preloadForNextPlayback();
+		if(!this.nextAudioElement) this.preloadForNextPlayback();
 			
 		// Play audio
 		this.fadeVolume = 1;
-		this.audio = this.nextAudio;
-		this.audio.volume = audio_volume;
-		this.audio.onended = () => audio_playingSounds.remove(ps);
-		this.audio.play();
+		this.audioElement = this.nextAudioElement;
+		this.audioElement.volume = audio_volume;
+		this.audioElement.onended = () => audio_playingSounds.remove(ps);
+		this.audioElement.play();
 		this.preloadForNextPlayback()
 		
 	internal js void preloadForNextPlayback
-		this.nextAudio = new Audio();
-		await this.nextAudio.setSinkId(PeerNetwork_audioOutputId);
-		this.nextAudio.src = this.file;
+		this.nextAudioElement = new Audio();
+		await this.nextAudioElement.setSinkId(PeerNetwork_audioOutputId);
+		this.nextAudioElement.src = this.file;
 		
 	isPlaying
 		return audio.playingSounds.any.sound == this and .frame < Time.frame
 		
 	fadeOut: Time duration = 3000
 		     Time delay = 0
-		fx.add FadeSoundEffect startTime:Time.now+delay, duration, smooth:false, this, startValue:1, delta:-1
+		fx.add FadeSoundEffect startTime:Time.now+delay, duration, smooth:false, sound:this, startValue:1, delta:-1
 		return this
 
 transient class PlayingSound
