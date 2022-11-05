@@ -399,6 +399,12 @@ transient global unit graphics
 	getAbsolutPosition: Vector2 position
 		return position.getTransformed(localMatrix)
 		
+	getPixelPosition: Vector2 position
+		return position.getTransformed(totalMatrix) / Platform.pixelRatio
+		
+	getPixelSize: Vector2 size
+		return size * {totalMatrix.m0, totalMatrix.m3} / Platform.pixelRatio
+		
 	// Draws an image on the screen
 	global void drawImage: Image image            // The image to draw
 		                   Vector2 position = {}  // The position to draw to
