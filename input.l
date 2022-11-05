@@ -337,8 +337,8 @@ skipInit unit Input
 				e.preventDefault();
 			}
 			else
-			if(key >= "0" && key <= "9") {
-				let index = key - "0"
+			if(key >= "F1" && key <= "F4") {
+				let index = key[1] - "1"
 				if(e.altKey)         { Network_save(index); e.preventDefault(); } else
 				if(e.ctrlKey)        { Network_restore(index); e.preventDefault(); } else
 				if(Platform_isDebug) {
