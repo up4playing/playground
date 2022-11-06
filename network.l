@@ -146,6 +146,14 @@ transient skipInit unit Network
 		Input.users.clear
 		Input.usersById.clear
 		errorMessage = ""
+		HTMLElement.clear
+		Math.randomValueIndex = 0
+		frame = 0
+		certainFrame = int.maxValue
+		uncertainFrame = -1
+		lobby.inLobby = startInLobby
+		Time.now = serverStartTime
+		initAll
 		
 		if !startInLobby or Platform.isDebug
 			// When the developer changed Platform.userCount, add or remove internal users accordingly
@@ -168,17 +176,7 @@ transient skipInit unit Network
 		for Input.internalUsers if .
 			.inputs.readPos = 0
 			
-		HTMLElement.clear
-		Math.randomValueIndex = 0
-		frame = 0
-		certainFrame = int.maxValue
-		uncertainFrame = -1
-		lobby.inLobby = startInLobby
-		Time.now = serverStartTime
-		
-		initAll
 		if !startInLobby: startApp
-			
 		if simulateRollback: saveState
 	
 	// Steps forward when going to a frame in the future
