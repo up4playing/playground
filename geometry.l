@@ -595,7 +595,7 @@ class Direction
 
 	string name
 	int index
-	IntVector2 vector
+	Vector2 vector
 	Angle angle
 	Angle isoAngle
 	
