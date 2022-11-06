@@ -337,17 +337,16 @@ skipInit unit Input
 				e.preventDefault();
 			}
 			else
-			if(key >= "F1" && key <= "F4") {
+			if((key >= "F1" && key <= "F4") && !ctrlOrCmd && Platform_isDebug) {
 				let index = key[1] - "1"
-				if(e.altKey)         { Network_save(index); e.preventDefault(); } else
-				if(e.ctrlKey)        { Network_restore(index); e.preventDefault(); } else
-				if(Platform_isDebug) {
-					// Disabled, because on mobile show keyboard is shown every time you switch tabs
-					// if(Input_isTextInputActive)
-					// 	Input_startTextInput("", -1);
-					Network_switchUser(index-1);
-					e.preventDefault();
-				}
+				Network_switchUser(index);
+				e.preventDefault();
+			}
+			else
+			if(key >= "1" && key <= "0") {
+				let index = key - "0"
+				if(e.altKey)  { Network_save(index); e.preventDefault(); } else
+				if(e.ctrlKey) { Network_restore(index); e.preventDefault(); }
 			}
 			else
 			// Reload
