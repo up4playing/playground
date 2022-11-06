@@ -1189,15 +1189,13 @@ skipInit unit Input
 		if (Network.mode == Connected || Network.simulateConnection) && userId != -1
 			let user = internalUsers[userId]
 				for user.movingTouches -> t
-					if !t.handled
-						log "move", t.referencePosition
-						do t
+					log "move", t.referencePosition
+					do t
 		else
 			for internalUsers -> user if .
 				for user.movingTouches -> t
-					if !t.handled
-						log "move", t.referencePosition
-						do t
+					log "move", t.referencePosition
+					do t
 					
 	onTouchUp: Touch touch               // Only do this if this particular touch or click ended
 		       bool markAsHandled = true // Mark the touch as handled so it won't trigger more touch events
