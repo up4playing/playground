@@ -337,17 +337,16 @@ skipInit unit Input
 				e.preventDefault();
 			}
 			else
-			if(key >= "F1" && key <= "F4") {
+			if((key >= "F1" && key <= "F4") && !ctrlOrCmd && Platform_isDebug) {
 				let index = key[1] - "1"
-				if(e.altKey)         { Network_save(index); e.preventDefault(); } else
-				if(e.ctrlKey)        { Network_restore(index); e.preventDefault(); } else
-				if(Platform_isDebug) {
-					// Disabled, because on mobile show keyboard is shown every time you switch tabs
-					// if(Input_isTextInputActive)
-					// 	Input_startTextInput("", -1);
-					Network_switchUser(index-1);
-					e.preventDefault();
-				}
+				Network_switchUser(index);
+				e.preventDefault();
+			}
+			else
+			if(key >= "1" && key <= "0") {
+				let index = key - "0"
+				if(e.altKey)  { Network_save(index); e.preventDefault(); } else
+				if(e.ctrlKey) { Network_restore(index); e.preventDefault(); }
 			}
 			else
 			// Reload
@@ -1189,15 +1188,13 @@ skipInit unit Input
 		if (Network.mode == Connected || Network.simulateConnection) && userId != -1
 			let user = internalUsers[userId]
 				for user.movingTouches -> t
-					if !t.handled
-						log "move", t.referencePosition
-						do t
+					log "move", t.referencePosition
+					do t
 		else
 			for internalUsers -> user if .
 				for user.movingTouches -> t
-					if !t.handled
-						log "move", t.referencePosition
-						do t
+					log "move", t.referencePosition
+					do t
 					
 	onTouchUp: Touch touch               // Only do this if this particular touch or click ended
 		       bool markAsHandled = true // Mark the touch as handled so it won't trigger more touch events

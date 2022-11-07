@@ -1096,7 +1096,7 @@ transient class DisplayItem
 			Platform_context.restore()
 			
 	js void drawGizmo
-		if(!this.poly) return
+		if(!this.poly || this.poly.length < 2) return
 		let poly = this.poly
 		Platform_context.beginPath();
 		let p = poly[poly.length-1]
