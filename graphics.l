@@ -47,7 +47,7 @@ class Texture
 		if(!image) {
 			return new Promise((resolve, reject) => {
 				image = new HTMLImage()
-				image.src = this.file
+				image.src = this.file.startsWith("http") ? this.file : _basePath+this.file
 				image.onload = e => {
 					this._htmlImage = image
 					window._htmlImageCache[this.file] = image
@@ -70,6 +70,7 @@ skipInit class Font
 		if(!window._fontCache) _fontCache = {}
 		let font = _fontCache[this.file]
 		if(!font) {
+			// let font = new FontFace(this.name, "url("+_basePath+this.file+")");
 			let font = new FontFace(this.name, "url("+this.file+")");
 			await font.load();
 			document.fonts.add(font);

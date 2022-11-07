@@ -12,7 +12,7 @@ skipInit class Sound
 			this.nextAudioElement = new Audio();
 			this.nextAudioElement.oncanplaythrough = () => resolve();
 			this.nextAudioElement.onerror = () => reject();
-			this.nextAudioElement.src = this.file;			
+			this.nextAudioElement.src = _basePath+this.file;			
 		})
 		
 	js void volume: float value
@@ -53,7 +53,7 @@ skipInit class Sound
 	internal js void preloadForNextPlayback
 		this.nextAudioElement = new Audio();
 		await this.nextAudioElement.setSinkId(PeerNetwork_audioOutputId);
-		this.nextAudioElement.src = this.file;
+		this.nextAudioElement.src = _basePath+this.file;
 		
 	isPlaying
 		return audio.playingSounds.any.sound == this and .frame < Time.frame

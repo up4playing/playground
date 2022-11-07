@@ -1,3 +1,10 @@
+// States
+// 
+// fastForward: When replaying, all frames except the last are fast forward and are not drawn
+// isCertain:
+// isSmooth:
+// isPremiere:
+	
 enum NetworkMode: None, Ping, Local, Connected, ResolveState
 transient class RoomInfo: int time, userId
 enum SendInputsMode: None, Peer, Server
