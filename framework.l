@@ -42,12 +42,12 @@ unit Framework
 					return b
 		return null
 		
-	deselect
+	deselectAndFinishTouches
 		selectedObjects.clear
 		for objects
 			if . is Piece
 				Piece piece = cast .
-				piece.cancelTouch
+				piece.finishTouch
 		
 	deselect: int userId
 		selectedObjects[userId] = null
@@ -288,9 +288,9 @@ Object Piece
 	
 	checksum := position.x + position.y + frame + scale + angle + cast side
 		
-	cancelTouch
-		moveTouch = null
+	finishTouch
 		rotateTouch = null
+		if moveTouch: moveTouch = null; onDrop
 		
 	override tick
 		// Rotate	
@@ -459,11 +459,11 @@ Piece Board
 		for objects: result += .checksum
 		return result
 		
-	cancelTouch
+	finishTouch
 		for objects
 			if . is Piece
 				Piece piece = cast .
-				piece.cancelTouch
+				piece.finishTouch
 						
 	add: Piece object
 		objects.add object
