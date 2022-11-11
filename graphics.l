@@ -130,9 +130,9 @@ transient global unit graphics
 		
 	private drawItems
 		items.sort b.layer - a.layer
+		gizmo.tick
 		items.each <- .draw
 		resetTransform
-		// items.each.drawGizmo
 		
 	private js void resetTransform
 		Platform_context.resetTransform()
@@ -1052,6 +1052,37 @@ transient global unit graphics
 					layer, alpha:1.0, currentClippingPath, "Video",
 					userId, radius
 				)
+unit gizmo
+	DisplayItem[] items
+	Vector2 min={-500,-500}, max={500,500}
+	
+	private inline js string locationFile() _locationFile
+	private inline js int locationStart() _locationStart
+	
+	inline js void clear() _locationFile = ""; _locationStart = 0;
+	
+	tick
+		min.x = float.maxValue; max.x = float.minValue
+		min.y = float.maxValue; max.y = float.minValue
+		items.clear
+		SourceCodeLocation location
+		for graphics.items
+			if .location
+				location = .location.find(locationFile, locationStart)
+				if location: break
+				
+		if location != null
+			for graphics.items
+				if .location.find(location) != null
+					items.add .
+					if .x < min.x: min.x = .x
+					if .y < min.y: min.y = .y
+					if .x + .w > max.x: max.x = .x + .w
+					if .y + .h > max.y: max.y = .y + .h
+
+		if items
+			drawRectangle min, size:max-min, align:Left, valign:Top, outlineColor:{"437FDF"}, outlineWidth:4
+			
 				
 transient class DisplayItem
 	float x, y, w, h
@@ -1095,20 +1126,6 @@ transient class DisplayItem
 		if(this.clippingPath.points.length >= 2)
 			Platform_context.restore()
 			
-	js void drawGizmo
-		if(!this.poly || this.poly.length < 2) return
-		let poly = this.poly
-		Platform_context.beginPath();
-		let p = poly[poly.length-1]
-		Platform_context.moveTo(p.x, p.y)
-		for(let i=0, len = poly.length; i<len; ++i) {
-			let p = poly[i]
-			Platform_context.lineTo(p.x, p.y)
-		}
-		Platform_context.closePath()
-		Platform_context.fillStyle = "#ff000040"
-		Platform_context.fill()
-	
 transient DisplayItem DisplayImage
 	object htmlImage
 	float sx, sy, sw, sh

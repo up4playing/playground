@@ -190,7 +190,8 @@ transient skipInit unit Platform
 	
 	private goToFrame(int targetFrame) Network.goToFrame(targetFrame)
 		
-	private Vector2 touchUpPos
+	private Vector2 touchDownPos
+	private bool touchDownInsideGizmo
 	private int locationIndex
 	private SourceCodeLocation[] locations
 	
@@ -198,32 +199,39 @@ transient skipInit unit Platform
 		if Platform.mode == Pointer or Platform.mode == Slide
 			int row, column
 			string file
+			bool deselect
 			if Platform.mode == Pointer
-				let movedSinceTouchUp = (pixelPos manhattanDistanceTo touchUpPos) > 8
-				if inputType == TouchUp: touchUpPos = pixelPos
-					
-				if (inputType == TouchDown and movedSinceTouchUp) or (inputType == TouchUp and !movedSinceTouchUp)
-					if movedSinceTouchUp                   
-						locationIndex = 0
-						locations.clear
-						for graphics.items -> item
-							if item.location != null and pixelPos.isInsidePoygon item.poly
-								SourceCodeLocation[] itemLocations
-								item.location.flatten itemLocations
-								itemLocations.sort (a.file compareTo b.file) || b.row - a.row || a.column - b.column
-								for itemLocations
-									if !.file.startsWith("lib")
-										locations.add .
-					
+				let movedSinceTouchDown = (pixelPos manhattanDistanceTo touchDownPos) > 8
+				let insideGizmo = referencePos >= gizmo.min and referencePos <= gizmo.max
+				if inputType == TouchDown: touchDownPos = pixelPos; touchDownInsideGizmo = insideGizmo
+				// if inputType != TouchMove: print "###", inputType, insideGizmo, movedSinceTouchDown, locationIndex
+				// print insideGizmo, gizmo.min, gizmo.max, referencePos
+				// if (inputType == TouchDown and movedSinceTouchUp) or (inputType == TouchUp and !movedSinceTouchUp)
+				if (inputType == TouchDown and !insideGizmo)
+				or (inputType == TouchUp and touchDownInsideGizmo and !movedSinceTouchDown)
+					locations.clear
+					for graphics.items -> item
+						if item.location != null and pixelPos.isInsidePoygon item.poly
+							SourceCodeLocation[] itemLocations
+							item.location.flatten itemLocations
+							itemLocations.sort (a.file compareTo b.file) || b.row - a.row || a.column - b.column
+							for itemLocations
+								if !.file.startsWith("lib")
+									locations.add .
+										
 					if locations.length
+						if inputType == TouchDown: locationIndex = 0
 						let selectedLocation = locations[locationIndex++ % locations.length]
 						row = selectedLocation.row
 						column = selectedLocation.column
 						file = selectedLocation.file
-			sendTouchToEditor id, referencePos, cast inputType, row, column, file
+					else
+						deselect = true
+						
+			sendTouchToEditor id, referencePos, cast inputType, row, column, file, deselect
 			
-	private js void sendTouchToEditor: int id, Vector2 pos, TouchPhase phase, int row, int column, string file
-		_sendToEditor({type:"touch", id, x:pos.x, y:pos.y, phase, row, column, file})
+	private js void sendTouchToEditor: int id, Vector2 pos, TouchPhase phase, int row, int column, string file, bool deselect
+		_sendToEditor({type:"touch", id, x:pos.x, y:pos.y, phase, row, column, file, deselect})
 	
 	internal js void sendFrame: int frame, int frames
 		_sendToEditor({type:"frame", frame, frames})

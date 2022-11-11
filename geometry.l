@@ -5,7 +5,13 @@ struct Vector2
 	SourceCodeLocation location
 	
 	// Used to specify that the vector is not set or invalid
-	const Vector2 none = new Vector2(float.infinity, float.infinity)
+	const Vector2 none = {float.infinity, float.infinity}
+	
+	// {float.minValue, float.minValue}
+	const Vector2 minValue = {float.minValue, float.minValue}
+	
+	// {float.maxValue, float.maxValue}
+	const Vector2 maxValue = {float.maxValue, float.maxValue}
 	
 	// {0,0}
 	const Vector2 zero = {0,0}
@@ -26,13 +32,13 @@ struct Vector2
 		a.location = b.location ? b.location.clone : null
 		return a
 	
-	js Vector2 operator + (Vector2 a, Vector2 b) return new Vector2(a.x+b.x, a.y+b.y, a.location || b.location ? new SourceCodeLocation(0, 0, null, a.location, b.location) : null)
-	js Vector2 operator - (Vector2 a, Vector2 b) return new Vector2(a.x-b.x, a.y-b.y, a.location || b.location ? new SourceCodeLocation(0, 0, null, a.location, b.location) : null)
+	js Vector2 operator + (Vector2 a, Vector2 b) return new Vector2(a.x+b.x, a.y+b.y, a.location || b.location ? new SourceCodeLocation(0, 0, null, 0, a.location, b.location) : null)
+	js Vector2 operator - (Vector2 a, Vector2 b) return new Vector2(a.x-b.x, a.y-b.y, a.location || b.location ? new SourceCodeLocation(0, 0, null, 0, a.location, b.location) : null)
 	
-	js Vector2 operator * (Vector2 a, Vector2 b) return new Vector2(a.x*b.x, a.y*b.y, a.location || b.location ? new SourceCodeLocation(0, 0, null, a.location, b.location) : null)
-	js Vector2 operator * (Vector2 a, float b)   return new Vector2(a.x*b, a.y*b, a.location || b.location ? new SourceCodeLocation(0, 0, null, a.location, b.location) : null)
-	js Vector2 operator * (Vector2 a, Time b)    return new Vector2(a.x*b, a.y*b, a.location || b.location ? new SourceCodeLocation(0, 0, null, a.location, b.location) : null)
-	js Vector2 operator * (float a, Vector2 b)   return new Vector2(a*b.x, a*b.y, a.location || b.location ? new SourceCodeLocation(0, 0, null, a.location, b.location) : null)
+	js Vector2 operator * (Vector2 a, Vector2 b) return new Vector2(a.x*b.x, a.y*b.y, a.location || b.location ? new SourceCodeLocation(0, 0, null, 0, a.location, b.location) : null)
+	js Vector2 operator * (Vector2 a, float b)   return new Vector2(a.x*b, a.y*b, a.location || b.location ? new SourceCodeLocation(0, 0, null, 0, a.location, b.location) : null)
+	js Vector2 operator * (Vector2 a, Time b)    return new Vector2(a.x*b, a.y*b, a.location || b.location ? new SourceCodeLocation(0, 0, null, 0, a.location, b.location) : null)
+	js Vector2 operator * (float a, Vector2 b)   return new Vector2(a*b.x, a*b.y, a.location || b.location ? new SourceCodeLocation(0, 0, null, 0, a.location, b.location) : null)
 	js Vector2 operator * (Vector2 vector, Matrix2D matrix)
 		return new Vector2(
 			matrix.m0 * vector.x + matrix.m2 * vector.y + matrix.m4,
@@ -40,8 +46,8 @@ struct Vector2
 			vector.location
 		)
 		
-	js Vector2 operator / (Vector2 a, Vector2 b) return new Vector2(a.x/b.x, a.y/b.y, a.location || b.location ? new SourceCodeLocation(0, 0, null, a.location, b.location) : null)
-	js Vector2 operator / (Vector2 a, float b)   return new Vector2(a.x/b, a.y/b, a.location || b.location ? new SourceCodeLocation(0, 0, null, a.location, b.location) : null)
+	js Vector2 operator / (Vector2 a, Vector2 b) return new Vector2(a.x/b.x, a.y/b.y, a.location || b.location ? new SourceCodeLocation(0, 0, null, 0, a.location, b.location) : null)
+	js Vector2 operator / (Vector2 a, float b)   return new Vector2(a.x/b, a.y/b, a.location || b.location ? new SourceCodeLocation(0, 0, null, 0, a.location, b.location) : null)
 	js Vector2 operator / (Vector2 vector, Matrix2D matrix)
 		var aa = matrix.m0, ab = matrix.m1, ac = matrix.m2, ad = matrix.m3, atx = matrix.m4, aty = matrix.m5
 
@@ -55,13 +61,13 @@ struct Vector2
 			vector.location
 		)			
 	
-	js Vector2 operator % (Vector2 a, Vector2 b) return new Vector2(((a.x % b.x) + b.x) % b.x, ((a.y % b.y) + b.y) % b.y, a.location || b.location ? new SourceCodeLocation(0, 0, null, a.location, b.location) : null)
-	js Vector2 operator % (Vector2 a, float b)   return new Vector2(((a.x % b) + b) % b, ((a.y % b) + b) % b, a.location || b.location ? new SourceCodeLocation(0, 0, null, a.location, b.location) : null)
+	js Vector2 operator % (Vector2 a, Vector2 b) return new Vector2(((a.x % b.x) + b.x) % b.x, ((a.y % b.y) + b.y) % b.y, a.location || b.location ? new SourceCodeLocation(0, 0, null, 0, a.location, b.location) : null)
+	js Vector2 operator % (Vector2 a, float b)   return new Vector2(((a.x % b) + b) % b, ((a.y % b) + b) % b, a.location || b.location ? new SourceCodeLocation(0, 0, null, 0, a.location, b.location) : null)
 	
-	js Vector2 operator += (Vector2 a, Vector2 b) a.x += b.x; a.y += b.y; if(a.location || b.location) {a.location = new SourceCodeLocation(0, 0, null, a.location, b.location)} return a
-	js Vector2 operator -= (Vector2 a, Vector2 b) a.x -= b.x; a.y -= b.y; if(a.location || b.location) {a.location = new SourceCodeLocation(0, 0, null, a.location, b.location)} return a
-	js Vector2 operator *= (Vector2 a, Vector2 b) a.x *= b.x; a.y *= b.y; if(a.location || b.location) {a.location = new SourceCodeLocation(0, 0, null, a.location, b.location)} return a
-	js Vector2 operator /= (Vector2 a, Vector2 b) a.x /= b.x; a.y /= b.y; if(a.location || b.location) {a.location = new SourceCodeLocation(0, 0, null, a.location, b.location)} return a
+	js Vector2 operator += (Vector2 a, Vector2 b) a.x += b.x; a.y += b.y; if(a.location || b.location) {a.location = new SourceCodeLocation(0, 0, null, 0, a.location, b.location)} return a
+	js Vector2 operator -= (Vector2 a, Vector2 b) a.x -= b.x; a.y -= b.y; if(a.location || b.location) {a.location = new SourceCodeLocation(0, 0, null, 0, a.location, b.location)} return a
+	js Vector2 operator *= (Vector2 a, Vector2 b) a.x *= b.x; a.y *= b.y; if(a.location || b.location) {a.location = new SourceCodeLocation(0, 0, null, 0, a.location, b.location)} return a
+	js Vector2 operator /= (Vector2 a, Vector2 b) a.x /= b.x; a.y /= b.y; if(a.location || b.location) {a.location = new SourceCodeLocation(0, 0, null, 0, a.location, b.location)} return a
 	
 	bool operator == (Vector2 a, Vector2 b) return a.x == b.x && a.y == b.y
 	bool operator != (Vector2 a, Vector2 b) return a.x != b.x || a.y != b.y
@@ -394,7 +400,7 @@ struct Matrix2D
 	Vector2 scaleVector := {m0, m3}
 
 	// Returns a string representation of the matrix
-	string toString := "("+m0+" "+m1+" "+m2+" "+m3+" "+m4+" "+m5+")" 
+	string toString := "("+m0.format(1)+" "+m1.format(1)+" "+m2.format(1)+" "+m3.format(1)+" "+m4.format(1)+" "+m5.format(1)+")" 
 	
 	// Returns true if the matrix isn't the identity matrix
 	bool toBool := (m0 != 1 || m1 != 0 || m2 != 0 || m3 != 1 || m4 != 0 || m5 != 0)
@@ -465,7 +471,7 @@ global transient unit System
 		                                    Vector2 pos,          // The position of the current item
 		                                    int i                 // The index of the current item of the list we are iterating over with forCentered
 		                                ) do                      // Do this for each item in a list
-		for(let i=0, _subject=subject, _start = start, _delta = delta, _len=_subject.length, _x = _start.x, _y= _start.y; i<_len; ++i, _x += _delta.x, _y += _delta.y) { let it = _subject[i], pos = new Vector2(_x, _y, _start.location || _delta.location ? new SourceCodeLocation(0, 0, null, _start.location, _delta.location) : null); do()}
+		for(let i=0, _subject=subject, _start = start, _delta = delta, _len=_subject.length, _x = _start.x, _y= _start.y; i<_len; ++i, _x += _delta.x, _y += _delta.y) { let it = _subject[i], pos = new Vector2(_x, _y, _start.location || _delta.location ? new SourceCodeLocation(0, 0, null, 0, _start.location, _delta.location) : null); do()}
 
 	global inline js void forPositions: int to                    // The exclusive upper bound to iterate towards
 		                                Vector2 start = {0,0}     // Left or top align items at this position
@@ -474,7 +480,7 @@ global transient unit System
 		                                    int i,                // The index of the current item of the list we are iterating over with forCentered
 		                                    Vector2 pos,          // The position of the current item
 		                                ) do                      // Do this for each item in a list
-		for(let i=0, _start = start, _delta = delta, _len=to, _x = _start.x, _y= _start.y; i<_len; ++i, _x += _delta.x, _y += _delta.y) { let pos = new Vector2(_x, _y, _start.location || _delta.location ? new SourceCodeLocation(0, 0, null, _start.location, _delta.location) : null); do()}
+		for(let i=0, _start = start, _delta = delta, _len=to, _x = _start.x, _y= _start.y; i<_len; ++i, _x += _delta.x, _y += _delta.y) { let pos = new Vector2(_x, _y, _start.location || _delta.location ? new SourceCodeLocation(0, 0, null, 0, _start.location, _delta.location) : null); do()}
 
 	global inline js void forPositions: T[] subject               // The list to iterate over
 		                                Vector2 start = {0,0}     // Left or top align items at this position
@@ -485,7 +491,7 @@ global transient unit System
 		                                    Vector2 pos,          // The position of the current item
 		                                    int i                 // The index of the current item of the list we are iterating over with forCentered
 		                                ) do                      // Do this for each item in a list
-		for(let i=0, _subject=subject, _start = start, _delta = delta, _width = width, _len=_subject.length, _x = _start.x, _y= _start.y; i<_len; ++i, _x += _delta.x) { if(_x >= _start.x+_width) {_x = _start.x; _y += _delta.y} let it = _subject[i], pos = new Vector2(_x, _y, _start.location || _delta.location ? new SourceCodeLocation(0, 0, null, _start.location, _delta.location) : null); do()}
+		for(let i=0, _subject=subject, _start = start, _delta = delta, _width = width, _len=_subject.length, _x = _start.x, _y= _start.y; i<_len; ++i, _x += _delta.x) { if(_x >= _start.x+_width) {_x = _start.x; _y += _delta.y} let it = _subject[i], pos = new Vector2(_x, _y, _start.location || _delta.location ? new SourceCodeLocation(0, 0, null, 0, _start.location, _delta.location) : null); do()}
 
 	global inline js void forPositions: T[] subject               // The list to iterate over
 		                                Vector2 center = {0,0}    // Center items at this position
@@ -495,7 +501,7 @@ global transient unit System
 		                                    Vector2 pos,          // The position of the current item
 		                                    int i                 // The index of the current item of the list we are iterating over with forCentered
 		                                ) do                      // Do this for each item in a list
-		for(let i=0, _subject=subject, _center = center, _delta = delta, _len=_subject.length, _x = _center.x-(_len-1)*_delta.x/2, _y=_center.y-(_len-1)*_delta.y/2; i<_len; ++i, _x += _delta.x, _y += _delta.y) { let it = _subject[i], pos = new Vector2(_x, _y, _center.location || _delta.location ? new SourceCodeLocation(0, 0, null, _center.location, _delta.location) : null); do()}
+		for(let i=0, _subject=subject, _center = center, _delta = delta, _len=_subject.length, _x = _center.x-(_len-1)*_delta.x/2, _y=_center.y-(_len-1)*_delta.y/2; i<_len; ++i, _x += _delta.x, _y += _delta.y) { let it = _subject[i], pos = new Vector2(_x, _y, _center.location || _delta.location ? new SourceCodeLocation(0, 0, null, 0, _center.location, _delta.location) : null); do()}
 
 	global inline js void forPositions: int to                    // The exclusive upper bound to iterate towards
 		                                Vector2 center = {0,0}    // Center items at this position
@@ -504,7 +510,7 @@ global transient unit System
 		                                    int i,                // The index of the current item of the list we are iterating over with forCentered
 		                                    Vector2 pos           // The position of the current item
 		                                ) do                      // Do this for each item in a list
-		for(let i=0, _center = center, _delta = delta, _len=to, _x = _center.x-(_len-1)*_delta.x/2, _y=_center.y-(_len-1)*_delta.y/2; i<_len; ++i, _x += _delta.x, _y += _delta.y) { let pos = new Vector2(_x, _y, _center.location || _delta.location ? new SourceCodeLocation(0, 0, null, _center.location, _delta.location) : null); do()}
+		for(let i=0, _center = center, _delta = delta, _len=to, _x = _center.x-(_len-1)*_delta.x/2, _y=_center.y-(_len-1)*_delta.y/2; i<_len; ++i, _x += _delta.x, _y += _delta.y) { let pos = new Vector2(_x, _y, _center.location || _delta.location ? new SourceCodeLocation(0, 0, null, 0, _center.location, _delta.location) : null); do()}
 
 	global inline js void forPositions: T[] subject               // The list to iterate over
 		                                Vector2 end = {0,0}       // Right or bottom align items at this position
@@ -514,7 +520,7 @@ global transient unit System
 		                                    Vector2 pos,          // The position of the current item
 		                                    int i                 // The index of the current item of the list we are iterating over with forCentered
 		                                ) do                      // Do this for each item in a list
-		for(let i=0, _subject=subject, _end = end, _delta = delta, _len=_subject.length, _x = _end.x-(_len-1)*_delta.x, _y=_end.y-(_len-1)*_delta.y; i<_len; ++i, _x += _delta.x, _y += _delta.y) { let it = _subject[i], pos = new Vector2(_x, _y, _end.location || _delta.location ? new SourceCodeLocation(0, 0, null, _end.location, _delta.location) : null); do()}
+		for(let i=0, _subject=subject, _end = end, _delta = delta, _len=_subject.length, _x = _end.x-(_len-1)*_delta.x, _y=_end.y-(_len-1)*_delta.y; i<_len; ++i, _x += _delta.x, _y += _delta.y) { let it = _subject[i], pos = new Vector2(_x, _y, _end.location || _delta.location ? new SourceCodeLocation(0, 0, null, 0, _end.location, _delta.location) : null); do()}
 
 // Converts positions within an isomatic grid with the origin in the north
 // Tilt your head slighly to the right to visualize the directions
@@ -595,7 +601,7 @@ class Direction
 
 	string name
 	int index
-	Vector2 vector
+	IntVector2 vector
 	Angle angle
 	Angle isoAngle
 	

@@ -85,7 +85,7 @@ struct float
 	const inline js float maxValue := Number.MAX_VALUE
 	
 	// The smallest possible floating point value
-	const inline js float minValue := Number.MIN_VALUE
+	const inline js float minValue := -Number.MAX_VALUE
 	
 	const inline js float infinity := Number.POSITIVE_INFINITY
 	
@@ -1038,18 +1038,42 @@ transient class SourceCodeLocation
 	int row     // The row of the source code
 	int column  // The column of the source code
 	string file // The filename of the source code
+	int start
 	
 	SourceCodeLocation left
 	SourceCodeLocation right
+	inline js bool toBool() (this != null)
 	
 	js SourceCodeLocation clone 
-		return new SourceCodeLocation(this.row, this.column, this.file, this.left, this.right)
+		return new SourceCodeLocation(this.row, this.column, this.file, this.start, this.left, this.right)
 		
 	void flatten: SourceCodeLocation[] result
 		if file:          result.add this
 		if left != null:  left.flatten result
 		if right != null: right.flatten result
-	
+			
+	SourceCodeLocation find: string file, int start
+		if this.file and this.file == file and this.start == start
+			return this
+		if left != null
+			let result = left.find file, start
+			if result != null: return result
+		if right != null
+			let result = right.find file, start
+			if result != null: return result
+		return null
+			
+	SourceCodeLocation find: dynamic sourceCodeLocation
+		if this == sourceCodeLocation
+			return this
+		if left != null
+			let result = left.find sourceCodeLocation
+			if result != null: return result
+		if right != null
+			let result = right.find sourceCodeLocation
+			if result != null: return result
+		return null
+		
 js Error
 class Error
 	string message
