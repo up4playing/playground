@@ -799,4 +799,37 @@ class MenuItem
 	MenuItemType type = Button
 	void(bool value, Touch touch) onClick
 
+Object DropDownMenu
+	Vector2 popupPosition
+	MenuItem[] items
+	Color backgroundColor = {"E8E8E8"}
+	Color color = {"BABABA"}
+	locked = true
+	
+	visible bool active
+		
+	DropDownMenu
 
+	private inline js void startGame
+		if(window.app_start) window.app_startGame(false);
+	
+	override tick
+		bool doNotClose
+		forPositions items, center:popupPosition, delta:{0,60} -> item
+			drawText .label, pos+{-60}, size:30, align:Left, layer:int.maxValue
+			if item.type == Button
+				if .image: drawImage .image, pos+{-120}, layer:int.maxValue
+				Input.onTouchDownWithin pos, size:{500,60}, do:item.onClick(true, touch)
+			else
+			if item.type == Check
+				drawImage Checkbox, pos+{-120}, layer:int.maxValue, frame:item.value ? 1 : 0
+				Input.onTouchDownWithin pos, size:{500,60}
+					item.value = !item.value
+					item.onClick(item.value, touch)
+					doNotClose = true
+				
+		drawRoundedRectangle popupPosition, radius:20, outlineColor:color, fillColor:backgroundColor, size:{500,60+items.length*60}, outlineWidth:3, layer:int.maxValue
+		
+		if not doNotClose
+			Input.onTouchDownAny
+				active = false
