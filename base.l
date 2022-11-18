@@ -1035,10 +1035,9 @@ interface object
 		
 // This struct is automatically filled with the source code location
 transient class SourceCodeLocation
-	int row     // The row of the source code
-	int column  // The column of the source code
-	string file // The filename of the source code
+	string file
 	int start
+	int end
 	
 	SourceCodeLocation left
 	SourceCodeLocation right
@@ -1052,18 +1051,18 @@ transient class SourceCodeLocation
 		if left != null:  left.flatten result
 		if right != null: right.flatten result
 			
-	SourceCodeLocation find: string file, int start
-		if this.file and this.file == file and this.start == start
+	SourceCodeLocation find: string file, int pos
+		if this.file and this.file == file and pos >= this.start and pos <= this.end
 			return this
 		if left != null
-			let result = left.find file, start
+			let result = left.find file, pos
 			if result != null: return result
 		if right != null
-			let result = right.find file, start
+			let result = right.find file, pos
 			if result != null: return result
 		return null
 			
-	SourceCodeLocation find: dynamic sourceCodeLocation
+	SourceCodeLocation find: SourceCodeLocation sourceCodeLocation
 		if this == sourceCodeLocation
 			return this
 		if left != null

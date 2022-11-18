@@ -431,7 +431,7 @@ skipInit unit Input
 		
 		Vector2 pixelPos = {x*Platform.pixelRatio, y*Platform.pixelRatio}
 		Vector2 referencePos = pixelPos.getRelativeTo(Platform.baseMatrix)
-		Platform.handleSlide inputType, id, pixelPos, referencePos
+		gizmo.onTouch inputType, id, pixelPos, referencePos
 		
 		if Network.mode == None || Platform.mode != Record || !localUser || !localUser.collectInputs: return
 		let inputs = localUser.inputs

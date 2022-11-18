@@ -59,6 +59,7 @@ transient skipInit unit Platform
 		Math_init();
 		Network_init();
 		Input_init();
+		gizmo_init();
 		Network_log("Loading...")
 		Platform_isMobile = false;
 		let platform = navigator.platform
@@ -183,55 +184,32 @@ transient skipInit unit Platform
 	
 	private enterSlideMode(PlatformMode mode) this.mode = mode; sendMode
 	
-	internal stop()    mode = Pause;  Network.stop; sendMode
-	internal pause()   mode = Pause;  audio.stop(); sendMode
-	internal record()  Network.adjustStartTimeIfNeeded; mode = Record; sendMode
-	internal play()    Network.adjustStartTimeIfNeeded; mode = Play;   sendMode
+	internal stop()    mode = Pause; Network.stop; gizmo.clear; sendMode
+	internal pause()   mode = Pause; audio.stop(); gizmo.clear; sendMode
+	internal record()  Network.adjustStartTimeIfNeeded; mode = Record; gizmo.clear; sendMode
+	internal play()    Network.adjustStartTimeIfNeeded; mode = Play;   gizmo.clear; sendMode
 	
 	private goToFrame(int targetFrame) Network.goToFrame(targetFrame)
 		
-	private Vector2 touchDownPos
-	private bool touchDownInsideGizmo
-	private int locationIndex
-	private SourceCodeLocation[] locations
+	internal js void sendSelectToEditor: string cursorFile, int cursorPos
+		log("select cursorFile:"+cursorFile+" cursorPos:"+cursorPos)
+		_sendToEditor({type:"select", cursorFile, cursorPos})
 	
-	internal handleSlide: InputType inputType, int id, Vector2 pixelPos, Vector2 referencePos	
-		if Platform.mode == Pointer or Platform.mode == Slide
-			int row, column
-			string file
-			bool deselect
-			if Platform.mode == Pointer
-				let movedSinceTouchDown = (pixelPos manhattanDistanceTo touchDownPos) > 8
-				let insideGizmo = referencePos >= gizmo.min and referencePos <= gizmo.max
-				if inputType == TouchDown: touchDownPos = pixelPos; touchDownInsideGizmo = insideGizmo
-				// if inputType != TouchMove: print "###", inputType, insideGizmo, movedSinceTouchDown, locationIndex
-				// print insideGizmo, gizmo.min, gizmo.max, referencePos
-				// if (inputType == TouchDown and movedSinceTouchUp) or (inputType == TouchUp and !movedSinceTouchUp)
-				if (inputType == TouchDown and !insideGizmo)
-				or (inputType == TouchUp and touchDownInsideGizmo and !movedSinceTouchDown)
-					locations.clear
-					for graphics.items -> item
-						if item.location != null and pixelPos.isInsidePoygon item.poly
-							SourceCodeLocation[] itemLocations
-							item.location.flatten itemLocations
-							itemLocations.sort (a.file compareTo b.file) || b.row - a.row || a.column - b.column
-							for itemLocations
-								if !.file.startsWith("lib")
-									locations.add .
-										
-					if locations.length
-						if inputType == TouchDown: locationIndex = 0
-						let selectedLocation = locations[locationIndex++ % locations.length]
-						row = selectedLocation.row
-						column = selectedLocation.column
-						file = selectedLocation.file
-					else
-						deselect = true
-						
-			sendTouchToEditor id, referencePos, cast inputType, row, column, file, deselect
-			
-	private js void sendTouchToEditor: int id, Vector2 pos, TouchPhase phase, int row, int column, string file, bool deselect
-		_sendToEditor({type:"touch", id, x:pos.x, y:pos.y, phase, row, column, file, deselect})
+	internal js void sendDeselectToEditor
+		log("deselect")
+		_sendToEditor({type:"deselect"})
+	
+	internal js void sendStartManipulationToEditor: Vector2 pos, GizomInfluence[] influences
+		log("startManipulation "+pos.x+","+pos.y)
+		_sendToEditor({type:"startManipulation", x:pos.x, y:pos.y, influences})
+	
+	internal js void sendMoveManipulationToEditor: Vector2 pos, GizomInfluence[] influences, int codeId
+		log("moveManipulation "+pos.x+","+pos.y+" codeId:"+codeId)
+		_sendToEditor({type:"moveManipulation", x:pos.x, y:pos.y, influences, codeId})
+	
+	internal js void sendEndManipulationToEditor
+		log("endManipulation")
+		_sendToEditor({type:"endManipulation"})
 	
 	internal js void sendFrame: int frame, int frames
 		_sendToEditor({type:"frame", frame, frames})

@@ -129,8 +129,8 @@ transient global unit graphics
 			PeerNetwork.setAudioMuted user.audioElement, muted:Network.muteInvisibleUsers and user.videoElementIndex == 0
 		
 	private drawItems
-		items.sort b.layer - a.layer
 		gizmo.tick
+		items.sort b.layer - a.layer
 		items.each <- .draw
 		resetTransform
 		
@@ -414,8 +414,9 @@ transient global unit graphics
 		                   visibleFor = -1        // Only this user will see the image
 		                   implicit int layer = 0 // Higher layers are drawn in front of lower layers
 		                   alpha = 1.0            // The opacity of the image (0: fully transpart, 1: fully visible)
+		                   SourceCodeLocation location
 		var frame = Math.floor(Network.frame * Math.max(framesPerSecond, 0) / Network.targetFps) % image.frames.length;
-		drawImage image, position, frame, scale, visibleFor, layer, alpha
+		drawImage image, position, frame, scale, visibleFor, layer, alpha, location
 	
 	// Draws an image on the screen
 	global void drawImage: Image image            // The image to draw
@@ -425,8 +426,9 @@ transient global unit graphics
 		                   int[] visibleFor       // Only this user will see the image
 		                   implicit int layer = 0 // Higher layers are drawn in front of lower layers
 		                   alpha = 1.0            // The opacity of the image (0: fully transpart, 1: fully visible)
+		                   SourceCodeLocation location
 		var frame = Math.floor(Network.frame * Math.max(framesPerSecond, 0) / Network.targetFps) % image.frames.length;
-		drawImage image, position, frame, scale, visibleFor, layer, alpha
+		drawImage image, position, frame, scale, visibleFor, layer, alpha, location
 	
 	// Draws an image on the screen
 	global void drawImage: Image image            // The image to draw
@@ -439,8 +441,9 @@ transient global unit graphics
 		                   visibleFor = -1        // Only this user will see the image
 		                   implicit int layer = 0 // Higher layers are drawn in front of lower layers
 		                   alpha = 1.0            // The opacity of the image (0: fully transpart, 1: fully visible)
+		                   SourceCodeLocation location
 		var frame = Math.floor(Network.frame * Math.max(framesPerSecond, 0) / Network.targetFps) % image.frames.length;
-		drawImage image, position, frame, scale, angle, flipX, flipY, visibleFor, layer, alpha
+		drawImage image, position, frame, scale, angle, flipX, flipY, visibleFor, layer, alpha, location
 	
 	// Draws an image on the screen
 	global void drawImage: Image image                  // The image to draw
@@ -455,7 +458,8 @@ transient global unit graphics
 		                   implicit layer = 0           // Higher layers are drawn in front of lower layers
 		                   alpha = 1.0                  // The opacity of the button 0: fully transpart, 1: fully visible)
 		                   void(Touch touch) onClick    // Execute this code when the user clicks the button
-		drawImage image, position, frame, scale, visibleFor, layer, alpha
+		                   SourceCodeLocation location
+		drawImage image, position, frame, scale, visibleFor, layer, alpha, location
 			
 		// Handle click (only visible buttons are clickable)
 		int[] effectiveClickableBy = getClickableBy(visibleFor, clickableBy)
@@ -466,23 +470,27 @@ transient global unit graphics
 				onClick null
 		
 	// Draws an image on the screen
-	global js void drawImage: Image image           // The image to draw
-		                      Vector2 position = {} // The position to draw to
-		                      frame = 0             // The frame of the image to draw
-		                      scale = 1.0           // Scale the image by this factor
-		                      visibleFor = -1       // Only this user will see the image
-		                      implicit layer = 0    // Higher layers are drawn in front of lower layers
-		                      alpha = 1.0           // The opacity of the image (0: fully transpart, 1: fully visible)
+	global js void drawImage: Image image                // The image to draw
+		                      Vector2 position = {}      // The position to draw to
+		                      frame = 0                  // The frame of the image to draw
+		                      implicit Vector2 size = {} // Scale the image by this factor
+		                      visibleFor = -1            // Only this user will see the image
+		                      implicit layer = 0         // Higher layers are drawn in front of lower layers
+		                      alpha = 1.0                // The opacity of the image (0: fully transpart, 1: fully visible)
+		                      SourceCodeLocation location
 		if(!image.texture?.ensureIsAvailable()) return
 		if(graphics_isVisibleFor(visibleFor)) {
 			let f = image.frames[frame % image.frames.length]
+			let w = size.x || f.w
+			let h = size.y || (w/f.w)*f.h
 			graphics_items.push(new DisplayImage(
 				graphics_totalMatrix,
-				position.x-f.w/2*scale,
-				position.y-f.h/2*scale,
-				f.w*scale,
-				f.h*scale,
-				layer, alpha, graphics_currentClippingPath, image.file, position.location,
+				position.x-w/2,
+				position.y-h/2,
+				w,
+				h,
+				layer, alpha, graphics_currentClippingPath, image.file,
+				location, position.location, size.location,
 				image.texture._htmlImage,
 				f.x1, f.y1, f.w, f.h
 			))
@@ -495,6 +503,7 @@ transient global unit graphics
 		                      int[] visibleFor      // Only this user will see the image
 		                      implicit layer = 0    // Higher layers are drawn in front of lower layers
 		                      alpha = 1.0           // The opacity of the image (0: fully transpart, 1: fully visible)
+		                      SourceCodeLocation location
 		if(!image.texture?.ensureIsAvailable()) return
 		if(graphics_isVisibleFor2(visibleFor)) {
 			let f = image.frames[frame % image.frames.length]
@@ -504,7 +513,8 @@ transient global unit graphics
 				position.y-f.h/2*scale,
 				f.w*scale,
 				f.h*scale,
-				layer, alpha, graphics_currentClippingPath, image.file, position.location,
+				layer, alpha, graphics_currentClippingPath, image.file,
+				location, position.location, size.location,
 				image.texture._htmlImage,
 				f.x1, f.y1, f.w, f.h
 			))
@@ -521,6 +531,7 @@ transient global unit graphics
 		                      visibleFor = -1       // Only this user will see the image
 		                      implicit layer = 0    // Higher layers are drawn in front of lower layers
 		                      alpha = 1.0           // The opacity of the image (0: fully transpart, 1: fully visible)
+		                      SourceCodeLocation location
 		if(!image.texture?.ensureIsAvailable()) return
 		if(graphics_isVisibleFor(visibleFor)) {
 			let f = image.frames[frame % image.frames.length]
@@ -534,7 +545,8 @@ transient global unit graphics
 				-f.h/2*scale,
 				f.w*scale,
 				f.h*scale,
-				layer, alpha, graphics_currentClippingPath, image.file, position.location, 
+				layer, alpha, graphics_currentClippingPath, image.file, 
+				location, position.location, size.location,
 				image.texture._htmlImage,
 				f.x1, f.y1, f.w, f.h
 			))
@@ -550,6 +562,7 @@ transient global unit graphics
 		                      int[] visibleFor      // Only this user will see the image
 		                      implicit layer = 0    // Higher layers are drawn in front of lower layers
 		                      alpha = 1.0           // The opacity of the image (0: fully transpart, 1: fully visible)
+		                      SourceCodeLocation location
 		if(!image.texture?.ensureIsAvailable()) return
 		if(graphics_isVisibleFor2(visibleFor)) {
 			let f = image.frames[frame % image.frames.length]
@@ -563,7 +576,8 @@ transient global unit graphics
 				-f.h/2*scale,
 				f.w*scale,
 				f.h*scale,
-				layer, alpha, graphics_currentClippingPath, image.file, position.location, 
+				layer, alpha, graphics_currentClippingPath, image.file, 
+				location, position.location, size.location,
 				image.texture._htmlImage,
 				f.x1, f.y1, f.w, f.h
 			))
@@ -710,8 +724,8 @@ transient global unit graphics
 				onClick null
 			
 	// Draws a rectangle on the screen
-	global js void drawRectangle: position = Vector2()       // The center of the rectangle
-		                          size = Vector2(32,32)      // The size of the rectangle
+	global js void drawRectangle: position = Vector2()      // The center of the rectangle
+		                          size = Vector2(32,32)     // The size of the rectangle
 		                          Color fillColor = null    // The color of the area within the rectangle
 		                          Color outlineColor = null // The color of the outline around the rectangle
 		                          outlineWidth = 0          // The width of the outline around the rectangle
@@ -720,21 +734,23 @@ transient global unit graphics
 		                          alpha = 1.0               // The opacity of the rectange 0: fully transpart, 1: fully visible)
 		                          HorizontalAlignment align = Center // The horizontal alignment of the rectangle
 		                          VerticalAlignment valign = Middle  // The vertical alignment of the rectangle
+		                          SourceCodeLocation location
 		if(graphics_isVisibleFor(visibleFor)) {
 			graphics_items.push(new DisplayRectangle(
 				graphics_totalMatrix,
 				align == 0  ? position.x : align  == 1 ? position.x-size.x*.5 : position.x-size.x,
 				valign == 0 ? position.y : valign == 1 ? position.y-size.y*.5 : position.y-size.y,
 				size.x, size.y,
-				layer, alpha, graphics_currentClippingPath, "Rectangle", position.location,
+				layer, alpha, graphics_currentClippingPath, "Rectangle", 
+				location, position.location, size.location,
 				fillColor || !outlineColor ? (fillColor || graphics_currentColor).hex : null,
 				outlineColor ? outlineColor.hex : null,
 				outlineWidth || graphics_currentLineWidth
 			))
 		}
 		
-	global js void drawRectangle: position = Vector2()       // The center of the rectangle
-		                          size = Vector2(32,32)      // The size of the rectangle
+	global js void drawRectangle: position = Vector2()      // The center of the rectangle
+		                          size = Vector2(32,32)     // The size of the rectangle
 		                          Color fillColor = null    // The color of the area within the rectangle
 		                          Color outlineColor = null // The color of the outline around the rectangle
 		                          outlineWidth = 0          // The width of the outline around the rectangle
@@ -743,13 +759,15 @@ transient global unit graphics
 		                          alpha = 1.0               // The opacity of the rectange 0: fully transpart, 1: fully visible)
 		                          HorizontalAlignment align = Center // The horizontal alignment of the rectangle
 		                          VerticalAlignment valign = Middle  // The vertical alignment of the rectangle
+		                          SourceCodeLocation location
 		if(graphics_isVisibleFor2(visibleFor)) {
 			graphics_items.push(new DisplayRectangle(
 				graphics_totalMatrix,
 				align == 0  ? position.x : align  == 1 ? position.x-size.x*.5 : position.x-size.x,
 				valign == 0 ? position.y : valign == 1 ? position.y-size.y*.5 : position.y-size.y,
 				size.x, size.y,
-				layer, alpha, graphics_currentClippingPath, "Rectangle", position.location,
+				layer, alpha, graphics_currentClippingPath, "Rectangle", 
+				location, position.location, size.location,
 				fillColor || !outlineColor ? (fillColor || graphics_currentColor).hex : null,
 				outlineColor ? outlineColor.hex : null,
 				outlineWidth || graphics_currentLineWidth
@@ -1052,38 +1070,153 @@ transient global unit graphics
 					layer, alpha:1.0, currentClippingPath, "Video",
 					userId, radius
 				)
-unit gizmo
-	DisplayItem[] items
-	Vector2 min={-500,-500}, max={500,500}
+
+struct GizomInfluence
+	string file
+	int start
+	int end
+	float xRatio
+	float yRatio
 	
-	private inline js string locationFile() _locationFile
-	private inline js int locationStart() _locationStart
+struct GizmoStackItem
+	SourceCodeLocation location
+	SourceCodeLocation positionLocation
+
+skipInit unit gizmo
+	private DisplayItem[] items
+	private Vector2 min, max
+	private SourceCodeLocation cursorLocation
 	
-	inline js void clear() _locationFile = ""; _locationStart = 0;
+	private inline js bool isCursorSet() window._cursorFile
+	private inline js string cursorFile() _cursorFile
+	private inline js int cursorPos() _cursorPos
+	private inline js int codeId() _codeId
 	
-	tick
+	private findInfluencedItems
+		items.clear
+		cursorLocation = null
+		if !isCursorSet: return
 		min.x = float.maxValue; max.x = float.minValue
 		min.y = float.maxValue; max.y = float.minValue
-		items.clear
-		SourceCodeLocation location
 		for graphics.items
-			if .location
-				location = .location.find(locationFile, locationStart)
-				if location: break
+			if .positionLocation and (cursorLocation = .positionLocation.find(cursorFile, cursorPos))
+				break
+			if .location and .location.file == cursorFile and cursorPos >= .location.start and cursorPos <= .location.end
+				cursorLocation = .location
+				break
 				
-		if location != null
+		if cursorLocation != null
 			for graphics.items
-				if .location.find(location) != null
+				if .location == cursorLocation or .positionLocation.find(cursorLocation) != null
 					items.add .
 					if .x < min.x: min.x = .x
 					if .y < min.y: min.y = .y
 					if .x + .w > max.x: max.x = .x + .w
 					if .y + .h > max.y: max.y = .y + .h
-
+	
+	internal tick
+		findInfluencedItems
 		if items
-			drawRectangle min, size:max-min, align:Left, valign:Top, outlineColor:{"437FDF"}, outlineWidth:4
+			let size = max - min
+			let center = (max + min)/2 
+			for Direction.allEightDirections
+				drawImage ResizeHandle, center + size/2*.vector, location:null, layer:int.maxValue
+			drawRectangle min, size:max-min, align:Left, valign:Top, outlineColor:{"437FDF"}, outlineWidth:4, location:null, layer:int.maxValue
 			
+	private bool isTouchDown
+	private Direction overHandleDirection
+	private Vector2 touchDownPos
+	private bool touchDownInsideGizmo
+	private int locationIndex
+	private int waitingForCodeId
+	// private GizmoStackItem selectedStackItem
+	
+	clear
+		isTouchDown = false
+		overHandleDirection = null
+		touchDownPos = Vector2.none
+		touchDownInsideGizmo = false
+		locationIndex = 0
+		items.clear
+		min = Vector2.none
+		max = Vector2.none
+	
+	internal onTouch: InputType inputType, int id, Vector2 pixelPos, Vector2 referencePos	
+		if Platform.mode != Pointer: return
+		if inputType == TouchDown: isTouchDown = true; else
+		if inputType == TouchUp:   isTouchDown = false;
+		GizomInfluence[] influences
+		print "onTouch {inputType} {pixelPos}", waitingForCodeId
+			
+		if items and not isTouchDown
+			let center = (min + max)/2
+			if referencePos manhattanDistanceTo max < 32:            overHandleDirection = Direction.DownRight; else
+			if referencePos manhattanDistanceTo min < 32:            overHandleDirection = Direction.UpLeft; else
+			if referencePos manhattanDistanceTo {max.x, min.y} < 32: overHandleDirection = Direction.UpRight; else
+			if referencePos manhattanDistanceTo {min.x, max.y} < 32: overHandleDirection = Direction.DownLeft; else
 				
+			if referencePos manhattanDistanceTo {max.x, center.y} < 32: overHandleDirection = Direction.Right; else
+				                                                        overHandleDirection = null
+				
+		let movedSinceTouchDown = (pixelPos manhattanDistanceTo touchDownPos) > 8
+		let insideGizmo = referencePos >= gizmo.min and referencePos <= gizmo.max
+		if inputType == TouchDown: touchDownPos = pixelPos; touchDownInsideGizmo = insideGizmo
+		if overHandleDirection == null and codeId >= waitingForCodeId
+			if (inputType == TouchDown and !insideGizmo)
+			or (inputType == TouchUp and touchDownInsideGizmo and !movedSinceTouchDown)
+				GizmoStackItem[] stack
+				for graphics.items -> item
+					if item.location and pixelPos.isInsidePoygon item.poly
+						if item.positionLocation.left or item.positionLocation.right
+							addToStackItems stack, item.positionLocation
+						else
+							stack.add {item.location, item.positionLocation}
+									
+				cursorLocation = null
+				if stack.length
+					if inputType == TouchDown: locationIndex = 0
+					let selectedStackItem = stack[locationIndex++ % stack.length]
+					cursorLocation = selectedStackItem.positionLocation
+					Platform.sendSelectToEditor selectedStackItem.location.file, selectedStackItem.location.start
+				else
+					locationIndex = 0
+					Platform.sendDeselectToEditor
+		
+		if cursorLocation
+			if overHandleDirection and overHandleDirection.vector == {1,1}
+				setCursor "nwse-resize"
+				for items
+					influences.add {.sizeLocation.file, .sizeLocation.start, .sizeLocation.end, xRatio:1, yRatio:1}
+				influences.add {cursorLocation.file, cursorLocation.start, cursorLocation.end, xRatio:.5, yRatio:.5}
+			else
+			if overHandleDirection and overHandleDirection.vector == {1,0}
+				setCursor "ew-resize"
+				for items
+					influences.add {.sizeLocation.file, .sizeLocation.start, .sizeLocation.end, xRatio:1, yRatio:0}
+				influences.add {cursorLocation.file, cursorLocation.start, cursorLocation.end, xRatio:.5, yRatio:0}
+			else
+			if overHandleDirection and overHandleDirection.vector == {-1,1}
+				setCursor "nesw-resize"
+			else
+				setCursor "auto"
+				influences.add {cursorLocation.file, cursorLocation.start, cursorLocation.end, xRatio:1, yRatio:1}
+					
+			if inputType == TouchDown: Platform.sendStartManipulationToEditor referencePos, influences; else
+			if inputType == TouchMove and isTouchDown: Platform.sendMoveManipulationToEditor referencePos, influences, ++waitingForCodeId; else
+			if inputType == TouchUp:   Platform.sendEndManipulationToEditor
+						
+	private void addToStackItems: GizmoStackItem[] stack, SourceCodeLocation location
+		let left = location.left, right = location.right
+		if right
+			stack.add {right, right}
+			addToStackItems stack, right
+		if left
+			stack.add {left, left}
+			addToStackItems stack, left
+			
+	js void setCursor: string cursor
+		document.body.style.cursor = cursor
+		
 transient class DisplayItem
 	float x, y, w, h
 	int layer
@@ -1091,6 +1224,8 @@ transient class DisplayItem
 	ClippingPath clippingPath
 	string name
 	SourceCodeLocation location
+	SourceCodeLocation positionLocation
+	SourceCodeLocation sizeLocation
 	
 	visible float m0, m1, m2, m3, m4, m5
 	visible Vector2[] poly
