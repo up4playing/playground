@@ -213,23 +213,23 @@ Object VideoObject
 		else       drawVideo userId, position, size
 			
 Object Button
-	Image image                      // The image of the button
-    text = ""                        // The text of the button
-    Vector2 position = {}            // The position to draw to
-    Color textColor                  // The color of the text
-    frame = 0                        // The frame of the image
-    scale = 1.0                      // Scale the image by this factor
-    fontSize = 18                    // The font size in pixels   
-    touchMargin = Vector2(16,16)     // The margin around the button within which it is touchable
-    textOffset = Vector2(0,-2)
-    showTouchArea = false            // Show the area within which the button is touchable
-    int[] clickableBy = null         // Only this user can click the button
-    implicit layer = 0               // Higher layers are drawn in front of lower layers
-    alpha = 1.0                      // The opacity of the button 0: fully transpart, 1: fully visible)
-	Key hotkey
-    void(Touch touch) onClick        // Execute this code when the user clicks the button
+	Image image                  // The image of the button
+    text = ""                    // The text of the button
+    Vector2 position = {}        // The position to draw to
+    Color textColor              // The color of the text
+    frame = 0                    // The frame of the image
+	implicit Vector2 size = {}   // The size of the image, use a float to keep the aspect ratio, use a vector to strech the image
+    fontSize = 18                // The font size in pixels   
+    touchMargin = Vector2(16,16) // The margin around the button within which it is touchable
+    textOffset = Vector2(0,-2)   // Draw the text at this offset
+    showTouchArea = false        // Show the area within which the button is touchable
+    int[] clickableBy = null     // Only this user can click the button
+    implicit layer = 0           // Higher layers are drawn in front of lower layers
+    alpha = 1.0                  // The opacity of the button 0: fully transpart, 1: fully visible)
+	Key hotkey                   // This keyboard shortcut will execute the onClick handler
+    void(Touch touch) onClick    // Execute this code when the user clicks the button
 	override tick
-		drawButton image, text, position, textColor, frame, scale, fontSize, touchMargin, textOffset, showTouchArea, visibleFor, clickableBy, hotkey, layer, alpha, onClick(touch)
+		drawButton image, text, position, textColor, frame, size, fontSize, touchMargin, textOffset, showTouchArea, visibleFor, clickableBy, hotkey, layer, alpha, onClick(touch)
 
 		
 Object Piece
@@ -351,9 +351,10 @@ Object Piece
 		draw
 				
 	draw
+		// TODO: Support size!!!!!!!!!!!!!
 		if image
-			if side == Front || !backImage: drawImage image, position, frame:frame%image.frames.length, scale, angle
-			else                            drawImage backImage, position, frame:frame%backImage.frames.length, scale, angle
+			if side == Front || !backImage: drawImage image, position, frame:frame%image.frames.length, angle
+			else                            drawImage backImage, position, frame:frame%backImage.frames.length, angle
 		
 	private checkBoardsWhileMoving: Touch touch
 		Vector2 pos = position
@@ -615,7 +616,8 @@ Object ParticleSystem
 		for particles <-
 			graphics.move .pos
 				graphics.rotate .angle
-					drawImage particleImage, frame:.frame, scale:.scale
+					// TODO: Suport scale!!!!!!!!!
+					drawImage particleImage, frame:.frame
 			.pos += .speed
 			.speed.y += 1
 			.angle += .05
