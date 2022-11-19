@@ -1100,11 +1100,8 @@ struct GizomInfluence
 	int end
 	float xRatio
 	float yRatio
+	float[] deltas
 	
-struct GizmoStackItem
-	SourceCodeLocation location
-	SourceCodeLocation positionLocation
-
 skipInit unit gizmo
 	private DisplayItem[] items
 	private Vector2 min, max
@@ -1125,7 +1122,7 @@ skipInit unit gizmo
 			if .positionLocation and (cursorLocation = .positionLocation.find(cursorFile, cursorPos))
 				break
 			if .location and .location.file == cursorFile and cursorPos >= .location.start and cursorPos <= .location.end
-				cursorLocation = .location
+				cursorLocation = .positionLocation ? .positionLocation.leaf : .location
 				break
 				
 		if cursorLocation != null
@@ -1146,16 +1143,15 @@ skipInit unit gizmo
 				drawImage ResizeHandle, center + size/2*.vector, location:null, layer:int.maxValue
 			drawRectangle min, size:max-min, align:Left, valign:Top, outlineColor:{"437FDF"}, outlineWidth:4, location:null, layer:int.maxValue
 			
-	private bool isTouchDown
-	private Direction overHandleDirection
 	private Vector2 touchDownPos
+	
+	private Direction overHandleDirection
 	private bool touchDownInsideGizmo
 	private int locationIndex
 	private int waitingForCodeId
-	// private GizmoStackItem selectedStackItem
+	private float aspectRatio
 	
 	clear
-		isTouchDown = false
 		overHandleDirection = null
 		touchDownPos = Vector2.none
 		touchDownInsideGizmo = false
@@ -1164,14 +1160,14 @@ skipInit unit gizmo
 		min = Vector2.none
 		max = Vector2.none
 	
-	internal onTouch: InputType inputType, int id, Vector2 pixelPos, Vector2 referencePos	
+	internal onTouch: InputType inputType, int id, Vector2 pixelPos, Vector2 referencePos, shift = false, alt = false, cmdOrCtrl = false	
 		if Platform.mode != Pointer: return
-		if inputType == TouchDown: isTouchDown = true; else
-		if inputType == TouchUp:   isTouchDown = false;
+		if inputType == TouchDown: touchDownPos = referencePos; else
+		if inputType == TouchUp:   touchDownPos = Vector2.none;
 		GizomInfluence[] influences
 		print "onTouch {inputType} {pixelPos}", waitingForCodeId
 			
-		if items and not isTouchDown
+		if items and not touchDownPos
 			let center = (min + max)/2
 			if referencePos manhattanDistanceTo max < 32:            overHandleDirection = Direction.DownRight; else
 			if referencePos manhattanDistanceTo min < 32:            overHandleDirection = Direction.UpLeft; else
@@ -1181,36 +1177,38 @@ skipInit unit gizmo
 			if referencePos manhattanDistanceTo {max.x, center.y} < 32: overHandleDirection = Direction.Right; else
 				                                                        overHandleDirection = null
 				
-		let movedSinceTouchDown = (pixelPos manhattanDistanceTo touchDownPos) > 8
+		let movedSinceTouchDown = (referencePos manhattanDistanceTo touchDownPos) > 8
 		let insideGizmo = referencePos >= gizmo.min and referencePos <= gizmo.max
-		if inputType == TouchDown: touchDownPos = pixelPos; touchDownInsideGizmo = insideGizmo
+		if inputType == TouchDown: touchDownInsideGizmo = insideGizmo
 		if overHandleDirection == null and codeId >= waitingForCodeId
 			if (inputType == TouchDown and !insideGizmo)
 			or (inputType == TouchUp and touchDownInsideGizmo and !movedSinceTouchDown)
-				GizmoStackItem[] stack
+				SourceCodeLocation[] stack
 				for graphics.items -> item
-					if item.location and pixelPos.isInsidePoygon item.poly
-						if item.positionLocation.left or item.positionLocation.right
-							addToStackItems stack, item.positionLocation
-						else
-							stack.add {item.location, item.positionLocation}
+					let location = item.positionLocation or item.location
+					if location and pixelPos.isInsidePoygon item.poly
+						location.flattenTo stack
 									
-				cursorLocation = null
 				if stack.length
 					if inputType == TouchDown: locationIndex = 0
 					let selectedStackItem = stack[locationIndex++ % stack.length]
-					cursorLocation = selectedStackItem.positionLocation
-					Platform.sendSelectToEditor selectedStackItem.location.file, selectedStackItem.location.start
+					cursorLocation = selectedStackItem
+					Platform.sendSelectToEditor selectedStackItem.file, selectedStackItem.start
 				else
 					locationIndex = 0
+					cursorLocation = null
 					Platform.sendDeselectToEditor
 		
 		if cursorLocation
 			if overHandleDirection and overHandleDirection.vector == {1,1}
 				setCursor "nwse-resize"
+				let dx = referencePos.x - touchDownPos.x
+				let dy = referencePos.y - touchDownPos.y
+				let deltas = shift ? [dx,dy] : aspectRatio < 1 ? [dx,dx*aspectRatio] : [dy/aspectRatio, dy]
 				for items
-					influences.add {.sizeLocation.file, .sizeLocation.start, .sizeLocation.end, xRatio:1, yRatio:1}
-				influences.add {cursorLocation.file, cursorLocation.start, cursorLocation.end, xRatio:.5, yRatio:.5}
+					influences.add {.sizeLocation.file, .sizeLocation.start, .sizeLocation.end, xRatio:1, yRatio:1, deltas}
+				if not cmdOrCtrl
+					influences.add {cursorLocation.file, cursorLocation.start, cursorLocation.end, xRatio:.5, yRatio:.5, deltas:[deltas[0]*.5, deltas[1]*.5]}
 			else
 			if overHandleDirection and overHandleDirection.vector == {1,0}
 				setCursor "ew-resize"
@@ -1222,20 +1220,16 @@ skipInit unit gizmo
 				setCursor "nesw-resize"
 			else
 				setCursor "auto"
-				influences.add {cursorLocation.file, cursorLocation.start, cursorLocation.end, xRatio:1, yRatio:1}
+				influences.add {cursorLocation.file, cursorLocation.start, cursorLocation.end, xRatio:1, yRatio:1, deltas:[referencePos.x - touchDownPos.x, referencePos.y - touchDownPos.y]}
 					
-			if inputType == TouchDown: Platform.sendStartManipulationToEditor referencePos, influences; else
-			if inputType == TouchMove and isTouchDown: Platform.sendMoveManipulationToEditor referencePos, influences, ++waitingForCodeId; else
+			if inputType == TouchDown: 
+				aspectRatio = (max.y - min.y) / (max.x - min.x)
+				Platform.sendStartManipulationToEditor referencePos, influences;
+			else
+			if inputType == TouchMove and touchDownPos:
+				Platform.sendMoveManipulationToEditor referencePos, influences, ++waitingForCodeId;
+			else
 			if inputType == TouchUp:   Platform.sendEndManipulationToEditor
-						
-	private void addToStackItems: GizmoStackItem[] stack, SourceCodeLocation location
-		let left = location.left, right = location.right
-		if right
-			stack.add {right, right}
-			addToStackItems stack, right
-		if left
-			stack.add {left, left}
-			addToStackItems stack, left
 			
 	js void setCursor: string cursor
 		document.body.style.cursor = cursor

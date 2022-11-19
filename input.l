@@ -292,13 +292,13 @@ skipInit unit Input
 	private js void initHandlers
 		window.onpointerdown = e => {
 			if(e.button == 0 && Platform_mode == 0) Platform_record();
-			Input_handleTouchEvent(1, e.pageX, e.pageY, e.pointerType, e.pointerId, e.button);
+			Input_handleTouchEvent(1, e.pageX, e.pageY, e.pointerType, e.pointerId, e.button, e.shiftKey, e.altKey, e.ctrlKey || e.metaKey);
 		}
 		window.onpointermove = e => {
-			Input_handleTouchEvent(2, e.pageX, e.pageY, e.pointerType, e.pointerId, e.button);
+			Input_handleTouchEvent(2, e.pageX, e.pageY, e.pointerType, e.pointerId, e.button, e.shiftKey, e.altKey, e.ctrlKey || e.metaKey);
 		}
 		window.onpointerup = e => {
-			Input_handleTouchEvent(3, e.pageX, e.pageY, e.pointerType, e.pointerId, e.button);
+			Input_handleTouchEvent(3, e.pageX, e.pageY, e.pointerType, e.pointerId, e.button, e.shiftKey, e.altKey, e.ctrlKey || e.metaKey);
 		}
 		window.oncontextmenu = e => {
 			e.preventDefault();
@@ -423,7 +423,7 @@ skipInit unit Input
 		inputs.writeInt32 keyCode
 		if type == KeyDown: inputs.writeString key
 		
-	internal handleTouchEvent: InputType inputType, float x, float y, string pointerType, int pointerId, int button
+	internal handleTouchEvent: InputType inputType, float x, float y, string pointerType, int pointerId, int button, shift = false, alt = false, cmdOrCtrl = false
 		int touchType, id
 		if pointerType == "mouse": touchType = button.limit(min:0, max:2); else
 		if pointerType == "touch": touchType = 3; id = pointerId; else
@@ -431,7 +431,7 @@ skipInit unit Input
 		
 		Vector2 pixelPos = {x*Platform.pixelRatio, y*Platform.pixelRatio}
 		Vector2 referencePos = pixelPos.getRelativeTo(Platform.baseMatrix)
-		gizmo.onTouch inputType, id, pixelPos, referencePos
+		gizmo.onTouch inputType, id, pixelPos, referencePos, shift, alt, cmdOrCtrl
 		
 		if Network.mode == None || Platform.mode != Record || !localUser || !localUser.collectInputs: return
 		let inputs = localUser.inputs
