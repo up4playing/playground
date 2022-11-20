@@ -199,13 +199,11 @@ transient skipInit unit Platform
 		log("deselect")
 		_sendToEditor({type:"deselect"})
 	
-	internal js void sendStartManipulationToEditor: Vector2 pos, GizomInfluence[] influences
-		log("startManipulation "+pos.x+","+pos.y)
-		_sendToEditor({type:"startManipulation", x:pos.x, y:pos.y, influences})
+	internal js void sendStartManipulationToEditor: GizomInfluence[] influences
+		_sendToEditor({type:"startManipulation", influences})
 	
-	internal js void sendMoveManipulationToEditor: Vector2 pos, GizomInfluence[] influences, int codeId
-		log("moveManipulation "+pos.x+","+pos.y+" codeId:"+codeId)
-		_sendToEditor({type:"moveManipulation", x:pos.x, y:pos.y, influences, codeId})
+	internal js void sendMoveManipulationToEditor: GizomInfluence[] influences, int codeId
+		_sendToEditor({type:"moveManipulation", influences, codeId})
 	
 	internal js void sendFrame: int frame, int frames
 		_sendToEditor({type:"frame", frame, frames})

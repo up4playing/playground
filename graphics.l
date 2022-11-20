@@ -1274,11 +1274,11 @@ skipInit unit gizmo
 					// Start manipulation as soon as we dragged more than a certain threshold
 					isManipulating = true
 					aspectRatio = (max.y - min.y) / (max.x - min.x)
-					Platform.sendStartManipulationToEditor referencePos, influences
+					Platform.sendStartManipulationToEditor influences
 					
 				if isManipulating
 					// Move manipulation
-					Platform.sendMoveManipulationToEditor referencePos, influences, ++waitingForCodeId
+					Platform.sendMoveManipulationToEditor influences, ++waitingForCodeId
 			
 	private js void setCursor: string cursor
 		document.body.style.cursor = cursor
