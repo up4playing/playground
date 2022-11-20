@@ -1045,11 +1045,6 @@ transient class SourceCodeLocation
 	
 	js SourceCodeLocation clone 
 		return new SourceCodeLocation(this.row, this.column, this.file, this.start, this.left, this.right)
-		
-	void flattenTo: SourceCodeLocation[] result
-		if file:  result.add this
-		if left:  left.flattenTo result
-		if right: right.flattenTo result
 			
 	SourceCodeLocation find: string file, int pos
 		if this.file and this.file == file and pos >= this.start and pos <= this.end
@@ -1074,13 +1069,13 @@ transient class SourceCodeLocation
 		return null
 		
 	SourceCodeLocation leaf
-		if this.file
+		if file and !file.startsWith("lib/")
 			return this
-		if left != null
-			let result = left.leaf
-			if result != null: return result
 		if right != null
 			let result = right.leaf
+			if result != null: return result
+		if left != null
+			let result = left.leaf
 			if result != null: return result
 		return null
 		

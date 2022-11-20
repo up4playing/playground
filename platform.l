@@ -207,10 +207,6 @@ transient skipInit unit Platform
 		log("moveManipulation "+pos.x+","+pos.y+" codeId:"+codeId)
 		_sendToEditor({type:"moveManipulation", x:pos.x, y:pos.y, influences, codeId})
 	
-	internal js void sendEndManipulationToEditor
-		log("endManipulation")
-		_sendToEditor({type:"endManipulation"})
-	
 	internal js void sendFrame: int frame, int frames
 		_sendToEditor({type:"frame", frame, frames})
 	

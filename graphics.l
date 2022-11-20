@@ -1098,14 +1098,18 @@ struct GizomInfluence
 	string file
 	int start
 	int end
-	float xRatio
-	float yRatio
 	float[] deltas
+	string initialValue
+
+struct GizmoOverItem
+	DisplayItem item
+	SourceCodeLocation location
 	
 skipInit unit gizmo
 	private DisplayItem[] items
 	private Vector2 min, max
 	private SourceCodeLocation cursorLocation
+	private DisplayItem cursorItem
 	
 	private inline js bool isCursorSet() window._cursorFile
 	private inline js string cursorFile() _cursorFile
@@ -1116,15 +1120,21 @@ skipInit unit gizmo
 		items.clear
 		cursorLocation = null
 		if !isCursorSet: return
-		min.x = float.maxValue; max.x = float.minValue
-		min.y = float.maxValue; max.y = float.minValue
+		
+		// Find the item and location at the cursor position
 		for graphics.items
 			if .positionLocation and (cursorLocation = .positionLocation.find(cursorFile, cursorPos))
+				cursorItem = .
 				break
 			if .location and .location.file == cursorFile and cursorPos >= .location.start and cursorPos <= .location.end
-				cursorLocation = .positionLocation ? .positionLocation.leaf : .location
+				cursorLocation = .positionLocation?.leaf or .location
+				cursorItem = .
 				break
-				
+			
+		// Find all items that are influenced by this location
+		// and calculate the min and max of the influenced items
+		min.x = float.maxValue; max.x = float.minValue
+		min.y = float.maxValue; max.y = float.minValue
 		if cursorLocation != null
 			for graphics.items
 				if .location == cursorLocation or .positionLocation.find(cursorLocation) != null
@@ -1136,103 +1146,147 @@ skipInit unit gizmo
 	
 	internal tick
 		findInfluencedItems
+		
 		if items
+			// Draw handles
 			let size = max - min
 			let center = (max + min)/2 
 			for Direction.allEightDirections
 				drawImage ResizeHandle, center + size/2*.vector, location:null, layer:int.maxValue
-			drawRectangle min, size:max-min, align:Left, valign:Top, outlineColor:{"437FDF"}, outlineWidth:4, location:null, layer:int.maxValue
+				
+			// Draw selection
+			drawRectangle center, size:max-min, outlineColor:{"437FDF"}, outlineWidth:4, location:null, layer:int.maxValue
 			
-	private Vector2 touchDownPos
-	
 	private Direction overHandleDirection
+	private Vector2 touchDownPos = {float.infinity, float.infinity}
 	private bool touchDownInsideGizmo
 	private int locationIndex
 	private int waitingForCodeId
 	private float aspectRatio
+	private bool isManipulating
 	
 	clear
 		overHandleDirection = null
 		touchDownPos = Vector2.none
 		touchDownInsideGizmo = false
 		locationIndex = 0
+		waitingForCodeId = 0
+		aspectRatio = 1
 		items.clear
 		min = Vector2.none
 		max = Vector2.none
 	
 	internal onTouch: InputType inputType, int id, Vector2 pixelPos, Vector2 referencePos, shift = false, alt = false, cmdOrCtrl = false	
 		if Platform.mode != Pointer: return
-		if inputType == TouchDown: touchDownPos = referencePos; else
-		if inputType == TouchUp:   touchDownPos = Vector2.none;
-		GizomInfluence[] influences
-		print "onTouch {inputType} {pixelPos}", waitingForCodeId
-			
-		if items and not touchDownPos
-			let center = (min + max)/2
-			if referencePos manhattanDistanceTo max < 32:            overHandleDirection = Direction.DownRight; else
-			if referencePos manhattanDistanceTo min < 32:            overHandleDirection = Direction.UpLeft; else
-			if referencePos manhattanDistanceTo {max.x, min.y} < 32: overHandleDirection = Direction.UpRight; else
-			if referencePos manhattanDistanceTo {min.x, max.y} < 32: overHandleDirection = Direction.DownLeft; else
-				
-			if referencePos manhattanDistanceTo {max.x, center.y} < 32: overHandleDirection = Direction.Right; else
-				                                                        overHandleDirection = null
-				
 		let movedSinceTouchDown = (referencePos manhattanDistanceTo touchDownPos) > 8
 		let insideGizmo = referencePos >= gizmo.min and referencePos <= gizmo.max
-		if inputType == TouchDown: touchDownInsideGizmo = insideGizmo
-		if overHandleDirection == null and codeId >= waitingForCodeId
+		if inputType == TouchDown: touchDownPos = referencePos; touchDownInsideGizmo = insideGizmo; else
+		if inputType == TouchUp:   touchDownPos = Vector2.none; isManipulating = false
+			
+		// Which handle are we currently hovering over?
+		if items and not touchDownPos
+			let center = (min + max)/2
+			const threshold = 32
+			if referencePos manhattanDistanceTo max < threshold:               overHandleDirection = Direction.DownRight; else
+			if referencePos manhattanDistanceTo min < threshold:               overHandleDirection = Direction.UpLeft; else
+			if referencePos manhattanDistanceTo {max.x, min.y} < threshold:    overHandleDirection = Direction.UpRight; else
+			if referencePos manhattanDistanceTo {min.x, max.y} < threshold:    overHandleDirection = Direction.DownLeft; else
+			if referencePos manhattanDistanceTo {max.x, center.y} < threshold: overHandleDirection = Direction.Right; else
+			if referencePos manhattanDistanceTo {min.x, center.y} < threshold: overHandleDirection = Direction.Left; else
+			if referencePos manhattanDistanceTo {center.x, min.y} < threshold: overHandleDirection = Direction.Up; else
+			if referencePos manhattanDistanceTo {center.x, max.y} < threshold: overHandleDirection = Direction.Down; else
+				                                                               overHandleDirection = null
+				
+		// If we touch down outside the selection, we select an item immediately, so we can directly move it
+		// If we touch up inside the selection without moving, we cycle through all items the pointer is over
+		if !overHandleDirection and codeId >= waitingForCodeId
 			if (inputType == TouchDown and !insideGizmo)
 			or (inputType == TouchUp and touchDownInsideGizmo and !movedSinceTouchDown)
-				SourceCodeLocation[] stack
+			
+				// Collect all items and locations the mouse pointer is over
+				GizmoOverItem[] overItems
 				for graphics.items -> item
-					let location = item.positionLocation or item.location
-					if location and pixelPos.isInsidePoygon item.poly
-						location.flattenTo stack
+					if pixelPos.isInsidePoygon item.poly
+						if item.positionLocation: flattenLocations overItems, item, item.positionLocation; else
+						if item.location:         overItems.add {item, item.location}
 									
-				if stack.length
+				if overItems.length
+					// Select next item cycling through all items the mouse pointer is over
 					if inputType == TouchDown: locationIndex = 0
-					let selectedStackItem = stack[locationIndex++ % stack.length]
-					cursorLocation = selectedStackItem
-					Platform.sendSelectToEditor selectedStackItem.file, selectedStackItem.start
+					let selectedStackItem = overItems[locationIndex++ % overItems.length]
+					cursorLocation = selectedStackItem.location
+					cursorItem = selectedStackItem.item
+					Platform.sendSelectToEditor cursorLocation.file, cursorLocation.start
 				else
+					// Deselect
 					locationIndex = 0
 					cursorLocation = null
 					Platform.sendDeselectToEditor
 		
 		if cursorLocation
-			if overHandleDirection and overHandleDirection.vector == {1,1}
-				setCursor "nwse-resize"
-				let dx = referencePos.x - touchDownPos.x
-				let dy = referencePos.y - touchDownPos.y
-				let deltas = shift ? [dx,dy] : aspectRatio < 1 ? [dx,dx*aspectRatio] : [dy/aspectRatio, dy]
+			GizomInfluence[] influences
+			if overHandleDirection
+				// Resize the item (we are over a handle)
+				let handle = overHandleDirection.vector
+				let isOrthogonal = handle.x == 0 or handle.y == 0
+				let dx = (referencePos.x - touchDownPos.x) * handle.x
+				let dy = (referencePos.y - touchDownPos.y) * handle.y
+				let deltas = shift or isOrthogonal ? [dx,dy] : aspectRatio < 1 ? [dx,dx*aspectRatio] : [dy/aspectRatio, dy]
+				
+				// Set cursor
+				setCursor isOrthogonal ? (handle.y == 0 ? "ew-resize" : "ns-resize")
+				                       : (handle.x == handle.y ? "nwse-resize" : "nesw-resize")
+						
+				// Adjust size
 				for items
-					influences.add {.sizeLocation.file, .sizeLocation.start, .sizeLocation.end, xRatio:1, yRatio:1, deltas}
+					if .sizeLocation and not .sizeLocation.file.startsWith("lib/")
+						// Change existing size
+						influences.add {.sizeLocation.file, .sizeLocation.start, .sizeLocation.end, deltas}
+					else
+						// Add new size
+						let initialValue = " size:\{{.w},{.h}\}"
+						influences.add {cursorLocation.file, cursorLocation.start, cursorLocation.end, deltas, initialValue}
+				
+				// Adjust position		
 				if not cmdOrCtrl
-					influences.add {cursorLocation.file, cursorLocation.start, cursorLocation.end, xRatio:.5, yRatio:.5, deltas:[deltas[0]*.5, deltas[1]*.5]}
+					if cursorItem.location != cursorLocation
+						// Change existing position
+						influences.add {cursorLocation.file, cursorLocation.start, cursorLocation.end, deltas:[.5*deltas[0]*handle.x, .5*deltas[1]*handle.y]}
+					else
+						// Add new position
+						let initialValue = " position:\{0,0\}"
+						influences.add {cursorLocation.file, cursorLocation.end, cursorLocation.end, deltas:[.5*deltas[0]*handle.x, .5*deltas[1]*handle.y], initialValue}
 			else
-			if overHandleDirection and overHandleDirection.vector == {1,0}
-				setCursor "ew-resize"
-				for items
-					influences.add {.sizeLocation.file, .sizeLocation.start, .sizeLocation.end, xRatio:1, yRatio:0}
-				influences.add {cursorLocation.file, cursorLocation.start, cursorLocation.end, xRatio:.5, yRatio:0}
-			else
-			if overHandleDirection and overHandleDirection.vector == {-1,1}
-				setCursor "nesw-resize"
-			else
+				// Move the item (we are inside the selection)
 				setCursor "auto"
-				influences.add {cursorLocation.file, cursorLocation.start, cursorLocation.end, xRatio:1, yRatio:1, deltas:[referencePos.x - touchDownPos.x, referencePos.y - touchDownPos.y]}
+				if cursorItem.location != cursorLocation
+					// Change existing position
+					influences.add {cursorLocation.file, cursorLocation.start, cursorLocation.end, deltas:[referencePos.x - touchDownPos.x, referencePos.y - touchDownPos.y]}
+				else
+					// Add new position
+					let initialValue = " position:\{0,0\}"
+					influences.add {cursorLocation.file, cursorLocation.end, cursorLocation.end, deltas:[referencePos.x - touchDownPos.x, referencePos.y - touchDownPos.y], initialValue}
+				
+			// Send manipulation to editor	
+			if inputType == TouchMove and touchDownPos and codeId >= waitingForCodeId
+				print touchDownPos
+				if not isManipulating and movedSinceTouchDown
+					// Start manipulation as soon as we dragged more than a certain threshold
+					isManipulating = true
+					aspectRatio = (max.y - min.y) / (max.x - min.x)
+					Platform.sendStartManipulationToEditor referencePos, influences
 					
-			if inputType == TouchDown: 
-				aspectRatio = (max.y - min.y) / (max.x - min.x)
-				Platform.sendStartManipulationToEditor referencePos, influences;
-			else
-			if inputType == TouchMove and touchDownPos:
-				Platform.sendMoveManipulationToEditor referencePos, influences, ++waitingForCodeId;
-			else
-			if inputType == TouchUp:   Platform.sendEndManipulationToEditor
+				if isManipulating
+					// Move manipulation
+					Platform.sendMoveManipulationToEditor referencePos, influences, ++waitingForCodeId
 			
-	js void setCursor: string cursor
+	private js void setCursor: string cursor
 		document.body.style.cursor = cursor
+		
+	private void flattenLocations: GizmoOverItem[] stack, DisplayItem item, SourceCodeLocation location
+		if location.file and !location.file.startsWith("lib/"): stack.add {item, location}
+		if location.right: flattenLocations stack, item, location.right
+		if location.left:  flattenLocations stack, item, location.left
 		
 transient class DisplayItem
 	float x, y, w, h
