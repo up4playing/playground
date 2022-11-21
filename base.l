@@ -1069,14 +1069,13 @@ transient class SourceCodeLocation
 		return null
 		
 	SourceCodeLocation leaf
-		if file and !file.startsWith("lib/")
-			return this
-		if right != null
+		if file: return this
+		if right
 			let result = right.leaf
-			if result != null: return result
-		if left != null
+			if result: return result
+		if left
 			let result = left.leaf
-			if result != null: return result
+			if result: return result
 		return null
 		
 js Error

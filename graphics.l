@@ -1137,7 +1137,7 @@ skipInit unit gizmo
 		min.y = float.maxValue; max.y = float.minValue
 		if cursorLocation != null
 			for graphics.items
-				if .location == cursorLocation or .positionLocation.find(cursorLocation) != null
+				if .location == cursorLocation or .positionLocation?.find(cursorLocation) != null
 					items.add .
 					if .x < min.x: min.x = .x
 					if .y < min.y: min.y = .y
@@ -1239,7 +1239,7 @@ skipInit unit gizmo
 						
 				// Adjust size
 				for items
-					if .sizeLocation and not .sizeLocation.file.startsWith("lib/")
+					if .sizeLocation
 						// Change existing size
 						influences.add {.sizeLocation.file, .sizeLocation.start, .sizeLocation.end, deltas}
 					else
@@ -1284,7 +1284,7 @@ skipInit unit gizmo
 		document.body.style.cursor = cursor
 		
 	private void flattenLocations: GizmoOverItem[] stack, DisplayItem item, SourceCodeLocation location
-		if location.file and !location.file.startsWith("lib/"): stack.add {item, location}
+		if location.file:  stack.add {item, location}
 		if location.right: flattenLocations stack, item, location.right
 		if location.left:  flattenLocations stack, item, location.left
 		
