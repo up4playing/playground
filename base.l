@@ -1038,13 +1038,12 @@ transient class SourceCodeLocation
 	string file
 	int start
 	int end
-	
 	SourceCodeLocation left
 	SourceCodeLocation right
+	
 	inline js bool toBool() (this != null)
 	
-	js SourceCodeLocation clone 
-		return new SourceCodeLocation(this.row, this.column, this.file, this.start, this.left, this.right)
+	SourceCodeLocation clone := {file, start, end, left, right}
 			
 	SourceCodeLocation find: string file, int pos
 		if this.file and this.file == file and pos >= this.start and pos <= this.end
