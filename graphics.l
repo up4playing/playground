@@ -65,6 +65,7 @@ class Texture
 skipInit class Font
 	string name
 	string file
+	Vector2 offset
 	
 	js void open
 		if(!window._fontCache) _fontCache = {}
@@ -76,7 +77,42 @@ skipInit class Font
 			document.fonts.add(font);
 			_fontCache[this.file] = font;
 		}
+		this.calculateOffset()
 		return this
+		
+	private js void calculateOffset
+		const fontsize = 64.0
+		const canvas = document.createElement('canvas');
+		const context=canvas.getContext('2d');
+		const w = fontsize*2, h = fontsize*2;
+		canvas.height = h;
+		canvas.width = w;
+		context.textBaseline='top';
+		context.font=fontsize+'px '+this.name;
+		context.fillStyle='red';
+		context.fillText("M",0,0);
+		let pixels = context.getImageData(0,0,w,h).data;
+		
+		let minY = 0
+		findMinY:
+		for(var y=0;y<h;y++) {
+			for(var x=0;x<w;x++) {
+			    if(pixels[(y*w+x)*4+3] > 0) {
+				  minY = y; break findMinY;
+			    }
+			}
+		}
+		
+		let minX = 0
+		findMinX:
+		for(var x=0;x<w;x++) {
+			for(var y=0;y<h;y++) {
+			    if(pixels[(y*w+x)*4+3] > 0) {
+        			minX = x; break findMinX;
+			    }
+			}
+		}
+		this.offset = new Vector2(minX/fontsize, minY/fontsize)
 
 // A single frame of an animated image
 struct ImageFrame
@@ -108,7 +144,7 @@ transient global unit graphics
 				Platform_context.fillStyle = graphics_backgroundColor.hex
 				Platform_context.fillRect(0, 0, Platform_pixelSize.x, Platform_pixelSize.y)
 			}
-			Platform_context.textBaseline = "middle"
+			Platform_context.textBaseline = "top"
 
 	internal reset
 		totalMatrix = Platform.baseMatrix
@@ -330,7 +366,7 @@ transient global unit graphics
 		code()
 		currentFontSize = prev
 		return currentFontSize
-	private currentFontSize = 20
+	private currentFontSize = 64
 	
 	// The default line width for all draw operations
 	lineWidth
@@ -590,6 +626,8 @@ transient global unit graphics
 			))
 		}
 	
+	const factorForAlignment = [0, .5, 1]
+	
 	// Draws text on the screen
 	global js void drawText: string text                        // The text to draw
 		                     Vector2 position = {}              // The position to draw to
@@ -604,17 +642,21 @@ transient global unit graphics
 		                     visibleFor = -1                    // Only this user will see the image
 		                     implicit layer = 0                 // Higher layers are drawn in front of lower layers
 		                     alpha = 1.0                        // The opacity of the text (0: fully transparent, 1: fully visible)
+		                     SourceCodeLocation location
 		if(graphics_isVisibleFor(visibleFor)) {
-			let contextFont = (style ? "bold ":"")+(size || graphics_currentFontSize)+"px "+(font || graphics_currentFont).name;
+			let effectiveFont = font || graphics_currentFont
+			let contextFont = (style ? "bold ":"")+(size || graphics_currentFontSize)+"px "+effectiveFont.name;
 			Platform_context.font = contextFont
 			let textSize = Platform_context.measureText(text)
 			let sizeX = textSize.width
 			let sizeY = size || graphics_currentFontSize
-			let x = align  == 0 ? position.x : align  == 1 ? position.x-sizeX*.5 : position.x-sizeX
-			let y = valign == 0 ? position.y-sizeY*.5 : valign == 1 ? position.y+sizeY*.15 : position.y+sizeY*.5
 			graphics_items.push(new DisplayText(
-				graphics_totalMatrix, x, y, sizeX, sizeY, layer, alpha, graphics_currentClippingPath, text, 
-				position.location, 
+				graphics_totalMatrix, 
+				position.x - (graphics_factorForAlignment[ align])*sizeX - effectiveFont.offset.x*sizeY,
+				position.y - (graphics_factorForAlignment[valign]+effectiveFont.offset.y)*sizeY,
+				sizeX, sizeY, 
+				layer, alpha, graphics_currentClippingPath, text, 
+				location, position.location, size.location,
 				(color || graphics_currentColor).hex, 
 				outlineColor ? outlineColor.hex : null,
 				outlineWidth || graphics_currentLineWidth,
@@ -635,17 +677,20 @@ transient global unit graphics
 		                     int[] visibleFor                   // Only this user will see the image
 		                     implicit layer = 0                 // Higher layers are drawn in front of lower layers
 		                     alpha = 1.0                        // The opacity of the text (0: fully transparent, 1: fully visible)
+		                     SourceCodeLocation location
 		if(graphics_isVisibleFor2(visibleFor)) {
 			let contextFont = (style ? "bold ":"")+(size || graphics_currentFontSize)+"px "+(font || graphics_currentFont).name;
 			Platform_context.font = contextFont
 			let textSize = Platform_context.measureText(text)
 			let sizeX = textSize.width
 			let sizeY = size || graphics_currentFontSize
-			let x = align  == 0 ? position.x : align  == 1 ? position.x-sizeX*.5 : position.x-sizeX
-			let y = valign == 0 ? position.y-sizeY*.5 : valign == 1 ? position.y+sizeY*.15 : position.y+sizeY*.5
 			graphics_items.push(new DisplayText(
-				graphics_totalMatrix, x, y, sizeX, sizeY, layer, alpha, graphics_currentClippingPath, text, 
-				position.location, 
+				graphics_totalMatrix, 
+				position.x - (graphics_factorForAlignment[ align])*sizeX - effectiveFont.offset.x*sizeY,
+				position.y - (graphics_factorForAlignment[valign]+effectiveFont.offset.y)*sizeY,
+				sizeX, sizeY, 
+				layer, alpha, graphics_currentClippingPath, text, 
+				location, position.location, size.location,
 				(color || graphics_currentColor).hex, 
 				outlineColor ? outlineColor.hex : null,
 				outlineWidth || graphics_currentLineWidth,
@@ -667,9 +712,10 @@ transient global unit graphics
 		                    visibleFor = -1              // Only this user will see the button
 		                    implicit layer = 0           // Higher layers are drawn in front of lower layers
 		                    alpha = 1.0                  // The opacity of the button (0: fully transparent, 1: fully visible)
+	                        SourceCodeLocation location
 		if isVisibleFor(visibleFor)
-			if text:  drawText text, position+textOffset, fontSize, textColor, visibleFor, layer, alpha
-			if image: drawImage image, position, frame, size, visibleFor, layer, alpha
+			if text:  drawText text, position+textOffset, fontSize, textColor, visibleFor, layer, alpha, location
+			if image: drawImage image, position, frame, size, visibleFor, layer, alpha, location
 			
 	// Draws a button that consists of an image and a text
 	global void drawButton: Image image = null            // The image of the button
@@ -688,9 +734,10 @@ transient global unit graphics
 		                    implicit layer = 0            // Higher layers are drawn in front of lower layers
 		                    alpha = 1.0                   // The opacity of the button 0: fully transparent, 1: fully visible)
 		                    void(Touch touch) onClick     // Execute this code when the user clicks the button or presses the hotkey
+	                        SourceCodeLocation location
 		if isVisibleFor(visibleFor)
-			if text:  drawText text, position+textOffset, fontSize, textColor, visibleFor, layer, alpha
-			if image: drawImage image, position, frame, size, visibleFor, layer, alpha
+			if text:  drawText text, position+textOffset, fontSize, textColor, visibleFor, layer, alpha, location
+			if image: drawImage image, position, frame, size, visibleFor, layer, alpha, location
 			
 		// Handle click (only visible buttons are clickable)
 		int[] effectiveClickableBy = getClickableBy(visibleFor, clickableBy)
@@ -717,9 +764,10 @@ transient global unit graphics
 		                    implicit layer = 0            // Higher layers are drawn in front of lower layers
 		                    alpha = 1.0                   // The opacity of the button 0: fully transparent, 1: fully visible)
 		                    void(Touch touch) onClick     // Execute this code when the user clicks the button or presses the hotkey
+	                        SourceCodeLocation location
 		if isVisibleFor(visibleFor)
-			if text:  drawText text, position+textOffset, fontSize, textColor, visibleFor, layer, alpha
-			if image: drawImage image, position, frame, size, visibleFor, layer, alpha
+			if text:  drawText text, position+textOffset, fontSize, textColor, visibleFor, layer, alpha, location
+			if image: drawImage image, position, frame, size, visibleFor, layer, alpha, location
 			
 		// Handle click (only visible buttons are clickable)
 		int[] effectiveClickableBy = getClickableBy(visibleFor, clickableBy)
