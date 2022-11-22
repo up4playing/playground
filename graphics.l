@@ -66,6 +66,7 @@ skipInit class Font
 	string name
 	string file
 	Vector2 offset
+	actualHeightFactor = .76
 	
 	js void open
 		if(!window._fontCache) _fontCache = {}
@@ -112,7 +113,7 @@ skipInit class Font
 			    }
 			}
 		}
-		this.offset = new Vector2(minX/fontsize, minY/fontsize)
+		this.offset = new Vector2(minX/fontsize, minY/(fontsize*this.actualHeightFactor))
 
 // A single frame of an animated image
 struct ImageFrame
@@ -626,12 +627,12 @@ transient global unit graphics
 			))
 		}
 	
-	const factorForAlignment = [0, .5, 1]
+	const alignmentFactor = [0, .5, 1]
 	
 	// Draws text on the screen
 	global js void drawText: string text                        // The text to draw
 		                     Vector2 position = {}              // The position to draw to
-		                     size = 0.0                         // The font size in pixels
+		                     implicit Vector2 size = {256}      // The size of the text
 		                     Color color = null                 // The color of the text
 		                     HorizontalAlignment align = Center // The horizontal alignment of the text
 		                     VerticalAlignment valign = Middle  // The vertical alignment of the text
@@ -645,28 +646,30 @@ transient global unit graphics
 		                     SourceCodeLocation location
 		if(graphics_isVisibleFor(visibleFor)) {
 			let effectiveFont = font || graphics_currentFont
-			let contextFont = (style ? "bold ":"")+(size || graphics_currentFontSize)+"px "+effectiveFont.name;
+			let fontSize = size.y || size.x
+			let contextFont = (style ? "bold ":"")+fontSize+"px "+effectiveFont.name;
 			Platform_context.font = contextFont
 			let textSize = Platform_context.measureText(text)
 			let sizeX = textSize.width
-			let sizeY = size || graphics_currentFontSize
+			let sizeY = fontSize*effectiveFont.actualHeightFactor
 			graphics_items.push(new DisplayText(
 				graphics_totalMatrix, 
-				position.x - (graphics_factorForAlignment[ align])*sizeX - effectiveFont.offset.x*sizeY,
-				position.y - (graphics_factorForAlignment[valign]+effectiveFont.offset.y)*sizeY,
+				position.x - graphics_alignmentFactor[ align]*sizeX,
+				position.y - graphics_alignmentFactor[valign]*sizeY,
 				sizeX, sizeY, 
 				layer, alpha, graphics_currentClippingPath, text, 
 				location, position.location, size.location,
 				(color || graphics_currentColor).hex, 
 				outlineColor ? outlineColor.hex : null,
 				outlineWidth || graphics_currentLineWidth,
+				effectiveFont.offset.y*sizeY,
 				contextFont
 			))
 		}
 		
 	global js void drawText: string text                        // The text to draw
 		                     Vector2 position = {}              // The position to draw to
-		                     size = 0.0                         // The font size in pixels
+		                     implicit Vector2 size = {256}      // The size of the text
 		                     Color color = null                 // The color of the text
 		                     HorizontalAlignment align = Center // The horizontal alignment of the text
 		                     VerticalAlignment valign = Middle  // The vertical alignment of the text
@@ -679,21 +682,25 @@ transient global unit graphics
 		                     alpha = 1.0                        // The opacity of the text (0: fully transparent, 1: fully visible)
 		                     SourceCodeLocation location
 		if(graphics_isVisibleFor2(visibleFor)) {
-			let contextFont = (style ? "bold ":"")+(size || graphics_currentFontSize)+"px "+(font || graphics_currentFont).name;
+			let effectiveFont = font || graphics_currentFont
+			let fontSize = size.y || size.x
+			let contextFont = (style ? "bold ":"")+fontSize+"px "+effectiveFont.name;
 			Platform_context.font = contextFont
 			let textSize = Platform_context.measureText(text)
 			let sizeX = textSize.width
-			let sizeY = size || graphics_currentFontSize
+			let sizeY = fontSize*effectiveFont.actualHeightFactor
+			log("Drowing text "+text+" sizeX:"+sizeX+" sizeY:"+sizeY)
 			graphics_items.push(new DisplayText(
 				graphics_totalMatrix, 
-				position.x - (graphics_factorForAlignment[ align])*sizeX - effectiveFont.offset.x*sizeY,
-				position.y - (graphics_factorForAlignment[valign]+effectiveFont.offset.y)*sizeY,
+				position.x - graphics_alignmentFactor[ align]*sizeX,
+				position.y - graphics_alignmentFactor[valign]*sizeY,
 				sizeX, sizeY, 
 				layer, alpha, graphics_currentClippingPath, text, 
 				location, position.location, size.location,
 				(color || graphics_currentColor).hex, 
 				outlineColor ? outlineColor.hex : null,
 				outlineWidth || graphics_currentLineWidth,
+				effectiveFont.offset.y*sizeY,
 				contextFont
 			))
 		}
@@ -834,24 +841,27 @@ transient global unit graphics
 		}
 		
 	// Draws a circle on the screen
-	global js void drawCircle: position = Vector2()      // The center of the circle
-		                       radius = 32.0             // The radius of the circle
-		                       Color fillColor = null    // The color of the area within the circle
-		                       Color outlineColor = null // The color of the outline around the circle
-		                       outlineWidth = 0          // The width of the outline around the circle
-		                       Angle startAngle = 0.0    // Draws an arc with this start angle in turns, measured from the positive x-axis
-		                       Angle endAngle = 1.0      // Draws an arc with this end angle in turns, measured from the positive x-axis
+	global js void drawCircle: position = Vector2()       // The center of the circle
+		                       implicit Vector2 size = {256,256} // The size of the circle, use a float to draw a circle, use a vector draw an ellipse
+		                       Color fillColor = null     // The color of the area within the circle
+		                       Color outlineColor = null  // The color of the outline around the circle
+		                       outlineWidth = 0           // The width of the outline around the circle
+		                       Angle startAngle = 0.0     // Draws an arc with this start angle in turns, measured from the positive x-axis
+		                       Angle endAngle = 1.0       // Draws an arc with this end angle in turns, measured from the positive x-axis
 		                       RotationDirection direction = Clockwise // The circle is drawn in this direction
-		                       visibleFor = -1           // Only this user will see the circle
-		                       implicit layer = 0        // Higher layers are drawn in front of lower layers
-		                       alpha = 1.0               // The opacity of the circle (0: fully transparent, 1: fully visible)
+		                       visibleFor = -1            // Only this user will see the circle
+		                       implicit layer = 0         // Higher layers are drawn in front of lower layers
+		                       alpha = 1.0                // The opacity of the circle (0: fully transparent, 1: fully visible)
+		                       SourceCodeLocation location
 		if(graphics_isVisibleFor(visibleFor)) {
-			let diameter = radius*2
 			graphics_items.push(new DisplayCircle(
 				graphics_totalMatrix, 
-				position.x, position.y, diameter, diameter,
-				layer, alpha, graphics_currentClippingPath, "Circle", position.location,
-				radius, startAngle, endAngle,
+				position.x - size.x/2, 
+				position.y - size.y/2, 
+				size.x, size.y,
+				layer, alpha, graphics_currentClippingPath, "Circle", 
+				location, position.location, size.location,
+				startAngle, endAngle,
 				direction == 1,
 				fillColor || !outlineColor ? (fillColor || graphics_currentColor).hex : null,
 				outlineColor ? outlineColor.hex : null,
@@ -860,7 +870,7 @@ transient global unit graphics
 		}
 		
 	global js void drawCircle: position = Vector2()      // The center of the circle
-		                       radius = 32.0             // The radius of the circle
+		                       implicit Vector2 size = {256,256} // The size of the circle, use a float to draw a circle, use a vector draw an ellipse
 		                       Color fillColor = null    // The color of the area within the circle
 		                       Color outlineColor = null // The color of the outline around the circle
 		                       outlineWidth = 0          // The width of the outline around the circle
@@ -870,13 +880,14 @@ transient global unit graphics
 		                       int[] visibleFor          // Only this user will see the circle
 		                       implicit layer = 0        // Higher layers are drawn in front of lower layers
 		                       alpha = 1.0               // The opacity of the circle (0: fully transparent, 1: fully visible)
+		                       SourceCodeLocation location
 		if(graphics_isVisibleFor2(visibleFor)) {
-			let diameter = radius*2
 			graphics_items.push(new DisplayCircle(
 				graphics_totalMatrix, 
-				position.x, position.y, diameter, diameter,
-				layer, alpha, graphics_currentClippingPath, "Circle", position.location,
-				radius, startAngle, endAngle,
+				position.x, position.y, size.x, size.y,
+				layer, alpha, graphics_currentClippingPath, "Circle", 
+				location, position.location, size.location,
+				startAngle, endAngle,
 				direction == 1,
 				fillColor || !outlineColor ? (fillColor || graphics_currentColor).hex : null,
 				outlineColor ? outlineColor.hex : null,
@@ -1225,7 +1236,7 @@ skipInit unit gizmo
 		max = Vector2.none
 	
 	internal onTouch: InputType inputType, int id, Vector2 pixelPos, Vector2 referencePos, shift = false, alt = false, cmdOrCtrl = false	
-		if Platform.mode != Pointer: return
+		if Platform.mode != Manipulator: return
 		let movedSinceTouchDown = (referencePos manhattanDistanceTo touchDownPos) > 8
 		let insideGizmo = referencePos >= gizmo.min and referencePos <= gizmo.max
 		if inputType == TouchDown: touchDownPos = referencePos; touchDownInsideGizmo = insideGizmo; else
@@ -1304,6 +1315,11 @@ skipInit unit gizmo
 						// Add new position
 						let initialValue = " position:\{0,0\}"
 						influences.add {cursorLocation.file, cursorLocation.end, cursorLocation.end, deltas:[.5*deltas[0]*handle.x, .5*deltas[1]*handle.y], initialValue}
+				else
+				if cursorItem.location != cursorLocation
+					// Change existing position
+					influences.add {cursorLocation.file, cursorLocation.start, cursorLocation.end, deltas:[0,0]}
+					
 			else
 				// Move the item (we are inside the selection)
 				setCursor "auto"
@@ -1397,6 +1413,7 @@ transient DisplayItem DisplayImage
 transient DisplayItem DisplayText
 	string fillStyle, outlineColor
 	float outlineWidth
+	float offsetY
 	string font
 	js void draw
 		if(this.alpha == 0) return
@@ -1411,7 +1428,7 @@ transient DisplayItem DisplayText
 			Platform_context.strokeText(this.name, this.x, this.y)
 		}
 		Platform_context.fillStyle = this.fillStyle
-		Platform_context.fillText(this.name, this.x, this.y)
+		Platform_context.fillText(this.name, this.x, this.y - this.offsetY)
 		
 		if(this.clippingPath) this.endClipping()
 		
@@ -1537,7 +1554,7 @@ transient DisplayItem DisplayPolygon
 enum RotationDirection: Clockwise, CounterClockwise
 		
 transient DisplayItem DisplayCircle
-	float radius, startAngle, endAngle
+	float startAngle, endAngle
 	RotationDirection direction
 	string fillColor, outlineColor
 	float outlineWidth
@@ -1548,7 +1565,14 @@ transient DisplayItem DisplayCircle
 		if(this.clippingPath) this.startClipping()
 			
 		Platform_context.beginPath();
-		Platform_context.arc(this.x, this.y, this.radius, this.startAngle*Math_TwoPI, this.endAngle*Math_TwoPI, this.direction);
+		if(this.w == this.h) {
+			let radius = this.w/2
+			Platform_context.arc(this.x+radius, this.y+radius, radius, this.startAngle*Math_TwoPI, this.endAngle*Math_TwoPI, this.direction);
+		} else {
+			let radiusX = this.w/2
+			let radiusY = this.h/2
+			Platform_context.ellipse(this.x+radiusX, this.y+radiusY, radiusX, radiusY, this.startAngle*Math_TwoPI, this.endAngle*Math_TwoPI, this.direction);
+		}
 		if(this.fillColor) {
 			Platform_context.fillStyle = this.fillColor
 			Platform_context.fill()

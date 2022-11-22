@@ -189,14 +189,14 @@ Object CircleObject
 
 Object TextObject
 	string text
-	int size
+	implicit Vector2 size
 	Font font
 	Color color = White
 	HorizontalAlignment align = Center // The horizontal alignment of the text
 	VerticalAlignment valign = Middle  // The vertical alignment of the text
-	internal checksum := position.x + position.y + text.length + size
+	internal checksum := position.x + position.y + text.length + size.x + size.y
 	override tick
-		drawText text, position, size*scale, color, align, valign, font, alpha, visibleFor, layer
+		drawText text, position, size*scale, color, align, valign, font, visibleFor, alpha, layer
 		
 Object ImageObject
 	Image image
@@ -674,7 +674,7 @@ Piece Coin
 			
 		if isInfinate or value or allowZero
 			if closestCoinType == Neighbor 
-				drawCircle (position + closestCoin.position)/2, radius:6, fillColor:darkColor, outlineColor:lightColor, outlineWidth:5
+				drawCircle (position + closestCoin.position)/2, size:12, fillColor:darkColor, outlineColor:lightColor, outlineWidth:5
 			if !isInfinate
 				if value < 10:  drawText cast value, position+{0, -4}, color:darkColor, size:42, style:Bold, font:ShadowedSerif, visibleFor:valueVisibleFor; else
 				if value < 100: drawText cast value, position+{0, -4}, color:darkColor, size:30, style:Bold, font:ShadowedSerif, visibleFor:valueVisibleFor; else

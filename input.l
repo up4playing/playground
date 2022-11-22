@@ -983,7 +983,7 @@ skipInit unit Input
 					if !touch.handled && (touch.referencePosition distanceTo position) <= radius
 						this.cursor = cursor
 				
-		if showTouchArea: drawCircle position, radius, fillColor:{"ff000080"}
+		if showTouchArea: drawCircle position, radius*2, fillColor:{"ff000080"}
 
 	// Do something when the user touches or clicks within a given polygon
 	onTouchDownWithin: Vector2 position           // The center of the touch area
@@ -1105,7 +1105,7 @@ skipInit unit Input
 					if !touch.handled && (touch.referencePosition distanceTo position) <= radius
 						this.cursor = cursor
 				
-		if showTouchArea: drawCircle position, radius, fillColor:{"ff000080"}
+		if showTouchArea: drawCircle position, radius*2, fillColor:{"ff000080"}
 
 	onTouchOver: Vector2 position           // The center of the touch area
 		         Vector2 size               // The size of a rectangular touch area

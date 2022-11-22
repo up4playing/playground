@@ -1,4 +1,4 @@
-enum PlatformMode: Pause, Pointer, Slide, Play, Record
+enum PlatformMode: Pause, Manipulator, Slide, Play, Record
 enum ScaleMode: Auto, FixedWidth, FixedHeight, None
 enum AnchorMode: TopLeft, TopCenter, Center
 enum OperatingSystem: Windows, Mac, Linux, Android, iOS
@@ -71,7 +71,7 @@ transient skipInit unit Platform
 		if(!Platform_isMobile) 
 			window.onresize = e => { 
 				Platform_onResize();
-				if(Platform_mode == 0/*Pause*/ && Platform_engineStarted) Network_tick(/*draw*/true);
+				if(Platform_mode < 3/*Pause,Manipulator,Slide*/ && Platform_engineStarted) Network_tick(/*draw*/true);
 			}
 		if(window.app_init) app_init();
 		

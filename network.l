@@ -485,7 +485,7 @@ transient skipInit unit Network
 					drawText "{lag100Count}-{lag200Count} #{frame} {PeerNetwork.connectionType}{statisticsGraph.maxValue}", statisticsGraph.position+{statisticsGraph.size.x/2, -statisticsGraph.size.y/2-12}, align:Right, layer:1000001, size:10
 			drawTime = Time.measure
 				graphics.finishFrame
-			if Platform.mode != Pointer: Input.updateCursor
+			if Platform.mode != Manipulator: Input.updateCursor
 		audio.finishFrame
 				
 	js void appTick() if(window.app_tick) app_tick();
