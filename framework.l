@@ -91,6 +91,7 @@ class Object
 	int[] visibleFor = null
 	int layer = 0
 	bool locked
+	SourceCodeLocation location
 	
 	visible siblings := Framework.objects
 	internal checksum := position.x + position.y + scale + alpha
@@ -789,7 +790,7 @@ Object Menu
 				Input.onTouchDownAny
 					active = false
 				
-		drawImage Menu, position
+		drawImage Menu, position, location
 			active = true
 		
 enum MenuItemType: Button, Check, Radio
