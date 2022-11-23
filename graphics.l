@@ -1215,8 +1215,9 @@ skipInit unit gizmo
 			// Draw handles
 			let size = max - min
 			let center = (max + min)/2 
+			let handleSize = cursorItem.handleSize
 			for Direction.allEightDirections
-				drawImage ResizeHandle, center + size/2*.vector, location:null, layer:int.maxValue
+				drawImage ResizeHandle, center + size/2*.vector, size:handleSize, location:null, layer:int.maxValue
 				
 			// Draw selection
 			drawRectangle center, size:max-min, outlineColor:{"437FDF"}, outlineWidth:4, location:null, layer:int.maxValue
@@ -1250,7 +1251,7 @@ skipInit unit gizmo
 		// Which handle are we currently hovering over?
 		if items and not touchDownPos
 			let center = (min + max)/2
-			const threshold = 32
+			let threshold = cursorItem.handleSize
 			if referencePos manhattanDistanceTo max < threshold:               overHandleDirection = Direction.DownRight; else
 			if referencePos manhattanDistanceTo min < threshold:               overHandleDirection = Direction.UpLeft; else
 			if referencePos manhattanDistanceTo {max.x, min.y} < threshold:    overHandleDirection = Direction.UpRight; else
@@ -1369,6 +1370,8 @@ transient class DisplayItem
 	
 	visible float m0, m1, m2, m3, m4, m5
 	visible Vector2[] poly
+	
+	handleSize := Math.min(w,h) < 64 ? 16 : 32 
 	
 	DisplayItem: Matrix2D m
 		m0 = m.m0; m1 = m.m1; m2 = m.m2; m3 = m.m3; m4 = m.m4; m5 = m.m5
