@@ -240,7 +240,7 @@ struct IntVector2
 	const IntVector2 zero = {0,0}
 	
 	// Creates a copy of the vector with the same values
-	IntVector2 clone := IntVector2(x, y)
+	IntVector2 clone := {x, y, location}
 		
 	// A string representation of the vector
 	string toString := "({x} {y})"
