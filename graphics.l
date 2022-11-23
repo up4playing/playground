@@ -854,11 +854,12 @@ transient global unit graphics
 		                       alpha = 1.0                // The opacity of the circle (0: fully transparent, 1: fully visible)
 		                       SourceCodeLocation location
 		if(graphics_isVisibleFor(visibleFor)) {
+			let sizeX = size.x, sizeY = size.y || size.x
 			graphics_items.push(new DisplayCircle(
 				graphics_totalMatrix, 
-				position.x - size.x/2, 
-				position.y - size.y/2, 
-				size.x, size.y,
+				position.x - sizeX/2, 
+				position.y - sizeY/2, 
+				sizeX, sizeY,
 				layer, alpha, graphics_currentClippingPath, "Circle", 
 				location, position.location, size.location,
 				startAngle, endAngle,
@@ -882,9 +883,12 @@ transient global unit graphics
 		                       alpha = 1.0               // The opacity of the circle (0: fully transparent, 1: fully visible)
 		                       SourceCodeLocation location
 		if(graphics_isVisibleFor2(visibleFor)) {
+			let sizeX = size.x, sizeY = size.y || size.x
 			graphics_items.push(new DisplayCircle(
 				graphics_totalMatrix, 
-				position.x, position.y, size.x, size.y,
+				position.x - sizeX/2, 
+				position.y - sizeY/2, 
+				sizeX, sizeY,
 				layer, alpha, graphics_currentClippingPath, "Circle", 
 				location, position.location, size.location,
 				startAngle, endAngle,
@@ -1086,26 +1090,28 @@ transient global unit graphics
 
 	global drawVideo: int userId
 		              Vector2 position = {}
-		              implicit Vector2 size = {440, 330}
+		              implicit Vector2 size = {440}
+		              VideoShape shape = Rectangle
 		              visibleFor = -1      // Only clear the rectangle for this user
 		              implicit layer = 0   // Higher layers are process after lower layers
 		if isVisibleFor(visibleFor)
-			if not size.y: size.y = size.x * 3/4
+			if not size.y: size.y = shape == Rectangle ? size.x * 3/4 : size.x
 			if Network.mode == Local or !PeerNetwork.enableVideo
 				NetworkUser user = Input.usersById[userId]
-				drawImage VideoScreen, position, size, frame:0, layer:1000000
+				drawImage VideoScreen, position, size, frame:shape == Circle ? 1:0, layer:1000000
 			else
 				items.add DisplayVideo(
 					m: totalMatrix,
 					x: position.x, y: position.y,
 					w: size.x,     h: size.y,
 					layer, alpha:1.0, currentClippingPath, "Video",
-					userId, radius:0
+					userId, shape
 				)
 				
 	global drawVideo: int userId
 		              Vector2 position = {}
 		              implicit Vector2 size = {440, 330}
+		              VideoShape shape = Rectangle
 		              int[] visibleFor          // Only clear the rectangle for this user
 		              implicit layer = 0        // Higher layers are process after lower layers
 		if isVisibleFor(visibleFor)
@@ -1119,43 +1125,7 @@ transient global unit graphics
 					x: position.x, y: position.y,
 					w: size.x,     h: size.y,
 					layer, alpha:1.0, currentClippingPath, "Video",
-					userId, radius:0
-				)
-				
-	global drawVideo: int userId
-		              Vector2 position = {}
-		              float radius = 440
-		              visibleFor = -1      
-		              implicit layer = 0   // Higher layers are process after lower layers
-		if isVisibleFor(visibleFor)
-			if Network.mode == Local or !PeerNetwork.enableVideo
-				NetworkUser user = Input.usersById[userId]
-				drawImage VideoScreen, position, size:radius*2, frame:1, layer:1000000
-			else
-				items.add DisplayVideo(
-					m: totalMatrix,
-					x: position.x, y: position.y,
-					w: radius*2,   h: radius*2,
-					layer, alpha:1.0, currentClippingPath, "Video",
-					userId, radius
-				)
-				
-	global drawVideo: int userId
-		              Vector2 position = {}
-		              float radius = 440
-		              int[] visibleFor     
-		              implicit layer = 0   // Higher layers are process after lower layers
-		if isVisibleFor(visibleFor)
-			if Network.mode == Local or !PeerNetwork.enableVideo
-				NetworkUser user = Input.usersById[userId]
-				drawImage VideoScreen, position, size:radius*2, frame:1, layer:1000000
-			else
-				items.add DisplayVideo(
-					m: totalMatrix,
-					x: position.x, y: position.y,
-					w: radius*2,   h: radius*2,
-					layer, alpha:1.0, currentClippingPath, "Video",
-					userId, radius
+					userId, shape
 				)
 
 struct GizomInfluence
@@ -1610,7 +1580,7 @@ transient DisplayItem DisplayLine
 			
 transient DisplayItem DisplayVideo
 	int userId
-	float radius
+	VideoShape shape
 	draw
 		InternalUser user = Input.internalUsers[userId]
 			let videoElement = user.videoElements[user.videoElementIndex]
@@ -1620,7 +1590,6 @@ transient DisplayItem DisplayVideo
 			let py = (m1 * x + m3 * y + m5) / Platform.pixelRatio
 			let sizeX = w*m0 / Platform.pixelRatio
 			let sizeY = h*m3 / Platform.pixelRatio
-			let radius = this.radius ? 10000 : 0
-			PeerNetwork.updateVideoElement videoElement, px, py, sizeX, sizeY, radius
+			PeerNetwork.updateVideoElement videoElement, px, py, sizeX, sizeY, radius:shape == Circle ? 10000 : 0
 			user.videoElementIndex++
 
