@@ -689,7 +689,6 @@ transient global unit graphics
 			let textSize = Platform_context.measureText(text)
 			let sizeX = textSize.width
 			let sizeY = fontSize*effectiveFont.actualHeightFactor
-			log("Drowing text "+text+" sizeX:"+sizeX+" sizeY:"+sizeY)
 			graphics_items.push(new DisplayText(
 				graphics_totalMatrix, 
 				position.x - graphics_alignmentFactor[ align]*sizeX,
