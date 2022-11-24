@@ -1056,14 +1056,14 @@ transient class SourceCodeLocation
 			if result != null: return result
 		return null
 			
-	SourceCodeLocation find: SourceCodeLocation sourceCodeLocation
-		if this == sourceCodeLocation
+	SourceCodeLocation find: SourceCodeLocation location
+		if file == location.file and start == location.start and end == location.end
 			return this
 		if left != null
-			let result = left.find sourceCodeLocation
+			let result = left.find location
 			if result != null: return result
 		if right != null
-			let result = right.find sourceCodeLocation
+			let result = right.find location
 			if result != null: return result
 		return null
 		
