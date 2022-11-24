@@ -23,13 +23,9 @@ struct Vector2
 	bool toBool := (x != float.infinity || y != float.infinity)
 	
 	// Creates a copy of the vector with the same values
-	Vector2 clone() return {x, y, this.location ? this.location.clone() : null}
+	Vector2 clone() := {x, y, location}
 		
-	Vector2 operator = (Vector2 a, Vector2 b)
-		a.x = b.x
-		a.y = b.y
-		a.location = b.location ? b.location.clone : null
-		return a
+	Vector2 operator = (Vector2 a, Vector2 b) a.x = b.x; a.y = b.y; a.location = b.location; return a
 	
 	Vector2 operator + (Vector2 a, Vector2 b) return {a.x+b.x, a.y+b.y, a.location || b.location ? new SourceCodeLocation(null, 0, 0, a.location, b.location) : null}
 	Vector2 operator - (Vector2 a, Vector2 b) return {a.x-b.x, a.y-b.y, a.location || b.location ? new SourceCodeLocation(null, 0, 0, a.location, b.location) : null}
@@ -248,7 +244,7 @@ struct IntVector2
 	// Returns true if the vector is not equal to IntVector2.none
 	bool toBool := (x != int.minValue || y != int.minValue)
 	
-	implicit Vector2 toVector2 := Vector2(x, y, location)
+	implicit Vector2 toVector2 := {x, y, location}
 	
 	// IntVector2 operator = (IntVector2 a, IntVector2 b) a.x = b.x; a.y = b.y; return a
 	
@@ -275,11 +271,7 @@ struct IntVector2
 	// IntVector2 operator *= (IntVector2 a, IntVector2 b) a.x *= b.x; a.y *= b.y; return a
 	// IntVector2 operator /= (IntVector2 a, IntVector2 b) a.x /= b.x; a.y /= b.y; return a
 	
-	IntVector2 operator = (IntVector2 a, IntVector2 b)
-		a.x = b.x
-		a.y = b.y
-		a.location = b.location ? b.location.clone : null
-		return a
+	IntVector2 operator = (IntVector2 a, IntVector2 b) a.x = b.x; a.y = b.y; a.location = b.location; return a
 	
 	IntVector2 operator + (IntVector2 a, IntVector2 b) return {a.x+b.x, a.y+b.y, a.location || b.location ? new SourceCodeLocation(null, 0, 0, a.location, b.location) : null}
 	IntVector2 operator - (IntVector2 a, IntVector2 b) return {a.x-b.x, a.y-b.y, a.location || b.location ? new SourceCodeLocation(null, 0, 0, a.location, b.location) : null}
