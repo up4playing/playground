@@ -5,16 +5,16 @@ struct Vector2
 	SourceCodeLocation location
 	
 	// Used to specify that the vector is not set or invalid
-	const Vector2 none = {float.infinity, float.infinity}
+	const Vector2 none = {float.infinity, float.infinity, null}
 	
 	// {float.minValue, float.minValue}
-	const Vector2 minValue = {float.minValue, float.minValue}
+	const Vector2 minValue = {float.minValue, float.minValue, null}
 	
 	// {float.maxValue, float.maxValue}
-	const Vector2 maxValue = {float.maxValue, float.maxValue}
+	const Vector2 maxValue = {float.maxValue, float.maxValue, null}
 	
 	// {0,0}
-	const Vector2 zero = {0,0}
+	const Vector2 zero = {0, 0, null}
 		
 	// A string representation of the vector
 	string toString := "({x} {y})"
@@ -234,10 +234,10 @@ struct IntVector2
 	SourceCodeLocation location
 	
 	// Used to specify that the vector is not set or invalid
-	const IntVector2 none = new IntVector2(int.minValue, int.minValue)
+	const IntVector2 none = {int.minValue, int.minValue, null}
 		
 	// {0,0}
-	const IntVector2 zero = {0,0}
+	const IntVector2 zero = {0, 0, null}
 	
 	// Creates a copy of the vector with the same values
 	IntVector2 clone := {x, y, location}
