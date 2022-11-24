@@ -83,15 +83,16 @@ skipInit class Font
 		
 	private js void calculateOffset
 		const fontsize = 64.0
+		const margin = 32.0
 		const canvas = document.createElement('canvas');
 		const context=canvas.getContext('2d');
-		const w = fontsize*2, h = fontsize*2;
+		const w = fontsize*2+margin, h = fontsize*2+margin;
 		canvas.height = h;
 		canvas.width = w;
 		context.textBaseline='top';
 		context.font=fontsize+'px '+this.name;
 		context.fillStyle='red';
-		context.fillText("M",0,0);
+		context.fillText("M", margin, margin);
 		let pixels = context.getImageData(0,0,w,h).data;
 		
 		let minY = 0
@@ -99,7 +100,7 @@ skipInit class Font
 		for(var y=0;y<h;y++) {
 			for(var x=0;x<w;x++) {
 			    if(pixels[(y*w+x)*4+3] > 0) {
-				  minY = y; break findMinY;
+				  minY = y-margin; break findMinY;
 			    }
 			}
 		}
@@ -109,11 +110,12 @@ skipInit class Font
 		for(var x=0;x<w;x++) {
 			for(var y=0;y<h;y++) {
 			    if(pixels[(y*w+x)*4+3] > 0) {
-        			minX = x; break findMinX;
+        			minX = x-margin; break findMinX;
 			    }
 			}
 		}
 		this.offset = new Vector2(minX/fontsize, minY/(fontsize*this.actualHeightFactor))
+		// log(this.name+" "+this.offset)
 
 // A single frame of an animated image
 struct ImageFrame
@@ -714,7 +716,7 @@ transient global unit graphics
 		                    implicit Vector2 size = {}   // The size of the image, use a float to keep the aspect ratio, use a vector to strech the image
 		                    fontSize = 18                // The font size in pixels
 		                    touchMargin = Vector2(16,16) // The margin around the button within which it is touchable
-		                    textOffset = Vector2(0,-2)   // Draw the text at this offset
+		                    textOffset = Vector2(0,0)    // Draw the text at this offset
 		                    showTouchArea = false        // Show the area within which the button is touchable
 		                    visibleFor = -1              // Only this user will see the button
 		                    implicit layer = 0           // Higher layers are drawn in front of lower layers
@@ -732,8 +734,8 @@ transient global unit graphics
 		                    frame = 0                     // The frame of the image
 		                    implicit Vector2 size = {}    // The size of the image, use a float to keep the aspect ratio, use a vector to strech the image
 		                    fontSize = 18                 // The font size in pixels   
-		                    textOffset = Vector2(0,-2)    // Draw the text at this offset
 		                    touchMargin = Vector2(16,16)  // The margin around the button within which it is touchable
+		                    textOffset = Vector2(0,0)     // Draw the text at this offset
 		                    showTouchArea = false         // Show the area within which the button is touchable
 		                    visibleFor = -1               // Only this user will see the button
 		                    clickableBy = -1              // Only this user can click the button
@@ -762,7 +764,7 @@ transient global unit graphics
 		                    frame = 0                     // The frame of the image
 		                    implicit Vector2 size = {}    // The size of the image, use a float to keep the aspect ratio, use a vector to strech the image
 		                    fontSize = 18                 // The font size in pixels   
-		                    textOffset = Vector2(0,-2)    // Draw the text at this offset
+		                    textOffset = Vector2(0,0)     // Draw the text at this offset
 		                    touchMargin = Vector2(16,16)  // The margin around the button within which it is touchable
 		                    showTouchArea = false         // Show the area within which the button is touchable
 		                    int[] visibleFor = null       // Only this user will see the button
