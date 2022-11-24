@@ -1096,11 +1096,12 @@ transient global unit graphics
 		              VideoShape shape = Rectangle
 		              visibleFor = -1      // Only clear the rectangle for this user
 		              implicit layer = 0   // Higher layers are process after lower layers
+		              SourceCodeLocation location
 		if isVisibleFor(visibleFor)
 			if not size.y: size.y = shape == Rectangle ? size.x * 3/4 : size.x
 			if Network.mode == Local or !PeerNetwork.enableVideo
 				NetworkUser user = Input.usersById[userId]
-				drawImage VideoScreen, position, size, frame:shape == Circle ? 1:0, layer:1000000
+				drawImage VideoScreen, position, size, frame:shape == Circle ? 1:0, layer:1000000, location
 			else
 				items.add DisplayVideo(
 					m: totalMatrix,
@@ -1146,6 +1147,7 @@ skipInit unit gizmo
 	private Vector2 min, max
 	private SourceCodeLocation cursorLocation
 	private DisplayItem cursorItem
+	private float handleSize
 	
 	private inline js bool isCursorSet() window._cursorFile
 	private inline js string cursorFile() _cursorFile
@@ -1179,6 +1181,7 @@ skipInit unit gizmo
 					if .y < min.y: min.y = .y
 					if .x + .w > max.x: max.x = .x + .w
 					if .y + .h > max.y: max.y = .y + .h
+		handleSize = Math.interpolate Math.min(max.x-min.x, max.y-min.y) fromStart:64 fromEnd:256 toStart:16 toEnd:32
 	
 	internal tick
 		findInfluencedItems
@@ -1187,7 +1190,6 @@ skipInit unit gizmo
 			// Draw handles
 			let size = max - min
 			let center = (max + min)/2 
-			let handleSize = cursorItem.handleSize
 			for Direction.allEightDirections
 				drawImage ResizeHandle, center + size/2*.vector, size:handleSize, location:null, layer:int.maxValue
 				
@@ -1223,16 +1225,15 @@ skipInit unit gizmo
 		// Which handle are we currently hovering over?
 		if items and not touchDownPos
 			let center = (min + max)/2
-			let threshold = cursorItem.handleSize
-			if referencePos manhattanDistanceTo max < threshold:               overHandleDirection = Direction.DownRight; else
-			if referencePos manhattanDistanceTo min < threshold:               overHandleDirection = Direction.UpLeft; else
-			if referencePos manhattanDistanceTo {max.x, min.y} < threshold:    overHandleDirection = Direction.UpRight; else
-			if referencePos manhattanDistanceTo {min.x, max.y} < threshold:    overHandleDirection = Direction.DownLeft; else
-			if referencePos manhattanDistanceTo {max.x, center.y} < threshold: overHandleDirection = Direction.Right; else
-			if referencePos manhattanDistanceTo {min.x, center.y} < threshold: overHandleDirection = Direction.Left; else
-			if referencePos manhattanDistanceTo {center.x, min.y} < threshold: overHandleDirection = Direction.Up; else
-			if referencePos manhattanDistanceTo {center.x, max.y} < threshold: overHandleDirection = Direction.Down; else
-				                                                               overHandleDirection = null
+			if referencePos manhattanDistanceTo max < handleSize:               overHandleDirection = Direction.DownRight; else
+			if referencePos manhattanDistanceTo min < handleSize:               overHandleDirection = Direction.UpLeft; else
+			if referencePos manhattanDistanceTo {max.x, min.y} < handleSize:    overHandleDirection = Direction.UpRight; else
+			if referencePos manhattanDistanceTo {min.x, max.y} < handleSize:    overHandleDirection = Direction.DownLeft; else
+			if referencePos manhattanDistanceTo {max.x, center.y} < handleSize: overHandleDirection = Direction.Right; else
+			if referencePos manhattanDistanceTo {min.x, center.y} < handleSize: overHandleDirection = Direction.Left; else
+			if referencePos manhattanDistanceTo {center.x, min.y} < handleSize: overHandleDirection = Direction.Up; else
+			if referencePos manhattanDistanceTo {center.x, max.y} < handleSize: overHandleDirection = Direction.Down; else
+				                                                                overHandleDirection = null
 				
 		// If we touch down outside the selection, we select an item immediately, so we can directly move it
 		// If we touch up inside the selection without moving, we cycle through all items the pointer is over
@@ -1342,9 +1343,7 @@ transient class DisplayItem
 	
 	visible float m0, m1, m2, m3, m4, m5
 	visible Vector2[] poly
-	
-	handleSize := Math.min(w,h) < 64 ? 16 : 32 
-	
+
 	DisplayItem: Matrix2D m
 		m0 = m.m0; m1 = m.m1; m2 = m.m2; m3 = m.m3; m4 = m.m4; m5 = m.m5
 		if Platform.isDebug and (w or h)
