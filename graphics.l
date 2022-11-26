@@ -1136,7 +1136,8 @@ struct GizomInfluence
 	int start
 	int end
 	float[] deltas
-	string initialValue
+	float[] initialValues
+	string label
 
 struct GizmoOverItem
 	DisplayItem item
@@ -1282,8 +1283,7 @@ skipInit unit gizmo
 						influences.add {.sizeLocation.file, .sizeLocation.start, .sizeLocation.end, deltas}
 					else
 						// Add new size
-						let initialValue = " size:\{{.w},{.h}\}"
-						influences.add {cursorLocation.file, cursorLocation.start, cursorLocation.end, deltas, initialValue}
+						influences.add {cursorLocation.file, cursorLocation.start, cursorLocation.end, deltas, initialValues:[.w,.h], label:"size"}
 				
 				// Adjust position		
 				if not cmdOrCtrl
@@ -1292,8 +1292,7 @@ skipInit unit gizmo
 						influences.add {cursorLocation.file, cursorLocation.start, cursorLocation.end, deltas:[.5*deltas[0]*handle.x, .5*deltas[1]*handle.y]}
 					else
 						// Add new position
-						let initialValue = " position:\{0,0\}"
-						influences.add {cursorLocation.file, cursorLocation.end, cursorLocation.end, deltas:[.5*deltas[0]*handle.x, .5*deltas[1]*handle.y], initialValue}
+						influences.add {cursorLocation.file, cursorLocation.end, cursorLocation.end, deltas:[.5*deltas[0]*handle.x, .5*deltas[1]*handle.y], initialValues:[0,0], label:"position"}
 				else
 				if cursorItem.location != cursorLocation
 					// Change existing position
@@ -1307,12 +1306,10 @@ skipInit unit gizmo
 					influences.add {cursorLocation.file, cursorLocation.start, cursorLocation.end, deltas:[referencePos.x - touchDownPos.x, referencePos.y - touchDownPos.y]}
 				else
 					// Add new position
-					let initialValue = " position:\{0,0\}"
-					influences.add {cursorLocation.file, cursorLocation.end, cursorLocation.end, deltas:[referencePos.x - touchDownPos.x, referencePos.y - touchDownPos.y], initialValue}
+					influences.add {cursorLocation.file, cursorLocation.end, cursorLocation.end, deltas:[referencePos.x - touchDownPos.x, referencePos.y - touchDownPos.y], initialValues:[0,0], label:"position"}
 				
 			// Send manipulation to editor	
 			if inputType == TouchMove and touchDownPos and codeId >= waitingForCodeId
-				print touchDownPos
 				if not isManipulating and movedSinceTouchDown
 					// Start manipulation as soon as we dragged more than a certain threshold
 					isManipulating = true

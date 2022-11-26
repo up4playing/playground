@@ -192,11 +192,9 @@ transient skipInit unit Platform
 	private goToFrame(int targetFrame) Network.goToFrame(targetFrame)
 		
 	internal js void sendSelectToEditor: string cursorFile, int cursorPos
-		log("select cursorFile:"+cursorFile+" cursorPos:"+cursorPos)
 		_sendToEditor({type:"select", cursorFile, cursorPos})
 	
 	internal js void sendDeselectToEditor
-		log("deselect")
 		_sendToEditor({type:"deselect"})
 	
 	internal js void sendStartManipulationToEditor: GizomInfluence[] influences
