@@ -551,7 +551,7 @@ transient global unit graphics
 		if(graphics_isVisibleFor2(visibleFor)) {
 			let f = image.frames[frame % image.frames.length]
 			let sizeX = size.x || f.w
-			let sizeY = size.y || (w/f.w)*f.h
+			let sizeY = size.y || (sizeX/f.w)*f.h
 			graphics_items.push(new DisplayImage(
 				graphics_totalMatrix,
 				position.x-sizeX/2,
@@ -580,7 +580,7 @@ transient global unit graphics
 		if(graphics_isVisibleFor(visibleFor)) {
 			let f = image.frames[frame % image.frames.length]
 			let sizeX = size.x || f.w
-			let sizeY = size.y || (w/f.w)*f.h
+			let sizeY = size.y || (sizeX/f.w)*f.h
 			let matrix = graphics_totalMatrix.clone()
 			matrix.move(position)
 			matrix.rotate(angle)
@@ -691,7 +691,6 @@ transient global unit graphics
 			let textSize = Platform_context.measureText(text)
 			let sizeX = textSize.width
 			let sizeY = fontSize*effectiveFont.actualHeightFactor
-			log("Drowing text "+text+" sizeX:"+sizeX+" sizeY:"+sizeY)
 			graphics_items.push(new DisplayText(
 				graphics_totalMatrix, 
 				position.x - graphics_alignmentFactor[ align]*sizeX,

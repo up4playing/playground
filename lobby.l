@@ -38,7 +38,7 @@ unit lobby
 					Loca.set cast(i)
 			
 		if Network.mode == Ping
-			drawText "Connecting..."
+			drawText "Connecting...", size:32
 		else
 		if Input.users.length withinInclusively Platform.supportedUserCount
 			for Input.users
