@@ -25,7 +25,9 @@ skipInit class Sound
 	js void stop
 		if(this.audioElement) this.audioElement.pause()
 		
-	play
+	play: needsToBeCertain = false
+		if needsToBeCertain and not Input.isCertain: return
+			
 		// We can play sounds immediately to ensure there is no lag
 		// If a sound turns out to be wrong after receiving new inputs, we stop it
 		let playingSound = audio.playingSounds.find(.sound == this and .frame == Time.frame)
@@ -102,12 +104,15 @@ transient global skipInit unit audio
 			volume = volumeLevels[volumeLevel]
 			playingSounds.each.sound.updateVolume
 	
-	global playSound: Sound sound, Time delay = 0, bool smooth = false
+	global playSound: Sound sound
+		              Time delay = 0
+		              bool needsToBeCertain = false
+		if needsToBeCertain and not Input.isCertain: return
+			
 		if Time.frame == 0
-			fx.add PlaySoundEffect startTime:Math.ceil(Time.now+Network.targetFrameTime)+delay, sound, smooth
+			fx.add PlaySoundEffect startTime:Math.ceil(Time.now+Network.targetFrameTime)+delay, sound
 		else
 		if delay
-			fx.add PlaySoundEffect startTime:Time.now+delay, sound, smooth
+			fx.add PlaySoundEffect startTime:Time.now+delay, sound
 		else
-		if not smooth or Input.isCertain
 			sound.play

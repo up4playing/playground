@@ -127,6 +127,7 @@ transient skipInit unit Network
 		mode = Local
 		startInLobby = false
 		certainFrame = -1
+		isPremiere = true
 		Input.internalUsers.clear
 		Math.setRandomSeed Math.generateRandomSeed 
 		initDatabase
@@ -193,6 +194,7 @@ transient skipInit unit Network
 	// and when stepping through the timeline with replayFromStart = false
 	// to only replay from the beginning when going to a frame in the past
 	goToFrame: int targetFrame, replayFromStart = false
+		isPremiere = false
 		if replayFromStart: frameWithNewWatches = 0
 		if targetFrame < frame or replayFromStart: reset
 			
@@ -200,6 +202,7 @@ transient skipInit unit Network
 			step fastForward:true, draw:false
 		adjustStartTime
 		animationFrame
+		isPremiere = true
 
 	// Smooth out animations by only executing code when we received inputs from everybody	
 	smooth: int userId
@@ -331,9 +334,10 @@ transient skipInit unit Network
 			// Statistics graph
 			for Input.users
 				let internalUser = Input.internalUsers[.id]
-					statisticsGraph.add cast .id, internalUser.bufferFrames, .color
-			// statisticsGraph.add "interval", sendInterval, {"808080"}
-			// statisticsGraph.add "ahead", ahead, Gray
+				if not internalUser.local
+					statistics.add cast .id, frame - internalUser.inputFrame, .color or graphics.defaultColors[.index]
+			// statistics.add "interval", sendInterval, {"808080"}
+			// statistics.add "ahead", ahead, Gray
 			
 		// Logs
 		try
@@ -397,7 +401,6 @@ transient skipInit unit Network
 			Platform.fastForward = fastForward
 			bool isCertain = frame <= certainFrame
 			isSmooth = mode == Local or frame <= frameMinusBuffer
-			isPremiere = frame >= frames
 			
 			// Log
 			parseLog += " #{frame} (fmb{frameMinusBuffer})"
@@ -478,11 +481,11 @@ transient skipInit unit Network
 			
 		if draw
 			if Platform.showDebugInfo
-				statisticsGraph.draw
+				statistics.draw
 				if errorMessage
-					drawText errorMessage, statisticsGraph.position+{statisticsGraph.size.x/2, -statisticsGraph.size.y/2-15}, align:Right, layer:1000001, size:12, color:{"ffff00"}
+					drawText errorMessage, statistics.position+{statistics.size.x/2, -statistics.size.y/2-15}, align:Right, layer:1000001, size:12, color:{"ffff00"}
 				else
-					drawText "{lag100Count}-{lag200Count} #{frame} {PeerNetwork.connectionType}{statisticsGraph.maxValue}", statisticsGraph.position+{statisticsGraph.size.x/2, -statisticsGraph.size.y/2-12}, align:Right, layer:1000001, size:10
+					drawText "{lag100Count}-{lag200Count} #{frame} {statistics.maxValue}", statistics.position+{statistics.size.x/2, -statistics.size.y/2-12}, align:Right, layer:1000001, size:10
 			drawTime = Time.measure
 				graphics.finishFrame
 			if Platform.mode != Manipulator: Input.updateCursor
@@ -641,6 +644,7 @@ transient skipInit unit Network
 	string gameId
 	
 	join: string gameId, string roomString, int userId
+		isPremiere = true
 		initAll
 		log Platform.url
 		log Date.now.dayMonthYearHourMinuteSecondString
@@ -655,7 +659,6 @@ transient skipInit unit Network
 		lobby.enableFullscreen = !Platform.isStaging
 		
 	private js void initAll
-		Network_isPremiere = Network_frame >= Network_frames
 		init()
 		// TODO: Is this needed?
 		Platform_updateBaseMatrix();
@@ -687,12 +690,32 @@ class StatisticsGraphSeries
 	Color color
 	float lastValue := values.length > 0 ? values[values.length-1] : 0
 	
-transient unit statisticsGraph
-	Vector2 position = {500, 450}
-	Vector2 size = {500, 180}
+transient unit statistics
+	Vector2 position = {500, 460}
+	Vector2 size = {500, 160}
+	
+	float[] pings
+		
+	send
+		let userName = localStorage.getStringDirectly("play-userId")
+		print "{Platform.host}:3114/stats"
+		http.post "{Platform.host}:3114/stats", body:{
+			time: Date.now.isoString
+			gameId: Network.gameId
+			roomId: Network.roomId
+			userId: Input.localUser.id
+			userName
+			staging: Platform.isStaging
+			pings
+			minPing: pings.min .
+			maxPing: pings.max .
+			averagePing: pings.average
+			connections: Input.internalUsers.select.connectionType
+		}
+			print .
 	
 	private StatisticsGraphSeries[] series
-	float maxValue
+	internal float maxValue
 	
 	setup: Vector2 position, Vector2 size = {880, 180}
 		this.position = position
@@ -706,7 +729,7 @@ transient unit statisticsGraph
 		s.color = color
 		s.values.add value, maxLength:size.x.round
 		
-	draw
+	internal draw
 		maxValue = 0
 		for series:	for .values: if . > maxValue: maxValue = .
 			

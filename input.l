@@ -28,6 +28,7 @@ transient class InternalUser
 	object peerConnection
 	object dataChannel
 	object recreateDataChannelInterval
+	string connectionType
 	bool offerByMe
 	int nextLostMessageAtFrame
 	
@@ -51,7 +52,7 @@ transient class InternalUser
 class NetworkUser
 	int id
 	int index
-	Color color
+	Color color = null
 	bool isReady
 	string textInput
 	

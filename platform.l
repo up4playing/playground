@@ -27,6 +27,7 @@ transient skipInit unit Platform
 	public TickMode tickMode = Interval
 	
 	public inline js string url := location.href
+	public inline js string host := location.host ? "https://"+location.host : "http://localhost"
 	public inline js int version := version
 	public inline js int appName := appName
 	public inline js int userAgent := navigator.userAgent.replace(/,/g," ")

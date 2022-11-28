@@ -137,6 +137,7 @@ transient unit ServerNetwork
 		float timeSinceStart = buffer.readFloat64
 		float pingTime = buffer.readFloat64
 		float pingPongTime = now - pingTime
+		statistics.pings.add pingPongTime
 		Network.log "<<< Pong ({pongCount}) {pingTime}", pingPongTime
 			
 		if pingPongTime < fastestPingPongTime

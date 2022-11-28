@@ -28,7 +28,6 @@ transient unit PeerNetwork
 	internal enableVideo = true
 	internal enableAudio = true
 	
-	visible string connectionType
 	visible string error
 	
 	private js object setupPeerConnection: InternalUser user, bool offerByMe
@@ -39,11 +38,18 @@ transient unit PeerNetwork
 			// iceCandidatePoolSize: 10,
 		}
 		if(PeerNetwork_relayMode > 0) {
+			// Alwyzon
 			options.iceServers.push({
-				urls: 'turn:81.169.197.127',
-				username: 'play-user-x8env28gx41odbxzwjyut2hx82jyzdk7qm6d-ok',
-				credential: '9y4vm5vxj3uyqvc8wkyzrm26ygebxutkd52bymr8zsmy6qa8-ok'
+				urls: 'turn:94.177.8.204:39917',
+				username: 'play-user-x8env28gx41odbxzwjyut2oq871987syq8ovyuqp-alwyzon',
+				credential: 'qoy91n981vlplabb1873jdcgsouz2qm87qmmakqpc-alwyzon'
 			});
+			// Amazon Lightsail
+			// options.iceServers.push({
+			// 	urls: 'turn:81.169.197.127',
+			// 	username: 'play-user-x8env28gx41odbxzwjyut2hx82jyzdk7qm6d-ok',
+			// 	credential: '9y4vm5vxj3uyqvc8wkyzrm26ygebxutkd52bymr8zsmy6qa8-ok'
+			// });
 		}
 		options.iceServers.push({
 			urls: [
@@ -51,7 +57,7 @@ transient unit PeerNetwork
 				'stun:stun2.l.google.com:19302',
 			],
 		});
-		let peerConnection = PeerNetwork_peerConnection = new RTCPeerConnection(options);
+		let peerConnection = new RTCPeerConnection(options);
 		let connectionId = user.connectionId
 		Network_log("setupPeerConnection userId:"+user.id+" connectionId:"+connectionId+" relayMode:"+PeerNetwork_relayMode)
 		
@@ -66,8 +72,6 @@ transient unit PeerNetwork
 		user.peerConnection = peerConnection
 		user.offerByMe = offerByMe
 		return peerConnection
-			
-	object peerConnection
 	
 	js void stopRecreatingDataChannel: InternalUser user
 		if(user.recreateDataChannelInterval) {
@@ -80,12 +84,13 @@ transient unit PeerNetwork
 		// Create reliable data channel
 		// These options would create an unreliable one: {ordered:false, maxRetransmits:0}
 		Network_log("setupDataChannel: Creating data channel for user "+user.id)
-		let dataChannel = PeerNetwork_peerConnection.createDataChannel("channel")
+		let dataChannel = user.peerConnection.createDataChannel("channel")
 		dataChannel.binaryType = "arraybuffer"
 		dataChannel.onopen = e => {
 			user.dataChannel = dataChannel
 			Network_log("setupDataChannel: Open data channel for "+user.id)
 			PeerNetwork_stopRecreatingDataChannel(user)
+			PeerNetwork_logConnectionType(user)
 		}
 		dataChannel.onclosing = e => Network_log("Data channel "+user.id+" closing")
 		dataChannel.onclose = e => {
@@ -111,7 +116,6 @@ transient unit PeerNetwork
 			let offer = await peerConnection.createOffer();
 			await peerConnection.setLocalDescription(offer);
 			ServerNetwork_sendSignal(user.id, "offer", peerConnection.localDescription.sdp)
-			PeerNetwork_logConnectionType()
 			Network_log("Sent offer to "+user.id+", waiting for answer.");
 		}
 		catch(e) {
@@ -119,8 +123,8 @@ transient unit PeerNetwork
 			Network_log(e.stack);
 		}
 		
-	js void setBitrate: float scaleResolutionDownBy = 1, float maxBitrate
-		let senderList = PeerNetwork_peerConnection.getSenders();
+	js void setBitrate: InternalUser user, float scaleResolutionDownBy = 1, float maxBitrate
+		let senderList = user.peerConnection.getSenders();
 		for(let sender of senderList) {
 			const params = sender.getParameters();
 			console.log(params);
@@ -143,7 +147,7 @@ transient unit PeerNetwork
 			PeerNetwork_stopRecreatingDataChannel(user)
 			
 			// Data channel
-			PeerNetwork_peerConnection.addEventListener('datachannel', e => {
+			user.peerConnection.addEventListener('datachannel', e => {
 				Network_log("Data Channel received")
 				let dataChannel = e.channel
 				dataChannel.binaryType = "arraybuffer"
@@ -151,6 +155,7 @@ transient unit PeerNetwork
 				dataChannel.onopen = e => {
 					Network_log("Data channel opened")
 					user.dataChannel = dataChannel
+					PeerNetwork_logConnectionType(user)
 				}
 				dataChannel.onclosing = e => {
 					Network_log("Data channel closing")
@@ -168,7 +173,6 @@ transient unit PeerNetwork
 			let answer = await peerConnection.createAnswer();
 			await peerConnection.setLocalDescription(answer);
 			ServerNetwork_sendSignal(user.id, "answer", peerConnection.localDescription.sdp)
-			PeerNetwork_logConnectionType()
 			Network_log("Received offer from "+user.id+", sent answer, waiting for connection.");
 		}
 		catch(e) {
@@ -250,19 +254,22 @@ transient unit PeerNetwork
 			Network_log(e.stack);
 		}
 		
-	private js void logConnectionType
+	private js void logConnectionType: InternalUser user
 		setTimeout(async () => {
-			let stats = await PeerNetwork_peerConnection.getStats()
+			let stats = await user.peerConnection.getStats()
 			let candidatePairs = [...stats.values()].filter(s => s.type == "candidate-pair" && s.state == "succeeded")
 			let candidatePair = candidatePairs.find(a => a.selected) || candidatePairs[0]
 			if(candidatePair) {
 				let candidate = stats.get(candidatePair.localCandidateId);
 				let ip = candidate.ip || candidate.address
-				PeerNetwork_connectionType += candidate.candidateType + " "
-				Network_log("#connection: "+candidate.candidateType+" "+ip+" "+ip)
+				user.connectionType = candidate.candidateType + " " + ip
+				Network_log("#connection to "+user.id+": "+user.connectionType)
 			} else {
+				Network_log("#connection: no candidate pair for "+user.id)
 				window.stats = [...stats.values()]
-				Network_log("Can't access stats"+window.stats)
+				console.log(window.stats)
+				try  { Network_log(JSON.stringify(window.stats)) }
+				catch{ }
 			}
 		}, 5000)
 		
