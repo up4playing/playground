@@ -77,6 +77,7 @@ skipInit class Font
 			await font.load();
 			document.fonts.add(font);
 			_fontCache[this.file] = font;
+			setTimeout(() => this.calculateOffset(), 0)
 		}
 		this.calculateOffset()
 		return this
