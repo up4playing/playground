@@ -297,12 +297,6 @@ transient skipInit unit Network
 	private int replayFrames
 	int tickMessageSize
 	
-	bool isLag100 = false
-	int lag100Count = 0
-	
-	bool isLag200 = false
-	int lag200Count = 0
-	
 	collectStatistics
 		if mode == Connected and Input.users.length > 1 and frame > joinFrame + 120
 			ahead = frame - receivedFrames
@@ -323,19 +317,14 @@ transient skipInit unit Network
 			
 			Input.localUser.bufferFrames = bufferFrames
 			
-			let prevIsLag100 = isLag100
-			isLag100 = ahead > 100
-			if isLag100 and !prevIsLag100: lag100Count++
 			
-			let prevIsLag200 = isLag200
-			isLag200 = ahead > 200
-			if isLag200 and !prevIsLag200: lag200Count++
 			
 			// Statistics graph
 			for Input.users
 				let internalUser = Input.internalUsers[.id]
 				if not internalUser.local
-					statistics.add cast .id, frame - internalUser.inputFrame, .color or graphics.defaultColors[.index]
+					statistics.add cast .index, frame - internalUser.inputFrame, .color or graphics.defaultColors[.index]
+			statistics.add "buffer", bufferFrames, Gray
 			// statistics.add "interval", sendInterval, {"808080"}
 			// statistics.add "ahead", ahead, Gray
 			
@@ -485,7 +474,7 @@ transient skipInit unit Network
 				if errorMessage
 					drawText errorMessage, statistics.position+{statistics.size.x/2, -statistics.size.y/2-15}, align:Right, layer:1000001, size:12, color:{"ffff00"}
 				else
-					drawText "{lag100Count}-{lag200Count} #{frame} {statistics.maxValue}", statistics.position+{statistics.size.x/2, -statistics.size.y/2-12}, align:Right, layer:1000001, size:10
+					drawText "#{frame} {statistics.maxValue}", statistics.position+{statistics.size.x/2, -statistics.size.y/2-12}, align:Right, layer:1000001, size:12
 			drawTime = Time.measure
 				graphics.finishFrame
 			if Platform.mode != Manipulator: Input.updateCursor
@@ -548,6 +537,7 @@ transient skipInit unit Network
 	js void log: logstring text
 		let str = new Date().hourMinuteSecondString() + " " + text
 		Network_eventLog += str + "\n"
+		statistics_log += str + "\n"
 		log(str)
 		
 	inline js int currentTime := Date.now()
@@ -677,6 +667,7 @@ transient skipInit unit Network
 	onError: Error error
 		errorMessage = error.stack
 		eventLog += errorMessage + "\n" 
+		statistics.log += errorMessage + "\n" 
 		Platform.sendErrorToEditor error
 		
 		if !Platform.isDebug and !alertShown
@@ -688,33 +679,75 @@ class StatisticsGraphSeries
 	string name
 	float[] values
 	Color color
+	
 	float lastValue := values.length > 0 ? values[values.length-1] : 0
 	
+	int peeks
+		int result = 0
+		bool isPeek = false
+		for values
+			if . > 30
+				if not isPeek: isPeek = true; result++
+			else
+				isPeek = false
+		return result
+				
 transient unit statistics
 	Vector2 position = {500, 460}
 	Vector2 size = {500, 160}
 	
-	float[] pings
-		
-	send
+	float[] serverPings
+	private StatisticsGraphSeries[] series
+	string log
+	
+	clear
+		series.each.values.clear
+		serverPings.clear
+		log = ""
+	
+	send: int game, int round, dynamic data = null
+		if not Input.isCertain: return
 		let userName = localStorage.getStringDirectly("play-userId")
-		print "{Platform.host}:3114/stats"
-		http.post "{Platform.host}:3114/stats", body:{
+		let server = Platform.host.getUntil(".")
+		let p0 = series.find.name == "0"
+		let p1 = series.find.name == "1"
+		let p2 = series.find.name == "2"
+		let p3 = series.find.name == "3"
+		http.post "{Platform.protocalAndHost}:3114/stats", body:{
 			time: Date.now.isoString
 			gameId: Network.gameId
 			roomId: Network.roomId
 			userId: Input.localUser.id
+			userIndex: Input.localUser.index
 			userName
+			game
+			round
 			staging: Platform.isStaging
-			pings
-			minPing: pings.min .
-			maxPing: pings.max .
-			averagePing: pings.average
+			server
+			minServerPing: serverPings.min .
+			maxServerPing: serverPings.max .
+			averageServerPing: serverPings.average
+			ping0: p0?.values.average
+			ping1: p1?.values.average
+			ping2: p2?.values.average
+			ping3: p3?.values.average
+			pingMax0: p0?.values.max .
+			pingMax1: p1?.values.max .
+			pingMax2: p2?.values.max .
+			pingMax3: p3?.values.max .
+			pingPeeks0: p0?.peeks
+			pingPeeks1: p1?.peeks
+			pingPeeks2: p2?.peeks
+			pingPeeks3: p3?.peeks
 			connections: Input.internalUsers.select.connectionType
+			serverPings
+			peerPings: series
+			log
+			data
 		}
 			print .
-	
-	private StatisticsGraphSeries[] series
+		clear
+			
 	internal float maxValue
 	
 	setup: Vector2 position, Vector2 size = {880, 180}
@@ -724,14 +757,18 @@ transient unit statistics
 	add: string name, float value, Color color = White
 		var s = series.find.name == name
 		if !s
-			series.add s = {name, color:color}
+			series.add s = {name, color}
 			series.orderBy.name
 		s.color = color
-		s.values.add value, maxLength:size.x.round
+		s.values.add value
 		
 	internal draw
 		maxValue = 0
-		for series:	for .values: if . > maxValue: maxValue = .
+		for series -> s
+			int len = min(.values.length, size.x.round)
+			for len: 
+				let value = s.values[-1-i]
+				if value > maxValue: maxValue = value
 			
 		Vector2 startPos = position + size/2
 		Vector2 labelPos = position - size/2 - {0,13}
@@ -741,10 +778,10 @@ transient unit statistics
 			drawText text, labelPos+{11, -2}, align:Left, layer:1000000, size:12
 			labelPos.x += graphics.getTextWidth(text, size:12) + 20
 			
-			int len = .values.length
+			int len = min(.values.length, size.x.round)
 			float prevY = 0
 			for len
-				let value = s.values[len-1-i]
+				let value = s.values[-1-i]
 				Vector2 pos = {startPos.x - i, startPos.y - value/maxValue*size.y + seriesIndex*3}
 				if i: drawRectangle pos, size:{4, prevY-pos.y+4}, fillColor:s.color, layer:1000000, valign:Top
 				prevY = pos.y

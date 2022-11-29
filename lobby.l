@@ -13,7 +13,7 @@ unit lobby
 			ticks++
 			
 			drawButton Button, "Send Statistics", {864,498}
-				statistics.send
+				statistics.send -1, -1
 		
 		if PeerNetwork.error or Network.errorMessage
 			drawText PeerNetwork.error, size:40

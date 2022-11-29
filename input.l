@@ -3,6 +3,7 @@ transient class InternalUser
 	int id              // The userId stays the same when a user reconnects
 	bool local          // Is this the local user?
 	int connectionId    // The connectionId increases with every connection, even if the same user reconnects
+	int index
 	
 	bool collectInputs  // When we are done pinging, we add a join event and start collecting inputs
 	int inputFrame      // We got all inputs from this player up to and including this frame
@@ -610,6 +611,7 @@ skipInit unit Input
 					Network.log "Adding user {userId}"
 					users.add user = {id:userId, index:users.length}
 					usersById[userId] = user
+					updateUserIndices
 				
 				let value = inputs.readUnsignedInt16
 				Network.parseLog += " "+value
@@ -814,7 +816,9 @@ skipInit unit Input
 						
 	updateUserIndices
 		users.orderBy.id
-		for users: .index = i
+		for users
+			.index = i
+			internalUsers[.id].index = i
 				
 	// Do something when the user touches or clicks within a given area
 	onTouchDownWithin: Vector2 position = {}      // The center of the touch area
