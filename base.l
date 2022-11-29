@@ -278,14 +278,14 @@ class string
 		this.replace(new RegExp(source, "g"), target)
 		
 	js string get: int index
-		(index >= 0 ? this[index] : this[this.length+index])
+		return index >= 0 ? this[index] : this[this.length+index]
 	
 	js string get: int from = 0
-		                  int to
-		this.substring(from >= 0 ? from : this.length+from, to >= 0 ? to : this.length+to)
+		           int to
+		return this.substring(from >= 0 ? from : this.length+from, to >= 0 ? to : this.length+to)
 		
 	js string get: int from = 0
-		this.substring(from >= 0 ? from : this.length+from)	
+		return this.substring(from >= 0 ? from : this.length+from)	
 	
 		
 // A logical data type that can have the value true or false
