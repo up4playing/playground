@@ -386,7 +386,7 @@ transient unit PeerNetwork
 		
 		// Update audio elements
 		for(let user of Input_internalUsers) {
-			if(user?.audioElement) {
+			if(user?.audioElement && user.audioElement.setSinkId) {
 				user.audioElement.setSinkId(PeerNetwork_audioOutputId);
 			}
 		}
@@ -410,7 +410,7 @@ transient unit PeerNetwork
 		// Create audio element so we always hear the remote user, event if no video is shown
 		let audioElement = user.audioElement = document.createElement('audio')
 		audioElement.srcObject = user.mediaStream
-		audioElement.setSinkId(PeerNetwork_audioOutputId);
+		if(audioElement.setSinkId) audioElement.setSinkId(PeerNetwork_audioOutputId);
 		document.body.appendChild(audioElement);
 		
 		// Add incoming tracks to media stream for remote player
