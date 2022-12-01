@@ -86,7 +86,7 @@ enum Side: Front, Back
 		
 class Object
 	Vector2 position
-	float scale = 1
+	implicit Vector2 size = {}
 	float alpha = 1
 	int[] visibleFor = null
 	int layer = 0
@@ -94,7 +94,7 @@ class Object
 	SourceCodeLocation location
 	
 	visible siblings := Framework.objects
-	internal checksum := position.x + position.y + scale + alpha
+	internal checksum := position.x + position.y + size.x + size.y + alpha
 	internal debugString := "(Object pos:{position.x} {position.y})"
 	internal tick
 	
@@ -152,11 +152,11 @@ class Object
 		fx.add FadeEffect startTime:Time.now+delay, duration, smooth, this, startValue:1, delta:-1, removeWhenDone
 		return this
 		
-	scaleTo: float scale 
+	scaleTo: implicit Vector2 size
 		     int duration = 1000
 		     Time delay = 0
 		     bool smooth = false
-		fx.add ScaleEffect startTime:Time.now+delay, duration, smooth, this, startValue:this.scale, delta:scale-this.scale
+		fx.add ScaleEffect startTime:Time.now+delay, duration, smooth, this, startValue:this.size, delta:size-this.size
 		return this
 	
 	fadeAndScaleIn: int duration = 200
@@ -169,16 +169,15 @@ class Object
 		return this
 		
 Object RectangleObject
-	Vector2 size
 	Color color = White
-	internal checksum := position.x + position.y + scale + alpha + size.x + size.y
+	internal checksum := position.x + position.y + alpha + size.x + size.y
 	override tick
 		drawRectangle position, size, color, visibleFor, layer, alpha
 
 Object CircleObject
 	float radius = 10
 	Color color = White
-	internal checksum := position.x + position.y + scale + alpha + radius
+	internal checksum := position.x + position.y + alpha + radius
 	override tick
 		drawCircle position, radius, fillColor:color, visibleFor, layer
 		
@@ -190,23 +189,21 @@ Object CircleObject
 
 Object TextObject
 	string text
-	implicit Vector2 size
 	Font font
 	Color color = White
 	HorizontalAlignment align = Center // The horizontal alignment of the text
 	VerticalAlignment valign = Middle  // The vertical alignment of the text
 	internal checksum := position.x + position.y + text.length + size.x + size.y
 	override tick
-		drawText text, position, size*scale, color, align, valign, font, visibleFor, alpha, layer
+		drawText text, position, size, color, align, valign, font, visibleFor, alpha, layer
 		
 Object ImageObject
 	Image image
 	override tick
-		drawImage image, position, scale, alpha, visibleFor, layer
+		drawImage image, position, size, alpha, visibleFor, layer
 		
 Object VideoObject
 	int userId
-	Vector2 size = {440, 330}
 	float radius
 	internal checksum := position.x + position.y + userId + size.x + size.y + radius
 	override tick
@@ -235,7 +232,7 @@ Object Button
 		
 Object Piece
 	const Vector2 stackOffset = {8,8}
-	const minSize = 75
+	// const minSize = 75 // EVAL
 	
 	Image image // The image of the piece
 	Angle angle // The rotation of the piece in turns (one full rotation is 1)
@@ -264,7 +261,6 @@ Object Piece
 	Vector2 iconPos = Vector2.none
 	Vector2 touchMargin = {50,50}
 	
-	public Vector2 size
 	public Board board
 	private int interactingUserId
 	
@@ -279,25 +275,31 @@ Object Piece
 	onDrop
 	
 	Piece
-		if image
-			size = image.size
-			if size.x < minSize: size.x = minSize
-			if size.y < minSize: size.y = minSize
+		// EVAL
+		// if image
+		// 	size = image.size
+		// 	if size.x < minSize: size.x = minSize
+		// 	if size.y < minSize: size.y = minSize
 		this.targetAngle = angle
 		
 	debugString := "(Piece pos:{position.x} {position.y} frame:{frame} side:{side} image:{image?.file} board:{board.toBool})"
 	
-	checksum := position.x + position.y + frame + scale + angle + cast side
+	checksum := position.x + position.y + size.x + size.y + frame + angle + cast side
 		
 	finishTouch
 		rotateTouch = null
 		if moveTouch: moveTouch = null; onDrop
 		
 	override tick
+		// Complete size if one or both components aren't specified
+		if image
+			if size.x == 0: size.x = image.size.x; size.y = image.size.y; else
+			if size.y == 0: size.y = size.x * image.size.y / image.size.x;
+				
 		// Rotate	
-		Vector2 iconPos = this.iconPos ? this.iconPos : (rotatable ? {(image.size.x+image.size.y)/3.5, (image.size.x+image.size.y)/3.5}*{1,-1} : image.size/2*{1,-1})
+		Vector2 iconPos = this.iconPos ? this.iconPos : (rotatable ? {(size.x+size.y)*.275, (size.x+size.y)*.275}*{1,-1} : size/2*{1,-1})
 		if rotatable and Framework.selectedObjects.contains(this)
-			Input.onTouchDownWithin position:position+iconPos*scale, size:Image.rotateIcon.size+touchMargin, userId:visibleFor
+			Input.onTouchDownWithin position:position+iconPos, size:Image.rotateIcon.size+touchMargin, userId:visibleFor
 				rotateTouch = touch
 				rotateOffset = angle - Math.getAngleForVector(touch.position - position)
 				rotatedOverThreshold = false
@@ -315,7 +317,7 @@ Object Piece
 				if angle == targetAngle: onRotate
 		
 		// Move
-		Input.onTouchDownWithin position, size * scale, angle, visibleFor
+		Input.onTouchDownWithin position, size, angle, visibleFor
 			if movable
 				moveTouch = touch
 				touchOffset = position - touch.position
@@ -336,7 +338,7 @@ Object Piece
 		
 		// Flip	
 		if Framework.selectedObjects.contains(this) && flipable
-			drawButton flipIcon, position:position+iconPos*{-1,1}*scale, touchMargin:{50,50}
+			drawButton flipIcon, position:position+iconPos*{-1,1}, touchMargin:{50,50}
 				side = side == Back ? Front : Back
 		
 		// Animate rotation
@@ -347,15 +349,15 @@ Object Piece
 		
 		// Draw rotation icon
 		if rotatable and Framework.selectedObjects.contains(this) and not (rotateTouch and rotatedOverThreshold)
-			drawImage rotateIcon, position:position+iconPos*scale, layer:10000, visibleFor
+			drawImage rotateIcon, position:position+iconPos, layer:10000, visibleFor
 		
 		draw
 				
 	draw
 		// TODO: Support size!!!!!!!!!!!!!
 		if image
-			if side == Front || !backImage: drawImage image, position, frame:frame%image.frames.length, angle
-			else                            drawImage backImage, position, frame:frame%backImage.frames.length, angle
+			if side == Front || !backImage: drawImage image, position, size, frame:frame%image.frames.length, angle, location
+			else                            drawImage backImage, position, size, frame:frame%backImage.frames.length, angle, location
 		
 	private checkBoardsWhileMoving: Touch touch
 		Vector2 pos = position
@@ -417,8 +419,8 @@ Piece Stack
 		for Math.limit(objects.length-shownObjectCount, min:0) to objects.length <- i
 			let obj = objects[i]
 			let image = obj.backImage || obj.image
-			drawImage image, obj.position, frame:obj.frame%image.frames.length, scale:obj.scale
-	
+			drawImage image, obj.position, frame:obj.frame%image.frames.length, size:obj.size
+			
 		// We pop after drawing, because the newly created card won't be drawn until the next frame
 		// and we don't want to draw the new, smaller stack without drawing the popped card as well
 		Input.onTouchDownWithin position, size
@@ -510,7 +512,7 @@ Piece Board
 				contentVisibleForOthers = contentVisibleForOthers == On ? Off : On
 				
 		if color: drawRectangle position, size, fillColor:color, layer:-1, visibleFor
-		if image: drawImage image, position, scale
+		if image: drawImage image, position, size
 		
 	snap: Piece currentObject, Vector2 position
 		
