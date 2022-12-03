@@ -5,7 +5,7 @@
 // isSmooth:
 // isPremiere:
 	
-enum NetworkMode: None, Ping, Local, Connected, ResolveState
+enum NetworkMode: None, Ping, Local, Connected
 transient class RoomInfo: int time, userId
 enum SendInputsMode: None, Peer, Server
 	
@@ -226,17 +226,15 @@ transient skipInit unit Network
 
 		// Ping
 		ServerNetwork.ping
-		if mode == None || mode == Ping || mode == ResolveState
+		if mode == None || mode == Ping
 			graphics.startFrame
 			lobby.tick
 			graphics.finishFrame
-			if mode == ResolveState: ServerNetwork.resolveState
 			return
 		else
 		if mode == Connected
 			PeerNetwork.processSendStateQueue
 			
-		// let targetFrame = Math.floor((now - startTime - timeOffset)/targetFrameTime)+1
 		let targetFrame = Math.floor((now - startTime)/targetFrameTime)+1
 		frameMinusBuffer = targetFrame - bufferFrames
 		if mode == Connected: certainFrame = Math.min(frameMinusBuffer, receivedFrames); else
@@ -705,7 +703,7 @@ transient unit statistics
 		serverPings.clear
 		log = ""
 	
-	send: int game, int round, dynamic data = null
+	send: int game = -1, int round = -1, dynamic data = null
 		if not Input.isCertain: return
 		let userName = localStorage.getStringDirectly("play-userId")
 		let server = Platform.host.getUntil(".")

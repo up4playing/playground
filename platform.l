@@ -382,8 +382,15 @@ transient skipInit unit Platform
 		}
 		
 	js void setInterval: int interval
-		                 void() do
-		setInterval(() => do(), interval)
+		                 void() code
+		setInterval(code)
+		
+	inline js int setTimeout: Time time
+		                      void() code
+		setTimeout(code, time)
+		
+	inline js void clearTimeout: int id
+		clearTimeout(id)
 		
 	inline js string resourcesPath := process.resourcesPath
 	
@@ -400,6 +407,8 @@ transient skipInit unit Platform
 		
 	inline js void reload
 		if(!Platform_isDebug) location.reload();
+			
+
 		
 unit File
 	js string readPartial: string filename, int offset=0, int length, void(string result) callback

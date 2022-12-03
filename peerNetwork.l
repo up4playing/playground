@@ -91,6 +91,10 @@ transient unit PeerNetwork
 			Network_log("setupDataChannel: Open data channel for "+user.id)
 			PeerNetwork_stopRecreatingDataChannel(user)
 			PeerNetwork_logConnectionType(user)
+			if(!PeerNetwork_requestedState) {
+				PeerNetwork_requestState(user)
+				PeerNetwork_requestedState = true
+			}
 		}
 		dataChannel.onclosing = e => Network_log("Data channel "+user.id+" closing")
 		dataChannel.onclose = e => {
@@ -225,6 +229,7 @@ transient unit PeerNetwork
 		NetworkMessageType type = cast buffer.readInt8
 		if type == Tick:         onTick user, buffer; else
 		if type == Checksum:     onChecksum user, buffer; else
+		if type == RequestState: onRequestState user, buffer; else
 		if type == State:        onState user, buffer
 			
 	private onTick: InternalUser sender, Buffer buffer
@@ -451,14 +456,31 @@ transient unit PeerNetwork
 		
 	Buffer snapshotBuffer
 	int[] sendStateQueue
+	bool requestedState
+	int stateTimeout
 	
-	stateRequestedBy: int id
-		sendStateQueue.add id
+	makePrimiaryUserIfStateIsNotReceived
+		requestedState = false
+		stateTimeout = Platform.setTimeout 15s
+			Network.log "We haven't received a state after 15s -> Make primary user"
+			makePrimaryUser
+	
+	makePrimaryUser
+		let frame = Math.floor((Network.currentTime - Network.startTime)/Network.targetFrameTime)+3
+		Network.startConnected frame
+	
+	private requestState: InternalUser from
+		sendBuffer.reset
+		sendBuffer.writeInt8 cast NetworkMessageType.RequestState
+		send from, sendBuffer
+		
+	private onRequestState: InternalUser sender, Buffer buffer
+		Network.log "Requesting state from {sender.id}"
+		sendStateQueue.add sender.id
 		if Network.mode == Connected: processSendStateQueue
 	
 	processSendStateQueue
 		if sendStateQueue.length > 0
-			Network.log "Processing send state queue", sendStateQueue.length
 			snapshotBuffer.reset
 			Snapshot.serialize snapshotBuffer
 			for sendStateQueue <-
@@ -466,22 +488,6 @@ transient unit PeerNetwork
 				if user?.dataChannel
 					sendState user, snapshotBuffer
 					sendStateQueue.removeAt i
-	
-	// sendRequestState: InternalUser to
-	// 	Network.log "Sending state request to {to.id}"
-	// 	sendBuffer.reset
-	// 	sendBuffer.writeInt8 cast NetworkMessageType.RequestState
-	// 	send to, sendBuffer
-		
-	// private onRequestState: InternalUser to, Buffer buffer
-	// 	if Network.mode == Connected
-	// 		Network.log "Received request state from {to.id} -> sending state"
-	// 		snapshotBuffer.reset
-	// 		Snapshot.serialize snapshotBuffer
-	// 		sendState to, snapshotBuffer
-	// 	else
-	// 		Network.log "Received request state from {to.id} -> queueing"
-	// 		sendStateQueue.add to.id
 		
 	private sendState: InternalUser to, Buffer buffer
 		Network.log "Sending state to {to.id}"
@@ -499,9 +505,11 @@ transient unit PeerNetwork
 		send to, sendBuffer
 		
 	private onState: InternalUser c, Buffer buffer
+		Platform.clearTimeout stateTimeout
 		if Network.mode == Connected:
 			Network.log "Ignoring received state from {c.id} because we are already connected"
 			return
+			
 		Network.log "Received state from {c.id}"
 		let frame = buffer.readInt32
 		let userCount = buffer.readInt32
@@ -520,8 +528,6 @@ transient unit PeerNetwork
 		Snapshot.deserialize snapshotBuffer
 		Math.recreateRandomValues
 		Network.startConnected frame+1
-		
-		ServerNetwork.sendReadyForStateRequests
 		
 					
 	// private float nextPingTime
