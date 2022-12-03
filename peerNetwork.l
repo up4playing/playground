@@ -255,23 +255,23 @@ transient unit PeerNetwork
 		}
 		
 	private js void logConnectionType: InternalUser user
-		setTimeout(async () => {
-			let stats = await user.peerConnection.getStats()
-			let candidatePairs = [...stats.values()].filter(s => s.type == "candidate-pair" && s.state == "succeeded")
-			let candidatePair = candidatePairs.find(a => a.selected) || candidatePairs[0]
-			if(candidatePair) {
-				let candidate = stats.get(candidatePair.localCandidateId);
-				let ip = candidate.ip || candidate.address
-				user.connectionType = candidate.candidateType + " " + ip
-				Network_log("#connection to "+user.id+": "+user.connectionType)
-			} else {
-				Network_log("#connection: no candidate pair for "+user.id)
-				window.stats = [...stats.values()]
-				console.log(window.stats)
-				try  { Network_log(JSON.stringify(window.stats)) }
-				catch{ }
-			}
-		}, 5000)
+		// setTimeout(async () => {
+		let stats = await user.peerConnection.getStats()
+		let candidatePairs = [...stats.values()].filter(s => s.type == "candidate-pair" && s.state == "succeeded")
+		let candidatePair = candidatePairs.find(a => a.selected) || candidatePairs[0]
+		if(candidatePair) {
+			let candidate = stats.get(candidatePair.localCandidateId);
+			let ip = candidate.ip || candidate.address
+			user.connectionType = candidate.candidateType + " " + ip
+			Network_log("#connection to "+user.id+": "+user.connectionType)
+		} else {
+			Network_log("#connection: no candidate pair for "+user.id)
+			window.stats = [...stats.values()]
+			console.log(window.stats)
+			try  { Network_log(JSON.stringify(window.stats)) }
+			catch{ }
+		}
+		// }, 5000)
 		
 	// --------------------------------------------- Checksum ---------------------------------------------
 	
