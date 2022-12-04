@@ -175,17 +175,10 @@ Object RectangleObject
 		drawRectangle position, size, color, visibleFor, layer, alpha
 
 Object CircleObject
-	float radius = 10
 	Color color = White
-	internal checksum := position.x + position.y + alpha + radius
+	internal checksum := position.x + position.y + alpha + size.x + size.x
 	override tick
-		drawCircle position, radius, fillColor:color, visibleFor, layer
-		
-	radiusTo: float value
-		      int duration = 200
-		      Time delay = 0
-		      bool smooth = false
-		fx.add RadiusEffect startTime:Time.now+delay, duration, smooth, this, startValue:radius, delta:value-radius
+		drawCircle position, size, fillColor:color, visibleFor, layer
 
 Object TextObject
 	string text

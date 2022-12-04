@@ -40,11 +40,6 @@ Effect ScaleEffect
 	implicit Vector2 startValue
 	implicit Vector2 delta
 	tick(float f) object.size = startValue + delta * f
-		
-Effect RadiusEffect
-	CircleObject object
-	float startValue, delta
-	tick(float f) object.radius = startValue + delta * f
 	
 Effect FadeSoundEffect
 	float startValue, delta
