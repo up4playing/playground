@@ -91,6 +91,7 @@ transient global skipInit unit audio
 		
 	stop
 		playingSounds.each.sound.stop
+		playingSounds.clear
 	
 	mute: int forUser = -1
 		if forUser == -1 or forUser == Input.localUser?.id

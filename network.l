@@ -161,6 +161,7 @@ transient skipInit unit Network
 		uncertainFrame = -1
 		lobby.inLobby = startInLobby
 		Time.now = serverStartTime
+		audio.stop
 		initAll
 		
 		if !startInLobby or Platform.isDebug
