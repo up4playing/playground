@@ -270,7 +270,7 @@ class InternetGamePad
 // A collection of methods to receive user input
 skipInit unit Input
 	transient visible InternalUser[] internalUsers
-	transient visible bool isCertain
+	transient bool isCertain
 	transient InternalUser localUser
 
 	NetworkUser[] users

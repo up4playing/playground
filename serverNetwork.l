@@ -99,7 +99,7 @@ transient unit ServerNetwork
 			
 		if version != Platform.version
 			alert "You are using an old version of this application. Please refresh your browser."
-		
+			
 		inputsSentPos = Input.localUser.inputs.writePos
 		Input.localUser.id = userId
 		Math.setRandomSeed seed
@@ -115,8 +115,13 @@ transient unit ServerNetwork
 		else
 			PeerNetwork.makePrimiaryUserIfStateIsNotReceived
 			
-		Platform.setTimeout 15s, statistics.send
-				
+		// Send statistics after 20 seconds
+		Platform.setTimeout 20s
+			let prevIsCertain = Input.isCertain
+			Input.isCertain = true
+			statistics.send game:-1, round:-1
+			Input.isCertain = prevIsCertain
+		
 		Network.log "Joining room {roomId} as user {userId}"
 		
 		// The first person in the room triggers sending an notification with the link to everybody

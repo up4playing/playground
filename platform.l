@@ -291,10 +291,10 @@ transient skipInit unit Platform
 		document.body.appendChild(fileInput)
 		fileInput.click()
 		
-	inline js void setLocalStorageObject: string key, object value
+	inline js void setLocalStorageObject: string key, dynamic value
 		localStorage.setItem(key, JSON.stringify(value))
 		
-	js object getLocalStorageObject: string key
+	js dynamic getLocalStorageObject: string key
 		let str = localStorage.getItem(key)
 		return str ? JSON.parse(str) : null 
 		

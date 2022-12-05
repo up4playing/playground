@@ -57,6 +57,12 @@ unit http
 			Input_handleObject(id, data)
 		}
 		
+	js void post: string url
+		          dynamic body
+		if(Network_isPremiere && Input_isCertain) {
+			(await fetch(url, {method:"POST", body:JSON.stringify(body)})).text()
+		}
+		
 	// Perform an http put request
 	js void put: string url
 		         stored void(dynamic result) code

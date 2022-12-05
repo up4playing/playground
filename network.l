@@ -704,8 +704,9 @@ transient unit statistics
 		serverPings.clear
 		log = ""
 	
-	send: int game = -1, int round = -1, dynamic data = null
-		if not Input.isCertain: return
+	send: int round, dynamic data = null, int game = 0
+		if not Input.isCertain or Platform.isDebug: return
+		print "sending statistics", round
 		let userName = localStorage.getStringDirectly("play-userId")
 		let server = Platform.host.getUntil(".")
 		let p0 = series.find.name == "0"
@@ -744,7 +745,6 @@ transient unit statistics
 			log
 			data
 		}
-			print .
 		clear
 			
 	internal float maxValue
