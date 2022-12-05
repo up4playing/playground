@@ -120,8 +120,9 @@ transient skipInit unit Network
 		certainFrame = -1
 		uncertainFrame = -1
 		bufferFrames = 0
-		log "Connected", user.id, frame, startTime, serverStartTime
 		saveState
+		statistics.connectTime = Time.preciseTime
+		log "Connected", user.id, frame, startTime, serverStartTime
 		
 	startLocal: userCount = 1
 		mode = Local
@@ -691,13 +692,14 @@ class StatisticsGraphSeries
 				isPeek = false
 		return result
 				
-transient unit statistics
+skipInit transient unit statistics
 	Vector2 position = {500, 460}
 	Vector2 size = {500, 160}
 	
 	float[] serverPings
 	private StatisticsGraphSeries[] series
 	string log
+	Time startTime, loadTime, connectTime
 	
 	clear
 		series.each.values.clear
@@ -742,6 +744,8 @@ transient unit statistics
 			connections: Input.internalUsers.select.connectionType
 			serverPings
 			peerPings: series
+			loadTime: loadTime - startTime
+			connectTime: connectTime - startTime
 			log
 			data
 		}

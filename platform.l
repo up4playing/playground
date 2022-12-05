@@ -63,6 +63,7 @@ transient skipInit unit Platform
 		Network_init();
 		Input_init();
 		gizmo_init();
+		statistics_init();
 		Network_log("Loading...")
 		Platform_isMobile = false;
 		let platform = navigator.platform
@@ -127,6 +128,7 @@ transient skipInit unit Platform
 	private start: bool isDebug
 		initMedia
 		initPlatform
+		statistics.startTime = Time.preciseTime
 		this.engineStarted = false
 		this.isDebug = isDebug
 		if !isDebug: showSafeArea = false; Network.simulateConnection = false
@@ -153,6 +155,7 @@ transient skipInit unit Platform
 		
 		openMedia
 			this.engineStarted = true
+			statistics.loadTime = Time.preciseTime
 			startInterval
 			if isDebug || isLocal || roomId == "local" || url.startsWith("file"): Network.startLocal userCount:userCount
 			else                                                                  Network.join gameId, roomId, userId
