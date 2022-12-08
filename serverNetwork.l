@@ -215,7 +215,7 @@ transient unit ServerNetwork
 		sendBuffer.writeBuffer inputs, inputsSentPos, length
 		send sendBuffer
 		
-		Network.sentLog += " #{inputFrame} {inputsSentPos}->{inputs.writePos} {inputs.toRangeString(inputsSentPos, inputs.writePos)}"
+		if Network.logging: Network.sentLog += " #{inputFrame} {inputsSentPos}->{inputs.writePos} {inputs.toRangeString(inputsSentPos, inputs.writePos)}"
 		
 		inputsSentPos = inputs.writePos
 		Network.tickMessageSize = sendBuffer.writePos	
@@ -230,7 +230,7 @@ transient unit ServerNetwork
 		buffer.readBuffer sender.inputs, prevWritePos
 		
 		Network.receivedFrames = Input.internalUsers.min.inputFrame where . and !.local
-		Network.receivedLog += " [{Network.currentTime}] <{senderId}> #{sender.inputFrame} ama:{sender.bufferFrames} {prevWritePos}->{sender.inputs.writePos} {sender.inputs.toRangeString(prevWritePos, sender.inputs.writePos)}"
+		if Network.logging: Network.receivedLog += " [{Network.currentTime}] <{senderId}> #{sender.inputFrame} ama:{sender.bufferFrames} {prevWritePos}->{sender.inputs.writePos} {sender.inputs.toRangeString(prevWritePos, sender.inputs.writePos)}"
 	
 	sendSwitch: SendInputsMode mode, int sendInterval
 		sendBuffer.reset

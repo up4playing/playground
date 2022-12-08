@@ -198,9 +198,7 @@ transient unit PeerNetwork
 				sendBuffer.writeBuffer inputs, user.inputsSentPos, length
 				Network.tickMessageSize = send ., sendBuffer
 				
-				Network.sentLog += " <{user.id}> #{inputFrame} {user.inputsSentPos}->{inputs.writePos} {inputs.toRangeString(user.inputsSentPos, inputs.writePos)} ({Network.tickMessageSize} bytes)"
-				// if length: print " <{user.id}> #{inputFrame} {user.inputsSentPos}->{inputs.writePos} {inputs.toRangeString(user.inputsSentPos, inputs.writePos)} ({Network.tickMessageSize} bytes)"
-				
+				if Network.logging: Network.sentLog += " <{user.id}> #{inputFrame} {user.inputsSentPos}->{inputs.writePos} {inputs.toRangeString(user.inputsSentPos, inputs.writePos)} ({Network.tickMessageSize} bytes)"
 				user.inputsSentPos = inputs.writePos
 			
 	private js int send: InternalUser user, Buffer buffer
@@ -242,10 +240,9 @@ transient unit PeerNetwork
 			buffer.readBuffer sender.inputs, prevWritePos
 			
 			Network.receivedFrames = getMinReceivedFrames
-			Network.receivedLog += " [{Network.currentTime}] <{sender.id}> #{inputFrame} buffer:{sender.bufferFrames} {prevWritePos}->{sender.inputs.writePos} {sender.inputs.toRangeString(prevWritePos, sender.inputs.writePos)}"
-			// if sender.inputs.writePos > prevWritePos: print " [{Network.currentTime}] <{sender.id}> #{inputFrame} buffer:{sender.bufferFrames} {prevWritePos}->{sender.inputs.writePos} {sender.inputs.toRangeString(prevWritePos, sender.inputs.writePos)}"
+			if Network.logging: Network.receivedLog += " [{Network.currentTime}] <{sender.id}> #{inputFrame} buffer:{sender.bufferFrames} {prevWritePos}->{sender.inputs.writePos} {sender.inputs.toRangeString(prevWritePos, sender.inputs.writePos)}"
 		else
-			Network.receivedLog += " [{Network.currentTime}] <{sender.id}> (ignoring #{inputFrame})"
+			if Network.logging: Network.receivedLog += " [{Network.currentTime}] <{sender.id}> (ignoring #{inputFrame})"
 		
 	js void onReceivedAnswer: InternalUser user, string sdp
 		await user.peerConnection.setRemoteDescription(new RTCSessionDescription({type: "answer", sdp}));
@@ -293,7 +290,7 @@ transient unit PeerNetwork
 	onChecksum: InternalUser user, Buffer buffer
 		int checksumFor = buffer.readInt
 		float checksum = buffer.readFloat64
-		Network.checksumLog += " <{user.id}> #{checksumFor} {checksum}"
+		if Network.logging: Network.checksumLog += " <{user.id}> #{checksumFor} {checksum}"
 		
 		let myChecksum = Network.checksums[checksumFor]
 		if !myChecksum

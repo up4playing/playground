@@ -78,6 +78,8 @@ transient skipInit unit Network
 	internal const targetFps = 30
 	const targetFrameTime = 1000/targetFps
 	
+	// TODO: Why is serverStartTime and startTime different in local game?
+	
 	NetworkMode mode                // Whether we are in local or connected mode
 	visible string errorMessage     // The error message if we caught any exceptions in the main loop
 	public float startTime          // The time the room was created, syncroniced between all clients
@@ -111,7 +113,7 @@ transient skipInit unit Network
 		// joinFrame = Math.floor((now - this.startTime)/targetFrameTime)+1
 		Input.handleJoin frame 
 		user.collectInputs = true
-		writeLog += " #{joinFrame} Join"
+		if Network.logging: writeLog += " #{joinFrame} Join"
 		log "startConnected", joinFrame
 		
 		this.frame = frame
@@ -296,6 +298,7 @@ transient skipInit unit Network
 	private float lastNetworkFrame, lastAnimationFrame, drawTime, tickTime, restoreTime, replayTime, saveTime
 	private int replayFrames
 	int tickMessageSize
+	bool logging = false
 	
 	collectStatistics
 		if mode == Connected and Input.users.length > 1 and frame > joinFrame + 120
@@ -317,8 +320,6 @@ transient skipInit unit Network
 			
 			Input.localUser.bufferFrames = bufferFrames
 			
-			
-			
 			// Statistics graph
 			for Input.users
 				let internalUser = Input.internalUsers[.id]
@@ -329,22 +330,23 @@ transient skipInit unit Network
 			// statistics.add "ahead", ahead, Gray
 			
 		// Logs
-		try
-			logTable += "{frame-1},{ahead},{receivedFrames},{frameMinusBuffer},{certainFrame},{sendInterval}"
-			for 3
-				let user = Input.internalUsers[i]
-					logTable += ",{user.id},{user.inputFrame},{user.bufferFrames}"
-				else
-					logTable += ",,,"
-				
-			logTable += ",{tickMessageSize},{now},{now - lastAnimationFrame},{now - lastNetworkFrame},{tickTime.format(fractionDigits:2)},{drawTime.format(fractionDigits:2)},{frame-animationStartFrame}"
-			logTable += ",{restoreTime.format(fractionDigits:2)},{replayFrames},{replayTime.format(fractionDigits:2)},{saveTime.format(fractionDigits:2)},{ServerNetwork.lastPingPongTime}"
-			logTable += ",\"{checksumLog.trim}\",\"{eventLog.trim}\",\"{Input.users[0]?.controller?.leftStick}\",\"{sentLog.trim}\",\"{receivedLog.trim}\",\"{writeLog.trim}\",\"{parseLog.trim}\",\"{touchLog.trim}\"\n"
-		catch
-			onError error
+		if logging
+			try
+				logTable += "{frame-1},{ahead},{receivedFrames},{frameMinusBuffer},{certainFrame},{sendInterval}"
+				for 3
+					let user = Input.internalUsers[i]
+						logTable += ",{user.id},{user.inputFrame},{user.bufferFrames}"
+					else
+						logTable += ",,,"
+					
+				logTable += ",{tickMessageSize},{now},{now - lastAnimationFrame},{now - lastNetworkFrame},{tickTime.format(fractionDigits:2)},{drawTime.format(fractionDigits:2)},{frame-animationStartFrame}"
+				logTable += ",{restoreTime.format(fractionDigits:2)},{replayFrames},{replayTime.format(fractionDigits:2)},{saveTime.format(fractionDigits:2)},{ServerNetwork.lastPingPongTime}"
+				logTable += ",\"{checksumLog.trim}\",\"{eventLog.trim}\",\"{Input.users[0]?.controller?.leftStick}\",\"{sentLog.trim}\",\"{receivedLog.trim}\",\"{writeLog.trim}\",\"{parseLog.trim}\",\"{touchLog.trim}\"\n"
+			catch
+				onError error
 			
-		eventLog = ""; sentLog = ""; receivedLog = ""; writeLog = ""; parseLog = ""; touchLog = ""; checksumLog = ""
-		ServerNetwork.lastPingPongTime = 0; tickMessageSize = 0
+			eventLog = ""; sentLog = ""; receivedLog = ""; writeLog = ""; parseLog = ""; touchLog = ""; checksumLog = ""
+			ServerNetwork.lastPingPongTime = 0; tickMessageSize = 0
 
 	private int lastSendFrame
 	
@@ -392,10 +394,11 @@ transient skipInit unit Network
 			isSmooth = mode == Local or frame <= frameMinusBuffer
 			
 			// Log
-			parseLog += " #{frame} (fmb{frameMinusBuffer})"
-			if fastForward: parseLog += "f"
-			if isCertain: parseLog += "c"
-			if isSmooth: parseLog += "s"
+			if logging
+				parseLog += " #{frame} (fmb{frameMinusBuffer})"
+				if fastForward: parseLog += "f"
+				if isCertain: parseLog += "c"
+				if isSmooth: parseLog += "s"
 				
 			// Save a snapshot when we are about to start the frame after the last certain frame where we got all inputs
 			saveState
@@ -421,7 +424,7 @@ transient skipInit unit Network
 				// Calculate checksum if we received all inputs for this frame
 				float myChecksum = Framework.checksum					
 				float theirChecksum = checksums[frame]
-				checksumLog += " <> #{frame} {myChecksum}"
+				if logging: checksumLog += " <> #{frame} {myChecksum}"
 				if !theirChecksum
 					checksums[frame] = myChecksum
 				else
@@ -500,9 +503,9 @@ transient skipInit unit Network
 				if(commonState != debugCommonState)
 					onError {"Serializing state failed"}
 
-			parseLog += " save f:{frame} c:{certainFrame} u:{uncertainFrame}"
+			if logging: parseLog += " save f:{frame} c:{certainFrame} u:{uncertainFrame}"
 		else
-			parseLog += " no-save f:{frame} c:{certainFrame} u:{uncertainFrame}"
+			if logging: parseLog += " no-save f:{frame} c:{certainFrame} u:{uncertainFrame}"
 			
 	
 	// Replay all frames from the first uncertain frame until the current frame
@@ -516,7 +519,7 @@ transient skipInit unit Network
 				.inputs.readPos = .uncertainReadPos
 			restoreTime = Time.measure
 				Snapshot.deserialize commonState
-			parseLog +=  " restore u:{uncertainFrame} c:{Framework.checksum}"
+			if logging: parseLog +=  " restore u:{uncertainFrame} c:{Framework.checksum}"
 	
 			let targetFrame = frame
 			frame = uncertainFrame
@@ -532,11 +535,11 @@ transient skipInit unit Network
 				while frame < targetFrame
 					step fastForward:true, draw:false
 		else
-			parseLog +=  " no-restore c:{certainFrame} u:{uncertainFrame}"
+			if logging: parseLog +=  " no-restore c:{certainFrame} u:{uncertainFrame}"
 					
 	js void log: logstring text
 		let str = new Date().hourMinuteSecondString() + " " + text
-		Network_eventLog += str + "\n"
+		if(Network_logging) Network_eventLog += str + "\n"
 		statistics_log += str + "\n"
 		log(str)
 		
@@ -661,12 +664,12 @@ transient skipInit unit Network
 		Platform.setLocalStorageObject "room"+roomId, RoomInfo(currentTime, Input.localUser.id)
 		
 	onWrongChecksum: float mine, float theirs
-		checksumLog += " MISMATCH mine:{mine} theirs:{theirs}"
+		if logging: checksumLog += " MISMATCH mine:{mine} theirs:{theirs}"
 		onError {"Out of sync"}
 		
 	onError: Error error
 		errorMessage = error.stack
-		eventLog += errorMessage + "\n" 
+		if logging: eventLog += errorMessage + "\n" 
 		statistics.log += errorMessage + "\n" 
 		Platform.sendErrorToEditor error
 		
@@ -763,7 +766,7 @@ skipInit transient unit statistics
 			series.add s = {name, color}
 			series.orderBy.name
 		s.color = color
-		s.values.add value
+		s.values.add value maxLength:size.x.round
 		
 	internal draw
 		maxValue = 0
