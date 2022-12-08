@@ -135,7 +135,7 @@ transient skipInit unit Platform
 		showDebugInfo = getLocalStorageObject("showDebugInfo") == "true"
 		
 		onResize
-		drawLoading
+		// drawLoading
 		if mode >= Play: mode = Pause
 		let path = url.getUntil("?").split("/")
 		let gameId = path[3]
