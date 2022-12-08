@@ -1191,7 +1191,7 @@ skipInit unit gizmo
 			// Draw handles
 			let size = max - min
 			let center = (max + min)/2 
-			for Direction.allEightDirections
+			for Direction.allDirections
 				drawImage ResizeHandle, center + size/2*.vector, size:handleSize, location:null, layer:int.maxValue
 				
 			// Draw selection

@@ -596,24 +596,24 @@ class IsometicGrid
 		return xOffset*worldVector.x + yOffset*worldVector.y
 		
 class Direction
-	global const Direction Right = {"Right", 0, { 1, 0},   0°, 330°} // positive x direction (1,0)
-	global const Direction Down  = {"Down",  1, { 0, 1},  90°,  30°} // positive y direction (0,1)
-	global const Direction Left  = {"Left",  2, {-1, 0}, 180°, 150°} // negative x direction (-1,0)
-	global const Direction Up    = {"Up",    3,  {0,-1}, 270°, 210°} // negative y direction (0,-1)
+	global const Direction Right = {"Right", 0, { 1, 0, location:null},   0°, 330°} // positive x direction (1,0)
+	global const Direction Down  = {"Down",  1, { 0, 1, location:null},  90°,  30°} // positive y direction (0,1)
+	global const Direction Left  = {"Left",  2, {-1, 0, location:null}, 180°, 150°} // negative x direction (-1,0)
+	global const Direction Up    = {"Up",    3,  {0,-1, location:null}, 270°, 210°} // negative y direction (0,-1)
 	
-	const Direction DownRight = {"DownRight", 0, { 1, 1},  45°} // positive x, positive y direction (1,1)
-	const Direction DownLeft  = {"DownLeft",  1, {-1, 1}, 135°} // negative x, positive y direction (-1,1)
-	const Direction UpLeft    = {"UpLeft",    2, {-1,-1}, 225°} // negative x, negative y direction (-1,-1)
-	const Direction UpRight   = {"UpRight",   3, { 1,-1}, 315°} // positive x, negative y direction (1,-1)
+	const Direction DownRight = {"DownRight", 0, { 1, 1, location:null},  45°} // positive x, positive y direction (1,1)
+	const Direction DownLeft  = {"DownLeft",  1, {-1, 1, location:null}, 135°} // negative x, positive y direction (-1,1)
+	const Direction UpLeft    = {"UpLeft",    2, {-1,-1, location:null}, 225°} // negative x, negative y direction (-1,-1)
+	const Direction UpRight   = {"UpRight",   3, { 1,-1, location:null}, 315°} // positive x, negative y direction (1,-1)
 	
 	// List of the four primary direction: Right, Down, Left, Up
-	const Direction[] allFourDirections = [Right, Down, Left, Up]
-	
-	// List of the primary direction and the diagonals
-	const Direction[] allEightDirections = [Right, DownRight, Down, DownLeft, Left, UpLeft, Up, UpRight]
+	const Direction[] primaryDirections = [Right, Down, Left, Up]
 	
 	// List of the four diagonals: UpLeft, UpRight, DownLeft, DownRight
-	const Direction[] allDiagonals = [DownRight, DownLeft, UpLeft, UpRight]
+	const Direction[] diagonalDirections = [DownRight, DownLeft, UpLeft, UpRight]
+	
+	// List of the primary direction and the diagonals
+	const Direction[] allDirections = [Right, DownRight, Down, DownLeft, Left, UpLeft, Up, UpRight]
 
 	string name
 	int index
@@ -624,10 +624,10 @@ class Direction
 	toString := name
 	
 	rotated: RotationDirection direction = Clockwise
-		return allFourDirections[(index+(direction == Clockwise ? 1:3))%4]
+		return primaryDirections[(index+(direction == Clockwise ? 1:3))%4]
 		
 	inverted
-		return allFourDirections[(index+2)%4]
+		return primaryDirections[(index+2)%4]
 		
 	isOrthogonalTo: Direction value
 		return index%2 != value.index%2
