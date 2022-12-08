@@ -324,7 +324,7 @@ transient skipInit unit Network
 			for Input.users
 				let internalUser = Input.internalUsers[.id]
 				if not internalUser.local
-					statistics.add cast .index, frame - internalUser.inputFrame, .color or graphics.defaultColors[.index]
+					statistics.add .index, frame - internalUser.inputFrame, .color or graphics.defaultColors[.index]
 			statistics.add "buffer", bufferFrames, Gray
 			// statistics.add "interval", sendInterval, {"808080"}
 			// statistics.add "ahead", ahead, Gray
@@ -681,25 +681,24 @@ transient skipInit unit Network
 			alertShown = true
 
 class StatisticsGraphSeries
-	string name
+	int userIndex = -1
+	string name = null
 	float[] values
+	float[] recentValues
 	Color color
 	
 	float lastValue := values.length > 0 ? values[values.length-1] : 0
 	
-	int peeks
-		int result = 0
-		bool isPeek = false
-		for values
-			if . > 30
-				if not isPeek: isPeek = true; result++
-			else
-				isPeek = false
-		return result
+	add: float value
+		recentValues.add value
+		if recentValues.length >= statistics.framesPerValue
+			values.add recentValues.max .
+			recentValues.clear
 				
 skipInit transient unit statistics
 	Vector2 position = {500, 460}
 	Vector2 size = {500, 160}
+	framesPerValue = 30
 	
 	float[] serverPings
 	private StatisticsGraphSeries[] series
@@ -716,10 +715,8 @@ skipInit transient unit statistics
 		print "sending statistics", round
 		let userName = localStorage.getStringDirectly("play-userId")
 		let server = Platform.host.getUntil(".")
-		let p0 = series.find.name == "0"
-		let p1 = series.find.name == "1"
-		let p2 = series.find.name == "2"
-		let p3 = series.find.name == "3"
+		StatisticsGraphSeries[] series
+		for Input.users: series.add this.series.find.userIndex == i
 		http.post "{Platform.protocalAndHost}:3114/stats", body:{
 			time: Date.now.isoString
 			gameId: Network.gameId
@@ -734,18 +731,7 @@ skipInit transient unit statistics
 			minServerPing: serverPings.min .
 			maxServerPing: serverPings.max .
 			averageServerPing: serverPings.average
-			ping0: p0?.values.average
-			ping1: p1?.values.average
-			ping2: p2?.values.average
-			ping3: p3?.values.average
-			pingMax0: p0?.values.max .
-			pingMax1: p1?.values.max .
-			pingMax2: p2?.values.max .
-			pingMax3: p3?.values.max .
-			pingPeeks0: p0?.peeks
-			pingPeeks1: p1?.peeks
-			pingPeeks2: p2?.peeks
-			pingPeeks3: p3?.peeks
+			ping:series.select ({average:it?.values.average, max:it?.values.max(.), peeks:it?.values.count . > 30})
 			connections: Input.internalUsers.select.connectionType
 			serverPings
 			peerPings: series
@@ -768,7 +754,15 @@ skipInit transient unit statistics
 			series.add s = {name, color}
 			series.orderBy.name
 		s.color = color
-		s.values.add value maxLength:size.x.round
+		s.add value
+		
+	add: int userIndex, float value, Color color = White
+		var s = series.find.userIndex == userIndex
+		if !s
+			series.add s = {userIndex, name:userIndex.toString, color}
+			series.orderBy.name
+		s.color = color
+		s.add value
 		
 	internal draw
 		maxValue = 0
