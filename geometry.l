@@ -465,7 +465,7 @@ unit Math
 global transient unit System
 	global inline js void forPositions: T[] subject               // The list to iterate over
 		                                Vector2 start = {0,0}     // Left or top align items at this position
-		                                Vector2 delta = {100,0}   // Distance between items
+		                                Vector2 delta = {300,0}   // Distance between items
 		                                -> void(
 		                                    T it,                 // The current item of the list we are iterating over with forCentered
 		                                    Vector2 pos,          // The position of the current item
@@ -475,7 +475,7 @@ global transient unit System
 
 	global inline js void forPositions: int to                    // The exclusive upper bound to iterate towards
 		                                Vector2 start = {0,0}     // Left or top align items at this position
-		                                Vector2 delta = {100,0}   // Distance between items
+		                                Vector2 delta = {300,0}   // Distance between items
 		                                -> void(
 		                                    int i,                // The index of the current item of the list we are iterating over with forCentered
 		                                    Vector2 pos,          // The position of the current item
@@ -495,7 +495,7 @@ global transient unit System
 
 	global inline js void forPositions: T[] subject               // The list to iterate over
 		                                Vector2 center = {0,0}    // Center items at this position
-		                                Vector2 delta = {100,0}   // Distance between items
+		                                Vector2 delta = {300,0}   // Distance between items
 		                                -> void(
 		                                    T it,                 // The current item of the list we are iterating over with forCentered
 		                                    Vector2 pos,          // The position of the current item
@@ -505,7 +505,7 @@ global transient unit System
 
 	global inline js void forPositions: int to                    // The exclusive upper bound to iterate towards
 		                                Vector2 center = {0,0}    // Center items at this position
-		                                Vector2 delta = {100,0}   // Distance between items
+		                                Vector2 delta = {300,0}   // Distance between items
 		                                -> void(
 		                                    int i,                // The index of the current item of the list we are iterating over with forCentered
 		                                    Vector2 pos           // The position of the current item
@@ -514,7 +514,7 @@ global transient unit System
 
 	global inline js void forPositions: T[] subject               // The list to iterate over
 		                                Vector2 end = {0,0}       // Right or bottom align items at this position
-		                                Vector2 delta = {100,0}   // Distance between items
+		                                Vector2 delta = {300,0}   // Distance between items
 		                                -> void(
 		                                    T it,                 // The current item of the list we are iterating over with forCentered
 		                                    Vector2 pos,          // The position of the current item
