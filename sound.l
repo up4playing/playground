@@ -25,10 +25,14 @@ skipInit class Sound
 	js void stop
 		if(this.audioElement) this.audioElement.pause()
 		
-	play
+	play: needsToBeCertain = false
+		print "pre-play", needsToBeCertain, Input.isCertain
+		if needsToBeCertain and not Input.isCertain: return
+			
 		// We can play sounds immediately to ensure there is no lag
 		// If a sound turns out to be wrong after receiving new inputs, we stop it
 		let playingSound = audio.playingSounds.find(.sound == this and .frame == Time.frame)
+		print "play", playingSound, Network.isPremiere
 		if !playingSound
 			audio.playingSounds.add playingSound = {this, frame:Time.frame, isConfirmed:true}
 			if Network.isPremiere: doPlay playingSound
@@ -52,7 +56,7 @@ skipInit class Sound
 		
 	internal js void preloadForNextPlayback
 		this.nextAudioElement = new Audio();
-		await this.nextAudioElement.setSinkId(PeerNetwork_audioOutputId);
+		if(this.nextAudioElement.setSinkId) await this.nextAudioElement.setSinkId(PeerNetwork_audioOutputId);
 		this.nextAudioElement.src = _basePath+this.file;
 		
 	isPlaying
@@ -82,13 +86,17 @@ transient global skipInit unit audio
 		
 	internal finishFrame
 		// Stop sounds that turned out to be wrong after receiving new inputs
-		playingSounds.each: if .frame == Time.frame and !.isConfirmed: .sound.stop
+		playingSounds.each
+			if .frame == Time.frame and !.isConfirmed
+				print "stopping", .sound.file, Time.frame, .isConfirmed
+				.sound.stop
 		
 	internal reload
 		sounds.each.preloadForNextPlayback
 		
 	stop
 		playingSounds.each.sound.stop
+		playingSounds.clear
 	
 	mute: int forUser = -1
 		if forUser == -1 or forUser == Input.localUser?.id
@@ -102,12 +110,15 @@ transient global skipInit unit audio
 			volume = volumeLevels[volumeLevel]
 			playingSounds.each.sound.updateVolume
 	
-	global playSound: Sound sound, Time delay = 0, bool smooth = false
+	global playSound: Sound sound
+		              Time delay = 0
+		              bool needsToBeCertain = false
+		if needsToBeCertain and not Input.isCertain: return
+			
 		if Time.frame == 0
-			fx.add PlaySoundEffect startTime:Math.ceil(Time.now+Network.targetFrameTime)+delay, sound, smooth
+			fx.add PlaySoundEffect startTime:Math.ceil(Time.now+Network.targetFrameTime)+delay, sound
 		else
 		if delay
-			fx.add PlaySoundEffect startTime:Time.now+delay, sound, smooth
+			fx.add PlaySoundEffect startTime:Time.now+delay, sound
 		else
-		if not smooth or Input.isCertain
 			sound.play

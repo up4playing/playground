@@ -28,7 +28,6 @@ transient unit PeerNetwork
 	internal enableVideo = true
 	internal enableAudio = true
 	
-	visible string connectionType
 	visible string error
 	
 	private js object setupPeerConnection: InternalUser user, bool offerByMe
@@ -39,11 +38,18 @@ transient unit PeerNetwork
 			// iceCandidatePoolSize: 10,
 		}
 		if(PeerNetwork_relayMode > 0) {
+			// Alwyzon
 			options.iceServers.push({
-				urls: 'turn:81.169.197.127',
-				username: 'play-user-x8env28gx41odbxzwjyut2hx82jyzdk7qm6d-ok',
-				credential: '9y4vm5vxj3uyqvc8wkyzrm26ygebxutkd52bymr8zsmy6qa8-ok'
+				urls: 'turn:94.177.8.204:39917',
+				username: 'play-user-x8env28gx41odbxzwjyut2oq871987syq8ovyuqp-alwyzon',
+				credential: 'qoy91n981vlplabb1873jdcgsouz2qm87qmmakqpc-alwyzon'
 			});
+			// Amazon Lightsail
+			// options.iceServers.push({
+			// 	urls: 'turn:81.169.197.127',
+			// 	username: 'play-user-x8env28gx41odbxzwjyut2hx82jyzdk7qm6d-ok',
+			// 	credential: '9y4vm5vxj3uyqvc8wkyzrm26ygebxutkd52bymr8zsmy6qa8-ok'
+			// });
 		}
 		options.iceServers.push({
 			urls: [
@@ -51,7 +57,7 @@ transient unit PeerNetwork
 				'stun:stun2.l.google.com:19302',
 			],
 		});
-		let peerConnection = PeerNetwork_peerConnection = new RTCPeerConnection(options);
+		let peerConnection = new RTCPeerConnection(options);
 		let connectionId = user.connectionId
 		Network_log("setupPeerConnection userId:"+user.id+" connectionId:"+connectionId+" relayMode:"+PeerNetwork_relayMode)
 		
@@ -66,8 +72,6 @@ transient unit PeerNetwork
 		user.peerConnection = peerConnection
 		user.offerByMe = offerByMe
 		return peerConnection
-			
-	object peerConnection
 	
 	js void stopRecreatingDataChannel: InternalUser user
 		if(user.recreateDataChannelInterval) {
@@ -80,12 +84,17 @@ transient unit PeerNetwork
 		// Create reliable data channel
 		// These options would create an unreliable one: {ordered:false, maxRetransmits:0}
 		Network_log("setupDataChannel: Creating data channel for user "+user.id)
-		let dataChannel = PeerNetwork_peerConnection.createDataChannel("channel")
+		let dataChannel = user.peerConnection.createDataChannel("channel")
 		dataChannel.binaryType = "arraybuffer"
 		dataChannel.onopen = e => {
 			user.dataChannel = dataChannel
 			Network_log("setupDataChannel: Open data channel for "+user.id)
 			PeerNetwork_stopRecreatingDataChannel(user)
+			PeerNetwork_logConnectionType(user)
+			if(!PeerNetwork_requestedState) {
+				PeerNetwork_requestState(user)
+				PeerNetwork_requestedState = true
+			}
 		}
 		dataChannel.onclosing = e => Network_log("Data channel "+user.id+" closing")
 		dataChannel.onclose = e => {
@@ -111,7 +120,6 @@ transient unit PeerNetwork
 			let offer = await peerConnection.createOffer();
 			await peerConnection.setLocalDescription(offer);
 			ServerNetwork_sendSignal(user.id, "offer", peerConnection.localDescription.sdp)
-			PeerNetwork_logConnectionType()
 			Network_log("Sent offer to "+user.id+", waiting for answer.");
 		}
 		catch(e) {
@@ -119,8 +127,8 @@ transient unit PeerNetwork
 			Network_log(e.stack);
 		}
 		
-	js void setBitrate: float scaleResolutionDownBy = 1, float maxBitrate
-		let senderList = PeerNetwork_peerConnection.getSenders();
+	js void setBitrate: InternalUser user, float scaleResolutionDownBy = 1, float maxBitrate
+		let senderList = user.peerConnection.getSenders();
 		for(let sender of senderList) {
 			const params = sender.getParameters();
 			console.log(params);
@@ -143,7 +151,7 @@ transient unit PeerNetwork
 			PeerNetwork_stopRecreatingDataChannel(user)
 			
 			// Data channel
-			PeerNetwork_peerConnection.addEventListener('datachannel', e => {
+			user.peerConnection.addEventListener('datachannel', e => {
 				Network_log("Data Channel received")
 				let dataChannel = e.channel
 				dataChannel.binaryType = "arraybuffer"
@@ -151,6 +159,7 @@ transient unit PeerNetwork
 				dataChannel.onopen = e => {
 					Network_log("Data channel opened")
 					user.dataChannel = dataChannel
+					PeerNetwork_logConnectionType(user)
 				}
 				dataChannel.onclosing = e => {
 					Network_log("Data channel closing")
@@ -168,7 +177,6 @@ transient unit PeerNetwork
 			let answer = await peerConnection.createAnswer();
 			await peerConnection.setLocalDescription(answer);
 			ServerNetwork_sendSignal(user.id, "answer", peerConnection.localDescription.sdp)
-			PeerNetwork_logConnectionType()
 			Network_log("Received offer from "+user.id+", sent answer, waiting for connection.");
 		}
 		catch(e) {
@@ -190,9 +198,7 @@ transient unit PeerNetwork
 				sendBuffer.writeBuffer inputs, user.inputsSentPos, length
 				Network.tickMessageSize = send ., sendBuffer
 				
-				Network.sentLog += " <{user.id}> #{inputFrame} {user.inputsSentPos}->{inputs.writePos} {inputs.toRangeString(user.inputsSentPos, inputs.writePos)} ({Network.tickMessageSize} bytes)"
-				// if length: print " <{user.id}> #{inputFrame} {user.inputsSentPos}->{inputs.writePos} {inputs.toRangeString(user.inputsSentPos, inputs.writePos)} ({Network.tickMessageSize} bytes)"
-				
+				if Network.logging: Network.sentLog += " <{user.id}> #{inputFrame} {user.inputsSentPos}->{inputs.writePos} {inputs.toRangeString(user.inputsSentPos, inputs.writePos)} ({Network.tickMessageSize} bytes)"
 				user.inputsSentPos = inputs.writePos
 			
 	private js int send: InternalUser user, Buffer buffer
@@ -221,6 +227,7 @@ transient unit PeerNetwork
 		NetworkMessageType type = cast buffer.readInt8
 		if type == Tick:         onTick user, buffer; else
 		if type == Checksum:     onChecksum user, buffer; else
+		if type == RequestState: onRequestState user, buffer; else
 		if type == State:        onState user, buffer
 			
 	private onTick: InternalUser sender, Buffer buffer
@@ -233,10 +240,9 @@ transient unit PeerNetwork
 			buffer.readBuffer sender.inputs, prevWritePos
 			
 			Network.receivedFrames = getMinReceivedFrames
-			Network.receivedLog += " [{Network.currentTime}] <{sender.id}> #{inputFrame} buffer:{sender.bufferFrames} {prevWritePos}->{sender.inputs.writePos} {sender.inputs.toRangeString(prevWritePos, sender.inputs.writePos)}"
-			// if sender.inputs.writePos > prevWritePos: print " [{Network.currentTime}] <{sender.id}> #{inputFrame} buffer:{sender.bufferFrames} {prevWritePos}->{sender.inputs.writePos} {sender.inputs.toRangeString(prevWritePos, sender.inputs.writePos)}"
+			if Network.logging: Network.receivedLog += " [{Network.currentTime}] <{sender.id}> #{inputFrame} buffer:{sender.bufferFrames} {prevWritePos}->{sender.inputs.writePos} {sender.inputs.toRangeString(prevWritePos, sender.inputs.writePos)}"
 		else
-			Network.receivedLog += " [{Network.currentTime}] <{sender.id}> (ignoring #{inputFrame})"
+			if Network.logging: Network.receivedLog += " [{Network.currentTime}] <{sender.id}> (ignoring #{inputFrame})"
 		
 	js void onReceivedAnswer: InternalUser user, string sdp
 		await user.peerConnection.setRemoteDescription(new RTCSessionDescription({type: "answer", sdp}));
@@ -250,21 +256,24 @@ transient unit PeerNetwork
 			Network_log(e.stack);
 		}
 		
-	private js void logConnectionType
-		setTimeout(async () => {
-			let stats = await PeerNetwork_peerConnection.getStats()
-			let candidatePairs = [...stats.values()].filter(s => s.type == "candidate-pair" && s.state == "succeeded")
-			let candidatePair = candidatePairs.find(a => a.selected) || candidatePairs[0]
-			if(candidatePair) {
-				let candidate = stats.get(candidatePair.localCandidateId);
-				let ip = candidate.ip || candidate.address
-				PeerNetwork_connectionType += candidate.candidateType + " "
-				Network_log("#connection: "+candidate.candidateType+" "+ip+" "+ip)
-			} else {
-				window.stats = [...stats.values()]
-				Network_log("Can't access stats"+window.stats)
-			}
-		}, 5000)
+	private js void logConnectionType: InternalUser user
+		// setTimeout(async () => {
+		let stats = await user.peerConnection.getStats()
+		let candidatePairs = [...stats.values()].filter(s => s.type == "candidate-pair" && s.state == "succeeded")
+		let candidatePair = candidatePairs.find(a => a.selected) || candidatePairs[0]
+		if(candidatePair) {
+			let candidate = stats.get(candidatePair.localCandidateId);
+			let ip = candidate.ip || candidate.address
+			user.connectionType = candidate.candidateType + " " + ip
+			Network_log("#connection to "+user.id+": "+user.connectionType)
+		} else {
+			Network_log("#connection: no candidate pair for "+user.id)
+			window.stats = [...stats.values()]
+			console.log(window.stats)
+			try  { Network_log(JSON.stringify(window.stats)) }
+			catch{ }
+		}
+		// }, 5000)
 		
 	// --------------------------------------------- Checksum ---------------------------------------------
 	
@@ -281,7 +290,7 @@ transient unit PeerNetwork
 	onChecksum: InternalUser user, Buffer buffer
 		int checksumFor = buffer.readInt
 		float checksum = buffer.readFloat64
-		Network.checksumLog += " <{user.id}> #{checksumFor} {checksum}"
+		if Network.logging: Network.checksumLog += " <{user.id}> #{checksumFor} {checksum}"
 		
 		let myChecksum = Network.checksums[checksumFor]
 		if !myChecksum
@@ -379,7 +388,7 @@ transient unit PeerNetwork
 		
 		// Update audio elements
 		for(let user of Input_internalUsers) {
-			if(user?.audioElement) {
+			if(user?.audioElement && user.audioElement.setSinkId) {
 				user.audioElement.setSinkId(PeerNetwork_audioOutputId);
 			}
 		}
@@ -403,7 +412,7 @@ transient unit PeerNetwork
 		// Create audio element so we always hear the remote user, event if no video is shown
 		let audioElement = user.audioElement = document.createElement('audio')
 		audioElement.srcObject = user.mediaStream
-		audioElement.setSinkId(PeerNetwork_audioOutputId);
+		if(audioElement.setSinkId) audioElement.setSinkId(PeerNetwork_audioOutputId);
 		document.body.appendChild(audioElement);
 		
 		// Add incoming tracks to media stream for remote player
@@ -444,14 +453,31 @@ transient unit PeerNetwork
 		
 	Buffer snapshotBuffer
 	int[] sendStateQueue
+	bool requestedState
+	int stateTimeout
 	
-	stateRequestedBy: int id
-		sendStateQueue.add id
+	makePrimiaryUserIfStateIsNotReceived
+		requestedState = false
+		stateTimeout = Platform.setTimeout 15s
+			Network.log "We haven't received a state after 15s -> Make primary user"
+			makePrimaryUser
+	
+	makePrimaryUser
+		let frame = Math.floor((Network.currentTime - Network.startTime)/Network.targetFrameTime)+3
+		Network.startConnected frame
+	
+	private requestState: InternalUser from
+		sendBuffer.reset
+		sendBuffer.writeInt8 cast NetworkMessageType.RequestState
+		send from, sendBuffer
+		
+	private onRequestState: InternalUser sender, Buffer buffer
+		Network.log "Requesting state from {sender.id}"
+		sendStateQueue.add sender.id
 		if Network.mode == Connected: processSendStateQueue
 	
 	processSendStateQueue
 		if sendStateQueue.length > 0
-			Network.log "Processing send state queue", sendStateQueue.length
 			snapshotBuffer.reset
 			Snapshot.serialize snapshotBuffer
 			for sendStateQueue <-
@@ -459,22 +485,6 @@ transient unit PeerNetwork
 				if user?.dataChannel
 					sendState user, snapshotBuffer
 					sendStateQueue.removeAt i
-	
-	// sendRequestState: InternalUser to
-	// 	Network.log "Sending state request to {to.id}"
-	// 	sendBuffer.reset
-	// 	sendBuffer.writeInt8 cast NetworkMessageType.RequestState
-	// 	send to, sendBuffer
-		
-	// private onRequestState: InternalUser to, Buffer buffer
-	// 	if Network.mode == Connected
-	// 		Network.log "Received request state from {to.id} -> sending state"
-	// 		snapshotBuffer.reset
-	// 		Snapshot.serialize snapshotBuffer
-	// 		sendState to, snapshotBuffer
-	// 	else
-	// 		Network.log "Received request state from {to.id} -> queueing"
-	// 		sendStateQueue.add to.id
 		
 	private sendState: InternalUser to, Buffer buffer
 		Network.log "Sending state to {to.id}"
@@ -492,9 +502,11 @@ transient unit PeerNetwork
 		send to, sendBuffer
 		
 	private onState: InternalUser c, Buffer buffer
+		Platform.clearTimeout stateTimeout
 		if Network.mode == Connected:
 			Network.log "Ignoring received state from {c.id} because we are already connected"
 			return
+			
 		Network.log "Received state from {c.id}"
 		let frame = buffer.readInt32
 		let userCount = buffer.readInt32
@@ -513,8 +525,6 @@ transient unit PeerNetwork
 		Snapshot.deserialize snapshotBuffer
 		Math.recreateRandomValues
 		Network.startConnected frame+1
-		
-		ServerNetwork.sendReadyForStateRequests
 		
 					
 	// private float nextPingTime

@@ -12,7 +12,7 @@ unit localStorage
 	inline js void set: string key, object value
 		localStorage.setItem(key, JSON.stringify(value))
 		
-	private inline js string getStringDirectly: string key
+	internal inline js string getStringDirectly: string key
 		(localStorage.getItem(key) || "")
 		
 	get: string key, stored void(dynamic data) do
@@ -25,7 +25,7 @@ unit http
 	js void get: string url
 		         stored void(dynamic result) code
 		let id = networkData_addCallback(code)
-		if(Network_isPremiere) {
+		if(Network_isPremiere && Input_isCertain) {
 			let data = await (await fetch(url)).text()
 			log("Actually fetching data: GET "+url+" -> "+data?.length+" bytes")
 			Input_handleObject(id, data, 1)
@@ -38,7 +38,7 @@ unit http
 	js void post: string url
 		          stored void(dynamic result) code
 		let id = networkData_addCallback(code)
-		if(Network_isPremiere) {
+		if(Network_isPremiere && Input_isCertain) {
 			let data = await (await fetch(url, {method:"POST"})).text()
 			log("Actually fetching data: POST "+url+" -> "+data?.length+" bytes")
 			Input_handleObject(id, data)
@@ -49,17 +49,25 @@ unit http
 		          dynamic body
 		          stored void(dynamic result) code
 		let id = networkData_addCallback(code)
-		if(Network_isPremiere) {
+		log(`[${Network_frame}] premiere:${Network_isPremiere} certain:${Input_isCertain}`)
+		if(Network_isPremiere && Input_isCertain) {
+			log("Actually fetching data: POST "+url)
 			let data = await (await fetch(url, {method:"POST", body:JSON.stringify(body)})).text()
-			log("Actually fetching data: POST "+url+" -> "+data?.length+" bytes")
+			log("Done fetching data: POST "+url+" -> "+data?.length+" bytes")
 			Input_handleObject(id, data)
+		}
+		
+	js void post: string url
+		          dynamic body
+		if(Network_isPremiere && Input_isCertain) {
+			(await fetch(url, {method:"POST", body:JSON.stringify(body)})).text()
 		}
 		
 	// Perform an http put request
 	js void put: string url
 		         stored void(dynamic result) code
 		let id = networkData_addCallback(code)
-		if(Network_isPremiere) {
+		if(Network_isPremiere && Input_isCertain) {
 			let data = await (await fetch(url, {method:"PUT"})).text()
 			log("Actually fetching data: PUT "+url+" -> "+data?.length+" bytes")
 			Input_handleObject(id, data)
@@ -70,7 +78,7 @@ unit http
 		         dynamic body
 		         stored void(dynamic result) code
 		let id = networkData_addCallback(code)
-		if(Network_isPremiere) {
+		if(Network_isPremiere && Input_isCertain) {
 			let data = await (await fetch(url, {method:"PUT", body:JSON.stringify(body)})).text()
 			log("Actually fetching data: PUT "+url+" -> "+data?.length+" bytes")
 			Input_handleObject(id, data)
@@ -80,7 +88,7 @@ unit http
 	js void delete: string url
 		            stored void(dynamic result) code
 		let id = networkData_addCallback(code)
-		if(Network_isPremiere) {
+		if(Network_isPremiere && Input_isCertain) {
 			let data = await (await fetch(url, {method:"DELETE"})).text()
 			log("Actually fetching data: DELETE "+url+" -> "+data?.length+" bytes")
 			Input_handleObject(id, data)
@@ -91,7 +99,7 @@ unit http
 		            dynamic body
 		            stored void(dynamic result) code
 		let id = networkData_addCallback(code)
-		if(Network_isPremiere) {
+		if(Network_isPremiere && Input_isCertain) {
 			let data = await (await fetch(url, {method:"DELETE", body:JSON.stringify(body)})).text()
 			log("Actually fetching data: DELETE "+url+" -> "+data?.length+" bytes")
 			Input_handleObject(id, data)
