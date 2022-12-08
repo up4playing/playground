@@ -1869,7 +1869,11 @@ transient struct Date
 	static inline js Date fromValues(int year, int month, int day, int hour = 0, int minute = 0, int second = 0) new Date(year, month-1, day, hour, minute, second)
 
 class Range
-	int from, to
+	int from // The start of the range
+	int to   // The end of the range
+	
+	Range: int from       // The start of the range
+		   nocolon int to // The end of the range
 	
 	inline js bool contains: int value
 		(value >= this.from && value < this.from)
