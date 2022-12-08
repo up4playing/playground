@@ -539,9 +539,11 @@ transient skipInit unit Network
 					
 	js void log: logstring text
 		let str = new Date().hourMinuteSecondString() + " " + text
-		if(Network_logging) Network_eventLog += str + "\n"
 		statistics_log += str + "\n"
-		log(str)
+		if(Network_logging) {
+			Network_eventLog += str + "\n"
+			log(str)
+		}
 		
 	inline js int currentTime := Date.now()
 	
