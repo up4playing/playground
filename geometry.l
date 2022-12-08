@@ -662,21 +662,21 @@ class Grid<T>
 	IntVector2 size
 	T[] items
 	
-	get: int x
-		 int y
+	get: int x // The column to get the value from
+		 int y // The row to get the value from
 		return items[y*size.x + x]
 	
-	get: IntVector2 pos
-		return items[pos.y*size.x + pos.x]
+	get: IntVector2 position // The vector to get the value from
+		return items[position.y*size.x + position.x]
 	
-	set: int x
-		 int y
-		 T value
+	set: int x   // The column of the value to set
+		 int y   // The row of the value to set
+		 T value // The value to set
 		items[y*size.x + x] = value
 	
-	set: IntVector2 pos
-		 T value
-		items[pos.y*size.x + pos.x] = value
+	set: IntVector2 position // The grid position of the value to set
+		 T value             // The value to set
+		items[position.y*size.x + position.x] = value
 			
 global transient unit System
 	global inline js void for: IntVector2 subject    // The exclusive upper bound to iterate towards
