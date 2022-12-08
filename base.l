@@ -280,14 +280,14 @@ class string
 		this.replace(new RegExp(source, "g"), target)
 		
 	js string get: int index
-		(index >= 0 ? this[index] : this[this.length+index])
+		return index >= 0 ? this[index] : this[this.length+index]
 	
 	js string get: int from = 0
-		                  int to
-		this.substring(from >= 0 ? from : this.length+from, to >= 0 ? to : this.length+to)
+		           int to
+		return this.substring(from >= 0 ? from : this.length+from, to >= 0 ? to : this.length+to)
 		
 	js string get: int from = 0
-		this.substring(from >= 0 ? from : this.length+from)	
+		return this.substring(from >= 0 ? from : this.length+from)	
 	
 		
 // A logical data type that can have the value true or false
@@ -1037,43 +1037,46 @@ interface object
 		
 // This struct is automatically filled with the source code location
 transient class SourceCodeLocation
-	int row     // The row of the source code
-	int column  // The column of the source code
-	string file // The filename of the source code
+	string file
 	int start
-	
+	int end
 	SourceCodeLocation left
 	SourceCodeLocation right
+	
 	inline js bool toBool() (this != null)
 	
-	js SourceCodeLocation clone 
-		return new SourceCodeLocation(this.row, this.column, this.file, this.start, this.left, this.right)
-		
-	void flatten: SourceCodeLocation[] result
-		if file:          result.add this
-		if left != null:  left.flatten result
-		if right != null: right.flatten result
+	SourceCodeLocation clone := {file, start, end, left, right}
 			
-	SourceCodeLocation find: string file, int start
-		if this.file and this.file == file and this.start == start
+	SourceCodeLocation find: string file, int pos
+		if this.file and this.file == file and pos >= this.start and pos <= this.end
 			return this
 		if left != null
-			let result = left.find file, start
+			let result = left.find file, pos
 			if result != null: return result
 		if right != null
-			let result = right.find file, start
+			let result = right.find file, pos
 			if result != null: return result
 		return null
 			
-	SourceCodeLocation find: dynamic sourceCodeLocation
-		if this == sourceCodeLocation
+	SourceCodeLocation find: SourceCodeLocation location
+		if file == location.file and start == location.start and end == location.end
 			return this
 		if left != null
-			let result = left.find sourceCodeLocation
+			let result = left.find location
 			if result != null: return result
 		if right != null
-			let result = right.find sourceCodeLocation
+			let result = right.find location
 			if result != null: return result
+		return null
+		
+	SourceCodeLocation leaf
+		if file: return this
+		if right
+			let result = right.leaf
+			if result: return result
+		if left
+			let result = left.leaf
+			if result: return result
 		return null
 		
 js Error

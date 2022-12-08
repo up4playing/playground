@@ -1,4 +1,4 @@
-enum NetworkMessageType: Join, JoinResponse, Ping, Pong, Signal, Ice, Tick, Switch, Reload, ReadyForStateRequests, MakePrimary, RequestState, State, Checksum
+enum NetworkMessageType: Join, JoinResponse, Ping, Pong, Signal, Ice, Tick, Switch, Reload, RequestState, State, Checksum
 
 transient unit ServerNetwork
 	private object socket
@@ -66,9 +66,7 @@ transient unit ServerNetwork
 		if type == Ice:          onIce buffer; else
 		if type == Tick:         onTick buffer; else
 		if type == Switch:       onSwitch buffer; else
-		if type == Reload:       onReload buffer; else
-		if type == MakePrimary:  onMakePrimary buffer;
-		if type == RequestState: onRequestState buffer;
+		if type == Reload:       onReload buffer;
 		
 	private void sendJoinMessage: string roomId, int userId, int version
 		sendBuffer.reset
@@ -101,7 +99,7 @@ transient unit ServerNetwork
 			
 		if version != Platform.version
 			alert "You are using an old version of this application. Please refresh your browser."
-		
+			
 		inputsSentPos = Input.localUser.inputs.writePos
 		Input.localUser.id = userId
 		Math.setRandomSeed seed
@@ -110,11 +108,24 @@ transient unit ServerNetwork
 		for Input.internalUsers
 			if . and !.local: PeerNetwork.createOffer .
 		Network.storeUserId
-				
+		
+		if userCount <= 1
+			Network.log "We are the only user so far -> Make primary user"
+			PeerNetwork.makePrimaryUser
+		else
+			PeerNetwork.makePrimiaryUserIfStateIsNotReceived
+			
+		// Send statistics after 20 seconds
+		Platform.setTimeout 20s
+			let prevIsCertain = Input.isCertain
+			Input.isCertain = true
+			statistics.send game:-1, round:-1
+			Input.isCertain = prevIsCertain
+		
 		Network.log "Joining room {roomId} as user {userId}"
 		
 		// The first person in the room triggers sending an notification with the link to everybody
-		if userCount <= 1 and !Platform.isStaging: http.getInternal "https://up4playing.com:3114/sendGamedayNotification/{Network.gameId}/{Network.roomId}/hasStarted"
+		if userCount <= 1 and !Platform.isStaging: http.getInternal "{Platform.protocalAndHost}:3114/sendGamedayNotification/{Network.gameId}/{Network.roomId}/hasStarted"
 
 		
 	float nextPingTime, fastestPingPongTime = int.maxValue, lastPingPongTime
@@ -137,6 +148,7 @@ transient unit ServerNetwork
 		float timeSinceStart = buffer.readFloat64
 		float pingTime = buffer.readFloat64
 		float pingPongTime = now - pingTime
+		statistics.serverPings.add pingPongTime
 		Network.log "<<< Pong ({pongCount}) {pingTime}", pingPongTime
 			
 		if pingPongTime < fastestPingPongTime
@@ -147,54 +159,7 @@ transient unit ServerNetwork
 			
 		pongCount++
 		lastPingPongTime = pingPongTime
-		
-		// Finish pinging after the 5th pong
-		if Network.mode == Ping and pongCount >= 5 and fastestPingPongTime < 1000
-			// Request the state from the user who has been here the longest (has the lowest connectionId)
-			Network.log "Ping-Pong complete", pongCount, fastestPingPongTime
-			requestStateTryNumber = 0
-			resolveState
 
-	private Time nextResolveStateTime
-	private int requestStateTryNumber
-		
-	resolveState
-		Network.mode = ResolveState
-		let now = Network.currentTime
-		if now > nextResolveStateTime
-			Network.log "resolveState: sending request state to server", requestStateTryNumber
-			sendRequestState requestStateTryNumber++
-			nextResolveStateTime = now + 7s
-			
-		// for Input.internalUsers
-		// 	print "    {.id} isConnected:{.isConnected}"
-			
-		// let master = Input.internalUsers.withMin.id where .isConnected and .dataChannel
-		// // if not masterId: masterId = Input.internalUsers.min.id
-		// // let masterId = Input.users.min.id
-			
-		// if master
-		// 	// Request state for master
-		// 	Network.log "ResolveState: The master is {master.id} -> sendRequestState"
-		// 	if master.isConnected and master.dataChannel: PeerNetwork.sendRequestState master
-		// else
-		// 	// Start application for first user
-		// 	Network.log "ResolveState: I'm the first user -> startConnected"
-		// 	let frame = Math.floor((now - Network.startTime)/Network.targetFrameTime)+3
-		// 	Network.startConnected frame
-			
-		// nextResolveStateTime = now + 5s
-		
-	private onRequestState: Buffer buffer
-		int requestedById = buffer.readInt16
-		Network.log "{requestedById} is requesting the state"
-		PeerNetwork.stateRequestedBy requestedById
-		
-	private onMakePrimary: Buffer buffer
-		Network.log "I'm the primary user -> startConnected"
-		let frame = Math.floor((Network.currentTime - Network.startTime)/Network.targetFrameTime)+3
-		Network.startConnected frame
-		
 	sendSignal:	int receiverId, string type, string sdp
 		sendBuffer.reset
 		sendBuffer.writeInt8 cast NetworkMessageType.Signal
@@ -202,17 +167,6 @@ transient unit ServerNetwork
 		sendBuffer.writeInt32 Input.localUser.id
 		sendBuffer.writeString type
 		sendBuffer.writeString sdp
-		send sendBuffer
-		
-	sendRequestState: int tryNumber
-		sendBuffer.reset
-		sendBuffer.writeInt8 cast NetworkMessageType.RequestState
-		sendBuffer.writeInt16 tryNumber
-		send sendBuffer
-		
-	sendReadyForStateRequests
-		sendBuffer.reset
-		sendBuffer.writeInt8 cast NetworkMessageType.ReadyForStateRequests
 		send sendBuffer
 		
 	private onSignal: Buffer buffer
@@ -261,7 +215,7 @@ transient unit ServerNetwork
 		sendBuffer.writeBuffer inputs, inputsSentPos, length
 		send sendBuffer
 		
-		Network.sentLog += " #{inputFrame} {inputsSentPos}->{inputs.writePos} {inputs.toRangeString(inputsSentPos, inputs.writePos)}"
+		if Network.logging: Network.sentLog += " #{inputFrame} {inputsSentPos}->{inputs.writePos} {inputs.toRangeString(inputsSentPos, inputs.writePos)}"
 		
 		inputsSentPos = inputs.writePos
 		Network.tickMessageSize = sendBuffer.writePos	
@@ -276,7 +230,7 @@ transient unit ServerNetwork
 		buffer.readBuffer sender.inputs, prevWritePos
 		
 		Network.receivedFrames = Input.internalUsers.min.inputFrame where . and !.local
-		Network.receivedLog += " [{Network.currentTime}] <{senderId}> #{sender.inputFrame} ama:{sender.bufferFrames} {prevWritePos}->{sender.inputs.writePos} {sender.inputs.toRangeString(prevWritePos, sender.inputs.writePos)}"
+		if Network.logging: Network.receivedLog += " [{Network.currentTime}] <{senderId}> #{sender.inputFrame} ama:{sender.bufferFrames} {prevWritePos}->{sender.inputs.writePos} {sender.inputs.toRangeString(prevWritePos, sender.inputs.writePos)}"
 	
 	sendSwitch: SendInputsMode mode, int sendInterval
 		sendBuffer.reset
