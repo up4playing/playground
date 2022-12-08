@@ -940,11 +940,11 @@ class List<T>
 	js T get: implicit int index // The index of the item to get
 		return index >= 0 ? this[index] : this[this.length+index]
 		
-	js T get: int from = 0
-		             int to
+	js T get: int from = 0 // Return a new list starting from this index
+		      int to       // Return a new list up to (but not including) this index
 		return this.slice(from, to)
 	
-	js T get: int from = 0
+	js T get: int from = 0 // Return a new list starting from this index
 		return this.slice(from)
 	
 	js T set: int index // The index of the item to set
