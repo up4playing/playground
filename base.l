@@ -224,6 +224,8 @@ class string
 	
 	inline js string toString() this
 	
+	Color toColor := {this}
+	
 	inline js int toInt := parseInt(this)
 		
 	inline js int toFloat := parseFloat(this)
