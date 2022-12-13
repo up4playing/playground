@@ -224,6 +224,8 @@ class string
 	
 	inline js string toString() this
 	
+	Color toColor := {this}
+	
 	inline js int toInt := parseInt(this)
 		
 	inline js int toFloat := parseFloat(this)
@@ -552,7 +554,7 @@ class List<T>
 	inline js bool all: bool(T a) predicate // The condition to check
 		this.every(predicate)
 		
-	inline js TValue[] select: TValue(T a) selector
+	inline js TValue[] select: TValue(T it) selector
 		this.map(selector)
 		
 	inline js T find: bool(T a) condition // The condition to check
@@ -938,11 +940,11 @@ class List<T>
 	js T get: implicit int index // The index of the item to get
 		return index >= 0 ? this[index] : this[this.length+index]
 		
-	js T get: int from = 0
-		             int to
+	js T get: int from = 0 // Return a new list starting from this index
+		      int to       // Return a new list up to (but not including) this index
 		return this.slice(from, to)
 	
-	js T get: int from = 0
+	js T get: int from = 0 // Return a new list starting from this index
 		return this.slice(from)
 	
 	js T set: int index // The index of the item to set
@@ -1867,7 +1869,11 @@ transient struct Date
 	static inline js Date fromValues(int year, int month, int day, int hour = 0, int minute = 0, int second = 0) new Date(year, month-1, day, hour, minute, second)
 
 class Range
-	int from, to
+	int from // The start of the range
+	int to   // The end of the range
+	
+	Range: int from       // The start of the range
+		   nocolon int to // The end of the range
 	
 	inline js bool contains: int value
 		(value >= this.from && value < this.from)

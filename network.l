@@ -78,6 +78,8 @@ transient skipInit unit Network
 	internal const targetFps = 30
 	const targetFrameTime = 1000/targetFps
 	
+	// TODO: Why is serverStartTime and startTime different in local game?
+	
 	NetworkMode mode                // Whether we are in local or connected mode
 	visible string errorMessage     // The error message if we caught any exceptions in the main loop
 	public float startTime          // The time the room was created, syncroniced between all clients
@@ -111,7 +113,7 @@ transient skipInit unit Network
 		// joinFrame = Math.floor((now - this.startTime)/targetFrameTime)+1
 		Input.handleJoin frame 
 		user.collectInputs = true
-		writeLog += " #{joinFrame} Join"
+		if Network.logging: writeLog += " #{joinFrame} Join"
 		log "startConnected", joinFrame
 		
 		this.frame = frame
@@ -296,6 +298,7 @@ transient skipInit unit Network
 	private float lastNetworkFrame, lastAnimationFrame, drawTime, tickTime, restoreTime, replayTime, saveTime
 	private int replayFrames
 	int tickMessageSize
+	bool logging = false
 	
 	collectStatistics
 		if mode == Connected and Input.users.length > 1 and frame > joinFrame + 120
@@ -317,34 +320,33 @@ transient skipInit unit Network
 			
 			Input.localUser.bufferFrames = bufferFrames
 			
-			
-			
 			// Statistics graph
 			for Input.users
 				let internalUser = Input.internalUsers[.id]
 				if not internalUser.local
-					statistics.add cast .index, frame - internalUser.inputFrame, .color or graphics.defaultColors[.index]
+					statistics.add .index, frame - internalUser.inputFrame, .color or graphics.defaultColors[.index]
 			statistics.add "buffer", bufferFrames, Gray
 			// statistics.add "interval", sendInterval, {"808080"}
 			// statistics.add "ahead", ahead, Gray
 			
 		// Logs
-		try
-			logTable += "{frame-1},{ahead},{receivedFrames},{frameMinusBuffer},{certainFrame},{sendInterval}"
-			for 3
-				let user = Input.internalUsers[i]
-					logTable += ",{user.id},{user.inputFrame},{user.bufferFrames}"
-				else
-					logTable += ",,,"
-				
-			logTable += ",{tickMessageSize},{now},{now - lastAnimationFrame},{now - lastNetworkFrame},{tickTime.format(fractionDigits:2)},{drawTime.format(fractionDigits:2)},{frame-animationStartFrame}"
-			logTable += ",{restoreTime.format(fractionDigits:2)},{replayFrames},{replayTime.format(fractionDigits:2)},{saveTime.format(fractionDigits:2)},{ServerNetwork.lastPingPongTime}"
-			logTable += ",\"{checksumLog.trim}\",\"{eventLog.trim}\",\"{Input.users[0]?.controller?.leftStick}\",\"{sentLog.trim}\",\"{receivedLog.trim}\",\"{writeLog.trim}\",\"{parseLog.trim}\",\"{touchLog.trim}\"\n"
-		catch
-			onError error
+		if logging
+			try
+				logTable += "{frame-1},{ahead},{receivedFrames},{frameMinusBuffer},{certainFrame},{sendInterval}"
+				for 3
+					let user = Input.internalUsers[i]
+						logTable += ",{user.id},{user.inputFrame},{user.bufferFrames}"
+					else
+						logTable += ",,,"
+					
+				logTable += ",{tickMessageSize},{now},{now - lastAnimationFrame},{now - lastNetworkFrame},{tickTime.format(fractionDigits:2)},{drawTime.format(fractionDigits:2)},{frame-animationStartFrame}"
+				logTable += ",{restoreTime.format(fractionDigits:2)},{replayFrames},{replayTime.format(fractionDigits:2)},{saveTime.format(fractionDigits:2)},{ServerNetwork.lastPingPongTime}"
+				logTable += ",\"{checksumLog.trim}\",\"{eventLog.trim}\",\"{Input.users[0]?.controller?.leftStick}\",\"{sentLog.trim}\",\"{receivedLog.trim}\",\"{writeLog.trim}\",\"{parseLog.trim}\",\"{touchLog.trim}\"\n"
+			catch
+				onError error
 			
-		eventLog = ""; sentLog = ""; receivedLog = ""; writeLog = ""; parseLog = ""; touchLog = ""; checksumLog = ""
-		ServerNetwork.lastPingPongTime = 0; tickMessageSize = 0
+			eventLog = ""; sentLog = ""; receivedLog = ""; writeLog = ""; parseLog = ""; touchLog = ""; checksumLog = ""
+			ServerNetwork.lastPingPongTime = 0; tickMessageSize = 0
 
 	private int lastSendFrame
 	
@@ -392,10 +394,11 @@ transient skipInit unit Network
 			isSmooth = mode == Local or frame <= frameMinusBuffer
 			
 			// Log
-			parseLog += " #{frame} (fmb{frameMinusBuffer})"
-			if fastForward: parseLog += "f"
-			if isCertain: parseLog += "c"
-			if isSmooth: parseLog += "s"
+			if logging
+				parseLog += " #{frame} (fmb{frameMinusBuffer})"
+				if fastForward: parseLog += "f"
+				if isCertain: parseLog += "c"
+				if isSmooth: parseLog += "s"
 				
 			// Save a snapshot when we are about to start the frame after the last certain frame where we got all inputs
 			saveState
@@ -421,7 +424,7 @@ transient skipInit unit Network
 				// Calculate checksum if we received all inputs for this frame
 				float myChecksum = Framework.checksum					
 				float theirChecksum = checksums[frame]
-				checksumLog += " <> #{frame} {myChecksum}"
+				if logging: checksumLog += " <> #{frame} {myChecksum}"
 				if !theirChecksum
 					checksums[frame] = myChecksum
 				else
@@ -500,9 +503,9 @@ transient skipInit unit Network
 				if(commonState != debugCommonState)
 					onError {"Serializing state failed"}
 
-			parseLog += " save f:{frame} c:{certainFrame} u:{uncertainFrame}"
+			if logging: parseLog += " save f:{frame} c:{certainFrame} u:{uncertainFrame}"
 		else
-			parseLog += " no-save f:{frame} c:{certainFrame} u:{uncertainFrame}"
+			if logging: parseLog += " no-save f:{frame} c:{certainFrame} u:{uncertainFrame}"
 			
 	
 	// Replay all frames from the first uncertain frame until the current frame
@@ -516,7 +519,7 @@ transient skipInit unit Network
 				.inputs.readPos = .uncertainReadPos
 			restoreTime = Time.measure
 				Snapshot.deserialize commonState
-			parseLog +=  " restore u:{uncertainFrame} c:{Framework.checksum}"
+			if logging: parseLog +=  " restore u:{uncertainFrame} c:{Framework.checksum}"
 	
 			let targetFrame = frame
 			frame = uncertainFrame
@@ -532,13 +535,15 @@ transient skipInit unit Network
 				while frame < targetFrame
 					step fastForward:true, draw:false
 		else
-			parseLog +=  " no-restore c:{certainFrame} u:{uncertainFrame}"
+			if logging: parseLog +=  " no-restore c:{certainFrame} u:{uncertainFrame}"
 					
 	js void log: logstring text
 		let str = new Date().hourMinuteSecondString() + " " + text
-		Network_eventLog += str + "\n"
 		statistics_log += str + "\n"
-		log(str)
+		if(Network_logging) {
+			Network_eventLog += str + "\n"
+			log(str)
+		}
 		
 	inline js int currentTime := Date.now()
 	
@@ -661,12 +666,12 @@ transient skipInit unit Network
 		Platform.setLocalStorageObject "room"+roomId, RoomInfo(currentTime, Input.localUser.id)
 		
 	onWrongChecksum: float mine, float theirs
-		checksumLog += " MISMATCH mine:{mine} theirs:{theirs}"
+		if logging: checksumLog += " MISMATCH mine:{mine} theirs:{theirs}"
 		onError {"Out of sync"}
 		
 	onError: Error error
 		errorMessage = error.stack
-		eventLog += errorMessage + "\n" 
+		if logging: eventLog += errorMessage + "\n" 
 		statistics.log += errorMessage + "\n" 
 		Platform.sendErrorToEditor error
 		
@@ -676,25 +681,24 @@ transient skipInit unit Network
 			alertShown = true
 
 class StatisticsGraphSeries
-	string name
+	int userIndex = -1
+	string name = null
 	float[] values
+	float[] recentValues
 	Color color
 	
 	float lastValue := values.length > 0 ? values[values.length-1] : 0
 	
-	int peeks
-		int result = 0
-		bool isPeek = false
-		for values
-			if . > 30
-				if not isPeek: isPeek = true; result++
-			else
-				isPeek = false
-		return result
+	add: float value
+		recentValues.add value
+		if recentValues.length >= statistics.framesPerValue
+			values.add recentValues.max .
+			recentValues.clear
 				
 skipInit transient unit statistics
 	Vector2 position = {500, 460}
 	Vector2 size = {500, 160}
+	framesPerValue = 30
 	
 	float[] serverPings
 	private StatisticsGraphSeries[] series
@@ -711,10 +715,8 @@ skipInit transient unit statistics
 		print "sending statistics", round
 		let userName = localStorage.getStringDirectly("play-userId")
 		let server = Platform.host.getUntil(".")
-		let p0 = series.find.name == "0"
-		let p1 = series.find.name == "1"
-		let p2 = series.find.name == "2"
-		let p3 = series.find.name == "3"
+		StatisticsGraphSeries[] series
+		for Input.users: series.add this.series.find.userIndex == i
 		http.post "{Platform.protocalAndHost}:3114/stats", body:{
 			time: Date.now.isoString
 			gameId: Network.gameId
@@ -729,18 +731,7 @@ skipInit transient unit statistics
 			minServerPing: serverPings.min .
 			maxServerPing: serverPings.max .
 			averageServerPing: serverPings.average
-			ping0: p0?.values.average
-			ping1: p1?.values.average
-			ping2: p2?.values.average
-			ping3: p3?.values.average
-			pingMax0: p0?.values.max .
-			pingMax1: p1?.values.max .
-			pingMax2: p2?.values.max .
-			pingMax3: p3?.values.max .
-			pingPeeks0: p0?.peeks
-			pingPeeks1: p1?.peeks
-			pingPeeks2: p2?.peeks
-			pingPeeks3: p3?.peeks
+			ping:series.select ({average:it?.values.average, max:it?.values.max(.), peeks:it?.values.count . > 30})
 			connections: Input.internalUsers.select.connectionType
 			serverPings
 			peerPings: series
@@ -763,7 +754,15 @@ skipInit transient unit statistics
 			series.add s = {name, color}
 			series.orderBy.name
 		s.color = color
-		s.values.add value
+		s.add value
+		
+	add: int userIndex, float value, Color color = White
+		var s = series.find.userIndex == userIndex
+		if !s
+			series.add s = {userIndex, name:userIndex.toString, color}
+			series.orderBy.name
+		s.color = color
+		s.add value
 		
 	internal draw
 		maxValue = 0

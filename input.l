@@ -376,17 +376,17 @@ skipInit unit Input
 				if(keyCode == 9) e.preventDefault();
 			}
 		}
-		// window.onkeyup = e => {
-		// 	if(e.key == "F1")
-		// 		// TEMP for testing
-		// 		Network_skipAnimationFrame = false;
-		// 	else
-		// 	if(e.key == "F2")
-		// 		// TEMP for testing
-		// 		Network_skipSending = false;
-		// 	else
-		// 		Input_handleKeyEvent(6, e.keyCode)
-		// }
+		window.onkeyup = e => {
+			// if(e.key == "F1")
+			// 	// TEMP for testing
+			// 	Network_skipAnimationFrame = false;
+			// else
+			// if(e.key == "F2")
+			// 	// TEMP for testing
+			// 	Network_skipSending = false;
+			// else
+			Input_handleKeyEvent(6, e.keyCode)
+		}
 			
 		// Handles the user navigating back or forward in the browser	
 		window.onpopstate = e => {
@@ -444,11 +444,11 @@ skipInit unit Input
 				// We already moved the pointer this input frame, so just update the last move
 				inputs.setInt16 index, Math.round(referencePos.x)
 				inputs.setInt16 index+2, Math.round(referencePos.y)
-				Network.writeLog += " #{localUser.inputFrame} override {id} at {index} to {Math.round(referencePos.x)} {Math.round(referencePos.y)}"
+				if Network.logging: Network.writeLog += " #{localUser.inputFrame} override {id} at {index} to {Math.round(referencePos.x)} {Math.round(referencePos.y)}"
 				return
 			else
 				setLastTouchMoveIndex id, inputs.writePos+6
-				Network.writeLog += " save {id} at {inputs.writePos+6}"
+				if Network.logging: Network.writeLog += " save {id} at {inputs.writePos+6}"
 			
 		int composite = cast(inputType)                                 // inputType: 0 -  31 (5 bit)
 		              + Math.shiftLeft(touchType, 5)                    // touchType: 0 -   7 (3 bit)
@@ -457,7 +457,7 @@ skipInit unit Input
 		inputs.writeUnsignedInt16 composite
 		inputs.writeInt16 Math.round(referencePos.x)
 		inputs.writeInt16 Math.round(referencePos.y)
-		Network.writeLog += " #{localUser.inputFrame} {composite} {Math.round(referencePos.x)} {Math.round(referencePos.y)} ({inputs.readPos}/{inputs.writePos})"
+		if Network.logging: Network.writeLog += " #{localUser.inputFrame} {composite} {Math.round(referencePos.x)} {Math.round(referencePos.y)} ({inputs.readPos}/{inputs.writePos})"
 		
 	private handleWheelEvent: float x, float y, float delta
 		if Network.mode == None || Platform.mode != Record || !localUser || !localUser.collectInputs: return
@@ -469,7 +469,7 @@ skipInit unit Input
 		inputs.writeInt16 Math.round(referencePos.x)
 		inputs.writeInt16 Math.round(referencePos.y)
 		inputs.writeInt16 Math.round(delta)
-		Network.writeLog += " [{localUser.inputFrame}] wheel {Math.round(referencePos.x)} {Math.round(referencePos.y)} {Math.round(delta)} \{r:{inputs.readPos} w:{inputs.writePos}\}"
+		if Network.logging: Network.writeLog += " [{localUser.inputFrame}] wheel {Math.round(referencePos.x)} {Math.round(referencePos.y)} {Math.round(delta)} \{r:{inputs.readPos} w:{inputs.writePos}\}"
 		
 	internal handleSetState: Buffer buffer
 		let inputs = localUser.inputs
@@ -589,18 +589,19 @@ skipInit unit Input
 			
 	internal parseInputs(int frame, bool isCertain)
 		this.isCertain = isCertain
-		if isCertain: Network.parseLog += " c"
+		if Network.logging: if isCertain: Network.parseLog += " c"
 		for internalUsers -> internalUser if internalUser
 			let inputs = internalUser.inputs
 			let userId = internalUser.id
 			let user = usersById[userId]
-			Network.parseLog += " <{userId}>"
+			if Network.logging: Network.parseLog += " <{userId}>"
 			user?.controller.startFrame
 			
 			while true
 				int nextFrame = inputs.canRead ? inputs.peekInt32 : int.maxValue
-				Network.parseLog += " ({inputs.readPos}/{inputs.writePos})"
-				if inputs.canRead: Network.parseLog += " *{nextFrame}"
+				if Network.logging: 
+					Network.parseLog += " ({inputs.readPos}/{inputs.writePos})"
+					if inputs.canRead: Network.parseLog += " *{nextFrame}"
 				if nextFrame > frame: break
 				inputs.readPos += 4
 				
@@ -614,7 +615,7 @@ skipInit unit Input
 					updateUserIndices
 				
 				let value = inputs.readUnsignedInt16
-				Network.parseLog += " "+value
+				if Network.logging: Network.parseLog += " "+value
 				InputType inputType = cast(value % 32)
 				
 				if inputType >= TouchDown && inputType <= Wheel
@@ -623,7 +624,7 @@ skipInit unit Input
 					int id = (value shiftRight 8) % 128
 					Vector2 referencePos = {inputs.readInt16, inputs.readInt16}
 					bool isSmoothPosition = !Network.smoothTouchPosition or Network.isSmooth or localUser.id == userId
-					Network.parseLog += " "+id
+					if Network.logging: Network.parseLog += " "+id
 					
 					if inputType == TouchDown
 						let touch = user.touches.find.id == id
@@ -638,12 +639,12 @@ skipInit unit Input
 							// This flag is preserved throughout "TouchMove" and "TouchUp", so if we mark the touch
 							// as handled at any point, the flags stays set to "true" until we touch down again
 							touch.handled = false
-							Network.parseLog += " down {id} {referencePos} {type}"
+							if Network.logging: Network.parseLog += " down {id} {referencePos} {type}"
 							if isSmoothPosition: touch.smoothPosition = referencePos
 						else
 							touch = {id, userId, cast inputType, type, referencePos, referencePos, referencePos, isDown:true}
 							user.touches.add touch
-							Network.parseLog += " down(new) {id} {referencePos} {type}"
+							if Network.logging: Network.parseLog += " down(new) {id} {referencePos} {type}"
 							
 						internalUser.downTouches.add touch
 					else
@@ -655,11 +656,11 @@ skipInit unit Input
 							touch.referencePosition = referencePos
 							touch.type = type
 							if isSmoothPosition: touch.smoothPosition = referencePos
-							Network.parseLog += " move {id} {referencePos} {type}"
+							if Network.logging: Network.parseLog += " move {id} {referencePos} {type}"
 						else
 							touch = {id, userId, cast inputType, type, referencePos, referenceStartPosition:Vector2.none, referencePos, isDown:false}
 							user.touches.add touch
-							Network.parseLog += " move(new) {id} {referencePos} {type}"
+							if Network.logging: Network.parseLog += " move(new) {id} {referencePos} {type}"
 
 						internalUser.movingTouches.add touch
 						cursor = "auto"
@@ -673,11 +674,11 @@ skipInit unit Input
 							touch.type = type
 							touch.isDown = false
 							if isSmoothPosition: touch.smoothPosition = referencePos
-							Network.parseLog += " up {id} {referencePos} {type}"
+							if Network.logging: Network.parseLog += " up {id} {referencePos} {type}"
 						else
 							touch = {id, userId, cast inputType, type, referencePos, referenceStartPosition:Vector2.none, referencePos, isDown:false}
 							user.touches.add touch
-							Network.parseLog += " up(new) {id} {referencePos} {type}"
+							if Network.logging: Network.parseLog += " up(new) {id} {referencePos} {type}"
 							
 						internalUser.upTouches.add touch
 					else
@@ -772,7 +773,7 @@ skipInit unit Input
 						lostUser.lostAtFrame = 0
 				else
 				if inputType == SetState
-					Network.parseLog += " setState"
+					if Network.logging: Network.parseLog += " setState"
 					Network.snapshotBuffer.reset
 					inputs.readBuffer Network.snapshotBuffer
 					Snapshot.deserialize Network.snapshotBuffer
@@ -781,20 +782,20 @@ skipInit unit Input
 				if inputType == String
 					int id = inputs.readInt
 					string value = inputs.readString
-					Network.parseLog += " string {id}: {value}"
+					if Network.logging: Network.parseLog += " string {id}: {value}"
 					networkData.call id, value
 				else
 				if inputType == Json
 					int id = inputs.readInt
 					string value = inputs.readString
-					Network.parseLog += " json {id}: {value}"
+					if Network.logging: Network.parseLog += " json {id}: {value}"
 					dynamic object = Json.parse value
 					networkData.call id, object
 				else
 				if inputType == Object
 					int id = inputs.readInt
 					string value = inputs.readString
-					Network.parseLog += " object {id}: {value}"
+					if Network.logging: Network.parseLog += " object {id}: {value}"
 					dynamic object = Json.parse value
 					networkData.call id, object
 	
@@ -1234,7 +1235,7 @@ skipInit unit Input
 						Snapshot.autoSave
 						
 	private log: string text, Vector2 pos
-		Network.touchLog += " #{Network.frame}{isCertain ? " c" : ""} {text} {pos}"
+		if Network.logging: Network.touchLog += " #{Network.frame}{isCertain ? " c" : ""} {text} {pos}"
 
 	// Do something when a user moves the mouse wheel
 	onWheel: void(WheelEvent event) do // Do this for each mouse wheel movement

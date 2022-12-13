@@ -1006,8 +1006,8 @@ transient global unit graphics
 		}
 		
 	// Draws a line on the screen
-	global js void drawLine: Vector2 from
-		                     nocolon Vector2 to 
+	global js void drawLine: Vector2 from           // The point to start the line from
+		                     nocolon Vector2 to     // The point to draw the line to
 		                     Color color = null     // The color of the outline around the line
 		                     width = 0              // The width of the outline around the line
 		                     visibleFor = -1        // Only this user will see the line
@@ -1191,7 +1191,7 @@ skipInit unit gizmo
 			// Draw handles
 			let size = max - min
 			let center = (max + min)/2 
-			for Direction.allEightDirections
+			for Direction.allDirections
 				drawImage ResizeHandle, center + size/2*.vector, size:handleSize, location:null, layer:int.maxValue
 				
 			// Draw selection

@@ -31,6 +31,7 @@ transient skipInit unit Platform
 	public inline js int version := version
 	public inline js int appName := appName
 	public inline js int userAgent := navigator.userAgent.replace(/,/g," ")
+	public inline js float usedMemory := performance.memory.usedJSHeapSize
 		
 	protocalAndHost := host ? "https://"+host : "http://localhost"
 	
@@ -135,7 +136,7 @@ transient skipInit unit Platform
 		showDebugInfo = getLocalStorageObject("showDebugInfo") == "true"
 		
 		onResize
-		drawLoading
+		// drawLoading
 		if mode >= Play: mode = Pause
 		let path = url.getUntil("?").split("/")
 		let gameId = path[3]
