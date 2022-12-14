@@ -477,6 +477,35 @@ unit Math
 	Vector2 getVectorForAngle: Angle angle      // The angle in turns (one full rotation is 1)
 		                       float radius = 1
 		return new Vector2(Math.cos(angle)*radius, Math.sin(angle)*radius)
+		
+	Vector2 intersectLines: Vector2 startA
+		                    Vector2 endA
+		                    Vector2 startB
+		                    Vector2 endB
+		                    LineType typeA = Segment
+		                    LineType typeB = Segment
+		
+		let x1    = startA.x, y1 = startA.y
+		let x2    = endA.x,   y2 = endA.y
+		let x3    = startB.x, y3 = startB.y
+		let x4    = endB.x,   y4 = endB.y
+		
+		// Check if none of the lines are of length 0
+		if (x1 == x2 && y1 == y2) || (x3 == x4 && y3 == y4) return Vector2.none
+
+		// compute line params
+		let denominator = (y4 - y3) * (x2 - x1) - (x4 - x3) * (y2 - y1)
+		if (denominator == 0) return Vector2.none // lines are parallel
+		let ua = ((x4 - x3) * (y1 - y3) - (y4 - y3) * (x1 - x3)) / denominator
+		let ub = ((x2 - x1) * (y1 - y3) - (y2 - y1) * (x1 - x3)) / denominator
+
+		// is the intersection along the segments
+		if (typeA >= Ray && ua < 0) || (typeA == Segment && ua > 1)
+		|| (typeB >= Ray && ub < 0) || (typeB == Segment && ub > 1)
+			return Vector2.none
+			
+		// Return a object with the x and y coordinates of the intersection
+		return new Vector2(x1 + ua * (x2 - x1), y1 + ua * (y2 - y1))
 	
 global transient unit System
 	global inline js void forPositions: T[] subject               // The list to iterate over
