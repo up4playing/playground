@@ -226,7 +226,7 @@ transient global unit graphics
 							
 	// Moves all operations in a block by a given vector						
 	move: Vector2 distance // The distance to move
-		  void() block    // All operations within this block will be moved
+		  void() block     // All operations within this block will be moved
 		let a0 = localMatrix.m0, a1 = localMatrix.m1, a2 = localMatrix.m2, a3 = localMatrix.m3, a4 = localMatrix.m4, a5 = localMatrix.m5
 		let b0 = totalMatrix.m0, b1 = totalMatrix.m1, b2 = totalMatrix.m2, b3 = totalMatrix.m3, b4 = totalMatrix.m4, b5 = totalMatrix.m5
 		localMatrix.move distance
@@ -265,6 +265,25 @@ transient global unit graphics
 		localMatrix.scale {factor, factor}
 		totalMatrix.scale {factor, factor}
 		block
+		localMatrix.m0 = a0; localMatrix.m1 = a1; localMatrix.m2 = a2; localMatrix.m3 = a3; localMatrix.m4 = a4; localMatrix.m5 = a5 
+		totalMatrix.m0 = b0; totalMatrix.m1 = b1; totalMatrix.m2 = b2; totalMatrix.m3 = b3; totalMatrix.m4 = b4; totalMatrix.m5 = b5 
+	
+	global transform: Vector2 move = Vector2.none  // The distance to move
+		              float scale = 1              // The factor to scale by
+		              Angle rotate = 0             // The angle in turns (0: no rotation, 1: one full rotation)
+		              void() do                    // All operations within this block will be scaled
+		let a0 = localMatrix.m0, a1 = localMatrix.m1, a2 = localMatrix.m2, a3 = localMatrix.m3, a4 = localMatrix.m4, a5 = localMatrix.m5
+		let b0 = totalMatrix.m0, b1 = totalMatrix.m1, b2 = totalMatrix.m2, b3 = totalMatrix.m3, b4 = totalMatrix.m4, b5 = totalMatrix.m5
+		if move
+			localMatrix.move move
+			totalMatrix.move move
+		if scale != 1
+			localMatrix.scale {scale, scale}
+			totalMatrix.scale {scale, scale}
+		if rotate
+			localMatrix.rotate rotate
+			totalMatrix.rotate rotate
+		do
 		localMatrix.m0 = a0; localMatrix.m1 = a1; localMatrix.m2 = a2; localMatrix.m3 = a3; localMatrix.m4 = a4; localMatrix.m5 = a5 
 		totalMatrix.m0 = b0; totalMatrix.m1 = b1; totalMatrix.m2 = b2; totalMatrix.m3 = b3; totalMatrix.m4 = b4; totalMatrix.m5 = b5 
 	
