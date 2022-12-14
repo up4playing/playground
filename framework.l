@@ -491,7 +491,7 @@ Piece Board
 		// Zoom
 		if zoomable	
 			Input.onWheelWithin position, size, visibleFor
-				float factor = zoomLookupTable[Math.limit event.delta+40, min:0, max:zoomLookupTable.length-1]
+				float factor = zoomLookupTable[Math.limit Math.round(event.delta.y)+40, min:0, max:zoomLookupTable.length-1]
 				if Network.logging: Network.touchLog += "[{Network.frame}] zoom value:{event.delta} factor:{factor} matrix:{matrix}"
 				matrix.move event.position
 				matrix.scale {factor, factor}

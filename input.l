@@ -112,7 +112,7 @@ class Touch
 	
 transient class WheelEvent
 	NetworkUser user
-	int delta
+	Vector2 delta
 	Vector2 referencePosition
 	bool handled
 	
@@ -311,7 +311,7 @@ skipInit unit Input
 			e.preventDefault();
 			e.stopPropagation();
 			if(e.button == 0 && Platform_mode == 0) Platform_record();
-			Input_handleWheelEvent(e.pageX, e.pageY, e.deltaY)
+			Input_handleWheelEvent(e.pageX, e.pageY, e.deltaX, e.deltaY)
 			return false;			
 		}
 		window.onkeydown = e => {
@@ -459,7 +459,7 @@ skipInit unit Input
 		inputs.writeInt16 Math.round(referencePos.y)
 		if Network.logging: Network.writeLog += " #{localUser.inputFrame} {composite} {Math.round(referencePos.x)} {Math.round(referencePos.y)} ({inputs.readPos}/{inputs.writePos})"
 		
-	private handleWheelEvent: float x, float y, float delta
+	private handleWheelEvent: float x, float y, float deltaX, float deltaY
 		if Network.mode == None || Platform.mode != Record || !localUser || !localUser.collectInputs: return
 		let inputs = localUser.inputs
 		
@@ -468,8 +468,9 @@ skipInit unit Input
 		inputs.writeUnsignedInt16 cast InputType.Wheel
 		inputs.writeInt16 Math.round(referencePos.x)
 		inputs.writeInt16 Math.round(referencePos.y)
-		inputs.writeInt16 Math.round(delta)
-		if Network.logging: Network.writeLog += " [{localUser.inputFrame}] wheel {Math.round(referencePos.x)} {Math.round(referencePos.y)} {Math.round(delta)} \{r:{inputs.readPos} w:{inputs.writePos}\}"
+		inputs.writeInt16 Math.round(deltaX)
+		inputs.writeInt16 Math.round(deltaY)
+		if Network.logging: Network.writeLog += " [{localUser.inputFrame}] wheel {Math.round(referencePos.x)} {Math.round(referencePos.y)} {deltaX} {deltaY} \{r:{inputs.readPos} w:{inputs.writePos}\}"
 		
 	internal handleSetState: Buffer buffer
 		let inputs = localUser.inputs
@@ -683,7 +684,7 @@ skipInit unit Input
 						internalUser.upTouches.add touch
 					else
 					if inputType == Wheel
-						let delta = inputs.readInt16
+						Vector2 delta = {inputs.readInt16, inputs.readInt16}
 						internalUser.wheelEvents.add {user, delta, referencePosition:referencePos}
 				else
 				if inputType == TextInput
