@@ -581,10 +581,14 @@ class List<T>
 	inline js T[] subList: int start, int count
 		this.slice(start, count)
 		
-	js int total: int(T a) selector
+	int total: int(T it) selector
 		let sum = 0
-		for(let i=0; i<this.length; i++)
-			sum += selector(this[i])
+		for this: sum += selector(.)
+		return sum
+		
+	Vector2 total: Vector2(T it) selector
+		Vector2 sum = {0,0}
+		for this: sum += selector(.)
 		return sum
 		
 	js int sum
