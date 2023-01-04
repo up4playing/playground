@@ -528,17 +528,21 @@ class List<T>
 		this.sort(comparer)
 	
 	// Sort the list by a given expression
-	T[] orderBy: float(T a) expression // The expression to order by
+	T[] orderBy: float(T a) expression // First order by this expression
 		return this.sort(expression(a) - expression(b))
 		
-	T[] orderBy: Time(T a) expression // The expression to order by
+	T[] orderBy: float(T it) expression           // First order by this expression
+		         label nocolon float(T it) thenBy // Then order by this expression
+		return this.sort(expression(a) - expression(b) || thenBy(a) - thenBy(b))
+		
+	T[] orderBy: Time(T a) expression // First order by this expression
 		return this.sort(expression(a) - expression(b))
 		
-	T[] orderBy: string(T a) expression // The expression to order by
+	T[] orderBy: string(T a) expression // First order by this expression
 		return this.sort(expression(a) compareTo expression(b))
 		
 	// Sort the list by a given expression
-	T[] orderBy: float(T a) expression // The expression to order by
+	T[] orderBy: float(T a) expression // First order by this expression
 		         SortingOrder order    // Specifies if you want to sort in ascending or descending order
 		if order == Ascending: return this.sort(expression(a) - expression(b))
 		else                   return this.sort(expression(b) - expression(a))
