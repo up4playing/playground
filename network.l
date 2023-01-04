@@ -308,7 +308,7 @@ transient skipInit unit Network
 				aheads.add ahead, maxLength:400
 				aheadMax = aheads.percentile(50)
 				aheadsMax.add aheadMax maxLength:400
-				int actualBufferFrames = ceil(aheadsMax.average * 1.25) limit max:30
+				int actualBufferFrames = Math.ceil(aheadsMax.average * 1.25) limit max:30
 				
 				// We only update bufferFrames if the new value is smaller or at least 2 larger
 				if actualBufferFrames < bufferFrames or actualBufferFrames > bufferFrames+1: bufferFrames = actualBufferFrames
@@ -767,7 +767,7 @@ skipInit transient unit statistics
 	internal draw
 		maxValue = 0
 		for series -> s
-			int len = min(.values.length, size.x.round)
+			int len = Math.min(.values.length, size.x.round)
 			for len: 
 				let value = s.values[-1-i]
 				if value > maxValue: maxValue = value
@@ -780,7 +780,7 @@ skipInit transient unit statistics
 			drawText text, labelPos+{11, -2}, align:Left, layer:1000000, size:12
 			labelPos.x += graphics.getTextWidth(text, size:12) + 20
 			
-			int len = min(.values.length, size.x.round)
+			int len = Math.min(.values.length, size.x.round)
 			float prevY = 0
 			for len
 				let value = s.values[-1-i]

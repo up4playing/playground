@@ -1339,80 +1339,85 @@ global transient unit System
 // A collection of mathematical functions and constants
 global skipInit unit Math
 	// Returns the absolute value
-	global inline js int abs: int value // The value to return the absolute value of
+	inline js int abs: int value // The value to return the absolute value of
 		Math.abs(value)
 		
 	// Returns the absolute value
-	global inline js float abs: float value // The value to return the absolute value of
+	inline js float abs: float value // The value to return the absolute value of
 		Math.abs(value)
 		
 	// Returns the absolute value
-	global inline js Angle abs: Angle value // The angle to return the absolute value of
+	inline js Angle abs: Angle value // The angle to return the absolute value of
 		Math.abs(value)
 		
 	// Returns the smallest integer greater than or equal to the given value 
-	global inline js int ceil: float value // The value to round up
+	inline js int ceil: float value // The value to round up
 		Math.ceil(value)
 		
 	// Returns the smallest integer greater than or equal to the given value 
-	global inline js Time ceil: Time value // The value to round up
+	inline js Time ceil: Time value // The value to round up
 		Math.ceil(value)
 		
 	// Returns the smallest integer greater than or equal to the given value 
-	global inline js Angle ceil: Angle value // The angle to round up
+	inline js Angle ceil: Angle value // The angle to round up
 		Math.ceil(value)
 		
 	// Returns the largest integer less than or equal to the given value
-	global inline js int floor: float value // The value to round down
+	inline js int floor: float value // The value to round down
 		Math.floor(value)
 		
 	// Returns the largest integer less than or equal to the given value
-	global inline js Time floor: Time value // The value to round down
+	inline js Time floor: Time value // The value to round down
 		Math.floor(value)
 		
 	// Returns the largest integer less than or equal to the given value
-	global inline js Angle floor: Angle value // The angle to round down
+	inline js Angle floor: Angle value // The angle to round down
 		Math.floor(value)
 		
 	// Returns the given value rounded to the nearest integer
-	global inline js int round: float value // The value to round
+	inline js int round: float value // The value to round
 		Math.round(value)
 		
 	// Returns the given value rounded to the nearest integer
-	global inline js Angle round: Angle value // The angle to round
+	inline js Angle round: Angle value // The angle to round
 		Math.round(value)
 		
 	// Returns the given value rounded to the nearest integer
-	global inline js Time round: Time value // The angle to round
+	inline js Time round: Time value // The angle to round
 		Math.round(value)
 		
-	global inline js int min: int a // The first value
-		                      int b // The second value
+	inline js int min: int a // The first value
+		               int b // The second value
 		Math.min(a, b)
 		
 	// Returns the smallest of the given values
-	global inline js float min: float a // The first value
-		                        float b // The second value
+	inline js float min: float a // The first value
+		                 float b // The second value
 		Math.min(a, b)
 		
 	// Returns the smallest of the given values
-	global inline js Angle min: Angle a // The first angle
-		                        Angle b // The second angle
+	inline js Angle min: Angle a // The first angle
+		                 Angle b // The second angle
 		Math.min(a, b)
 		
 	// Returns the largest of the given values
-	global inline js int max: int a // The first value
-		                      int b // The second value
+	inline js int max: int a // The first value
+		               int b // The second value
 		Math.max(a, b)
 		
 	// Returns the largest of the given values
-	global inline js float max: float a // The first value
-		                        float b // The second value
+	inline js float max: float a // The first value
+		                 float b // The second value
 		Math.max(a, b)
 		
 	// Returns the largest of the given values
-	global inline js Angle max: Angle a // The first angle
-		                        Angle b // The second angle
+	inline js Angle max: Angle a // The first angle
+		                 Angle b // The second angle
+		Math.max(a, b)
+		
+	// Returns the largest of the given values
+	inline js Time max: Time a // The first time
+		                Time b // The second time
 		Math.max(a, b)
 		
 	// Returns the positive square root of the given value

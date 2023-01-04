@@ -584,8 +584,8 @@ skipInit unit Input
 		let inputs = localUser.inputs
 		inputs.writeInt32 localUser.inputFrame
 		inputs.writeInt16 cast InputType.GameController
-		inputs.writeFloat32 abs(leftStickX) > GameController.deadZone ? leftStickX : 0
-		inputs.writeFloat32 abs(leftStickY) > GameController.deadZone ? leftStickY : 0
+		inputs.writeFloat32 Math.abs(leftStickX) > GameController.deadZone ? leftStickX : 0
+		inputs.writeFloat32 Math.abs(leftStickY) > GameController.deadZone ? leftStickY : 0
 		inputs.writeUnsignedInt16 buttons
 			
 	internal parseInputs(int frame, bool isCertain)
@@ -813,8 +813,8 @@ skipInit unit Input
 				if .controllerKeyDownFrame[5]: .controller.b.state = true
 				if .controllerKeyDownFrame[6]: .controller.x.state = true
 				if .controllerKeyDownFrame[7]: .controller.y.state = true
-				.controller.inMotion = abs(.controller.leftStick.x) >= GameController.deadZone
-				                    or abs(.controller.leftStick.y) >= GameController.deadZone
+				.controller.inMotion = Math.abs(.controller.leftStick.x) >= GameController.deadZone
+				                    or Math.abs(.controller.leftStick.y) >= GameController.deadZone
 						
 	updateUserIndices
 		users.orderBy.id
