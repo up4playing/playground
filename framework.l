@@ -115,18 +115,8 @@ class Object
 		    Time delay = 0
 		    bool smooth = false
 		Vector2 startValue = position
-		let startTime = Time.now + delay
-		
-		// When chaining serveral move effects together, continue where the last one left off
-		let effect = fx.effects[fx.effects.length-1]
-			if effect.type == MoveEffect
-				MoveEffect moveEffect = cast effect
-				if moveEffect.object == this
-					startValue = moveEffect.startValue + moveEffect.delta
-					startTime = moveEffect.startTime + moveEffect.duration
-					
 		let delta = pos - startValue
-		fx.add MoveEffect startTime, duration, smooth, this, startValue, delta
+		fx.add MoveEffect startTime:fx.endOfPrevEffect(this)+delay, duration, smooth, this, startValue, delta
 		return this
 		
 	moveTo: Vector2 pos
@@ -135,37 +125,43 @@ class Object
 		    bool smooth = false
 		let delta = pos - position
 		let duration = Math.floor(delta.length / speed)
-		fx.add MoveEffect startTime:Time.now+delay, duration, smooth, this, startValue:position, delta
+		fx.add MoveEffect startTime:fx.endOfPrevEffect(this)+delay, duration, smooth, this, startValue:position, delta
 		return this
 		
-	fadeIn: int duration = 1000
+	fadeIn: int duration = 100
 		    Time delay = 0
 		    bool smooth = false
 		alpha = 0
-		fx.add FadeEffect startTime:Time.now+delay, duration, smooth, this, startValue:0, delta:1
+		fx.add FadeEffect startTime:fx.endOfPrevEffect(this)+delay, duration, smooth, this, startValue:0, delta:1
 		return this
 		
-	fadeOut: int duration = 1000
-		     Time delay = 0
+	fadeOut: int duration = 100
+		     Time delay = -100
 		     bool removeWhenDone = true
 		     bool smooth = false
-		fx.add FadeEffect startTime:Time.now+delay, duration, smooth, this, startValue:1, delta:-1, removeWhenDone
+		fx.add FadeEffect startTime:fx.endOfPrevEffect(this)+delay, duration, smooth, this, startValue:1, delta:-1, removeWhenDone
 		return this
 		
 	scaleTo: implicit Vector2 size
 		     int duration = 1000
 		     Time delay = 0
 		     bool smooth = false
-		fx.add ScaleEffect startTime:Time.now+delay, duration, smooth, this, startValue:this.size, delta:size-this.size
+		fx.add ScaleEffect startTime:fx.endOfPrevEffect(this)+delay, duration, smooth, this, startValue:this.size, delta:size-this.size
 		return this
+		
+	finally: Time delay = 0
+		     bool smooth = false
+		     void() do
+		fx.add DelayEffect startTime:fx.endOfPrevEffect(this)+delay, duration:0, smooth, this, do
 	
 	fadeAndScaleIn: int duration = 200
 		            float startScale = 3
 		            Time delay = 0
 		            bool smooth = false
 		alpha = 0
-		fx.add ScaleEffect startTime:Time.now+delay, duration, smooth, this, startValue:startScale, delta:1-startScale
-		fx.add FadeEffect  startTime:Time.now+delay, duration, smooth, this, startValue:0, delta:1
+		let startTime = fx.endOfPrevEffect(this)+delay
+		fx.add ScaleEffect startTime, duration, smooth, this, startValue:startScale, delta:1-startScale
+		fx.add FadeEffect  startTime, duration, smooth, this, startValue:0, delta:1
 		return this
 		
 Object RectangleObject
