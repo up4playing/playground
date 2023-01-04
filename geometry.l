@@ -206,6 +206,10 @@ struct Vector2
 			&& (c = !c)
 			j = i
 		return c
+		
+	in: Rect rectangle
+		return x >= rectangle.position.x - rectangle.size.x/2 && x < rectangle.position.x + rectangle.size.x/2
+		    && y >= rectangle.position.y - rectangle.size.y/2 && y < rectangle.position.y + rectangle.size.y/2
 	
 	// The dot product
 	dot: Vector2 value // The value to calculate the dot procut with
