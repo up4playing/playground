@@ -1340,13 +1340,13 @@ global transient unit System
 	// Prints a message to the console
 	global js void print: logstring text // The text, variables or expressions to print
 		                  SourceCodeLocation location
-		log(text, location.row, location.column, location.file)
+		log(text, location.start, location.file)
 	
 	// Display a message in the timeline
 	global js void watch: logstring text // The text, variables or expressions to watch
 		                  SourceCodeLocation location
 		if(Platform_isDebug && Network_frame >= Network_frameWithNewWatches) {
-			Platform_sendWatch(Network_frame, text, location.row, location.column, location.file)
+			Platform_sendWatch(Network_frame, text, location.start, location.file)
 		}
 	
 	// Shows a dialog box with a given message
