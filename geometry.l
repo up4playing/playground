@@ -472,6 +472,12 @@ struct Matrix2D
 		result.m3 = b1 * a2 + b3 * a3
 		result.m5 = b1 * a4 + b3 * a5 + b5
 		return result
+		
+class List<T>
+	Vector2 total: Vector2(T it) selector
+		Vector2 sum = {0,0}
+		for this: sum += selector(.)
+		return sum	
 
 unit Math
 	// Returns the arctangent of the quotient of the given values

@@ -224,8 +224,6 @@ class string
 	
 	inline js string toString() this
 	
-	Color toColor := {this}
-	
 	inline js int toInt := parseInt(this)
 		
 	inline js int toFloat := parseFloat(this)
@@ -611,11 +609,6 @@ class List<T>
 		for this: sum += selector(.)
 		return sum
 		
-	Vector2 total: Vector2(T it) selector
-		Vector2 sum = {0,0}
-		for this: sum += selector(.)
-		return sum
-		
 	js int sum
 		let sum = 0;
 		for(let i=0; i<this.length; i++)
@@ -625,8 +618,8 @@ class List<T>
 	js float average
 		return this.length > 0 ? this.sum() / this.length : 0
 		
-	string concat: string(T a) selector
-		           string separator = ", "
+	string joinToString: string(T a) selector
+		                 string separator = ", "
 		let result = ""
 		for this
 			if result: result += separator
