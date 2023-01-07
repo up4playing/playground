@@ -128,16 +128,11 @@ transient skipInit unit Network
 		
 	startLocal: userCount = 1
 		mode = Local
-		startInLobby = false
 		certainFrame = -1
-		isPremiere = true
 		Input.internalUsers.clear
 		Math.setRandomSeed Math.generateRandomSeed 
 		initDatabase
-		startTime = serverStartTime = currentTime
-		// timeOffset = 0
-		reset
-		animationFrame
+		stop
 		
 	// Clear all inputs and reset the application to the first frame
 	stop
@@ -149,8 +144,11 @@ transient skipInit unit Network
 		startInLobby = false
 		errorMessage = ""
 		audio.stop
-		goToFrame 0
-		
+		isPremiere = true
+		startTime = serverStartTime = currentTime
+		reset
+		animationFrame
+				
 	// Keep inputs, call init functions, create the local users, reset read positions and start app
 	// This is called on startup, after every code change and when going backwards in the timeline
 	reset
@@ -162,6 +160,7 @@ transient skipInit unit Network
 		frame = 0
 		certainFrame = int.maxValue
 		uncertainFrame = -1
+		Input.isCertain = true
 		lobby.inLobby = startInLobby
 		Time.now = serverStartTime
 		audio.stop
