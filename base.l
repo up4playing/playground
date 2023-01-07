@@ -323,6 +323,27 @@ class List<T>
 		                       int i      // The index of the current item of the list we are iterating over
 		                   ) do           // Do this for each item in a list
 		for(let _subject=[...this], i=_subject.length-1; i>=0; --i) { let it = _subject[i]; do()}
+			
+	js void eachDistinct: TKey(T it) selector
+		                         void(
+		                             TKey it,
+		                             T[] items,
+		                             int i
+		                         ) do
+		if(this.length > 0) {
+			let _subject = this.sort((a,b) => selector(a) - selector(b))
+			for(let _nextIndex=1, it = selector(_subject[0]), i=0; _nextIndex<_subject.length; ++_nextIndex) { 
+				let _nextIt = selector(_subject[_nextIndex]);
+				if(_nextIt != it) {
+					let items = _subject.slice(i, _nextIndex);
+					do(it, items, i)
+					it = _nextIt;
+					i = _nextIndex;
+				}
+			}
+		}
+			
+			
 		
 	// Adds an item to the end of the list
 	inline js void add: T item // The item to add
