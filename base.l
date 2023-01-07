@@ -1683,13 +1683,6 @@ transient float Angle
 	inline js float in: AngleUnit unit
 		(unit==1 ? this*Math_TwoPI : unit==2 ? this*360 : unit==3 ? this*400 : this)
 		
-enum TimeUnit
-	ms   // Milliseconds
-	s    // Seconds
-	min  // Minutes
-	h    // Hours
-	days // Days
-		
 transient float Time
 	// The largest possible time value
 	const inline js Time maxValue := Number.MAX_VALUE
@@ -1772,7 +1765,14 @@ transient float Time
 	js static void startTimer() window._timerStart = performance.now()
 	js static void printTimer(string text) log(text+": "+(performance.now()-window._timerStart))
 	static inline js float preciseTime := performance.now()
-	
+		
+enum TimeUnit
+	ms   // Milliseconds
+	s    // Seconds
+	min  // Minutes
+	h    // Hours
+	days // Days
+		
 js Date
 transient struct Date
 	const dayStrings = [
