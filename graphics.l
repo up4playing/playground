@@ -654,7 +654,7 @@ transient global unit graphics
 	// Draws text on the screen
 	global js void drawText: string text                        // The text to draw
 		                     Vector2 position = {}              // The position to draw to
-		                     implicit Vector2 size = {256}      // The size of the text
+		                     implicit Vector2 size = {}         // The size of the text
 		                     Color color = null                 // The color of the text
 		                     HorizontalAlignment align = Center // The horizontal alignment of the text
 		                     VerticalAlignment valign = Middle  // The vertical alignment of the text
@@ -668,7 +668,7 @@ transient global unit graphics
 		                     SourceCodeLocation location
 		if(graphics_isVisibleFor(visibleFor)) {
 			let effectiveFont = font || graphics_currentFont
-			let fontSize = size.y || size.x
+			let fontSize = size.y || size.x || graphics_currentFontSize
 			let contextFont = (style ? "bold ":"")+fontSize+"px "+effectiveFont.name;
 			Platform_context.font = contextFont
 			let textSize = Platform_context.measureText(text)
@@ -691,7 +691,7 @@ transient global unit graphics
 		
 	global js void drawText: string text                        // The text to draw
 		                     Vector2 position = {}              // The position to draw to
-		                     implicit Vector2 size = {256}      // The size of the text
+		                     implicit Vector2 size = {}         // The size of the text
 		                     Color color = null                 // The color of the text
 		                     HorizontalAlignment align = Center // The horizontal alignment of the text
 		                     VerticalAlignment valign = Middle  // The vertical alignment of the text
@@ -705,7 +705,7 @@ transient global unit graphics
 		                     SourceCodeLocation location
 		if(graphics_isVisibleFor2(visibleFor)) {
 			let effectiveFont = font || graphics_currentFont
-			let fontSize = size.y || size.x
+			let fontSize = size.y || size.x || graphics_currentFontSize
 			let contextFont = (style ? "bold ":"")+fontSize+"px "+effectiveFont.name;
 			Platform_context.font = contextFont
 			let textSize = Platform_context.measureText(text)
