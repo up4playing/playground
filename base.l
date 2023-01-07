@@ -1624,14 +1624,23 @@ global skipInit unit Math
 		if value < min: return min
 			            return value
 	
-	interpolate: float value
-		         float fromStart = 0
-		         float fromEnd = 1
-		         float toStart = 0
-		         float toEnd = 1
+	map: float value
+		 float fromStart = 0
+		 float fromEnd = 1
+		 float toStart = 0
+		 float toEnd = 1
 		if value < fromStart: return toStart
 		if value > fromEnd:   return toEnd
 			                  return toStart + (toEnd-toStart) * (value-fromStart)/(fromEnd-fromStart)
+		
+	map: Time value
+		 Time fromStart = 0
+		 Time fromEnd = 1
+		 float toStart = 0
+		 float toEnd = 1
+		if value < fromStart: return toStart
+		if value > fromEnd:   return toEnd
+			                  return toStart + float(toEnd-toStart) * (value-fromStart)/(fromEnd-fromStart)
 		
 enum AngleUnit
 	turns // Turn (one full rotation is 1)

@@ -1201,7 +1201,7 @@ skipInit unit gizmo
 					if .y < min.y: min.y = .y
 					if .x + .w > max.x: max.x = .x + .w
 					if .y + .h > max.y: max.y = .y + .h
-		handleSize = Math.interpolate Math.min(max.x-min.x, max.y-min.y) fromStart:64 fromEnd:256 toStart:16 toEnd:32
+		handleSize = Math.map Math.min(max.x-min.x, max.y-min.y) fromStart:64 fromEnd:256 toStart:16 toEnd:32
 	
 	internal tick
 		findInfluencedItems
