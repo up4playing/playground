@@ -1896,7 +1896,7 @@ transient struct Date
 
 	static inline js Date now := new Date(Time_now)
 	static inline js Date fromTime(Time time) new Date(time)
-	static inline js Date fromValues(int year, int month, int day, int hour = 0, int minute = 0, int second = 0) new Date(year, month-1, day, hour, minute, second)
+	static inline js Date fromValues(int year, int month=1, int day=1, int hour = 0, int minute = 0, int second = 0) new Date(year, month-1, day, hour, minute, second)
 
 class Range
 	int from // The start of the range
