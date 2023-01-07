@@ -128,16 +128,11 @@ transient skipInit unit Network
 		
 	startLocal: userCount = 1
 		mode = Local
-		startInLobby = false
 		certainFrame = -1
-		isPremiere = true
 		Input.internalUsers.clear
 		Math.setRandomSeed Math.generateRandomSeed 
 		initDatabase
-		startTime = serverStartTime = currentTime
-		// timeOffset = 0
-		reset
-		animationFrame
+		stop
 		
 	// Clear all inputs and reset the application to the first frame
 	stop
@@ -149,8 +144,11 @@ transient skipInit unit Network
 		startInLobby = false
 		errorMessage = ""
 		audio.stop
-		goToFrame 0
-		
+		isPremiere = true
+		startTime = serverStartTime = currentTime
+		reset
+		animationFrame
+				
 	// Keep inputs, call init functions, create the local users, reset read positions and start app
 	// This is called on startup, after every code change and when going backwards in the timeline
 	reset
@@ -162,6 +160,7 @@ transient skipInit unit Network
 		frame = 0
 		certainFrame = int.maxValue
 		uncertainFrame = -1
+		Input.isCertain = true
 		lobby.inLobby = startInLobby
 		Time.now = serverStartTime
 		audio.stop
@@ -308,7 +307,7 @@ transient skipInit unit Network
 				aheads.add ahead, maxLength:400
 				aheadMax = aheads.percentile(50)
 				aheadsMax.add aheadMax maxLength:400
-				int actualBufferFrames = ceil(aheadsMax.average * 1.25) limit max:30
+				int actualBufferFrames = Math.ceil(aheadsMax.average * 1.25) limit max:30
 				
 				// We only update bufferFrames if the new value is smaller or at least 2 larger
 				if actualBufferFrames < bufferFrames or actualBufferFrames > bufferFrames+1: bufferFrames = actualBufferFrames
@@ -767,7 +766,7 @@ skipInit transient unit statistics
 	internal draw
 		maxValue = 0
 		for series -> s
-			int len = min(.values.length, size.x.round)
+			int len = Math.min(.values.length, size.x.round)
 			for len: 
 				let value = s.values[-1-i]
 				if value > maxValue: maxValue = value
@@ -780,7 +779,7 @@ skipInit transient unit statistics
 			drawText text, labelPos+{11, -2}, align:Left, layer:1000000, size:12
 			labelPos.x += graphics.getTextWidth(text, size:12) + 20
 			
-			int len = min(.values.length, size.x.round)
+			int len = Math.min(.values.length, size.x.round)
 			float prevY = 0
 			for len
 				let value = s.values[-1-i]

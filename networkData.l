@@ -1,4 +1,4 @@
-unit networkData
+networkData
 	void(dynamic data)[] callbacks
 	call: int id, dynamic data
 		callbacks[id](data)
@@ -8,7 +8,7 @@ unit networkData
 		networkData.callbacks.add do
 		return id
 				
-unit localStorage
+localStorage
 	inline js void set: string key, object value
 		localStorage.setItem(key, JSON.stringify(value))
 		
@@ -20,7 +20,7 @@ unit localStorage
 		let data = getStringDirectly(key)
 		Input.handleObject id, data
 		
-unit http
+http
 	// Perform an http get request
 	js void get: string url
 		         stored void(dynamic result) code
