@@ -151,7 +151,7 @@ class Object
 		
 	finally: Time delay = 0
 		     bool smooth = false
-		     void() do
+		     stored void() do
 		fx.add DelayEffect startTime:fx.endOfPrevEffect(this)+delay, duration:0, smooth, this, do
 	
 	fadeAndScaleIn: int duration = 200

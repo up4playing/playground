@@ -1333,7 +1333,7 @@ global transient unit System
 	// Prints a message to the console
 	global js void print: logstring text // The text, variables or expressions to print
 		                  SourceCodeLocation location
-		log(text, location.start, location.file)
+		(location ? log(text, location.start, location.file) : log(text))
 	
 	// Display a message in the timeline
 	global js void watch: logstring text // The text, variables or expressions to watch

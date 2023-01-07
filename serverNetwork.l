@@ -116,7 +116,7 @@ transient unit ServerNetwork
 			PeerNetwork.makePrimiaryUserIfStateIsNotReceived
 			
 		// Send statistics after 20 seconds
-		Platform.setTimeout 20s
+		Platform.setTimeout 30s
 			let prevIsCertain = Input.isCertain
 			Input.isCertain = true
 			statistics.send game:-1, round:-1
