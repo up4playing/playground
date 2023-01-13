@@ -712,6 +712,8 @@ class Line
 
 class Rect
 	Vector2 position, size
+	bool contains: Vector2 position
+		return this.position-this.size/2 <=  position < this.position+this.size/2
 	
 class Grid<T>
 	IntVector2 size
