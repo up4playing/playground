@@ -966,7 +966,7 @@ class List<T>
 		      int to       // Return a new list up to (but not including) this index
 		return this.slice(from, to)
 	
-	js T get: int from = 0 // Return a new list starting from this index
+	js T get: int from // Return a new list starting from this index
 		return this.slice(from)
 	
 	js T set: int index // The index of the item to set
