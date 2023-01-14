@@ -85,7 +85,7 @@ struct float
 	const inline js float maxValue := Number.MAX_VALUE
 	
 	// The smallest possible floating point value
-	const inline js float minValue := Number.MIN_VALUE
+	const inline js float minValue := -Number.MAX_VALUE
 	
 	const inline js float infinity := Number.POSITIVE_INFINITY
 	
@@ -277,15 +277,15 @@ class string
 		                      string target
 		this.replace(new RegExp(source, "g"), target)
 		
-	inline js string get: int index
-		(index >= 0 ? this[index] : this[this.length+index])
+	js string get: int index
+		return index >= 0 ? this[index] : this[this.length+index]
 	
-	inline js string get: int from = 0
-		                  int to
-		this.substring(from >= 0 ? from : this.length+from, to >= 0 ? to : this.length+to)
+	js string get: int from = 0
+		           int to
+		return this.substring(from >= 0 ? from : this.length+from, to >= 0 ? to : this.length+to)
 		
-	inline js string get: int from = 0
-		this.substring(from >= 0 ? from : this.length+from)	
+	js string get: int from = 0
+		return this.substring(from >= 0 ? from : this.length+from)	
 	
 		
 // A logical data type that can have the value true or false
@@ -321,6 +321,27 @@ class List<T>
 		                       int i      // The index of the current item of the list we are iterating over
 		                   ) do           // Do this for each item in a list
 		for(let _subject=[...this], i=_subject.length-1; i>=0; --i) { let it = _subject[i]; do()}
+			
+	js void eachDistinct: TKey(T it) selector
+		                         void(
+		                             TKey it,
+		                             T[] items,
+		                             int i
+		                         ) do
+		if(this.length > 0) {
+			let _subject = this.sort((a,b) => selector(a) - selector(b))
+			for(let _nextIndex=1, it = selector(_subject[0]), i=0; _nextIndex<_subject.length; ++_nextIndex) { 
+				let _nextIt = selector(_subject[_nextIndex]);
+				if(_nextIt != it) {
+					let items = _subject.slice(i, _nextIndex);
+					do(it, items, i)
+					it = _nextIt;
+					i = _nextIndex;
+				}
+			}
+		}
+			
+			
 		
 	// Adds an item to the end of the list
 	inline js void add: T item // The item to add
@@ -453,7 +474,7 @@ class List<T>
 		return this.get((index+1)%length)
 		
 	T next: T currentItem
-		    bool(T item) where
+		    label bool(T item) where
 		int baseIndex = indexOf(currentItem)
 		for this.length
 			let item = this.get((baseIndex+i+1)%length)
@@ -487,10 +508,12 @@ class List<T>
 			
 	// Returns true if the list is not null and not empty	
 	inline js bool toBool := (this != null && this.length != 0) 
-		
 	
-	// Reverses the order of the items of the list
+	// Reverses the order of the items of the list in place
 	inline js T[] reverse() this.reverse()
+		
+	// Return a list with all unique items of the original list
+	inline js T[] distinct() [...new Set(this)]
 	
 	// Moves an item to the end of the list
 	js T moveToBack: T item // The item to move to the end of the list
@@ -515,7 +538,7 @@ class List<T>
 		
 	// Sort the list
 	inline js T[] sort
-		this.sort()
+		this.sort((a,b) => a - b)
 	
 	inline js T[] sort: float(T a, T b) comparer // A function returning 1 if "a" is larger, -1 if "b" is larger, 0 if they are equal
 		this.sort(comparer)
@@ -524,18 +547,22 @@ class List<T>
 		this.sort(comparer)
 	
 	// Sort the list by a given expression
-	T[] orderBy: float(T a) expression // The expression to order by
+	T[] orderBy: float(T a) expression // First order by this expression
 		return this.sort(expression(a) - expression(b))
 		
-	T[] orderBy: Time(T a) expression // The expression to order by
+	T[] orderBy: float(T it) expression           // First order by this expression
+		         label nocolon float(T it) thenBy // Then order by this expression
+		return this.sort(expression(a) - expression(b) || thenBy(a) - thenBy(b))
+		
+	T[] orderBy: Time(T a) expression // First order by this expression
 		return this.sort(expression(a) - expression(b))
 		
-	T[] orderBy: string(T a) expression // The expression to order by
+	T[] orderBy: string(T a) expression // First order by this expression
 		return this.sort(expression(a) compareTo expression(b))
 		
 	// Sort the list by a given expression
-	T[] orderBy: float(T a) expression // The expression to order by
-		     SortingOrder order    // Specifies if you want to sort in ascending or descending order
+	T[] orderBy: float(T a) expression // First order by this expression
+		         SortingOrder order    // Specifies if you want to sort in ascending or descending order
 		if order == Ascending: return this.sort(expression(a) - expression(b))
 		else                   return this.sort(expression(b) - expression(a))
 		
@@ -550,7 +577,7 @@ class List<T>
 	inline js bool all: bool(T a) predicate // The condition to check
 		this.every(predicate)
 		
-	inline js TValue[] select: TValue(T a) selector
+	inline js TValue[] select: TValue(T it) selector
 		this.map(selector)
 		
 	inline js T find: bool(T a) condition // The condition to check
@@ -577,10 +604,9 @@ class List<T>
 	inline js T[] subList: int start, int count
 		this.slice(start, count)
 		
-	js int total: int(T a) selector
+	int total: int(T it) selector
 		let sum = 0
-		for(let i=0; i<this.length; i++)
-			sum += selector(this[i])
+		for this: sum += selector(.)
 		return sum
 		
 	js int sum
@@ -591,6 +617,14 @@ class List<T>
 	
 	js float average
 		return this.length > 0 ? this.sum() / this.length : 0
+		
+	string joinToString: string(T a) selector
+		                 string separator = ", "
+		let result = ""
+		for this
+			if result: result += separator
+			result += selector(.)
+		return result
 		
 	shuffle
 		for 1 to length <- i
@@ -632,7 +666,7 @@ class List<T>
 	min: int(T a) selector 
 		 int threshold = int.maxValue
 		 int default = 0
-		 bool(T a) where
+		 label bool(T a) where
 		int resultValue = threshold
 		for this
 			if where(.)
@@ -643,7 +677,7 @@ class List<T>
 	min: float(T a) selector 
 		 float threshold = float.maxValue
 		 float default = 0
-		 bool(T a) where
+		 label bool(T a) where
 		float resultValue = threshold
 		for this
 			if where(.)
@@ -681,7 +715,7 @@ class List<T>
 	max: int(T a) selector
 		 int threshold = int.minValue
 		 int default = 0
-		 bool(T a) where
+		 label bool(T a) where
 		int resultValue = threshold
 		for this 
 			if where(.)
@@ -692,7 +726,7 @@ class List<T>
 	max: float(T a) selector
 		 float threshold = float.minValue
 		 float default = 0
-		 bool(T a) where
+		 label bool(T a) where
 		float resultValue = threshold
 		for this
 			if where(.)
@@ -703,7 +737,7 @@ class List<T>
 	max: Time(T a) selector
 		 Time threshold = float.minValue
 		 Time default = 0
-		 bool(T a) where
+		 label bool(T a) where
 		Time resultValue = threshold
 		for this
 			if where(.)
@@ -794,7 +828,7 @@ class List<T>
 		
 	withMin: Time(T a) selector
 		     Time threshold = float.maxValue
-		     bool(T a) where
+		     label bool(T a) where
 		Time resultValue = threshold
 		T resultItem
 		for this
@@ -870,7 +904,7 @@ class List<T>
 		
 	withMax: int(T a) selector
 		     int threshold = int.minValue
-		     bool(T a) where
+		     label bool(T a) where
 		int resultValue = threshold
 		T resultItem
 		for this
@@ -883,7 +917,7 @@ class List<T>
 		
 	withMax: float(T a) selector
 		     float threshold = float.minValue
-		     bool(T a) where
+		     label bool(T a) where
 		float resultValue = threshold
 		T resultItem
 		for this
@@ -925,53 +959,53 @@ class List<T>
 		return result;
 		
 	// Gets an item from the list
-	inline js T get: implicit int index // The index of the item to get
-		(index >= 0 ? this[index] : this[this.length+index])
+	js T get: implicit int index // The index of the item to get
+		return index >= 0 ? this[index] : this[this.length+index]
 		
-	inline js T get: int from = 0
-		             int to
-		this.slice(from, to)
+	js T get: int from = 0 // Return a new list starting from this index
+		      int to       // Return a new list up to (but not including) this index
+		return this.slice(from, to)
 	
-	inline js T get: int from = 0
-		this.slice(from)
+	js T get: int from // Return a new list starting from this index
+		return this.slice(from)
 	
-	inline js T set: int index // The index of the item to set
-		             T value   // The new value to set
-		(index >= 0 ? this[index] = value : this[this.length+index] = value)
+	js T set: int index // The index of the item to set
+		      T value   // The new value to set
+		return index >= 0 ? this[index] = value : this[this.length+index] = value
 		
 	// Tries to get an item from the list. If it doesn't exist, it sets it.
+	// TODO: Support index with side effect (e.g. list[index++] ?= 0)
 	inline js T getOrSet: int index
 		                  T value
 		(this.hasOwnProperty(index) ? this[index] : this[index] = value)
 		
 	// Add a value to an item of the list
-	inline js T addToItem: int index // The index of the item to change
-		                   T value   // The value to add to the item
-		(index >= 0 ? this[index] += value : this[this.length+index] += value)
+	js T addToItem: int index // The index of the item to change
+		            T value   // The value to add to the item
+		return index >= 0 ? this[index] += value : this[this.length+index] += value
 		
 	// Subtract a value from an item of the list
-	inline js T subtractFromItem: int index // The index of the item to change
-		                          T value   // The value to subtract from the item
-		(index >= 0 ? this[index] -= value : this[this.length+index] -= value)
+	js T subtractFromItem: int index // The index of the item to change
+		                   T value   // The value to subtract from the item
+		return index >= 0 ? this[index] -= value : this[this.length+index] -= value
 		
 	// Multiply an item of the list by a value
-	inline js T multiplyItem: int index // The index of the item to change
-		                      T value   // The value to multiply the item by
-		(index >= 0 ? this[index] *= value : this[this.length+index] *= value)
+	js T multiplyItem: int index // The index of the item to change
+		               T value   // The value to multiply the item by
+		return index >= 0 ? this[index] *= value : this[this.length+index] *= value
 		
 	// Divide an item of the list by a value
-	inline js T divideItem: int index // The index of the item to change
-		                    T value   // The value to divide the item by
-		(index >= 0 ? this[index] /= value : this[this.length+index] /= value)
+	js T divideItem: int index // The index of the item to change
+		             T value   // The value to divide the item by
+		return index >= 0 ? this[index] /= value : this[this.length+index] /= value
 		
 	// Add 1 to item of the list
-	inline js T incrementItem: int index // The index of the item to change
-		(index >= 0 ? this[index]++ : this[this.length+index]++)
-		
-	// Subtract 1 from an item of the list
-	inline js T decrementItem: int index // The index of the item to change
-		(index >= 0 ? this[index]-- : this[this.length+index]--)
+	js T incrementItem: int index // The index of the item to change
+		return index >= 0 ? this[index]++ : this[this.length+index]++
 	
+	// Subtract 1 from an item of the list
+	js T decrementItem: int index // The index of the item to change
+		return index >= 0 ? this[index]-- : this[this.length+index]--
 		
 // A data container that stores key-value pairs
 js Map
@@ -1025,21 +1059,48 @@ interface object
 		
 // This struct is automatically filled with the source code location
 transient class SourceCodeLocation
-	int row     // The row of the source code
-	int column  // The column of the source code
-	string file // The filename of the source code
-	
+	string file
+	int start
+	int end
 	SourceCodeLocation left
 	SourceCodeLocation right
 	
-	js SourceCodeLocation clone 
-		return new SourceCodeLocation(this.row, this.column, this.file, this.left, this.right)
-		
-	void flatten: SourceCodeLocation[] result
-		if file:          result.add this
-		if left != null:  left.flatten result
-		if right != null: right.flatten result
+	inline js bool toBool() (this != null)
 	
+	SourceCodeLocation clone := {file, start, end, left, right}
+			
+	SourceCodeLocation find: string file, int pos
+		if this.file and this.file == file and pos >= this.start and pos <= this.end
+			return this
+		if left != null
+			let result = left.find file, pos
+			if result != null: return result
+		if right != null
+			let result = right.find file, pos
+			if result != null: return result
+		return null
+			
+	SourceCodeLocation find: SourceCodeLocation location
+		if file == location.file and start == location.start and end == location.end
+			return this
+		if left != null
+			let result = left.find location
+			if result != null: return result
+		if right != null
+			let result = right.find location
+			if result != null: return result
+		return null
+		
+	SourceCodeLocation leaf
+		if file: return this
+		if right
+			let result = right.leaf
+			if result: return result
+		if left
+			let result = left.leaf
+			if result: return result
+		return null
+		
 js Error
 class Error
 	string message
@@ -1054,9 +1115,9 @@ global transient unit System
 		if(condition) then()
 			
 	// Executes code depending on whether a given condition is true or false
-	global inline js void if: implicit bool condition // The condition to check
-		                      void() then             // Do this if the condition is true
-		                      void() else             // Do this if the condition is false
+	global inline js void if: implicit bool condition   // The condition to check
+		                      void() then               // Do this if the condition is true
+		                      label nocolon void() else // Do this if the condition is false
 		if(condition) then() @else else()
 			
 	// Executes code as long as a given condition is true
@@ -1072,10 +1133,6 @@ global transient unit System
 		@do do() 
 		@while(while)
 	
-	// Do something a given number of times or for each item in a list
-	global inline js void for: void subject    // The list to iterate over or the exclusive upper bound to iterate towards
-		                       void do         // Do this for each item in a list or a given number of times
-		
 	// Do something a given number of times or for each item in a list
 	global inline js void for: T[] subject    // The list to iterate over
 		                       -> void(
@@ -1276,13 +1333,13 @@ global transient unit System
 	// Prints a message to the console
 	global js void print: logstring text // The text, variables or expressions to print
 		                  SourceCodeLocation location
-		log(text, location.row, location.column, location.file)
+		(location ? log(text, location.start, location.file) : log(text))
 	
 	// Display a message in the timeline
 	global js void watch: logstring text // The text, variables or expressions to watch
 		                  SourceCodeLocation location
 		if(Platform_isDebug && Network_frame >= Network_frameWithNewWatches) {
-			Platform_sendWatch(Network_frame, text, location.row, location.column, location.file)
+			Platform_sendWatch(Network_frame, text, location.start, location.file)
 		}
 	
 	// Shows a dialog box with a given message
@@ -1300,80 +1357,85 @@ global transient unit System
 // A collection of mathematical functions and constants
 global skipInit unit Math
 	// Returns the absolute value
-	global inline js int abs: int value // The value to return the absolute value of
+	inline js int abs: int value // The value to return the absolute value of
 		Math.abs(value)
 		
 	// Returns the absolute value
-	global inline js float abs: float value // The value to return the absolute value of
+	inline js float abs: float value // The value to return the absolute value of
 		Math.abs(value)
 		
 	// Returns the absolute value
-	global inline js Angle abs: Angle value // The angle to return the absolute value of
+	inline js Angle abs: Angle value // The angle to return the absolute value of
 		Math.abs(value)
 		
 	// Returns the smallest integer greater than or equal to the given value 
-	global inline js int ceil: float value // The value to round up
+	inline js int ceil: float value // The value to round up
 		Math.ceil(value)
 		
 	// Returns the smallest integer greater than or equal to the given value 
-	global inline js Time ceil: Time value // The value to round up
+	inline js Time ceil: Time value // The value to round up
 		Math.ceil(value)
 		
 	// Returns the smallest integer greater than or equal to the given value 
-	global inline js Angle ceil: Angle value // The angle to round up
+	inline js Angle ceil: Angle value // The angle to round up
 		Math.ceil(value)
 		
 	// Returns the largest integer less than or equal to the given value
-	global inline js int floor: float value // The value to round down
+	inline js int floor: float value // The value to round down
 		Math.floor(value)
 		
 	// Returns the largest integer less than or equal to the given value
-	global inline js Time floor: Time value // The value to round down
+	inline js Time floor: Time value // The value to round down
 		Math.floor(value)
 		
 	// Returns the largest integer less than or equal to the given value
-	global inline js Angle floor: Angle value // The angle to round down
+	inline js Angle floor: Angle value // The angle to round down
 		Math.floor(value)
 		
 	// Returns the given value rounded to the nearest integer
-	global inline js int round: float value // The value to round
+	inline js int round: float value // The value to round
 		Math.round(value)
 		
 	// Returns the given value rounded to the nearest integer
-	global inline js Angle round: Angle value // The angle to round
+	inline js Angle round: Angle value // The angle to round
 		Math.round(value)
 		
 	// Returns the given value rounded to the nearest integer
-	global inline js Time round: Time value // The angle to round
+	inline js Time round: Time value // The angle to round
 		Math.round(value)
 		
-	global inline js int min: int a // The first value
-		                      int b // The second value
+	inline js int min: int a // The first value
+		               int b // The second value
 		Math.min(a, b)
 		
 	// Returns the smallest of the given values
-	global inline js float min: float a // The first value
-		                        float b // The second value
+	inline js float min: float a // The first value
+		                 float b // The second value
 		Math.min(a, b)
 		
 	// Returns the smallest of the given values
-	global inline js Angle min: Angle a // The first angle
-		                        Angle b // The second angle
+	inline js Angle min: Angle a // The first angle
+		                 Angle b // The second angle
 		Math.min(a, b)
 		
 	// Returns the largest of the given values
-	global inline js int max: int a // The first value
-		                      int b // The second value
+	inline js int max: int a // The first value
+		               int b // The second value
 		Math.max(a, b)
 		
 	// Returns the largest of the given values
-	global inline js float max: float a // The first value
-		                        float b // The second value
+	inline js float max: float a // The first value
+		                 float b // The second value
 		Math.max(a, b)
 		
 	// Returns the largest of the given values
-	global inline js Angle max: Angle a // The first angle
-		                        Angle b // The second angle
+	inline js Angle max: Angle a // The first angle
+		                 Angle b // The second angle
+		Math.max(a, b)
+		
+	// Returns the largest of the given values
+	inline js Time max: Time a // The first time
+		                Time b // The second time
 		Math.max(a, b)
 		
 	// Returns the positive square root of the given value
@@ -1581,14 +1643,23 @@ global skipInit unit Math
 		if value < min: return min
 			            return value
 	
-	interpolate: float value
-		         float fromStart = 0
-		         float fromEnd = 1
-		         float toStart = 0
-		         float toEnd = 1
+	map: float value
+		 float fromStart = 0
+		 float fromEnd = 1
+		 float toStart = 0
+		 float toEnd = 1
 		if value < fromStart: return toStart
 		if value > fromEnd:   return toEnd
 			                  return toStart + (toEnd-toStart) * (value-fromStart)/(fromEnd-fromStart)
+		
+	map: Time value
+		 Time fromStart = 0
+		 Time fromEnd = 1
+		 float toStart = 0
+		 float toEnd = 1
+		if value < fromStart: return toStart
+		if value > fromEnd:   return toEnd
+			                  return toStart + float(toEnd-toStart) * (value-fromStart)/(fromEnd-fromStart)
 		
 enum AngleUnit
 	turns // Turn (one full rotation is 1)
@@ -1640,13 +1711,6 @@ transient float Angle
 	inline js float in: AngleUnit unit
 		(unit==1 ? this*Math_TwoPI : unit==2 ? this*360 : unit==3 ? this*400 : this)
 		
-enum TimeUnit
-	ms   // Milliseconds
-	s    // Seconds
-	min  // Minutes
-	h    // Hours
-	days // Days
-		
 transient float Time
 	// The largest possible time value
 	const inline js Time maxValue := Number.MAX_VALUE
@@ -1656,9 +1720,7 @@ transient float Time
 	
 	// The number of milliseconds elapsed since January 1, 1970
 	static Time now
-	
-	static inline js float preciseTime := performance.now()
-	
+
 	// The current frame
 	static inline js int frame := Network_frame
 	
@@ -1728,9 +1790,24 @@ transient float Time
 	inline js float in: TimeUnit unit // Convert the time to this unit
 		(unit==1 ? this/1000 : unit==2 ? this/60000 : unit==3 ? this/3600000 : unit==4 ? this/86400000 : this)
 		
-	
+	js static void startTimer() window._timerStart = performance.now()
+	js static void printTimer(string text) log(text+": "+(performance.now()-window._timerStart))
+	static inline js float preciseTime := performance.now()
+		
+enum TimeUnit
+	ms   // Milliseconds
+	s    // Seconds
+	min  // Minutes
+	h    // Hours
+	days // Days
+		
 js Date
 transient struct Date
+	const dayStrings = [
+		["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Gameday", "Do not send"]
+		["Sonntag", "Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag"]
+	]
+		
 	inline js Date() new Date(Time_now)
 	
 	inline js int year := this.getFullYear()
@@ -1747,6 +1824,11 @@ transient struct Date
 	inline js string twoDigitHour := this.getHours().toLocaleString('en-US', {minimumIntegerDigits:2})
 	inline js string twoDigitMinute := this.getMinutes().toLocaleString('en-US', {minimumIntegerDigits:2})
 	inline js string twoDigitSecond := this.getSeconds().toLocaleString('en-US', {minimumIntegerDigits:2})
+		
+	inline js Time timeOfDay := this.getHours()*3600000 + this.getMinutes()*60000
+	
+	private static string toTwoDigitString: int value
+		return value < 10 ? "0"+value.toString : value.toString
 	
 	// (31.12.2000)
 	js string dayMonthYearString: language = Loca.language
@@ -1758,15 +1840,27 @@ transient struct Date
 	
 	// (31 Dec 2000)
 	js string dayShortMonthNameYearString: language = Loca.language
-		return this.getDate().toLocaleString('en-US', {minimumIntegerDigits:2})+" "+this.toLocaleString('en-US', {month: 'short'})+" "+this.getFullYear()
+		return this.getDate()+" "+this.toLocaleString('en-US', {month: 'short'})+" "+this.getFullYear()
+	
+	// (Monday)
+	string weekdayString: language = Loca.language
+		return dayStrings[language][dayOfWeek]
 	
 	// (23:59)
-	js string hourMinuteString: language = Loca.language
-		return this.getHours().toLocaleString('en-US', {minimumIntegerDigits:2})+":"+this.getMinutes().toLocaleString('en-US', {minimumIntegerDigits:2})
+	string hourMinuteString: language = Loca.language
+		if language == English
+			let h = hour
+			return ""+((h-1)%12+1)+":"+toTwoDigitString(minute)+(h < 12 ? " am":" pm")
+		else
+			return ""+hour+":"+toTwoDigitString(minute)
 	
 	// (23:59:59)
-	js string hourMinuteSecondString: language = Loca.language
-		return this.getHours().toLocaleString('en-US', {minimumIntegerDigits:2})+"-"+this.getMinutes().toLocaleString('en-US', {minimumIntegerDigits:2})+"-"+this.getSeconds().toLocaleString('en-US', {minimumIntegerDigits:2})
+	string hourMinuteSecondString: language = Loca.language
+		if language == English
+			let h = hour
+			return ""+((h-1)%12+1)+":"+toTwoDigitString(minute)+":"+toTwoDigitString(second)+(h < 12 ? " am":" pm")
+		else
+			return ""+hour+":"+toTwoDigitString(minute)+":"+toTwoDigitString(second)
 	
 	// (31.12.2000 23:59)
 	js string dayMonthYearHourMinuteString: language = Loca.language
@@ -1775,8 +1869,11 @@ transient struct Date
 	
 	// (31.12.2000 23:59:59)
 	js string dayMonthYearHourMinuteSecondString: language = Loca.language
-		if(language == 1000) return this.getDate().toLocaleString('en-US', {minimumIntegerDigits:2})+"-"+(this.getMonth()+1).toLocaleString('en-US', {minimumIntegerDigits:2})+"-"+this.getFullYear()+" "+this.getHours().toLocaleString('en-US', {minimumIntegerDigits:2})+"-"+this.getMinutes().toLocaleString('en-US', {minimumIntegerDigits:2})+"-"+this.getSeconds().toLocaleString('en-US', {minimumIntegerDigits:2})
-		else                 return this.getDate().toLocaleString('en-US', {minimumIntegerDigits:2})+"."+(this.getMonth()+1).toLocaleString('en-US', {minimumIntegerDigits:2})+"."+this.getFullYear()+" "+this.getHours().toLocaleString('en-US', {minimumIntegerDigits:2})+":"+this.getMinutes().toLocaleString('en-US', {minimumIntegerDigits:2})+":"+this.getSeconds().toLocaleString('en-US', {minimumIntegerDigits:2})
+		return this.getDate().toLocaleString('en-US', {minimumIntegerDigits:2})+"."+(this.getMonth()+1).toLocaleString('en-US', {minimumIntegerDigits:2})+"."+this.getFullYear()+" "+this.getHours().toLocaleString('en-US', {minimumIntegerDigits:2})+":"+this.getMinutes().toLocaleString('en-US', {minimumIntegerDigits:2})+":"+this.getSeconds().toLocaleString('en-US', {minimumIntegerDigits:2})
+	
+	// (31-12-2000 23-59-59)
+	js string invariantDayMonthYearHourMinuteSecondString: language = Loca.language
+		return this.getDate().toLocaleString('en-US', {minimumIntegerDigits:2})+"-"+(this.getMonth()+1).toLocaleString('en-US', {minimumIntegerDigits:2})+"-"+this.getFullYear()+" "+this.getHours().toLocaleString('en-US', {minimumIntegerDigits:2})+"-"+this.getMinutes().toLocaleString('en-US', {minimumIntegerDigits:2})+"-"+this.getSeconds().toLocaleString('en-US', {minimumIntegerDigits:2})
 	
 	// The number of milliseconds elapsed since January 1, 1970
 	inline js Time time := this.getTime()
@@ -1801,10 +1898,14 @@ transient struct Date
 
 	static inline js Date now := new Date(Time_now)
 	static inline js Date fromTime(Time time) new Date(time)
-	static inline js Date fromValues(int year, int month, int day, int hour = 0, int minute = 0, int second = 0) new Date(year, month-1, day, hour, minute, second)
+	static inline js Date fromValues(int year, int month=1, int day=1, int hour = 0, int minute = 0, int second = 0) new Date(year, month-1, day, hour, minute, second)
 
 class Range
-	int from, to
+	int from // The start of the range
+	int to   // The end of the range
+	
+	Range: int from       // The start of the range
+		   nocolon int to // The end of the range
 	
 	inline js bool contains: int value
 		(value >= this.from && value < this.from)
@@ -1819,5 +1920,14 @@ unit Json
 enum Language: English, German, Spanish, Frensh, Italian, Portuguese, Japanese, Chinese, Korean, Dutch, Turkish, Polish, Russian, Hindi, Arabic, Bengali, Urdu, Indonesian, Invariant = 1000
 
 unit Loca
-	Language[] supportedLanguages = [English, German]
+	visible Language[] supportedLanguages = [English, German]
+	visible string[] defaultLocaleForLanguage = ["en-001", "de-DE", "es-ES", "fr-FR", "it-IT", "pt-PT", "ja-JP", "zh-Hans-CN", "ko-KR", "nl-NL", "tr-TR", "pl-PL", "ru-RU", "hi-IN", "ar-001", "bn-BD", "ur-IN", "id-ID"]
+	
 	Language language = English
+	string locale = defaultLocaleForLanguage[language]
+	
+	set: Language language, string locale = null
+		this.language = language
+		this.locale = locale or defaultLocaleForLanguage[language]
+	
+	

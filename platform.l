@@ -1,4 +1,4 @@
-enum PlatformMode: Pause, Pointer, Slide, Play, Record
+enum PlatformMode: Pause, Manipulator, Slide, Play, Record
 enum ScaleMode: Auto, FixedWidth, FixedHeight, None
 enum AnchorMode: TopLeft, TopCenter, Center
 enum OperatingSystem: Windows, Mac, Linux, Android, iOS
@@ -27,9 +27,13 @@ transient skipInit unit Platform
 	public TickMode tickMode = Interval
 	
 	public inline js string url := location.href
+	public inline js string host := location.host
 	public inline js int version := version
 	public inline js int appName := appName
 	public inline js int userAgent := navigator.userAgent.replace(/,/g," ")
+	public inline js float usedMemory := performance.memory.usedJSHeapSize
+		
+	protocalAndHost := host ? "https://"+host : "http://localhost"
 	
 	public Vector2 referenceSize = {1920, 1080}
 	public ScaleMode scaleMode = Auto, effectiveScaleMode
@@ -47,10 +51,6 @@ transient skipInit unit Platform
 	internal bool fastForward
 	visible bool isMobile = true
 	visible OperatingSystem os
-	
-	internal inline js void initApplication
-		init()
-		Platform_updateBaseMatrix();
 		
 	private inline js void initMedia
 		audio_init();
@@ -63,6 +63,8 @@ transient skipInit unit Platform
 		Math_init();
 		Network_init();
 		Input_init();
+		gizmo_init();
+		statistics_init();
 		Network_log("Loading...")
 		Platform_isMobile = false;
 		let platform = navigator.platform
@@ -74,7 +76,7 @@ transient skipInit unit Platform
 		if(!Platform_isMobile) 
 			window.onresize = e => { 
 				Platform_onResize();
-				if(Platform_mode == 0/*Pause*/ && Platform_engineStarted) Network_tick(/*draw*/true);
+				if(Platform_mode < 3/*Pause,Manipulator,Slide*/ && Platform_engineStarted) Network_tick(/*draw*/true);
 			}
 		if(window.app_init) app_init();
 		
@@ -127,13 +129,14 @@ transient skipInit unit Platform
 	private start: bool isDebug
 		initMedia
 		initPlatform
+		statistics.startTime = Time.preciseTime
 		this.engineStarted = false
 		this.isDebug = isDebug
 		if !isDebug: showSafeArea = false; Network.simulateConnection = false
 		showDebugInfo = getLocalStorageObject("showDebugInfo") == "true"
 		
 		onResize
-		drawLoading
+		// drawLoading
 		if mode >= Play: mode = Pause
 		let path = url.getUntil("?").split("/")
 		let gameId = path[3]
@@ -153,6 +156,7 @@ transient skipInit unit Platform
 		
 		openMedia
 			this.engineStarted = true
+			statistics.loadTime = Time.preciseTime
 			startInterval
 			if isDebug || isLocal || roomId == "local" || url.startsWith("file"): Network.startLocal userCount:userCount
 			else                                                                  Network.join gameId, roomId, userId
@@ -187,53 +191,30 @@ transient skipInit unit Platform
 	
 	private enterSlideMode(PlatformMode mode) this.mode = mode; sendMode
 	
-	internal stop()    mode = Pause;  Network.stop; sendMode
-	internal pause()   mode = Pause;  audio.stop(); sendMode
-	internal record()  Network.adjustStartTimeIfNeeded; mode = Record; sendMode
-	internal play()    Network.adjustStartTimeIfNeeded; mode = Play;   sendMode
+	internal stop()    mode = Pause; Network.stop; gizmo.clear; sendMode
+	internal pause()   mode = Pause; audio.stop(); gizmo.clear; sendMode
+	internal record()  Network.adjustStartTimeIfNeeded; mode = Record; gizmo.clear; sendMode
+	internal play()    Network.adjustStartTimeIfNeeded; mode = Play;   gizmo.clear; sendMode
 	
 	private goToFrame(int targetFrame) Network.goToFrame(targetFrame)
 		
-	private Vector2 touchUpPos
-	private int locationIndex
-	private SourceCodeLocation[] locations
+	internal js void sendSelectToEditor: string cursorFile, int cursorPos
+		_sendToEditor({type:"select", cursorFile, cursorPos})
 	
-	internal handleSlide: InputType inputType, int id, Vector2 pixelPos, Vector2 referencePos	
-		if Platform.mode == Pointer or Platform.mode == Slide
-			int row, column
-			string file
-			if Platform.mode == Pointer
-				let movedSinceTouchUp = (pixelPos manhattanDistanceTo touchUpPos) > 8
-				if inputType == TouchUp: touchUpPos = pixelPos
-					
-				if (inputType == TouchDown and movedSinceTouchUp) or (inputType == TouchUp and !movedSinceTouchUp)
-					if movedSinceTouchUp                   
-						locationIndex = 0
-						locations.clear
-						for graphics.items -> item
-							if item.location != null and pixelPos.isInsidePoygon item.poly
-								SourceCodeLocation[] itemLocations
-								item.location.flatten itemLocations
-								itemLocations.sort (a.file compareTo b.file) || b.row - a.row || a.column - b.column
-								for itemLocations
-									if !.file.startsWith("lib")
-										locations.add .
-					
-					if locations.length
-						let selectedLocation = locations[locationIndex++ % locations.length]
-						row = selectedLocation.row
-						column = selectedLocation.column
-						file = selectedLocation.file
-			sendTouchToEditor id, referencePos, cast inputType, row, column, file
-			
-	private js void sendTouchToEditor: int id, Vector2 pos, TouchPhase phase, int row, int column, string file
-		_sendToEditor({type:"touch", id, x:pos.x, y:pos.y, phase, row, column, file})
+	internal js void sendDeselectToEditor
+		_sendToEditor({type:"deselect"})
+	
+	internal js void sendStartManipulationToEditor: GizomInfluence[] influences
+		_sendToEditor({type:"startManipulation", influences})
+	
+	internal js void sendMoveManipulationToEditor: GizomInfluence[] influences, int codeId
+		_sendToEditor({type:"moveManipulation", influences, codeId})
 	
 	internal js void sendFrame: int frame, int frames
 		_sendToEditor({type:"frame", frame, frames})
 	
-	internal js void sendWatch: int frame, string text, int row, int column, string file
-		_sendToEditor({type:"watch", frame, text, row, column, file})
+	internal js void sendWatch: int frame, string text, int location, string file
+		_sendToEditor({type:"watch", frame, text, location, file})
 	
 	private js void sendMode
 		if(Platform_isDebug) _sendToEditor({type:"setPlatformMode", mode:Platform_mode, frame:Network_frame})
@@ -314,10 +295,10 @@ transient skipInit unit Platform
 		document.body.appendChild(fileInput)
 		fileInput.click()
 		
-	inline js void setLocalStorageObject: string key, object value
+	inline js void setLocalStorageObject: string key, dynamic value
 		localStorage.setItem(key, JSON.stringify(value))
 		
-	js object getLocalStorageObject: string key
+	js dynamic getLocalStorageObject: string key
 		let str = localStorage.getItem(key)
 		return str ? JSON.parse(str) : null 
 		
@@ -405,24 +386,33 @@ transient skipInit unit Platform
 		}
 		
 	js void setInterval: int interval
-		                 void() do
-		setInterval(() => do(), interval)
+		                 void() code
+		setInterval(code)
+		
+	inline js int setTimeout: Time time
+		                      void() code
+		setTimeout(code, time)
+		
+	inline js void clearTimeout: int id
+		clearTimeout(id)
 		
 	inline js string resourcesPath := process.resourcesPath
 	
 	inline js void pushState: string url
 		                      object state = null
-		if(!Network_isReplay) history.pushState(state, "", url);
+		if(Network_isPremiere) history.pushState(state, "", url);
 		
 	inline js void replaceState: string url
 		                         object state = null
-		if(!Network_isReplay) history.replaceState(state, "", url);
+		if(Network_isPremiere) history.replaceState(state, "", url);
 		
 	inline js void back
-		if(!Network_isReplay) history.back();
+		if(Network_isPremiere) history.back();
 		
 	inline js void reload
 		if(!Platform_isDebug) location.reload();
+			
+
 		
 unit File
 	js string readPartial: string filename, int offset=0, int length, void(string result) callback
@@ -456,98 +446,6 @@ struct FileFilter
 	string name
 	string[] extensions
 
-transient unit Http	
-	js async dynamic get: string url
-		let response = await fetch(url)
-		return response.json()
-		
-	js void get: string url, void(dynamic result) code
-		let response = await fetch(url)
-		code(await response.json())
-		
-	js async string delete: string url 
-		let response = await fetch(url, {method:"DELETE"})
-		return await response.json()
-		
-	js async string delete: string url 
-		                    dynamic body
-		let response = await fetch(url, {method:"DELETE", body:JSON.stringify(body)})
-		return await response.json()
-		
-	js void delete: string url 
-		         void(dynamic result) code
-		         void(string error) else
-		try {
-			let response = await fetch(url, {method:"DELETE"})
-			let result = await response.json()
-			code(result)
-		} catch(e) {
-			else(e.message)
-		}
-		
-	js async void put: string url 
-		let response = await fetch(url, {method:"PUT"})
-		return await response.json()
-		
-	js void put: string url 
-		         void(dynamic result) code
-		         void(string error) else
-		try {
-			let response = await fetch(url, {method:"PUT"})
-			let result = await response.json()
-			code(result)
-		} catch(e) {
-			else(e.message)
-		}
-		
-	js async void put: string url 
-		         string body
-		let response = await fetch(url, {method:"PUT", body})
-		return await response.json()
-		
-	js async void put: string url 
-		         dynamic body
-		let response = await fetch(url, {method:"PUT", body:JSON.stringify(body)})
-		return await response.json()
-		
-	js void put: string url
-		         dynamic body
-		         void(dynamic result) code
-		         void(string error) else
-		try {
-			let response = await fetch(url, {method:"PUT", body:JSON.stringify(body)})
-			let result = await response.json()
-			code(result)
-		} catch(e) {
-			else(e.message)
-		}
-		
-	js async string post: string url 
-		                  string body
-		let response = await fetch(url, {method:"POST", body})
-		return await response.json()
-		
-	js async string post: string url 
-		                  dynamic body
-		let response = await fetch(url, {method:"POST", body:JSON.stringify(body)})
-		return await response.json()
-		
-	js async string post: string url 
-		let response = await fetch(url, {method:"POST"})
-		return await response.json()
-		
-	js void post: string url
-		          string body
-		          void(dynamic result) code
-		          void(string error) else
-		try {
-			let response = await fetch(url, {method:"POST", body})
-			let result = await response.json()
-			code(result)
-		} catch(e) {
-			else(e.message)
-		}
-		
 transient unit IndexedDB
 	private object db
 	
