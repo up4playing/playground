@@ -51,7 +51,8 @@ skipInit class Sound
 		
 	internal js void preloadForNextPlayback
 		this.nextAudio = new Audio();
-		await this.nextAudio.setSinkId(PeerNetwork_audioOutputId);
+		if(PeerNetwork_audioOutputId) 
+			await this.nextAudio.setSinkId(PeerNetwork_audioOutputId);
 		this.nextAudio.src = this.file;
 		
 	isPlaying
