@@ -448,11 +448,13 @@ transient global unit graphics
 	private int[] currentlyVisibleFor = null
 		
 	// Returns the width of a string in pixels
-	global js int getTextWidth: string text              // The string to get the width of
-		                        size = 18                // The size of the font in pixels
-		                        Font font = null         // The font of the text
-		                        FontStyle style = Normal // Whether the text should be bold or normal style
-		Platform_context.font = (style ? "bold ":"")+(size || graphics_currentFontSize)+"px "+(font || graphics_currentFont).name;
+	global js int getTextWidth: string text                 // The string to get the width of
+		                         implicit Vector2 size = {} // The size of the text
+		                        Font font = null            // The font of the text
+		                        FontStyle style = Normal    // Whether the text should be bold or normal style
+		let effectiveFont = font || graphics_currentFont
+		let fontSize = size.y || size.x || graphics_currentFontSize
+		Platform_context.font =  (style ? "bold ":"")+fontSize+"px "+effectiveFont.name;
 		let textSize = Platform_context.measureText(text)
 		return textSize.width
 		
@@ -930,13 +932,14 @@ transient global unit graphics
 		if(!texture?.ensureIsAvailable()) return
 		if(graphics_isVisibleFor(visibleFor)) {
 			let sizeX = size.x || texture.size.x
-			let sizeY = size.y || (w/texture.size.x)*texture.size.y
+			let sizeY = size.y || (sizeX/texture.size.x)*texture.size.y
 			graphics_items.push(new DisplayImage(
 				graphics_totalMatrix,
 				position.x - sizeX/2,
 				position.y - sizeY/2,
 				sizeX, sizeY,
-				layer, alpha, graphics_currentClippingPath, texture.file, position.location,
+				layer, alpha, graphics_currentClippingPath, texture.file,
+				location, position.location, size.location,
 				texture._htmlImage,
 				0, 0, texture.size.x, texture.size.y
 			))
@@ -954,7 +957,7 @@ transient global unit graphics
 		if(!image.texture?.ensureIsAvailable()) return
 		if(graphics_isVisibleFor(visibleFor)) {
 			let sizeX = size.x || texture.size.x
-			let sizeY = size.y || (w/texture.size.x)*texture.size.y
+			let sizeY = size.y || (sizeX/texture.size.x)*texture.size.y
 			graphics_items.push(new DisplayImage(
 				graphics_totalMatrix,
 				position.x - sizeX/2,
@@ -1014,7 +1017,7 @@ transient global unit graphics
 				graphics_totalMatrix,
 				align == 0  ? position.x : align  == 1 ? position.x-sizeX*.5 : position.x-sizeX,
 				valign == 0 ? position.y : valign == 1 ? position.y-sizeY*.5 : position.y-sizeY,
-				sizeY, sizeY,
+				sizeX, sizeY,
 				layer, alpha, graphics_currentClippingPath, "RoundedRectangle", 
 				location, position.location, size.location,
 				radius,
