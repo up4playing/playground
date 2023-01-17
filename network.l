@@ -140,6 +140,7 @@ transient skipInit unit Network
 		for Input.internalUsers if .
 			.inputs.reset
 			.startInputFrame 0
+		startTime = serverStartTime = currentTime
 		frames = 0
 		frameWithNewWatches = 0
 		startInLobby = false
