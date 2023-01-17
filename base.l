@@ -1801,13 +1801,6 @@ skipInit transient float Time
 	js static void printTimer(string text) log(text+": "+(performance.now()-window._timerStart))
 	static inline js float preciseTime := performance.now()
 		
-enum TimeUnit
-	ms   // Milliseconds
-	s    // Seconds
-	min  // Minutes
-	h    // Hours
-	days // Days
-		
 js Date
 transient struct Date
 	const dayStrings = [
