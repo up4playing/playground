@@ -1,4 +1,4 @@
-enum PlatformMode: Pause, Pointer, Slide, Play, Record
+enum PlatformMode: Pause, Manipulator, Slide, Play, Record
 enum ScaleMode: Auto, FixedWidth, FixedHeight, None
 enum AnchorMode: TopLeft, TopCenter, Center
 enum OperatingSystem: Windows, Mac, Linux, Android, iOS
@@ -27,9 +27,13 @@ transient skipInit unit Platform
 	public TickMode tickMode = Interval
 	
 	public inline js string url := location.href
+	public inline js string host := location.host
 	public inline js int version := version
 	public inline js int appName := appName
 	public inline js int userAgent := navigator.userAgent.replace(/,/g," ")
+	public inline js float usedMemory := performance.memory.usedJSHeapSize
+		
+	protocalAndHost := host ? "https://"+host : "http://localhost"
 	
 	public Vector2 referenceSize = {1920, 1080}
 	public ScaleMode scaleMode = Auto, effectiveScaleMode
@@ -59,6 +63,8 @@ transient skipInit unit Platform
 		Math_init();
 		Network_init();
 		Input_init();
+		gizmo_init();
+		statistics_init();
 		Network_log("Loading...")
 		Platform_isMobile = false;
 		let platform = navigator.platform
@@ -70,7 +76,7 @@ transient skipInit unit Platform
 		if(!Platform_isMobile) 
 			window.onresize = e => { 
 				Platform_onResize();
-				if(Platform_mode == 0/*Pause*/ && Platform_engineStarted) Network_tick(/*draw*/true);
+				if(Platform_mode < 3/*Pause,Manipulator,Slide*/ && Platform_engineStarted) Network_tick(/*draw*/true);
 			}
 		if(window.app_init) app_init();
 		
@@ -123,13 +129,14 @@ transient skipInit unit Platform
 	private start: bool isDebug
 		initMedia
 		initPlatform
+		statistics.startTime = Time.preciseTime
 		this.engineStarted = false
 		this.isDebug = isDebug
 		if !isDebug: showSafeArea = false; Network.simulateConnection = false
 		showDebugInfo = getLocalStorageObject("showDebugInfo") == "true"
 		
 		onResize
-		drawLoading
+		// drawLoading
 		if mode >= Play: mode = Pause
 		let path = url.getUntil("?").split("/")
 		let gameId = path[3]
@@ -149,6 +156,7 @@ transient skipInit unit Platform
 		
 		openMedia
 			this.engineStarted = true
+			statistics.loadTime = Time.preciseTime
 			startInterval
 			if isDebug || isLocal || roomId == "local" || url.startsWith("file"): Network.startLocal userCount:userCount
 			else                                                                  Network.join gameId, roomId, userId
@@ -183,61 +191,30 @@ transient skipInit unit Platform
 	
 	private enterSlideMode(PlatformMode mode) this.mode = mode; sendMode
 	
-	internal stop()    mode = Pause;  Network.stop; sendMode
-	internal pause()   mode = Pause;  audio.stop(); sendMode
-	internal record()  Network.adjustStartTimeIfNeeded; mode = Record; sendMode
-	internal play()    Network.adjustStartTimeIfNeeded; mode = Play;   sendMode
+	internal stop()    mode = Pause; Network.stop; gizmo.clear; sendMode
+	internal pause()   mode = Pause; audio.stop(); gizmo.clear; sendMode
+	internal record()  Network.adjustStartTimeIfNeeded; mode = Record; gizmo.clear; sendMode
+	internal play()    Network.adjustStartTimeIfNeeded; mode = Play;   gizmo.clear; sendMode
 	
 	private goToFrame(int targetFrame) Network.goToFrame(targetFrame)
 		
-	private Vector2 touchDownPos
-	private bool touchDownInsideGizmo
-	private int locationIndex
-	private SourceCodeLocation[] locations
+	internal js void sendSelectToEditor: string cursorFile, int cursorPos
+		_sendToEditor({type:"select", cursorFile, cursorPos})
 	
-	internal handleSlide: InputType inputType, int id, Vector2 pixelPos, Vector2 referencePos	
-		if Platform.mode == Pointer or Platform.mode == Slide
-			int row, column
-			string file
-			bool deselect
-			if Platform.mode == Pointer
-				let movedSinceTouchDown = (pixelPos manhattanDistanceTo touchDownPos) > 8
-				let insideGizmo = referencePos >= gizmo.min and referencePos <= gizmo.max
-				if inputType == TouchDown: touchDownPos = pixelPos; touchDownInsideGizmo = insideGizmo
-				// if inputType != TouchMove: print "###", inputType, insideGizmo, movedSinceTouchDown, locationIndex
-				// print insideGizmo, gizmo.min, gizmo.max, referencePos
-				// if (inputType == TouchDown and movedSinceTouchUp) or (inputType == TouchUp and !movedSinceTouchUp)
-				if (inputType == TouchDown and !insideGizmo)
-				or (inputType == TouchUp and touchDownInsideGizmo and !movedSinceTouchDown)
-					locations.clear
-					for graphics.items -> item
-						if item.location != null and pixelPos.isInsidePoygon item.poly
-							SourceCodeLocation[] itemLocations
-							item.location.flatten itemLocations
-							itemLocations.sort (a.file compareTo b.file) || b.row - a.row || a.column - b.column
-							for itemLocations
-								if !.file.startsWith("lib")
-									locations.add .
-										
-					if locations.length
-						if inputType == TouchDown: locationIndex = 0
-						let selectedLocation = locations[locationIndex++ % locations.length]
-						row = selectedLocation.row
-						column = selectedLocation.column
-						file = selectedLocation.file
-					else
-						deselect = true
-						
-			sendTouchToEditor id, referencePos, cast inputType, row, column, file, deselect
-			
-	private js void sendTouchToEditor: int id, Vector2 pos, TouchPhase phase, int row, int column, string file, bool deselect
-		_sendToEditor({type:"touch", id, x:pos.x, y:pos.y, phase, row, column, file, deselect})
+	internal js void sendDeselectToEditor
+		_sendToEditor({type:"deselect"})
+	
+	internal js void sendStartManipulationToEditor: GizomInfluence[] influences
+		_sendToEditor({type:"startManipulation", influences})
+	
+	internal js void sendMoveManipulationToEditor: GizomInfluence[] influences, int codeId
+		_sendToEditor({type:"moveManipulation", influences, codeId})
 	
 	internal js void sendFrame: int frame, int frames
 		_sendToEditor({type:"frame", frame, frames})
 	
-	internal js void sendWatch: int frame, string text, int row, int column, string file
-		_sendToEditor({type:"watch", frame, text, row, column, file})
+	internal js void sendWatch: int frame, string text, int location, string file
+		_sendToEditor({type:"watch", frame, text, location, file})
 	
 	private js void sendMode
 		if(Platform_isDebug) _sendToEditor({type:"setPlatformMode", mode:Platform_mode, frame:Network_frame})
@@ -318,10 +295,10 @@ transient skipInit unit Platform
 		document.body.appendChild(fileInput)
 		fileInput.click()
 		
-	inline js void setLocalStorageObject: string key, object value
+	inline js void setLocalStorageObject: string key, dynamic value
 		localStorage.setItem(key, JSON.stringify(value))
 		
-	js object getLocalStorageObject: string key
+	js dynamic getLocalStorageObject: string key
 		let str = localStorage.getItem(key)
 		return str ? JSON.parse(str) : null 
 		
@@ -409,8 +386,15 @@ transient skipInit unit Platform
 		}
 		
 	js void setInterval: int interval
-		                 void() do
-		setInterval(() => do(), interval)
+		                 void() code
+		setInterval(code)
+		
+	inline js int setTimeout: Time time
+		                      void() code
+		setTimeout(code, time)
+		
+	inline js void clearTimeout: int id
+		clearTimeout(id)
 		
 	inline js string resourcesPath := process.resourcesPath
 	
@@ -427,6 +411,8 @@ transient skipInit unit Platform
 		
 	inline js void reload
 		if(!Platform_isDebug) location.reload();
+			
+
 		
 unit File
 	js string readPartial: string filename, int offset=0, int length, void(string result) callback

@@ -3,7 +3,13 @@ global unit fx
 	add: Effect effect
 		effects.add effect
 		
-	tick
+	endOfPrevEffect: Object object
+		let lastEffect = effects[-1]
+			if lastEffect.object == object
+				return Math.max(Time.now, lastEffect.startTime + lastEffect.duration)
+		return Time.now
+		
+	internal tick
 		let now = Time.now
 		for effects <-
 			if now >= .startTime and (not .smooth or Network.isSmooth)
@@ -14,16 +20,16 @@ global unit fx
 	global delay: Time time = 0
 		          bool smooth = false
 		          stored void() do
-		add RunEffect startTime:Time.now+time, smooth, do
+		add DelayEffect startTime:Time.now+time, smooth, do
 				
 class Effect
 	Time startTime
 	Time duration
 	bool smooth
-	tick: float f
-
-Effect FadeEffect
 	Object object
+	tick: float f
+	
+Effect FadeEffect
 	float startValue, delta
 	bool removeWhenDone
 	tick(float f) 
@@ -31,19 +37,13 @@ Effect FadeEffect
 		if f >= 1 and removeWhenDone: Framework.objects.remove object
 		
 Effect MoveEffect
-	Object object
 	Vector2 startValue, delta
 	tick(float f) object.position = startValue + delta * f
 		
 Effect ScaleEffect
-	Object object
-	float startValue, delta
-	tick(float f) object.scale = startValue + delta * f
-		
-Effect RadiusEffect
-	CircleObject object
-	float startValue, delta
-	tick(float f) object.radius = startValue + delta * f
+	implicit Vector2 startValue
+	implicit Vector2 delta
+	tick(float f) object.size = startValue + delta * f
 	
 Effect FadeSoundEffect
 	float startValue, delta
@@ -60,7 +60,7 @@ Effect PlaySoundEffect
 	Sound sound
 	tick(float f) sound.play
 	
-Effect RunEffect
+Effect DelayEffect
 	void() do
 	tick(float f) do()
 	
