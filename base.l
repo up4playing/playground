@@ -1681,7 +1681,7 @@ enum TimeUnit
 	h    // Hours
 	days // Days
 		
-transient float Time
+skipInit transient float Time
 	// The largest possible time value
 	const inline js Time maxValue := Number.MAX_VALUE
 	
