@@ -1661,6 +1661,14 @@ global skipInit unit Math
 		if value > fromEnd:   return toEnd
 			                  return toStart + float(toEnd-toStart) * (value-fromStart)/(fromEnd-fromStart)
 		
+struct Average
+	float total
+	int count
+	add: float value
+		total += value
+		count++
+	average := total / count		
+
 enum AngleUnit
 	turns // Turn (one full rotation is 1)
 	rad   // Radians (one full rotation is 2π)
