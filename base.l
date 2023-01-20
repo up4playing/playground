@@ -1720,6 +1720,8 @@ transient float Time
 	
 	// The number of milliseconds elapsed since January 1, 1970
 	static Time now
+	
+	static internal inline js float realTime := Date.now()
 
 	// The current frame
 	static inline js int frame := Network_frame
