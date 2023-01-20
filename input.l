@@ -857,7 +857,7 @@ skipInit unit Input
 					if !touch.handled && touch.referencePosition.isInsidePoygon(poly)
 						this.cursor = cursor
 				
-		if showTouchArea: drawRectangle position, size, fillColor:{"ff000080"}
+		if showTouchArea: drawRectangle position, size, fillColor:{"ff000080"}, layer:10000000
 
 	onTouchDownWithin: Vector2 position           // The center of the touch area
 		               Vector2 size               // The size of a rectangular touch area

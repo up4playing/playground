@@ -1661,6 +1661,14 @@ global skipInit unit Math
 		if value > fromEnd:   return toEnd
 			                  return toStart + float(toEnd-toStart) * (value-fromStart)/(fromEnd-fromStart)
 		
+struct Average
+	float total
+	int count
+	add: float value
+		total += value
+		count++
+	average := total / count		
+
 enum AngleUnit
 	turns // Turn (one full rotation is 1)
 	rad   // Radians (one full rotation is 2π)
@@ -1711,7 +1719,14 @@ transient float Angle
 	inline js float in: AngleUnit unit
 		(unit==1 ? this*Math_TwoPI : unit==2 ? this*360 : unit==3 ? this*400 : this)
 		
-transient float Time
+enum TimeUnit
+	ms   // Milliseconds
+	s    // Seconds
+	min  // Minutes
+	h    // Hours
+	days // Days
+		
+skipInit transient float Time
 	// The largest possible time value
 	const inline js Time maxValue := Number.MAX_VALUE
 	
@@ -1795,13 +1810,6 @@ transient float Time
 	js static void startTimer() window._timerStart = performance.now()
 	js static void printTimer(string text) log(text+": "+(performance.now()-window._timerStart))
 	static inline js float preciseTime := performance.now()
-		
-enum TimeUnit
-	ms   // Milliseconds
-	s    // Seconds
-	min  // Minutes
-	h    // Hours
-	days // Days
 		
 js Date
 transient struct Date
