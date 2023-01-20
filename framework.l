@@ -160,7 +160,7 @@ class Object
 		            bool smooth = false
 		alpha = 0
 		let startTime = fx.endOfPrevEffect(this)+delay
-		fx.add ScaleEffect startTime, duration, smooth, this, startValue:startScale, delta:1-startScale
+		fx.add ScaleEffect startTime, duration, smooth, this, startValue:startScale*size, delta:(1-startScale)*size
 		fx.add FadeEffect  startTime, duration, smooth, this, startValue:0, delta:1
 		return this
 		
