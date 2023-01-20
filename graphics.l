@@ -514,6 +514,7 @@ transient global unit graphics
 		                   Vector2 position = {}        // The position to draw to
 		                   frame = 0                    // The frame of the image to draw
 		                   implicit Vector2 size = {}   // The size of the image, use a float to keep the aspect ratio, use a vector to strech the image
+		                   Angle angle = 0.0            // Rotate the image by this angle in turns (0: no rotation, 1: one full rotation)
 		                   touchMargin = Vector2(16,16) // The margin around the button within which it is touchable
 		                   showTouchArea = false        // Show the area within which the button is touchable
 		                   visibleFor = -1              // Only this user will see the button
@@ -523,7 +524,7 @@ transient global unit graphics
 		                   alpha = 1.0                  // The opacity of the button 0: fully transparent, 1: fully visible)
 		                   void(Touch touch) onClick    // Execute this code when the user clicks on the image or presses the hotkey
 		                   SourceCodeLocation location
-		drawImage image, position, frame, size, visibleFor, layer, alpha, location
+		drawImage image, position, frame, size, angle, visibleFor, layer, alpha, location
 			
 		// Handle click (only visible buttons are clickable)
 		int[] effectiveClickableBy = getClickableBy(visibleFor, clickableBy)
