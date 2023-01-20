@@ -868,8 +868,8 @@ transient global unit graphics
 		                       Color fillColor = null     // The color of the area within the circle
 		                       Color outlineColor = null  // The color of the outline around the circle
 		                       outlineWidth = 0           // The width of the outline around the circle
-		                       Angle startAngle = 0.0     // Draws an arc with this start angle in turns, measured from the positive x-axis
-		                       Angle endAngle = 1.0       // Draws an arc with this end angle in turns, measured from the positive x-axis
+		                       Angle startAngle = -.25    // Draws an arc with this start angle in turns, measured from the positive x-axis
+		                       Angle angle = 1.0          // Draws an arc with this angle in turns (0.25: quarter circle, 0.5: half circle, 1: full circle)
 		                       RotationDirection direction = Clockwise // The circle is drawn in this direction
 		                       visibleFor = -1            // Only this user will see the circle
 		                       implicit layer = 0         // Higher layers are drawn in front of lower layers
@@ -884,7 +884,7 @@ transient global unit graphics
 				sizeX, sizeY,
 				layer, alpha, graphics_currentClippingPath, "Circle", 
 				location, position.location, size.location,
-				startAngle, endAngle,
+				startAngle, angle,
 				direction == 1,
 				fillColor || !outlineColor ? (fillColor || graphics_currentColor).hex : null,
 				outlineColor ? outlineColor.hex : null,
@@ -897,8 +897,8 @@ transient global unit graphics
 		                       Color fillColor = null    // The color of the area within the circle
 		                       Color outlineColor = null // The color of the outline around the circle
 		                       outlineWidth = 0          // The width of the outline around the circle
-		                       Angle startAngle = 0.0    // Draws an arc with this start angle in radians, measured from the positive x-axis
-		                       Angle endAngle = 1.0      // Draws an arc with this end angle in radians, measured from the positive x-axis
+		                       Angle startAngle = -.25   // Draws an arc with this start angle in turns, measured from the positive x-axis
+		                       Angle angle = 1.0         // Draws an arc with this angle in turns (0.25: quarter circle, 0.5: half circle, 1: full circle)
 		                       RotationDirection direction = Clockwise // The circle is drawn in this direction
 		                       int[] visibleFor          // Only this user will see the circle
 		                       implicit layer = 0        // Higher layers are drawn in front of lower layers
@@ -913,7 +913,7 @@ transient global unit graphics
 				sizeX, sizeY,
 				layer, alpha, graphics_currentClippingPath, "Circle", 
 				location, position.location, size.location,
-				startAngle, endAngle,
+				startAngle, anlge,
 				direction == 1,
 				fillColor || !outlineColor ? (fillColor || graphics_currentColor).hex : null,
 				outlineColor ? outlineColor.hex : null,
@@ -1550,7 +1550,7 @@ transient DisplayItem DisplayPolygon
 enum RotationDirection: Clockwise, CounterClockwise
 		
 transient DisplayItem DisplayCircle
-	float startAngle, endAngle
+	float startAngle, angle
 	RotationDirection direction
 	string fillColor, outlineColor
 	float outlineWidth
@@ -1563,11 +1563,15 @@ transient DisplayItem DisplayCircle
 		Platform_context.beginPath();
 		if(this.w == this.h) {
 			let radius = this.w/2
-			Platform_context.arc(this.x+radius, this.y+radius, radius, this.startAngle*Math_TwoPI, this.endAngle*Math_TwoPI, this.direction);
+			if(this.angle == 1) {
+				Platform_context.arc(this.x+radius, this.y+radius, radius, 0, Math_TwoPI, this.direction);
+			} else {
+				Platform_context.arc(this.x+radius, this.y+radius, radius, this.startAngle*Math_TwoPI, (this.startAngle+this.angle)*Math_TwoPI, this.direction);
+			}
 		} else {
 			let radiusX = this.w/2
 			let radiusY = this.h/2
-			Platform_context.ellipse(this.x+radiusX, this.y+radiusY, radiusX, radiusY, this.startAngle*Math_TwoPI, this.endAngle*Math_TwoPI, this.direction);
+			Platform_context.ellipse(this.x+radiusX, this.y+radiusY, radiusX, radiusY, this.startAngle*Math_TwoPI, (this.startAngle+this.angle)*Math_TwoPI, this.direction);
 		}
 		if(this.fillColor) {
 			Platform_context.fillStyle = this.fillColor
