@@ -188,8 +188,9 @@ Object TextObject
 		
 Object ImageObject
 	Image image
+	Angle angle
 	override tick
-		drawImage image, position, size, alpha, visibleFor, layer
+		drawImage image, position, size, angle, alpha, visibleFor, layer
 		
 Object VideoObject
 	int userId
