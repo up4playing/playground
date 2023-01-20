@@ -111,7 +111,7 @@ class Object
 	moveToBack  := siblings.moveToBack this
 		
 	moveTo: Vector2 pos
-		    int duration = 1000
+		    Time duration = 1000
 		    Time delay = 0
 		    bool smooth = false
 		Vector2 startValue = position
@@ -128,14 +128,14 @@ class Object
 		fx.add MoveEffect startTime:fx.endOfPrevEffect(this)+delay, duration, smooth, this, startValue:position, delta
 		return this
 		
-	fadeIn: int duration = 100
+	fadeIn: Time duration = 100
 		    Time delay = 0
 		    bool smooth = false
 		alpha = 0
 		fx.add FadeEffect startTime:fx.endOfPrevEffect(this)+delay, duration, smooth, this, startValue:0, delta:1
 		return this
 		
-	fadeOut: int duration = 100
+	fadeOut: Time duration = 100
 		     Time delay = -100
 		     bool removeWhenDone = true
 		     bool smooth = false
@@ -143,7 +143,7 @@ class Object
 		return this
 		
 	scaleTo: implicit Vector2 size
-		     int duration = 1000
+		     Time duration = 1000
 		     Time delay = 0
 		     bool smooth = false
 		fx.add ScaleEffect startTime:fx.endOfPrevEffect(this)+delay, duration, smooth, this, startValue:this.size, delta:size-this.size
