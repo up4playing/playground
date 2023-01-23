@@ -298,7 +298,7 @@ transient skipInit unit Network
 	private float lastNetworkFrame, lastAnimationFrame, drawTime, tickTime, restoreTime, replayTime, saveTime
 	private int replayFrames
 	int tickMessageSize
-	bool logging = false
+	bool logging = true
 	
 	collectStatistics
 		if mode == Connected and Input.users.length > 1 and frame > joinFrame + 120
@@ -726,6 +726,7 @@ skipInit transient unit statistics
 			userName
 			game
 			round
+			step
 			staging: Platform.isStaging
 			server
 			minServerPing: serverPings.min .
