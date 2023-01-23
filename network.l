@@ -716,7 +716,11 @@ skipInit transient unit statistics
 		let userName = localStorage.getStringDirectly("play-userId")
 		let server = Platform.host.getUntil(".")
 		StatisticsGraphSeries[] series
-		for Input.users: series.add this.series.find.userIndex == i
+		string[] connections
+		for Input.users
+			let internalUser = Input.internalUsers[.id]
+			connections.add internalUser.connectionType
+			series.add this.series.find.userIndex == i
 		http.post "{Platform.protocalAndHost}:3114/stats", body:{
 			time: Date.now.isoString
 			gameId: Network.gameId
@@ -732,8 +736,12 @@ skipInit transient unit statistics
 			minServerPing: serverPings.min .
 			maxServerPing: serverPings.max .
 			averageServerPing: serverPings.average
-			ping:series.select ({average:it?.values.average, max:it?.values.max(.), peeks:it?.values.count . > 30})
-			connections: Input.internalUsers.select.connectionType
+			ping:series.select {
+				average:it?.values.average
+				max:it?.values.max(.)
+				peeks:it?.values.count . > 30
+			}
+			connections
 			serverPings
 			peerPings: series
 			loadTime: loadTime - startTime

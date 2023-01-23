@@ -31,6 +31,7 @@ transient class InternalUser
 	object recreateDataChannelInterval
 	string connectionType
 	bool offerByMe
+	bool receivedAnswer
 	int nextLostMessageAtFrame
 	
 	startInputFrame: int index
