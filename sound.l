@@ -26,13 +26,11 @@ skipInit class Sound
 		if(this.audioElement) this.audioElement.pause()
 		
 	play: needsToBeCertain = false
-		print "pre-play", needsToBeCertain, Input.isCertain
 		if needsToBeCertain and not Input.isCertain: return
 			
 		// We can play sounds immediately to ensure there is no lag
 		// If a sound turns out to be wrong after receiving new inputs, we stop it
 		let playingSound = audio.playingSounds.find(.sound == this and .frame == Time.frame)
-		print "play", playingSound, Network.isPremiere
 		if !playingSound
 			audio.playingSounds.add playingSound = {this, frame:Time.frame, isConfirmed:true}
 			if Network.isPremiere: doPlay playingSound
@@ -89,7 +87,6 @@ transient global skipInit unit audio
 		// Stop sounds that turned out to be wrong after receiving new inputs
 		playingSounds.each
 			if .frame == Time.frame and !.isConfirmed
-				print "stopping", .sound.file, Time.frame, .isConfirmed
 				.sound.stop
 		
 	internal reload
