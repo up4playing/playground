@@ -167,7 +167,7 @@ transient skipInit unit Network
 		audio.stop
 		initAll
 		
-		if !startInLobby or Platform.isDebug
+		if !startInLobby
 			// When the developer changed Platform.userCount, add or remove internal users accordingly
 			for Input.internalUsers.length to Platform.userCount
 				Input.internalUsers.add {id:i, local:true, collectInputs:true}
@@ -366,8 +366,9 @@ transient skipInit unit Network
 			if sendInputsMode == Server: ServerNetwork.sendInputs inputFrame
 			lastSendFrame = frame
 			
-	switchUser: int userId
-		Input.localUser = Input.internalUsers[userId.limit(min:0 max:Input.internalUsers.length-1)]
+	switchUser: int userIndex
+		let user = Input.users[userIndex]
+		Input.localUser = Input.internalUsers.find.id == user.id
 			
 	switchSendInterval: int sendInterval
 		this.sendInterval = sendInterval

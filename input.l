@@ -494,7 +494,7 @@ skipInit unit Input
 		
 	// Post lost messages and remove users if nobody disagrees
 	internal handleLost
-		if Network.mode != Connected or !lobby.inLobby: return
+		if Network.mode < Local or !lobby.inLobby: return
 		for users <- user
 			let internalUser = internalUsers[.id]
 				if user.lostAtFrame and Network.frame > user.lostAtFrame + Network.targetFps * 3

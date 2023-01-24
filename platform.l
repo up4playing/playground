@@ -230,16 +230,16 @@ transient skipInit unit Platform
 		setLocalStorageObject("showDebugInfo", showDebugInfo ? "true" : "false")
 		
 	inline js void setFullscreen: value = true, forUser = -1
-		try   {
-			if(forUser == -1 || Input_localUser?.id == forUser) {
+		if(!Platform_isStaging && !Platform_isDebug && (forUser == -1 || Input_localUser?.id == forUser)) {
+			try {
 				if(value) {
-					if(!Platform_isStaging) document.body.requestFullscreen()
+					document.body.requestFullscreen()
 				} else {
 					document.exitFullscreen()
 				}
+			} catch {
 			}
-		} catch {
-		}
+		}	
 		
 	js void saveTextFile: string filename, string text
 		var element = document.createElement('a');
