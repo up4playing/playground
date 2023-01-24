@@ -614,6 +614,7 @@ transient skipInit unit Network
 			frames = buffer.readInt32
 			let randomSeed = buffer.readString
 			startInLobby = buffer.readBool
+			Platform.isStaging = false
 			let userCount = buffer.readInt8
 			Input.internalUsers.clear
 			for userCount

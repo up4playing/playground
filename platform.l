@@ -42,7 +42,7 @@ transient skipInit unit Platform
 	private object canvas
 	internal object context
 	visible bool isDebug
-	visible bool isStaging
+	public bool isStaging
 	visible Vector2 pixelSize, size
 	visible float pixelRatio
 	internal Matrix2D baseMatrix
