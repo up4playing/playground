@@ -1,61 +1,69 @@
 // A sound
-class Sound
+skipInit class Sound
 	string file
 	float fadeVolume = 1
+	transient dynamic audioElement
+	
+	Sound
+		audio.sounds.add this
 	
 	js void open
 		return new Promise((resolve, reject) => {
-			this.nextAudio = new Audio();
-			this.nextAudio.oncanplaythrough = () => resolve();
-			this.nextAudio.onerror = () => reject();
-			this.nextAudio.src = this.file;			
+			this.nextAudioElement = new Audio();
+			this.nextAudioElement.oncanplaythrough = () => resolve();
+			this.nextAudioElement.onerror = () => reject();
+			this.nextAudioElement.src = _basePath+this.file;			
 		})
 		
 	js void volume: float value
 		this.fadeVolume = value
-		if(this.audio) this.audio.volume = this.fadeVolume * audio_volume
+		if(this.audioElement) this.audioElement.volume = this.fadeVolume * audio_volume
 		
 	js void updateVolume
-		if(this.audio) this.audio.volume = this.fadeVolume * audio_volume
+		if(this.audioElement) this.audioElement.volume = this.fadeVolume * audio_volume
 		
 	js void stop
-		if(this.audio) this.audio.pause()
+		if(this.audioElement) this.audioElement.pause()
 		
-	play
+	play: needsToBeCertain = false
+		if needsToBeCertain and not Input.isCertain: return
+			
 		// We can play sounds immediately to ensure there is no lag
 		// If a sound turns out to be wrong after receiving new inputs, we stop it
-		let playingSound = audio.playingSounds.find.sound == this and .frame == Time.frame
+		let playingSound = audio.playingSounds.find(.sound == this and .frame == Time.frame)
 		if !playingSound
 			audio.playingSounds.add playingSound = {this, frame:Time.frame, isConfirmed:true}
-			if not Network.isReplay: doPlay playingSound
+			if Network.isPremiere: doPlay playingSound
 		else
 			playingSound.isConfirmed = true
 			
 	js void currentTime: float value
-		if(this.audio) this.audio.currentTime = value
+		if(this.audioElement) this.audioElement.currentTime = value
 		
 	private js void doPlay: PlayingSound ps
 		// Recreate audio if it was lost during serialization
-		if(!this.nextAudio) this.preloadForNextPlayback();
+		if(!this.nextAudioElement) this.preloadForNextPlayback();
 			
 		// Play audio
 		this.fadeVolume = 1;
-		this.audio = this.nextAudio;
-		this.audio.volume = audio_volume;
-		this.audio.onended = () => audio_playingSounds.remove(ps);
-		this.audio.play();
+		this.audioElement = this.nextAudioElement;
+		this.audioElement.volume = audio_volume;
+		this.audioElement.onended = () => audio_playingSounds.remove(ps);
+		this.audioElement.play();
 		this.preloadForNextPlayback()
 		
-	private js void preloadForNextPlayback()
-		this.nextAudio = new Audio();
-		this.nextAudio.src = this.file;
+	internal js void preloadForNextPlayback
+		this.nextAudioElement = new Audio();
+		if(PeerNetwork_audioOutputId && this.nextAudioElement.setSinkId) 
+			await this.nextAudioElement.setSinkId(PeerNetwork_audioOutputId);
+		this.nextAudioElement.src = _basePath+this.file;
 		
 	isPlaying
 		return audio.playingSounds.any.sound == this and .frame < Time.frame
 		
 	fadeOut: Time duration = 3000
 		     Time delay = 0
-		fx.add FadeSoundEffect startTime:Time.now+delay, duration, smooth:false, this, startValue:1, delta:-1
+		fx.add FadeSoundEffect startTime:Time.now+delay, duration, smooth:false, sound:this, startValue:1, delta:-1
 		return this
 
 transient class PlayingSound
@@ -64,21 +72,29 @@ transient class PlayingSound
 	bool isConfirmed
 	
 // A collection of functions for playing audio
-transient global unit audio
+transient global skipInit unit audio
 	const float[] volumeLevels = [0, 0.0001, 0.0002, 0.0005, 0.001, 0.002, 0.005, .01, .02, .04, .08, .16, .32, .64, 1]
 	int volumeLevel = 10
 	float volume = volumeLevels[volumeLevel]
+	
 	PlayingSound[] playingSounds
+	Sound[] sounds
 	
 	internal startFrame
 		playingSounds.each.isConfirmed = false
 		
 	internal finishFrame
 		// Stop sounds that turned out to be wrong after receiving new inputs
-		playingSounds.each: if .frame == Time.frame and !.isConfirmed: .sound.stop
+		playingSounds.each
+			if .frame == Time.frame and !.isConfirmed
+				.sound.stop
+		
+	internal reload
+		sounds.each.preloadForNextPlayback
 		
 	stop
 		playingSounds.each.sound.stop
+		playingSounds.clear
 	
 	mute: int forUser = -1
 		if forUser == -1 or forUser == Input.localUser?.id
@@ -92,12 +108,15 @@ transient global unit audio
 			volume = volumeLevels[volumeLevel]
 			playingSounds.each.sound.updateVolume
 	
-	global playSound: Sound sound, Time delay = 0, bool smooth = false
+	global playSound: Sound sound
+		              Time delay = 0
+		              bool needsToBeCertain = false
+		if needsToBeCertain and not Input.isCertain: return
+			
 		if Time.frame == 0
-			fx.add PlaySoundEffect startTime:Math.ceil(Time.now+Network.targetFrameTime)+delay, sound, smooth
+			fx.add PlaySoundEffect startTime:Math.ceil(Time.now+Network.targetFrameTime)+delay, sound
 		else
 		if delay
-			fx.add PlaySoundEffect startTime:Time.now+delay, sound, smooth
+			fx.add PlaySoundEffect startTime:Time.now+delay, sound
 		else
-		if not smooth or Input.isCertain
 			sound.play
