@@ -480,9 +480,10 @@ transient global unit graphics
 		                   visibleFor = -1            // Only this user will see the image
 		                   implicit int layer = 0     // Higher layers are drawn in front of lower layers
 		                   alpha = 1.0                // The opacity of the image (0: fully transparent, 1: fully visible)
+		                   Color color = White        // Tint the image with this color
 		                   SourceCodeLocation location
 		var frame = Math.floor(Network.frame * Math.max(framesPerSecond, 0) / Network.targetFps) % image.frames.length;
-		drawImage image, position, frame, size, visibleFor, layer, alpha, location
+		drawImage image, position, frame, size, visibleFor, layer, alpha, color, location
 	
 	// Draws an image on the screen
 	global void drawImage: Image image                // The image to draw
@@ -492,9 +493,10 @@ transient global unit graphics
 		                   int[] visibleFor           // Only this user will see the image
 		                   implicit int layer = 0     // Higher layers are drawn in front of lower layers
 		                   alpha = 1.0                // The opacity of the image (0: fully transparent, 1: fully visible)
+		                   Color color = White        // Tint the image with this color
 		                   SourceCodeLocation location
 		var frame = Math.floor(Network.frame * Math.max(framesPerSecond, 0) / Network.targetFps) % image.frames.length;
-		drawImage image, position, frame, size, visibleFor, layer, alpha, location
+		drawImage image, position, frame, size, visibleFor, layer, alpha, color, location
 	
 	// Draws an image on the screen
 	global void drawImage: Image image                // The image to draw
@@ -507,9 +509,10 @@ transient global unit graphics
 		                   visibleFor = -1            // Only this user will see the image
 		                   implicit int layer = 0     // Higher layers are drawn in front of lower layers
 		                   alpha = 1.0                // The opacity of the image (0: fully transparent, 1: fully visible)
+		                   Color color = White        // Tint the image with this color
 		                   SourceCodeLocation location
 		var frame = Math.floor(Network.frame * Math.max(framesPerSecond, 0) / Network.targetFps) % image.frames.length;
-		drawImage image, position, frame, size, angle, flipX, flipY, visibleFor, layer, alpha, location
+		drawImage image, position, frame, size, angle, flipX, flipY, visibleFor, layer, alpha, color, location
 	
 	// Draws an image on the screen
 	global void drawImage: Image image                  // The image to draw
@@ -524,9 +527,10 @@ transient global unit graphics
 		                   hotkey = Key.None            // This keyboard shortcut will execute the onClick handler
 		                   implicit layer = 0           // Higher layers are drawn in front of lower layers
 		                   alpha = 1.0                  // The opacity of the button 0: fully transparent, 1: fully visible)
+		                   Color color = White          // Tint the image with this color
 		                   void(Touch touch) onClick    // Execute this code when the user clicks on the image or presses the hotkey
 		                   SourceCodeLocation location
-		drawImage image, position, frame, size, angle, visibleFor, layer, alpha, location
+		drawImage image, position, frame, size, angle, visibleFor, layer, alpha, color, location
 			
 		// Handle click (only visible buttons are clickable)
 		int[] effectiveClickableBy = getClickableBy(visibleFor, clickableBy)
@@ -544,6 +548,7 @@ transient global unit graphics
 		                      visibleFor = -1            // Only this user will see the image
 		                      implicit layer = 0         // Higher layers are drawn in front of lower layers
 		                      alpha = 1.0                // The opacity of the image (0: fully transparent, 1: fully visible)
+		                      Color color = White        // Tint the image with this color
 		                      SourceCodeLocation location
 		if(!image.texture?.ensureIsAvailable()) return
 		if(graphics_isVisibleFor(visibleFor)) {
@@ -558,7 +563,8 @@ transient global unit graphics
 				layer, alpha, graphics_currentClippingPath, image.file,
 				location, position.location, size.location,
 				image.texture._htmlImage,
-				f.x1, f.y1, f.w, f.h
+				f.x1, f.y1, f.w, f.h,
+				color
 			))
 		}
 	
@@ -569,6 +575,7 @@ transient global unit graphics
 		                      int[] visibleFor           // Only this user will see the image
 		                      implicit layer = 0         // Higher layers are drawn in front of lower layers
 		                      alpha = 1.0                // The opacity of the image (0: fully transparent, 1: fully visible)
+		                      Color color = White        // Tint the image with this color
 		                      SourceCodeLocation location
 		if(!image.texture?.ensureIsAvailable()) return
 		if(graphics_isVisibleFor2(visibleFor)) {
@@ -583,7 +590,8 @@ transient global unit graphics
 				layer, alpha, graphics_currentClippingPath, image.file,
 				location, position.location, size.location,
 				image.texture._htmlImage,
-				f.x1, f.y1, f.w, f.h
+				f.x1, f.y1, f.w, f.h,
+				color
 			))
 		}
 	
@@ -598,6 +606,7 @@ transient global unit graphics
 		                      visibleFor = -1            // Only this user will see the image
 		                      implicit layer = 0         // Higher layers are drawn in front of lower layers
 		                      alpha = 1.0                // The opacity of the image (0: fully transparent, 1: fully visible)
+		                      Color color = White        // Tint the image with this color
 		                      SourceCodeLocation location
 		if(!image.texture?.ensureIsAvailable()) return
 		if(graphics_isVisibleFor(visibleFor)) {
@@ -616,7 +625,8 @@ transient global unit graphics
 				layer, alpha, graphics_currentClippingPath, image.file, 
 				location, position.location, size.location,
 				image.texture._htmlImage,
-				f.x1, f.y1, f.w, f.h
+				f.x1, f.y1, f.w, f.h,
+				color
 			))
 		}
 	
@@ -630,6 +640,7 @@ transient global unit graphics
 		                      int[] visibleFor           // Only this user will see the image
 		                      implicit layer = 0         // Higher layers are drawn in front of lower layers
 		                      alpha = 1.0                // The opacity of the image (0: fully transparent, 1: fully visible)
+		                      Color color = White        // Tint the image with this color
 		                      SourceCodeLocation location
 		if(!image.texture?.ensureIsAvailable()) return
 		if(graphics_isVisibleFor2(visibleFor)) {
@@ -648,7 +659,8 @@ transient global unit graphics
 				layer, alpha, graphics_currentClippingPath, image.file, 
 				location, position.location, size.location,
 				image.texture._htmlImage,
-				f.x1, f.y1, f.w, f.h
+				f.x1, f.y1, f.w, f.h,
+				color
 			))
 		}
 	
@@ -1398,14 +1410,39 @@ transient class DisplayItem
 transient DisplayItem DisplayImage
 	object htmlImage
 	float sx, sy, sw, sh
+	Color color
 	js void draw
 		if(this.alpha == 0) return
 		Platform_context.setTransform(this.m0, this.m1, this.m2, this.m3, this.m4, this.m5)
 		Platform_context.globalAlpha = this.alpha
 		if(this.clippingPath) this.startClipping()
-		
-		try{ Platform_context.drawImage(this.htmlImage, this.sx, this.sy, this.sw, this.sh, this.x, this.y, this.w, this.h) }
-		catch(e) { log("DisplayImage: "+e.message) }
+			
+		if(this.color.hex == "#ffffff") {
+			try{ Platform_context.drawImage(this.htmlImage, this.sx, this.sy, this.sw, this.sh, this.x, this.y, this.w, this.h) }
+			catch(e) { log("DisplayImage: "+e.message) }
+		} else {
+			// Create offscreen buffer
+	        let offscreenCanvas = document.createElement('canvas');
+	        offscreenCanvas.width = this.sw;
+	        offscreenCanvas.height = this.sh;
+	        let offscreenContext = offscreenCanvas.getContext('2d');
+			
+			// Draw image
+			offscreenContext.drawImage(this.htmlImage, this.sx, this.sy, this.sw, this.sh, 0, 0, this.sw, this.sh)
+			
+			// Multiply tint color
+			offscreenContext.fillStyle = this.color.hex;
+			offscreenContext.globalCompositeOperation = 'multiply';
+			offscreenContext.fillRect(0, 0, buffer.width, buffer.height);
+			
+			// Apply alpha
+			offscreenContext.globalAlpha = 1;
+			offscreenContext.globalCompositeOperation = 'destination-in';
+			offscreenContext.drawImage(this.htmlImage, this.sx, this.sy, this.sw, this.sh, 0, 0, this.sw, this.sh)
+				
+			// Draw tinted image
+	        Platform_context.drawImage(buffer, this.x, this.y, this.w, this.h);		
+		}
 		
 		if(this.clippingPath) this.endClipping()
 
