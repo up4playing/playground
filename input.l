@@ -336,6 +336,7 @@ skipInit unit Input
 			else
 			if(ctrlOrCmd && key == "l") {
 				// Save logs
+				statistics_manuallyTriggerSend(-2, /*clear*/false);
 				Network_saveLogs();
 				e.preventDefault();
 			}
@@ -514,6 +515,9 @@ skipInit unit Input
 					inputs.writeInt16 cast InputType.Lost
 					inputs.writeInt16 user.id
 					internalUser.nextLostMessageAtFrame = Network.frame + Network.targetFps * 12
+					
+					// Send logfiles to server
+					Platform.setTimeout 7s: statistics.manuallyTriggerSend -3, clear:false
 	
 	private handleStillConnected: int userId
 		let inputs = localUser.inputs
@@ -758,11 +762,11 @@ skipInit unit Input
 							
 						// If we are still connected to that user, we disagree to their removal
 						// by posting the "StillConnected" message
-						if Network.frame < lostInternalUser.inputFrame + Network.targetFps * 5
-							Network.log "Lost {lostUserId} by {userId} -> We are still connected, sending StillConnected"
+						if lostInternalUser.dataChannel and Network.frame < lostInternalUser.inputFrame + Network.targetFps * 5
+							Network.log "Lost {lostUserId} by {userId} -> We are still connected, sending StillConnected", lostInternalUser.dataChannel, Network.frame, lostInternalUser.inputFrame, isCertain
 							handleStillConnected lostUserId
 						else
-							Network.log "Lost {lostUserId} by {userId} -> We also aren't connected"
+							Network.log "Lost {lostUserId} by {userId} -> We also aren't connected", lostInternalUser.dataChannel, Network.frame, lostInternalUser.inputFrame, isCertain
 					else
 						Network.log "Lost {lostUserId} by {userId} -> No internal user!"
 				else

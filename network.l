@@ -712,7 +712,7 @@ skipInit transient unit statistics
 		serverPings.clear
 		log = ""
 	
-	send: dynamic data = null, int game = 0, int round = 0, int step = 0
+	send: dynamic data = null, int game = 0, int round = 0, int step = 0, bool clear = true
 		if not Input.isCertain or Platform.isDebug: return
 		print "sending statistics", round
 		let userName = localStorage.getStringDirectly("play-userId")
@@ -751,7 +751,13 @@ skipInit transient unit statistics
 			log
 			data
 		}
-		clear
+		if clear: this.clear
+			
+	internal manuallyTriggerSend: int value, bool clear
+		let prevIsCertain = Input.isCertain
+		Input.isCertain = true
+		statistics.send round:value game:value clear
+		Input.isCertain = prevIsCertain
 			
 	internal float maxValue
 	
