@@ -1761,9 +1761,38 @@ transient float Time
 	inline js int minutes      := Math.floor((this % 3600000) /   60000) 
 	inline js int hours        := Math.floor((this          ) / 3600000)
 		
-	inline js string minutesAndSeconds := (Math.floor((this % 3600000) / 60000) + (this % 60000 < 10000 ? ":0":":") + Math.floor((this % 60000) / 1000))
+	// (31.12.)
+	inline js string dayMonthString(language = Loca.language) new Date(this).dayMonthString(language)
+		
+	// (31.12.2000)
+	inline js string dayMonthYearString(language = Loca.language) new Date(this).dayMonthYearString(language)
 	
-	inline js string dayMonthYearHourMinuteString() new Date(this).dayMonthYearHourMinuteString()
+	// (31 December 2000)
+	inline js string dayLongMonthNameYearString(language = Loca.language) new Date(this).dayLongMonthNameYearString(language)
+	
+	// (31 Dec 2000)
+	inline js string dayShortMonthNameYearString(language = Loca.language) new Date(this).dayShortMonthNameYearString(language)
+	
+	// (Monday)
+	inline js string weekdayString(language = Loca.language) new Date(this).weekdayString(language)
+	
+	// (23:59)
+	inline js string hourMinuteString(language = Loca.language) new Date(this).hourMinuteString(language)
+	
+ 	// (59:59)
+	inline js string minuteSecondString() (Math.floor((this % 3600000) / 60000) + (this % 60000 < 10000 ? ":0":":") + Math.floor((this % 60000) / 1000))
+	
+	// (23:59:59)
+	inline js string hourMinuteSecondString(language = Loca.language) new Date(this).hourMinuteSecondString(language)
+	
+	// (31.12.2000 23:59)
+	inline js string dayMonthYearHourMinuteString(language = Loca.language) new Date(this).dayMonthYearHourMinuteString(language)
+	
+	// (31.12.2000 23:59:59)
+	inline js string dayMonthYearHourMinuteSecondString(language = Loca.language) new Date(this).dayMonthYearHourMinuteSecondString(language)
+	
+	// (31-12-2000 23-59-59)
+	inline js string invariantDayMonthYearHourMinuteSecondString() new Date(this).invariantDayMonthYearHourMinuteSecondString()
 			
 	inline js Time  operator +  (Time a, Time b) a+b
 	inline js Time  operator +  (Time a, int b) a+b
@@ -1837,6 +1866,10 @@ transient struct Date
 	
 	private static string toTwoDigitString: int value
 		return value < 10 ? "0"+value.toString : value.toString
+	
+	// (31.12.)
+	js string dayMonthString: language = Loca.language
+		return this.getDate().toLocaleString('en-US', {minimumIntegerDigits:2})+"."+(this.getMonth()+1).toLocaleString('en-US', {minimumIntegerDigits:2})+"."
 	
 	// (31.12.2000)
 	js string dayMonthYearString: language = Loca.language
