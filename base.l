@@ -67,6 +67,10 @@ struct int
 	inline js int incrementUpToExclusive: int max
 		(this < max-1 ? ++this : max-1)
 		
+	inline js int incrementBy: int value
+		                       int upTo
+		(this+value < upTo ? (this += value) : upTo)
+		
 	inline js int decrementDownTo: int min
 		(this > min ? --this : min)
 		
@@ -159,6 +163,10 @@ struct float
 		                           float value
 		                           EaseFunction ease
 		(this + (target - this)*ease.function.invoke(value))
+		
+	inline js float incrementBy: float value
+		                         float max
+		(this+value < max ? (this += value) : max)
 		
 	// ------------------------------------------- Time -------------------------------------------
 	
