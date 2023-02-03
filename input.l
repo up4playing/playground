@@ -311,7 +311,7 @@ skipInit unit Input
 			e.preventDefault();
 			e.stopPropagation();
 			if(e.button == 0 && Platform_mode == 0) Platform_record();
-			Input_handleWheelEvent(e.pageX, e.pageY, e.deltaX, e.deltaY)
+			Input_handleWheelEvent(e.pageX, e.pageY, -e.deltaX, -e.deltaY)
 			return false;			
 		}
 		window.onkeydown = e => {
