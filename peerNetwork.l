@@ -22,7 +22,6 @@ class MediaDevices
 	MediaDeviceInfo[] videoInput
 	
 transient unit PeerNetwork
-	const userIsLostAfter = 1s
 	RelayMode relayMode = Auto
 	
 	internal enableVideo = true
@@ -62,7 +61,13 @@ transient unit PeerNetwork
 		Network_log("setupPeerConnection userId:"+user.id+" connectionId:"+connectionId+" relayMode:"+PeerNetwork_relayMode)
 		
 		// Event handlers
-		peerConnection.oniceconnectionstatechange = e => Network_log("oniceconnectionstatechange " + peerConnection.iceConnectionState)
+		peerConnection.oniceconnectionstatechange = e => {
+			Network_log("oniceconnectionstatechange " + peerConnection.iceConnectionState)
+			if(peerConnection.iceConnectionState == "disconnected") {
+				// Send logfiles to server
+				setTimeout(() => statistics_manuallyTriggerSend(-5, /*clear*/false), 7000);
+			}
+		}
 		peerConnection.onicecandidate = async event => {
 			if (event.candidate)
 				ServerNetwork_sendIce(user.id, JSON.stringify(event.candidate))
@@ -104,6 +109,8 @@ transient unit PeerNetwork
 				Network_log("setupDataChannel: Start recreating interval for "+user.id)
 				user.recreateDataChannelInterval = setInterval(() => PeerNetwork_setupDataChannel(user), 2000)
 			}
+			// Send logfiles to server
+			setTimeout(() => statistics_manuallyTriggerSend(-4, /*clear*/false), 7000);
 		}
 		dataChannel.onerror = e => Network_log("DataChannel "+user.id+"error "+e)
 		dataChannel.onmessage = e => PeerNetwork_onMessage(user, new Buffer(e.data, 0, 0, 0))
@@ -120,6 +127,7 @@ transient unit PeerNetwork
 			let offer = await peerConnection.createOffer();
 			await peerConnection.setLocalDescription(offer);
 			ServerNetwork_sendSignal(user.id, "offer", peerConnection.localDescription.sdp)
+			user.receivedAnswer = false
 			Network_log("Sent offer to "+user.id+", waiting for answer.");
 		}
 		catch(e) {
@@ -246,6 +254,7 @@ transient unit PeerNetwork
 		
 	js void onReceivedAnswer: InternalUser user, string sdp
 		await user.peerConnection.setRemoteDescription(new RTCSessionDescription({type: "answer", sdp}));
+		user.receivedAnswer = true
 		Network_log("Received answer from "+user.id+".");
 		
 	js void onIce: InternalUser user, string candidate
@@ -265,9 +274,9 @@ transient unit PeerNetwork
 			let candidate = stats.get(candidatePair.localCandidateId);
 			let ip = candidate.ip || candidate.address
 			user.connectionType = candidate.candidateType + " " + ip
-			Network_log("#connection to "+user.id+": "+user.connectionType)
+			Network_log("####################connection to "+user.id+": "+user.connectionType)
 		} else {
-			Network_log("#connection: no candidate pair for "+user.id)
+			Network_log("####################connection: no candidate pair for "+user.id)
 			window.stats = [...stats.values()]
 			console.log(window.stats)
 			try  { Network_log(JSON.stringify(window.stats)) }
@@ -459,8 +468,12 @@ transient unit PeerNetwork
 	makePrimiaryUserIfStateIsNotReceived
 		requestedState = false
 		stateTimeout = Platform.setTimeout 15s
-			Network.log "We haven't received a state after 15s -> Make primary user"
-			makePrimaryUser
+			if Input.internalUsers.any.receivedAnswer
+				Network.log "No state after 15s, but we received answers -> Alert the user to make sure WebRTC connections aren't blocked."
+				alert "Could not connect. Please make sure WebRTC connections aren't block by your router, firewall or a browser extension. If you have a VPN browser extension installed, please check your settings and make sure WebRTC connections aren't blocked."
+			else
+				Network.log "No state after 15s -> Make primary user"
+				makePrimaryUser
 	
 	makePrimaryUser
 		let frame = Math.floor((Network.currentTime - Network.startTime)/Network.targetFrameTime)+3
@@ -472,7 +485,7 @@ transient unit PeerNetwork
 		send from, sendBuffer
 		
 	private onRequestState: InternalUser sender, Buffer buffer
-		Network.log "Requesting state from {sender.id}"
+		Network.log "Received state request from {sender.id}"
 		sendStateQueue.add sender.id
 		if Network.mode == Connected: processSendStateQueue
 	

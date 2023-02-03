@@ -111,22 +111,12 @@ class Object
 	moveToBack  := siblings.moveToBack this
 		
 	moveTo: Vector2 pos
-		    int duration = 1000
+		    Time duration = 1000
 		    Time delay = 0
 		    bool smooth = false
 		Vector2 startValue = position
-		let startTime = Time.now + delay
-		
-		// When chaining serveral move effects together, continue where the last one left off
-		let effect = fx.effects[fx.effects.length-1]
-			if effect.type == MoveEffect
-				MoveEffect moveEffect = cast effect
-				if moveEffect.object == this
-					startValue = moveEffect.startValue + moveEffect.delta
-					startTime = moveEffect.startTime + moveEffect.duration
-					
 		let delta = pos - startValue
-		fx.add MoveEffect startTime, duration, smooth, this, startValue, delta
+		fx.add MoveEffect startTime:fx.endOfPrevEffect(this)+delay, duration, smooth, this, startValue, delta
 		return this
 		
 	moveTo: Vector2 pos
@@ -135,37 +125,43 @@ class Object
 		    bool smooth = false
 		let delta = pos - position
 		let duration = Math.floor(delta.length / speed)
-		fx.add MoveEffect startTime:Time.now+delay, duration, smooth, this, startValue:position, delta
+		fx.add MoveEffect startTime:fx.endOfPrevEffect(this)+delay, duration, smooth, this, startValue:position, delta
 		return this
 		
-	fadeIn: int duration = 1000
+	fadeIn: Time duration = 100
 		    Time delay = 0
 		    bool smooth = false
 		alpha = 0
-		fx.add FadeEffect startTime:Time.now+delay, duration, smooth, this, startValue:0, delta:1
+		fx.add FadeEffect startTime:fx.endOfPrevEffect(this)+delay, duration, smooth, this, startValue:0, delta:1
 		return this
 		
-	fadeOut: int duration = 1000
-		     Time delay = 0
+	fadeOut: Time duration = 100
+		     Time delay = -100
 		     bool removeWhenDone = true
 		     bool smooth = false
-		fx.add FadeEffect startTime:Time.now+delay, duration, smooth, this, startValue:1, delta:-1, removeWhenDone
+		fx.add FadeEffect startTime:fx.endOfPrevEffect(this)+delay, duration, smooth, this, startValue:1, delta:-1, removeWhenDone
 		return this
 		
 	scaleTo: implicit Vector2 size
-		     int duration = 1000
+		     Time duration = 1000
 		     Time delay = 0
 		     bool smooth = false
-		fx.add ScaleEffect startTime:Time.now+delay, duration, smooth, this, startValue:this.size, delta:size-this.size
+		fx.add ScaleEffect startTime:fx.endOfPrevEffect(this)+delay, duration, smooth, this, startValue:this.size, delta:size-this.size
 		return this
+		
+	finally: Time delay = 0
+		     bool smooth = false
+		     stored void() do
+		fx.add DelayEffect startTime:fx.endOfPrevEffect(this)+delay, duration:0, smooth, this, do
 	
 	fadeAndScaleIn: int duration = 200
 		            float startScale = 3
 		            Time delay = 0
 		            bool smooth = false
 		alpha = 0
-		fx.add ScaleEffect startTime:Time.now+delay, duration, smooth, this, startValue:startScale, delta:1-startScale
-		fx.add FadeEffect  startTime:Time.now+delay, duration, smooth, this, startValue:0, delta:1
+		let startTime = fx.endOfPrevEffect(this)+delay
+		fx.add ScaleEffect startTime, duration, smooth, this, startValue:startScale*size, delta:(1-startScale)*size
+		fx.add FadeEffect  startTime, duration, smooth, this, startValue:0, delta:1
 		return this
 		
 Object RectangleObject
@@ -192,8 +188,9 @@ Object TextObject
 		
 Object ImageObject
 	Image image
+	Angle angle
 	override tick
-		drawImage image, position, size, alpha, visibleFor, layer
+		drawImage image, position, size, angle, alpha, visibleFor, layer
 		
 Object VideoObject
 	int userId
@@ -797,37 +794,3 @@ class MenuItem
 	MenuItemType type = Button
 	void(bool value, Touch touch) onClick
 
-Object DropDownMenu
-	Vector2 popupPosition
-	MenuItem[] items
-	Color backgroundColor = {"E8E8E8"}
-	Color color = {"BABABA"}
-	locked = true
-	
-	visible bool active
-		
-	DropDownMenu
-
-	private inline js void startGame
-		if(window.app_start) window.app_startGame(false);
-	
-	override tick
-		bool doNotClose
-		forPositions items, center:popupPosition, delta:{0,60} -> item
-			drawText .label, pos+{-60}, size:30, align:Left, layer:int.maxValue
-			if item.type == Button
-				if .image: drawImage .image, pos+{-120}, layer:int.maxValue
-				Input.onTouchDownWithin pos, size:{500,60}, do:item.onClick(true, touch)
-			else
-			if item.type == Check
-				drawImage Checkbox, pos+{-120}, layer:int.maxValue, frame:item.value ? 1 : 0
-				Input.onTouchDownWithin pos, size:{500,60}
-					item.value = !item.value
-					item.onClick(item.value, touch)
-					doNotClose = true
-				
-		drawRoundedRectangle popupPosition, radius:20, outlineColor:color, fillColor:backgroundColor, size:{500,60+items.length*60}, outlineWidth:3, layer:int.maxValue
-		
-		if not doNotClose
-			Input.onTouchDownAny
-				active = false

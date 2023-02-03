@@ -42,7 +42,7 @@ transient skipInit unit Platform
 	private object canvas
 	internal object context
 	visible bool isDebug
-	visible bool isStaging
+	public bool isStaging
 	visible Vector2 pixelSize, size
 	visible float pixelRatio
 	internal Matrix2D baseMatrix
@@ -50,6 +50,7 @@ transient skipInit unit Platform
 	visible PlatformMode mode
 	internal bool fastForward
 	visible bool isMobile = true
+	visible bool isBrowser = true
 	visible OperatingSystem os
 		
 	private inline js void initMedia
@@ -67,6 +68,7 @@ transient skipInit unit Platform
 		statistics_init();
 		Network_log("Loading...")
 		Platform_isMobile = false;
+		Platform_isBrowser = !window.require;
 		let platform = navigator.platform
 		Platform_os = platform.startsWith("Win") ? 0 : platform.startsWith("Mac") ? 1 : 2
 		if(/(android|bb\d+|meego).+mobile|avantgo|bada\/|blackberry|blazer|compal|elaine|fennec|hiptop|iemobile|ip(hone|od)|ipad|iris|kindle|Android|Silk|lge |maemo|midp|mmp|netfront|opera m(ob|in)i|palm( os)?|phone|p(ixi|re)\/|plucker|pocket|psp|series(4|6)0|symbian|treo|up\.(browser|link)|vodafone|wap|windows (ce|phone)|xda|xiino/i.test(navigator.userAgent) 
@@ -213,8 +215,8 @@ transient skipInit unit Platform
 	internal js void sendFrame: int frame, int frames
 		_sendToEditor({type:"frame", frame, frames})
 	
-	internal js void sendWatch: int frame, string text, int row, int column, string file
-		_sendToEditor({type:"watch", frame, text, row, column, file})
+	internal js void sendWatch: int frame, string text, int location, string file
+		_sendToEditor({type:"watch", frame, text, location, file})
 	
 	private js void sendMode
 		if(Platform_isDebug) _sendToEditor({type:"setPlatformMode", mode:Platform_mode, frame:Network_frame})
@@ -230,16 +232,16 @@ transient skipInit unit Platform
 		setLocalStorageObject("showDebugInfo", showDebugInfo ? "true" : "false")
 		
 	inline js void setFullscreen: value = true, forUser = -1
-		try   {
-			if(forUser == -1 || Input_localUser?.id == forUser) {
+		if(!Platform_isStaging && !Platform_isDebug && (forUser == -1 || Input_localUser?.id == forUser)) {
+			try {
 				if(value) {
-					if(!Platform_isStaging) document.body.requestFullscreen()
+					document.body.requestFullscreen()
 				} else {
 					document.exitFullscreen()
 				}
+			} catch {
 			}
-		} catch {
-		}
+		}	
 		
 	js void saveTextFile: string filename, string text
 		var element = document.createElement('a');

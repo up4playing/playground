@@ -135,18 +135,39 @@ struct Vector2
 		return Math.getAngleForVector(value - this)
 
 	// Interpolates to another vector
-	interpolateTo: Vector2 target  // The target vector to interpolate to
-		           float value    // The interpolation value, 0 returns the original vector, 1 returns the target vector
+	interpolateTo: Vector2 target  // The target position to interpolate to
+		           float value     // The input value
 		let ivalue = 1 - value
 		return new Vector2(x * ivalue + target.x * value, y * ivalue + target.y * value)
 
 	// Interpolates to another vector
-	interpolateTo: Vector2 target  // The target vector to interpolate to
-		           float value    // The interpolation value, 0 returns the original vector, 1 returns the target vector
+	interpolateTo: Vector2 target  // The target position to interpolate to
+		           float value     // The input value
 		           EaseFunction ease
 		value = ease.function(value)
 		let ivalue = 1 - value
 		return new Vector2(x * ivalue + target.x * value, y * ivalue + target.y * value)
+
+	// Interpolates to another vector
+	interpolateTo: Vector2 target // The target position to interpolate to
+		           float value    // The input value
+		           float from     // The beginning of the input range
+		           float to       // The end of the input range
+		if value <= from: return this
+		if value >= to: return target
+		let factor = (value-from) / (to-from)
+		return new Vector2(x + (target.x-x)*factor, y + (target.y-y)*factor)
+
+	// Interpolates to another vector
+	interpolateTo: Vector2 target    // The target position to interpolate to
+		           float value       // The input value
+		           float from        // The beginning of the input range
+		           float to          // The end of the input range
+		           EaseFunction ease // The easing function to apply
+		if value <= from: return this
+		if value >= to: return target
+		let factor = ease.function((value-from) / (to-from))
+		return new Vector2(x + (target.x-x)*factor, y + (target.y-y)*factor)
 
 	// A vector that points in the same direction, but has a length of 1
 	normalized
@@ -206,6 +227,10 @@ struct Vector2
 			&& (c = !c)
 			j = i
 		return c
+		
+	in: Rect rectangle
+		return x >= rectangle.position.x - rectangle.size.x/2 && x < rectangle.position.x + rectangle.size.x/2
+		    && y >= rectangle.position.y - rectangle.size.y/2 && y < rectangle.position.y + rectangle.size.y/2
 	
 	// The dot product
 	dot: Vector2 value // The value to calculate the dot procut with
@@ -468,6 +493,12 @@ struct Matrix2D
 		result.m3 = b1 * a2 + b3 * a3
 		result.m5 = b1 * a4 + b3 * a5 + b5
 		return result
+		
+class List<T>
+	Vector2 total: Vector2(T it) selector
+		Vector2 sum = {0,0}
+		for this: sum += selector(.)
+		return sum	
 
 unit Math
 	// Returns the arctangent of the quotient of the given values
@@ -507,64 +538,87 @@ unit Math
 		// Return a object with the x and y coordinates of the intersection
 		return new Vector2(x1 + ua * (x2 - x1), y1 + ua * (y2 - y1))
 	
+	// Maps a value from an input range to an output range
+	map: float value    // The input value 
+		 float from = 0 // The beginning of the input range
+		 float to = 1   // The end of the input range
+		 Vector2 start  // The start output position, will be returned for values smaller than "from".
+		 Vector2 target // The target output position, will be returned for values larger than "to".
+		if value <= from: return start
+		if value >= to:   return target
+		let factor = (value-from) / (to-from)
+		return start + (target-start) * factor
+			
+	// Maps a value from an input range to an output range
+	map: float value       // The input value 
+		 float from = 0    // The beginning of the input range
+		 float to = 1      // The end of the input range
+		 Vector2 start     // The start output position, will be returned for values smaller than "from".
+		 Vector2 target    // The target output position, will be returned for values larger than "to".
+		 EaseFunction ease // The easing function to apply
+		if value <= from: return start
+		if value >= to:   return target
+		let factor = (value-from) / (to-from)
+		return start + (target-start) * ease.function(factor)
+	
 global transient unit System
-	global inline js void forPositions: T[] subject               // The list to iterate over
-		                                Vector2 start = {0,0}     // Left or top align items at this position
-		                                Vector2 delta = {300,0}   // Distance between items
+	global inline js void forPositions: T[] subject                       // The list to iterate over
+		                                Vector2 start = {0,0}             // Left or top align items at this position
+		                                implicit Vector2 delta = {300,0}  // Distance between items
 		                                -> void(
-		                                    T it,                 // The current item of the list we are iterating over with forCentered
-		                                    Vector2 pos,          // The position of the current item
-		                                    int i                 // The index of the current item of the list we are iterating over with forCentered
-		                                ) do                      // Do this for each item in a list
+		                                    T it,                         // The current item of the list we are iterating over with forCentered
+		                                    Vector2 pos,                  // The position of the current item
+		                                    int i                         // The index of the current item of the list we are iterating over with forCentered
+		                                ) do                              // Do this for each item in a list
 		for(let i=0, _subject=subject, _start = start, _delta = delta, _len=_subject.length, _x = _start.x, _y= _start.y; i<_len; ++i, _x += _delta.x, _y += _delta.y) { let it = _subject[i], pos = new Vector2(_x, _y, _start.location || _delta.location ? new SourceCodeLocation(null, 0, 0, _start.location, _delta.location) : null); do()}
 
-	global inline js void forPositions: int to                    // The exclusive upper bound to iterate towards
-		                                Vector2 start = {0,0}     // Left or top align items at this position
-		                                Vector2 delta = {300,0}   // Distance between items
+	global inline js void forPositions: int to                            // The exclusive upper bound to iterate towards
+		                                Vector2 start = {0,0}             // Left or top align items at this position
+		                                implicit Vector2 delta = {300,0}  // Distance between items
 		                                -> void(
-		                                    int i,                // The index of the current item of the list we are iterating over with forCentered
-		                                    Vector2 pos,          // The position of the current item
-		                                ) do                      // Do this for each item in a list
+		                                    int i,                        // The index of the current item of the list we are iterating over with forCentered
+		                                    Vector2 pos,                  // The position of the current item
+		                                ) do                              // Do this for each item in a list
 		for(let i=0, _start = start, _delta = delta, _len=to, _x = _start.x, _y= _start.y; i<_len; ++i, _x += _delta.x, _y += _delta.y) { let pos = new Vector2(_x, _y, _start.location || _delta.location ? new SourceCodeLocation(null, 0, 0, _start.location, _delta.location) : null); do()}
 
-	global inline js void forPositions: T[] subject               // The list to iterate over
-		                                Vector2 start = {0,0}     // Left or top align items at this position
-		                                Vector2 delta = {100,100} // Distance between items
-		                                float width               // Wrap to the next row when we reach this width
+	global inline js void forPositions: T[] subject                       // The list to iterate over
+		                                Vector2 start = {0,0}             // Left or top align items at this position
+		                                implicit Vector2 elta = {300,300} // Distance between items
+		                                float width                       // Wrap to the next row when we reach this width
 		                                -> void(
-		                                    T it,                 // The current item of the list we are iterating over with forCentered
-		                                    Vector2 pos,          // The position of the current item
-		                                    int i                 // The index of the current item of the list we are iterating over with forCentered
-		                                ) do                      // Do this for each item in a list
+		                                    T it,                         // The current item of the list we are iterating over with forCentered
+		                                    Vector2 pos,                  // The position of the current item
+		                                    int i                         // The index of the current item of the list we are iterating over with forCentered
+		                                ) do                              // Do this for each item in a list
 		for(let i=0, _subject=subject, _start = start, _delta = delta, _width = width, _len=_subject.length, _x = _start.x, _y= _start.y; i<_len; ++i, _x += _delta.x) { if(_x >= _start.x+_width) {_x = _start.x; _y += _delta.y} let it = _subject[i], pos = new Vector2(_x, _y, _start.location || _delta.location ? new SourceCodeLocation(null, 0, 0, _start.location, _delta.location) : null); do()}
 
-	global inline js void forPositions: T[] subject               // The list to iterate over
-		                                Vector2 center = {0,0}    // Center items at this position
-		                                Vector2 delta = {300,0}   // Distance between items
+	global inline js void forPositions: T[] subject                       // The list to iterate over
+		                                Vector2 center = {0,0}            // Center items at this position
+		                                implicit Vector2 delta = {300,0}  // Distance between items
 		                                -> void(
-		                                    T it,                 // The current item of the list we are iterating over with forCentered
-		                                    Vector2 pos,          // The position of the current item
-		                                    int i                 // The index of the current item of the list we are iterating over with forCentered
-		                                ) do                      // Do this for each item in a list
+		                                    T it,                         // The current item of the list we are iterating over with forCentered
+		                                    Vector2 pos,                  // The position of the current item
+		                                    int i                         // The index of the current item of the list we are iterating over with forCentered
+		                                ) do                              // Do this for each item in a list
 		for(let i=0, _subject=subject, _center = center, _delta = delta, _len=_subject.length, _x = _center.x-(_len-1)*_delta.x/2, _y=_center.y-(_len-1)*_delta.y/2; i<_len; ++i, _x += _delta.x, _y += _delta.y) { let it = _subject[i], pos = new Vector2(_x, _y, _center.location || _delta.location ? new SourceCodeLocation(null, 0, 0, _center.location, _delta.location) : null); do()}
 
-	global inline js void forPositions: int to                    // The exclusive upper bound to iterate towards
-		                                Vector2 center = {0,0}    // Center items at this position
-		                                Vector2 delta = {300,0}   // Distance between items
+	global inline js void forPositions: int to                            // The exclusive upper bound to iterate towards
+		                                Vector2 center = {0,0}            // Center items at this position
+		                                implicit Vector2 delta = {300,0}  // Distance between items
 		                                -> void(
-		                                    int i,                // The index of the current item of the list we are iterating over with forCentered
-		                                    Vector2 pos           // The position of the current item
-		                                ) do                      // Do this for each item in a list
+		                                    int i,                        // The index of the current item of the list we are iterating over with forCentered
+		                                    Vector2 pos                   // The position of the current item
+		                                ) do                              // Do this for each item in a list
 		for(let i=0, _center = center, _delta = delta, _len=to, _x = _center.x-(_len-1)*_delta.x/2, _y=_center.y-(_len-1)*_delta.y/2; i<_len; ++i, _x += _delta.x, _y += _delta.y) { let pos = new Vector2(_x, _y, _center.location || _delta.location ? new SourceCodeLocation(null, 0, 0, _center.location, _delta.location) : null); do()}
 
-	global inline js void forPositions: T[] subject               // The list to iterate over
-		                                Vector2 end = {0,0}       // Right or bottom align items at this position
-		                                Vector2 delta = {300,0}   // Distance between items
+	global inline js void forPositions: T[] subject                       // The list to iterate over
+		                                Vector2 end = {0,0}               // Right or bottom align items at this position
+		                                implicit Vector2 delta = {300,0}  // Distance between items
 		                                -> void(
-		                                    T it,                 // The current item of the list we are iterating over with forCentered
-		                                    Vector2 pos,          // The position of the current item
-		                                    int i                 // The index of the current item of the list we are iterating over with forCentered
-		                                ) do                      // Do this for each item in a list
+		                                    T it,                         // The current item of the list we are iterating over with forCentered
+		                                    Vector2 pos,                  // The position of the current item
+		                                    int i                         // The index of the current item of the list we are iterating over with forCentered
+		                                ) do                              // Do this for each item in a list
 		for(let i=0, _subject=subject, _end = end, _delta = delta, _len=_subject.length, _x = _end.x-(_len-1)*_delta.x, _y=_end.y-(_len-1)*_delta.y; i<_len; ++i, _x += _delta.x, _y += _delta.y) { let it = _subject[i], pos = new Vector2(_x, _y, _end.location || _delta.location ? new SourceCodeLocation(null, 0, 0, _end.location, _delta.location) : null); do()}
 
 // Converts positions within an isomatic grid with the origin in the north
@@ -702,6 +756,8 @@ class Line
 
 class Rect
 	Vector2 position, size
+	bool contains: Vector2 position
+		return this.position-this.size/2 <=  position < this.position+this.size/2
 	
 class Grid<T>
 	IntVector2 size

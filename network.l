@@ -128,29 +128,28 @@ transient skipInit unit Network
 		
 	startLocal: userCount = 1
 		mode = Local
-		startInLobby = false
 		certainFrame = -1
-		isPremiere = true
 		Input.internalUsers.clear
 		Math.setRandomSeed Math.generateRandomSeed 
 		initDatabase
-		startTime = serverStartTime = currentTime
-		// timeOffset = 0
-		reset
-		animationFrame
+		stop
 		
 	// Clear all inputs and reset the application to the first frame
 	stop
 		for Input.internalUsers if .
 			.inputs.reset
 			.startInputFrame 0
+		startTime = serverStartTime = currentTime
 		frames = 0
 		frameWithNewWatches = 0
 		startInLobby = false
 		errorMessage = ""
 		audio.stop
-		goToFrame 0
-		
+		isPremiere = true
+		startTime = serverStartTime = currentTime
+		reset
+		animationFrame
+				
 	// Keep inputs, call init functions, create the local users, reset read positions and start app
 	// This is called on startup, after every code change and when going backwards in the timeline
 	reset
@@ -162,12 +161,13 @@ transient skipInit unit Network
 		frame = 0
 		certainFrame = int.maxValue
 		uncertainFrame = -1
+		Input.isCertain = true
 		lobby.inLobby = startInLobby
 		Time.now = serverStartTime
 		audio.stop
 		initAll
 		
-		if !startInLobby or Platform.isDebug
+		if !startInLobby
 			// When the developer changed Platform.userCount, add or remove internal users accordingly
 			for Input.internalUsers.length to Platform.userCount
 				Input.internalUsers.add {id:i, local:true, collectInputs:true}
@@ -298,7 +298,7 @@ transient skipInit unit Network
 	private float lastNetworkFrame, lastAnimationFrame, drawTime, tickTime, restoreTime, replayTime, saveTime
 	private int replayFrames
 	int tickMessageSize
-	bool logging = false
+	bool logging = true
 	
 	collectStatistics
 		if mode == Connected and Input.users.length > 1 and frame > joinFrame + 120
@@ -308,7 +308,7 @@ transient skipInit unit Network
 				aheads.add ahead, maxLength:400
 				aheadMax = aheads.percentile(50)
 				aheadsMax.add aheadMax maxLength:400
-				int actualBufferFrames = ceil(aheadsMax.average * 1.25) limit max:30
+				int actualBufferFrames = Math.ceil(aheadsMax.average * 1.25) limit max:30
 				
 				// We only update bufferFrames if the new value is smaller or at least 2 larger
 				if actualBufferFrames < bufferFrames or actualBufferFrames > bufferFrames+1: bufferFrames = actualBufferFrames
@@ -366,8 +366,9 @@ transient skipInit unit Network
 			if sendInputsMode == Server: ServerNetwork.sendInputs inputFrame
 			lastSendFrame = frame
 			
-	switchUser: int userId
-		Input.localUser = Input.internalUsers[userId.limit(min:0 max:Input.internalUsers.length-1)]
+	switchUser: int userIndex
+		let user = Input.users[userIndex]
+		Input.localUser = Input.internalUsers.find.id == user.id
 			
 	switchSendInterval: int sendInterval
 		this.sendInterval = sendInterval
@@ -542,7 +543,7 @@ transient skipInit unit Network
 		statistics_log += str + "\n"
 		if(Network_logging) {
 			Network_eventLog += str + "\n"
-			log(str)
+			console.log(str)
 		}
 		
 	inline js int currentTime := Date.now()
@@ -613,6 +614,7 @@ transient skipInit unit Network
 			frames = buffer.readInt32
 			let randomSeed = buffer.readString
 			startInLobby = buffer.readBool
+			Platform.isStaging = false
 			let userCount = buffer.readInt8
 			Input.internalUsers.clear
 			for userCount
@@ -710,13 +712,17 @@ skipInit transient unit statistics
 		serverPings.clear
 		log = ""
 	
-	send: dynamic data = null, int game = 0, int round = 0, int step = 0
+	send: dynamic data = null, int game = 0, int round = 0, int step = 0, bool clear = true
 		if not Input.isCertain or Platform.isDebug: return
 		print "sending statistics", round
 		let userName = localStorage.getStringDirectly("play-userId")
 		let server = Platform.host.getUntil(".")
 		StatisticsGraphSeries[] series
-		for Input.users: series.add this.series.find.userIndex == i
+		string[] connections
+		for Input.users
+			let internalUser = Input.internalUsers[.id]
+			connections.add internalUser.connectionType
+			series.add this.series.find.userIndex == i
 		http.post "{Platform.protocalAndHost}:3114/stats", body:{
 			time: Date.now.isoString
 			gameId: Network.gameId
@@ -726,13 +732,18 @@ skipInit transient unit statistics
 			userName
 			game
 			round
+			step
 			staging: Platform.isStaging
 			server
 			minServerPing: serverPings.min .
 			maxServerPing: serverPings.max .
 			averageServerPing: serverPings.average
-			ping:series.select ({average:it?.values.average, max:it?.values.max(.), peeks:it?.values.count . > 30})
-			connections: Input.internalUsers.select.connectionType
+			ping:series.select {
+				average:it?.values.average
+				max:it?.values.max(.)
+				peeks:it?.values.count . > 30
+			}
+			connections
 			serverPings
 			peerPings: series
 			loadTime: loadTime - startTime
@@ -740,7 +751,13 @@ skipInit transient unit statistics
 			log
 			data
 		}
-		clear
+		if clear: this.clear
+			
+	internal manuallyTriggerSend: int value, bool clear
+		let prevIsCertain = Input.isCertain
+		Input.isCertain = true
+		statistics.send round:value game:value clear
+		Input.isCertain = prevIsCertain
 			
 	internal float maxValue
 	
@@ -767,7 +784,7 @@ skipInit transient unit statistics
 	internal draw
 		maxValue = 0
 		for series -> s
-			int len = min(.values.length, size.x.round)
+			int len = Math.min(.values.length, size.x.round)
 			for len: 
 				let value = s.values[-1-i]
 				if value > maxValue: maxValue = value
@@ -780,7 +797,7 @@ skipInit transient unit statistics
 			drawText text, labelPos+{11, -2}, align:Left, layer:1000000, size:12
 			labelPos.x += graphics.getTextWidth(text, size:12) + 20
 			
-			int len = min(.values.length, size.x.round)
+			int len = Math.min(.values.length, size.x.round)
 			float prevY = 0
 			for len
 				let value = s.values[-1-i]

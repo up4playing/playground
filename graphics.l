@@ -448,11 +448,13 @@ transient global unit graphics
 	private int[] currentlyVisibleFor = null
 		
 	// Returns the width of a string in pixels
-	global js int getTextWidth: string text              // The string to get the width of
-		                        size = 18                // The size of the font in pixels
-		                        Font font = null         // The font of the text
-		                        FontStyle style = Normal // Whether the text should be bold or normal style
-		Platform_context.font = (style ? "bold ":"")+(size || graphics_currentFontSize)+"px "+(font || graphics_currentFont).name;
+	global js int getTextWidth: string text                 // The string to get the width of
+		                         implicit Vector2 size = {} // The size of the text
+		                        Font font = null            // The font of the text
+		                        FontStyle style = Normal    // Whether the text should be bold or normal style
+		let effectiveFont = font || graphics_currentFont
+		let fontSize = size.y || size.x || graphics_currentFontSize
+		Platform_context.font =  (style ? "bold ":"")+fontSize+"px "+effectiveFont.name;
 		let textSize = Platform_context.measureText(text)
 		return textSize.width
 		
@@ -478,9 +480,10 @@ transient global unit graphics
 		                   visibleFor = -1            // Only this user will see the image
 		                   implicit int layer = 0     // Higher layers are drawn in front of lower layers
 		                   alpha = 1.0                // The opacity of the image (0: fully transparent, 1: fully visible)
+		                   Color color = White        // Tint the image with this color
 		                   SourceCodeLocation location
 		var frame = Math.floor(Network.frame * Math.max(framesPerSecond, 0) / Network.targetFps) % image.frames.length;
-		drawImage image, position, frame, size, visibleFor, layer, alpha, location
+		drawImage image, position, frame, size, visibleFor, layer, alpha, color, location
 	
 	// Draws an image on the screen
 	global void drawImage: Image image                // The image to draw
@@ -490,9 +493,10 @@ transient global unit graphics
 		                   int[] visibleFor           // Only this user will see the image
 		                   implicit int layer = 0     // Higher layers are drawn in front of lower layers
 		                   alpha = 1.0                // The opacity of the image (0: fully transparent, 1: fully visible)
+		                   Color color = White        // Tint the image with this color
 		                   SourceCodeLocation location
 		var frame = Math.floor(Network.frame * Math.max(framesPerSecond, 0) / Network.targetFps) % image.frames.length;
-		drawImage image, position, frame, size, visibleFor, layer, alpha, location
+		drawImage image, position, frame, size, visibleFor, layer, alpha, color, location
 	
 	// Draws an image on the screen
 	global void drawImage: Image image                // The image to draw
@@ -505,15 +509,17 @@ transient global unit graphics
 		                   visibleFor = -1            // Only this user will see the image
 		                   implicit int layer = 0     // Higher layers are drawn in front of lower layers
 		                   alpha = 1.0                // The opacity of the image (0: fully transparent, 1: fully visible)
+		                   Color color = White        // Tint the image with this color
 		                   SourceCodeLocation location
 		var frame = Math.floor(Network.frame * Math.max(framesPerSecond, 0) / Network.targetFps) % image.frames.length;
-		drawImage image, position, frame, size, angle, flipX, flipY, visibleFor, layer, alpha, location
+		drawImage image, position, frame, size, angle, flipX, flipY, visibleFor, layer, alpha, color, location
 	
 	// Draws an image on the screen
 	global void drawImage: Image image                  // The image to draw
 		                   Vector2 position = {}        // The position to draw to
 		                   frame = 0                    // The frame of the image to draw
 		                   implicit Vector2 size = {}   // The size of the image, use a float to keep the aspect ratio, use a vector to strech the image
+		                   Angle angle = 0.0            // Rotate the image by this angle in turns (0: no rotation, 1: one full rotation)
 		                   touchMargin = Vector2(16,16) // The margin around the button within which it is touchable
 		                   showTouchArea = false        // Show the area within which the button is touchable
 		                   visibleFor = -1              // Only this user will see the button
@@ -521,9 +527,10 @@ transient global unit graphics
 		                   hotkey = Key.None            // This keyboard shortcut will execute the onClick handler
 		                   implicit layer = 0           // Higher layers are drawn in front of lower layers
 		                   alpha = 1.0                  // The opacity of the button 0: fully transparent, 1: fully visible)
+		                   Color color = White          // Tint the image with this color
 		                   void(Touch touch) onClick    // Execute this code when the user clicks on the image or presses the hotkey
 		                   SourceCodeLocation location
-		drawImage image, position, frame, size, visibleFor, layer, alpha, location
+		drawImage image, position, frame, size, angle, visibleFor, layer, alpha, color, location
 			
 		// Handle click (only visible buttons are clickable)
 		int[] effectiveClickableBy = getClickableBy(visibleFor, clickableBy)
@@ -541,6 +548,7 @@ transient global unit graphics
 		                      visibleFor = -1            // Only this user will see the image
 		                      implicit layer = 0         // Higher layers are drawn in front of lower layers
 		                      alpha = 1.0                // The opacity of the image (0: fully transparent, 1: fully visible)
+		                      Color color = White        // Tint the image with this color
 		                      SourceCodeLocation location
 		if(!image.texture?.ensureIsAvailable()) return
 		if(graphics_isVisibleFor(visibleFor)) {
@@ -555,7 +563,8 @@ transient global unit graphics
 				layer, alpha, graphics_currentClippingPath, image.file,
 				location, position.location, size.location,
 				image.texture._htmlImage,
-				f.x1, f.y1, f.w, f.h
+				f.x1, f.y1, f.w, f.h,
+				color
 			))
 		}
 	
@@ -566,6 +575,7 @@ transient global unit graphics
 		                      int[] visibleFor           // Only this user will see the image
 		                      implicit layer = 0         // Higher layers are drawn in front of lower layers
 		                      alpha = 1.0                // The opacity of the image (0: fully transparent, 1: fully visible)
+		                      Color color = White        // Tint the image with this color
 		                      SourceCodeLocation location
 		if(!image.texture?.ensureIsAvailable()) return
 		if(graphics_isVisibleFor2(visibleFor)) {
@@ -580,7 +590,8 @@ transient global unit graphics
 				layer, alpha, graphics_currentClippingPath, image.file,
 				location, position.location, size.location,
 				image.texture._htmlImage,
-				f.x1, f.y1, f.w, f.h
+				f.x1, f.y1, f.w, f.h,
+				color
 			))
 		}
 	
@@ -595,6 +606,7 @@ transient global unit graphics
 		                      visibleFor = -1            // Only this user will see the image
 		                      implicit layer = 0         // Higher layers are drawn in front of lower layers
 		                      alpha = 1.0                // The opacity of the image (0: fully transparent, 1: fully visible)
+		                      Color color = White        // Tint the image with this color
 		                      SourceCodeLocation location
 		if(!image.texture?.ensureIsAvailable()) return
 		if(graphics_isVisibleFor(visibleFor)) {
@@ -613,7 +625,8 @@ transient global unit graphics
 				layer, alpha, graphics_currentClippingPath, image.file, 
 				location, position.location, size.location,
 				image.texture._htmlImage,
-				f.x1, f.y1, f.w, f.h
+				f.x1, f.y1, f.w, f.h,
+				color
 			))
 		}
 	
@@ -627,12 +640,13 @@ transient global unit graphics
 		                      int[] visibleFor           // Only this user will see the image
 		                      implicit layer = 0         // Higher layers are drawn in front of lower layers
 		                      alpha = 1.0                // The opacity of the image (0: fully transparent, 1: fully visible)
+		                      Color color = White        // Tint the image with this color
 		                      SourceCodeLocation location
 		if(!image.texture?.ensureIsAvailable()) return
 		if(graphics_isVisibleFor2(visibleFor)) {
 			let f = image.frames[frame % image.frames.length]
 			let sizeX = size.x || f.w
-			let sizeY = size.y || (w/f.w)*f.h
+			let sizeY = size.y || (sizeX/f.w)*f.h
 			let matrix = graphics_totalMatrix.clone()
 			matrix.move(position)
 			matrix.rotate(angle)
@@ -645,7 +659,8 @@ transient global unit graphics
 				layer, alpha, graphics_currentClippingPath, image.file, 
 				location, position.location, size.location,
 				image.texture._htmlImage,
-				f.x1, f.y1, f.w, f.h
+				f.x1, f.y1, f.w, f.h,
+				color
 			))
 		}
 	
@@ -654,7 +669,7 @@ transient global unit graphics
 	// Draws text on the screen
 	global js void drawText: string text                        // The text to draw
 		                     Vector2 position = {}              // The position to draw to
-		                     implicit Vector2 size = {256}      // The size of the text
+		                     implicit Vector2 size = {}         // The size of the text
 		                     Color color = null                 // The color of the text
 		                     HorizontalAlignment align = Center // The horizontal alignment of the text
 		                     VerticalAlignment valign = Middle  // The vertical alignment of the text
@@ -668,7 +683,7 @@ transient global unit graphics
 		                     SourceCodeLocation location
 		if(graphics_isVisibleFor(visibleFor)) {
 			let effectiveFont = font || graphics_currentFont
-			let fontSize = size.y || size.x
+			let fontSize = size.y || size.x || graphics_currentFontSize
 			let contextFont = (style ? "bold ":"")+fontSize+"px "+effectiveFont.name;
 			Platform_context.font = contextFont
 			let textSize = Platform_context.measureText(text)
@@ -691,7 +706,7 @@ transient global unit graphics
 		
 	global js void drawText: string text                        // The text to draw
 		                     Vector2 position = {}              // The position to draw to
-		                     implicit Vector2 size = {256}      // The size of the text
+		                     implicit Vector2 size = {}         // The size of the text
 		                     Color color = null                 // The color of the text
 		                     HorizontalAlignment align = Center // The horizontal alignment of the text
 		                     VerticalAlignment valign = Middle  // The vertical alignment of the text
@@ -705,7 +720,7 @@ transient global unit graphics
 		                     SourceCodeLocation location
 		if(graphics_isVisibleFor2(visibleFor)) {
 			let effectiveFont = font || graphics_currentFont
-			let fontSize = size.y || size.x
+			let fontSize = size.y || size.x || graphics_currentFontSize
 			let contextFont = (style ? "bold ":"")+fontSize+"px "+effectiveFont.name;
 			Platform_context.font = contextFont
 			let textSize = Platform_context.measureText(text)
@@ -867,8 +882,8 @@ transient global unit graphics
 		                       Color fillColor = null     // The color of the area within the circle
 		                       Color outlineColor = null  // The color of the outline around the circle
 		                       outlineWidth = 0           // The width of the outline around the circle
-		                       Angle startAngle = 0.0     // Draws an arc with this start angle in turns, measured from the positive x-axis
-		                       Angle endAngle = 1.0       // Draws an arc with this end angle in turns, measured from the positive x-axis
+		                       Angle startAngle = -.25    // Draws an arc with this start angle in turns, measured from the positive x-axis
+		                       Angle angle = 1.0          // Draws an arc with this angle in turns (0.25: quarter circle, 0.5: half circle, 1: full circle)
 		                       RotationDirection direction = Clockwise // The circle is drawn in this direction
 		                       visibleFor = -1            // Only this user will see the circle
 		                       implicit layer = 0         // Higher layers are drawn in front of lower layers
@@ -883,7 +898,7 @@ transient global unit graphics
 				sizeX, sizeY,
 				layer, alpha, graphics_currentClippingPath, "Circle", 
 				location, position.location, size.location,
-				startAngle, endAngle,
+				startAngle, angle,
 				direction == 1,
 				fillColor || !outlineColor ? (fillColor || graphics_currentColor).hex : null,
 				outlineColor ? outlineColor.hex : null,
@@ -896,8 +911,8 @@ transient global unit graphics
 		                       Color fillColor = null    // The color of the area within the circle
 		                       Color outlineColor = null // The color of the outline around the circle
 		                       outlineWidth = 0          // The width of the outline around the circle
-		                       Angle startAngle = 0.0    // Draws an arc with this start angle in radians, measured from the positive x-axis
-		                       Angle endAngle = 1.0      // Draws an arc with this end angle in radians, measured from the positive x-axis
+		                       Angle startAngle = -.25   // Draws an arc with this start angle in turns, measured from the positive x-axis
+		                       Angle angle = 1.0         // Draws an arc with this angle in turns (0.25: quarter circle, 0.5: half circle, 1: full circle)
 		                       RotationDirection direction = Clockwise // The circle is drawn in this direction
 		                       int[] visibleFor          // Only this user will see the circle
 		                       implicit layer = 0        // Higher layers are drawn in front of lower layers
@@ -912,7 +927,7 @@ transient global unit graphics
 				sizeX, sizeY,
 				layer, alpha, graphics_currentClippingPath, "Circle", 
 				location, position.location, size.location,
-				startAngle, endAngle,
+				startAngle, anlge,
 				direction == 1,
 				fillColor || !outlineColor ? (fillColor || graphics_currentColor).hex : null,
 				outlineColor ? outlineColor.hex : null,
@@ -930,13 +945,14 @@ transient global unit graphics
 		if(!texture?.ensureIsAvailable()) return
 		if(graphics_isVisibleFor(visibleFor)) {
 			let sizeX = size.x || texture.size.x
-			let sizeY = size.y || (w/texture.size.x)*texture.size.y
+			let sizeY = size.y || (sizeX/texture.size.x)*texture.size.y
 			graphics_items.push(new DisplayImage(
 				graphics_totalMatrix,
 				position.x - sizeX/2,
 				position.y - sizeY/2,
 				sizeX, sizeY,
-				layer, alpha, graphics_currentClippingPath, texture.file, position.location,
+				layer, alpha, graphics_currentClippingPath, texture.file,
+				location, position.location, size.location,
 				texture._htmlImage,
 				0, 0, texture.size.x, texture.size.y
 			))
@@ -954,7 +970,7 @@ transient global unit graphics
 		if(!image.texture?.ensureIsAvailable()) return
 		if(graphics_isVisibleFor(visibleFor)) {
 			let sizeX = size.x || texture.size.x
-			let sizeY = size.y || (w/texture.size.x)*texture.size.y
+			let sizeY = size.y || (sizeX/texture.size.x)*texture.size.y
 			graphics_items.push(new DisplayImage(
 				graphics_totalMatrix,
 				position.x - sizeX/2,
@@ -1201,7 +1217,7 @@ skipInit unit gizmo
 					if .y < min.y: min.y = .y
 					if .x + .w > max.x: max.x = .x + .w
 					if .y + .h > max.y: max.y = .y + .h
-		handleSize = Math.interpolate Math.min(max.x-min.x, max.y-min.y) fromStart:64 fromEnd:256 toStart:16 toEnd:32
+		handleSize = Math.map Math.min(max.x-min.x, max.y-min.y) 64..256 start:16 target:32
 	
 	internal tick
 		findInfluencedItems
@@ -1394,14 +1410,39 @@ transient class DisplayItem
 transient DisplayItem DisplayImage
 	object htmlImage
 	float sx, sy, sw, sh
+	Color color
 	js void draw
 		if(this.alpha == 0) return
 		Platform_context.setTransform(this.m0, this.m1, this.m2, this.m3, this.m4, this.m5)
 		Platform_context.globalAlpha = this.alpha
 		if(this.clippingPath) this.startClipping()
-		
-		try{ Platform_context.drawImage(this.htmlImage, this.sx, this.sy, this.sw, this.sh, this.x, this.y, this.w, this.h) }
-		catch(e) { log("DisplayImage: "+e.message) }
+			
+		if(this.color.hex == "#ffffff") {
+			try{ Platform_context.drawImage(this.htmlImage, this.sx, this.sy, this.sw, this.sh, this.x, this.y, this.w, this.h) }
+			catch(e) { log("DisplayImage: "+e.message) }
+		} else {
+			// Create offscreen buffer
+	        let offscreenCanvas = document.createElement('canvas');
+	        offscreenCanvas.width = this.sw;
+	        offscreenCanvas.height = this.sh;
+	        let offscreenContext = offscreenCanvas.getContext('2d');
+			
+			// Draw image
+			offscreenContext.drawImage(this.htmlImage, this.sx, this.sy, this.sw, this.sh, 0, 0, this.sw, this.sh)
+			
+			// Multiply tint color
+			offscreenContext.fillStyle = this.color.hex;
+			offscreenContext.globalCompositeOperation = 'multiply';
+			offscreenContext.fillRect(0, 0, buffer.width, buffer.height);
+			
+			// Apply alpha
+			offscreenContext.globalAlpha = 1;
+			offscreenContext.globalCompositeOperation = 'destination-in';
+			offscreenContext.drawImage(this.htmlImage, this.sx, this.sy, this.sw, this.sh, 0, 0, this.sw, this.sh)
+				
+			// Draw tinted image
+	        Platform_context.drawImage(buffer, this.x, this.y, this.w, this.h);		
+		}
 		
 		if(this.clippingPath) this.endClipping()
 
@@ -1549,7 +1590,7 @@ transient DisplayItem DisplayPolygon
 enum RotationDirection: Clockwise, CounterClockwise
 		
 transient DisplayItem DisplayCircle
-	float startAngle, endAngle
+	float startAngle, angle
 	RotationDirection direction
 	string fillColor, outlineColor
 	float outlineWidth
@@ -1562,11 +1603,15 @@ transient DisplayItem DisplayCircle
 		Platform_context.beginPath();
 		if(this.w == this.h) {
 			let radius = this.w/2
-			Platform_context.arc(this.x+radius, this.y+radius, radius, this.startAngle*Math_TwoPI, this.endAngle*Math_TwoPI, this.direction);
+			if(this.angle == 1) {
+				Platform_context.arc(this.x+radius, this.y+radius, radius, 0, Math_TwoPI, this.direction);
+			} else {
+				Platform_context.arc(this.x+radius, this.y+radius, radius, this.startAngle*Math_TwoPI, (this.startAngle+this.angle)*Math_TwoPI, this.direction);
+			}
 		} else {
 			let radiusX = this.w/2
 			let radiusY = this.h/2
-			Platform_context.ellipse(this.x+radiusX, this.y+radiusY, radiusX, radiusY, this.startAngle*Math_TwoPI, this.endAngle*Math_TwoPI, this.direction);
+			Platform_context.ellipse(this.x+radiusX, this.y+radiusY, radiusX, radiusY, this.startAngle*Math_TwoPI, (this.startAngle+this.angle)*Math_TwoPI, this.direction);
 		}
 		if(this.fillColor) {
 			Platform_context.fillStyle = this.fillColor

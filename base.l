@@ -159,7 +159,7 @@ struct float
 		                           float value
 		                           EaseFunction ease
 		(this + (target - this)*ease.function.invoke(value))
-		
+
 	// ------------------------------------------- Time -------------------------------------------
 	
 	implicit inline js Time toTime() this
@@ -223,8 +223,6 @@ class string
 	inline js bool toBool := this
 	
 	inline js string toString() this
-	
-	Color toColor := {this}
 	
 	inline js int toInt := parseInt(this)
 		
@@ -323,6 +321,27 @@ class List<T>
 		                       int i      // The index of the current item of the list we are iterating over
 		                   ) do           // Do this for each item in a list
 		for(let _subject=[...this], i=_subject.length-1; i>=0; --i) { let it = _subject[i]; do()}
+			
+	js void eachDistinct: TKey(T it) selector
+		                         void(
+		                             TKey it,
+		                             T[] items,
+		                             int i
+		                         ) do
+		if(this.length > 0) {
+			let _subject = this.sort((a,b) => selector(a) - selector(b))
+			for(let _nextIndex=1, it = selector(_subject[0]), i=0; _nextIndex<_subject.length; ++_nextIndex) { 
+				let _nextIt = selector(_subject[_nextIndex]);
+				if(_nextIt != it) {
+					let items = _subject.slice(i, _nextIndex);
+					do(it, items, i)
+					it = _nextIt;
+					i = _nextIndex;
+				}
+			}
+		}
+			
+			
 		
 	// Adds an item to the end of the list
 	inline js void add: T item // The item to add
@@ -455,7 +474,7 @@ class List<T>
 		return this.get((index+1)%length)
 		
 	T next: T currentItem
-		    bool(T item) where
+		    label bool(T item) where
 		int baseIndex = indexOf(currentItem)
 		for this.length
 			let item = this.get((baseIndex+i+1)%length)
@@ -528,17 +547,21 @@ class List<T>
 		this.sort(comparer)
 	
 	// Sort the list by a given expression
-	T[] orderBy: float(T a) expression // The expression to order by
+	T[] orderBy: float(T a) expression // First order by this expression
 		return this.sort(expression(a) - expression(b))
 		
-	T[] orderBy: Time(T a) expression // The expression to order by
+	T[] orderBy: float(T it) expression           // First order by this expression
+		         label nocolon float(T it) thenBy // Then order by this expression
+		return this.sort(expression(a) - expression(b) || thenBy(a) - thenBy(b))
+		
+	T[] orderBy: Time(T a) expression // First order by this expression
 		return this.sort(expression(a) - expression(b))
 		
-	T[] orderBy: string(T a) expression // The expression to order by
+	T[] orderBy: string(T a) expression // First order by this expression
 		return this.sort(expression(a) compareTo expression(b))
 		
 	// Sort the list by a given expression
-	T[] orderBy: float(T a) expression // The expression to order by
+	T[] orderBy: float(T a) expression // First order by this expression
 		         SortingOrder order    // Specifies if you want to sort in ascending or descending order
 		if order == Ascending: return this.sort(expression(a) - expression(b))
 		else                   return this.sort(expression(b) - expression(a))
@@ -586,11 +609,6 @@ class List<T>
 		for this: sum += selector(.)
 		return sum
 		
-	Vector2 total: Vector2(T it) selector
-		Vector2 sum = {0,0}
-		for this: sum += selector(.)
-		return sum
-		
 	js int sum
 		let sum = 0;
 		for(let i=0; i<this.length; i++)
@@ -600,8 +618,8 @@ class List<T>
 	js float average
 		return this.length > 0 ? this.sum() / this.length : 0
 		
-	string concat: string(T a) selector
-		           string separator = ", "
+	string joinToString: string(T a) selector
+		                 string separator = ", "
 		let result = ""
 		for this
 			if result: result += separator
@@ -648,7 +666,7 @@ class List<T>
 	min: int(T a) selector 
 		 int threshold = int.maxValue
 		 int default = 0
-		 bool(T a) where
+		 label bool(T a) where
 		int resultValue = threshold
 		for this
 			if where(.)
@@ -659,7 +677,7 @@ class List<T>
 	min: float(T a) selector 
 		 float threshold = float.maxValue
 		 float default = 0
-		 bool(T a) where
+		 label bool(T a) where
 		float resultValue = threshold
 		for this
 			if where(.)
@@ -697,7 +715,7 @@ class List<T>
 	max: int(T a) selector
 		 int threshold = int.minValue
 		 int default = 0
-		 bool(T a) where
+		 label bool(T a) where
 		int resultValue = threshold
 		for this 
 			if where(.)
@@ -708,7 +726,7 @@ class List<T>
 	max: float(T a) selector
 		 float threshold = float.minValue
 		 float default = 0
-		 bool(T a) where
+		 label bool(T a) where
 		float resultValue = threshold
 		for this
 			if where(.)
@@ -719,7 +737,7 @@ class List<T>
 	max: Time(T a) selector
 		 Time threshold = float.minValue
 		 Time default = 0
-		 bool(T a) where
+		 label bool(T a) where
 		Time resultValue = threshold
 		for this
 			if where(.)
@@ -810,7 +828,7 @@ class List<T>
 		
 	withMin: Time(T a) selector
 		     Time threshold = float.maxValue
-		     bool(T a) where
+		     label bool(T a) where
 		Time resultValue = threshold
 		T resultItem
 		for this
@@ -886,7 +904,7 @@ class List<T>
 		
 	withMax: int(T a) selector
 		     int threshold = int.minValue
-		     bool(T a) where
+		     label bool(T a) where
 		int resultValue = threshold
 		T resultItem
 		for this
@@ -899,7 +917,7 @@ class List<T>
 		
 	withMax: float(T a) selector
 		     float threshold = float.minValue
-		     bool(T a) where
+		     label bool(T a) where
 		float resultValue = threshold
 		T resultItem
 		for this
@@ -948,7 +966,7 @@ class List<T>
 		      int to       // Return a new list up to (but not including) this index
 		return this.slice(from, to)
 	
-	js T get: int from = 0 // Return a new list starting from this index
+	js T get: int from // Return a new list starting from this index
 		return this.slice(from)
 	
 	js T set: int index // The index of the item to set
@@ -1097,9 +1115,9 @@ global transient unit System
 		if(condition) then()
 			
 	// Executes code depending on whether a given condition is true or false
-	global inline js void if: implicit bool condition // The condition to check
-		                      void() then             // Do this if the condition is true
-		                      void() else             // Do this if the condition is false
+	global inline js void if: implicit bool condition   // The condition to check
+		                      void() then               // Do this if the condition is true
+		                      label nocolon void() else // Do this if the condition is false
 		if(condition) then() @else else()
 			
 	// Executes code as long as a given condition is true
@@ -1115,10 +1133,6 @@ global transient unit System
 		@do do() 
 		@while(while)
 	
-	// Do something a given number of times or for each item in a list
-	global inline js void for: void subject    // The list to iterate over or the exclusive upper bound to iterate towards
-		                       void do         // Do this for each item in a list or a given number of times
-		
 	// Do something a given number of times or for each item in a list
 	global inline js void for: T[] subject    // The list to iterate over
 		                       -> void(
@@ -1319,13 +1333,13 @@ global transient unit System
 	// Prints a message to the console
 	global js void print: logstring text // The text, variables or expressions to print
 		                  SourceCodeLocation location
-		log(text, location.row, location.column, location.file)
+		(location ? log(text, location.start, location.file) : log(text))
 	
 	// Display a message in the timeline
 	global js void watch: logstring text // The text, variables or expressions to watch
 		                  SourceCodeLocation location
-		if(Platform_isDebug && Network_frame >= Network_frameWithNewWatches) {
-			Platform_sendWatch(Network_frame, text, location.row, location.column, location.file)
+		if(Platform_isDebug && Network_frame >= Network_frameWithNewWatches && location) {
+			Platform_sendWatch(Network_frame, text, location.start, location.file)
 		}
 	
 	// Shows a dialog box with a given message
@@ -1343,80 +1357,85 @@ global transient unit System
 // A collection of mathematical functions and constants
 global skipInit unit Math
 	// Returns the absolute value
-	global inline js int abs: int value // The value to return the absolute value of
+	inline js int abs: int value // The value to return the absolute value of
 		Math.abs(value)
 		
 	// Returns the absolute value
-	global inline js float abs: float value // The value to return the absolute value of
+	inline js float abs: float value // The value to return the absolute value of
 		Math.abs(value)
 		
 	// Returns the absolute value
-	global inline js Angle abs: Angle value // The angle to return the absolute value of
+	inline js Angle abs: Angle value // The angle to return the absolute value of
 		Math.abs(value)
 		
 	// Returns the smallest integer greater than or equal to the given value 
-	global inline js int ceil: float value // The value to round up
+	inline js int ceil: float value // The value to round up
 		Math.ceil(value)
 		
 	// Returns the smallest integer greater than or equal to the given value 
-	global inline js Time ceil: Time value // The value to round up
+	inline js Time ceil: Time value // The value to round up
 		Math.ceil(value)
 		
 	// Returns the smallest integer greater than or equal to the given value 
-	global inline js Angle ceil: Angle value // The angle to round up
+	inline js Angle ceil: Angle value // The angle to round up
 		Math.ceil(value)
 		
 	// Returns the largest integer less than or equal to the given value
-	global inline js int floor: float value // The value to round down
+	inline js int floor: float value // The value to round down
 		Math.floor(value)
 		
 	// Returns the largest integer less than or equal to the given value
-	global inline js Time floor: Time value // The value to round down
+	inline js Time floor: Time value // The value to round down
 		Math.floor(value)
 		
 	// Returns the largest integer less than or equal to the given value
-	global inline js Angle floor: Angle value // The angle to round down
+	inline js Angle floor: Angle value // The angle to round down
 		Math.floor(value)
 		
 	// Returns the given value rounded to the nearest integer
-	global inline js int round: float value // The value to round
+	inline js int round: float value // The value to round
 		Math.round(value)
 		
 	// Returns the given value rounded to the nearest integer
-	global inline js Angle round: Angle value // The angle to round
+	inline js Angle round: Angle value // The angle to round
 		Math.round(value)
 		
 	// Returns the given value rounded to the nearest integer
-	global inline js Time round: Time value // The angle to round
+	inline js Time round: Time value // The angle to round
 		Math.round(value)
 		
-	global inline js int min: int a // The first value
-		                      int b // The second value
+	inline js int min: int a // The first value
+		               int b // The second value
 		Math.min(a, b)
 		
 	// Returns the smallest of the given values
-	global inline js float min: float a // The first value
-		                        float b // The second value
+	inline js float min: float a // The first value
+		                 float b // The second value
 		Math.min(a, b)
 		
 	// Returns the smallest of the given values
-	global inline js Angle min: Angle a // The first angle
-		                        Angle b // The second angle
+	inline js Angle min: Angle a // The first angle
+		                 Angle b // The second angle
 		Math.min(a, b)
 		
 	// Returns the largest of the given values
-	global inline js int max: int a // The first value
-		                      int b // The second value
+	inline js int max: int a // The first value
+		               int b // The second value
 		Math.max(a, b)
 		
 	// Returns the largest of the given values
-	global inline js float max: float a // The first value
-		                        float b // The second value
+	inline js float max: float a // The first value
+		                 float b // The second value
 		Math.max(a, b)
 		
 	// Returns the largest of the given values
-	global inline js Angle max: Angle a // The first angle
-		                        Angle b // The second angle
+	inline js Angle max: Angle a // The first angle
+		                 Angle b // The second angle
+		Math.max(a, b)
+		
+	// Returns the largest of the given values
+	inline js Time max: Time a // The first time
+		                Time b // The second time
 		Math.max(a, b)
 		
 	// Returns the positive square root of the given value
@@ -1623,22 +1642,49 @@ global skipInit unit Math
 		   float min
 		if value < min: return min
 			            return value
-	
-	interpolate: float value
-		         float fromStart = 0
-		         float fromEnd = 1
-		         float toStart = 0
-		         float toEnd = 1
-		if value < fromStart: return toStart
-		if value > fromEnd:   return toEnd
-			                  return toStart + (toEnd-toStart) * (value-fromStart)/(fromEnd-fromStart)
+			
+	// Maps a value from an input range to an output range
+	map: Time value        // The input value 
+		 Time from = 0     // The beginning of the input range
+		 Time to = 1       // The end of the input range
+		 float start = 0   // The lowest possible output value, will be returned for values smaller than "from".
+		 float target = 1  // The highest possible output value, will be returned for values larger than "to".
+		if value <= from: return start
+		if value >= to:   return target
+		let factor = (value-from) / (to-from)
+		return start + (target-start) * factor
+			
+	// Maps a value from an input range to an output range
+	map: float value       // The input value 
+		 float from = 0    // The beginning of the input range
+		 float to = 1      // The end of the input range
+		 float start = 0   // The lowest possible output value, will be returned for values smaller than "from".
+		 float target = 1  // The highest possible output value, will be returned for values larger than "to".
+		if value <= from: return start
+		if value >= to:   return target
+		let factor = (value-from) / (to-from)
+		return start + (target-start) * factor
+			
+	// Maps a value from an input range to an output range
+	map: float value       // The input value 
+		 float from = 0    // The beginning of the input range
+		 float to = 1      // The end of the input range
+		 float start = 0   // The lowest possible output value, will be returned for values smaller than "from".
+		 float target = 1  // The highest possible output value, will be returned for values larger than "to".
+		 EaseFunction ease // The easing function to apply
+		if value <= from: return start
+		if value >= to:   return target
+		let factor = ease.function((value-from) / (to-from))
+		return start + (target-start) * factor
 		
-enum AngleUnit
-	turns // Turn (one full rotation is 1)
-	rad   // Radians (one full rotation is 2π)
-	deg   // Degrees (one full rotation is 360)
-	grad  // Gradiants (one full rotation is 400)
-	
+struct Average
+	float total
+	int count
+	add: float value
+		total += value
+		count++
+	average := total / count		
+
 transient float Angle
 	inline js float toFloat() this
 	inline js string toString() this.toString()
@@ -1683,14 +1729,13 @@ transient float Angle
 	inline js float in: AngleUnit unit
 		(unit==1 ? this*Math_TwoPI : unit==2 ? this*360 : unit==3 ? this*400 : this)
 		
-enum TimeUnit
-	ms   // Milliseconds
-	s    // Seconds
-	min  // Minutes
-	h    // Hours
-	days // Days
+enum AngleUnit
+	turns // Turn (one full rotation is 1)
+	rad   // Radians (one full rotation is 2π)
+	deg   // Degrees (one full rotation is 360)
+	grad  // Gradiants (one full rotation is 400)
 		
-transient float Time
+skipInit transient float Time
 	// The largest possible time value
 	const inline js Time maxValue := Number.MAX_VALUE
 	
@@ -1699,6 +1744,8 @@ transient float Time
 	
 	// The number of milliseconds elapsed since January 1, 1970
 	static Time now
+	
+	static internal inline js float realTime := Date.now()
 
 	// The current frame
 	static inline js int frame := Network_frame
@@ -1772,7 +1819,14 @@ transient float Time
 	js static void startTimer() window._timerStart = performance.now()
 	js static void printTimer(string text) log(text+": "+(performance.now()-window._timerStart))
 	static inline js float preciseTime := performance.now()
-	
+		
+enum TimeUnit
+	ms   // Milliseconds
+	s    // Seconds
+	min  // Minutes
+	h    // Hours
+	days // Days
+		
 js Date
 transient struct Date
 	const dayStrings = [
@@ -1870,7 +1924,7 @@ transient struct Date
 
 	static inline js Date now := new Date(Time_now)
 	static inline js Date fromTime(Time time) new Date(time)
-	static inline js Date fromValues(int year, int month, int day, int hour = 0, int minute = 0, int second = 0) new Date(year, month-1, day, hour, minute, second)
+	static inline js Date fromValues(int year, int month=1, int day=1, int hour = 0, int minute = 0, int second = 0) new Date(year, month-1, day, hour, minute, second)
 
 class Range
 	int from // The start of the range
