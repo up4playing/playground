@@ -1014,7 +1014,7 @@ transient global unit graphics
 				graphics_totalMatrix,
 				align == 0  ? position.x : align  == 1 ? position.x-sizeX*.5 : position.x-sizeX,
 				valign == 0 ? position.y : valign == 1 ? position.y-sizeY*.5 : position.y-sizeY,
-				sizeY, sizeY,
+				sizeX, sizeY,
 				layer, alpha, graphics_currentClippingPath, "RoundedRectangle", 
 				location, position.location, size.location,
 				radius,
