@@ -543,7 +543,7 @@ transient skipInit unit Network
 		statistics_log += str + "\n"
 		if(Network_logging) {
 			Network_eventLog += str + "\n"
-			log(str)
+			console.log(str)
 		}
 		
 	inline js int currentTime := Date.now()
