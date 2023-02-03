@@ -1244,10 +1244,16 @@ skipInit unit Input
 		if Network.logging: Network.touchLog += " #{Network.frame}{isCertain ? " c" : ""} {text} {pos}"
 
 	// Do something when a user moves the mouse wheel
-	onWheel: void(WheelEvent event) do // Do this for each mouse wheel movement
-		for internalUsers -> user if .
-			for user.wheelEvents
-				do .
+	onWheel: int userId = -1
+		     void(WheelEvent event) do // Do this for each mouse wheel movement
+		if (Network.mode == Connected || Network.simulateConnection) && userId != -1
+			let user = internalUsers[userId]
+				for user.wheelEvents
+					do .
+		else
+			for internalUsers -> user if user
+				for user.wheelEvents
+					do .
 	
 	// Do something when a user moves the mouse wheel within a given rectangle
 	onWheelWithin: Vector2 position            // The center of the rectangle
