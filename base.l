@@ -36,11 +36,17 @@ struct int
 	inline js int shiftRight: int count
 		(this >> count)
 		
-	inline js int bitwiseOr: int value
+	inline js int bitwiseOr: implicit int value
 		(this | value)
 	
-	inline js int bitwiseAnd: int value
+	inline js int bitwiseAnd: implicit int value
 		(this & value)
+	
+	inline js int setBit: implicit int value
+		(this |= value)
+	
+	inline js int unsetBit: implicit int value
+		(this &= ~value)
 	
 	inline js int limit: int min
 		                 int max
