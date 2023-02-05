@@ -1725,7 +1725,7 @@ transient float Angle
 	inline js float in: AngleUnit unit
 		(unit==1 ? this*Math_TwoPI : unit==2 ? this*360 : unit==3 ? this*400 : this)
 		
-transient float Time
+skipInit transient float Time
 	// The largest possible time value
 	const inline js Time maxValue := Number.MAX_VALUE
 	
