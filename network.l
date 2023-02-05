@@ -392,6 +392,9 @@ transient skipInit unit Network
 			bool isCertain = frame <= certainFrame
 			isSmooth = mode == Local or frame <= frameMinusBuffer
 			
+			// Send current frame to editor	
+			if Platform.isDebug and !fastForward and (Platform.mode == Record or Platform.mode == Play or Platform.isWaitingForInitialData): Platform.sendFrame(frame, Math.max(frame+1, frames))
+			
 			// Log
 			if logging
 				parseLog += " #{frame} (fmb{frameMinusBuffer})"
@@ -443,12 +446,10 @@ transient skipInit unit Network
 			.clearEvent
 		Input.users.each.clearEvents
 		
-		// Send current frame to editor	
-		if frames < frame+1: frames = frame+1
-		if frameWithNewWatches < frame+1: frameWithNewWatches = frame+1
-		if Platform.isDebug and !fastForward and (Platform.mode == Record or Platform.mode == Play): Platform.sendFrame(frame, frames)
-		
+		// Advance frame
 		frame++
+		if frames < frame: frames = frame
+		if frameWithNewWatches < frame: frameWithNewWatches = frame
 		
 	// Clear screen, process application tick, and draw all graphics
 	// This is called in step.

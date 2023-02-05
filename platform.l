@@ -9,49 +9,54 @@ enum TickMode: Interval, AnimationFrame
 // - has always the reference size (1920 x 1080 by default) on all platforms
 // - the origin is in the middle of the screen
 //
-//          Top              🡺 x
-//     Left  +  Right      🡻 
-//        Bottom            y
+//          Top              → x
+//     Left  +  Right      ↓ 
+//         Bottom          y
 //
 // Pixel space
 // - the size in the screen size in pixels of the target platform
 // - the origin in the top left corner
 transient skipInit unit Platform
+	
+	// Configuration
 	public userCount = 2
 	public supportedUserCount = Range 2..4
-	
 	public bool showSafeArea = true
 	public bool showDebugInfo = false
 	public bool isLocal = false
-	
 	public TickMode tickMode = Interval
-	
-	public inline js string url := location.href
-	public inline js string host := location.host
-	public inline js int version := version
-	public inline js int appName := appName
-	public inline js int userAgent := navigator.userAgent.replace(/,/g," ")
-	public inline js float usedMemory := performance.memory.usedJSHeapSize
-		
-	protocalAndHost := host ? "https://"+host : "http://localhost"
-	
 	public Vector2 referenceSize = {1920, 1080}
 	public ScaleMode scaleMode = Auto, effectiveScaleMode
 	public AnchorMode anchor = Center
 	
-	private object canvas
-	internal object context
+	// Info
+	public inline js string url := location.href
+	public inline js string host := location.host
+	public protocalAndHost := host ? "https://"+host : "http://localhost"
+	
+	public inline js int appName := appName
+	public inline js int version := version
+	public inline js int userAgent := navigator.userAgent.replace(/,/g," ")
+	public inline js float usedMemory := performance.memory.usedJSHeapSize
+	
+	visible OperatingSystem os
+	visible bool isMobile
 	visible bool isDebug
 	visible bool isStaging
-	visible Vector2 pixelSize, size
+	
+	visible Vector2 pixelSize
+	visible Vector2 size
 	visible float pixelRatio
+	
+	// Internal
+	private object canvas
+	internal object context
 	internal Matrix2D baseMatrix
 	internal bool engineStarted
-	visible PlatformMode mode
+	internal PlatformMode mode
 	internal bool fastForward
-	visible bool isMobile = true
-	visible OperatingSystem os
-		
+	internal bool isWaitingForInitialData
+	
 	private inline js void initMedia
 		audio_init();
 		if(window.Image_init) Image_init();
@@ -187,7 +192,7 @@ transient skipInit unit Platform
 		}
 	
 	// This is called every animation frame
-	private tick()   if mode == Play or mode == Record: Network.animationFrame
+	private tick()   if mode == Play or mode == Record or isWaitingForInitialData: Network.animationFrame
 	
 	private enterSlideMode(PlatformMode mode) this.mode = mode; sendMode
 	
