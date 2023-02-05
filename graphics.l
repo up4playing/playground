@@ -927,7 +927,7 @@ transient global unit graphics
 				sizeX, sizeY,
 				layer, alpha, graphics_currentClippingPath, "Circle", 
 				location, position.location, size.location,
-				startAngle, anlge,
+				startAngle, angle,
 				direction == 1,
 				fillColor || !outlineColor ? (fillColor || graphics_currentColor).hex : null,
 				outlineColor ? outlineColor.hex : null,
