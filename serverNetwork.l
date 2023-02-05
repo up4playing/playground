@@ -116,12 +116,8 @@ transient unit ServerNetwork
 			PeerNetwork.makePrimiaryUserIfStateIsNotReceived
 			
 		// Send statistics after 20 seconds
-		Platform.setTimeout 30s
-			let prevIsCertain = Input.isCertain
-			Input.isCertain = true
-			statistics.send game:-1, round:-1
-			Input.isCertain = prevIsCertain
-		
+		Platform.setTimeout 30s: statistics.manuallyTriggerSend -1, clear:true
+
 		Network.log "Joining room {roomId} as user {userId}"
 		
 		// The first person in the room triggers sending an notification with the link to everybody

@@ -135,18 +135,39 @@ struct Vector2
 		return Math.getAngleForVector(value - this)
 
 	// Interpolates to another vector
-	interpolateTo: Vector2 target  // The target vector to interpolate to
-		           float value    // The interpolation value, 0 returns the original vector, 1 returns the target vector
+	interpolateTo: Vector2 target  // The target position to interpolate to
+		           float value     // The input value
 		let ivalue = 1 - value
 		return new Vector2(x * ivalue + target.x * value, y * ivalue + target.y * value)
 
 	// Interpolates to another vector
-	interpolateTo: Vector2 target  // The target vector to interpolate to
-		           float value    // The interpolation value, 0 returns the original vector, 1 returns the target vector
+	interpolateTo: Vector2 target  // The target position to interpolate to
+		           float value     // The input value
 		           EaseFunction ease
 		value = ease.function(value)
 		let ivalue = 1 - value
 		return new Vector2(x * ivalue + target.x * value, y * ivalue + target.y * value)
+
+	// Interpolates to another vector
+	interpolateTo: Vector2 target // The target position to interpolate to
+		           float value    // The input value
+		           float from     // The beginning of the input range
+		           float to       // The end of the input range
+		if value <= from: return this
+		if value >= to: return target
+		let factor = (value-from) / (to-from)
+		return new Vector2(x + (target.x-x)*factor, y + (target.y-y)*factor)
+
+	// Interpolates to another vector
+	interpolateTo: Vector2 target    // The target position to interpolate to
+		           float value       // The input value
+		           float from        // The beginning of the input range
+		           float to          // The end of the input range
+		           EaseFunction ease // The easing function to apply
+		if value <= from: return this
+		if value >= to: return target
+		let factor = ease.function((value-from) / (to-from))
+		return new Vector2(x + (target.x-x)*factor, y + (target.y-y)*factor)
 
 	// A vector that points in the same direction, but has a length of 1
 	normalized
@@ -517,6 +538,29 @@ unit Math
 		// Return a object with the x and y coordinates of the intersection
 		return new Vector2(x1 + ua * (x2 - x1), y1 + ua * (y2 - y1))
 	
+	// Maps a value from an input range to an output range
+	map: float value    // The input value 
+		 float from = 0 // The beginning of the input range
+		 float to = 1   // The end of the input range
+		 Vector2 start  // The start output position, will be returned for values smaller than "from".
+		 Vector2 target // The target output position, will be returned for values larger than "to".
+		if value <= from: return start
+		if value >= to:   return target
+		let factor = (value-from) / (to-from)
+		return start + (target-start) * factor
+			
+	// Maps a value from an input range to an output range
+	map: float value       // The input value 
+		 float from = 0    // The beginning of the input range
+		 float to = 1      // The end of the input range
+		 Vector2 start     // The start output position, will be returned for values smaller than "from".
+		 Vector2 target    // The target output position, will be returned for values larger than "to".
+		 EaseFunction ease // The easing function to apply
+		if value <= from: return start
+		if value >= to:   return target
+		let factor = (value-from) / (to-from)
+		return start + (target-start) * ease.function(factor)
+	
 global transient unit System
 	global inline js void forPositions: T[] subject                       // The list to iterate over
 		                                Vector2 start = {0,0}             // Left or top align items at this position
@@ -712,6 +756,8 @@ class Line
 
 class Rect
 	Vector2 position, size
+	bool contains: Vector2 position
+		return this.position-this.size/2 <=  position < this.position+this.size/2
 	
 class Grid<T>
 	IntVector2 size

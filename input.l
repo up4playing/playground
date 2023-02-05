@@ -31,6 +31,7 @@ transient class InternalUser
 	object recreateDataChannelInterval
 	string connectionType
 	bool offerByMe
+	bool receivedAnswer
 	int nextLostMessageAtFrame
 	
 	startInputFrame: int index
@@ -338,6 +339,7 @@ skipInit unit Input
 			else
 			if(ctrlOrCmd && key == "l") {
 				// Save logs
+				statistics_manuallyTriggerSend(-2, /*clear*/false);
 				Network_saveLogs();
 				e.preventDefault();
 			}
@@ -496,7 +498,7 @@ skipInit unit Input
 		
 	// Post lost messages and remove users if nobody disagrees
 	internal handleLost
-		if Network.mode != Connected or !lobby.inLobby: return
+		if Network.mode < Local or !lobby.inLobby: return
 		for users <- user
 			let internalUser = internalUsers[.id]
 				if user.lostAtFrame and Network.frame > user.lostAtFrame + Network.targetFps * 3
@@ -516,6 +518,9 @@ skipInit unit Input
 					inputs.writeInt16 cast InputType.Lost
 					inputs.writeInt16 user.id
 					internalUser.nextLostMessageAtFrame = Network.frame + Network.targetFps * 12
+					
+					// Send logfiles to server
+					Platform.setTimeout 7s: statistics.manuallyTriggerSend -3, clear:false
 	
 	private handleStillConnected: int userId
 		let inputs = localUser.inputs
@@ -761,11 +766,11 @@ skipInit unit Input
 							
 						// If we are still connected to that user, we disagree to their removal
 						// by posting the "StillConnected" message
-						if Network.frame < lostInternalUser.inputFrame + Network.targetFps * 5
-							Network.log "Lost {lostUserId} by {userId} -> We are still connected, sending StillConnected"
+						if lostInternalUser.dataChannel and Network.frame < lostInternalUser.inputFrame + Network.targetFps * 5
+							Network.log "Lost {lostUserId} by {userId} -> We are still connected, sending StillConnected", lostInternalUser.dataChannel, Network.frame, lostInternalUser.inputFrame, isCertain
 							handleStillConnected lostUserId
 						else
-							Network.log "Lost {lostUserId} by {userId} -> We also aren't connected"
+							Network.log "Lost {lostUserId} by {userId} -> We also aren't connected", lostInternalUser.dataChannel, Network.frame, lostInternalUser.inputFrame, isCertain
 					else
 						Network.log "Lost {lostUserId} by {userId} -> No internal user!"
 				else
@@ -874,7 +879,7 @@ skipInit unit Input
 					if !touch.handled && touch.referencePosition.isInsidePoygon(poly)
 						this.cursor = cursor
 				
-		if showTouchArea: drawRectangle position, size, fillColor:{"ff000080"}
+		if showTouchArea: drawRectangle position, size, fillColor:{"ff000080"}, layer:10000000
 
 	onTouchDownWithin: Vector2 position           // The center of the touch area
 		               Vector2 size               // The size of a rectangular touch area
@@ -1256,10 +1261,16 @@ skipInit unit Input
 		if Network.logging: Network.touchLog += " #{Network.frame}{isCertain ? " c" : ""} {text} {pos}"
 
 	// Do something when a user moves the mouse wheel
-	onWheel: void(WheelEvent event) do // Do this for each mouse wheel movement
-		for internalUsers -> user if .
-			for user.wheelEvents
-				do .
+	onWheel: int userId = -1
+		     void(WheelEvent event) do // Do this for each mouse wheel movement
+		if (Network.mode == Connected || Network.simulateConnection) && userId != -1
+			let user = internalUsers[userId]
+				for user.wheelEvents
+					do .
+		else
+			for internalUsers -> user if user
+				for user.wheelEvents
+					do .
 	
 	// Do something when a user moves the mouse wheel within a given rectangle
 	onWheelWithin: Vector2 position            // The center of the rectangle

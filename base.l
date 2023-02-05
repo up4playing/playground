@@ -980,7 +980,7 @@ class List<T>
 		      int to       // Return a new list up to (but not including) this index
 		return this.slice(from, to)
 	
-	js T get: int from = 0 // Return a new list starting from this index
+	js T get: int from // Return a new list starting from this index
 		return this.slice(from)
 	
 	js T set: int index // The index of the item to set
@@ -1352,7 +1352,7 @@ global transient unit System
 	// Display a message in the timeline
 	global js void watch: logstring text // The text, variables or expressions to watch
 		                  SourceCodeLocation location
-		if(Platform_isDebug && Network_frame >= Network_frameWithNewWatches) {
+		if(Platform_isDebug && Network_frame >= Network_frameWithNewWatches && location) {
 			Platform_sendWatch(Network_frame, text, location.start, location.file)
 		}
 	
@@ -1656,31 +1656,49 @@ global skipInit unit Math
 		   float min
 		if value < min: return min
 			            return value
-	
-	map: float value
-		 float fromStart = 0
-		 float fromEnd = 1
-		 float toStart = 0
-		 float toEnd = 1
-		if value < fromStart: return toStart
-		if value > fromEnd:   return toEnd
-			                  return toStart + (toEnd-toStart) * (value-fromStart)/(fromEnd-fromStart)
+			
+	// Maps a value from an input range to an output range
+	map: Time value        // The input value 
+		 Time from = 0     // The beginning of the input range
+		 Time to = 1       // The end of the input range
+		 float start = 0   // The lowest possible output value, will be returned for values smaller than "from".
+		 float target = 1  // The highest possible output value, will be returned for values larger than "to".
+		if value <= from: return start
+		if value >= to:   return target
+		let factor = (value-from) / (to-from)
+		return start + (target-start) * factor
+			
+	// Maps a value from an input range to an output range
+	map: float value       // The input value 
+		 float from = 0    // The beginning of the input range
+		 float to = 1      // The end of the input range
+		 float start = 0   // The lowest possible output value, will be returned for values smaller than "from".
+		 float target = 1  // The highest possible output value, will be returned for values larger than "to".
+		if value <= from: return start
+		if value >= to:   return target
+		let factor = (value-from) / (to-from)
+		return start + (target-start) * factor
+			
+	// Maps a value from an input range to an output range
+	map: float value       // The input value 
+		 float from = 0    // The beginning of the input range
+		 float to = 1      // The end of the input range
+		 float start = 0   // The lowest possible output value, will be returned for values smaller than "from".
+		 float target = 1  // The highest possible output value, will be returned for values larger than "to".
+		 EaseFunction ease // The easing function to apply
+		if value <= from: return start
+		if value >= to:   return target
+		let factor = ease.function((value-from) / (to-from))
+		return start + (target-start) * factor
 		
-	map: Time value
-		 Time fromStart = 0
-		 Time fromEnd = 1
-		 float toStart = 0
-		 float toEnd = 1
-		if value < fromStart: return toStart
-		if value > fromEnd:   return toEnd
-			                  return toStart + float(toEnd-toStart) * (value-fromStart)/(fromEnd-fromStart)
-		
-enum AngleUnit
-	turns // Turn (one full rotation is 1)
-	rad   // Radians (one full rotation is 2π)
-	deg   // Degrees (one full rotation is 360)
-	grad  // Gradiants (one full rotation is 400)
-	
+struct Average
+	float total
+	int count
+	add: float value
+		total += value
+		count++
+	average := total / count		
+
 transient float Angle
 	inline js float toFloat() this
 	inline js string toString() this.toString()
@@ -1725,6 +1743,12 @@ transient float Angle
 	inline js float in: AngleUnit unit
 		(unit==1 ? this*Math_TwoPI : unit==2 ? this*360 : unit==3 ? this*400 : this)
 		
+enum AngleUnit
+	turns // Turn (one full rotation is 1)
+	rad   // Radians (one full rotation is 2π)
+	deg   // Degrees (one full rotation is 360)
+	grad  // Gradiants (one full rotation is 400)
+		
 skipInit transient float Time
 	// The largest possible time value
 	const inline js Time maxValue := Number.MAX_VALUE
@@ -1734,6 +1758,8 @@ skipInit transient float Time
 	
 	// The number of milliseconds elapsed since January 1, 1970
 	static Time now
+	
+	static internal inline js float realTime := Date.now()
 
 	// The current frame
 	static inline js int frame := Network_frame
@@ -1970,7 +1996,7 @@ unit Loca
 	visible Language[] supportedLanguages = [English, German]
 	visible string[] defaultLocaleForLanguage = ["en-001", "de-DE", "es-ES", "fr-FR", "it-IT", "pt-PT", "ja-JP", "zh-Hans-CN", "ko-KR", "nl-NL", "tr-TR", "pl-PL", "ru-RU", "hi-IN", "ar-001", "bn-BD", "ur-IN", "id-ID"]
 	
-	Language language = English
+	Language language = German
 	string locale = defaultLocaleForLanguage[language]
 	
 	set: Language language, string locale = null

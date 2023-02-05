@@ -72,6 +72,7 @@ transient skipInit unit Platform
 		statistics_init();
 		Network_log("Loading...")
 		Platform_isMobile = false;
+		Platform_isBrowser = !window.require;
 		let platform = navigator.platform
 		Platform_os = platform.startsWith("Win") ? 0 : platform.startsWith("Mac") ? 1 : 2
 		if(/(android|bb\d+|meego).+mobile|avantgo|bada\/|blackberry|blazer|compal|elaine|fennec|hiptop|iemobile|ip(hone|od)|ipad|iris|kindle|Android|Silk|lge |maemo|midp|mmp|netfront|opera m(ob|in)i|palm( os)?|phone|p(ixi|re)\/|plucker|pocket|psp|series(4|6)0|symbian|treo|up\.(browser|link)|vodafone|wap|windows (ce|phone)|xda|xiino/i.test(navigator.userAgent) 
@@ -235,16 +236,16 @@ transient skipInit unit Platform
 		setLocalStorageObject("showDebugInfo", showDebugInfo ? "true" : "false")
 		
 	inline js void setFullscreen: value = true, forUser = -1
-		try   {
-			if(forUser == -1 || Input_localUser?.id == forUser) {
+		if(!Platform_isStaging && !Platform_isDebug && (forUser == -1 || Input_localUser?.id == forUser)) {
+			try {
 				if(value) {
-					if(!Platform_isStaging) document.body.requestFullscreen()
+					document.body.requestFullscreen()
 				} else {
 					document.exitFullscreen()
 				}
+			} catch {
 			}
-		} catch {
-		}
+		}	
 		
 	js void saveTextFile: string filename, string text
 		var element = document.createElement('a');
