@@ -431,10 +431,11 @@ unit File
 		})		
 		
 	js string write: string filename, string data, void() then = null
-		let fs = require("fs")
-		fs.writeFile(filename, data, "utf8", (err, data) => {
-			then?.()
-		})
+		if(Network_isPremiere && Input_isCertain) {
+			require("fs").writeFile(filename, data, "utf8", (err, data) => {
+				then?.()
+			})
+		}
 		
 	inline js bool exists: string filename
 		require("fs").existsSync(filename)
