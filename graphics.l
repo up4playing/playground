@@ -141,7 +141,7 @@ transient global unit graphics
 		
 	internal js void startFrame
 		graphics_reset()
-		if(!Platform_fastForward)
+		if(!Platform_fastForward && !Platform_isWaitingForInitialData)
 			if(!graphics_backgroundColor || graphics_backgroundColor.hex == "#000000") {
 				Platform_context.clearRect(0, 0, Platform_pixelSize.x, Platform_pixelSize.y)
 			} else {

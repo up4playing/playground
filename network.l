@@ -456,8 +456,8 @@ transient skipInit unit Network
 	// Clear screen, process application tick, and draw all graphics
 	// This is called in step.
 	internal tick: bool draw
+		graphics.startFrame
 		if draw and not Platform.isWaitingForInitialData
-			graphics.startFrame
 			let isPlayback = Platform.mode == Play or frame+1 < frames
 			if Input.showPointers or isPlayback
 				Input.users.each drawPointer .id, showLocalPointer:isPlayback or Input.showLocalPointer
