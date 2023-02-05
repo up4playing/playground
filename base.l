@@ -546,6 +546,9 @@ class List<T>
 	inline js T[] sort: Time(T a, T b) comparer // A function returning 1 if "a" is larger, -1 if "b" is larger, 0 if they are equal
 		this.sort(comparer)
 	
+	inline js T[] sort: Angle(T a, T b) comparer // A function returning 1 if "a" is larger, -1 if "b" is larger, 0 if they are equal
+		this.sort(comparer)
+	
 	// Sort the list by a given expression
 	T[] orderBy: float(T a) expression // First order by this expression
 		return this.sort(expression(a) - expression(b))
@@ -555,6 +558,9 @@ class List<T>
 		return this.sort(expression(a) - expression(b) || thenBy(a) - thenBy(b))
 		
 	T[] orderBy: Time(T a) expression // First order by this expression
+		return this.sort(expression(a) - expression(b))
+		
+	T[] orderBy: Angle(T a) expression // First order by this expression
 		return this.sort(expression(a) - expression(b))
 		
 	T[] orderBy: string(T a) expression // First order by this expression
