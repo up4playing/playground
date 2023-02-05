@@ -36,11 +36,17 @@ struct int
 	inline js int shiftRight: int count
 		(this >> count)
 		
-	inline js int bitwiseOr: int value
+	inline js int bitwiseOr: implicit int value
 		(this | value)
 	
-	inline js int bitwiseAnd: int value
+	inline js int bitwiseAnd: implicit int value
 		(this & value)
+	
+	inline js int setBit: implicit int value
+		(this |= value)
+	
+	inline js int unsetBit: implicit int value
+		(this &= ~value)
 	
 	inline js int limit: int min
 		                 int max
@@ -66,6 +72,10 @@ struct int
 		
 	inline js int incrementUpToExclusive: int max
 		(this < max-1 ? ++this : max-1)
+		
+	inline js int incrementBy: int value
+		                       int upTo
+		(this+value < upTo ? (this += value) : upTo)
 		
 	inline js int decrementDownTo: int min
 		(this > min ? --this : min)
@@ -159,6 +169,10 @@ struct float
 		                           float value
 		                           EaseFunction ease
 		(this + (target - this)*ease.function.invoke(value))
+		
+	inline js float incrementBy: float value
+		                         float max
+		(this+value < max ? (this += value) : max)
 		
 	// ------------------------------------------- Time -------------------------------------------
 	
@@ -1648,24 +1662,40 @@ global skipInit unit Math
 		   float min
 		if value < min: return min
 			            return value
-	
-	map: float value
-		 float fromStart = 0
-		 float fromEnd = 1
-		 float toStart = 0
-		 float toEnd = 1
-		if value < fromStart: return toStart
-		if value > fromEnd:   return toEnd
-			                  return toStart + (toEnd-toStart) * (value-fromStart)/(fromEnd-fromStart)
-		
-	map: Time value
-		 Time fromStart = 0
-		 Time fromEnd = 1
-		 float toStart = 0
-		 float toEnd = 1
-		if value < fromStart: return toStart
-		if value > fromEnd:   return toEnd
-			                  return toStart + float(toEnd-toStart) * (value-fromStart)/(fromEnd-fromStart)
+			
+	// Maps a value from an input range to an output range
+	map: Time value        // The input value 
+		 Time from = 0     // The beginning of the input range
+		 Time to = 1       // The end of the input range
+		 float start = 0   // The lowest possible output value, will be returned for values smaller than "from".
+		 float target = 1  // The highest possible output value, will be returned for values larger than "to".
+		if value <= from: return start
+		if value >= to:   return target
+		let factor = (value-from) / (to-from)
+		return start + (target-start) * factor
+			
+	// Maps a value from an input range to an output range
+	map: float value       // The input value 
+		 float from = 0    // The beginning of the input range
+		 float to = 1      // The end of the input range
+		 float start = 0   // The lowest possible output value, will be returned for values smaller than "from".
+		 float target = 1  // The highest possible output value, will be returned for values larger than "to".
+		if value <= from: return start
+		if value >= to:   return target
+		let factor = (value-from) / (to-from)
+		return start + (target-start) * factor
+			
+	// Maps a value from an input range to an output range
+	map: float value       // The input value 
+		 float from = 0    // The beginning of the input range
+		 float to = 1      // The end of the input range
+		 float start = 0   // The lowest possible output value, will be returned for values smaller than "from".
+		 float target = 1  // The highest possible output value, will be returned for values larger than "to".
+		 EaseFunction ease // The easing function to apply
+		if value <= from: return start
+		if value >= to:   return target
+		let factor = ease.function((value-from) / (to-from))
+		return start + (target-start) * factor
 		
 struct Average
 	float total
@@ -1769,9 +1799,38 @@ skipInit transient float Time
 	inline js int minutes      := Math.floor((this % 3600000) /   60000) 
 	inline js int hours        := Math.floor((this          ) / 3600000)
 		
-	inline js string minutesAndSeconds := (Math.floor((this % 3600000) / 60000) + (this % 60000 < 10000 ? ":0":":") + Math.floor((this % 60000) / 1000))
+	// (31.12.)
+	inline js string dayMonthString(language = Loca.language) new Date(this).dayMonthString(language)
+		
+	// (31.12.2000)
+	inline js string dayMonthYearString(language = Loca.language) new Date(this).dayMonthYearString(language)
 	
-	inline js string dayMonthYearHourMinuteString() new Date(this).dayMonthYearHourMinuteString()
+	// (31 December 2000)
+	inline js string dayLongMonthNameYearString(language = Loca.language) new Date(this).dayLongMonthNameYearString(language)
+	
+	// (31 Dec 2000)
+	inline js string dayShortMonthNameYearString(language = Loca.language) new Date(this).dayShortMonthNameYearString(language)
+	
+	// (Monday)
+	inline js string weekdayString(language = Loca.language) new Date(this).weekdayString(language)
+	
+	// (23:59)
+	inline js string hourMinuteString(language = Loca.language) new Date(this).hourMinuteString(language)
+	
+ 	// (59:59)
+	inline js string minuteSecondString() (Math.floor((this % 3600000) / 60000) + (this % 60000 < 10000 ? ":0":":") + Math.floor((this % 60000) / 1000))
+	
+	// (23:59:59)
+	inline js string hourMinuteSecondString(language = Loca.language) new Date(this).hourMinuteSecondString(language)
+	
+	// (31.12.2000 23:59)
+	inline js string dayMonthYearHourMinuteString(language = Loca.language) new Date(this).dayMonthYearHourMinuteString(language)
+	
+	// (31.12.2000 23:59:59)
+	inline js string dayMonthYearHourMinuteSecondString(language = Loca.language) new Date(this).dayMonthYearHourMinuteSecondString(language)
+	
+	// (31-12-2000 23-59-59)
+	inline js string invariantDayMonthYearHourMinuteSecondString() new Date(this).invariantDayMonthYearHourMinuteSecondString()
 			
 	inline js Time  operator +  (Time a, Time b) a+b
 	inline js Time  operator +  (Time a, int b) a+b
@@ -1845,6 +1904,10 @@ transient struct Date
 	
 	private static string toTwoDigitString: int value
 		return value < 10 ? "0"+value.toString : value.toString
+	
+	// (31.12.)
+	js string dayMonthString: language = Loca.language
+		return this.getDate().toLocaleString('en-US', {minimumIntegerDigits:2})+"."+(this.getMonth()+1).toLocaleString('en-US', {minimumIntegerDigits:2})+"."
 	
 	// (31.12.2000)
 	js string dayMonthYearString: language = Loca.language
@@ -1939,7 +2002,7 @@ unit Loca
 	visible Language[] supportedLanguages = [English, German]
 	visible string[] defaultLocaleForLanguage = ["en-001", "de-DE", "es-ES", "fr-FR", "it-IT", "pt-PT", "ja-JP", "zh-Hans-CN", "ko-KR", "nl-NL", "tr-TR", "pl-PL", "ru-RU", "hi-IN", "ar-001", "bn-BD", "ur-IN", "id-ID"]
 	
-	Language language = English
+	Language language = German
 	string locale = defaultLocaleForLanguage[language]
 	
 	set: Language language, string locale = null
