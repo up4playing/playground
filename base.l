@@ -115,6 +115,8 @@ struct float
 	inline js float remainder: float value
 		(this % value)
 		
+	inline js int toInt := Math.floor(this)
+		
 	// Returns true if the floot is not zero
 	inline js bool toBool := this
 	
