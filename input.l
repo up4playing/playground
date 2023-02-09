@@ -49,20 +49,23 @@ transient class InternalUser
 		upKeys.clear
 		pressedKeys.clear
 		navigations.clear
-	
+		
 // The public state of a user. This is the same accross all clients.
 class NetworkUser
 	int id
 	int index
 	Color color = null
 	bool isReady
-	string textInput
 	
-	// Touch
+	// Touch input
 	visible Touch[] touches
 	bool enableTouch = true
 	
-	// Controller
+	// Text input
+	string textInput
+	Key[] keysCurrentlyDown
+	
+	// Controller input
 	visible GameController controller = {}
 	Key[] mapKeyToController = [Right, Down, Left, Up, Space, X, Alt, Ctrl]
 	int[] controllerKeyDownFrame = [0, 0, 0, 0, 0, 0]
@@ -312,7 +315,7 @@ skipInit unit Input
 			e.preventDefault();
 			e.stopPropagation();
 			if(e.button == 0 && Platform_mode == 0) Platform_record();
-			Input_handleWheelEvent(e.pageX, e.pageY, e.deltaX, e.deltaY)
+			Input_handleWheelEvent(e.pageX, e.pageY, -e.deltaX, -e.deltaY)
 			return false;			
 		}
 		window.onkeydown = e => {
@@ -336,6 +339,7 @@ skipInit unit Input
 			else
 			if(ctrlOrCmd && key == "l") {
 				// Save logs
+				statistics_manuallyTriggerSend(-2, /*clear*/false);
 				Network_saveLogs();
 				e.preventDefault();
 			}
@@ -428,7 +432,7 @@ skipInit unit Input
 		
 	internal handleTouchEvent: InputType inputType, float x, float y, string pointerType, int pointerId, int button, shift = false, alt = false, cmdOrCtrl = false
 		int touchType, id
-		if pointerType == "mouse": touchType = button.limit(min:0, max:2); else
+		if pointerType == "mouse": touchType = button.limit(0..2); else
 		if pointerType == "touch": touchType = 3; id = pointerId; else
 			                       touchType = 4
 		
@@ -514,6 +518,9 @@ skipInit unit Input
 					inputs.writeInt16 cast InputType.Lost
 					inputs.writeInt16 user.id
 					internalUser.nextLostMessageAtFrame = Network.frame + Network.targetFps * 12
+					
+					// Send logfiles to server
+					Platform.setTimeout 7s: statistics.manuallyTriggerSend -3, clear:false
 	
 	private handleStillConnected: int userId
 		let inputs = localUser.inputs
@@ -697,14 +704,15 @@ skipInit unit Input
 					Key key = cast inputs.readInt32
 					let keyPressed = inputs.readString
 					internalUser.downKeys.add key
+					user.keysCurrentlyDown.ensure key
 					if keyPressed: internalUser.pressedKeys.add keyPressed
 					let keyIndex = user.mapKeyToController.indexOf(key)
 					if keyIndex != -1: user.controllerKeyDownFrame[keyIndex] = frame
-					
 				else
 				if inputType == KeyUp
 					Key key = cast inputs.readInt32
 					internalUser.upKeys.add key
+					user.keysCurrentlyDown.remove key
 					let keyIndex = user.mapKeyToController.indexOf(key)
 					if keyIndex != -1: user.controllerKeyDownFrame[keyIndex] = 0
 				else
@@ -758,11 +766,11 @@ skipInit unit Input
 							
 						// If we are still connected to that user, we disagree to their removal
 						// by posting the "StillConnected" message
-						if Network.frame < lostInternalUser.inputFrame + Network.targetFps * 5
-							Network.log "Lost {lostUserId} by {userId} -> We are still connected, sending StillConnected"
+						if lostInternalUser.dataChannel and Network.frame < lostInternalUser.inputFrame + Network.targetFps * 5
+							Network.log "Lost {lostUserId} by {userId} -> We are still connected, sending StillConnected", lostInternalUser.dataChannel, Network.frame, lostInternalUser.inputFrame, isCertain
 							handleStillConnected lostUserId
 						else
-							Network.log "Lost {lostUserId} by {userId} -> We also aren't connected"
+							Network.log "Lost {lostUserId} by {userId} -> We also aren't connected", lostInternalUser.dataChannel, Network.frame, lostInternalUser.inputFrame, isCertain
 					else
 						Network.log "Lost {lostUserId} by {userId} -> No internal user!"
 				else
@@ -786,6 +794,7 @@ skipInit unit Input
 					string value = inputs.readString
 					if Network.logging: Network.parseLog += " string {id}: {value}"
 					networkData.call id, value
+					Platform.isWaitingForInitialData = false
 				else
 				if inputType == Json
 					int id = inputs.readInt
@@ -793,6 +802,7 @@ skipInit unit Input
 					if Network.logging: Network.parseLog += " json {id}: {value}"
 					dynamic object = Json.parse value
 					networkData.call id, object
+					Platform.isWaitingForInitialData = false
 				else
 				if inputType == Object
 					int id = inputs.readInt
@@ -800,6 +810,7 @@ skipInit unit Input
 					if Network.logging: Network.parseLog += " object {id}: {value}"
 					dynamic object = Json.parse value
 					networkData.call id, object
+					Platform.isWaitingForInitialData = false
 	
 		for users
 			let internalUser = internalUsers[.id]
@@ -817,12 +828,22 @@ skipInit unit Input
 				.controller.inMotion = Math.abs(.controller.leftStick.x) >= GameController.deadZone
 				                    or Math.abs(.controller.leftStick.y) >= GameController.deadZone
 						
-	updateUserIndices
+	private updateUserIndices
 		users.orderBy.id
 		for users
 			.index = i
 			internalUsers[.id].index = i
-				
+		
+	// Returns true if given key is currently held down
+	isKeyDown: Key key         // The key to check
+		       int userId = -1 // Only consider key presses by this user 
+		if (Network.mode == Connected || Network.simulateConnection) && userId != -1
+			let user = usersById[userId]
+				return user.keysCurrentlyDown.contains key
+		else
+			return users.any.keysCurrentlyDown.contains key
+		return false
+		
 	// Do something when the user touches or clicks within a given area
 	onTouchDownWithin: Vector2 position = {}      // The center of the touch area
 		               Vector2 size               // The size of a rectangular touch area
@@ -830,13 +851,21 @@ skipInit unit Input
 		               string cursor = ""         // Change the mouse cursor image when hovering over this area
 		               bool showTouchArea = false // Draw a red rectangle to visualize that area to touch
 		               bool markAsHandled = true  // Mark the touch as handled so it won't trigger more touch events
+		               HorizontalAlignment align = Center // The horizontal alignment of the touch area
+		               VerticalAlignment valign = Middle  // The vertical alignment of the touch area
 		               void(Touch touch) do       // Do this for each touch or click
+		
+		let sizeX = size.x
+		let sizeY = size.y || size.x
+		let x = align == Left ? position.x : align  == Center ? position.x-sizeX/2 : position.x-sizeX
+		let y = valign == Top ? position.y : valign == Middle ? position.y-sizeY/2 : position.y-sizeY
 		Vector2[] poly = [
-			{ position.x-size.x/2, position.y-size.y/2 }.transform(graphics.localMatrix),
-			{ position.x+size.x/2, position.y-size.y/2 }.transform(graphics.localMatrix),
-			{ position.x+size.x/2, position.y+size.y/2 }.transform(graphics.localMatrix),
-			{ position.x-size.x/2, position.y+size.y/2 }.transform(graphics.localMatrix),
+			{ x,         y         }.transform(graphics.localMatrix),
+			{ x + sizeX, y         }.transform(graphics.localMatrix),
+			{ x + sizeX, y + sizeY }.transform(graphics.localMatrix),
+			{ x,         y + sizeY }.transform(graphics.localMatrix),
 		]
+		
 		if (Network.mode == Connected || Network.simulateConnection) && userId != -1
 			let user = usersById[userId]
 				for internalUsers[userId].downTouches -> touch
@@ -858,7 +887,7 @@ skipInit unit Input
 					if !touch.handled && touch.referencePosition.isInsidePoygon(poly)
 						this.cursor = cursor
 				
-		if showTouchArea: drawRectangle position, size, fillColor:{"ff000080"}, layer:10000000
+		if showTouchArea: drawRectangle position, size, fillColor:{"ff000080"}, align, valign, layer:10000000
 
 	onTouchDownWithin: Vector2 position           // The center of the touch area
 		               Vector2 size               // The size of a rectangular touch area
@@ -866,13 +895,20 @@ skipInit unit Input
 		               string cursor = ""         // Change the mouse cursor image when hovering over this area
 		               bool showTouchArea = false // Draw a red rectangle to visualize that area to touch
 		               bool markAsHandled = true  // Mark the touch as handled so it won't trigger more touch events
+		               HorizontalAlignment align = Center // The horizontal alignment of the touch area
+		               VerticalAlignment valign = Middle  // The vertical alignment of the touch area
 		               void(Touch touch) do       // Do this for each touch or click
+		let sizeX = size.x
+		let sizeY = size.y || size.x
+		let x = align == Left ? position.x : align  == Center ? position.x-sizeX/2 : position.x-sizeX
+		let y = valign == Top ? position.y : valign == Middle ? position.y-sizeY/2 : position.y-sizeY
 		Vector2[] poly = [
-			{ position.x-size.x/2, position.y-size.y/2 }.transform(graphics.localMatrix),
-			{ position.x+size.x/2, position.y-size.y/2 }.transform(graphics.localMatrix),
-			{ position.x+size.x/2, position.y+size.y/2 }.transform(graphics.localMatrix),
-			{ position.x-size.x/2, position.y+size.y/2 }.transform(graphics.localMatrix),
+			{ x,         y         }.transform(graphics.localMatrix),
+			{ x + sizeX, y         }.transform(graphics.localMatrix),
+			{ x + sizeX, y + sizeY }.transform(graphics.localMatrix),
+			{ x,         y + sizeY }.transform(graphics.localMatrix),
 		]
+		
 		if not (Network.mode == Connected || Network.simulateConnection)
 			userId = null
 			
@@ -888,7 +924,7 @@ skipInit unit Input
 				if !touch.handled && touch.referencePosition.isInsidePoygon(poly)
 					this.cursor = cursor
 				
-		if showTouchArea: drawRectangle position, size, fillColor:{"ff000080"}
+		if showTouchArea: drawRectangle position, size, fillColor:{"ff000080"}, align, valign, layer:10000000
 
 	// Do something when the user touches or clicks within a given area
 	onTouchDownWithin: Vector2 position           // The center of the touch area
@@ -898,13 +934,20 @@ skipInit unit Input
 		               string cursor = ""         // Change the mouse cursor image when hovering over this area
 		               bool showTouchArea = false // Draw a red rectangle to visualize that area to touch
 		               bool markAsHandled = true  // Mark the touch as handled so it won't trigger more touch events
+		               HorizontalAlignment align = Center // The horizontal alignment of the touch area
+		               VerticalAlignment valign = Middle  // The vertical alignment of the touch area
 		               void(Touch touch) do       // Do this for each touch or click
+		let sizeX = size.x
+		let sizeY = size.y || size.x
+		let x = align == Left ? position.x : align  == Center ? position.x-sizeX/2 : position.x-sizeX
+		let y = valign == Top ? position.y : valign == Middle ? position.y-sizeY/2 : position.y-sizeY
 		Vector2[] poly = [
-			(position + Vector2( -size.x/2, -size.y/2 ).rotate(angle)).transform(graphics.localMatrix),
-			(position + Vector2( +size.x/2, -size.y/2 ).rotate(angle)).transform(graphics.localMatrix),
-			(position + Vector2( +size.x/2, +size.y/2 ).rotate(angle)).transform(graphics.localMatrix),
-			(position + Vector2( -size.x/2, +size.y/2 ).rotate(angle)).transform(graphics.localMatrix),
+			{ x,         y         }.rotate(angle).transform(graphics.localMatrix),
+			{ x + sizeX, y         }.rotate(angle).transform(graphics.localMatrix),
+			{ x + sizeX, y + sizeY }.rotate(angle).transform(graphics.localMatrix),
+			{ x,         y + sizeY }.rotate(angle).transform(graphics.localMatrix),
 		]
+		
 		if (Network.mode == Connected || Network.simulateConnection) && userId != -1
 			let user = usersById[userId]
 				for internalUsers[userId].downTouches -> touch
@@ -926,7 +969,7 @@ skipInit unit Input
 					if !touch.handled && touch.referencePosition.isInsidePoygon(poly)
 						this.cursor = cursor
 				
-		if showTouchArea: drawRectangle position, size, fillColor:{"ff000080"}
+		if showTouchArea: drawRectangle position, size, fillColor:{"ff000080"}, align, valign, layer:10000000
 
 	onTouchDownWithin: Vector2 position           // The center of the touch area
 		               Vector2 size               // The size of a rectangular touch area
@@ -935,13 +978,20 @@ skipInit unit Input
 		               string cursor = ""         // Change the mouse cursor image when hovering over this area
 		               bool showTouchArea = false // Draw a red rectangle to visualize that area to touch
 		               bool markAsHandled = true  // Mark the touch as handled so it won't trigger more touch events
+		               HorizontalAlignment align = Center // The horizontal alignment of the touch area
+		               VerticalAlignment valign = Middle  // The vertical alignment of the touch area
 		               void(Touch touch) do       // Do this for each touch or click
+		let sizeX = size.x
+		let sizeY = size.y || size.x
+		let x = align == Left ? position.x : align  == Center ? position.x-sizeX/2 : position.x-sizeX
+		let y = valign == Top ? position.y : valign == Middle ? position.y-sizeY/2 : position.y-sizeY
 		Vector2[] poly = [
-			(position + Vector2( -size.x/2, -size.y/2 ).rotate(angle)).transform(graphics.localMatrix),
-			(position + Vector2( +size.x/2, -size.y/2 ).rotate(angle)).transform(graphics.localMatrix),
-			(position + Vector2( +size.x/2, +size.y/2 ).rotate(angle)).transform(graphics.localMatrix),
-			(position + Vector2( -size.x/2, +size.y/2 ).rotate(angle)).transform(graphics.localMatrix),
+			{ x,         y         }.rotate(angle).transform(graphics.localMatrix),
+			{ x + sizeX, y         }.rotate(angle).transform(graphics.localMatrix),
+			{ x + sizeX, y + sizeY }.rotate(angle).transform(graphics.localMatrix),
+			{ x,         y + sizeY }.rotate(angle).transform(graphics.localMatrix),
 		]
+		
 		if not (Network.mode == Connected || Network.simulateConnection)
 			userId = null
 			
@@ -958,7 +1008,7 @@ skipInit unit Input
 					if !touch.handled && touch.referencePosition.isInsidePoygon(poly)
 						this.cursor = cursor
 				
-		if showTouchArea: drawRectangle position, size, fillColor:{"ff000080"}
+		if showTouchArea: drawRectangle position, size, fillColor:{"ff000080"}, align, valign, layer:10000000
 
 	// Do something when the user touches or clicks within a given circle
 	onTouchDownWithin: Vector2 position           // The center of the touch area
@@ -1180,11 +1230,17 @@ skipInit unit Input
 						do touch
 			
 	// Do something when a touch or click moves
-	onTouchMove: Touch touch          // Only do this if this particular touch or click moves
-		         void(Touch touch) do // Do this for each touch or click
+	onTouchMove: Touch touch                 // Only do this if this particular touch or click moves
+		         triggeredOnTouchDown = true // Also trigger this event right after the user touches or clicks before moving
+		         void(Touch touch) do        // Do this for each touch or click
 		if !touch: return
 		let touchId = touch.id
 		let user = internalUsers[touch.userId]
+			if triggeredOnTouchDown
+				for user.downTouches
+					if .id == touchId
+						log "down triggers move", .referencePosition
+						do .
 			for user.movingTouches
 				if .id == touchId
 					log "move", .referencePosition
@@ -1204,9 +1260,9 @@ skipInit unit Input
 					log "move", t.referencePosition
 					do t
 					
-	onTouchUp: Touch touch               // Only do this if this particular touch or click ended
-		       bool markAsHandled = true // Mark the touch as handled so it won't trigger more touch events
-		       void(Touch touch) do      // Do this for each touch or click
+	onTouchUp: Touch touch          // Only do this if this particular touch or click ended
+		       markAsHandled = true // Mark the touch as handled so it won't trigger more touch events
+		       void(Touch touch) do // Do this for each touch or click
 		if !touch: return
 		let touchId = touch.id
 		let user = internalUsers[touch.userId]
@@ -1240,10 +1296,16 @@ skipInit unit Input
 		if Network.logging: Network.touchLog += " #{Network.frame}{isCertain ? " c" : ""} {text} {pos}"
 
 	// Do something when a user moves the mouse wheel
-	onWheel: void(WheelEvent event) do // Do this for each mouse wheel movement
-		for internalUsers -> user if .
-			for user.wheelEvents
-				do .
+	onWheel: int userId = -1
+		     void(WheelEvent event) do // Do this for each mouse wheel movement
+		if (Network.mode == Connected || Network.simulateConnection) && userId != -1
+			let user = internalUsers[userId]
+				for user.wheelEvents
+					do .
+		else
+			for internalUsers -> user if user
+				for user.wheelEvents
+					do .
 	
 	// Do something when a user moves the mouse wheel within a given rectangle
 	onWheelWithin: Vector2 position            // The center of the rectangle

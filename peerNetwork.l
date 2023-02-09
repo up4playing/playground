@@ -61,7 +61,13 @@ transient unit PeerNetwork
 		Network_log("setupPeerConnection userId:"+user.id+" connectionId:"+connectionId+" relayMode:"+PeerNetwork_relayMode)
 		
 		// Event handlers
-		peerConnection.oniceconnectionstatechange = e => Network_log("oniceconnectionstatechange " + peerConnection.iceConnectionState)
+		peerConnection.oniceconnectionstatechange = e => {
+			Network_log("oniceconnectionstatechange " + peerConnection.iceConnectionState)
+			if(peerConnection.iceConnectionState == "disconnected") {
+				// Send logfiles to server
+				setTimeout(() => statistics_manuallyTriggerSend(-5, /*clear*/false), 7000);
+			}
+		}
 		peerConnection.onicecandidate = async event => {
 			if (event.candidate)
 				ServerNetwork_sendIce(user.id, JSON.stringify(event.candidate))
@@ -103,6 +109,8 @@ transient unit PeerNetwork
 				Network_log("setupDataChannel: Start recreating interval for "+user.id)
 				user.recreateDataChannelInterval = setInterval(() => PeerNetwork_setupDataChannel(user), 2000)
 			}
+			// Send logfiles to server
+			setTimeout(() => statistics_manuallyTriggerSend(-4, /*clear*/false), 7000);
 		}
 		dataChannel.onerror = e => Network_log("DataChannel "+user.id+"error "+e)
 		dataChannel.onmessage = e => PeerNetwork_onMessage(user, new Buffer(e.data, 0, 0, 0))

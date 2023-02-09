@@ -308,7 +308,7 @@ transient skipInit unit Network
 				aheads.add ahead, maxLength:400
 				aheadMax = aheads.percentile(50)
 				aheadsMax.add aheadMax maxLength:400
-				int actualBufferFrames = Math.ceil(aheadsMax.average * 1.25) limit max:30
+				int actualBufferFrames = Math.ceil(aheadsMax.average * 1.25) max 30
 				
 				// We only update bufferFrames if the new value is smaller or at least 2 larger
 				if actualBufferFrames < bufferFrames or actualBufferFrames > bufferFrames+1: bufferFrames = actualBufferFrames
@@ -316,7 +316,7 @@ transient skipInit unit Network
 				aheads.add ahead, maxLength:200
 				aheadMax = aheads.percentile(50)
 				aheadsMax.add aheadMax maxLength:30
-				bufferFrames = Math.round(aheadsMax.average * 2.0) limit max:30
+				bufferFrames = Math.round(aheadsMax.average * 2.0) max 30
 			
 			Input.localUser.bufferFrames = bufferFrames
 			
@@ -394,6 +394,9 @@ transient skipInit unit Network
 			bool isCertain = frame <= certainFrame
 			isSmooth = mode == Local or frame <= frameMinusBuffer
 			
+			// Send current frame to editor	
+			if Platform.isDebug and !fastForward and (Platform.mode == Record or Platform.mode == Play or Platform.isWaitingForInitialData): Platform.sendFrame(frame, Math.max(frame+1, frames))
+			
 			// Log
 			if logging
 				parseLog += " #{frame} (fmb{frameMinusBuffer})"
@@ -445,18 +448,16 @@ transient skipInit unit Network
 			.clearEvent
 		Input.users.each.clearEvents
 		
-		// Send current frame to editor	
-		if frames < frame+1: frames = frame+1
-		if frameWithNewWatches < frame+1: frameWithNewWatches = frame+1
-		if Platform.isDebug and !fastForward and (Platform.mode == Record or Platform.mode == Play): Platform.sendFrame(frame, frames)
-		
+		// Advance frame
 		frame++
+		if frames < frame: frames = frame
+		if frameWithNewWatches < frame: frameWithNewWatches = frame
 		
 	// Clear screen, process application tick, and draw all graphics
 	// This is called in step.
 	internal tick: bool draw
 		graphics.startFrame
-		if draw
+		if draw and not Platform.isWaitingForInitialData
 			let isPlayback = Platform.mode == Play or frame+1 < frames
 			if Input.showPointers or isPlayback
 				Input.users.each drawPointer .id, showLocalPointer:isPlayback or Input.showLocalPointer
@@ -472,7 +473,7 @@ transient skipInit unit Network
 		catch
 			onError error
 			
-		if draw
+		if draw and not Platform.isWaitingForInitialData
 			if Platform.showDebugInfo
 				statistics.draw
 				if errorMessage
@@ -543,7 +544,7 @@ transient skipInit unit Network
 		statistics_log += str + "\n"
 		if(Network_logging) {
 			Network_eventLog += str + "\n"
-			log(str)
+			console.log(str)
 		}
 		
 	inline js int currentTime := Date.now()
@@ -712,7 +713,7 @@ skipInit transient unit statistics
 		serverPings.clear
 		log = ""
 	
-	send: dynamic data = null, int game = 0, int round = 0, int step = 0
+	send: dynamic data = null, int game = 0, int round = 0, int step = 0, bool clear = true
 		if not Input.isCertain or Platform.isDebug: return
 		print "sending statistics", round
 		let userName = localStorage.getStringDirectly("play-userId")
@@ -751,7 +752,13 @@ skipInit transient unit statistics
 			log
 			data
 		}
-		clear
+		if clear: this.clear
+			
+	internal manuallyTriggerSend: int value, bool clear
+		let prevIsCertain = Input.isCertain
+		Input.isCertain = true
+		statistics.send round:value game:value clear
+		Input.isCertain = prevIsCertain
 			
 	internal float maxValue
 	
