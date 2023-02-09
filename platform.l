@@ -42,6 +42,7 @@ transient skipInit unit Platform
 	visible OperatingSystem os
 	visible bool isMobile
 	visible bool isDebug
+	visible bool isBrowser
 	public bool isStaging
 	
 	visible Vector2 pixelSize
