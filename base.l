@@ -48,15 +48,21 @@ struct int
 	inline js int unsetBit: implicit int value
 		(this &= ~value)
 	
-	inline js int limit: int min
-		                 int max
-		(this < min ? min : this > max ? max : this)
+	inline js int limit: int from
+		                 int to
+		(this < from ? from : this > to ? to : this)
 		
-	inline js int limit: int max
-		(this > max ? max : this)
+	inline js int limit: int to
+		(this > to ? to : this)
 	
-	inline js int limit: int min
-		(this < min ? min : this)
+	inline js int limit: int from
+		(this < from ? from : this)
+	
+	inline js int max: int value
+		(this > value ? value : this)
+	
+	inline js int min: int value
+		(this < value ? value : this)
 	
 	inline js int setIfLarger: int newValue
 		(this = Math.max(newValue, this))
@@ -139,15 +145,21 @@ struct float
 	inline js int round
 		Math.round(this)
 		
-	inline js float limit: float min
-		                   float max
-		(this < min ? min : this > max ? max : this)
+	inline js float limit: float from
+		                   float to
+		(this < from ? from : this > to ? to : this)
 		
-	inline js float limit: float max
-		(this > max ? max : this)
+	inline js float limit: float to
+		(this > to ? to : this)
 	
-	inline js float limit: float min
-		(this < min ? min : this)
+	inline js float limit: float from
+		(this < from ? from : this)
+	
+	inline js float max: float value
+		(this > value ? value : this)
+	
+	inline js float min: float value
+		(this < value ? value : this)
 	
 	inline js bool isApproximately: float value
 		                            float epsilon = 0.00001
@@ -1149,7 +1161,7 @@ global transient unit System
 		for(;;) do()
 	
 	global inline js void do: void() do                   // Do this while to condition is true
-		                      nolabel implicit bool while // The condition to check
+		                      nocolon implicit bool while // The condition to check
 		@do do() 
 		@while(while)
 	

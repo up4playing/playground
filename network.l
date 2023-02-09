@@ -308,7 +308,7 @@ transient skipInit unit Network
 				aheads.add ahead, maxLength:400
 				aheadMax = aheads.percentile(50)
 				aheadsMax.add aheadMax maxLength:400
-				int actualBufferFrames = Math.ceil(aheadsMax.average * 1.25) limit max:30
+				int actualBufferFrames = Math.ceil(aheadsMax.average * 1.25) max 30
 				
 				// We only update bufferFrames if the new value is smaller or at least 2 larger
 				if actualBufferFrames < bufferFrames or actualBufferFrames > bufferFrames+1: bufferFrames = actualBufferFrames
@@ -316,7 +316,7 @@ transient skipInit unit Network
 				aheads.add ahead, maxLength:200
 				aheadMax = aheads.percentile(50)
 				aheadsMax.add aheadMax maxLength:30
-				bufferFrames = Math.round(aheadsMax.average * 2.0) limit max:30
+				bufferFrames = Math.round(aheadsMax.average * 2.0) max 30
 			
 			Input.localUser.bufferFrames = bufferFrames
 			

@@ -432,7 +432,7 @@ skipInit unit Input
 		
 	internal handleTouchEvent: InputType inputType, float x, float y, string pointerType, int pointerId, int button, shift = false, alt = false, cmdOrCtrl = false
 		int touchType, id
-		if pointerType == "mouse": touchType = button.limit(min:0, max:2); else
+		if pointerType == "mouse": touchType = button.limit(0..2); else
 		if pointerType == "touch": touchType = 3; id = pointerId; else
 			                       touchType = 4
 		
