@@ -1184,11 +1184,17 @@ skipInit unit Input
 						do touch
 			
 	// Do something when a touch or click moves
-	onTouchMove: Touch touch          // Only do this if this particular touch or click moves
-		         void(Touch touch) do // Do this for each touch or click
+	onTouchMove: Touch touch                 // Only do this if this particular touch or click moves
+		         triggeredOnTouchDown = true // Also trigger this event right after the user touches or clicks before moving
+		         void(Touch touch) do        // Do this for each touch or click
 		if !touch: return
 		let touchId = touch.id
 		let user = internalUsers[touch.userId]
+			if triggeredOnTouchDown
+				for user.downTouches
+					if .id == touchId
+						log "down triggers move", .referencePosition
+						do .
 			for user.movingTouches
 				if .id == touchId
 					log "move", .referencePosition
@@ -1208,9 +1214,9 @@ skipInit unit Input
 					log "move", t.referencePosition
 					do t
 					
-	onTouchUp: Touch touch               // Only do this if this particular touch or click ended
-		       bool markAsHandled = true // Mark the touch as handled so it won't trigger more touch events
-		       void(Touch touch) do      // Do this for each touch or click
+	onTouchUp: Touch touch          // Only do this if this particular touch or click ended
+		       markAsHandled = true // Mark the touch as handled so it won't trigger more touch events
+		       void(Touch touch) do // Do this for each touch or click
 		if !touch: return
 		let touchId = touch.id
 		let user = internalUsers[touch.userId]
