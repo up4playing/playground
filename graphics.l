@@ -141,7 +141,7 @@ transient global unit graphics
 		
 	internal js void startFrame
 		graphics_reset()
-		if(!Platform_fastForward)
+		if(!Platform_fastForward && !Platform_isWaitingForInitialData)
 			if(!graphics_backgroundColor || graphics_backgroundColor.hex == "#000000") {
 				Platform_context.clearRect(0, 0, Platform_pixelSize.x, Platform_pixelSize.y)
 			} else {
@@ -927,7 +927,7 @@ transient global unit graphics
 				sizeX, sizeY,
 				layer, alpha, graphics_currentClippingPath, "Circle", 
 				location, position.location, size.location,
-				startAngle, anlge,
+				startAngle, angle,
 				direction == 1,
 				fillColor || !outlineColor ? (fillColor || graphics_currentColor).hex : null,
 				outlineColor ? outlineColor.hex : null,
@@ -1217,7 +1217,7 @@ skipInit unit gizmo
 					if .y < min.y: min.y = .y
 					if .x + .w > max.x: max.x = .x + .w
 					if .y + .h > max.y: max.y = .y + .h
-		handleSize = Math.map Math.min(max.x-min.x, max.y-min.y) fromStart:64 fromEnd:256 toStart:16 toEnd:32
+		handleSize = Math.map Math.min(max.x-min.x, max.y-min.y) 64..256 start:16 target:32
 	
 	internal tick
 		findInfluencedItems
