@@ -1815,8 +1815,13 @@ skipInit transient float Time
 js Date
 transient struct Date
 	const dayStrings = [
-		["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Gameday", "Do not send"]
-		["Sonntag", "Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag"]
+		["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
+		["Sonntag", "Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag"]
+	]
+		
+	const shortDayStrings = [
+		["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
+		["So", "Mo", "Di", "Mi", "Do", "Fr", "Sa"]
 	]
 		
 	inline js Date() new Date(Time_now)
@@ -1856,6 +1861,10 @@ transient struct Date
 	// (Monday)
 	string weekdayString: language = Loca.language
 		return dayStrings[language][dayOfWeek]
+	
+	// (Mon)
+	string shortWeekdayString: language = Loca.language
+		return shortDayStrings[language][dayOfWeek]
 	
 	// (23:59)
 	string hourMinuteString: language = Loca.language
