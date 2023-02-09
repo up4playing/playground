@@ -389,7 +389,7 @@ transient skipInit unit Platform
 		
 	js void setInterval: int interval
 		                 void() code
-		setInterval(code)
+		setInterval(code, interval)
 		
 	inline js int setTimeout: Time time
 		                      void() code
