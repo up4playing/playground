@@ -459,9 +459,11 @@ transient unit IndexedDB
 	
 	js void start: string databaseName, string storeName, int version = 1
 		try {
+			Network_log("IndexedDB: start");
 			IndexedDB_storeName = storeName;
 			var request = indexedDB.open(databaseName, version)
 			request.onupgradeneeded = e => {
+				Network_log("IndexedDB: upgradeneeded");
 				IndexedDB_db = e.target.result;
 				if(!IndexedDB_db.objectStoreNames.contains(storeName))
 					IndexedDB_db.createObjectStore(storeName, { keyPath: "id" });
@@ -469,12 +471,14 @@ transient unit IndexedDB
 			}
 			request.onsuccess = e => {
 				IndexedDB_db = e.target.result;
+				Network_log("IndexedDB: success");
 			}
 			request.onerror = e => {
-				Network_log("Error in IndexedDB.start: "+request.error);
+				Network_log("IndexedDB: error "+request.error);
 			}
+			Network_log("IndexedDB: finished");
 		} catch(e) {
-			Network_log("Error in IndexedDB.start: "+e.message)
+			Network_log("IndexedDB: exception "+e.message)
 		}
 		
 	js void open: string storeName, string id, void(object data) then, void() else = null

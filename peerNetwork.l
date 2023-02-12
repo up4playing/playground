@@ -314,6 +314,7 @@ transient unit PeerNetwork
 	string videoInputId, audioInputId, audioOutputId	
 	
 	private js void setupLocalMedia: bool enableVideo, bool enableAudio
+		Network_log("setupLocalMedia: start")
 		PeerNetwork_enableVideo = enableVideo
 		PeerNetwork_enableAudio = enableAudio
 		if(!enableVideo && !enableAudio) return
@@ -324,9 +325,12 @@ transient unit PeerNetwork
 				video: {width: 500, height: 375},
 				audio: enableAudio
 			});
+			Network_log("setupLocalMedia: getUserMedia done")
 			
 			// Enummerate local devices
 			let devices = await navigator.mediaDevices.enumerateDevices();
+			Network_log("setupLocalMedia: enumerateDevices done")
+			
 			for(let device of devices) {
 				switch(device.kind) {
 					case "videoinput":  PeerNetwork_devices.videoInput.push(device); break;
