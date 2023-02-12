@@ -41,8 +41,8 @@ transient skipInit unit Platform
 	
 	visible OperatingSystem os
 	visible bool isMobile
-	visible bool isDebug
 	visible bool isBrowser
+	public bool isDebug
 	public bool isStaging
 	
 	visible Vector2 pixelSize
@@ -222,6 +222,9 @@ transient skipInit unit Platform
 	
 	internal js void sendWatch: int frame, string text, int location, string file
 		_sendToEditor({type:"watch", frame, text, location, file})
+	
+	internal js void sendClearTimeline:
+		_sendToEditor({type:"clearTimeline"})
 	
 	private js void sendMode
 		if(Platform_isDebug) _sendToEditor({type:"setPlatformMode", mode:Platform_mode, frame:Network_frame})

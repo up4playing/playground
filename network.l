@@ -64,6 +64,7 @@ transient unit Snapshot
 		// 	autoSaveAtEndOfStep = false
 	
 transient skipInit unit Network
+	int eventStreamVersion = 1
 	int sendInterval = 1
 	int smoothStrength = 90
 	bool smoothTouchPosition = true
@@ -146,6 +147,8 @@ transient skipInit unit Network
 		errorMessage = ""
 		audio.stop
 		isPremiere = true
+		Platform.isDebug = true
+		Platform.isStaging = true
 		startTime = serverStartTime = currentTime
 		reset
 		animationFrame
@@ -596,14 +599,17 @@ transient skipInit unit Network
 			
 	saveEventStream
 		Buffer buffer
-		buffer.writeInt32 frame-1
-		buffer.writeInt32 frames
+		buffer.writeInt eventStreamVersion
+		buffer.writeInt frame-1
+		buffer.writeInt frames
 		buffer.writeString Math.randomSeed
 		buffer.writeBool startInLobby
+		buffer.writeBool Platform.isDebug
+		buffer.writeBool Platform.isStaging
 		let userCount = Input.internalUsers.count . != null
 		buffer.writeInt8 userCount
 		for Input.internalUsers if .
-			buffer.writeInt8 .id
+			buffer.writeInt .id
 			buffer.writeBool .local
 			buffer.writeBuffer .inputs
 		let date = Date.now
@@ -613,16 +619,18 @@ transient skipInit unit Network
 		Platform.pause
 		Platform.openBinaryFile
 			// Read event stream
-			frame = buffer.readInt32
-			frames = buffer.readInt32
+			int version = buffer.readInt
+			int targetFrame = buffer.readInt
+			frames = buffer.readInt
 			let randomSeed = buffer.readString
 			startInLobby = buffer.readBool
-			Platform.isStaging = false
+			Platform.isDebug = buffer.readBool
+			Platform.isStaging = buffer.readBool
 			let userCount = buffer.readInt8
 			Input.internalUsers.clear
 			for userCount
 				InternalUser user = {
-					id: buffer.readInt8
+					id: buffer.readInt
 					local: buffer.readBool
 				}
 				if user.local: Input.localUser = user
@@ -635,9 +643,11 @@ transient skipInit unit Network
 				if Platform.isDebug: .local = true
 				.startInputFrame frames
 			certainFrame = int.maxValue
-			Platform.sendFrame(frame, frames)
 			Math.setRandomSeed randomSeed
-			goToFrame targetFrame:frame, replayFromStart:true
+			
+			Platform.sendClearTimeline
+			goToFrame targetFrame, replayFromStart:true
+			Platform.sendFrame(targetFrame, frames)
 		
 	string roomString
 	int roomId
