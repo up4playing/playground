@@ -114,9 +114,6 @@ transient unit ServerNetwork
 			PeerNetwork.makePrimaryUser
 		else
 			PeerNetwork.makePrimiaryUserIfStateIsNotReceived
-			
-		// Send statistics after 20 seconds
-		Platform.setTimeout 30s: statistics.manuallyTriggerSend -1, clear:true
 
 		Network.log "Joining room {roomId} as user {userId}"
 		

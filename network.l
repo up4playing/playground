@@ -51,17 +51,17 @@ transient unit Snapshot
 	autoSave() autoSaveAtEndOfStep = true
 	
 	internal onEndOfStep
-		if Input.isCertain
-			if autoSaveAtEndOfStep and ++autoSaveCount > 5
-				let snap = save
-				IndexedDB.saveBuffer "snapshot", "{Network.gameId}-0", snap
-				lastSnapshotSize = snap.writePos
-				
-			if Network.frame/snapshotEvery > snapshotStarts.length
-				snapshotStarts.add snapshots.writePos
-				serialize(snapshots)
-			
-			autoSaveAtEndOfStep = false
+		// Disabled automatically saving snapshots because they haven't been used for while,
+		// might use a lot of memory over time and IndexDB is one potential cause for Felix' startup problems
+		// if Input.isCertain
+		// 	if autoSaveAtEndOfStep and ++autoSaveCount > 5
+		// 		let snap = save
+		// 		IndexedDB.saveBuffer "snapshot", "{Network.gameId}-0", snap
+		// 		lastSnapshotSize = snap.writePos
+		// 	if Network.frame/snapshotEvery > snapshotStarts.length
+		// 		snapshotStarts.add snapshots.writePos
+		// 		serialize(snapshots)
+		// 	autoSaveAtEndOfStep = false
 	
 transient skipInit unit Network
 	int sendInterval = 1
@@ -131,7 +131,7 @@ transient skipInit unit Network
 		certainFrame = -1
 		Input.internalUsers.clear
 		Math.setRandomSeed Math.generateRandomSeed 
-		initDatabase
+		// initDatabase
 		stop
 		
 	// Clear all inputs and reset the application to the first frame
@@ -563,19 +563,21 @@ transient skipInit unit Network
 	Buffer snapshotBuffer
 		
 	save: int slot
-		snapshotBuffer.reset
-		Snapshot.serialize snapshotBuffer
-		IndexedDB.saveBuffer "snapshot", "{gameId}-{slot}", snapshotBuffer
-			print "saved snapshot {gameId}-{slot} ({snapshotBuffer.writePos} bytes)"
-		else
-			print "save failed"
+		// Database disabled for now
+		// snapshotBuffer.reset
+		// Snapshot.serialize snapshotBuffer
+		// IndexedDB.saveBuffer "snapshot", "{gameId}-{slot}", snapshotBuffer
+		// 	print "saved snapshot {gameId}-{slot} ({snapshotBuffer.writePos} bytes)"
+		// else
+		// 	print "save failed"
 		
 	restore: int slot
-		IndexedDB.openBuffer "snapshot", "{gameId}-{slot}"
-			Input.handleSetState buffer
-			print "restored snapshot {gameId}-{slot} ({buffer.writePos} bytes)"
-		else
-			print "restore failed"
+		// Database disabled for now
+		// IndexedDB.openBuffer "snapshot", "{gameId}-{slot}"
+		// 	Input.handleSetState buffer
+		// 	print "restored snapshot {gameId}-{slot} ({buffer.writePos} bytes)"
+		// else
+		// 	print "restore failed"
 		
 	saveEventStreamAndLogs
 		if Input.isCertain
@@ -642,17 +644,20 @@ transient skipInit unit Network
 	string gameId
 	
 	join: string gameId, string roomString, int userId
+		// Send statistics after 20 seconds
+		Platform.setTimeout 20s: statistics.manuallyTriggerSend -1, clear:false
+		
 		isPremiere = true
 		initAll
 		log Platform.url
-		log Date.now.dayMonthYearHourMinuteSecondString
+		log Date.realtime.dayMonthYearHourMinuteSecondString
 		log Platform.userAgent
 		startInLobby = true
 		this.gameId = gameId
 		this.roomString = roomString
 		this.roomId = cast roomString
 		Input.localUser = {userId, local:true, connectionId:0}
-		initDatabase
+		//initDatabase
 		setupVideoAndNetwork
 		lobby.enableFullscreen = !Platform.isStaging
 		
