@@ -147,8 +147,6 @@ transient skipInit unit Network
 		errorMessage = ""
 		audio.stop
 		isPremiere = true
-		Platform.isDebug = true
-		Platform.isStaging = true
 		startTime = serverStartTime = currentTime
 		reset
 		animationFrame
@@ -604,7 +602,6 @@ transient skipInit unit Network
 		buffer.writeInt frames
 		buffer.writeString Math.randomSeed
 		buffer.writeBool startInLobby
-		buffer.writeBool Platform.isDebug
 		buffer.writeBool Platform.isStaging
 		let userCount = Input.internalUsers.count . != null
 		buffer.writeInt8 userCount
@@ -624,7 +621,6 @@ transient skipInit unit Network
 			frames = buffer.readInt
 			let randomSeed = buffer.readString
 			startInLobby = buffer.readBool
-			Platform.isDebug = buffer.readBool
 			Platform.isStaging = buffer.readBool
 			let userCount = buffer.readInt8
 			Input.internalUsers.clear
