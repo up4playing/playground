@@ -717,6 +717,7 @@ skipInit transient unit statistics
 	private StatisticsGraphSeries[] series
 	string log
 	Time startTime, loadTime, connectTime
+	internal float maxValue
 	
 	clear
 		series.each.values.clear
@@ -770,9 +771,6 @@ skipInit transient unit statistics
 		statistics.send round:value game:value clear
 		Input.isCertain = prevIsCertain
 			
-	internal float maxValue
-	
-	
 	add: string name, float value, Color color = White
 		var s = series.find.name == name
 		if !s
