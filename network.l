@@ -303,10 +303,10 @@ transient skipInit unit Network
 			ahead = frame - receivedFrames
 			
 			if sendInterval == 1
-				aheads.add ahead, maxLength:400
+				if ahead < 50: aheads.add ahead, maxLength:200
 				aheadMax = aheads.max .
-				aheadsMax.add aheadMax maxLength:400
-				int actualBufferFrames = Math.ceil(aheadsMax.average) max 90
+				aheadsMax.add aheadMax maxLength:600
+				int actualBufferFrames = Math.ceil(aheadsMax.average)
 				
 				// We only update bufferFrames if the new value is smaller or at least 2 larger
 				if actualBufferFrames < bufferFrames or actualBufferFrames > bufferFrames+1: bufferFrames = actualBufferFrames
@@ -704,6 +704,10 @@ class StatisticsGraphSeries
 		if recentValues.length >= statistics.framesPerValue
 			values.add recentValues.max .
 			recentValues.clear
+			
+class StatisticsInfo
+	float value
+	int frame
 				
 skipInit transient unit statistics
 	const Vector2 margin = {224,126}
@@ -715,6 +719,7 @@ skipInit transient unit statistics
 	
 	float[] serverPings
 	private StatisticsGraphSeries[] series
+	private StatisticsInfo[] infos
 	string log
 	Time startTime, loadTime, connectTime
 	internal float maxValue
@@ -787,6 +792,9 @@ skipInit transient unit statistics
 		s.color = color
 		s.add value
 		
+	addInfo: implicit int value
+		infos.add {value, frame:Network.frame}
+		
 	internal draw
 		maxValue = 12
 		for series -> s
@@ -799,8 +807,8 @@ skipInit transient unit statistics
 		Vector2 labelPos = this.labelPos
 		for series -> s, seriesIndex
 			string text = cast .lastValue
-			drawRectangle labelPos, {8,8}, fillColor:.color, align:Left, layer:1000000
-			drawText text, labelPos+{11, -2}, align:Left, layer:1000000, size:12
+			drawRectangle labelPos, {8,8}, fillColor:.color, align:Left
+			drawText text, labelPos+{11, -2}, align:Left, size:12
 			labelPos.x += graphics.getTextWidth(text, size:12) + 20
 			
 			int len = Math.min(.values.length, size.x.round)
@@ -808,12 +816,18 @@ skipInit transient unit statistics
 			for len
 				let value = s.values[-1-i]
 				Vector2 pos = {startPos.x - i, startPos.y - (value/maxValue).max(1)*size.y + seriesIndex*3}
-				if i: drawRectangle pos, size:{4, prevY-pos.y+4}, fillColor:s.color, layer:1000000, valign:Top
+				if i: drawRectangle pos, size:{4, prevY-pos.y+4}, fillColor:s.color, valign:Top
 				prevY = pos.y
 				
-		if Network.errorMessage: drawText Network.errorMessage, position, align:Left, layer:1000001, size:12, color:{"ffff00"}
-		drawText "#{Network.frame} {maxValue}", {position.x+size.x-8, labelPos.y}, align:Right, layer:1000001, size:12
-		drawRectangle position, size, fillColor:backgroundColor, layer:1000000, align:Left, valign:Top
+		// Draw infos
+		for infos <-
+			let x = (Network.frame - .frame)/framesPerValue
+			if x > size.x: break
+			drawText cast .value, {position.x + size.x - x, position.y + 10}, size:12
+				
+		if Network.errorMessage: drawText Network.errorMessage, position, align:Left, size:12, color:{"ffff00"}
+		drawText "#{Network.frame} {maxValue}", {position.x+size.x-8, labelPos.y}, align:Right, size:12
+		drawRectangle position, size, fillColor:backgroundColor, align:Left, valign:Top
 
 unit networkVisualizer		
 	private int[] posForUser = [0,-10000,-10000,-10000,-10000,-10000]
@@ -838,4 +852,4 @@ unit networkVisualizer
 				drawRectangle {984+user.index*32, 510} size:{24, getHeightForFrame(internaluser.inputFrame)}, valign:Bottom, fillColor:.color
 	
 	private getHeightForFrame: int frame
-		return (100+frame-Network.frame)*10
+		return (50+frame-Network.frame)*20

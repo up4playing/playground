@@ -127,27 +127,29 @@ transient unit ServerNetwork
 	ping
 		let now = Network.currentTime
 		if (Network.mode == Ping or Network.mode == Connected) and now >= nextPingTime
-			Network.log ">>> Ping {now}"
 			sendBuffer.reset
 			sendBuffer.writeInt8 cast NetworkMessageType.Ping
 			sendBuffer.writeFloat64 now
 			sendBuffer.writeInt32 Network.certainFrame                            // The last certain frame with inputs from everybody
 			sendBuffer.writeFloat64 Network.checksums[Network.certainFrame] || 0  // The checksum of the last certain frame
 			send sendBuffer
-			nextPingTime = now + (Network.mode == Ping ? 200 : pongCount < 20 ? 1000 : 30000)
+			nextPingTime = now + (Network.mode == Ping ? 200 : pongCount < 20 ? 1000 : 15000)
 			
 	private onPong: Buffer buffer
 		float now = Network.currentTime
 		float timeSinceStart = buffer.readFloat64
 		float pingTime = buffer.readFloat64
 		float pingPongTime = now - pingTime
+		int calculatedStartTime = Math.round(now - pingPongTime/2 - timeSinceStart)
+		int delta = Math.round(calculatedStartTime - Network.startTime)
 		statistics.serverPings.add pingPongTime
-		Network.log "<<< Pong ({pongCount}) {pingTime}", pingPongTime
+		Network.log "<<< Pong ({pongCount})", pingPongTime, calculatedStartTime, delta
+		statistics.addInfo delta
 			
 		if pingPongTime < fastestPingPongTime
 			// Use the fastest ping-pong-time we have ever seen to calculate the start time
 			fastestPingPongTime = pingPongTime
-			Network.startTime = Math.round(now - pingPongTime/2 - timeSinceStart)
+			Network.startTime = calculatedStartTime
 			Network.log "New fastest pingPongTime", pongCount, now, pingPongTime, timeSinceStart, Network.startTime
 			
 		pongCount++
