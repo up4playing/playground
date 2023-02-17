@@ -304,7 +304,7 @@ transient skipInit unit Network
 			
 			if sendInterval == 1
 				aheads.add ahead, maxLength:400
-				aheadMax = aheads.percentile(90)
+				aheadMax = aheads.max .
 				aheadsMax.add aheadMax maxLength:400
 				int actualBufferFrames = Math.ceil(aheadsMax.average) max 90
 				
@@ -788,9 +788,9 @@ skipInit transient unit statistics
 		s.add value
 		
 	internal draw
-		maxValue = 0
+		maxValue = 12
 		for series -> s
-			int len = Math.min(.values.length, size.x.round)
+			int len = Math.min(.values.length, 50)
 			for len: 
 				let value = s.values[-1-i]
 				if value > maxValue: maxValue = value
@@ -807,7 +807,7 @@ skipInit transient unit statistics
 			float prevY = 0
 			for len
 				let value = s.values[-1-i]
-				Vector2 pos = {startPos.x - i, startPos.y - value/maxValue*size.y + seriesIndex*3}
+				Vector2 pos = {startPos.x - i, startPos.y - (value/maxValue).max(1)*size.y + seriesIndex*3}
 				if i: drawRectangle pos, size:{4, prevY-pos.y+4}, fillColor:s.color, layer:1000000, valign:Top
 				prevY = pos.y
 				
