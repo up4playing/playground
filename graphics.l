@@ -150,6 +150,10 @@ transient global unit graphics
 			}
 			Platform_context.textBaseline = "top"
 
+	internal resetMatrix
+		totalMatrix = Platform.baseMatrix
+		localMatrix.clear	
+
 	internal reset
 		totalMatrix = Platform.baseMatrix
 		localMatrix.clear

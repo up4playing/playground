@@ -203,6 +203,7 @@ transient unit PeerNetwork
 				sendBuffer.writeInt8 cast NetworkMessageType.Tick
 				sendBuffer.writeInt inputFrame // You got all inputs up to and including this frame
 				sendBuffer.writeInt Network.bufferFrames
+				sendBuffer.writeInt user.inputsSentPos
 				sendBuffer.writeBuffer inputs, user.inputsSentPos, length
 				Network.tickMessageSize = send ., sendBuffer
 				
@@ -244,7 +245,7 @@ transient unit PeerNetwork
 			sender.inputFrame = inputFrame
 			
 			sender.bufferFrames = buffer.readInt
-			let prevWritePos = sender.inputs.writePos
+			let prevWritePos = buffer.readInt
 			buffer.readBuffer sender.inputs, prevWritePos
 			
 			Network.receivedFrames = getMinReceivedFrames
@@ -471,12 +472,12 @@ transient unit PeerNetwork
 	
 	makePrimiaryUserIfStateIsNotReceived
 		requestedState = false
-		stateTimeout = Platform.setTimeout 15s
+		stateTimeout = Platform.setTimeout 25s
 			if Input.internalUsers.any.receivedAnswer
-				Network.log "No state after 15s, but we received answers -> Alert the user to make sure WebRTC connections aren't blocked."
+				Network.log "No state after 25s, but we received answers -> Alert the user to make sure WebRTC connections aren't blocked."
 				alert "Could not connect. Please make sure WebRTC connections aren't block by your router, firewall or a browser extension. If you have a VPN browser extension installed, please check your settings and make sure WebRTC connections aren't blocked."
 			else
-				Network.log "No state after 15s -> Make primary user"
+				Network.log "No state after 25s -> Make primary user"
 				makePrimaryUser
 	
 	makePrimaryUser

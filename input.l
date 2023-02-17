@@ -374,7 +374,7 @@ skipInit unit Input
 				
 			if(key == "F9") {
 				if(e.shiftKey) { Network_saveLogs(); }
-				else           { Platform_toggleDebugInfo(); Network_debugString = "" }
+				else           { Platform_toggleDebugInfo(); }
 				e.preventDefault();
 			} else {
 				Input_handleKeyEvent(5, keyCode, key?.length == 1 ? key : "")
@@ -421,7 +421,7 @@ skipInit unit Input
 		inputs.writeUnsignedInt16 cast type
 		inputs.writeString text
 			
-	private handleKeyEvent: InputType type, int keyCode, string key
+	internal handleKeyEvent: InputType type, int keyCode, string key
 		if Network.mode == None || Platform.mode != Record || !localUser || !localUser.collectInputs: return
 		let inputs = localUser.inputs
 		

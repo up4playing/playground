@@ -65,12 +65,12 @@ transient skipInit unit Platform
 		if(window.Sound_init) Sound_init();
 		
 	private js void initPlatform
+		statistics_init();
 		Platform_init();
 		Math_init();
 		Network_init();
 		Input_init();
 		gizmo_init();
-		statistics_init();
 		Network_log("Loading...")
 		Platform_isMobile = false;
 		Platform_isBrowser = !window.require;
@@ -111,26 +111,28 @@ transient skipInit unit Platform
 	// Update the base matrix
 	// Called when resizing and after calling init() because we could change the scaleMode and anchor in App.init
 	private updateBaseMatrix
-		Vector2 ratio = {pixelSize.x / referenceSize.x, pixelSize.y / referenceSize.y}
+		let statisticsMargin = showDebugInfo ? statistics.margin : {}
+		let referenceSizeWithMargin = referenceSize + statisticsMargin
+		Vector2 ratio = {pixelSize.x / referenceSizeWithMargin.x, pixelSize.y / referenceSizeWithMargin.y}
 		float scale
 		if scaleMode == Auto
 			if ratio.x < ratio.y: effectiveScaleMode = FixedWidth;  scale = ratio.x
 			else                  effectiveScaleMode = FixedHeight; scale = ratio.y
-			size = referenceSize
+			size = referenceSizeWithMargin
 		else
 		if scaleMode == FixedWidth
 			effectiveScaleMode = scaleMode
 			scale = ratio.x
-			size = {referenceSize.x, pixelSize.y/scale}
+			size = {referenceSizeWithMargin.x, pixelSize.y/scale}
 		else
 		if scaleMode == FixedHeight
 			effectiveScaleMode = scaleMode
 			scale = ratio.y; 
-			size = {pixelSize.x/scale, referenceSize.y}
+			size = {pixelSize.x/scale, referenceSizeWithMargin.y}
 			
 		let offsetX = anchor > 0 ? pixelSize.x/2 : 0
 		let offsetY = anchor > 1 ? pixelSize.y/2 : 0
-		baseMatrix = {scale,0,0,scale,offsetX,offsetY}
+		baseMatrix = {scale,0,0,scale,offsetX-(statisticsMargin.x/2)*scale,offsetY-(statisticsMargin.y/2)*scale}
 	
 	// This is called when the application starts for the first time	
 	private start: bool isDebug
@@ -238,6 +240,7 @@ transient skipInit unit Platform
 	void toggleDebugInfo
 		showDebugInfo = !showDebugInfo;
 		setLocalStorageObject("showDebugInfo", showDebugInfo ? "true" : "false")
+		updateBaseMatrix
 		
 	inline js void setFullscreen: value = true, forUser = -1
 		if(!Platform_isStaging && !Platform_isDebug && (forUser == -1 || Input_localUser?.id == forUser)) {
