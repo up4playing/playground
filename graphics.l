@@ -173,6 +173,7 @@ transient global unit graphics
 			PeerNetwork.setAudioMuted user.audioElement, muted:Network.muteInvisibleUsers and user.videoElementIndex == 0
 		
 	private drawItems
+		Network.displayItems = items.length
 		gizmo.tick
 		items.sort b.layer - a.layer
 		items.each <- .draw
