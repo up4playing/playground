@@ -580,7 +580,6 @@ struct Particle
 	Vector2 pos, speed
 	int frame
 	Angle angle     // The rotation of the particle in turns (one full rotation is 1)
-	float scale = 1
 
 Object ParticleSystem
 	private Particle[] particles
@@ -609,12 +608,11 @@ Object ParticleSystem
 		for particles <-
 			graphics.move .pos
 				graphics.rotate .angle
-					// TODO: Suport scale!!!!!!!!!
 					drawImage particleImage, frame:.frame
 			.pos += .speed
 			.speed.y += 1
 			.angle += .05
-			if .pos.y < -Platform.size.y/2
+			if .pos.y > Platform.size.y/2
 				particles.removeAt i
 		
 		if particles.length == 0	
