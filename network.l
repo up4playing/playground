@@ -709,6 +709,7 @@ class StatisticsGraphSeries
 			
 class StatisticsInfo
 	float value
+	int index
 	int frame
 				
 skipInit transient unit statistics
@@ -721,10 +722,12 @@ skipInit transient unit statistics
 	
 	float[] serverPings
 	private StatisticsGraphSeries[] series
-	private StatisticsInfo[] infos
 	string log
 	Time startTime, loadTime, connectTime
 	internal float maxValue
+	
+	private StatisticsInfo[] infos
+	private string[] infoNames
 	
 	clear
 		series.each.values.clear
@@ -794,8 +797,10 @@ skipInit transient unit statistics
 		s.color = color
 		s.add value
 		
-	addInfo: implicit int value
-		infos.add {value, frame:Network.frame}
+	addInfo: string name, float value
+		int index = infoNames.indexOf name
+		if index == -1: index = infoNames.length; infoNames.add name
+		infos.add {value, index, frame:Network.frame}
 		
 	internal draw
 		maxValue = 12
@@ -825,7 +830,7 @@ skipInit transient unit statistics
 		for infos <-
 			let x = (Network.frame - .frame)/framesPerValue
 			if x > size.x: break
-			drawText cast .value, {position.x + size.x - x, position.y + 10}, size:12
+			drawText cast .value, {position.x + size.x - x, position.y + 10 + 10*.index}, size:12
 				
 		if Network.errorMessage: drawText Network.errorMessage, position, align:Left, size:12, color:{"ffff00"}
 		drawText "#{Network.frame} {maxValue}", {position.x+size.x-8, labelPos.y}, align:Right, size:12
