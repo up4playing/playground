@@ -133,24 +133,34 @@ transient unit ServerNetwork
 			sendBuffer.writeInt32 Network.certainFrame                            // The last certain frame with inputs from everybody
 			sendBuffer.writeFloat64 Network.checksums[Network.certainFrame] || 0  // The checksum of the last certain frame
 			send sendBuffer
-			nextPingTime = now + (Network.mode == Ping ? 200 : pongCount < 20 ? 1000 : 15000)
+			nextPingTime = now + (Network.mode == Ping ? 200 : pongCount < 20 ? 1000 : 5000)
+			
+	float[] calculatedStartTimes
+	float referenceStartTime
 			
 	private onPong: Buffer buffer
 		float now = Network.currentTime
 		float timeSinceStart = buffer.readFloat64
 		float pingTime = buffer.readFloat64
 		float pingPongTime = now - pingTime
-		int calculatedStartTime = Math.round(now - pingPongTime/2 - timeSinceStart)
-		int delta = Math.round(calculatedStartTime - Network.startTime)
+		float calculatedStartTime = now - pingPongTime/2 - timeSinceStart
+		calculatedStartTimes.add calculatedStartTime maxLength:10
+		Network.startTime = calculatedStartTimes.average
+		
+		int deltaFromAverage = Math.round(calculatedStartTime - Network.startTime)
+		int deltaFromReference = Math.round(calculatedStartTime - referenceStartTime)
 		statistics.serverPings.add pingPongTime
-		Network.log "<<< Pong ({pongCount})", pingPongTime, calculatedStartTime, delta
-		statistics.addInfo delta
+		Network.log "<<< Pong ({pongCount})", pingPongTime, calculatedStartTime
+		Network.log "average", Network.startTime, deltaFromAverage 
+		Network.log "reference", referenceStartTime, deltaFromReference 
+		statistics.addInfo "from average", deltaFromAverage
+		statistics.addInfo "from reference", deltaFromReference
 			
 		if pingPongTime < fastestPingPongTime
 			// Use the fastest ping-pong-time we have ever seen to calculate the start time
 			fastestPingPongTime = pingPongTime
-			Network.startTime = calculatedStartTime
-			Network.log "New fastest pingPongTime", pongCount, now, pingPongTime, timeSinceStart, Network.startTime
+			referenceStartTime = calculatedStartTime
+			Network.log "New fastest pingPongTime", pongCount, now, pingPongTime, timeSinceStart, Network.startTime, referenceStartTime
 			
 		pongCount++
 		lastPingPongTime = pingPongTime
