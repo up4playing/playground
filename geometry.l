@@ -494,6 +494,12 @@ struct Matrix2D
 		result.m5 = b1 * a4 + b3 * a5 + b5
 		return result
 		
+Vector2 SmoothVector2
+	internal transient float viewX, viewY
+	internal transient float lastMoveFrame
+	float speed = 10
+	Vector2 operator = (SmoothVector2 a, Vector2 b) a.x = b.x; a.y = b.y; a.location = b.location; return a
+
 class List<T>
 	Vector2 total: Vector2(T it) selector
 		Vector2 sum = {0,0}
