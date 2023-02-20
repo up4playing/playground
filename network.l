@@ -162,6 +162,7 @@ transient skipInit unit Network
 		frame = 0
 		certainFrame = int.maxValue
 		uncertainFrame = -1
+		smoothFrame = 0
 		Input.isCertain = true
 		lobby.inLobby = startInLobby
 		Time.now = serverStartTime
@@ -242,6 +243,7 @@ transient skipInit unit Network
 			
 		let targetFrame = Math.floor((now - startTime)/targetFrameTime)+1
 		frameMinusBuffer = targetFrame - bufferFrames
+		if frameMinusBuffer > smoothFrame: smoothFrame = frameMinusBuffer
 		if mode == Connected: certainFrame = Math.min(frameMinusBuffer, receivedFrames); else
 		if simulateRollback:  certainFrame = targetFrame - 5; else
 			                  certainFrame = int.maxValue
@@ -268,7 +270,7 @@ transient skipInit unit Network
 			// Ensure that step is called every targetFrameTime milliseconds
 			while frame < targetFrame
 				// Create artificial inputs to test the smoothness
-				if simulateInputsForTesting and Platform.showDebugInfo and Input.localUser and Input.localUser.collectInputs
+				if simulateInputsForTesting and Input.localUser and Input.localUser.collectInputs
 					Input.handleKeyEvent KeyDown, cast Key.F24, ""
 
 				for Input.internalUsers -> user
@@ -287,6 +289,7 @@ transient skipInit unit Network
 	private int[] aheadsMax         // Rolling buffer of aheadMax values
 	visible int bufferFrames        // The average of all aheadMax values
 	private int frameMinusBuffer    // We expect to receive all inputs by this frame (frame - bufferFrames)
+	private int smoothFrame
 	private int animationStartFrame // The frame at the beginning of animationFrame, used to calculate iteration
 	private float now               // The time at the beginning of animationFrame
 	
@@ -391,7 +394,7 @@ transient skipInit unit Network
 			// Flags
 			Platform.fastForward = fastForward
 			bool isCertain = frame <= certainFrame
-			isSmooth = mode == Local or frame <= frameMinusBuffer
+			isSmooth = mode == Local or frame <= smoothFrame
 			
 			// Send current frame to editor	
 			if Platform.isDebug and !fastForward and (Platform.mode == Record or Platform.mode == Play or Platform.isWaitingForInitialData): Platform.sendFrame(frame, Math.max(frame+1, frames))
