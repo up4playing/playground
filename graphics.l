@@ -150,9 +150,6 @@ transient global unit graphics
 			}
 			Platform_context.textBaseline = "top"
 
-	internal resetMatrix
-		totalMatrix = Platform.baseMatrix
-		localMatrix.clear	
 
 	internal reset
 		totalMatrix = Platform.baseMatrix
@@ -1090,7 +1087,8 @@ transient global unit graphics
 		                     implicit int layer = 0 // Higher layers are drawn in front of lower layers
 		                     alpha = 1.0            // The opacity of the line (0: fully transparent, 1: fully visible)
 		if(graphics_isVisibleFor(visibleFor)) {
-			if(position.speed) position = graphics_smoothVector2(position)
+			if(from.speed) from = graphics_smoothVector2(from)
+			if(to.speed)   to   = graphics_smoothVector2(to)
 			graphics_items.push(new DisplayLine(
 				graphics_totalMatrix,
 				from.x, from.y,

@@ -462,6 +462,10 @@ transient skipInit unit Network
 				Input.users.each drawPointer .id, showLocalPointer:isPlayback or Input.showLocalPointer
 		audio.startFrame
 		
+		if Platform.showDebugInfo
+			statistics.draw
+			networkVisualizer.tick
+			
 		try
 			if lobby.inLobby
 				lobby.tick
@@ -471,11 +475,6 @@ transient skipInit unit Network
 					appTick
 		catch
 			onError error
-			
-		if Platform.showDebugInfo
-			graphics.resetMatrix
-			statistics.draw
-			networkVisualizer.tick
 			
 		if draw and not Platform.isWaitingForInitialData
 			drawTime = Time.measure
