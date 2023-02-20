@@ -286,6 +286,7 @@ transient skipInit unit Network
 	private int ahead               // How many frames are we ahead of frame we got inputs from all users for?
 	private int[] aheads            // Rolling buffer of ahead values, used to calculate bufferFrames
 	private int aheadMax            // The maximum ahead value
+	visible int aheadMin
 	private int[] aheadsMax         // Rolling buffer of aheadMax values
 	visible int bufferFrames        // The average of all aheadMax values
 	private int frameMinusBuffer    // We expect to receive all inputs by this frame (frame - bufferFrames)
@@ -309,11 +310,13 @@ transient skipInit unit Network
 			if sendInterval == 1
 				if ahead < 50: aheads.add ahead, maxLength:200
 				aheadMax = aheads.max .
+				aheadMin = aheads.min .
 				aheadsMax.add aheadMax maxLength:600
-				int actualBufferFrames = Math.ceil(aheadsMax.average)
 				
-				// We only update bufferFrames if the new value is smaller or at least 2 larger
-				if actualBufferFrames < bufferFrames or actualBufferFrames > bufferFrames+1: bufferFrames = actualBufferFrames
+				bufferFrames = Math.ceil(aheadsMax.average)
+				// // We only update bufferFrames if the new value is smaller or at least 2 larger
+				// int actualBufferFrames = Math.ceil(aheadsMax.average)
+				// if actualBufferFrames < bufferFrames or actualBufferFrames > bufferFrames+1: bufferFrames = actualBufferFrames
 			else
 				aheads.add ahead, maxLength:200
 				aheadMax = aheads.percentile(50)
@@ -853,9 +856,17 @@ unit networkVisualizer
 						posForUser[user.index] -= 1080
 			drawCircle {1110+user.index*20, -540+posForUser[user.index]}, size:20, fillColor:.color
 		
+		// BufferFrames
+		let bufferY = 510 - getHeightForFrame(Network.frame-Network.bufferFrames+1)
+		drawLine {960,bufferY} to {1100,bufferY} width:3
+		drawText cast Network.bufferFrames, {1110, bufferY}, size:20, align:Left
+		
+		// AheadMin
+		let minY = 510 - getHeightForFrame(Network.frame-Network.aheadMin+1)
+		drawLine {960,minY} to {1100,minY} width:3
+		drawText cast Network.aheadMin, {1110, minY}, size:20, align:Left
+		
 		// Draw bar to visualizue up to which frame we got input from each player
-		let bufferY = 510 - getHeightForFrame(Network.frame-Network.bufferFrames)
-		drawLine {960,bufferY} to {1100,bufferY} width:5
 		for Input.users -> user
 			let internaluser = Input.internalUsers[.id]
 				drawRectangle {984+user.index*32, 510} size:{24, getHeightForFrame(internaluser.inputFrame)}, valign:Bottom, fillColor:.color
