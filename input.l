@@ -794,7 +794,7 @@ skipInit unit Input
 					string value = inputs.readString
 					if Network.logging: Network.parseLog += " string {id}: {value}"
 					networkData.call id, value
-					Platform.isWaitingForInitialData = false
+					Platform.waitingForInitialData--
 				else
 				if inputType == Json
 					int id = inputs.readInt
@@ -802,7 +802,7 @@ skipInit unit Input
 					if Network.logging: Network.parseLog += " json {id}: {value}"
 					dynamic object = Json.parse value
 					networkData.call id, object
-					Platform.isWaitingForInitialData = false
+					Platform.waitingForInitialData--
 				else
 				if inputType == Object
 					int id = inputs.readInt
@@ -810,7 +810,7 @@ skipInit unit Input
 					if Network.logging: Network.parseLog += " object {id}: {value}"
 					dynamic object = Json.parse value
 					networkData.call id, object
-					Platform.isWaitingForInitialData = false
+					Platform.waitingForInitialData--
 	
 		for users
 			let internalUser = internalUsers[.id]

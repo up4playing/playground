@@ -56,7 +56,7 @@ transient skipInit unit Platform
 	internal bool engineStarted
 	internal PlatformMode mode
 	internal bool fastForward
-	internal bool isWaitingForInitialData
+	internal int waitingForInitialData
 	
 	private inline js void initMedia
 		audio_init();
@@ -196,7 +196,7 @@ transient skipInit unit Platform
 		}
 	
 	// This is called every animation frame
-	private tick()   if mode == Play or mode == Record or isWaitingForInitialData: Network.animationFrame
+	private tick()   if mode == Play or mode == Record or waitingForInitialData: Network.animationFrame
 	
 	private enterSlideMode(PlatformMode mode) this.mode = mode; sendMode
 	
