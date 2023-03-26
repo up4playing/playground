@@ -41,11 +41,6 @@ transient class InternalUser
 	visible int bufferFrames               // The average of all aheadMax values
 	visible int smoothFrame = int.maxValue
 	
-	// Snapshot
-	int snapshotFrame = -1
-	int lastInputFrame
-	Buffer snapshot
-	
 	startInputFrame: int index
 		lastTouchMoveIndex.clear
 		inputFrame = index
