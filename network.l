@@ -699,6 +699,7 @@ transient skipInit unit Network
 
 class StatisticsGraphSeries
 	int userIndex = -1
+	int set
 	string name = null
 	float[] values
 	float[] recentValues
@@ -723,13 +724,15 @@ skipInit transient unit statistics
 	const Vector2 size = {1920+margin.x, margin.y}
 	const Vector2 labelPos = {970, 528}
 	const Color backgroundColor = {"202020"}
-	const framesPerValue = 10
+	const framesPerValue = 15
 	
 	float[] serverPings
 	private StatisticsGraphSeries[] series
 	string log
 	Time startTime, loadTime, connectTime
 	internal float maxValue
+	int currentSet
+	int sets = 1
 	
 	private StatisticsInfo[] infos
 	private string[] infoNames
@@ -786,19 +789,21 @@ skipInit transient unit statistics
 		statistics.send round:value game:value clear
 		Input.isCertain = prevIsCertain
 			
-	add: string name, float value, Color color = White
-		var s = series.find.name == name
+	add: string name, float value, Color color = White, int set = 0
+		var s = series.find.name == name and .set == set
 		if !s
-			series.add s = {name, color}
+			series.add s = {name, color, set}
 			series.orderBy.name
+			sets assignIfGreater set+1
 		s.color = color
 		s.add value
 		
-	add: int userIndex, float value, Color color = White
-		var s = series.find.userIndex == userIndex
+	add: int userIndex, float value, Color color = White, int set = 0
+		var s = series.find.userIndex == userIndex and .set == set
 		if !s
-			series.add s = {userIndex, name:userIndex.toString, color}
+			series.add s = {userIndex, name:userIndex.toString, color, set}
 			series.orderBy.name
+			sets assignIfGreater set+1
 		s.color = color
 		s.add value
 		
@@ -807,9 +812,13 @@ skipInit transient unit statistics
 		if index == -1: index = infoNames.length; infoNames.add name
 		infos.add {value, index, frame:Network.frame}
 		
-	internal draw
+	internal tick
+		Input.onTouchDownWithin position, size, align:Left, valign:Top
+			currentSet incrementAndWrap sets
+	
 		maxValue = 12
 		for series -> s
+			if .set != currentSet: continue
 			int len = Math.min(.values.length, 50)
 			for len: 
 				let value = s.values[-1-i]
@@ -817,7 +826,9 @@ skipInit transient unit statistics
 			
 		Vector2 startPos = position + size
 		Vector2 labelPos = this.labelPos
+		const height = size.y - 20
 		for series -> s, seriesIndex
+			if .set != currentSet: continue
 			string text = cast .lastValue
 			drawRectangle labelPos, {8,8}, fillColor:.color, align:Left
 			drawText text, labelPos+{11, -2}, align:Left, size:12
@@ -827,7 +838,7 @@ skipInit transient unit statistics
 			float prevY = 0
 			for len
 				let value = s.values[-1-i]
-				Vector2 pos = {startPos.x - i, startPos.y - (value/maxValue).max(1)*size.y + seriesIndex*3}
+				Vector2 pos = {startPos.x - i, startPos.y - (value/maxValue).max(1)*height + seriesIndex*3}
 				if i: drawRectangle pos, size:{4, prevY-pos.y+4}, fillColor:s.color, valign:Top
 				prevY = pos.y
 				
@@ -835,7 +846,7 @@ skipInit transient unit statistics
 		for infos <-
 			let x = (Network.frame - .frame)/framesPerValue
 			if x > size.x: break
-			drawText cast .value, {position.x + size.x - x, position.y + 10 + 10*.index}, size:12
+			drawText cast .value, {position.x + size.x - x, position.y + 10*.index}, size:8, valign:Top
 				
 		if Network.errorMessage: drawText Network.errorMessage, position, align:Left, size:12, color:{"ffff00"}
 		drawText "#{Network.frame} {maxValue}", {position.x+size.x-8, labelPos.y}, align:Right, size:12
@@ -845,31 +856,44 @@ unit networkVisualizer
 	private int[] posForUser = [0,-10000,-10000,-10000,-10000,-10000]
 		
 	internal tick
-		for Input.users
-			if posForUser[.index] == -10000: posForUser[.index] = posForUser[0]
+		if Network.simulateInputsForTesting
+			for Input.users
+				if posForUser[.index] == -10000: posForUser[.index] = posForUser[0]
+					
+			// Move circle with artificially created inputs to test the smoothness
+			for Input.users -> user
+				Network.smooth user.id
+					if user.id == 1: Network.replayLog += "C"
+					// Network.log "[{Network.frame}] <{user.id}> networkVisualizer", Network.isSmooth
+					Input.onKeyDown F24, userId:user.id
+						if user.id == 1: Network.replayLog += "D"
+						if (posForUser[user.index] += 2) > 1080
+							posForUser[user.index] -= 1080
+						// Network.log "[{Network.frame}] <{user.id}> networkVisualizer Input.onKeyDown", posForUser[user.index]
 				
-		// Move circle with artificially created inputs to test the smoothness
-		for Input.users -> user
-			Network.smooth user.id
-				Input.onKeyDown F24, userId:user.id
-					if (posForUser[user.index] += 2) > 1080
-						posForUser[user.index] -= 1080
-			drawCircle {1110+user.index*20, -540+posForUser[user.index]}, size:20, fillColor:.color
+			for Input.users -> user
+				drawCircle {1110+user.index*20, -540+posForUser[user.index]}, size:20, fillColor:.color
 		
-		// BufferFrames
-		let bufferY = 510 - getHeightForFrame(Network.frame-Network.bufferFrames+1)
-		drawLine {960,bufferY} to {1100,bufferY} width:3
-		drawText cast Network.bufferFrames, {1110, bufferY}, size:20, align:Left
-		
-		// AheadMin
-		let minY = 510 - getHeightForFrame(Network.frame-Network.aheadMin+1)
-		drawLine {960,minY} to {1100,minY} width:3
-		drawText cast Network.aheadMin, {1110, minY}, size:20, align:Left
+		// // AheadMin
+		// let minY = 510 - getHeightForFrame(Network.frame-Network.aheadMin+1)
+		// drawLine {960,minY} to {1100,minY} width:3
+		// drawText cast Network.aheadMin, {1110, minY}, size:20, align:Left
 		
 		// Draw bar to visualizue up to which frame we got input from each player
 		for Input.users -> user
 			let internaluser = Input.internalUsers[.id]
+				// BufferFrames
+				let bufferY = 510 - getHeightForFrame(Network.frame-internaluser.bufferFrames+1)
+				drawLine {960,bufferY} to {1100,bufferY} width:3, color:.color
+				drawText cast internaluser.bufferFrames, {1110, bufferY}, size:20, color:.color, align:Left
+		
 				drawRectangle {984+user.index*32, 510} size:{24, getHeightForFrame(internaluser.inputFrame)}, valign:Bottom, fillColor:.color
+		
+		// Replay from
+		if Network.replayFrom != -1
+			let bufferY = 510 - getHeightForFrame(Network.replayFrom)
+			drawLine {960,bufferY} to {1100,bufferY} width:3, color:White
+			drawText cast(Network.frame - Network.replayFrom), {1110, bufferY}, size:20, color:White, align:Left
 	
 	private getHeightForFrame: int frame
 		return (50+frame-Network.frame)*20
