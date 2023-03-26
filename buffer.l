@@ -284,6 +284,22 @@ transient struct Buffer
 			
 		this.writePos = writePos
 		
+	js void set: Buffer source
+		let readPos = 0
+		let length = source.writePos
+		let writePos = 0
+		
+		// Expand if neccessary
+		if(writePos+length > this.buffer.byteLength)
+			this.expandBuffer(writePos+length)
+			
+		// Write bytes
+		let readPosEnd = readPos + length
+		while(readPos < readPosEnd)
+			this.dataView.setUint8(writePos++, source.dataView.getUint8(readPos++))
+			
+		this.writePos = writePos
+		
 	inline js int peekInt8  := this.dataView.getInt8(this.readPos)
 	inline js int peekInt16 := this.dataView.getInt16(this.readPos)
 	inline js int peekInt32 := this.dataView.getInt32(this.readPos)
@@ -382,7 +398,10 @@ transient struct Buffer
 		
 	reset
 		this.writePos = 0
-		this.readPos = 0   
+		this.readPos = 0
+		
+	rewind
+		this.readPos = 0
 		
 	private js void expandBuffer: int size
 		let prevLength = this.buffer.byteLength
