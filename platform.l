@@ -361,7 +361,9 @@ transient skipInit unit Platform
 		setTimeout(then, time)
 		
 	inline js void copyToClipboard(string text)
-		navigator.clipboard.writeText(text)
+		if(Network_isPremiere && Input_isCertain) {
+			navigator.clipboard.writeText(text)
+		}
 		
 	inline js void setLocation: string url
 		location.href = url

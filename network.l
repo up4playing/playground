@@ -13,7 +13,7 @@ transient unit Snapshot
 	int autoSaveCount
 	int lastSnapshotSize
 	
-	Buffer snapshots
+	Buffer snapshots = {}
 	int[] snapshotStarts
 	int snapshotEvery = 100
 	
@@ -41,7 +41,7 @@ transient unit Snapshot
 		value.deserialize_internal(buffer);
 				
 	Buffer save
-		Buffer buffer
+		Buffer buffer = {}
 		serialize(buffer)
 		return buffer
 		
@@ -533,7 +533,7 @@ transient skipInit unit Network
 	adjustStartTimeIfNeeded
 		if Platform.mode < Play: adjustStartTime
 		
-	Buffer snapshotBuffer
+	Buffer snapshotBuffer = {}
 		
 	save: int slot
 		// Database disabled for now
@@ -568,7 +568,7 @@ transient skipInit unit Network
 		// 	print "save logs failed {error}"
 			
 	saveEventStream
-		Buffer buffer
+		Buffer buffer = {}
 		buffer.writeInt eventStreamVersion
 		buffer.writeInt frame-1
 		buffer.writeInt frames
