@@ -476,24 +476,6 @@ transient global unit graphics
 		let sizeX = size.x || imageSize.x
 		let sizeY = size.y || (sizeX/imageSize.x)*imageSize.y
 		return {sizeX, sizeY}
-				
-	private smoothVector2: SmoothVector2 position
-		let x = position.x, y = position.y
-		let deltaX = x - position.viewX
-		let deltaY = y - position.viewY
-		if deltaX or deltaY
-			if Time.frame > position.lastMoveFrame
-				let factor = position.speed / Math.sqrt(deltaX * deltaX + deltaY * deltaY)
-				if deltaX > 0: x = position.viewX = Math.min(position.viewX + deltaX * factor, x)
-				else           x = position.viewX = Math.max(position.viewX + deltaX * factor, x)
-				if deltaY > 0: y = position.viewY = Math.min(position.viewY + deltaY * factor, y)
-				else           y = position.viewY = Math.max(position.viewY + deltaY * factor, y)
-				position.lastMoveFrame = Time.frame
-				return {x,y}
-			else
-				return {position.viewX, position.viewY}
-		else
-			return position
 		
 	// Draws an image on the screen
 	global void drawImage: Image image                // The image to draw
