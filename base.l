@@ -94,6 +94,9 @@ struct int
 		
 	inline js bool withinInclusively: Range range
 		(this >= range.from && this <= range.to)
+		
+	inline js int assignIfGreater: int value
+		(value > this ? this = value : this)
 	
 // A number stored as a double precision 64-bit floating point value
 struct float
@@ -640,6 +643,11 @@ class List<T>
 		
 	int total: int(T it) selector
 		let sum = 0
+		for this: sum += selector(.)
+		return sum
+		
+	float total: float(T it) selector
+		let sum = 0.0
 		for this: sum += selector(.)
 		return sum
 		
