@@ -118,17 +118,17 @@ transient skipInit unit Platform
 		if scaleMode == Auto
 			if ratio.x < ratio.y: effectiveScaleMode = FixedWidth;  scale = ratio.x
 			else                  effectiveScaleMode = FixedHeight; scale = ratio.y
-			size = referenceSizeWithMargin
+			size = referenceSize
 		else
 		if scaleMode == FixedWidth
 			effectiveScaleMode = scaleMode
 			scale = ratio.x
-			size = {referenceSizeWithMargin.x, pixelSize.y/scale}
+			size = {referenceSize.x, pixelSize.y/scale}
 		else
 		if scaleMode == FixedHeight
 			effectiveScaleMode = scaleMode
 			scale = ratio.y; 
-			size = {pixelSize.x/scale, referenceSizeWithMargin.y}
+			size = {pixelSize.x/scale, referenceSize.y}
 			
 		let offsetX = anchor > 0 ? pixelSize.x/2 : 0
 		let offsetY = anchor > 1 ? pixelSize.y/2 : 0
