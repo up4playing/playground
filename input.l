@@ -18,7 +18,7 @@ transient class InternalUser
 	
 	int[] lastTouchMoveIndex
 	
-	Buffer inputs         // The stream of inputs of this user
+	Buffer inputs = {}    // The stream of inputs of this user
 	int uncertainReadPos  // The buffer position where we haven't received inputs from all users
 	
 	object mediaStream

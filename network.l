@@ -13,7 +13,7 @@ transient unit Snapshot
 	int autoSaveCount
 	int lastSnapshotSize
 	
-	Buffer snapshots
+	Buffer snapshots = {}
 	int[] snapshotStarts
 	int snapshotEvery = 100
 	
@@ -41,7 +41,7 @@ transient unit Snapshot
 		value.deserialize_internal(buffer);
 				
 	Buffer save
-		Buffer buffer
+		Buffer buffer = {}
 		serialize(buffer)
 		return buffer
 		
@@ -91,7 +91,7 @@ transient skipInit unit Network
 	public int receivedFrames       // We received all remote inputs up to this frame (lowest of all user frames)
 	private int uncertainFrame = -1 // The first frame where we don't have inputs from all players
 	public int certainFrame = -1    // The last frame where we have inputs from all players
-	private Buffer commonState      // A snapshot taken before the first uncertain frame
+	private Buffer commonState = {} // A snapshot taken before the first uncertain frame
 	internal int frameWithNewWatches = 0 // First frame with new watches, do not send watches for frames below this
 	internal bool startInLobby      // Connected sessions usually start in the lobby, local sessions start in the app
 	private int joinFrame           // The frame the current user joined
@@ -100,7 +100,7 @@ transient skipInit unit Network
 	bool isPremiere
 	bool isSmooth
 	
-	private Buffer debugCommonState // Used in debug mode to validate that serialing twice yields the same result 
+	private Buffer debugCommonState = {} // Used in debug mode to validate that serialing twice yields the same result 
 
 	initDatabase
 		IndexedDB.start "up4playing", "snapshot", 5
@@ -559,7 +559,7 @@ transient skipInit unit Network
 	adjustStartTimeIfNeeded
 		if Platform.mode < Play: adjustStartTime
 		
-	Buffer snapshotBuffer
+	Buffer snapshotBuffer = {}
 		
 	save: int slot
 		// Database disabled for now
@@ -594,7 +594,7 @@ transient skipInit unit Network
 		// 	print "save logs failed {error}"
 			
 	saveEventStream
-		Buffer buffer
+		Buffer buffer = {}
 		buffer.writeInt eventStreamVersion
 		buffer.writeInt frame-1
 		buffer.writeInt frames
