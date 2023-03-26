@@ -130,10 +130,8 @@ transient unit ServerNetwork
 			sendBuffer.reset
 			sendBuffer.writeInt8 cast NetworkMessageType.Ping
 			sendBuffer.writeFloat64 now
-			sendBuffer.writeInt32 Network.certainFrame                            // The last certain frame with inputs from everybody
-			sendBuffer.writeFloat64 Network.checksums[Network.certainFrame] || 0  // The checksum of the last certain frame
 			send sendBuffer
-			nextPingTime = now + (Network.mode == Ping ? 200 : pongCount < 20 ? 1000 : 5000)
+			nextPingTime = now + (Network.mode == Ping ? 200 : pongCount < 20 ? 1000 : 6000)
 			
 	float[] calculatedStartTimes
 	float referenceStartTime
@@ -226,6 +224,8 @@ transient unit ServerNetwork
 		sendBuffer.writeInt32 Input.localUser.id
 		sendBuffer.writeInt32 inputFrame // You got all inputs up to and including this frame
 		sendBuffer.writeBuffer inputs, inputsSentPos, length
+		sendBuffer.writeInt Network.lastChecksumFrame                              // The last certain frame with inputs from everybody
+		sendBuffer.writeFloat64 Network.checksums[Network.lastChecksumFrame] || 0  // The checksum of the last certain frame
 		send sendBuffer
 		
 		if Network.logging: Network.sentLog += " #{inputFrame} {inputsSentPos}->{inputs.writePos} {inputs.toRangeString(inputsSentPos, inputs.writePos)}"

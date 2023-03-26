@@ -383,21 +383,9 @@ transient skipInit unit Network
 			
 			if HTMLElement.elements: HTMLElement.elements.each.tick
 			
-			if mode != Local and (frame % checksumInterval)==0 and isCertain
-				// Calculate checksum if we received all inputs for this frame
-				float myChecksum = Framework.checksum					
-				float theirChecksum = checksums[frame]
-				if logging: checksumLog += " <> #{frame} {myChecksum}"
-				if !theirChecksum
-					checksums[frame] = myChecksum
-				else
-				if !theirChecksum.isApproximately(myChecksum)
-					onWrongChecksum mine:myChecksum theirs:theirChecksum
-				PeerNetwork.sendChecksum frame, myChecksum
-					
+			if mode != Local and isCertain
 				// Take snapshot
 				Snapshot.onEndOfStep
-			
 			
 		catch
 			onError error
@@ -648,6 +636,19 @@ transient skipInit unit Network
 			if(snapshot != simulateRollbackSnapshot)
 				onError {"Serializing state failed"}
 												
+		// Checksum
+		if Input.users.length >= 2 and frame > 200
+			float myChecksum = Framework.checksum + snapshot.writePos
+			float theirChecksum = checksums[frame]
+			if logging: checksumLog += " <{Input.localUser.id}*> #{frame} {myChecksum}"
+			if !theirChecksum                             checksums[frame] = myChecksum; else
+			if !theirChecksum.isApproximately(myChecksum) onWrongChecksum mine:myChecksum theirs:theirChecksum
+			lastChecksumFrame = frame
+			
+			// Temporary logging
+			eventLog += "objects:{Framework.objects.length} fx:{fx.effects.length} items:{app.items.length} Platform.size:{Platform.size} "
+			eventLog += Framework.debugString + app.debugString
+			
 		snapshot.writeInt Input.internalUsers.length
 		for Input.internalUsers
 			snapshot.writeInt .inputs.readPos
