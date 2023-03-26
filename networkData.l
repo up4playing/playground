@@ -25,7 +25,7 @@ http
 	js void get: string url
 		         stored void(dynamic result) code
 		let id = networkData_addCallback(code)
-		if(Network_frame == 0) Platform_isWaitingForInitialData = true
+		if(Network_frame == 0) Platform_waitingForInitialData++
 		if(Network_isPremiere && Input_isCertain) {
 			let data = await (await fetch(url)).text()
 			log("http.get "+url+" -> "+data?.length+" bytes")
@@ -39,7 +39,7 @@ http
 	js void post: string url
 		          stored void(dynamic result) code
 		let id = networkData_addCallback(code)
-		if(Network_frame == 0) Platform_isWaitingForInitialData = true
+		if(Network_frame == 0) Platform_waitingForInitialData++
 		if(Network_isPremiere && Input_isCertain) {
 			let data = await (await fetch(url, {method:"POST"})).text()
 			log("http.post "+url+" -> "+data?.length+" bytes")
@@ -51,7 +51,7 @@ http
 		          dynamic body
 		          stored void(dynamic result) code
 		let id = networkData_addCallback(code)
-		if(Network_frame == 0) Platform_isWaitingForInitialData = true
+		if(Network_frame == 0) Platform_waitingForInitialData++
 		if(Network_isPremiere && Input_isCertain) {
 			log("Actually fetching data: POST "+url)
 			let data = await (await fetch(url, {method:"POST", body:JSON.stringify(body)})).text()
@@ -69,7 +69,7 @@ http
 	js void put: string url
 		         stored void(dynamic result) code
 		let id = networkData_addCallback(code)
-		if(Network_frame == 0) Platform_isWaitingForInitialData = true
+		if(Network_frame == 0) Platform_waitingForInitialData++
 		if(Network_isPremiere && Input_isCertain) {
 			let data = await (await fetch(url, {method:"PUT"})).text()
 			log("http.put "+url+" -> "+data?.length+" bytes")
@@ -81,7 +81,7 @@ http
 		         dynamic body
 		         stored void(dynamic result) code
 		let id = networkData_addCallback(code)
-		if(Network_frame == 0) Platform_isWaitingForInitialData = true
+		if(Network_frame == 0) Platform_waitingForInitialData++
 		if(Network_isPremiere && Input_isCertain) {
 			let data = await (await fetch(url, {method:"PUT", body:JSON.stringify(body)})).text()
 			log("http.put "+url+" -> "+data?.length+" bytes")
