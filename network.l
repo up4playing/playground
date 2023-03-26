@@ -550,8 +550,8 @@ transient skipInit unit Network
 			console.log(str)
 		}
 		
-	// inline js int currentTime := Date.now()
-	inline js int currentTime := Math.round(performance.now())
+	inline js int currentTime := Date.now()
+	// inline js int currentTime := Math.round(performance.now())
 	
 	js void startApp
 		lobby_inLobby = false
