@@ -137,6 +137,7 @@ transient unit ServerNetwork
 			
 	float[] calculatedStartTimes
 	float referenceStartTime
+	float[] pingPongTimes
 			
 	private onPong: Buffer buffer
 		float now = Network.currentTime
@@ -144,8 +145,6 @@ transient unit ServerNetwork
 		float pingTime = buffer.readFloat64
 		float pingPongTime = now - pingTime
 		float calculatedStartTime = now - pingPongTime/2 - timeSinceStart
-		calculatedStartTimes.add calculatedStartTime maxLength:10
-		Network.startTime = calculatedStartTimes.average
 		
 		int deltaFromAverage = Math.round(calculatedStartTime - Network.startTime)
 		int deltaFromReference = Math.round(calculatedStartTime - referenceStartTime)
@@ -153,18 +152,28 @@ transient unit ServerNetwork
 		Network.log "<<< Pong ({pongCount})", pingPongTime, calculatedStartTime
 		Network.log "average", Network.startTime, deltaFromAverage 
 		Network.log "reference", referenceStartTime, deltaFromReference 
+		
+		// Ignore pings that took more than twice as long as the average
+		pongCount++
+		lastPingPongTime = pingPongTime
+		pingPongTimes.add pingPongTime maxLength:30
+		let pingPongTimesAverage = pingPongTimes.average
+		if pingPongTime > 400 or (pingPongTimes.length >= 15 and pingPongTime > pingPongTimesAverage * 2)
+			Network.log "ignoring ping-pong", pingPongTimes.length, pingPongTimesAverage
+			return
+			
 		statistics.addInfo "from average", deltaFromAverage
 		statistics.addInfo "from reference", deltaFromReference
+		
+		calculatedStartTimes.add calculatedStartTime maxLength:20
+		Network.startTime = calculatedStartTimes.average
 			
+		// Use the fastest ping-pong-time we have ever seen to calculate the reference start time
 		if pingPongTime < fastestPingPongTime
-			// Use the fastest ping-pong-time we have ever seen to calculate the start time
 			fastestPingPongTime = pingPongTime
 			referenceStartTime = calculatedStartTime
 			Network.log "New fastest pingPongTime", pongCount, now, pingPongTime, timeSinceStart, Network.startTime, referenceStartTime
 			
-		pongCount++
-		lastPingPongTime = pingPongTime
-
 	sendSignal:	int receiverId, string type, string sdp
 		sendBuffer.reset
 		sendBuffer.writeInt8 cast NetworkMessageType.Signal
