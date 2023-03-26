@@ -473,24 +473,6 @@ transient global unit graphics
 		let sizeX = size.x || imageSize.x
 		let sizeY = size.y || (sizeX/imageSize.x)*imageSize.y
 		return {sizeX, sizeY}
-				
-	private smoothVector2: SmoothVector2 position
-		let x = position.x, y = position.y
-		let deltaX = x - position.viewX
-		let deltaY = y - position.viewY
-		if deltaX or deltaY
-			if Time.frame > position.lastMoveFrame
-				let factor = position.speed / Math.sqrt(deltaX * deltaX + deltaY * deltaY)
-				if deltaX > 0: x = position.viewX = Math.min(position.viewX + deltaX * factor, x)
-				else           x = position.viewX = Math.max(position.viewX + deltaX * factor, x)
-				if deltaY > 0: y = position.viewY = Math.min(position.viewY + deltaY * factor, y)
-				else           y = position.viewY = Math.max(position.viewY + deltaY * factor, y)
-				position.lastMoveFrame = Time.frame
-				return {x,y}
-			else
-				return {position.viewX, position.viewY}
-		else
-			return position
 		
 	// Draws an image on the screen
 	global void drawImage: Image image                // The image to draw
@@ -572,7 +554,6 @@ transient global unit graphics
 		                      SourceCodeLocation location
 		if(!image.texture?.ensureIsAvailable()) return
 		if(graphics_isVisibleFor(visibleFor)) {
-			if(position.speed) position = graphics_smoothVector2(position)
 			let f = image.frames[frame % image.frames.length]
 			let sizeX = size.x || f.w
 			let sizeY = size.y || (sizeX/f.w)*f.h
@@ -600,7 +581,6 @@ transient global unit graphics
 		                      SourceCodeLocation location
 		if(!image.texture?.ensureIsAvailable()) return
 		if(graphics_isVisibleFor2(visibleFor)) {
-			if(position.speed) position = graphics_smoothVector2(position)
 			let f = image.frames[frame % image.frames.length]
 			let sizeX = size.x || f.w
 			let sizeY = size.y || (sizeX/f.w)*f.h
@@ -632,7 +612,6 @@ transient global unit graphics
 		                      SourceCodeLocation location
 		if(!image.texture?.ensureIsAvailable()) return
 		if(graphics_isVisibleFor(visibleFor)) {
-			if(position.speed) position = graphics_smoothVector2(position)
 			let f = image.frames[frame % image.frames.length]
 			let sizeX = size.x || f.w
 			let sizeY = size.y || (sizeX/f.w)*f.h
@@ -667,7 +646,6 @@ transient global unit graphics
 		                      SourceCodeLocation location
 		if(!image.texture?.ensureIsAvailable()) return
 		if(graphics_isVisibleFor2(visibleFor)) {
-			if(position.speed) position = graphics_smoothVector2(position)
 			let f = image.frames[frame % image.frames.length]
 			let sizeX = size.x || f.w
 			let sizeY = size.y || (sizeX/f.w)*f.h
@@ -706,7 +684,6 @@ transient global unit graphics
 		                     alpha = 1.0                        // The opacity of the text (0: fully transparent, 1: fully visible)
 		                     SourceCodeLocation location
 		if(graphics_isVisibleFor(visibleFor)) {
-			if(position.speed) position = graphics_smoothVector2(position)
 			let effectiveFont = font || graphics_currentFont
 			let fontSize = size.y || size.x || graphics_currentFontSize
 			let contextFont = (style ? "bold ":"")+fontSize+"px "+effectiveFont.name;
@@ -744,7 +721,6 @@ transient global unit graphics
 		                     alpha = 1.0                        // The opacity of the text (0: fully transparent, 1: fully visible)
 		                     SourceCodeLocation location
 		if(graphics_isVisibleFor2(visibleFor)) {
-			if(position.speed) position = graphics_smoothVector2(position)
 			let effectiveFont = font || graphics_currentFont
 			let fontSize = size.y || size.x || graphics_currentFontSize
 			let contextFont = (style ? "bold ":"")+fontSize+"px "+effectiveFont.name;
@@ -860,7 +836,6 @@ transient global unit graphics
 		                          VerticalAlignment valign = Middle  // The vertical alignment of the rectangle
 		                          SourceCodeLocation location
 		if(graphics_isVisibleFor(visibleFor)) {
-			if(position.speed) position = graphics_smoothVector2(position)
 			let sizeX = size.x
 			let sizeY = size.y || size.x
 			graphics_items.push(new DisplayRectangle(
@@ -888,7 +863,6 @@ transient global unit graphics
 		                          VerticalAlignment valign = Middle  // The vertical alignment of the rectangle
 		                          SourceCodeLocation location
 		if(graphics_isVisibleFor2(visibleFor)) {
-			if(position.speed) position = graphics_smoothVector2(position)
 			let sizeX = size.x
 			let sizeY = size.y || size.x
 			graphics_items.push(new DisplayRectangle(
@@ -918,7 +892,6 @@ transient global unit graphics
 		                       alpha = 1.0                // The opacity of the circle (0: fully transparent, 1: fully visible)
 		                       SourceCodeLocation location
 		if(graphics_isVisibleFor(visibleFor)) {
-			if(position.speed) position = graphics_smoothVector2(position)
 			let sizeX = size.x, sizeY = size.y || size.x
 			graphics_items.push(new DisplayCircle(
 				graphics_totalMatrix, 
@@ -948,7 +921,6 @@ transient global unit graphics
 		                       alpha = 1.0               // The opacity of the circle (0: fully transparent, 1: fully visible)
 		                       SourceCodeLocation location
 		if(graphics_isVisibleFor2(visibleFor)) {
-			if(position.speed) position = graphics_smoothVector2(position)
 			let sizeX = size.x, sizeY = size.y || size.x
 			graphics_items.push(new DisplayCircle(
 				graphics_totalMatrix, 
@@ -975,7 +947,6 @@ transient global unit graphics
 		                        Color color = White        // Tint the image with this color
 		if(!texture?.ensureIsAvailable()) return
 		if(graphics_isVisibleFor(visibleFor)) {
-			if(position.speed) position = graphics_smoothVector2(position)
 			let sizeX = size.x || texture.size.x
 			let sizeY = size.y || (sizeX/texture.size.x)*texture.size.y
 			graphics_items.push(new DisplayImage(
@@ -1003,7 +974,6 @@ transient global unit graphics
 		                        Color color = White        // Tint the image with this color
 		if(!image.texture?.ensureIsAvailable()) return
 		if(graphics_isVisibleFor(visibleFor)) {
-			if(position.speed) position = graphics_smoothVector2(position)
 			let sizeX = size.x || texture.size.x
 			let sizeY = size.y || (sizeX/texture.size.x)*texture.size.y
 			graphics_items.push(new DisplayImage(
@@ -1033,7 +1003,6 @@ transient global unit graphics
 		                        implicit int layer = 0     // Higher layers are drawn in front of lower layers
 		                        alpha = 1.0                // The opacity of the polygon (0: fully transparent, 1: fully visible)
 		if(graphics_isVisibleFor(visibleFor)) {
-			if(position.speed) position = graphics_smoothVector2(position)
 			graphics_items.push(new DisplayPolygon(
 				graphics_totalMatrix,
 				position.x, position.y,
@@ -1061,7 +1030,6 @@ transient global unit graphics
 		                                 HorizontalAlignment align = Center // The horizontal alignment of the rectangle
 		                                 VerticalAlignment valign = Middle  // The vertical alignment of the rectangle
 		if(graphics_isVisibleFor(visibleFor)) {
-			if(position.speed) position = graphics_smoothVector2(position)
 			let sizeX = size.x
 			let sizeY = size.y || size.x
 			graphics_items.push(new DisplayRoundedRectangle(
@@ -1087,8 +1055,6 @@ transient global unit graphics
 		                     implicit int layer = 0 // Higher layers are drawn in front of lower layers
 		                     alpha = 1.0            // The opacity of the line (0: fully transparent, 1: fully visible)
 		if(graphics_isVisibleFor(visibleFor)) {
-			if(from.speed) from = graphics_smoothVector2(from)
-			if(to.speed)   to   = graphics_smoothVector2(to)
 			graphics_items.push(new DisplayLine(
 				graphics_totalMatrix,
 				from.x, from.y,
@@ -1111,7 +1077,6 @@ transient global unit graphics
 		                      implicit int layer = 0 // Higher layers are drawn in front of lower layers
 		                      alpha = 1.0            // The opacity of the lines (0: fully transparent, 1: fully visible)
 		if(graphics_isVisibleFor(visibleFor)) {
-			if(position.speed) position = graphics_smoothVector2(position)
 			graphics_items.push(new DisplayPolygon(
 				graphics_totalMatrix,
 				position.x, position.y,
@@ -1133,7 +1098,6 @@ transient global unit graphics
 		                           visibleFor = -1                  // Only clear the rectangle for this user
 		                           implicit layer = 0               // Higher layers are process after lower layers
 		if(graphics_isVisibleFor(visibleFor)) {
-			if(position.speed) position = graphics_smoothVector2(position)
 			let sizeX = size.x
 			let sizeY = size.y || size.x
 			graphics_items.push(new DisplayRectangle(
