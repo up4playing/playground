@@ -202,7 +202,6 @@ transient unit PeerNetwork
 				sendBuffer.reset
 				sendBuffer.writeInt8 cast NetworkMessageType.Tick
 				sendBuffer.writeInt inputFrame // You got all inputs up to and including this frame
-				sendBuffer.writeInt Network.bufferFrames
 				sendBuffer.writeInt user.inputsSentPos
 				sendBuffer.writeBuffer inputs, user.inputsSentPos, length
 				Network.tickMessageSize = send ., sendBuffer
@@ -223,14 +222,6 @@ transient unit PeerNetwork
 		
 	// private js void onMessage: InternalUser user, Buffer buffer
 	// 	setTimeout(() => PeerNetwork_onMessageDo(user, buffer), 1000)
-		
-	private getMinReceivedFrames
-		let minReceivedFrames = int.maxValue
-		for Input.users
-			let internalUser = Input.internalUsers[.id]
-				if internalUser.inputFrame < minReceivedFrames
-					minReceivedFrames = internalUser.inputFrame
-		return minReceivedFrames
 								
 	private onMessage: InternalUser user, Buffer buffer
 		NetworkMessageType type = cast buffer.readInt8
@@ -243,8 +234,6 @@ transient unit PeerNetwork
 		let inputFrame = buffer.readInt
 		if inputFrame >= sender.inputFrame
 			sender.inputFrame = inputFrame
-			
-			sender.bufferFrames = buffer.readInt
 			let prevWritePos = buffer.readInt
 			buffer.readBuffer sender.inputs, prevWritePos
 			
@@ -515,6 +504,7 @@ transient unit PeerNetwork
 		for Input.internalUsers if .
 			sendBuffer.writeInt32 .id
 			sendBuffer.writeInt32 .inputs.readPos
+			sendBuffer.writeBool .active
 		to.inputsSentPos = localPlayer.inputs.readPos
 		sendBuffer.writeBuffer buffer
 		send to, sendBuffer
@@ -531,9 +521,11 @@ transient unit PeerNetwork
 		for userCount
 			let id = buffer.readInt32
 			let readPos = buffer.readInt32
+			let active = buffer.readBool
 			let user = Input.internalUsers[id]
 				user.inputFrame = frame
 				user.inputs.readPos = user.inputs.writePos = readPos
+				user.active = active
 				
 		for Input.internalUsers if .
 			.inputsSentPos = Input.localUser.inputs.writePos

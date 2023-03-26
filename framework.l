@@ -585,6 +585,7 @@ Object ParticleSystem
 	bursts = 10
 	
 	private int burst
+	debugString := "(ParticleSystem {position.x} {position.y} {particles.length})"
 	
 	override tick
 		if Time.now > nextBurst

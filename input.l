@@ -4,28 +4,29 @@ transient class InternalUser
 	bool local          // Is this the local user?
 	int connectionId    // The connectionId increases with every connection, even if the same user reconnects
 	int index
+	bool active
 	
-	bool collectInputs  // When we are done pinging, we add a join event and start collecting inputs
-	int inputFrame      // We got all inputs from this player up to and including this frame
-	int bufferFrames
+	// Event Stream
+	bool collectInputs       // When we are done pinging, we add a join event and start collecting inputs
+	int inputFrame = -1      // We got all inputs from this player up to and including this frame
 	int inputsSentPos
+	int[] lastTouchMoveIndex
+	Buffer inputs            // The stream of inputs of this user
 	
+	// List of inputs filled by parseInput and used by onTouchDown, onWheel, onKeyDown, ...
 	visible Touch[] downTouches, movingTouches, upTouches
 	visible WheelEvent[] wheelEvents
 	visible Key[] downKeys, upKeys
 	visible string[] pressedKeys, textInputs, textCompositions
 	visible string[] navigations
-	
-	int[] lastTouchMoveIndex
-	
-	Buffer inputs         // The stream of inputs of this user
-	int uncertainReadPos  // The buffer position where we haven't received inputs from all users
-	
+
+	// Video + Audio
 	object mediaStream
 	object[] videoElements
 	object audioElement
 	int videoElementIndex = 0
 	
+	// Connection
 	object peerConnection
 	object dataChannel
 	object recreateDataChannelInterval
@@ -33,6 +34,17 @@ transient class InternalUser
 	bool offerByMe
 	bool receivedAnswer
 	int nextLostMessageAtFrame
+	
+	// Statistics
+	private int[] aheads                   // Rolling buffer of ahead values, used to calculate bufferFrames
+	private int[] aheadsMax                // Rolling buffer of aheadMax values
+	visible int bufferFrames               // The average of all aheadMax values
+	visible int smoothFrame = int.maxValue
+	
+	// Snapshot
+	int snapshotFrame = -1
+	int lastInputFrame
+	Buffer snapshot
 	
 	startInputFrame: int index
 		lastTouchMoveIndex.clear
@@ -49,6 +61,19 @@ transient class InternalUser
 		upKeys.clear
 		pressedKeys.clear
 		navigations.clear
+		
+	collectStatistics: int frame
+		int ahead = frame - inputFrame
+		if ahead < 50: aheads.add ahead, maxLength:200
+		int aheadMax = aheads.max .
+		aheadsMax.add aheadMax maxLength:600
+		bufferFrames = Math.ceil(aheadsMax.average)
+		// bufferFrames = 10
+		smoothFrame = frame - bufferFrames
+		
+	simulateRollback: int frame
+		bufferFrames = 5
+		smoothFrame = frame - bufferFrames		
 		
 // The public state of a user. This is the same accross all clients.
 class NetworkUser
@@ -81,9 +106,9 @@ class NetworkUser
 		controller.y.name = "CTRL"
 
 	internal clearEvents
-		bool hasToch = touches.any.type == Touch
+		bool hasTouch = touches.any.type == Touch
 		for touches <-
-			if (.phase == Up and .type >= Touch) or (hasToch and .type != Touch)
+			if (.phase == Up and .type >= Touch) or (hasTouch and .type != Touch)
 				touches.remove .
 	
 enum InputType: None, TouchDown, TouchMove, TouchUp, Wheel, KeyDown, KeyUp, TextInput, Stick, Trigger, Grip, ButtonDown, ButtonUp, ControllerTransform, HeadTransform, DeviceRotation, Join, Lost, StillConnected, SetState, Navigate, GameController, String, Json, Object
@@ -507,6 +532,7 @@ skipInit unit Input
 					Network.log "Removing user {user.id} at frame {Network.frame}, user was lost at frame {user.lostAtFrame} and nobody disagreed", isCertain
 					users.remove user
 					usersById[user.id] = null
+					internalUser.active = false
 					updateUserIndices
 				else	
 				if Network.frame > internalUser.inputFrame + Network.targetFps * 8
@@ -596,9 +622,7 @@ skipInit unit Input
 		inputs.writeFloat32 Math.abs(leftStickY) > GameController.deadZone ? leftStickY : 0
 		inputs.writeUnsignedInt16 buttons
 			
-	internal parseInputs(int frame, bool isCertain)
-		this.isCertain = isCertain
-		if Network.logging: if isCertain: Network.parseLog += " c"
+	internal parseInputs: int frame
 		for internalUsers -> internalUser if internalUser
 			let inputs = internalUser.inputs
 			let userId = internalUser.id
@@ -621,10 +645,10 @@ skipInit unit Input
 					Network.log "Adding user {userId}"
 					users.add user = {id:userId, index:users.length}
 					usersById[userId] = user
+					internalUser.active = true
 					updateUserIndices
 				
 				let value = inputs.readUnsignedInt16
-				if Network.logging: Network.parseLog += " "+value
 				InputType inputType = cast(value % 32)
 				
 				if inputType >= TouchDown && inputType <= Wheel
@@ -632,7 +656,7 @@ skipInit unit Input
 					TouchType type = cast((value shiftRight 5) % 8)
 					int id = (value shiftRight 8) % 128
 					Vector2 referencePos = {inputs.readInt16, inputs.readInt16}
-					bool isSmoothPosition = !Network.smoothTouchPosition or Network.isSmooth or localUser.id == userId
+					bool isSmoothPosition = !Network.smoothTouchPosition or internalUser.local or frame <= internalUser.smoothFrame
 					if Network.logging: Network.parseLog += " "+id
 					
 					if inputType == TouchDown
@@ -708,6 +732,7 @@ skipInit unit Input
 					if keyPressed: internalUser.pressedKeys.add keyPressed
 					let keyIndex = user.mapKeyToController.indexOf(key)
 					if keyIndex != -1: user.controllerKeyDownFrame[keyIndex] = frame
+					if Network.logging: Network.parseLog += " KeyDown {key}"
 				else
 				if inputType == KeyUp
 					Key key = cast inputs.readInt32
@@ -715,6 +740,7 @@ skipInit unit Input
 					user.keysCurrentlyDown.remove key
 					let keyIndex = user.mapKeyToController.indexOf(key)
 					if keyIndex != -1: user.controllerKeyDownFrame[keyIndex] = 0
+					if Network.logging: Network.parseLog += " KeyUp {key}"
 				else
 				if inputType == Navigate
 					internalUser.navigations.add inputs.readString
@@ -832,6 +858,7 @@ skipInit unit Input
 		users.orderBy.id
 		for users
 			.index = i
+			.color = graphics.defaultColors[i]
 			internalUsers[.id].index = i
 		
 	// Returns true if given key is currently held down

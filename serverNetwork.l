@@ -225,7 +225,6 @@ transient unit ServerNetwork
 		sendBuffer.writeInt8 cast NetworkMessageType.Tick
 		sendBuffer.writeInt32 Input.localUser.id
 		sendBuffer.writeInt32 inputFrame // You got all inputs up to and including this frame
-		sendBuffer.writeInt32 Network.bufferFrames
 		sendBuffer.writeBuffer inputs, inputsSentPos, length
 		send sendBuffer
 		
@@ -240,11 +239,9 @@ transient unit ServerNetwork
 		let prevWritePos = sender.inputs.writePos
 		
 		sender.inputFrame = buffer.readInt32
-		sender.bufferFrames = buffer.readInt32
 		buffer.readBuffer sender.inputs, prevWritePos
-		
-		Network.receivedFrames = Input.internalUsers.min.inputFrame where . and !.local
-		if Network.logging: Network.receivedLog += " [{Network.currentTime}] <{senderId}> #{sender.inputFrame} ama:{sender.bufferFrames} {prevWritePos}->{sender.inputs.writePos} {sender.inputs.toRangeString(prevWritePos, sender.inputs.writePos)}"
+
+		if Network.logging: Network.receivedLog += " [{Network.currentTime}] <{senderId}> #{sender.inputFrame} {prevWritePos}->{sender.inputs.writePos} {sender.inputs.toRangeString(prevWritePos, sender.inputs.writePos)}"
 	
 	sendSwitch: SendInputsMode mode, int sendInterval
 		sendBuffer.reset
