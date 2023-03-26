@@ -1811,7 +1811,6 @@ skipInit transient float Time
 		new Date(isoString).getTime()
 		
 	inline js float toFloat() this
-	inline js int toInt() Math.floor(this)
 	inline js string toString() this.toString()
 		
 	// Returns true if the time is not zero

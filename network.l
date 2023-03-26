@@ -354,7 +354,7 @@ transient skipInit unit Network
 			bool isCertain = frame <= certainFrame
 			
 			// Send current frame to editor	
-			if Platform.isDebug and !fastForward and (Platform.mode == Record or Platform.mode == Play or Platform.isWaitingForInitialData): Platform.sendFrame(frame, Math.max(frame+1, frames))
+			if Platform.isDebug and !fastForward and (Platform.mode == Record or Platform.mode == Play or Platform.waitingForInitialData): Platform.sendFrame(frame, Math.max(frame+1, frames))
 			
 			// Save a snapshot when we are about to start the frame after the last certain frame where we got all inputs
 			checkSaveState
@@ -404,7 +404,7 @@ transient skipInit unit Network
 	// This is called in step.
 	internal tick: bool draw
 		graphics.startFrame
-		if draw and not Platform.isWaitingForInitialData
+		if draw and not Platform.waitingForInitialData
 			let isPlayback = Platform.mode == Play or frame+1 < frames
 			if Input.showPointers or isPlayback
 				Input.users.each drawPointer .id, showLocalPointer:isPlayback or Input.showLocalPointer
@@ -424,7 +424,7 @@ transient skipInit unit Network
 		catch
 			onError error
 			
-		if draw and not Platform.isWaitingForInitialData
+		if draw and not Platform.waitingForInitialData
 			drawTime = Time.measure
 				graphics.finishFrame
 			if Platform.mode != Manipulator: Input.updateCursor
