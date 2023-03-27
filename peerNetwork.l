@@ -192,7 +192,7 @@ transient unit PeerNetwork
 			Network_log(e.stack);
 		}
 		
-	Buffer sendBuffer
+	Buffer sendBuffer = {}
 	
 	sendInputs: int inputFrame
 		for Input.internalUsers -> user
@@ -464,7 +464,7 @@ transient unit PeerNetwork
 		
 	// --------------------------------------------- Send state ---------------------------------------------
 		
-	Buffer snapshotBuffer
+	Buffer snapshotBuffer = {}
 	int[] sendStateQueue
 	bool requestedState
 	int stateTimeout

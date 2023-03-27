@@ -2,7 +2,7 @@ enum NetworkMessageType: Join, JoinResponse, Ping, Pong, Signal, Ice, Tick, Swit
 
 transient unit ServerNetwork
 	private object socket
-	private Buffer sendBuffer
+	private Buffer sendBuffer = {}
 	int nextConnectionId = 1
 	
 	js void setup
