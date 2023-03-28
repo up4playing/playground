@@ -431,6 +431,7 @@ transient skipInit unit Network
 		audio.finishFrame
 				
 	js void appTick() if(window.app_tick) app_tick();
+	js string appDebugString() (window.app_debugString || "")
 		
 	private Buffer snapshot = {}
 	private Buffer secondSnapshotForTesting = {}
@@ -503,8 +504,8 @@ transient skipInit unit Network
 			lastChecksumFrame = frame
 			
 			// Temporary logging
-			eventLog += "objects:{Framework.objects.length} fx:{fx.effects.length} items:{app.items.length} Platform.size:{Platform.size} "
-			eventLog += Framework.debugString + app.debugString
+			eventLog += "objects:{Framework.objects.length} fx:{fx.effects.length} Platform.size:{Platform.size} "
+			eventLog += Framework.debugString + appDebugString
 			
 		snapshot.writeInt Input.internalUsers.length
 		for Input.internalUsers
