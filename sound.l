@@ -63,7 +63,7 @@ skipInit class Sound
 		
 	fadeOut: Time duration = 3000
 		     Time delay = 0
-		fx.add FadeSoundEffect startTime:Time.now+delay, duration, smooth:false, sound:this, startValue:1, delta:-1
+		fx.add FadeSoundEffect startTime:Time.now+delay, duration, sound:this, startValue:1, delta:-1
 		return this
 
 transient class PlayingSound

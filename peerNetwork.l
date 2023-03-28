@@ -192,7 +192,7 @@ transient unit PeerNetwork
 			Network_log(e.stack);
 		}
 		
-	Buffer sendBuffer
+	Buffer sendBuffer = {}
 	
 	sendInputs: int inputFrame
 		for Input.internalUsers -> user
@@ -202,12 +202,14 @@ transient unit PeerNetwork
 				sendBuffer.reset
 				sendBuffer.writeInt8 cast NetworkMessageType.Tick
 				sendBuffer.writeInt inputFrame // You got all inputs up to and including this frame
-				sendBuffer.writeInt Network.bufferFrames
+				sendBuffer.writeInt user.inputsSentPos
 				sendBuffer.writeBuffer inputs, user.inputsSentPos, length
-				Network.tickMessageSize = send ., sendBuffer
+				sendBuffer.writeInt Network.lastChecksumFrame                              // The last certain frame with inputs from everybody
+				sendBuffer.writeFloat64 Network.checksums[Network.lastChecksumFrame] || 0  // The checksum of the last certain frame
 				
-				if Network.logging: Network.sentLog += " <{user.id}> #{inputFrame} {user.inputsSentPos}->{inputs.writePos} {inputs.toRangeString(user.inputsSentPos, inputs.writePos)} ({Network.tickMessageSize} bytes)"
+				Network.tickMessageSize = send ., sendBuffer
 				user.inputsSentPos = inputs.writePos
+				if Network.logging: Network.sentLog += " <{user.id}> #{inputFrame} {user.inputsSentPos}->{inputs.writePos} {inputs.toRangeString(user.inputsSentPos, inputs.writePos)} ({Network.tickMessageSize} bytes)"
 			
 	private js int send: InternalUser user, Buffer buffer
 		try {
@@ -222,14 +224,6 @@ transient unit PeerNetwork
 		
 	// private js void onMessage: InternalUser user, Buffer buffer
 	// 	setTimeout(() => PeerNetwork_onMessageDo(user, buffer), 1000)
-		
-	private getMinReceivedFrames
-		let minReceivedFrames = int.maxValue
-		for Input.users
-			let internalUser = Input.internalUsers[.id]
-				if internalUser.inputFrame < minReceivedFrames
-					minReceivedFrames = internalUser.inputFrame
-		return minReceivedFrames
 								
 	private onMessage: InternalUser user, Buffer buffer
 		NetworkMessageType type = cast buffer.readInt8
@@ -242,13 +236,19 @@ transient unit PeerNetwork
 		let inputFrame = buffer.readInt
 		if inputFrame >= sender.inputFrame
 			sender.inputFrame = inputFrame
-			
-			sender.bufferFrames = buffer.readInt
-			let prevWritePos = sender.inputs.writePos
+			let prevWritePos = buffer.readInt
 			buffer.readBuffer sender.inputs, prevWritePos
 			
-			Network.receivedFrames = getMinReceivedFrames
-			if Network.logging: Network.receivedLog += " [{Network.currentTime}] <{sender.id}> #{inputFrame} buffer:{sender.bufferFrames} {prevWritePos}->{sender.inputs.writePos} {sender.inputs.toRangeString(prevWritePos, sender.inputs.writePos)}"
+			// Checksum
+			int checksumFor = buffer.readInt
+			float checksum = buffer.readFloat64
+			if Network.logging: Network.checksumLog += " <{sender.id}> #{checksumFor} {checksum}"
+			
+			let myChecksum = Network.checksums[checksumFor]
+			if !myChecksum                           Network.checksums[checksumFor] = checksum; else
+			if !myChecksum.isApproximately(checksum) Network.onWrongChecksum mine:myChecksum theirs:checksum
+			
+			if Network.logging: Network.receivedLog += " [{Network.currentTime}] <{sender.id}> #{inputFrame} {prevWritePos}->{sender.inputs.writePos} {sender.inputs.toRangeString(prevWritePos, sender.inputs.writePos)}"
 		else
 			if Network.logging: Network.receivedLog += " [{Network.currentTime}] <{sender.id}> (ignoring #{inputFrame})"
 		
@@ -266,23 +266,23 @@ transient unit PeerNetwork
 		}
 		
 	private js void logConnectionType: InternalUser user
-		// setTimeout(async () => {
-		let stats = await user.peerConnection.getStats()
-		let candidatePairs = [...stats.values()].filter(s => s.type == "candidate-pair" && s.state == "succeeded")
-		let candidatePair = candidatePairs.find(a => a.selected) || candidatePairs[0]
-		if(candidatePair) {
-			let candidate = stats.get(candidatePair.localCandidateId);
-			let ip = candidate.ip || candidate.address
-			user.connectionType = candidate.candidateType + " " + ip
-			Network_log("####################connection to "+user.id+": "+user.connectionType)
-		} else {
-			Network_log("####################connection: no candidate pair for "+user.id)
-			window.stats = [...stats.values()]
-			console.log(window.stats)
-			try  { Network_log(JSON.stringify(window.stats)) }
-			catch{ }
-		}
-		// }, 5000)
+		setTimeout(async () => {
+			let stats = await user.peerConnection.getStats()
+			let candidatePairs = [...stats.values()].filter(s => s.type == "candidate-pair" && s.state == "succeeded")
+			let candidatePair = candidatePairs.find(a => a.selected) || candidatePairs[0]
+			if(candidatePair) {
+				let candidate = stats.get(candidatePair.localCandidateId);
+				let ip = candidate.ip || candidate.address
+				user.connectionType = candidate.candidateType + " " + ip
+				Network_log("####################connection to "+user.id+": "+user.connectionType)
+			} else {
+				Network_log("####################connection: no candidate pair for "+user.id)
+				window.stats = [...stats.values()]
+				console.log(window.stats)
+				try  { Network_log(JSON.stringify(window.stats)) }
+				catch{ }
+			}
+		}, 10000)
 		
 	// --------------------------------------------- Checksum ---------------------------------------------
 	
@@ -314,6 +314,7 @@ transient unit PeerNetwork
 	string videoInputId, audioInputId, audioOutputId	
 	
 	private js void setupLocalMedia: bool enableVideo, bool enableAudio
+		Network_log("setupLocalMedia: start")
 		PeerNetwork_enableVideo = enableVideo
 		PeerNetwork_enableAudio = enableAudio
 		if(!enableVideo && !enableAudio) return
@@ -324,9 +325,12 @@ transient unit PeerNetwork
 				video: {width: 500, height: 375},
 				audio: enableAudio
 			});
+			Network_log("setupLocalMedia: getUserMedia done")
 			
 			// Enummerate local devices
 			let devices = await navigator.mediaDevices.enumerateDevices();
+			Network_log("setupLocalMedia: enumerateDevices done")
+			
 			for(let device of devices) {
 				switch(device.kind) {
 					case "videoinput":  PeerNetwork_devices.videoInput.push(device); break;
@@ -460,19 +464,19 @@ transient unit PeerNetwork
 		
 	// --------------------------------------------- Send state ---------------------------------------------
 		
-	Buffer snapshotBuffer
+	Buffer snapshotBuffer = {}
 	int[] sendStateQueue
 	bool requestedState
 	int stateTimeout
 	
 	makePrimiaryUserIfStateIsNotReceived
 		requestedState = false
-		stateTimeout = Platform.setTimeout 15s
+		stateTimeout = Platform.setTimeout 25s
 			if Input.internalUsers.any.receivedAnswer
-				Network.log "No state after 15s, but we received answers -> Alert the user to make sure WebRTC connections aren't blocked."
+				Network.log "No state after 25s, but we received answers -> Alert the user to make sure WebRTC connections aren't blocked."
 				alert "Could not connect. Please make sure WebRTC connections aren't block by your router, firewall or a browser extension. If you have a VPN browser extension installed, please check your settings and make sure WebRTC connections aren't blocked."
 			else
-				Network.log "No state after 15s -> Make primary user"
+				Network.log "No state after 25s -> Make primary user"
 				makePrimaryUser
 	
 	makePrimaryUser
@@ -510,6 +514,7 @@ transient unit PeerNetwork
 		for Input.internalUsers if .
 			sendBuffer.writeInt32 .id
 			sendBuffer.writeInt32 .inputs.readPos
+			sendBuffer.writeBool .active
 		to.inputsSentPos = localPlayer.inputs.readPos
 		sendBuffer.writeBuffer buffer
 		send to, sendBuffer
@@ -526,9 +531,11 @@ transient unit PeerNetwork
 		for userCount
 			let id = buffer.readInt32
 			let readPos = buffer.readInt32
+			let active = buffer.readBool
 			let user = Input.internalUsers[id]
 				user.inputFrame = frame
 				user.inputs.readPos = user.inputs.writePos = readPos
+				user.active = active
 				
 		for Input.internalUsers if .
 			.inputsSentPos = Input.localUser.inputs.writePos
