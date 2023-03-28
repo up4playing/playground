@@ -1052,9 +1052,6 @@ class Map<TKey, TValue>
 
 // Specifies that a function doesn't return a value
 struct void
-
-// Classes derived from this type can be iterated over
-struct iterable	
 	
 // Denotes a type that can be null
 struct Nullable<T>
