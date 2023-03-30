@@ -19,7 +19,7 @@ transient unit Snapshot
 	
 	private bool autoSaveAtEndOfStep
 	
-	inline js void serialize(Buffer buffer) serialize_internal(buffer)
+	inline js string serialize(Buffer buffer) serialize_internal(buffer)
 	inline js void deserialize(Buffer buffer) deserialize_internal(buffer)
 		
 	js string toString: dynamic value
@@ -442,7 +442,7 @@ transient skipInit unit Network
 		if (mode != Connected and !simulateRollback) or Input.internalUsers.length == 1: return
 			
 		if mode == Local and simulateRollback: nextSnapshotFrame = frame - 5
-		else                nextSnapshotFrame = (Input.internalUsers.min Math.min(.smoothFrame, .inputFrame) where .active and not .local)+1
+		else                                   nextSnapshotFrame = (Input.internalUsers.min Math.min(.smoothFrame, .inputFrame) where .active and not .local)+1
 		replayLog += "(next:{nextSnapshotFrame})"
 		if snapshotFrame != -1: rewindAndReplayState snapshot, snapshotFrame
 
@@ -484,7 +484,9 @@ transient skipInit unit Network
 	private saveState: Buffer snapshot
 		snapshot.reset
 		saveTime = Time.measure
-			Snapshot.serialize snapshot
+			// TEMP logging
+			let serializeLog = Snapshot.serialize snapshot
+			eventLog += serializeLog
 				
 		// To check if serialization works consistently, deserialize, serialize a second snapshot and compare it with the first
 		if simulateRollback
@@ -502,7 +504,7 @@ transient skipInit unit Network
 			if !theirChecksum.isApproximately(myChecksum) onWrongChecksum mine:myChecksum theirs:theirChecksum
 			lastChecksumFrame = frame
 			
-			// Temporary logging
+			// TEMP logging
 			eventLog += "objects:{Framework.objects.length} fx:{fx.effects.length} items:{app.items.length} Platform.size:{Platform.size} "
 			eventLog += Framework.debugString + app.debugString
 			
