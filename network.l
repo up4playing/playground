@@ -285,7 +285,7 @@ transient skipInit unit Network
 					statistics.add .index, frame - internalUser.smoothFrame, .color, set:1
 			if replayFrom != -1: statistics.add "replay", frame - replayFrom, Gray
 		else
-		if simulateRollback
+		if mode == Local and simulateRollback
 			Input.internalUsers.each.simulateRollback frame
 			
 		// Logs
@@ -441,7 +441,7 @@ transient skipInit unit Network
 	private checkRewindAndReplayState
 		if (mode != Connected and !simulateRollback) or Input.internalUsers.length == 1: return
 			
-		if simulateRollback nextSnapshotFrame = frame - 5
+		if mode == Local and simulateRollback: nextSnapshotFrame = frame - 5
 		else                nextSnapshotFrame = (Input.internalUsers.min Math.min(.smoothFrame, .inputFrame) where .active and not .local)+1
 		replayLog += "(next:{nextSnapshotFrame})"
 		if snapshotFrame != -1: rewindAndReplayState snapshot, snapshotFrame
