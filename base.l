@@ -397,23 +397,25 @@ class List<T>
 		this.splice(index, 1)
 			
 	// Removes the item at the given index from the list
-	inline js void removeRange: int index // The index of the first item to remove
-		                        int count // The number of items to remove
-		this.splice(index, count)
+	inline js void removeRange: int start = 0 // The index of the first item to remove
+		                        int count     // The number of items to remove
+		this.splice(start, count)
 			
-	T removeFirstWhere: bool(T a) condition // The condition to check
-		for this
-			if condition(.)
-				removeAt i
-				return .
-		return null
-		
+	// Remove all item the meet a specific condition	
 	removeWhere: bool(T a) condition // The condition to check
 		for this <-
 			if condition(.)
 				removeAt i
 		return null
 		
+	// Remove the first item the meet a specific condition
+	T removeFirstWhere: bool(T a) condition // The condition to check
+		for this
+			if condition(.)
+				removeAt i
+				return .
+		return null
+	
 	// Adds an item to the list if it isn't already in there
 	inline js void ensure: T item // The item to add
 		if(this.indexOf(item) == -1) this.push(item)
