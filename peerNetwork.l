@@ -58,11 +58,11 @@ transient unit PeerNetwork
 		});
 		let peerConnection = new RTCPeerConnection(options);
 		let connectionId = user.connectionId
-		Network_log("setupPeerConnection userId:"+user.id+" connectionId:"+connectionId+" relayMode:"+PeerNetwork_relayMode)
+		Network_log("<"+user.id+"> setupPeerConnection connectionId:"+connectionId+" relayMode:"+PeerNetwork_relayMode)
 		
 		// Event handlers
 		peerConnection.oniceconnectionstatechange = e => {
-			Network_log("oniceconnectionstatechange " + peerConnection.iceConnectionState)
+			Network_log("<"+user.id+"> oniceconnectionstatechange " + peerConnection.iceConnectionState)
 			if(peerConnection.iceConnectionState == "disconnected") {
 				// Send logfiles to server
 				setTimeout(() => statistics_manuallyTriggerSend(-5, /*clear*/false), 7000);
@@ -72,7 +72,7 @@ transient unit PeerNetwork
 			if (event.candidate)
 				ServerNetwork_sendIce(user.id, JSON.stringify(event.candidate))
 			else
-				Network_log("Final ice candidate");
+				Network_log("<"+user.id+"> Final ice candidate");
 		}
 		user.peerConnection = peerConnection
 		user.offerByMe = offerByMe
@@ -80,7 +80,7 @@ transient unit PeerNetwork
 	
 	js void stopRecreatingDataChannel: InternalUser user
 		if(user.recreateDataChannelInterval) {
-			Network_log("stopRecreatingDataChannel for user:"+user.id+" connectionId:"+user.connectionId)
+			Network_log("<"+user.id+"> stopRecreatingDataChannel connectionId:"+user.connectionId)
 			clearInterval(user.recreateDataChannelInterval)
 			user.recreateDataChannelInterval = null
 		}
@@ -88,12 +88,12 @@ transient unit PeerNetwork
 	js void setupDataChannel: InternalUser user
 		// Create reliable data channel
 		// These options would create an unreliable one: {ordered:false, maxRetransmits:0}
-		Network_log("setupDataChannel: Creating data channel for user "+user.id)
+		Network_log("<"+user.id+"> setupDataChannel: Creating data channel")
 		let dataChannel = user.peerConnection.createDataChannel("channel")
 		dataChannel.binaryType = "arraybuffer"
 		dataChannel.onopen = e => {
 			user.dataChannel = dataChannel
-			Network_log("setupDataChannel: Open data channel for "+user.id)
+			Network_log("<"+user.id+"> setupDataChannel: Open data channel")
 			PeerNetwork_stopRecreatingDataChannel(user)
 			PeerNetwork_logConnectionType(user)
 			if(!PeerNetwork_requestedState) {
@@ -101,18 +101,18 @@ transient unit PeerNetwork
 				PeerNetwork_requestedState = true
 			}
 		}
-		dataChannel.onclosing = e => Network_log("Data channel "+user.id+" closing")
+		dataChannel.onclosing = e => Network_log("<"+user.id+"> Data channel closing")
 		dataChannel.onclose = e => {
-			Network_log("setupDataChannel: Close data channel for "+user.id+" recreateInterval:"+user.recreateDataChannelInterval)
+			Network_log("<"+user.id+"> setupDataChannel: Close data channel, recreateInterval:"+user.recreateDataChannelInterval)
 			user.dataChannel = null
 			if(!user.recreateDataChannelInterval) {
-				Network_log("setupDataChannel: Start recreating interval for "+user.id)
+				Network_log("<"+user.id+"> setupDataChannel: Start recreating interval")
 				user.recreateDataChannelInterval = setInterval(() => PeerNetwork_setupDataChannel(user), 2000)
 			}
 			// Send logfiles to server
 			setTimeout(() => statistics_manuallyTriggerSend(-4, /*clear*/false), 7000);
 		}
-		dataChannel.onerror = e => Network_log("DataChannel "+user.id+"error "+e)
+		dataChannel.onerror = e => Network_log("<"+user.id+"> DataChannel "+user.id+"error "+e)
 		dataChannel.onmessage = e => PeerNetwork_onMessage(user, new Buffer(e.data, 0, 0, 0))
 	
 	js void createOffer: InternalUser user
@@ -128,7 +128,7 @@ transient unit PeerNetwork
 			await peerConnection.setLocalDescription(offer);
 			ServerNetwork_sendSignal(user.id, "offer", peerConnection.localDescription.sdp)
 			user.receivedAnswer = false
-			Network_log("Sent offer to "+user.id+", waiting for answer.");
+			Network_log("<"+user.id+"> Sent offer to "+user.id+", waiting for answer.");
 		}
 		catch(e) {
 			console.error(e);
@@ -151,6 +151,7 @@ transient unit PeerNetwork
 		
 	js void onReceivedOffer: InternalUser user, string sdp
 		try {
+			Network_log("<"+user.id+"> Received offer, senting answer");
 			PeerNetwork_setupPeerConnection(user, /*offerByMe*/false)
 			PeerNetwork_setupRemoteMedia(user)
 			
@@ -160,24 +161,23 @@ transient unit PeerNetwork
 			
 			// Data channel
 			user.peerConnection.addEventListener('datachannel', e => {
-				Network_log("Data Channel received")
+				Network_log("<"+user.id+"> Data channel received")
 				let dataChannel = e.channel
 				dataChannel.binaryType = "arraybuffer"
 				user.dataChannel = dataChannel
 				dataChannel.onopen = e => {
-					Network_log("Data channel opened")
+					Network_log("<"+user.id+"> Data channel opened")
 					user.dataChannel = dataChannel
 					PeerNetwork_logConnectionType(user)
 				}
 				dataChannel.onclosing = e => {
-					Network_log("Data channel closing")
+					Network_log("<"+user.id+"> Data channel closing")
 					user.dataChannel = null
 				}
-				dataChannel.onclose = e => Network_log("DataChannel close "+e)
-				dataChannel.onerror = e => Network_log("DataChannel error "+e)
+				dataChannel.onclose = e => Network_log("<"+user.id+"> Data channel close "+e)
+				dataChannel.onerror = e => Network_log("<"+user.id+"> Data channel error "+e)
 				dataChannel.onmessage = e => PeerNetwork_onMessage(user, new Buffer(e.data, 0, 0, 0))
 			})
-			Network_log("onReceivedOffer: data channel listeners")
 						
 			// Answer
 			let peerConnection = user.peerConnection
@@ -185,7 +185,6 @@ transient unit PeerNetwork
 			let answer = await peerConnection.createAnswer();
 			await peerConnection.setLocalDescription(answer);
 			ServerNetwork_sendSignal(user.id, "answer", peerConnection.localDescription.sdp)
-			Network_log("Received offer from "+user.id+", sent answer, waiting for connection.");
 		}
 		catch(e) {
 			console.error(e)
@@ -255,13 +254,13 @@ transient unit PeerNetwork
 	js void onReceivedAnswer: InternalUser user, string sdp
 		await user.peerConnection.setRemoteDescription(new RTCSessionDescription({type: "answer", sdp}));
 		user.receivedAnswer = true
-		Network_log("Received answer from "+user.id+".");
+		Network_log("<"+user.id+"> Received answer from "+user.id+".");
 		
 	js void onIce: InternalUser user, string candidate
 		try {
 			await user.peerConnection.addIceCandidate(new RTCIceCandidate(JSON.parse(candidate)));
 		} catch(e) {
-			Network_log("onIce failed " + e.message)
+			Network_log("<"+user.id+"> onIce failed " + e.message)
 			Network_log(e.stack);
 		}
 		
@@ -274,9 +273,9 @@ transient unit PeerNetwork
 				let candidate = stats.get(candidatePair.localCandidateId);
 				let ip = candidate.ip || candidate.address
 				user.connectionType = candidate.candidateType + " " + ip
-				Network_log("####################connection to "+user.id+": "+user.connectionType)
+				Network_log("<"+user.id+"> ####################connection to "+user.id+": "+user.connectionType)
 			} else {
-				Network_log("####################connection: no candidate pair for "+user.id)
+				Network_log("<"+user.id+"> ####################connection: no candidate pair for "+user.id)
 				window.stats = [...stats.values()]
 				console.log(window.stats)
 				try  { Network_log(JSON.stringify(window.stats)) }

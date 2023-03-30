@@ -19,7 +19,7 @@ transient unit Snapshot
 	
 	private bool autoSaveAtEndOfStep
 	
-	inline js void serialize(Buffer buffer) serialize_internal(buffer)
+	inline js string serialize(Buffer buffer) serialize_internal(buffer)
 	inline js void deserialize(Buffer buffer) deserialize_internal(buffer)
 		
 	js string toString: dynamic value
@@ -285,7 +285,7 @@ transient skipInit unit Network
 					statistics.add .index, frame - internalUser.smoothFrame, .color, set:1
 			if replayFrom != -1: statistics.add "replay", frame - replayFrom, Gray
 		else
-		if simulateRollback
+		if mode == Local and simulateRollback
 			Input.internalUsers.each.simulateRollback frame
 			
 		// Logs
@@ -442,8 +442,8 @@ transient skipInit unit Network
 	private checkRewindAndReplayState
 		if (mode != Connected and !simulateRollback) or Input.internalUsers.length == 1: return
 			
-		if simulateRollback nextSnapshotFrame = frame - 5
-		else                nextSnapshotFrame = (Input.internalUsers.min Math.min(.smoothFrame, .inputFrame) where .active and not .local)+1
+		if mode == Local and simulateRollback: nextSnapshotFrame = frame - 5
+		else                                   nextSnapshotFrame = (Input.internalUsers.min Math.min(.smoothFrame, .inputFrame) where .active and not .local)+1
 		replayLog += "(next:{nextSnapshotFrame})"
 		if snapshotFrame != -1: rewindAndReplayState snapshot, snapshotFrame
 
@@ -485,7 +485,9 @@ transient skipInit unit Network
 	private saveState: Buffer snapshot
 		snapshot.reset
 		saveTime = Time.measure
-			Snapshot.serialize snapshot
+			// TEMP logging
+			let serializeLog = Snapshot.serialize snapshot
+			eventLog += serializeLog
 				
 		// To check if serialization works consistently, deserialize, serialize a second snapshot and compare it with the first
 		if simulateRollback
@@ -503,7 +505,7 @@ transient skipInit unit Network
 			if !theirChecksum.isApproximately(myChecksum) onWrongChecksum mine:myChecksum theirs:theirChecksum
 			lastChecksumFrame = frame
 			
-			// Temporary logging
+			// TEMP logging
 			eventLog += "objects:{Framework.objects.length} fx:{fx.effects.length} Platform.size:{Platform.size} "
 			eventLog += Framework.debugString + appDebugString
 			
@@ -562,7 +564,7 @@ transient skipInit unit Network
 	internal saveLogs
 		// Ensure that current eventLog is added to the table even if we haven't processed a single frame
 		logTable += ",,,,,,,,,,,,,,,,,,,,,,,,\"{eventLog.trim}\""
-		Platform.saveTextFile "{Platform.appName} {Date.now.invariantDayMonthYearHourMinuteSecondString} v{Platform.version}.csv", logTable
+		Platform.saveTextFile "{Input.localUser.id} {Platform.appName} {Date.now.invariantDayMonthYearHourMinuteSecondString} v{Platform.version}.csv", logTable
 		// Http.post "/saveLog/{gameId}/{roomId}/{userId}", logTable
 		// 	log "save logs"
 		// else
