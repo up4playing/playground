@@ -637,7 +637,8 @@ skipInit unit Input
 				// which is typically the "Join" message that is sent in "startConnected",
 				// but could also be a user reconnecting that was previously kicked out
 				if not user
-					Network.log "Adding user {userId}"
+					Network.log "#{frame} Add {userId}"
+					if Network.logging: Network.parseLog += " Add {userId}"
 					users.add user = {id:userId, index:users.length}
 					usersById[userId] = user
 					internalUser.active = true
@@ -772,7 +773,8 @@ skipInit unit Input
 					// We created the user above as soon as received the first input from that user,
 					// which is typically the "Join" message that is sent in "startConnected",
 					// but could also be a user reconnecting that was previously kicked out
-					Network.log "Join {userId}", isCertain
+					Network.log "#{frame} Join {userId}", isCertain
+					if Network.logging: Network.parseLog += " Join {userId}"
 				else
 				if inputType == Lost
 					let lostUserId = inputs.readInt16
