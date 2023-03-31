@@ -1,7 +1,7 @@
 unit lobby
 	bool inLobby = true
 	bool enableFullscreen = true
-	// Vector2[] points
+	Vector2[] points
 	
 	int ticks
 	
@@ -33,7 +33,7 @@ unit lobby
 			
 		// Place points with a click for testing
 		// Input.onTouchDown: points.add .position.clone
-		// points.each drawCircle ., radius:50
+		// points.each drawCircle ., size:50
 		
 		if Loca.supportedLanguages.length > 1
 			forPositions Loca.supportedLanguages, end:{930,-510}, delta:{40}
@@ -55,6 +55,7 @@ unit lobby
 	private showSettings = false
 	
 	tickSettings
+		if not Input.localUser: return
 		drawImage settingsIcon, {-920,-500}, clickableBy:Input.localUser.id, size:32
 			showSettings = !showSettings
 			
@@ -83,4 +84,3 @@ unit lobby
 					drawText .label, pos, size:18, align:Left, color:PeerNetwork.audioOutputId == .deviceId ? Green : White
 					Input.onTouchDownWithin pos+{200,0}, size:{400,30}, showTouchArea:false, userId:Input.localUser.id
 						PeerNetwork.setAudioOutput device.deviceId
-		
