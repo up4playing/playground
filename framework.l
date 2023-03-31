@@ -113,55 +113,48 @@ class Object
 	moveTo: Vector2 pos
 		    Time duration = 1000
 		    Time delay = 0
-		    bool smooth = false
 		Vector2 startValue = position
 		let delta = pos - startValue
-		fx.add MoveEffect startTime:fx.endOfPrevEffect(this)+delay, duration, smooth, this, startValue, delta
+		fx.add MoveEffect startTime:fx.endOfPrevEffect(this)+delay, duration, this, startValue, delta
 		return this
 		
 	moveTo: Vector2 pos
 		    float speed = 1
 		    Time delay = 0
-		    bool smooth = false
 		let delta = pos - position
 		let duration = Math.floor(delta.length / speed)
-		fx.add MoveEffect startTime:fx.endOfPrevEffect(this)+delay, duration, smooth, this, startValue:position, delta
+		fx.add MoveEffect startTime:fx.endOfPrevEffect(this)+delay, duration, this, startValue:position, delta
 		return this
 		
 	fadeIn: Time duration = 100
 		    Time delay = 0
-		    bool smooth = false
 		alpha = 0
-		fx.add FadeEffect startTime:fx.endOfPrevEffect(this)+delay, duration, smooth, this, startValue:0, delta:1
+		fx.add FadeEffect startTime:fx.endOfPrevEffect(this)+delay, duration, this, startValue:0, delta:1
 		return this
 		
 	fadeOut: Time duration = 100
 		     Time delay = -100
 		     bool removeWhenDone = true
-		     bool smooth = false
-		fx.add FadeEffect startTime:fx.endOfPrevEffect(this)+delay, duration, smooth, this, startValue:1, delta:-1, removeWhenDone
+		fx.add FadeEffect startTime:fx.endOfPrevEffect(this)+delay, duration, this, startValue:1, delta:-1, removeWhenDone
 		return this
 		
 	scaleTo: implicit Vector2 size
 		     Time duration = 1000
 		     Time delay = 0
-		     bool smooth = false
-		fx.add ScaleEffect startTime:fx.endOfPrevEffect(this)+delay, duration, smooth, this, startValue:this.size, delta:size-this.size
+		fx.add ScaleEffect startTime:fx.endOfPrevEffect(this)+delay, duration, this, startValue:this.size, delta:size-this.size
 		return this
 		
 	finally: Time delay = 0
-		     bool smooth = false
 		     stored void() do
-		fx.add DelayEffect startTime:fx.endOfPrevEffect(this)+delay, duration:0, smooth, this, do
+		fx.add DelayEffect startTime:fx.endOfPrevEffect(this)+delay, duration:0, this, do
 	
 	fadeAndScaleIn: int duration = 200
 		            float startScale = 3
 		            Time delay = 0
-		            bool smooth = false
 		alpha = 0
 		let startTime = fx.endOfPrevEffect(this)+delay
-		fx.add ScaleEffect startTime, duration, smooth, this, startValue:startScale*size, delta:(1-startScale)*size
-		fx.add FadeEffect  startTime, duration, smooth, this, startValue:0, delta:1
+		fx.add ScaleEffect startTime, duration, this, startValue:startScale*size, delta:(1-startScale)*size
+		fx.add FadeEffect  startTime, duration, this, startValue:0, delta:1
 		return this
 		
 Object RectangleObject
@@ -580,7 +573,6 @@ struct Particle
 	Vector2 pos, speed
 	int frame
 	Angle angle     // The rotation of the particle in turns (one full rotation is 1)
-	float scale = 1
 
 Object ParticleSystem
 	private Particle[] particles
@@ -593,6 +585,7 @@ Object ParticleSystem
 	bursts = 10
 	
 	private int burst
+	debugString := "(ParticleSystem {position.x} {position.y} {particles.length})"
 	
 	override tick
 		if Time.now > nextBurst
@@ -609,12 +602,11 @@ Object ParticleSystem
 		for particles <-
 			graphics.move .pos
 				graphics.rotate .angle
-					// TODO: Suport scale!!!!!!!!!
 					drawImage particleImage, frame:.frame
 			.pos += .speed
 			.speed.y += 1
 			.angle += .05
-			if .pos.y < -Platform.size.y/2
+			if .pos.y > Platform.size.y/2
 				particles.removeAt i
 		
 		if particles.length == 0	

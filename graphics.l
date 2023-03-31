@@ -141,7 +141,7 @@ transient global unit graphics
 		
 	internal js void startFrame
 		graphics_reset()
-		if(!Platform_fastForward)
+		if(!Platform_fastForward && !Platform_waitingForInitialData)
 			if(!graphics_backgroundColor || graphics_backgroundColor.hex == "#000000") {
 				Platform_context.clearRect(0, 0, Platform_pixelSize.x, Platform_pixelSize.y)
 			} else {
@@ -149,6 +149,7 @@ transient global unit graphics
 				Platform_context.fillRect(0, 0, Platform_pixelSize.x, Platform_pixelSize.y)
 			}
 			Platform_context.textBaseline = "top"
+
 
 	internal reset
 		totalMatrix = Platform.baseMatrix
@@ -169,6 +170,7 @@ transient global unit graphics
 			PeerNetwork.setAudioMuted user.audioElement, muted:Network.muteInvisibleUsers and user.videoElementIndex == 0
 		
 	private drawItems
+		Network.displayItems = items.length
 		gizmo.tick
 		items.sort b.layer - a.layer
 		items.each <- .draw
@@ -471,7 +473,7 @@ transient global unit graphics
 		let sizeX = size.x || imageSize.x
 		let sizeY = size.y || (sizeX/imageSize.x)*imageSize.y
 		return {sizeX, sizeY}
-				
+		
 	// Draws an image on the screen
 	global void drawImage: Image image                // The image to draw
 		                   Vector2 position = {}      // The position to draw to
@@ -927,7 +929,7 @@ transient global unit graphics
 				sizeX, sizeY,
 				layer, alpha, graphics_currentClippingPath, "Circle", 
 				location, position.location, size.location,
-				startAngle, anlge,
+				startAngle, angle,
 				direction == 1,
 				fillColor || !outlineColor ? (fillColor || graphics_currentColor).hex : null,
 				outlineColor ? outlineColor.hex : null,
@@ -942,6 +944,7 @@ transient global unit graphics
 		                        visibleFor = -1              // Only this user will see the texture
 		                        implicit int layer = 0       // Higher layers are drawn in front of lower layers
 		                        alpha = 1.0                  // The opacity of the texture (0: fully transparent, 1: fully visible)
+		                        Color color = White        // Tint the image with this color
 		if(!texture?.ensureIsAvailable()) return
 		if(graphics_isVisibleFor(visibleFor)) {
 			let sizeX = size.x || texture.size.x
@@ -954,7 +957,8 @@ transient global unit graphics
 				layer, alpha, graphics_currentClippingPath, texture.file,
 				location, position.location, size.location,
 				texture._htmlImage,
-				0, 0, texture.size.x, texture.size.y
+				0, 0, texture.size.x, texture.size.y,
+				color
 			))
 		}
 
@@ -967,6 +971,7 @@ transient global unit graphics
 		                        visibleFor = -1             // Only this user will see the texture
 		                        implicit int layer = 0      // Higher layers are drawn in front of lower layers
 		                        alpha = 1.0                 // The opacity of the texture (0: fully transparent, 1: fully visible)
+		                        Color color = White        // Tint the image with this color
 		if(!image.texture?.ensureIsAvailable()) return
 		if(graphics_isVisibleFor(visibleFor)) {
 			let sizeX = size.x || texture.size.x
@@ -982,7 +987,8 @@ transient global unit graphics
 				sourcePosition.x+texture.size.x/2-sourceSize.x/2,
 				sourcePosition.y+texture.size.y/2-sourceSize.y/2,
 				sourceSize.x, 
-				sourceSize.y, 
+				sourceSize.y,
+				color
 			))
 		}
 		

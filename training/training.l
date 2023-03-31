@@ -1,63 +1,33 @@
-ExampleItem
-	const Vector2 size = {300,60}
-	bool moveable = true
-	Vector2 position, originalPosition
-	Touch moveTouch
-	Vector2 touchOffset
-	ExampleBox droppedInBox
-	string word
-	
-	tick
-		if moveable
-			// Drag items
-			Input.onTouchDownWithin position, size, userId:exampleApp.currentPlayer.id
-				// Start dragging item
-				moveTouch = .
-				originalPosition = position
-				touchOffset = position - .position
-				if droppedInBox
-					droppedInBox.itemInBox = null
-					droppedInBox = null
-					
-			Input.onTouchMove moveTouch
-				// Drag item
-				position = .position + touchOffset
-				
-			Input.onTouchUp moveTouch
-				// Drop item
-				let droppedInBox = exampleApp.boxes.find.rect.contains position
-				if droppedInBox and droppedInBox.itemInBox == null
-					this.droppedInBox = droppedInBox
-					droppedInBox.itemInBox = this
-					position = droppedInBox.rect.position
-				else
-					// Box is full, revert to original position
-					position = originalPosition
-				moveTouch = null
-		
-		// Draw red text in the foreground
-		drawText word, position, size:40, font:OpenSans, color:{"ff0000"}
-		
-		// Draw blue circle with a radius of 200 with a red outline
-		drawCircle position, size:400, fillColor:{"0000ff"}, outlineColor:{"ff0000"}, outlineWidth:5
-
-enum ExamplePhase: EnterClue, Guess, Score, Reveal
-		
-ExampleBox
-	Rect rect
-	ExampleItem itemInBox
-	tick
-		// Draw blue box with white outline
-		drawRectangle rect.position, rect.size, fillColor:{"0000ff"}, outlineColor:{"ffffff"}, outlineWidth:5
-
 exampleApp
+	// Member variable syntax: <type> <name>
+	int round
+	// Lists
 	const string[] words = ["Example", "Word"]
 	ExamplePhase phase
 	ExamplePlayer[] players
 	ExamplePlayer currentPlayer
 	ExampleBox[] boxes
 	ExampleItem[] items
-	int round
+	
+	// Method syntax: <return type> <method name>: <parameters>
+	int getNumbers: int start, int end
+		int[] list
+		// For loop for numbers syntax: for <start> to <end>
+		// Use . to access the current value
+		for start to end
+			if . % 2 == 0: list.add .
+		return list
+		
+	int getSum: int[] list
+		int sum
+		// For loop for lists syntax: for <list>
+		// Use . to access the current value
+		for list
+			sum += .
+		return sum
+		
+	getWinner
+		return players.withMax.score
 	
 	init
 		Platform.userCount = 4
@@ -126,13 +96,58 @@ exampleApp
 		
 		let top3Players = players.orderBy(.score).take 3
 		
-	// Create a list with all even numbers from start to end
-	getNumbers: int start, int end
-		int[] list
-		for start to end
-			if . % 2 == 0: list.add .
-		return list
+ExampleItem
+	const Vector2 size = {300,60}
+	bool moveable = true
+	Vector2 position, originalPosition
+	Touch moveTouch
+	Vector2 touchOffset
+	ExampleBox droppedInBox
+	string word
+	
+	tick
+		if moveable
+			// Drag items
+			Input.onTouchDownWithin position, size, userId:exampleApp.currentPlayer.id
+				// Start dragging item
+				moveTouch = .
+				originalPosition = position
+				touchOffset = position - .position
+				if droppedInBox
+					droppedInBox.itemInBox = null
+					droppedInBox = null
+					
+			Input.onTouchMove moveTouch
+				// Drag item
+				position = .position + touchOffset
+				
+			Input.onTouchUp moveTouch
+				// Drop item
+				let droppedInBox = exampleApp.boxes.find.rect.contains position
+				if droppedInBox and droppedInBox.itemInBox == null
+					this.droppedInBox = droppedInBox
+					droppedInBox.itemInBox = this
+					position = droppedInBox.rect.position
+				else
+					// Box is full, revert to original position
+					position = originalPosition
+				moveTouch = null
+		
+		// Draw red text in the foreground
+		drawText word, position, size:40, font:OpenSans, color:{"ff0000"}
+		
+		// Draw blue circle with a radius of 200 with a red outline
+		drawCircle position, size:400, fillColor:{"0000ff"}, outlineColor:{"ff0000"}, outlineWidth:5
 
+enum ExamplePhase: EnterClue, Guess, Score, Reveal
+		
+ExampleBox
+	Rect rect
+	ExampleItem itemInBox
+	tick
+		// Draw blue box with white outline
+		drawRectangle rect.position, rect.size, fillColor:{"0000ff"}, outlineColor:{"ffffff"}, outlineWidth:5
+		
 ExamplePlayer
 	int id, index
 	int score
@@ -148,7 +163,8 @@ ExamplePlayer
 		const radius = 220
 		drawVideo id, videoPos, size:radius*2, shape:Circle
 		drawCircle videoPos, size:radius*2+50, outlineColor:playerColor, outlineWidth:12
-		
+
+// The LiveTime API		
 unit Math
 	int randomInteger: int min, int max
 	float randomFloat
