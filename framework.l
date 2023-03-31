@@ -765,11 +765,11 @@ Object Menu
 			forPositions items, center:popupPosition, delta:{0,60} -> item
 				drawText .label, pos+{-60}, size:30, align:Left, layer:int.maxValue
 				if item.type == Button
-					drawImage .image, pos+{-120}, layer:int.maxValue
+					if .image: drawImage .image, pos+{-120}, layer:int.maxValue
 					Input.onTouchDownWithin pos, size:{500,60}, do:item.onClick(true, touch)
 				else
 				if item.type == Check
-					drawImage Checkbox, pos+{-120}, layer:int.maxValue, frame:item.value ? 1 : 0
+					if .image: drawImage Checkbox, pos+{-120}, layer:int.maxValue, frame:item.value ? 1 : 0
 					Input.onTouchDownWithin pos, size:{500,60}
 						item.value = !item.value
 						item.onClick(item.value, touch)
