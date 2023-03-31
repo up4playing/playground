@@ -196,16 +196,16 @@ struct float
 	implicit inline js Time toTime() this
 	
 	// Milliseconds
-	inline js Time ms := this
+	inline js Time milliseconds := this
 	
 	// Seconds
-	inline js Time s := (this*1000)
+	inline js Time seconds := (this*1000)
 		
 	// Minutes
-	inline js Time min := (this*60000)
+	inline js Time minutes := (this*60000)
 		
 	// Hours
-	inline js Time h := (this*3600000)
+	inline js Time hours := (this*3600000)
 	
 	// Days
 	inline js Time days := (this*86400000)

@@ -541,7 +541,7 @@ skipInit unit Input
 					internalUser.nextLostMessageAtFrame = Network.frame + Network.targetFps * 12
 					
 					// Send logfiles to server
-					Platform.setTimeout 7s: statistics.manuallyTriggerSend -3, clear:false
+					Platform.setTimeout 7 seconds: statistics.manuallyTriggerSend -3, clear:false
 	
 	private handleStillConnected: int userId
 		let inputs = localUser.inputs

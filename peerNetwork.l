@@ -470,7 +470,7 @@ transient unit PeerNetwork
 	
 	makePrimiaryUserIfStateIsNotReceived
 		requestedState = false
-		stateTimeout = Platform.setTimeout 25s
+		stateTimeout = Platform.setTimeout 25 seconds
 			if Input.internalUsers.any.receivedAnswer
 				Network.log "No state after 25s, but we received answers -> Alert the user to make sure WebRTC connections aren't blocked."
 				alert "Could not connect. Please make sure WebRTC connections aren't block by your router, firewall or a browser extension. If you have a VPN browser extension installed, please check your settings and make sure WebRTC connections aren't blocked."

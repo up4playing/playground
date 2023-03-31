@@ -558,7 +558,7 @@ transient skipInit unit Network
 	saveEventStreamAndLogs
 		if Input.isCertain
 			saveEventStream
-			Platform.delay 1s
+			Platform.delay 1 seconds
 				saveLogs
 			
 	internal saveLogs
@@ -625,7 +625,7 @@ transient skipInit unit Network
 	
 	join: string gameId, string roomString, int userId
 		// Send statistics after 25 seconds
-		Platform.setTimeout 25s: statistics.manuallyTriggerSend -1, clear:false
+		Platform.setTimeout 25 seconds: statistics.manuallyTriggerSend -1, clear:false
 		
 		isPremiere = true
 		initAll
