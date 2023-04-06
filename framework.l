@@ -258,11 +258,11 @@ Object Piece
 	onDrop
 	
 	Piece
-		// EVAL
-		// if image
-		// 	size = image.size
-		// 	if size.x < minSize: size.x = minSize
-		// 	if size.y < minSize: size.y = minSize
+		if image
+			size = image.size
+			// EVAL
+			// if size.x < minSize: size.x = minSize
+			// if size.y < minSize: size.y = minSize
 		this.targetAngle = angle
 		
 	debugString := "(Piece pos:{position.x} {position.y} frame:{frame} side:{side} image:{image?.file} board:{board.toBool})"
@@ -396,7 +396,7 @@ Piece Stack
 			
 		let a = objects[objects.length-shownObjectCount]
 		let b = objects[objects.length-1]
-		size = (b.position+{b.size.x/2, -b.image.size.y/2}) - (a.position-{a.size.x/2, -a.size.y/2})
+		size = (b.position+{b.size.x/2, b.image.size.y/2}) - (a.position-{a.size.x/2, a.size.y/2})
 	
 	override tick
 		for Math.limit(objects.length-shownObjectCount, min:0) to objects.length <- i
