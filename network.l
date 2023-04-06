@@ -153,6 +153,7 @@ transient skipInit unit Network
 		Input.isCertain = true
 		lobby.inLobby = startInLobby
 		Time.now = serverStartTime
+		snapshotFrame = -1
 		audio.stop
 		initAll
 		
