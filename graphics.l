@@ -480,7 +480,7 @@ transient global unit graphics
 		                   visibleFor = -1            // Only this user will see the image
 		                   implicit int layer = 0     // Higher layers are drawn in front of lower layers
 		                   alpha = 1.0                // The opacity of the image (0: fully transparent, 1: fully visible)
-		                   Color color = White        // Tint the image with this color
+		                   Color color = White        // Tint the image with this color (white for no tint)
 		                   SourceCodeLocation location
 		var frame = Math.floor(Network.frame * Math.max(framesPerSecond, 0) / Network.targetFps) % image.frames.length;
 		drawImage image, position, frame, size, visibleFor, layer, alpha, color, location
@@ -493,7 +493,7 @@ transient global unit graphics
 		                   int[] visibleFor           // Only this user will see the image
 		                   implicit int layer = 0     // Higher layers are drawn in front of lower layers
 		                   alpha = 1.0                // The opacity of the image (0: fully transparent, 1: fully visible)
-		                   Color color = White        // Tint the image with this color
+		                   Color color = White        // Tint the image with this color (white for no tint)
 		                   SourceCodeLocation location
 		var frame = Math.floor(Network.frame * Math.max(framesPerSecond, 0) / Network.targetFps) % image.frames.length;
 		drawImage image, position, frame, size, visibleFor, layer, alpha, color, location
@@ -509,7 +509,7 @@ transient global unit graphics
 		                   visibleFor = -1            // Only this user will see the image
 		                   implicit int layer = 0     // Higher layers are drawn in front of lower layers
 		                   alpha = 1.0                // The opacity of the image (0: fully transparent, 1: fully visible)
-		                   Color color = White        // Tint the image with this color
+		                   Color color = White        // Tint the image with this color (white for no tint)
 		                   SourceCodeLocation location
 		var frame = Math.floor(Network.frame * Math.max(framesPerSecond, 0) / Network.targetFps) % image.frames.length;
 		drawImage image, position, frame, size, angle, flipX, flipY, visibleFor, layer, alpha, color, location
@@ -527,7 +527,7 @@ transient global unit graphics
 		                   hotkey = Key.None            // This keyboard shortcut will execute the onClick handler
 		                   implicit layer = 0           // Higher layers are drawn in front of lower layers
 		                   alpha = 1.0                  // The opacity of the button 0: fully transparent, 1: fully visible)
-		                   Color color = White          // Tint the image with this color
+		                   Color color = White        // Tint the image with this color (white for no tint)
 		                   void(Touch touch) onClick    // Execute this code when the user clicks on the image or presses the hotkey
 		                   SourceCodeLocation location
 		drawImage image, position, frame, size, angle, visibleFor, layer, alpha, color, location
@@ -548,7 +548,7 @@ transient global unit graphics
 		                      visibleFor = -1            // Only this user will see the image
 		                      implicit layer = 0         // Higher layers are drawn in front of lower layers
 		                      alpha = 1.0                // The opacity of the image (0: fully transparent, 1: fully visible)
-		                      Color color = White        // Tint the image with this color
+		                      Color color = White        // Tint the image with this color (white for no tint)
 		                      SourceCodeLocation location
 		if(!image.texture?.ensureIsAvailable()) return
 		if(graphics_isVisibleFor(visibleFor)) {
@@ -575,7 +575,7 @@ transient global unit graphics
 		                      int[] visibleFor           // Only this user will see the image
 		                      implicit layer = 0         // Higher layers are drawn in front of lower layers
 		                      alpha = 1.0                // The opacity of the image (0: fully transparent, 1: fully visible)
-		                      Color color = White        // Tint the image with this color
+		                      Color color = White        // Tint the image with this color (white for no tint)
 		                      SourceCodeLocation location
 		if(!image.texture?.ensureIsAvailable()) return
 		if(graphics_isVisibleFor2(visibleFor)) {
@@ -606,7 +606,7 @@ transient global unit graphics
 		                      visibleFor = -1            // Only this user will see the image
 		                      implicit layer = 0         // Higher layers are drawn in front of lower layers
 		                      alpha = 1.0                // The opacity of the image (0: fully transparent, 1: fully visible)
-		                      Color color = White        // Tint the image with this color
+		                      Color color = White        // Tint the image with this color (white for no tint)
 		                      SourceCodeLocation location
 		if(!image.texture?.ensureIsAvailable()) return
 		if(graphics_isVisibleFor(visibleFor)) {
@@ -640,7 +640,7 @@ transient global unit graphics
 		                      int[] visibleFor           // Only this user will see the image
 		                      implicit layer = 0         // Higher layers are drawn in front of lower layers
 		                      alpha = 1.0                // The opacity of the image (0: fully transparent, 1: fully visible)
-		                      Color color = White        // Tint the image with this color
+		                      Color color = White        // Tint the image with this color (white for no tint)
 		                      SourceCodeLocation location
 		if(!image.texture?.ensureIsAvailable()) return
 		if(graphics_isVisibleFor2(visibleFor)) {
@@ -942,6 +942,7 @@ transient global unit graphics
 		                        visibleFor = -1              // Only this user will see the texture
 		                        implicit int layer = 0       // Higher layers are drawn in front of lower layers
 		                        alpha = 1.0                  // The opacity of the texture (0: fully transparent, 1: fully visible)
+		                        Color color = White          // Tint the image with this color (white for no tint)
 		if(!texture?.ensureIsAvailable()) return
 		if(graphics_isVisibleFor(visibleFor)) {
 			let sizeX = size.x || texture.size.x
@@ -954,7 +955,8 @@ transient global unit graphics
 				layer, alpha, graphics_currentClippingPath, texture.file,
 				location, position.location, size.location,
 				texture._htmlImage,
-				0, 0, texture.size.x, texture.size.y
+				0, 0, texture.size.x, texture.size.y,
+				color
 			))
 		}
 
@@ -967,6 +969,7 @@ transient global unit graphics
 		                        visibleFor = -1             // Only this user will see the texture
 		                        implicit int layer = 0      // Higher layers are drawn in front of lower layers
 		                        alpha = 1.0                 // The opacity of the texture (0: fully transparent, 1: fully visible)
+		                        Color color = White         // Tint the image with this color (white for no tint)
 		if(!image.texture?.ensureIsAvailable()) return
 		if(graphics_isVisibleFor(visibleFor)) {
 			let sizeX = size.x || texture.size.x
@@ -982,7 +985,8 @@ transient global unit graphics
 				sourcePosition.x+texture.size.x/2-sourceSize.x/2,
 				sourcePosition.y+texture.size.y/2-sourceSize.y/2,
 				sourceSize.x, 
-				sourceSize.y, 
+				sourceSize.y,
+				color
 			))
 		}
 		
