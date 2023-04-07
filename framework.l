@@ -114,6 +114,14 @@ class Object
 		    Time duration = 1000
 		    Time delay = 0
 		Vector2 startValue = position
+		
+		// When chaining serveral move effects together, continue where the last one left off
+		let effect = fx.effects[-1]
+		if effect?.type == MoveEffect
+			MoveEffect moveEffect = cast effect
+			if moveEffect.object == this
+				startValue = moveEffect.startValue + moveEffect.delta
+
 		let delta = pos - startValue
 		fx.add MoveEffect startTime:fx.endOfPrevEffect(this)+delay, duration, this, startValue, delta
 		return this
