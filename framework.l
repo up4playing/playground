@@ -266,7 +266,7 @@ Object Piece
 	onDrop
 	
 	Piece
-		if image
+		if image and size == {0,0}
 			size = image.size
 			// EVAL
 			// if size.x < minSize: size.x = minSize
@@ -345,7 +345,6 @@ Object Piece
 		draw
 				
 	draw
-		// TODO: Support size!!!!!!!!!!!!!
 		if image
 			if side == Front || !backImage: drawImage image, position, size, frame:frame%image.frames.length, angle, location
 			else                            drawImage backImage, position, size, frame:frame%backImage.frames.length, angle, location
