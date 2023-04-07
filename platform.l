@@ -41,6 +41,7 @@ transient skipInit unit Platform
 	
 	visible OperatingSystem os
 	visible bool isMobile
+	visible bool isBrowser
 	visible bool isDebug
 	public bool isStaging
 	
@@ -55,7 +56,7 @@ transient skipInit unit Platform
 	internal bool engineStarted
 	internal PlatformMode mode
 	internal bool fastForward
-	internal bool isWaitingForInitialData
+	internal int waitingForInitialData
 	
 	private inline js void initMedia
 		audio_init();
@@ -64,12 +65,12 @@ transient skipInit unit Platform
 		if(window.Sound_init) Sound_init();
 		
 	private js void initPlatform
+		statistics_init();
 		Platform_init();
 		Math_init();
 		Network_init();
 		Input_init();
 		gizmo_init();
-		statistics_init();
 		Network_log("Loading...")
 		Platform_isMobile = false;
 		Platform_isBrowser = !window.require;
@@ -110,7 +111,9 @@ transient skipInit unit Platform
 	// Update the base matrix
 	// Called when resizing and after calling init() because we could change the scaleMode and anchor in App.init
 	private updateBaseMatrix
-		Vector2 ratio = {pixelSize.x / referenceSize.x, pixelSize.y / referenceSize.y}
+		let statisticsMargin = showDebugInfo ? statistics.margin : {}
+		let referenceSizeWithMargin = referenceSize + statisticsMargin
+		Vector2 ratio = {pixelSize.x / referenceSizeWithMargin.x, pixelSize.y / referenceSizeWithMargin.y}
 		float scale
 		if scaleMode == Auto
 			if ratio.x < ratio.y: effectiveScaleMode = FixedWidth;  scale = ratio.x
@@ -129,7 +132,7 @@ transient skipInit unit Platform
 			
 		let offsetX = anchor > 0 ? pixelSize.x/2 : 0
 		let offsetY = anchor > 1 ? pixelSize.y/2 : 0
-		baseMatrix = {scale,0,0,scale,offsetX,offsetY}
+		baseMatrix = {scale,0,0,scale,offsetX-(statisticsMargin.x/2)*scale,offsetY-(statisticsMargin.y/2)*scale}
 	
 	// This is called when the application starts for the first time	
 	private start: bool isDebug
@@ -193,7 +196,7 @@ transient skipInit unit Platform
 		}
 	
 	// This is called every animation frame
-	private tick()   if mode == Play or mode == Record or isWaitingForInitialData: Network.animationFrame
+	private tick()   if mode == Play or mode == Record or waitingForInitialData: Network.animationFrame
 	
 	private enterSlideMode(PlatformMode mode) this.mode = mode; sendMode
 	
@@ -222,6 +225,9 @@ transient skipInit unit Platform
 	internal js void sendWatch: int frame, string text, int location, string file
 		_sendToEditor({type:"watch", frame, text, location, file})
 	
+	internal js void sendClearTimeline:
+		_sendToEditor({type:"clearTimeline"})
+	
 	private js void sendMode
 		if(Platform_isDebug) _sendToEditor({type:"setPlatformMode", mode:Platform_mode, frame:Network_frame})
 
@@ -234,6 +240,7 @@ transient skipInit unit Platform
 	void toggleDebugInfo
 		showDebugInfo = !showDebugInfo;
 		setLocalStorageObject("showDebugInfo", showDebugInfo ? "true" : "false")
+		updateBaseMatrix
 		
 	inline js void setFullscreen: value = true, forUser = -1
 		if(!Platform_isStaging && !Platform_isDebug && (forUser == -1 || Input_localUser?.id == forUser)) {
@@ -354,7 +361,9 @@ transient skipInit unit Platform
 		setTimeout(then, time)
 		
 	inline js void copyToClipboard(string text)
-		navigator.clipboard.writeText(text)
+		if(Network_isPremiere && Input_isCertain) {
+			navigator.clipboard.writeText(text)
+		}
 		
 	inline js void setLocation: string url
 		location.href = url
@@ -393,7 +402,7 @@ transient skipInit unit Platform
 		
 	js void setInterval: int interval
 		                 void() code
-		setInterval(code)
+		setInterval(code, interval)
 		
 	inline js int setTimeout: Time time
 		                      void() code
@@ -458,9 +467,11 @@ transient unit IndexedDB
 	
 	js void start: string databaseName, string storeName, int version = 1
 		try {
+			Network_log("IndexedDB: start");
 			IndexedDB_storeName = storeName;
 			var request = indexedDB.open(databaseName, version)
 			request.onupgradeneeded = e => {
+				Network_log("IndexedDB: upgradeneeded");
 				IndexedDB_db = e.target.result;
 				if(!IndexedDB_db.objectStoreNames.contains(storeName))
 					IndexedDB_db.createObjectStore(storeName, { keyPath: "id" });
@@ -468,12 +479,14 @@ transient unit IndexedDB
 			}
 			request.onsuccess = e => {
 				IndexedDB_db = e.target.result;
+				Network_log("IndexedDB: success");
 			}
 			request.onerror = e => {
-				Network_log("Error in IndexedDB.start: "+request.error);
+				Network_log("IndexedDB: error "+request.error);
 			}
+			Network_log("IndexedDB: finished");
 		} catch(e) {
-			Network_log("Error in IndexedDB.start: "+e.message)
+			Network_log("IndexedDB: exception "+e.message)
 		}
 		
 	js void open: string storeName, string id, void(object data) then, void() else = null

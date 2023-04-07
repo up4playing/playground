@@ -1,4 +1,4 @@
-transient struct Buffer
+transient class Buffer
 	js void writeInt: int value
 		if(value <= -2147483647 || value >= 2147483647)
 			throw new Error("Value out of integer range: {value}")
@@ -195,8 +195,8 @@ transient struct Buffer
 		this.writePos += 4
 		return this.writePos
 	
-	// private js void writeSize: int pos
-	// 	this.dataView.setInt32(pos-4, this.writePos-pos)
+	private js void writeSize: int pos
+		this.dataView.setInt32(pos-4, this.writePos-pos)
 	
 	js void writeInt8: int value
 		if(this.writePos+1 > this.buffer.byteLength)
@@ -272,6 +272,22 @@ transient struct Buffer
 		let readPos = 0
 		let length = source.writePos
 		let writePos = this.writePos
+		
+		// Expand if neccessary
+		if(writePos+length > this.buffer.byteLength)
+			this.expandBuffer(writePos+length)
+			
+		// Write bytes
+		let readPosEnd = readPos + length
+		while(readPos < readPosEnd)
+			this.dataView.setUint8(writePos++, source.dataView.getUint8(readPos++))
+			
+		this.writePos = writePos
+		
+	js void set: Buffer source
+		let readPos = 0
+		let length = source.writePos
+		let writePos = 0
 		
 		// Expand if neccessary
 		if(writePos+length > this.buffer.byteLength)
@@ -382,7 +398,10 @@ transient struct Buffer
 		
 	reset
 		this.writePos = 0
-		this.readPos = 0   
+		this.readPos = 0
+		
+	rewind
+		this.readPos = 0
 		
 	private js void expandBuffer: int size
 		let prevLength = this.buffer.byteLength

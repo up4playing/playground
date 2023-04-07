@@ -2,7 +2,7 @@ enum NetworkMessageType: Join, JoinResponse, Ping, Pong, Signal, Ice, Tick, Swit
 
 transient unit ServerNetwork
 	private object socket
-	private Buffer sendBuffer
+	private Buffer sendBuffer = {}
 	int nextConnectionId = 1
 	
 	js void setup
@@ -32,8 +32,11 @@ transient unit ServerNetwork
 			Network_log(error.message)
 		}
 		
+	// We set the internal user to active when we receive the first signal (offer or answer)
+	// to ensure we hold on to the current snapshot, so we can later rewind to a frame before the new user joined.
+	// This ensured that the user joins on the same frame on all clients
 	private getOrCreateUser: int id
-		return Input.internalUsers[id] || (Input.internalUsers[id] = {id, local:false})
+		return Input.internalUsers[id] || (Input.internalUsers[id] = {id, local:false, active:true})
 		
 	private onConnectedToServer
 		if Input.localUser.id == -1 and !Platform.isStaging
@@ -114,9 +117,6 @@ transient unit ServerNetwork
 			PeerNetwork.makePrimaryUser
 		else
 			PeerNetwork.makePrimiaryUserIfStateIsNotReceived
-			
-		// Send statistics after 20 seconds
-		Platform.setTimeout 30s: statistics.manuallyTriggerSend -1, clear:true
 
 		Network.log "Joining room {roomId} as user {userId}"
 		
@@ -130,32 +130,51 @@ transient unit ServerNetwork
 	ping
 		let now = Network.currentTime
 		if (Network.mode == Ping or Network.mode == Connected) and now >= nextPingTime
-			Network.log ">>> Ping {now}"
 			sendBuffer.reset
 			sendBuffer.writeInt8 cast NetworkMessageType.Ping
 			sendBuffer.writeFloat64 now
-			sendBuffer.writeInt32 Network.certainFrame                            // The last certain frame with inputs from everybody
-			sendBuffer.writeFloat64 Network.checksums[Network.certainFrame] || 0  // The checksum of the last certain frame
 			send sendBuffer
-			nextPingTime = now + (Network.mode == Ping ? 200 : pongCount < 20 ? 1000 : 30000)
+			nextPingTime = now + (Network.mode == Ping ? 200 : pongCount < 20 ? 1000 : 6000)
+			
+	float[] calculatedStartTimes
+	float referenceStartTime
+	float[] pingPongTimes
 			
 	private onPong: Buffer buffer
 		float now = Network.currentTime
 		float timeSinceStart = buffer.readFloat64
 		float pingTime = buffer.readFloat64
 		float pingPongTime = now - pingTime
+		float calculatedStartTime = now - pingPongTime/2 - timeSinceStart
+		
+		int deltaFromAverage = Math.round(calculatedStartTime - Network.startTime)
+		int deltaFromReference = Math.round(calculatedStartTime - referenceStartTime)
 		statistics.serverPings.add pingPongTime
-		Network.log "<<< Pong ({pongCount}) {pingTime}", pingPongTime
-			
-		if pingPongTime < fastestPingPongTime
-			// Use the fastest ping-pong-time we have ever seen to calculate the start time
-			fastestPingPongTime = pingPongTime
-			Network.startTime = Math.round(now - pingPongTime/2 - timeSinceStart)
-			Network.log "New fastest pingPongTime", pongCount, now, pingPongTime, timeSinceStart, Network.startTime
-			
+		Network.log "<<< Pong ({pongCount})", pingPongTime, calculatedStartTime
+		Network.log "average", Network.startTime, deltaFromAverage 
+		Network.log "reference", referenceStartTime, deltaFromReference 
+		
+		// Ignore pings that took more than twice as long as the average
 		pongCount++
 		lastPingPongTime = pingPongTime
-
+		pingPongTimes.add pingPongTime maxLength:30
+		let pingPongTimesAverage = pingPongTimes.average
+		if pingPongTime > 400 or (pingPongTimes.length >= 15 and pingPongTime > pingPongTimesAverage * 2)
+			Network.log "ignoring ping-pong", pingPongTimes.length, pingPongTimesAverage
+			return
+			
+		statistics.addInfo "from average", deltaFromAverage
+		statistics.addInfo "from reference", deltaFromReference
+		
+		calculatedStartTimes.add calculatedStartTime maxLength:20
+		Network.startTime = calculatedStartTimes.average
+			
+		// Use the fastest ping-pong-time we have ever seen to calculate the reference start time
+		if pingPongTime < fastestPingPongTime
+			fastestPingPongTime = pingPongTime
+			referenceStartTime = calculatedStartTime
+			Network.log "New fastest pingPongTime", pongCount, now, pingPongTime, timeSinceStart, Network.startTime, referenceStartTime
+			
 	sendSignal:	int receiverId, string type, string sdp
 		sendBuffer.reset
 		sendBuffer.writeInt8 cast NetworkMessageType.Signal
@@ -207,8 +226,9 @@ transient unit ServerNetwork
 		sendBuffer.writeInt8 cast NetworkMessageType.Tick
 		sendBuffer.writeInt32 Input.localUser.id
 		sendBuffer.writeInt32 inputFrame // You got all inputs up to and including this frame
-		sendBuffer.writeInt32 Network.bufferFrames
 		sendBuffer.writeBuffer inputs, inputsSentPos, length
+		sendBuffer.writeInt Network.lastChecksumFrame                              // The last certain frame with inputs from everybody
+		sendBuffer.writeFloat64 Network.checksums[Network.lastChecksumFrame] || 0  // The checksum of the last certain frame
 		send sendBuffer
 		
 		if Network.logging: Network.sentLog += " #{inputFrame} {inputsSentPos}->{inputs.writePos} {inputs.toRangeString(inputsSentPos, inputs.writePos)}"
@@ -222,11 +242,9 @@ transient unit ServerNetwork
 		let prevWritePos = sender.inputs.writePos
 		
 		sender.inputFrame = buffer.readInt32
-		sender.bufferFrames = buffer.readInt32
 		buffer.readBuffer sender.inputs, prevWritePos
-		
-		Network.receivedFrames = Input.internalUsers.min.inputFrame where . and !.local
-		if Network.logging: Network.receivedLog += " [{Network.currentTime}] <{senderId}> #{sender.inputFrame} ama:{sender.bufferFrames} {prevWritePos}->{sender.inputs.writePos} {sender.inputs.toRangeString(prevWritePos, sender.inputs.writePos)}"
+
+		if Network.logging: Network.receivedLog += " [{Network.currentTime}] <{senderId}> #{sender.inputFrame} {prevWritePos}->{sender.inputs.writePos} {sender.inputs.toRangeString(prevWritePos, sender.inputs.writePos)}"
 	
 	sendSwitch: SendInputsMode mode, int sendInterval
 		sendBuffer.reset

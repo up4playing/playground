@@ -141,7 +141,7 @@ transient global unit graphics
 		
 	internal js void startFrame
 		graphics_reset()
-		if(!Platform_fastForward)
+		if(!Platform_fastForward && !Platform_waitingForInitialData)
 			if(!graphics_backgroundColor || graphics_backgroundColor.hex == "#000000") {
 				Platform_context.clearRect(0, 0, Platform_pixelSize.x, Platform_pixelSize.y)
 			} else {
@@ -149,6 +149,7 @@ transient global unit graphics
 				Platform_context.fillRect(0, 0, Platform_pixelSize.x, Platform_pixelSize.y)
 			}
 			Platform_context.textBaseline = "top"
+
 
 	internal reset
 		totalMatrix = Platform.baseMatrix
@@ -169,6 +170,7 @@ transient global unit graphics
 			PeerNetwork.setAudioMuted user.audioElement, muted:Network.muteInvisibleUsers and user.videoElementIndex == 0
 		
 	private drawItems
+		Network.displayItems = items.length
 		gizmo.tick
 		items.sort b.layer - a.layer
 		items.each <- .draw
@@ -471,7 +473,7 @@ transient global unit graphics
 		let sizeX = size.x || imageSize.x
 		let sizeY = size.y || (sizeX/imageSize.x)*imageSize.y
 		return {sizeX, sizeY}
-				
+		
 	// Draws an image on the screen
 	global void drawImage: Image image                // The image to draw
 		                   Vector2 position = {}      // The position to draw to

@@ -48,15 +48,21 @@ struct int
 	inline js int unsetBit: implicit int value
 		(this &= ~value)
 	
-	inline js int limit: int min
-		                 int max
-		(this < min ? min : this > max ? max : this)
+	inline js int limit: int from
+		                 int to
+		(this < from ? from : this > to ? to : this)
 		
-	inline js int limit: int max
-		(this > max ? max : this)
+	inline js int limit: int to
+		(this > to ? to : this)
 	
-	inline js int limit: int min
-		(this < min ? min : this)
+	inline js int limit: int from
+		(this < from ? from : this)
+	
+	inline js int max: int value
+		(this > value ? value : this)
+	
+	inline js int min: int value
+		(this < value ? value : this)
 	
 	inline js int setIfLarger: int newValue
 		(this = Math.max(newValue, this))
@@ -88,6 +94,9 @@ struct int
 		
 	inline js bool withinInclusively: Range range
 		(this >= range.from && this <= range.to)
+		
+	inline js int assignIfGreater: int value
+		(value > this ? this = value : this)
 	
 // A number stored as a double precision 64-bit floating point value
 struct float
@@ -108,6 +117,8 @@ struct float
 	// The remainer after a division by the given value. The sign stays the same.
 	inline js float remainder: float value
 		(this % value)
+		
+	inline js int toInt := Math.floor(this)
 		
 	// Returns true if the floot is not zero
 	inline js bool toBool := this
@@ -139,15 +150,21 @@ struct float
 	inline js int round
 		Math.round(this)
 		
-	inline js float limit: float min
-		                   float max
-		(this < min ? min : this > max ? max : this)
+	inline js float limit: float from
+		                   float to
+		(this < from ? from : this > to ? to : this)
 		
-	inline js float limit: float max
-		(this > max ? max : this)
+	inline js float limit: float to
+		(this > to ? to : this)
 	
-	inline js float limit: float min
-		(this < min ? min : this)
+	inline js float limit: float from
+		(this < from ? from : this)
+	
+	inline js float max: float value
+		(this > value ? value : this)
+	
+	inline js float min: float value
+		(this < value ? value : this)
 	
 	inline js bool isApproximately: float value
 		                            float epsilon = 0.00001
@@ -179,16 +196,16 @@ struct float
 	implicit inline js Time toTime() this
 	
 	// Milliseconds
-	inline js Time ms := this
+	inline js Time milliseconds := this
 	
 	// Seconds
-	inline js Time s := (this*1000)
+	inline js Time seconds := (this*1000)
 		
 	// Minutes
-	inline js Time min := (this*60000)
+	inline js Time minutes := (this*60000)
 		
 	// Hours
-	inline js Time h := (this*3600000)
+	inline js Time hours := (this*3600000)
 	
 	// Days
 	inline js Time days := (this*86400000)
@@ -380,23 +397,25 @@ class List<T>
 		this.splice(index, 1)
 			
 	// Removes the item at the given index from the list
-	inline js void removeRange: int index // The index of the first item to remove
-		                        int count // The number of items to remove
-		this.splice(index, count)
+	inline js void removeRange: int start = 0 // The index of the first item to remove
+		                        int count     // The number of items to remove
+		this.splice(start, count)
 			
-	T removeFirstWhere: bool(T a) condition // The condition to check
-		for this
-			if condition(.)
-				removeAt i
-				return .
-		return null
-		
+	// Remove all item the meet a specific condition	
 	removeWhere: bool(T a) condition // The condition to check
 		for this <-
 			if condition(.)
 				removeAt i
 		return null
 		
+	// Remove the first item the meet a specific condition
+	T removeFirstWhere: bool(T a) condition // The condition to check
+		for this
+			if condition(.)
+				removeAt i
+				return .
+		return null
+	
 	// Adds an item to the list if it isn't already in there
 	inline js void ensure: T item // The item to add
 		if(this.indexOf(item) == -1) this.push(item)
@@ -560,6 +579,9 @@ class List<T>
 	inline js T[] sort: Time(T a, T b) comparer // A function returning 1 if "a" is larger, -1 if "b" is larger, 0 if they are equal
 		this.sort(comparer)
 	
+	inline js T[] sort: Angle(T a, T b) comparer // A function returning 1 if "a" is larger, -1 if "b" is larger, 0 if they are equal
+		this.sort(comparer)
+	
 	// Sort the list by a given expression
 	T[] orderBy: float(T a) expression // First order by this expression
 		return this.sort(expression(a) - expression(b))
@@ -569,6 +591,9 @@ class List<T>
 		return this.sort(expression(a) - expression(b) || thenBy(a) - thenBy(b))
 		
 	T[] orderBy: Time(T a) expression // First order by this expression
+		return this.sort(expression(a) - expression(b))
+		
+	T[] orderBy: Angle(T a) expression // First order by this expression
 		return this.sort(expression(a) - expression(b))
 		
 	T[] orderBy: string(T a) expression // First order by this expression
@@ -620,6 +645,11 @@ class List<T>
 		
 	int total: int(T it) selector
 		let sum = 0
+		for this: sum += selector(.)
+		return sum
+		
+	float total: float(T it) selector
+		let sum = 0.0
 		for this: sum += selector(.)
 		return sum
 		
@@ -1032,9 +1062,6 @@ class Map<TKey, TValue>
 
 // Specifies that a function doesn't return a value
 struct void
-
-// Classes derived from this type can be iterated over
-struct iterable	
 	
 // Denotes a type that can be null
 struct Nullable<T>
@@ -1143,7 +1170,7 @@ global transient unit System
 		for(;;) do()
 	
 	global inline js void do: void() do                   // Do this while to condition is true
-		                      nolabel implicit bool while // The condition to check
+		                      nocolon implicit bool while // The condition to check
 		@do do() 
 		@while(while)
 	
@@ -1873,8 +1900,13 @@ enum TimeUnit
 js Date
 transient struct Date
 	const dayStrings = [
-		["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Gameday", "Do not send"]
-		["Sonntag", "Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag"]
+		["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
+		["Sonntag", "Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag"]
+	]
+		
+	const shortDayStrings = [
+		["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
+		["So", "Mo", "Di", "Mi", "Do", "Fr", "Sa"]
 	]
 		
 	inline js Date() new Date(Time_now)
@@ -1918,6 +1950,10 @@ transient struct Date
 	// (Monday)
 	string weekdayString: language = Loca.language
 		return dayStrings[language][dayOfWeek]
+	
+	// (Mon)
+	string shortWeekdayString: language = Loca.language
+		return shortDayStrings[language][dayOfWeek]
 	
 	// (23:59)
 	string hourMinuteString: language = Loca.language
@@ -1972,7 +2008,10 @@ transient struct Date
 	static inline js Date now := new Date(Time_now)
 	static inline js Date fromTime(Time time) new Date(time)
 	static inline js Date fromValues(int year, int month=1, int day=1, int hour = 0, int minute = 0, int second = 0) new Date(year, month-1, day, hour, minute, second)
-
+	
+	// Returns the real time, even during replay. Be careful: This can break the replay.
+	static inline js Date realtime := new Date()
+	
 class Range
 	int from // The start of the range
 	int to   // The end of the range

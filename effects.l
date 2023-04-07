@@ -5,27 +5,25 @@ global unit fx
 		
 	endOfPrevEffect: Object object
 		let lastEffect = effects[-1]
-			if lastEffect.object == object
-				return Math.max(Time.now, lastEffect.startTime + lastEffect.duration)
+		if lastEffect?.object == object
+			return Math.max(Time.now, lastEffect.startTime + lastEffect.duration)
 		return Time.now
 		
 	internal tick
 		let now = Time.now
 		for effects <-
-			if now >= .startTime and (not .smooth or Network.isSmooth)
+			if now >= .startTime
 				float f = .duration ? (now - .startTime)/.duration : 1
 				if f >= 1: f = 1; effects.removeAt i
 				.tick f
 				
 	global delay: Time time = 0
-		          bool smooth = false
 		          stored void() do
-		add DelayEffect startTime:Time.now+time, smooth, do
+		add DelayEffect startTime:Time.now+time, do
 				
 class Effect
 	Time startTime
 	Time duration
-	bool smooth
 	Object object
 	tick: float f
 	
