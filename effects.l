@@ -3,62 +3,63 @@ global unit fx
 	add: Effect effect
 		effects.add effect
 		
-	tick
+	endOfPrevEffect: Object object
+		let lastEffect = effects[-1]
+		if lastEffect?.object == object
+			return Math.max(Time.now, lastEffect.startTime + lastEffect.duration)
+		return Time.now
+		
+	internal tick
 		let now = Time.now
 		for effects <-
-			if now >= .startTime and (not .smooth or Input.isCertain)
-				// TODO: Remove this workaround when finding common base is implemented
+			if now >= .startTime
 				float f = .duration ? (now - .startTime)/.duration : 1
 				if f >= 1: f = 1; effects.removeAt i
 				.tick f
 				
-	global delay: Time time
-		 bool smooth = false
-		 stored void() do
-		add RunEffect startTime:Time.now+time, smooth, do
+	global delay: Time time = 0
+		          stored void() do
+		add DelayEffect startTime:Time.now+time, do
 				
 class Effect
 	Time startTime
 	Time duration
-	bool smooth
-	tick: Time f
-
-Effect FadeEffect
 	Object object
+	tick: float f
+	
+Effect FadeEffect
 	float startValue, delta
 	bool removeWhenDone
-	tick(Time f) 
+	tick(float f) 
 		object.alpha = startValue + delta * f
 		if f >= 1 and removeWhenDone: Framework.objects.remove object
 		
 Effect MoveEffect
-	Object object
 	Vector2 startValue, delta
-	tick(Time f) object.position = startValue + delta * f
+	tick(float f) object.position = startValue + delta * f
 		
 Effect ScaleEffect
-	Object object
-	float startValue, delta
-	tick(Time f) object.scale = startValue + delta * f
-		
-Effect RadiusEffect
-	CircleObject object
-	float startValue, delta
-	tick(Time f) object.radius = startValue + delta * f
+	implicit Vector2 startValue
+	implicit Vector2 delta
+	tick(float f) object.size = startValue + delta * f
 	
 Effect FadeSoundEffect
-	Sound sound
 	float startValue, delta
-	tick(Time f) 
-		sound.volume = startValue + delta * f
-		if f >= 1: sound.stop
+	private dynamic audioElement
+	
+	FadeSoundEffect: Sound sound
+		this.audioElement = sound.audioElement
+	tick(float f)
+		if audioElement == null: return
+		audioElement.volume = (startValue + delta * f) * audio.volume
+		if f >= 1: audioElement.pause
 			
 Effect PlaySoundEffect
 	Sound sound
-	tick(Time f) sound.play
+	tick(float f) sound.play
 	
-Effect RunEffect
+Effect DelayEffect
 	void() do
-	tick(Time f) do()
+	tick(float f) do()
 	
 

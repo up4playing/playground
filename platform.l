@@ -1,4 +1,4 @@
-enum PlatformMode: Pause, Pointer, Slide, Play, Record
+enum PlatformMode: Pause, Manipulator, Slide, Play, Record
 enum ScaleMode: Auto, FixedWidth, FixedHeight, None
 enum AnchorMode: TopLeft, TopCenter, Center
 enum OperatingSystem: Windows, Mac, Linux, Android, iOS
@@ -9,46 +9,55 @@ enum TickMode: Interval, AnimationFrame
 // - has always the reference size (1920 x 1080 by default) on all platforms
 // - the origin is in the middle of the screen
 //
-//          Top              🡺 x
-//     Left  +  Right      🡻 
-//        Bottom            y
+//          Top              → x
+//     Left  +  Right      ↓ 
+//         Bottom          y
 //
 // Pixel space
 // - the size in the screen size in pixels of the target platform
 // - the origin in the top left corner
-transient unit Platform
+transient skipInit unit Platform
+	
+	// Configuration
 	public userCount = 2
+	public supportedUserCount = Range 2..4
 	public bool showSafeArea = true
 	public bool showDebugInfo = false
 	public bool isLocal = false
 	public TickMode tickMode = Interval
-	
-	public inline js string url := location.href
-	public inline js int version := version
-	public inline js int appName := appName
-	public inline js int userAgent := navigator.userAgent.replace(/,/g," ")
-	
 	public Vector2 referenceSize = {1920, 1080}
 	public ScaleMode scaleMode = Auto, effectiveScaleMode
 	public AnchorMode anchor = Center
 	
+	// Info
+	public inline js string url := location.href
+	public inline js string host := location.host
+	public protocalAndHost := host ? "https://"+host : "http://localhost"
+	
+	public inline js int appName := appName
+	public inline js int version := version
+	public inline js int userAgent := navigator.userAgent.replace(/,/g," ")
+	public inline js float usedMemory := performance.memory.usedJSHeapSize
+	
+	visible OperatingSystem os
+	visible bool isMobile
+	visible bool isBrowser
+	visible bool isDebug
+	public bool isStaging
+	
+	visible Vector2 pixelSize
+	visible Vector2 size
+	visible float pixelRatio
+	
+	// Internal
 	private object canvas
 	internal object context
-	visible bool isDebug
-	visible bool isStaging
-	visible Vector2 pixelSize, size
-	visible float pixelRatio
 	internal Matrix2D baseMatrix
 	internal bool engineStarted
-	visible PlatformMode mode
+	internal PlatformMode mode
 	internal bool fastForward
-	visible bool isMobile = true
-	visible OperatingSystem os
+	internal int waitingForInitialData
 	
-	internal inline js void initApplication
-		init()
-		Platform_updateBaseMatrix();
-		
 	private inline js void initMedia
 		audio_init();
 		if(window.Image_init) Image_init();
@@ -56,11 +65,15 @@ transient unit Platform
 		if(window.Sound_init) Sound_init();
 		
 	private js void initPlatform
+		statistics_init();
 		Platform_init();
 		Math_init();
 		Network_init();
 		Input_init();
+		gizmo_init();
+		Network_log("Loading...")
 		Platform_isMobile = false;
+		Platform_isBrowser = !window.require;
 		let platform = navigator.platform
 		Platform_os = platform.startsWith("Win") ? 0 : platform.startsWith("Mac") ? 1 : 2
 		if(/(android|bb\d+|meego).+mobile|avantgo|bada\/|blackberry|blazer|compal|elaine|fennec|hiptop|iemobile|ip(hone|od)|ipad|iris|kindle|Android|Silk|lge |maemo|midp|mmp|netfront|opera m(ob|in)i|palm( os)?|phone|p(ixi|re)\/|plucker|pocket|psp|series(4|6)0|symbian|treo|up\.(browser|link)|vodafone|wap|windows (ce|phone)|xda|xiino/i.test(navigator.userAgent) 
@@ -70,7 +83,7 @@ transient unit Platform
 		if(!Platform_isMobile) 
 			window.onresize = e => { 
 				Platform_onResize();
-				if(Platform_mode == 0/*Pause*/ && Platform_engineStarted) Network_tick(/*draw*/true);
+				if(Platform_mode < 3/*Pause,Manipulator,Slide*/ && Platform_engineStarted) Network_tick(/*draw*/true);
 			}
 		if(window.app_init) app_init();
 		
@@ -87,10 +100,20 @@ transient unit Platform
 		Platform_canvas.imageSmoothingQuality = "high";
 		Platform_updateBaseMatrix();
 		
+	private js void drawLoading
+		let text = "Loading..."
+		Platform_context.font = "24px Arial"
+		Platform_context.fillStyle = "#ffffff"
+		Platform_context.textBaseline = "middle"
+		let textSize = Platform_context.measureText(text)
+		Platform_context.fillText(text, (Platform_pixelSize.x-textSize.width)/2, Platform_pixelSize.y/2)
+		
 	// Update the base matrix
 	// Called when resizing and after calling init() because we could change the scaleMode and anchor in App.init
 	private updateBaseMatrix
-		Vector2 ratio = {pixelSize.x / referenceSize.x, pixelSize.y / referenceSize.y}
+		let statisticsMargin = showDebugInfo ? statistics.margin : {}
+		let referenceSizeWithMargin = referenceSize + statisticsMargin
+		Vector2 ratio = {pixelSize.x / referenceSizeWithMargin.x, pixelSize.y / referenceSizeWithMargin.y}
 		float scale
 		if scaleMode == Auto
 			if ratio.x < ratio.y: effectiveScaleMode = FixedWidth;  scale = ratio.x
@@ -109,21 +132,22 @@ transient unit Platform
 			
 		let offsetX = anchor > 0 ? pixelSize.x/2 : 0
 		let offsetY = anchor > 1 ? pixelSize.y/2 : 0
-		baseMatrix = {scale,0,0,scale,offsetX,offsetY}
+		baseMatrix = {scale,0,0,scale,offsetX-(statisticsMargin.x/2)*scale,offsetY-(statisticsMargin.y/2)*scale}
 	
 	// This is called when the application starts for the first time	
 	private start: bool isDebug
 		initMedia
 		initPlatform
+		statistics.startTime = Time.preciseTime
 		this.engineStarted = false
 		this.isDebug = isDebug
-		if !isDebug: showSafeArea = false
+		if !isDebug: showSafeArea = false; Network.simulateConnection = false
 		showDebugInfo = getLocalStorageObject("showDebugInfo") == "true"
 		
 		onResize
-		if !isDebug: Network.simulateConnection = false
+		// drawLoading
 		if mode >= Play: mode = Pause
-		let path = url.split("/")
+		let path = url.getUntil("?").split("/")
 		let gameId = path[3]
 		let roomId = path[4]
 			
@@ -137,10 +161,11 @@ transient unit Platform
 				roomId = roomId.substring(0,dashIndex)
 			
 		// If the roomId "staging", "latest" or negative, switch to staging mode (no audio, no fullscreen)
-		isStaging = roomId == "staging" or roomId == "latest" or roomId?.startsWith("-")
+		isStaging = isDebug or roomId == "staging" or roomId == "latest" or roomId?.startsWith("-")
 		
 		openMedia
 			this.engineStarted = true
+			statistics.loadTime = Time.preciseTime
 			startInterval
 			if isDebug || isLocal || roomId == "local" || url.startsWith("file"): Network.startLocal userCount:userCount
 			else                                                                  Network.join gameId, roomId, userId
@@ -171,57 +196,37 @@ transient unit Platform
 		}
 	
 	// This is called every animation frame
-	private tick()   if mode == Play or mode == Record: Network.animationFrame
+	private tick()   if mode == Play or mode == Record or waitingForInitialData: Network.animationFrame
 	
 	private enterSlideMode(PlatformMode mode) this.mode = mode; sendMode
 	
-	internal stop()    mode = Pause;  Network.stop; sendMode
-	internal pause()   mode = Pause;  audio.stop(); sendMode
-	internal record()  Network.resetStartTimeIfNeeded; mode = Record; sendMode
-	internal play()    Network.resetStartTimeIfNeeded; mode = Play;   sendMode
+	internal stop()    mode = Pause; Network.stop; gizmo.clear; sendMode
+	internal pause()   mode = Pause; audio.stop(); gizmo.clear; sendMode
+	internal record()  Network.adjustStartTimeIfNeeded; mode = Record; gizmo.clear; sendMode
+	internal play()    Network.adjustStartTimeIfNeeded; mode = Play;   gizmo.clear; sendMode
 	
 	private goToFrame(int targetFrame) Network.goToFrame(targetFrame)
 		
-	private Vector2 touchUpPos
-	private int locationIndex
-	private SourceCodeLocation[] locations
+	internal js void sendSelectToEditor: string cursorFile, int cursorPos
+		_sendToEditor({type:"select", cursorFile, cursorPos})
 	
-	internal handleSlide: InputType inputType, int id, Vector2 pixelPos, Vector2 referencePos	
-		if Platform.mode == Pointer or Platform.mode == Slide
-			int row, column
-			string file
-			if Platform.mode == Pointer
-				let movedSinceTouchUp = (pixelPos manhattanDistanceTo touchUpPos) > 8
-				if inputType == TouchUp: touchUpPos = pixelPos
-					
-				if (inputType == TouchDown and movedSinceTouchUp) or (inputType == TouchUp and !movedSinceTouchUp)
-					if movedSinceTouchUp                   
-						locationIndex = 0
-						locations.clear
-						for graphics.items -> item
-							if item.location != null and pixelPos.isInsidePoygon item.poly
-								SourceCodeLocation[] itemLocations
-								item.location.flatten itemLocations
-								itemLocations.sort (a.file compareTo b.file) || b.row - a.row || a.column - b.column
-								for itemLocations
-									if !.file.startsWith("lib")
-										locations.add .
-					
-					if locations.length
-						let selectedLocation = locations[locationIndex++ % locations.length]
-						row = selectedLocation.row
-						column = selectedLocation.column
-						file = selectedLocation.file
-			sendTouchToEditor id, referencePos, cast inputType, row, column, file
-			
-	private js void sendTouchToEditor: int id, Vector2 pos, TouchPhase phase, int row, int column, string file
-		_sendToEditor({type:"touch", id, x:pos.x, y:pos.y, phase, row, column, file})
+	internal js void sendDeselectToEditor
+		_sendToEditor({type:"deselect"})
+	
+	internal js void sendStartManipulationToEditor: GizomInfluence[] influences
+		_sendToEditor({type:"startManipulation", influences})
+	
+	internal js void sendMoveManipulationToEditor: GizomInfluence[] influences, int codeId
+		_sendToEditor({type:"moveManipulation", influences, codeId})
 	
 	internal js void sendFrame: int frame, int frames
 		_sendToEditor({type:"frame", frame, frames})
 	
-	internal js void sendWatch: int frame, string text, int row, int column, string file
-		_sendToEditor({type:"watch", frame, text, row, column, file})
+	internal js void sendWatch: int frame, string text, int location, string file
+		_sendToEditor({type:"watch", frame, text, location, file})
+	
+	internal js void sendClearTimeline:
+		_sendToEditor({type:"clearTimeline"})
 	
 	private js void sendMode
 		if(Platform_isDebug) _sendToEditor({type:"setPlatformMode", mode:Platform_mode, frame:Network_frame})
@@ -235,18 +240,19 @@ transient unit Platform
 	void toggleDebugInfo
 		showDebugInfo = !showDebugInfo;
 		setLocalStorageObject("showDebugInfo", showDebugInfo ? "true" : "false")
+		updateBaseMatrix
 		
 	inline js void setFullscreen: value = true, forUser = -1
-		try   {
-			if(forUser == -1 || Input_localUser?.id == forUser) {
+		if(!Platform_isStaging && !Platform_isDebug && (forUser == -1 || Input_localUser?.id == forUser)) {
+			try {
 				if(value) {
-					if(!Platform_isStaging) document.body.requestFullscreen()
+					document.body.requestFullscreen()
 				} else {
 					document.exitFullscreen()
 				}
+			} catch {
 			}
-		} catch {
-		}
+		}	
 		
 	js void saveTextFile: string filename, string text
 		var element = document.createElement('a');
@@ -302,10 +308,10 @@ transient unit Platform
 		document.body.appendChild(fileInput)
 		fileInput.click()
 		
-	inline js void setLocalStorageObject: string key, object value
+	inline js void setLocalStorageObject: string key, dynamic value
 		localStorage.setItem(key, JSON.stringify(value))
 		
-	js object getLocalStorageObject: string key
+	js dynamic getLocalStorageObject: string key
 		let str = localStorage.getItem(key)
 		return str ? JSON.parse(str) : null 
 		
@@ -322,7 +328,7 @@ transient unit Platform
 		return result.toLowerCase()
 		
 	inline js void vibrate: int duration = 100
-		navigator.vibrate(duration)
+		if(navigator.vibrate) navigator.vibrate(duration)
 		
 	js void saveImage: string dataUrl, string file
 		var base64Data = dataUrl.replace(/data:image\/png;base64,/, "");
@@ -355,7 +361,9 @@ transient unit Platform
 		setTimeout(then, time)
 		
 	inline js void copyToClipboard(string text)
-		navigator.clipboard.writeText(text)
+		if(Network_isPremiere && Input_isCertain) {
+			navigator.clipboard.writeText(text)
+		}
 		
 	inline js void setLocation: string url
 		location.href = url
@@ -393,24 +401,33 @@ transient unit Platform
 		}
 		
 	js void setInterval: int interval
-		                 void() do
-		setInterval(() => do(), interval)
+		                 void() code
+		setInterval(code, interval)
+		
+	inline js int setTimeout: Time time
+		                      void() code
+		setTimeout(code, time)
+		
+	inline js void clearTimeout: int id
+		clearTimeout(id)
 		
 	inline js string resourcesPath := process.resourcesPath
 	
 	inline js void pushState: string url
 		                      object state = null
-		if(!Network_isReplay) history.pushState(state, "", url);
+		if(Network_isPremiere) history.pushState(state, "", url);
 		
 	inline js void replaceState: string url
 		                         object state = null
-		if(!Network_isReplay) history.replaceState(state, "", url);
+		if(Network_isPremiere) history.replaceState(state, "", url);
 		
 	inline js void back
-		if(!Network_isReplay) history.back();
+		if(Network_isPremiere) history.back();
 		
 	inline js void reload
 		if(!Platform_isDebug) location.reload();
+			
+
 		
 unit File
 	js string readPartial: string filename, int offset=0, int length, void(string result) callback
@@ -429,10 +446,11 @@ unit File
 		})		
 		
 	js string write: string filename, string data, void() then = null
-		let fs = require("fs")
-		fs.writeFile(filename, data, "utf8", (err, data) => {
-			then?.()
-		})
+		if(Network_isPremiere && Input_isCertain) {
+			require("fs").writeFile(filename, data, "utf8", (err, data) => {
+				then?.()
+			})
+		}
 		
 	inline js bool exists: string filename
 		require("fs").existsSync(filename)
@@ -444,106 +462,16 @@ struct FileFilter
 	string name
 	string[] extensions
 
-transient unit Http	
-	js async dynamic get: string url
-		let response = await fetch(url)
-		return response.json()
-		
-	js void get: string url, void(dynamic result) code
-		let response = await fetch(url)
-		code(await response.json())
-		
-	js async string delete: string url 
-		let response = await fetch(url, {method:"DELETE"})
-		return await response.json()
-		
-	js async string delete: string url 
-		                    dynamic body
-		let response = await fetch(url, {method:"DELETE", body:JSON.stringify(body)})
-		return await response.json()
-		
-	js void delete: string url 
-		         void(dynamic result) code
-		         void(string error) else
-		try {
-			let response = await fetch(url, {method:"DELETE"})
-			let result = await response.json()
-			code(result)
-		} catch(e) {
-			else(e.message)
-		}
-		
-	js async void put: string url 
-		let response = await fetch(url, {method:"PUT"})
-		return await response.json()
-		
-	js void put: string url 
-		         void(dynamic result) code
-		         void(string error) else
-		try {
-			let response = await fetch(url, {method:"PUT"})
-			let result = await response.json()
-			code(result)
-		} catch(e) {
-			else(e.message)
-		}
-		
-	js async void put: string url 
-		         string body
-		let response = await fetch(url, {method:"PUT", body})
-		return await response.json()
-		
-	js async void put: string url 
-		         dynamic body
-		let response = await fetch(url, {method:"PUT", body:JSON.stringify(body)})
-		return await response.json()
-		
-	js void put: string url
-		         dynamic body
-		         void(dynamic result) code
-		         void(string error) else
-		try {
-			let response = await fetch(url, {method:"PUT", body:JSON.stringify(body)})
-			let result = await response.json()
-			code(result)
-		} catch(e) {
-			else(e.message)
-		}
-		
-	js async string post: string url 
-		                  string body
-		let response = await fetch(url, {method:"POST", body})
-		return await response.json()
-		
-	js async string post: string url 
-		                  dynamic body
-		let response = await fetch(url, {method:"POST", body:JSON.stringify(body)})
-		return await response.json()
-		
-	js async string post: string url 
-		let response = await fetch(url, {method:"POST"})
-		return await response.json()
-		
-	js void post: string url
-		          string body
-		          void(dynamic result) code
-		          void(string error) else
-		try {
-			let response = await fetch(url, {method:"POST", body})
-			let result = await response.json()
-			code(result)
-		} catch(e) {
-			else(e.message)
-		}
-		
 transient unit IndexedDB
 	private object db
 	
 	js void start: string databaseName, string storeName, int version = 1
 		try {
+			Network_log("IndexedDB: start");
 			IndexedDB_storeName = storeName;
 			var request = indexedDB.open(databaseName, version)
 			request.onupgradeneeded = e => {
+				Network_log("IndexedDB: upgradeneeded");
 				IndexedDB_db = e.target.result;
 				if(!IndexedDB_db.objectStoreNames.contains(storeName))
 					IndexedDB_db.createObjectStore(storeName, { keyPath: "id" });
@@ -551,12 +479,14 @@ transient unit IndexedDB
 			}
 			request.onsuccess = e => {
 				IndexedDB_db = e.target.result;
+				Network_log("IndexedDB: success");
 			}
 			request.onerror = e => {
-				Network_log("Error in IndexedDB.start: "+request.error);
+				Network_log("IndexedDB: error "+request.error);
 			}
+			Network_log("IndexedDB: finished");
 		} catch(e) {
-			Network_log("Error in IndexedDB.start: "+e.message)
+			Network_log("IndexedDB: exception "+e.message)
 		}
 		
 	js void open: string storeName, string id, void(object data) then, void() else = null
