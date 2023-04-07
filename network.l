@@ -154,6 +154,8 @@ transient skipInit unit Network
 		lobby.inLobby = startInLobby
 		Time.now = serverStartTime
 		snapshotFrame = -1
+		checksums.clear
+		lastChecksumFrame = -1
 		audio.stop
 		initAll
 		
@@ -328,7 +330,7 @@ transient skipInit unit Network
 			
 	switchUser: int userIndex
 		let user = Input.users[userIndex]
-		Input.localUser = Input.internalUsers.find.id == user.id
+			Input.localUser = Input.internalUsers.find.id == user.id
 			
 	switchSendInterval: int sendInterval
 		this.sendInterval = sendInterval
