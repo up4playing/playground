@@ -288,7 +288,7 @@ Object Piece
 			if size.y == 0: size.y = size.x * image.size.y / image.size.x;
 				
 		// Rotate	
-		Vector2 iconPos = this.iconPos ? this.iconPos : (rotatable ? {(size.x+size.y)*.275, (size.x+size.y)*.275}*{1,-1} : size/2*{1,-1})
+		Vector2 iconPos = this.iconPos ? this.iconPos : (rotatable ? {(size.x+size.y)*.29, (size.x+size.y)*.29}*{1,-1} : size/2*{1,-1})
 		if rotatable and Framework.selectedObjects.contains(this)
 			Input.onTouchDownWithin position:position+iconPos, size:Image.rotateIcon.size+touchMargin, userId:visibleFor
 				rotateTouch = touch
