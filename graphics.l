@@ -1202,8 +1202,8 @@ transient DisplayItem DisplayPolygon
 		let x = this.x, y = this.y
 		let points = this.points, startPoint = points[0]
 		
+		Platform_context.moveTo(startPoint.x, startPoint.y)
 		Platform_context.beginPath();
-		Platform_context.moveTo(x + startPoint.x, y + startPoint.y)
 		
 		if(!this.smooth || points.length < 3) {
 			for(let i=1, len = points.length; i<len; ++i) {
@@ -1219,12 +1219,11 @@ transient DisplayItem DisplayPolygon
 			let p1 = points[i], p2 = points[i + 1]
 			Platform_context.quadraticCurveTo(p1.x, p1.y, p2.x,p2.y);
 		}
-		if(this.close) {
+		if(this.close || this.fillColor) {
 			Platform_context.closePath()
 		}
 		if(this.fillColor) {
 			// Close the polygon and fill it
-			Platform_context.lineTo(x + startPoint.x, y + startPoint.y)
 			Platform_context.fillStyle = this.fillColor
 			Platform_context.fill()
 		}
