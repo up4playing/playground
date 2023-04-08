@@ -69,7 +69,10 @@ unit Framework
 		return result
 			
 transient global unit graphics
-	setUserVideo: int userId = 0, Vector2 pos = {}, float width = 440, float radius = 0
+	setUserVideo: int userId = 0
+		          Vector2 pos = {}
+		          implicit Vector2 size = {440}
+		          VideoShape shape = Rectangle
 		VideoObject videoObject = cast Framework.objects.find
 			if .type == VideoObject
 				VideoObject v = cast .
@@ -78,8 +81,8 @@ transient global unit graphics
 		// if !videoObject or Framework.toBeRemoved.contains(videoObject): videoObject = VideoObject(userId)
 		if !videoObject: videoObject = VideoObject(userId)
 		videoObject.position = pos
-		videoObject.radius = radius
-		videoObject.size = {width, width*3/4}
+		videoObject.size = size
+		videoObject.shape = shape
 		videoObject.locked = true
 		
 enum Side: Front, Back
@@ -217,11 +220,10 @@ Object ImageObject
 		
 Object VideoObject
 	int userId
-	float radius
-	internal checksum := position.x + position.y + userId + size.x + size.y + radius
+	VideoShape shape
+	internal checksum := position.x + position.y + userId + size.x + size.y + size.x + size.y
 	override tick
-		if radius: drawVideo userId, position, radius
-		else       drawVideo userId, position, size
+		drawVideo userId, position, size, shape
 			
 Object Button
 	Image image                  // The image of the button
@@ -231,8 +233,8 @@ Object Button
     frame = 0                    // The frame of the image
 	implicit Vector2 size = {}   // The size of the image, use a float to keep the aspect ratio, use a vector to strech the image
     fontSize = 18                // The font size in pixels   
-    touchMargin = Vector2(16,16) // The margin around the button within which it is touchable
-    textOffset = Vector2(0,-2)   // Draw the text at this offset
+    touchMargin = {16,16}        // The margin around the button within which it is touchable
+    textOffset = {}              // Draw the text at this offset
     showTouchArea = false        // Show the area within which the button is touchable
     int[] clickableBy = null     // Only this user can click the button
     implicit layer = 0           // Higher layers are drawn in front of lower layers
