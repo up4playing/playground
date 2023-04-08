@@ -1559,8 +1559,8 @@ transient DisplayItem DisplayPolygon
 		let x = this.x, y = this.y
 		let points = this.points, startPoint = points[0]
 		
-		Platform_context.moveTo(startPoint.x, startPoint.y)
 		Platform_context.beginPath();
+		Platform_context.moveTo(startPoint.x, startPoint.y)
 		
 		if(!this.smooth || points.length < 3) {
 			for(let i=1, len = points.length; i<len; ++i) {
