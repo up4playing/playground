@@ -165,6 +165,9 @@ class Object
 		fx.add FadeEffect  startTime, duration, this, startValue:0, delta:1
 		return this
 		
+	removeEffects
+		fx.removeForObject this
+		
 Object RectangleObject
 	Color color = White
 	internal checksum := position.x + position.y + alpha + size.x + size.y

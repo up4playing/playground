@@ -3,6 +3,9 @@ global unit fx
 	add: Effect effect
 		effects.add effect
 		
+	removeForObject: Object object
+		effects.removeWhere.object == object
+		
 	endOfPrevEffect: Object object
 		let lastEffect = effects[-1]
 		if lastEffect?.object == object
