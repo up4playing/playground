@@ -126,6 +126,25 @@ class Object
 		fx.add MoveEffect startTime:fx.endOfPrevEffect(this)+delay, duration, this, startValue, delta
 		return this
 		
+	moveAndScaleTo: Vector2 position
+		            implicit Vector2 size
+		            Time duration = 1000
+		            Time delay = 0
+		Vector2 startPosition = this.position
+		Vector2 startSize = this.size
+		
+		// When chaining serveral move effects together, continue where the last one left off
+		let effect = fx.effects[-1]
+		if effect?.type == MoveEffect
+			MoveEffect moveEffect = cast effect
+			if moveEffect.object == this
+				startPosition = moveEffect.startValue + moveEffect.delta
+
+		let startTime = fx.endOfPrevEffect(this)+delay
+		fx.add MoveEffect startTime, duration, this, startPosition, delta:position - startPosition
+		fx.add ScaleEffect startTime, duration, this, startSize, delta:size - startSize
+		return this
+		
 	moveTo: Vector2 pos
 		    float speed = 1
 		    Time delay = 0
@@ -156,7 +175,7 @@ class Object
 		     stored void() do
 		fx.add DelayEffect startTime:fx.endOfPrevEffect(this)+delay, duration:0, this, do
 	
-	fadeAndScaleIn: int duration = 200
+	fadeAndScaleIn: Time duration = 200
 		            float startScale = 3
 		            Time delay = 0
 		alpha = 0
