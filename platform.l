@@ -205,7 +205,7 @@ transient skipInit unit Platform
 	internal record()  Network.adjustStartTimeIfNeeded; mode = Record; gizmo.clear; sendMode
 	internal play()    Network.adjustStartTimeIfNeeded; mode = Play;   gizmo.clear; sendMode
 	
-	private goToFrame(int targetFrame) Network.goToFrame(targetFrame)
+	private goToFrame(int targetFrame) pause(); Network.goToFrame(targetFrame)
 		
 	internal js void sendSelectToEditor: string cursorFile, int cursorPos
 		_sendToEditor({type:"select", cursorFile, cursorPos})
