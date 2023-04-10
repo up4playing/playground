@@ -32,7 +32,7 @@ transient skipInit unit Platform
 	// Info
 	public inline js string url := location.href
 	public inline js string host := location.host
-	public protocalAndHost := host ? "https://"+host : "http://localhost"
+	public protocolAndHost := host ? "https://"+host : "http://localhost"
 	
 	public inline js int appName := appName
 	public inline js int version := version
