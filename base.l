@@ -622,6 +622,12 @@ class List<T>
 	inline js T find: bool(T a) condition // The condition to check
 		this.find(condition)
 		
+	T findLast: bool(T a) condition // The condition to check
+		for this <-
+			if condition(.)
+				return .
+		return null
+		
 	int indexWhere: bool(T a) condition // The condition to check
 		for this
 			if condition(.)
