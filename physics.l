@@ -4,7 +4,7 @@ transient unit Physics
 	
 	js void start
 		if(window.world) _b2World_Delete(world)
-		window.world = new b2World(new b2Vec2(0, -10))
+		window.world = new b2World(new b2Vec2(0, 10))
 		
 	js void step
 		if(window.world) window.world.Step(1/Network_targetFps, 8, 3)
