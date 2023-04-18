@@ -727,7 +727,7 @@ skipInit transient unit statistics
 			let internalUser = Input.internalUsers[.id]
 			connections.add internalUser.connectionType
 			series.add this.series.find.userIndex == i
-		http.post "{Platform.protocalAndHost}:3114/stats", body:{
+		http.post "{Platform.protocolAndHost}:3114/stats", body:{
 			time: Date.now.isoString
 			gameId: Network.gameId
 			roomId: Network.roomId
