@@ -2071,7 +2071,10 @@ unit Loca
 		for(let placeholderNumber of entry.p) {
 			let i = placeholderNumber+1
 			result += arguments[i]
-			if(i < strings.length) result += strings[i]
+			if(i < strings.length) {
+				let str = strings[i]
+				if(str) result += str
+			}
 		}
 		return result
 	
