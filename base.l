@@ -1113,8 +1113,7 @@ transient class SourceCodeLocation
 	SourceCodeLocation right
 	
 	inline js bool toBool() (this != null)
-	
-	SourceCodeLocation clone := {file, start, end, left, right}
+	inline js string toString() (this.file+":"+this.start)
 			
 	SourceCodeLocation find: string file, int pos
 		if this.file and this.file == file and pos >= this.start and pos <= this.end
@@ -1377,6 +1376,14 @@ global transient unit System
 		                                     ) do         // Do this for each triple in a list
 		for(let _subject=subject, _len=_subject.length, i=_len-1; i>=0; --i) { let it = _subject[i], next = _subject[(((i-1)%_len)+_len)%_len], prev = _subject[(i+1)%_len]; do()}
 
+	// Do something a given number of times or for each item in a list
+	global inline js void for: dynamic subject // The list to iterate over
+		                       -> void(
+		                           dynamic it,       // The current item of the list we are iterating over with the for-loop
+		                           string key   // The index of the current item of the list we are iterating over with the for-loop
+		                       ) do             // Do this for each item in a list
+		{let _subject=subject; for(let key in _subject) { let it = _subject[key]; do()}}
+		
 	// Prints a message to the console
 	global js void print: logstring text // The text, variables or expressions to print
 		                  SourceCodeLocation location
@@ -1789,9 +1796,6 @@ skipInit transient float Time
 	// The smallest possible time value
 	const inline js Time minValue := Number.MIN_VALUE
 	
-	// The number of milliseconds elapsed since January 1, 1970
-	static Time now
-	
 	static internal inline js float realTime := Date.now()
 
 	// The current frame
@@ -1912,8 +1916,7 @@ enum TimeUnit
 	h    // Hours
 	days // Days
 		
-js Date
-transient struct Date
+js(Date) transient struct Date
 	const dayStrings = [
 		["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
 		["Sonntag", "Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag"]
@@ -1923,8 +1926,6 @@ transient struct Date
 		["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
 		["So", "Mo", "Di", "Mi", "Do", "Fr", "Sa"]
 	]
-		
-	inline js Date() new Date(Time_now)
 	
 	inline js int year := this.getFullYear()
 	inline js int month := (this.getMonth()+1)
@@ -2020,7 +2021,6 @@ transient struct Date
 			dif + pad(Math.floor(Math.abs(tzo) / 60)) +
 			':' + pad(Math.abs(tzo) % 60);
 
-	static inline js Date now := new Date(Time_now)
 	static inline js Date fromTime(Time time) new Date(time)
 	static inline js Date fromValues(int year, int month=1, int day=1, int hour = 0, int minute = 0, int second = 0) new Date(year, month-1, day, hour, minute, second)
 	
