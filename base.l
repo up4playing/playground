@@ -2035,11 +2035,29 @@ unit Loca
 	visible Language[] supportedLanguages = [English, German]
 	visible string[] defaultLocaleForLanguage = ["en-001", "de-DE", "es-ES", "fr-FR", "it-IT", "pt-PT", "ja-JP", "zh-Hans-CN", "ko-KR", "nl-NL", "tr-TR", "pl-PL", "ru-RU", "hi-IN", "ar-001", "bn-BD", "ur-IN", "id-ID"]
 	
-	Language language = German
-	string locale = defaultLocaleForLanguage[language]
+	visible Language language = English
+	visible string locale = defaultLocaleForLanguage[language]
+	private dynamic localStrings
 	
-	set: Language language, string locale = null
-		this.language = language
-		this.locale = locale or defaultLocaleForLanguage[language]
+	init
+		set English
+	
+	js void set: Language language
+		         string locale = null
+		Loca_language = language
+		Loca_locale = locale || Loca_defaultLocaleForLanguage[language]
+		Loca_localStrings = _strings[language]
+		
+	js void format: int id
+		let entry = Loca_localStrings[id]
+		if(!entry || entry.s.length == 0) return "##########"
+		let strings = entry.s
+		let result = strings[0]
+		for(let placeholderNumber of entry.p) {
+			let i = placeholderNumber+1
+			result += arguments[i]
+			if(i < strings.length) result += strings[i]
+		}
+		return result
 	
 	
