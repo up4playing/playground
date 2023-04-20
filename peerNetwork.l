@@ -37,13 +37,19 @@ transient unit PeerNetwork
 			// iceCandidatePoolSize: 10,
 		}
 		if(PeerNetwork_relayMode > 0) {
-			// Alwyzon
+			// --- Alphahosting ---
 			options.iceServers.push({
-				urls: 'turn:94.177.8.204:39917',
-				username: 'play-user-x8env28gx41odbxzwjyut2oq871987syq8ovyuqp-alwyzon',
-				credential: 'qoy91n981vlplabb1873jdcgsouz2qm87qmmakqpc-alwyzon'
-			});
-			// Amazon Lightsail
+				urls: 'turn:89.22.121.145:39571',
+				username: 'play-user-x8env28gx41odbxzwjyut2oq871987syq8ovyuqp-alphahosting',
+				credential: 'qoy91n981vlplabb1873jdcgsouz2qm87qmmakqpc-alphahosting'
+			});			
+			// --- Alwyzon ---
+			// options.iceServers.push({
+			// 	urls: 'turn:94.177.8.204:39571',
+			// 	username: 'play-user-x8env28gx41odbxzwjyut2oq871987syq8ovyuqp-alwyzon',
+			// 	credential: 'qoy91n981vlplabb1873jdcgsouz2qm87qmmakqpc-alwyzon'
+			// });
+			// --- Strato ---
 			// options.iceServers.push({
 			// 	urls: 'turn:81.169.197.127',
 			// 	username: 'play-user-x8env28gx41odbxzwjyut2hx82jyzdk7qm6d-ok',

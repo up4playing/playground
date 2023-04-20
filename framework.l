@@ -69,7 +69,10 @@ unit Framework
 		return result
 			
 transient global unit graphics
-	setUserVideo: int userId = 0, Vector2 pos = {}, float width = 440, float radius = 0
+	setUserVideo: int userId = 0
+		          Vector2 pos = {}
+		          implicit Vector2 size = {440}
+		          VideoShape shape = Rectangle
 		VideoObject videoObject = cast Framework.objects.find
 			if .type == VideoObject
 				VideoObject v = cast .
@@ -78,15 +81,15 @@ transient global unit graphics
 		// if !videoObject or Framework.toBeRemoved.contains(videoObject): videoObject = VideoObject(userId)
 		if !videoObject: videoObject = VideoObject(userId)
 		videoObject.position = pos
-		videoObject.radius = radius
-		videoObject.size = {width, width*3/4}
+		videoObject.size = size
+		videoObject.shape = shape
 		videoObject.locked = true
 		
 enum Side: Front, Back
 		
 class Object
 	Vector2 position
-	implicit Vector2 size = {}
+	implicit Vector2 size = Vector2.none
 	float alpha = 1
 	int[] visibleFor = null
 	int layer = 0
@@ -113,9 +116,32 @@ class Object
 	moveTo: Vector2 pos
 		    Time duration = 1000
 		    Time delay = 0
-		Vector2 startValue = position
-		let delta = pos - startValue
-		fx.add MoveEffect startTime:fx.endOfPrevEffect(this)+delay, duration, this, startValue, delta
+		Vector2 startPosition = position
+		
+		// When chaining serveral move effects together, continue where the last one left off
+		MoveEffect moveEffect = cast fx.effects.findLast.type == MoveEffect and .object == this
+			startPosition = moveEffect.startValue + moveEffect.delta
+
+		let delta = pos - startPosition
+		fx.add MoveEffect startTime:fx.endOfPrevEffect(this)+delay, duration, this, startPosition, delta
+		return this
+		
+	moveAndScaleTo: Vector2 position
+		            implicit Vector2 size
+		            Time duration = 1000
+		            Time delay = 0
+		Vector2 startPosition = this.position
+		Vector2 startSize = this.size
+		Vector2 endSize = size.y ? size : {size.x, size.x * startSize.y/startSize.x}
+		
+		// When chaining serveral move effects together, continue where the last one left off
+		MoveEffect moveEffect = cast fx.effects.findLast.type == MoveEffect and .object == this
+			startPosition = moveEffect.startValue + moveEffect.delta
+
+		let startTime = fx.endOfPrevEffect(this)+delay
+		fx.add MoveEffect startTime, duration, this, startPosition, delta:position - startPosition
+		fx.add ScaleEffect startTime, duration, this, startSize, delta:endSize - startSize
+		watch startSize, endSize
 		return this
 		
 	moveTo: Vector2 pos
@@ -144,18 +170,25 @@ class Object
 		fx.add ScaleEffect startTime:fx.endOfPrevEffect(this)+delay, duration, this, startValue:this.size, delta:size-this.size
 		return this
 		
-	finally: Time delay = 0
-		     stored void() do
+	do:   stored void() do
+		  Time delay = 0
 		fx.add DelayEffect startTime:fx.endOfPrevEffect(this)+delay, duration:0, this, do
-	
-	fadeAndScaleIn: int duration = 200
-		            float startScale = 3
+		
+	playSound: Sound sound
+		       Time delay = 0
+		fx.add PlaySoundEffect startTime:fx.endOfPrevEffect(this)+delay, duration:0, this, sound
+
+	fadeAndScaleIn: float startScale = 3
+		            Time duration = 200
 		            Time delay = 0
 		alpha = 0
 		let startTime = fx.endOfPrevEffect(this)+delay
 		fx.add ScaleEffect startTime, duration, this, startValue:startScale*size, delta:(1-startScale)*size
 		fx.add FadeEffect  startTime, duration, this, startValue:0, delta:1
 		return this
+		
+	removeEffects
+		fx.removeForObject this
 		
 Object RectangleObject
 	Color color = White
@@ -182,16 +215,19 @@ Object TextObject
 Object ImageObject
 	Image image
 	Angle angle
+	
+	ImageObject
+		if !size: size = image.size
+	
 	override tick
 		drawImage image, position, size, angle, alpha, visibleFor, layer
 		
 Object VideoObject
 	int userId
-	float radius
-	internal checksum := position.x + position.y + userId + size.x + size.y + radius
+	VideoShape shape
+	internal checksum := position.x + position.y + userId + size.x + size.y + size.x + size.y
 	override tick
-		if radius: drawVideo userId, position, radius
-		else       drawVideo userId, position, size
+		drawVideo userId, position, size, shape
 			
 Object Button
 	Image image                  // The image of the button
@@ -201,8 +237,8 @@ Object Button
     frame = 0                    // The frame of the image
 	implicit Vector2 size = {}   // The size of the image, use a float to keep the aspect ratio, use a vector to strech the image
     fontSize = 18                // The font size in pixels   
-    touchMargin = Vector2(16,16) // The margin around the button within which it is touchable
-    textOffset = Vector2(0,-2)   // Draw the text at this offset
+    touchMargin = {16,16}        // The margin around the button within which it is touchable
+    textOffset = {}              // Draw the text at this offset
     showTouchArea = false        // Show the area within which the button is touchable
     int[] clickableBy = null     // Only this user can click the button
     implicit layer = 0           // Higher layers are drawn in front of lower layers
@@ -258,11 +294,11 @@ Object Piece
 	onDrop
 	
 	Piece
-		// EVAL
-		// if image
-		// 	size = image.size
-		// 	if size.x < minSize: size.x = minSize
-		// 	if size.y < minSize: size.y = minSize
+		if image and size == {0,0}
+			size = image.size
+			// EVAL
+			// if size.x < minSize: size.x = minSize
+			// if size.y < minSize: size.y = minSize
 		this.targetAngle = angle
 		
 	debugString := "(Piece pos:{position.x} {position.y} frame:{frame} side:{side} image:{image?.file} board:{board.toBool})"
@@ -280,7 +316,7 @@ Object Piece
 			if size.y == 0: size.y = size.x * image.size.y / image.size.x;
 				
 		// Rotate	
-		Vector2 iconPos = this.iconPos ? this.iconPos : (rotatable ? {(size.x+size.y)*.275, (size.x+size.y)*.275}*{1,-1} : size/2*{1,-1})
+		Vector2 iconPos = this.iconPos ? this.iconPos : (rotatable ? {(size.x+size.y)*.29, (size.x+size.y)*.29}*{1,-1} : size/2*{1,-1})
 		if rotatable and Framework.selectedObjects.contains(this)
 			Input.onTouchDownWithin position:position+iconPos, size:Image.rotateIcon.size+touchMargin, userId:visibleFor
 				rotateTouch = touch
@@ -337,7 +373,6 @@ Object Piece
 		draw
 				
 	draw
-		// TODO: Support size!!!!!!!!!!!!!
 		if image
 			if side == Front || !backImage: drawImage image, position, size, frame:frame%image.frames.length, angle, location
 			else                            drawImage backImage, position, size, frame:frame%backImage.frames.length, angle, location
@@ -396,7 +431,7 @@ Piece Stack
 			
 		let a = objects[objects.length-shownObjectCount]
 		let b = objects[objects.length-1]
-		size = (b.position+{b.size.x/2, -b.image.size.y/2}) - (a.position-{a.size.x/2, -a.size.y/2})
+		size = (b.position+{b.size.x/2, b.image.size.y/2}) - (a.position-{a.size.x/2, a.size.y/2})
 	
 	override tick
 		for Math.limit(objects.length-shownObjectCount, min:0) to objects.length <- i

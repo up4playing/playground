@@ -32,7 +32,7 @@ transient skipInit unit Platform
 	// Info
 	public inline js string url := location.href
 	public inline js string host := location.host
-	public protocalAndHost := host ? "https://"+host : "http://localhost"
+	public protocolAndHost := host ? "https://"+host : "http://localhost"
 	
 	public inline js int appName := appName
 	public inline js int version := version
@@ -206,7 +206,7 @@ transient skipInit unit Platform
 	internal record()  Network.adjustStartTimeIfNeeded; mode = Record; gizmo.clear; sendMode
 	internal play()    Network.adjustStartTimeIfNeeded; mode = Play;   gizmo.clear; sendMode
 	
-	private goToFrame(int targetFrame) Network.goToFrame(targetFrame)
+	private goToFrame(int targetFrame) pause(); Network.goToFrame(targetFrame)
 		
 	internal js void sendSelectToEditor: string cursorFile, int cursorPos
 		_sendToEditor({type:"select", cursorFile, cursorPos})

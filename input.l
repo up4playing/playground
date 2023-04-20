@@ -961,15 +961,15 @@ skipInit unit Input
 		               HorizontalAlignment align = Center // The horizontal alignment of the touch area
 		               VerticalAlignment valign = Middle  // The vertical alignment of the touch area
 		               void(Touch touch) do       // Do this for each touch or click
-		let sizeX = size.x
-		let sizeY = size.y || size.x
-		let x = align == Left ? position.x : align  == Center ? position.x-sizeX/2 : position.x-sizeX
-		let y = valign == Top ? position.y : valign == Middle ? position.y-sizeY/2 : position.y-sizeY
+		let halfSizeX = size.x/2
+		let halfSizeY = (size.y || size.x)/2
+		let x = align == Left ? position.x+halfSizeX : align  == Center ? position.x : position.x-halfSizeX
+		let y = valign == Top ? position.y+halfSizeY : valign == Middle ? position.y : position.y-halfSizeY
 		Vector2[] poly = [
-			{ x,         y         }.rotate(angle).transform(graphics.localMatrix),
-			{ x + sizeX, y         }.rotate(angle).transform(graphics.localMatrix),
-			{ x + sizeX, y + sizeY }.rotate(angle).transform(graphics.localMatrix),
-			{ x,         y + sizeY }.rotate(angle).transform(graphics.localMatrix),
+			{ -halfSizeX, -halfSizeY }.rotate(angle).move(x,y).transform(graphics.localMatrix),
+			{ +halfSizeX, -halfSizeY }.rotate(angle).move(x,y).transform(graphics.localMatrix),
+			{ +halfSizeX, +halfSizeY }.rotate(angle).move(x,y).transform(graphics.localMatrix),
+			{ -halfSizeX, +halfSizeY }.rotate(angle).move(x,y).transform(graphics.localMatrix),
 		]
 		
 		if (Network.mode == Connected || Network.simulateConnection) && userId != -1
@@ -993,7 +993,8 @@ skipInit unit Input
 					if !touch.handled && touch.referencePosition.isInsidePoygon(poly)
 						this.cursor = cursor
 				
-		if showTouchArea: drawRectangle position, size, fillColor:{"ff000080"}, align, valign, layer:10000000
+		// if showTouchArea: drawRectangle position, size, fillColor:{"ff000080"}, align, valign, layer:10000000
+		if showTouchArea: drawPolygon poly, fillColor:{"ff000080"}, layer:10000000
 
 	onTouchDownWithin: Vector2 position           // The center of the touch area
 		               Vector2 size               // The size of a rectangular touch area
@@ -1005,15 +1006,15 @@ skipInit unit Input
 		               HorizontalAlignment align = Center // The horizontal alignment of the touch area
 		               VerticalAlignment valign = Middle  // The vertical alignment of the touch area
 		               void(Touch touch) do       // Do this for each touch or click
-		let sizeX = size.x
-		let sizeY = size.y || size.x
-		let x = align == Left ? position.x : align  == Center ? position.x-sizeX/2 : position.x-sizeX
-		let y = valign == Top ? position.y : valign == Middle ? position.y-sizeY/2 : position.y-sizeY
+		let halfSizeX = size.x/2
+		let halfSizeY = (size.y || size.x)/2
+		let x = align == Left ? position.x+halfSizeX : align  == Center ? position.x : position.x-halfSizeX
+		let y = valign == Top ? position.y+halfSizeY : valign == Middle ? position.y : position.y-halfSizeY
 		Vector2[] poly = [
-			{ x,         y         }.rotate(angle).transform(graphics.localMatrix),
-			{ x + sizeX, y         }.rotate(angle).transform(graphics.localMatrix),
-			{ x + sizeX, y + sizeY }.rotate(angle).transform(graphics.localMatrix),
-			{ x,         y + sizeY }.rotate(angle).transform(graphics.localMatrix),
+			{ -halfSizeX, -halfSizeY }.rotate(angle).move(x,y).transform(graphics.localMatrix),
+			{ +halfSizeX, -halfSizeY }.rotate(angle).move(x,y).transform(graphics.localMatrix),
+			{ +halfSizeX, +halfSizeY }.rotate(angle).move(x,y).transform(graphics.localMatrix),
+			{ -halfSizeX, +halfSizeY }.rotate(angle).move(x,y).transform(graphics.localMatrix),
 		]
 		
 		if not (Network.mode == Connected || Network.simulateConnection)
@@ -1032,7 +1033,8 @@ skipInit unit Input
 					if !touch.handled && touch.referencePosition.isInsidePoygon(poly)
 						this.cursor = cursor
 				
-		if showTouchArea: drawRectangle position, size, fillColor:{"ff000080"}, align, valign, layer:10000000
+		// if showTouchArea: drawRectangle position, size, fillColor:{"ff000080"}, align, valign, layer:10000000
+		if showTouchArea: drawPolygon poly, fillColor:{"ff000080"}, layer:10000000
 
 	// Do something when the user touches or clicks within a given circle
 	onTouchDownWithin: Vector2 position           // The center of the touch area

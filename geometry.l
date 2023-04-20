@@ -112,6 +112,19 @@ struct Vector2
 	// The smaller of the two coordinates
 	min := x < y ? x : y
 	
+	// Move the vector
+	move: Vector2 delta // The vector to move by
+		this.x += delta.x
+		this.y += delta.y
+		return this
+	
+	// Move the vector	
+	move: float x // Move horizontally by this value
+		  float y // Move vertically by this value
+		this.x += x
+		this.y += y
+		return this
+		
 	rotate: Angle angle // The angle in turns (one full rotation is 1)
 		let x = this.x, y = this.y
 		let sn = Math.sin(angle)

@@ -121,7 +121,7 @@ transient unit ServerNetwork
 		Network.log "Joining room {roomId} as user {userId}"
 		
 		// The first person in the room triggers sending an notification with the link to everybody
-		if userCount <= 1 and !Platform.isStaging: http.getInternal "{Platform.protocalAndHost}:3114/sendGamedayNotification/{Network.gameId}/{Network.roomId}/hasStarted"
+		if userCount <= 1 and !Platform.isStaging: http.getInternal "{Platform.protocolAndHost}:3114/sendGamedayNotification/{Network.gameId}/{Network.roomId}/hasStarted"
 
 		
 	float nextPingTime, fastestPingPongTime = int.maxValue, lastPingPongTime
