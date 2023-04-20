@@ -2061,7 +2061,7 @@ unit Loca
 		         string locale = null
 		Loca_language = language
 		Loca_locale = locale || Loca_defaultLocaleForLanguage[language]
-		Loca_localStrings = _strings[language]
+		if(window._strings) Loca_localStrings = _strings[language]
 		
 	js void format: int id
 		let entry = Loca_localStrings[id]
