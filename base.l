@@ -2055,25 +2055,41 @@ unit Loca
 	private dynamic localStrings
 	
 	init
-		set English
+		setLanguage English
 	
-	js void set: Language language
-		         string locale = null
+	js void setLanguage: Language language
+		                 string locale = null
 		Loca_language = language
 		Loca_locale = locale || Loca_defaultLocaleForLanguage[language]
-		Loca_localStrings = _strings[language]
+		if(window._strings) Loca_localStrings = _strings[language]
 		
 	js void format: int id
 		let entry = Loca_localStrings[id]
 		if(!entry || entry.s.length == 0) return "##########"
 		let strings = entry.s
 		let result = strings[0]
+		let stringIndex = 1
 		for(let placeholderNumber of entry.p) {
-			let i = placeholderNumber+1
-			result += arguments[i]
-			if(i < strings.length) {
-				let str = strings[i]
+			if(placeholderNumber >= 0) {
+				// Placeholder
+				//     "Step {currentStep}"          {s:["Step "],p:[0]}
+				//            ^                          ^           ^
+				let placeholderValue = arguments[placeholderNumber+1]
+				result += placeholderValue
+				if(stringIndex < strings.length) {
+					let str = strings[stringIndex++]
+					if(str) result += str
+				}
+			} else {
+				// Placeholder with pluralization
+				//     "Waiting for {playerCount} player[s]"          {s:["Waiting for ", " player.", " players."],p:[-1]}
+				//                   ^                                                    ^           ^               ^
+				// If the placeholder value is 1, we take the first string (sigular version), otherwise the second (plural version)
+				let placeholderValue = arguments[-placeholderNumber]
+				result += placeholderValue
+				let str = strings[placeholderValue == 1 ? stringIndex : stringIndex+1]
 				if(str) result += str
+				stringIndex += 2
 			}
 		}
 		return result
