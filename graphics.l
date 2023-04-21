@@ -46,14 +46,14 @@ class Texture
 		let image = _htmlImageCache[this.file]
 		if(!image) {
 			return new Promise((resolve, reject) => {
-				image = new HTMLImage()
-				image.src = this.file.startsWith("http") ? this.file : _basePath+this.file
+				image = new Image()
 				image.onload = e => {
 					this._htmlImage = image
 					window._htmlImageCache[this.file] = image
 					this.size = new Vector2(image.width, image.height, null)
 					resolve(this);
 				}
+				image.src = this.file.startsWith("http") ? this.file : _basePath+this.file
 			})
 		} else {
 			this._htmlImage = image
