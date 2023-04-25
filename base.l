@@ -178,6 +178,10 @@ struct float
 		                         float speed
 		(this < value ? (this + speed < value ? (this += speed) : (this = value)) : (this - speed > value ? (this -= speed) : (this = value)))
 		
+	inline js float moveTowardsAndEaseOut: float value
+		                                   float speed
+		(this < value ? (this + speed * (value-this) < value ? (this += speed * (value-this)) : (this = value)) : (this - speed * (this-value) > value ? (this -= speed * (this-value)) : (this = value)))
+		
 	inline js float interpolateTo: float target
 		                           float value
 		(this + (target - this)*value)
