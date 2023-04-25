@@ -89,7 +89,7 @@ enum Side: Front, Back
 		
 class Object
 	Vector2 position
-	implicit Vector2 size = Vector2.none
+	implicit Vector2 size
 	float alpha = 1
 	int[] visibleFor = null
 	int layer = 0
@@ -217,7 +217,7 @@ Object ImageObject
 	Angle angle
 	
 	ImageObject
-		if !size: size = image.size
+		if size.x == 0 and size.y == 0: size = image.size
 	
 	override tick
 		drawImage image, position, size, angle, alpha, visibleFor, layer
