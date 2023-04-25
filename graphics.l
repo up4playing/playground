@@ -529,14 +529,15 @@ transient global unit graphics
 		                   hotkey = Key.None            // This keyboard shortcut will execute the onClick handler
 		                   implicit layer = 0           // Higher layers are drawn in front of lower layers
 		                   alpha = 1.0                  // The opacity of the button 0: fully transparent, 1: fully visible)
-		                   Color color = White        // Tint the image with this color (white for no tint)
+		                   Color color = White          // Tint the image with this color (white for no tint)
 		                   void(Touch touch) onClick    // Execute this code when the user clicks on the image or presses the hotkey
 		                   SourceCodeLocation location
 		drawImage image, position, frame, size, angle, visibleFor, layer, alpha, color, location
 			
 		// Handle click (only visible buttons are clickable)
 		int[] effectiveClickableBy = getClickableBy(visibleFor, clickableBy)
-		Input.onTouchDownWithin position, image.size + touchMargin, userId:effectiveClickableBy, showTouchArea
+		if size.x == 0 and size.y == 0: size = image.size
+		Input.onTouchDownWithin position, size + touchMargin, userId:effectiveClickableBy, showTouchArea
 			onClick touch
 		if hotkey
 			Input.onKeyDown hotkey, userId:effectiveClickableBy
