@@ -658,6 +658,12 @@ class List<T>
 		for this: sum += selector(.)
 		return sum
 		
+	int total: int(T it) selector
+		       label bool(T a) where
+		let sum = 0
+		for this: if where(.): sum += selector(.)
+		return sum
+		
 	float total: float(T it) selector
 		let sum = 0.0
 		for this: sum += selector(.)
