@@ -124,10 +124,10 @@ struct ImageFrame
 
 // An image that can be drawn on the screen and can have several frames of animation
 skipInit class Image
+	string file
 	Texture texture
 	Vector2 size
 	ImageFrame[] frames
-	string file
 	
 enum HorizontalAlignment: Left, Center, Right
 enum VerticalAlignment: Top, Middle, Bottom
