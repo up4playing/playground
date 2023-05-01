@@ -537,8 +537,7 @@ transient global unit graphics
 		// Handle click (only visible buttons are clickable)
 		int[] effectiveClickableBy = getClickableBy(visibleFor, clickableBy)
 		if size.x == 0 and size.y == 0: size = image.size
-		Input.onTouchDownWithin position, size + touchMargin, userId:effectiveClickableBy, showTouchArea
-			onClick touch
+		Input.onTouchDownWithin position, size + touchMargin, userId:effectiveClickableBy, showTouchArea, do:onClick
 		if hotkey
 			Input.onKeyDown hotkey, userId:effectiveClickableBy
 				onClick null
@@ -788,8 +787,7 @@ transient global unit graphics
 		// Handle click (only visible buttons are clickable)
 		int[] effectiveClickableBy = getClickableBy(visibleFor, clickableBy)
 		Vector2 effectiveSize = image ? getEffectiveSize(image.size, size) : {getTextWidth(text), fontSize}
-		Input.onTouchDownWithin position, effectiveSize + touchMargin, userId:effectiveClickableBy, showTouchArea
-			onClick touch
+		Input.onTouchDownWithin position, effectiveSize + touchMargin, userId:effectiveClickableBy, showTouchArea, do:onClick
 		if hotkey
 			Input.onKeyDown hotkey, userId:effectiveClickableBy
 				onClick null
@@ -818,8 +816,7 @@ transient global unit graphics
 		// Handle click (only visible buttons are clickable)
 		int[] effectiveClickableBy = getClickableBy(visibleFor, clickableBy)
 		Vector2 effectiveSize = image ? getEffectiveSize(image.size, size) : {getTextWidth(text), fontSize}
-		Input.onTouchDownWithin position, effectiveSize + touchMargin, userId:effectiveClickableBy, showTouchArea
-			onClick touch
+		Input.onTouchDownWithin position, effectiveSize + touchMargin, userId:effectiveClickableBy, showTouchArea, do:onClick
 		if hotkey
 			Input.onKeyDown hotkey, userId:effectiveClickableBy
 				onClick null
