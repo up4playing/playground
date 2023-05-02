@@ -46,14 +46,14 @@ class Texture
 		let image = _htmlImageCache[this.file]
 		if(!image) {
 			return new Promise((resolve, reject) => {
-				image = new HTMLImage()
-				image.src = this.file.startsWith("http") ? this.file : _basePath+this.file
+				image = new Image()
 				image.onload = e => {
 					this._htmlImage = image
 					window._htmlImageCache[this.file] = image
 					this.size = new Vector2(image.width, image.height, null)
 					resolve(this);
 				}
+				image.src = this.file.startsWith("http") ? this.file : _basePath+this.file
 			})
 		} else {
 			this._htmlImage = image
@@ -124,10 +124,10 @@ struct ImageFrame
 
 // An image that can be drawn on the screen and can have several frames of animation
 skipInit class Image
+	string file
 	Texture texture
 	Vector2 size
 	ImageFrame[] frames
-	string file
 	
 enum HorizontalAlignment: Left, Center, Right
 enum VerticalAlignment: Top, Middle, Bottom
@@ -529,15 +529,15 @@ transient global unit graphics
 		                   hotkey = Key.None            // This keyboard shortcut will execute the onClick handler
 		                   implicit layer = 0           // Higher layers are drawn in front of lower layers
 		                   alpha = 1.0                  // The opacity of the button 0: fully transparent, 1: fully visible)
-		                   Color color = White        // Tint the image with this color (white for no tint)
+		                   Color color = White          // Tint the image with this color (white for no tint)
 		                   void(Touch touch) onClick    // Execute this code when the user clicks on the image or presses the hotkey
 		                   SourceCodeLocation location
 		drawImage image, position, frame, size, angle, visibleFor, layer, alpha, color, location
 			
 		// Handle click (only visible buttons are clickable)
 		int[] effectiveClickableBy = getClickableBy(visibleFor, clickableBy)
-		Input.onTouchDownWithin position, image.size + touchMargin, userId:effectiveClickableBy, showTouchArea
-			onClick touch
+		if size.x == 0 and size.y == 0: size = image.size
+		Input.onTouchDownWithin position, size + touchMargin, userId:effectiveClickableBy, showTouchArea, do:onClick
 		if hotkey
 			Input.onKeyDown hotkey, userId:effectiveClickableBy
 				onClick null
@@ -787,8 +787,7 @@ transient global unit graphics
 		// Handle click (only visible buttons are clickable)
 		int[] effectiveClickableBy = getClickableBy(visibleFor, clickableBy)
 		Vector2 effectiveSize = image ? getEffectiveSize(image.size, size) : {getTextWidth(text), fontSize}
-		Input.onTouchDownWithin position, effectiveSize + touchMargin, userId:effectiveClickableBy, showTouchArea
-			onClick touch
+		Input.onTouchDownWithin position, effectiveSize + touchMargin, userId:effectiveClickableBy, showTouchArea, do:onClick
 		if hotkey
 			Input.onKeyDown hotkey, userId:effectiveClickableBy
 				onClick null
@@ -817,8 +816,7 @@ transient global unit graphics
 		// Handle click (only visible buttons are clickable)
 		int[] effectiveClickableBy = getClickableBy(visibleFor, clickableBy)
 		Vector2 effectiveSize = image ? getEffectiveSize(image.size, size) : {getTextWidth(text), fontSize}
-		Input.onTouchDownWithin position, effectiveSize + touchMargin, userId:effectiveClickableBy, showTouchArea
-			onClick touch
+		Input.onTouchDownWithin position, effectiveSize + touchMargin, userId:effectiveClickableBy, showTouchArea, do:onClick
 		if hotkey
 			Input.onKeyDown hotkey, userId:effectiveClickableBy
 				onClick null
@@ -1560,7 +1558,7 @@ transient DisplayItem DisplayPolygon
 		let points = this.points, startPoint = points[0]
 		
 		Platform_context.beginPath();
-		Platform_context.moveTo(startPoint.x, startPoint.y)
+		Platform_context.moveTo(x + startPoint.x, y + startPoint.y)
 		
 		if(!this.smooth || points.length < 3) {
 			for(let i=1, len = points.length; i<len; ++i) {

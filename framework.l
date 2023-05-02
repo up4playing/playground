@@ -89,7 +89,7 @@ enum Side: Front, Back
 		
 class Object
 	Vector2 position
-	implicit Vector2 size = {}
+	implicit Vector2 size
 	float alpha = 1
 	int[] visibleFor = null
 	int layer = 0
@@ -116,17 +116,14 @@ class Object
 	moveTo: Vector2 pos
 		    Time duration = 1000
 		    Time delay = 0
-		Vector2 startValue = position
+		Vector2 startPosition = position
 		
 		// When chaining serveral move effects together, continue where the last one left off
-		let effect = fx.effects[-1]
-		if effect?.type == MoveEffect
-			MoveEffect moveEffect = cast effect
-			if moveEffect.object == this
-				startValue = moveEffect.startValue + moveEffect.delta
+		MoveEffect moveEffect = cast fx.effects.findLast.type == MoveEffect and .object == this
+			startPosition = moveEffect.startValue + moveEffect.delta
 
-		let delta = pos - startValue
-		fx.add MoveEffect startTime:fx.endOfPrevEffect(this)+delay, duration, this, startValue, delta
+		let delta = pos - startPosition
+		fx.add MoveEffect startTime:fx.endOfPrevEffect(this)+delay, duration, this, startPosition, delta
 		return this
 		
 	moveAndScaleTo: Vector2 position
@@ -135,17 +132,16 @@ class Object
 		            Time delay = 0
 		Vector2 startPosition = this.position
 		Vector2 startSize = this.size
+		Vector2 endSize = size.y ? size : {size.x, size.x * startSize.y/startSize.x}
 		
 		// When chaining serveral move effects together, continue where the last one left off
-		let effect = fx.effects[-1]
-		if effect?.type == MoveEffect
-			MoveEffect moveEffect = cast effect
-			if moveEffect.object == this
-				startPosition = moveEffect.startValue + moveEffect.delta
+		MoveEffect moveEffect = cast fx.effects.findLast.type == MoveEffect and .object == this
+			startPosition = moveEffect.startValue + moveEffect.delta
 
 		let startTime = fx.endOfPrevEffect(this)+delay
 		fx.add MoveEffect startTime, duration, this, startPosition, delta:position - startPosition
-		fx.add ScaleEffect startTime, duration, this, startSize, delta:size - startSize
+		fx.add ScaleEffect startTime, duration, this, startSize, delta:endSize - startSize
+		watch startSize, endSize
 		return this
 		
 	moveTo: Vector2 pos
@@ -174,12 +170,16 @@ class Object
 		fx.add ScaleEffect startTime:fx.endOfPrevEffect(this)+delay, duration, this, startValue:this.size, delta:size-this.size
 		return this
 		
-	finally: Time delay = 0
-		     stored void() do
+	do:   stored void() do
+		  Time delay = 0
 		fx.add DelayEffect startTime:fx.endOfPrevEffect(this)+delay, duration:0, this, do
-	
-	fadeAndScaleIn: Time duration = 200
-		            float startScale = 3
+		
+	playSound: Sound sound
+		       Time delay = 0
+		fx.add PlaySoundEffect startTime:fx.endOfPrevEffect(this)+delay, duration:0, this, sound
+
+	fadeAndScaleIn: float startScale = 3
+		            Time duration = 200
 		            Time delay = 0
 		alpha = 0
 		let startTime = fx.endOfPrevEffect(this)+delay
@@ -215,6 +215,10 @@ Object TextObject
 Object ImageObject
 	Image image
 	Angle angle
+	
+	ImageObject
+		if size.x == 0 and size.y == 0: size = image.size
+	
 	override tick
 		drawImage image, position, size, angle, alpha, visibleFor, layer
 		

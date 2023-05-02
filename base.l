@@ -178,6 +178,10 @@ struct float
 		                         float speed
 		(this < value ? (this + speed < value ? (this += speed) : (this = value)) : (this - speed > value ? (this -= speed) : (this = value)))
 		
+	inline js float moveTowardsAndEaseOut: float value
+		                                   float speed
+		(this < value ? (this + speed * (value-this) < value ? (this += speed * (value-this)) : (this = value)) : (this - speed * (this-value) > value ? (this -= speed * (this-value)) : (this = value)))
+		
 	inline js float interpolateTo: float target
 		                           float value
 		(this + (target - this)*value)
@@ -622,6 +626,12 @@ class List<T>
 	inline js T find: bool(T a) condition // The condition to check
 		this.find(condition)
 		
+	T findLast: bool(T a) condition // The condition to check
+		for this <-
+			if condition(.)
+				return .
+		return null
+		
 	int indexWhere: bool(T a) condition // The condition to check
 		for this
 			if condition(.)
@@ -646,6 +656,12 @@ class List<T>
 	int total: int(T it) selector
 		let sum = 0
 		for this: sum += selector(.)
+		return sum
+		
+	int total: int(T it) selector
+		       label bool(T a) where
+		let sum = 0
+		for this: if where(.): sum += selector(.)
 		return sum
 		
 	float total: float(T it) selector
@@ -1107,8 +1123,7 @@ transient class SourceCodeLocation
 	SourceCodeLocation right
 	
 	inline js bool toBool() (this != null)
-	
-	SourceCodeLocation clone := {file, start, end, left, right}
+	inline js string toString() (this.file+":"+this.start)
 			
 	SourceCodeLocation find: string file, int pos
 		if this.file and this.file == file and pos >= this.start and pos <= this.end
@@ -1371,6 +1386,14 @@ global transient unit System
 		                                     ) do         // Do this for each triple in a list
 		for(let _subject=subject, _len=_subject.length, i=_len-1; i>=0; --i) { let it = _subject[i], next = _subject[(((i-1)%_len)+_len)%_len], prev = _subject[(i+1)%_len]; do()}
 
+	// Do something a given number of times or for each item in a list
+	global inline js void for: dynamic subject // The list to iterate over
+		                       -> void(
+		                           dynamic it,       // The current item of the list we are iterating over with the for-loop
+		                           string key   // The index of the current item of the list we are iterating over with the for-loop
+		                       ) do             // Do this for each item in a list
+		{let _subject=subject; for(let key in _subject) { let it = _subject[key]; do()}}
+		
 	// Prints a message to the console
 	global js void print: logstring text // The text, variables or expressions to print
 		                  SourceCodeLocation location
@@ -1783,9 +1806,6 @@ skipInit transient float Time
 	// The smallest possible time value
 	const inline js Time minValue := Number.MIN_VALUE
 	
-	// The number of milliseconds elapsed since January 1, 1970
-	static Time now
-	
 	static internal inline js float realTime := Date.now()
 
 	// The current frame
@@ -1906,8 +1926,7 @@ enum TimeUnit
 	h    // Hours
 	days // Days
 		
-js Date
-transient struct Date
+js(Date) transient struct Date
 	const dayStrings = [
 		["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
 		["Sonntag", "Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag"]
@@ -1917,8 +1936,6 @@ transient struct Date
 		["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
 		["So", "Mo", "Di", "Mi", "Do", "Fr", "Sa"]
 	]
-		
-	inline js Date() new Date(Time_now)
 	
 	inline js int year := this.getFullYear()
 	inline js int month := (this.getMonth()+1)
@@ -2014,7 +2031,6 @@ transient struct Date
 			dif + pad(Math.floor(Math.abs(tzo) / 60)) +
 			':' + pad(Math.abs(tzo) % 60);
 
-	static inline js Date now := new Date(Time_now)
 	static inline js Date fromTime(Time time) new Date(time)
 	static inline js Date fromValues(int year, int month=1, int day=1, int hour = 0, int minute = 0, int second = 0) new Date(year, month-1, day, hour, minute, second)
 	
@@ -2044,11 +2060,48 @@ unit Loca
 	visible Language[] supportedLanguages = [English, German]
 	visible string[] defaultLocaleForLanguage = ["en-001", "de-DE", "es-ES", "fr-FR", "it-IT", "pt-PT", "ja-JP", "zh-Hans-CN", "ko-KR", "nl-NL", "tr-TR", "pl-PL", "ru-RU", "hi-IN", "ar-001", "bn-BD", "ur-IN", "id-ID"]
 	
-	Language language = German
-	string locale = defaultLocaleForLanguage[language]
+	visible Language language = English
+	visible string locale = defaultLocaleForLanguage[language]
+	private dynamic localStrings
 	
-	set: Language language, string locale = null
-		this.language = language
-		this.locale = locale or defaultLocaleForLanguage[language]
+	init
+		setLanguage English
+	
+	js void setLanguage: Language language
+		                 string locale = null
+		Loca_language = language
+		Loca_locale = locale || Loca_defaultLocaleForLanguage[language]
+		if(window._strings) Loca_localStrings = _strings[language]
+		
+	js void format: int id
+		let entry = Loca_localStrings[id]
+		if(!entry || entry.s.length == 0) return "##########"
+		let strings = entry.s
+		let result = strings[0]
+		let stringIndex = 1
+		for(let placeholderNumber of entry.p) {
+			if(placeholderNumber >= 0) {
+				// Placeholder
+				//     "Step {currentStep}"          {s:["Step "],p:[0]}
+				//            ^                          ^           ^
+				let placeholderValue = arguments[placeholderNumber+1]
+				result += placeholderValue
+				if(stringIndex < strings.length) {
+					let str = strings[stringIndex++]
+					if(str) result += str
+				}
+			} else {
+				// Placeholder with pluralization
+				//     "Waiting for {playerCount} player[s]"          {s:["Waiting for ", " player.", " players."],p:[-1]}
+				//                   ^                                                    ^           ^               ^
+				// If the placeholder value is 1, we take the first string (sigular version), otherwise the second (plural version)
+				let placeholderValue = arguments[-placeholderNumber]
+				result += placeholderValue
+				let str = strings[placeholderValue == 1 ? stringIndex : stringIndex+1]
+				if(str) result += str
+				stringIndex += 2
+			}
+		}
+		return result
 	
 	

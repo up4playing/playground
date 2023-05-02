@@ -488,9 +488,10 @@ transient skipInit unit Network
 	private saveState: Buffer snapshot
 		snapshot.reset
 		saveTime = Time.measure
+			Snapshot.serialize snapshot
 			// TEMP logging
-			let serializeLog = Snapshot.serialize snapshot
-			eventLog += serializeLog
+			// let serializeLog = Snapshot.serialize snapshot
+			// eventLog += serializeLog
 				
 		// To check if serialization works consistently, deserialize, serialize a second snapshot and compare it with the first
 		if simulateRollback
@@ -509,8 +510,8 @@ transient skipInit unit Network
 			lastChecksumFrame = frame
 			
 			// TEMP logging
-			eventLog += "objects:{Framework.objects.length} fx:{fx.effects.length} Platform.size:{Platform.size} "
-			eventLog += Framework.debugString + appDebugString
+			// eventLog += "objects:{Framework.objects.length} fx:{fx.effects.length} Platform.size:{Platform.size} "
+			// eventLog += Framework.debugString + appDebugString
 			
 		snapshot.writeInt Input.internalUsers.length
 		for Input.internalUsers
