@@ -364,7 +364,7 @@ skipInit unit Input
 				e.preventDefault();
 			}
 			else
-			if((key >= "F1" && key <= "F4") && !ctrlOrCmd && Platform_isDebug) {
+			if((key == "F1" || key == "F2" || key == "F3" || key == "F4") && !ctrlOrCmd && Platform_isDebug) {
 				let index = key[1] - "1"
 				Network_switchUser(index);
 				e.preventDefault();
