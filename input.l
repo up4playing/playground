@@ -396,6 +396,8 @@ skipInit unit Input
 				if(e.shiftKey) { Network_saveLogs(); }
 				else           { Platform_toggleDebugInfo(); }
 				e.preventDefault();
+			} else if(key == "F10") { 
+				Platform_toggleSmallScreen();
 			} else {
 				Input_handleKeyEvent(5, keyCode, key?.length == 1 ? key : "")
 				if(keyCode == 9) e.preventDefault();

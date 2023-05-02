@@ -43,6 +43,7 @@ transient skipInit unit Platform
 	visible bool isMobile
 	visible bool isBrowser
 	visible bool isDebug
+	visible bool isSmallScreen
 	public bool isStaging
 	
 	visible Vector2 pixelSize
@@ -57,6 +58,9 @@ transient skipInit unit Platform
 	internal PlatformMode mode
 	internal bool fastForward
 	internal int waitingForInitialData
+	
+	inline js void preventScrolling
+		window.scrollTo(0,0)
 	
 	private inline js void initMedia
 		audio_init();
@@ -92,6 +96,7 @@ transient skipInit unit Platform
 		Platform_context = Platform_canvas.getContext("2d");
 		Platform_pixelRatio = window.devicePixelRatio;
 		Platform_pixelSize = new Vector2(window.innerWidth*Platform_pixelRatio, window.innerHeight*Platform_pixelRatio, null);
+		Platform_isSmallScreen = screen.width < 600 || (localStorage.getItem("smallScreen") == "true")
 		Platform_canvas.style.width = window.innerWidth + "px";
 		Platform_canvas.style.height = window.innerHeight + "px";
 		Platform_canvas.width = Platform_pixelSize.x;
@@ -242,6 +247,11 @@ transient skipInit unit Platform
 		setLocalStorageObject("showDebugInfo", showDebugInfo ? "true" : "false")
 		updateBaseMatrix
 		
+	void toggleSmallScreen
+		isSmallScreen = !isSmallScreen;
+		print isSmallScreen
+		setLocalStorageObject("smallScreen", isSmallScreen ? "true" : "false")
+		
 	inline js void setFullscreen: value = true, forUser = -1
 		if(!Platform_isStaging && !Platform_isDebug && (forUser == -1 || Input_localUser?.id == forUser)) {
 			try {
@@ -367,6 +377,9 @@ transient skipInit unit Platform
 		
 	inline js void setLocation: string url
 		location.href = url
+		
+	inline js void openLink: string url
+		window.open(url)
 		
 	js void showIcon
 		if(!Platform_isDebug && window.require) {
