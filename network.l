@@ -22,19 +22,19 @@ transient unit Snapshot
 	inline js string serialize(Buffer buffer) serialize_internal(buffer)
 	inline js void deserialize(Buffer buffer) deserialize_internal(buffer)
 		
-	js string toString: dynamic value
+	js string toString: object value
 		let buffer = new Buffer(null, 1024, 0, 0);
 		setup_serialize();
 		value.serialize_external(buffer);
 		return btoa(String.fromCharCode(...new Uint8Array(buffer.buffer, 0, buffer.writePos)));	
 		
-	js void fromString: dynamic value, string base64String
+	js void fromString: object value, string base64String
 		let bytes = Uint8Array.from(atob(base64String), c => c.charCodeAt(0))
 		let buffer = new Buffer(bytes.buffer,0,0,0);
 		setup_deserialize();
 		value.deserialize_external(buffer);
 		
-	js void fromBase64: dynamic value, string base64String
+	js void fromBase64: object value, string base64String
 		let bytes = Uint8Array.from(atob(base64String), c => c.charCodeAt(0))
 		let buffer = new Buffer(bytes.buffer,0,0,0);
 		setup_deserialize();
