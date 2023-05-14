@@ -1,5 +1,11 @@
+[System]
+Predict the next line of code in LiveTime language.
+Only output a single raw line of code.
+Do NOT output explanations or comments.
+Only call functions that are present in the given code.
+[Example]
+This is an example app in the LiveTime language:
 exampleApp
-	// Member variable syntax: <type> <name>
 	int round
 	// Lists
 	const string[] words = ["Example", "Word"]
@@ -9,8 +15,7 @@ exampleApp
 	ExampleBox[] boxes
 	ExampleItem[] items
 	
-	// Method syntax: <return type> <method name>: <parameters>
-	int getNumbers: int start, int end
+	int getNumbers(int start, int end)
 		int[] list
 		// For loop for numbers syntax: for <start> to <end>
 		// Use . to access the current value
@@ -18,7 +23,7 @@ exampleApp
 			if . % 2 == 0: list.add .
 		return list
 		
-	int getSum: int[] list
+	int getSum(int[] list)
 		int sum
 		// For loop for lists syntax: for <list>
 		// Use . to access the current value
@@ -26,13 +31,13 @@ exampleApp
 			sum += .
 		return sum
 		
-	getWinner
+	void getWinner()
 		return players.withMax.score
 	
-	init
+	void init()
 		Platform.userCount = 4
 		
-	start
+	void start()
 		Menu()
 		statistics.setup {0, 460}, {850,150}
 		// Create players
@@ -40,13 +45,12 @@ exampleApp
 			players.add {id:.id, index:.index}
 		startGame
 		
-	startGame
+	void startGame()
 		for Direction.diagonalDirections
 			boxes.add {rect:{position:{220,280}*.vector, size:{420,440}}}
-			
 		nextRound
 		
-	nextRound
+	void nextRound()
 		round++
 		boxes.each.itemInBox = null
 		words.shuffle
@@ -59,7 +63,7 @@ exampleApp
 		// Make the next player the current player
 		currentPlayer = players next currentPlayer
 			
-	tick
+	void tick()
 		items.each.tick
 		boxes.each.tick
 		players.each.tick
@@ -67,9 +71,10 @@ exampleApp
 		// If all items are dropped into boxes, show "Next Round button"
 		if items.all.droppedInBox != null
 			drawButton image:Button, text:"Next Round", position:{0,0}, visibleFor:currentPlayer.id
+				let userIdWhoClicked = touch.userId
 				nextRound
 				
-	gameOver
+	gameOver()
 		// Order players by score
 		players.orderBy.score order:Descending
 		
@@ -105,11 +110,12 @@ ExampleItem
 	ExampleBox droppedInBox
 	string word
 	
-	tick
+	void tick()
 		if moveable
 			// Drag items
 			Input.onTouchDownWithin position, size, userId:exampleApp.currentPlayer.id
 				// Start dragging item
+				let idOfUserWhoClicked = touch.userId
 				moveTouch = .
 				originalPosition = position
 				touchOffset = position - .position
@@ -144,7 +150,7 @@ enum ExamplePhase: EnterClue, Guess, Score, Reveal
 ExampleBox
 	Rect rect
 	ExampleItem itemInBox
-	tick
+	void tick()
 		// Draw blue box with white outline
 		drawRectangle rect.position, rect.size, fillColor:{"0000ff"}, outlineColor:{"ffffff"}, outlineWidth:5
 		
@@ -158,84 +164,98 @@ ExamplePlayer
 	visible Direction dir = Direction.diagonalDirections[index]
 	visible Vector2 videoPos = dir.vector * {700,270}
 	
-	tick
+	void tick()
 		// Draw round video of player with cirlce outline
 		const radius = 220
 		drawVideo id, videoPos, size:radius*2, shape:Circle
 		drawCircle videoPos, size:radius*2+50, outlineColor:playerColor, outlineWidth:12
 
-// The LiveTime API		
+// The LiveTime API. Do NOT call functions that are not in the LiveTime API.
+class Touch
+	int userId
+	Vector2 referencePosition
+	Vector2 referenceStartPosition
+	
+unit Input
+	void onTouchDownWithin(Vector2 position = {}, Vector2 size, int userId = -1, string cursor = "", bool showTouchArea = false, bool markAsHandled = true, HorizontalAlignment align = Center, VerticalAlignment valign = Middle, void(Touch touch) do)
+	onTouchMove(Touch touch, triggeredOnTouchDown = true, void(Touch touch) do)
+	onTouchMove(int userId = -1, void(Touch touch) do)
+	onTouchUp(Touch touch, markAsHandled = true, void(Touch touch) do)
+	onTouchUp(int userId = -1, bool markAsHandled = true, void(Touch touch) do)
+		
 unit Math
-	int randomInteger: int min, int max
-	float randomFloat
-	float min: float a, float b
-	float max: float a, float b
-	float map: float value, float fromStart = 0, float fromEnd = 1, float toStart = 0, float toEnd = 1
+	int randomInteger(int min, int max)
+	float randomFloat()
+	float min(float a, float b)
+	float max(float a, float b)
 
 class List<T>
-	void insert: T item, index = 0
-	void remove: T item
-	void removeAt: int index
-	void removeRange: int index, int count
-	T removeFirstWhere: bool(T a) condition
-	removeWhere: bool(T a) condition
-	ensure: T item // The item to add
-	addRange: T[] items
-	bool contains: T item
-	int indexOf: T item
-	setList: T[] list
-	setFilteredList: T[] list, bool(T a) condition
-	T pop
-	T popAt: int index
-	T[] popRange: int index, int count
-	T popWhere: bool(T a) condition
-	T popFront
+	void insert(T item, index = 0)
+	void remove(T item)
+	void removeAt(int index)
+	void removeRange(int index, int count)
+	T removeFirstWhere(bool(T a) condition)
+	void removeWhere(bool(T a) condition)
+	void ensure(T item)
+	void addRange(T[] items)
+	bool contains(T item)
+	int indexOf(T item)
+	void setList(T[] list)
+	void setFilteredList(T[] list, bool(T a) condition)
+	T pop()
+	T popAt(int index)
+	T[] popRange(int index, int count)
+	T popWhere(bool(T a) condition)
+	T popFront()
 	int length
-	int setLength: int value
-	clear
-	T[] clone
+	int setLength(int value)
+	void clear()
+	T[] clone()
 	string toString()
-	T random
-	T popRandom
-	T next: T currentItem
-	T prev: T currentItem
-	T[] reverse
-	T[] distinct
-	T moveToBack: T item
-	T moveToFront: T item
-	T[] orderBy: float(T a) expression
-	T[] orderBy: float(T it) expression, label nocolon float(T it) thenBy
-	T[] orderBy: float(T a) expression, SortingOrder order
-	bool any: bool(T a) predicate
-	bool none: bool(T a) predicate
-	bool all: bool(T a) predicate
-	TValue[] select: TValue(T it) selector
-	T find: bool(T a) condition
-	int indexWhere: bool(T a) condition
-	T[] where: bool(T a) condition
-	T[] take: int count
-	int total: int(T it) selector
-	int sum
-	float average
-	string joinToString: string(T a) selector, string separator = ", "
-	shuffle
-	T percentile: int value
-	T min: float(T a) selector, float threshold = float.maxValue, float default = 0, label bool(T a) where
-	T max: float(T a) selector, float threshold = float.minValue, float default = 0, label bool(T a) where
-	minIndex: float(T a) selector, float threshold = float.maxValue
-	maxIndex: float(T a) selector, float threshold = float.minValue
-	withMin: float(T a) selector, float threshold = float.maxValue, label bool(T a) where
-	withMax: float(T a) selector, float threshold = float.minValue, label bool(T a) where
-	popMax: float(T a) selector
-	count: bool(T a) predicate
-	countNot: bool(T a) predicate
-	rotate
-	T[] intersectWith: T[] other
+	T random()
+	T popRandom()
+	T next(T currentItem)
+	T prev(T currentItem)
+	T[] reverse()
+	T[] distinct()
+	T moveToBack(T item)
+	T moveToFront(T item)
+	T[] orderBy(float(T a) expression)
+	T[] orderBy(float(T it) expression, label nocolon float(T it) thenBy)
+	T[] orderBy(float(T a) expression, SortingOrder order)
+	bool any(bool(T a) predicate)
+	bool none(bool(T a) predicate)
+	bool all(bool(T a) predicate)
+	TValue[] select(TValue(T it) selector)
+	T find(bool(T a) condition)
+	int indexWhere(bool(T a) condition)
+	T[] where(bool(T a) condition)
+	T[] take(int count)
+	int total(int(T it) selector)
+	int sum()
+	float average()
+	string joinToString(string(T a) selector, string separator = ", ")
+	void shuffle()
+	T percentile(int value)
+	T min(float(T a) selector, float threshold = float.maxValue, float default = 0, label bool(T a) where)
+	T max(float(T a) selector, float threshold = float.minValue, float default = 0, label bool(T a) where)
+	int minIndex(float(T a) selector, float threshold = float.maxValue)
+	int maxIndex(float(T a) selector, float threshold = float.minValue)
+	T withMin(float(T a) selector, float threshold = float.maxValue, label bool(T a) where)
+	T withMax(float(T a) selector, float threshold = float.minValue, label bool(T a) where)
+	T popMax(float(T a) selector)
+	int count(bool(T a) predicate)
+	int countNot(bool(T a) predicate)
+	void rotate()
+	T[] intersectWith(T[] other)
 
 unit graphics
-	void drawImage: Image image, Vector2 position, frame = 0, Vector2 size = {}, touchMargin = Vector2(16,16), visibleFor = -1, clickableBy = -1, hotkey = Key.None, layer = 0, alpha = 1.0, void(Touch touch) onClick
-	void drawText: string text, Vector2 position = {}, implicit Vector2 size = {}, Color color = null, HorizontalAlignment align = , VerticalAlignment valign = Middle, FontStyle style = Normal, Font font = null, Color outlineColor = null, outlineWidth = 0, visibleFor = -1, implicit layer = 0, alpha = 1.0
-	void drawButton: Image image = null, text = "", Vector2 position = {}, Color textColor = null, frame = 0, implicit Vector2 size = {}, fontSize = 18, touchMargin = Vector2(16,16), textOffset = Vector2(0,0), showTouchArea = false, visibleFor = -1, implicit layer = 0, alpha = 1.0, void(Touch touch) onClic
-	void drawRectangle: position = Vector2(), implicit size = Vector2(256,256), Color fillColor = null, Color outlineColor = null, outlineWidth = 0, visibleFor = -1, implicit layer = 0, alpha = 1.0, HorizontalAlignment align = Center, VerticalAlignment valign = Middle
-	void drawCircle: position = Vector2(), implicit Vector2 size = {256,256}, Color fillColor = null, Color outlineColor = null, outlineWidth = 0, Angle startAngle = 0.0, Angle endAngle = 1.0, RotationDirection direction = Clockwise, visibleFor = -1, implicit layer = 0, alpha = 1.0
-	void drawPolygon: Vector2[] points, Vector2 position = {0,0}, Color fillColor = null, Color outlineColor = null, outlineWidth = 0, smooth = false, visibleFor = -1, implicit int layer = 0, alpha = 1.0
+	void drawImage(Image image, Vector2 position, frame = 0, Vector2 size = {}, touchMargin = Vector2(16,16), visibleFor = -1, clickableBy = -1, hotkey = Key.None, layer = 0, alpha = 1.0, void(Touch touch) onClick)
+	void drawText(string text, Vector2 position = {}, implicit Vector2 size = {}, Color color = null, HorizontalAlignment align = , VerticalAlignment valign = Middle, FontStyle style = Normal, Font font = null, Color outlineColor = null, outlineWidth = 0, visibleFor = -1, implicit layer = 0, alpha = 1.0)
+	void drawButton(Image image = null, text = "", Vector2 position = {}, Color textColor = null, frame = 0, implicit Vector2 size = {}, fontSize = 18, touchMargin = Vector2(16,16), textOffset = Vector2(0,0), showTouchArea = false, visibleFor = -1, implicit layer = 0, alpha = 1.0, void(Touch touch) onClic)
+	void drawRectangle(position = Vector2(), implicit size = Vector2(256,256), Color fillColor = null, Color outlineColor = null, outlineWidth = 0, visibleFor = -1, implicit layer = 0, alpha = 1.0, HorizontalAlignment align = Center, VerticalAlignment valign = Middle)
+	void drawCircle(position = Vector2(), implicit Vector2 size = {256,256}, Color fillColor = null, Color outlineColor = null, outlineWidth = 0, Angle startAngle = 0.0, Angle endAngle = 1.0, RotationDirection direction = Clockwise, visibleFor = -1, implicit layer = 0, alpha = 1.0)
+	void drawPolygon(Vector2[] points, Vector2 position = {0,0}, Color fillColor = null, Color outlineColor = null, outlineWidth = 0, smooth = false, visibleFor = -1, implicit int layer = 0, alpha = 1.0)
+
+[Context]
+Output the next line of code given the following context. Do NOT output explanations or comments. Only output code.
