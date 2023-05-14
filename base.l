@@ -1205,6 +1205,21 @@ global transient unit System
 		                       ) do           // Do this for each item in a list
 		for(let _subject=subject, i=_subject.length-1; i>=0; --i) { let it = _subject[i]; do()}
 		
+	// Creates a new list populated with the results of calling a function on every element of the list
+	global inline js TResult[] for: T[] subject // The list to iterate over
+		                       -> TResult(
+		                           T it         // The current item of the list we are iterating over with the for-loop
+		                       ) selector       // Select the field or expression to be included in the result
+		subject.map(selector)
+		
+	// Creates a new list populated with the results of calling a function on every element of the list
+	global inline js TResult[] for: T[] subject // The list to iterate over
+		                       <- TResult(
+		                           T it         // The current item of the list we are iterating over with the for-loop
+		                       ) selector       // Select the field or expression to be included in the result
+		subject.map(selector).reverse()
+		
+		for(let _subject=subject, i=_subject.length-1; i>=0; --i) { let it = _subject[i]; do()}
 	// Do something for each item in a list. You can add or remove items inside the loop.
 	global inline js void forChangeable: T[] subject    // The list to iterate over
 		                       -> void(

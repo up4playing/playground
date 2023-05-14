@@ -73,17 +73,29 @@ transient global unit graphics
 		          Vector2 pos = {}
 		          implicit Vector2 size = {440}
 		          VideoShape shape = Rectangle
-		VideoObject videoObject = cast Framework.objects.find
-			if .type == VideoObject
-				VideoObject v = cast .
-				return v.userId == userId
-			return false
+		
+		// Use the following when multiline selectors are supported
+		// VideoObject videoObject = cast Framework.objects.find
+		// 	if .type == VideoObject
+		// 		VideoObject v = cast .
+		// 		return v.userId == userId
+		// 	return false
+		let videoObject = getVideoObject userId:userId
+			
 		// if !videoObject or Framework.toBeRemoved.contains(videoObject): videoObject = VideoObject(userId)
 		if !videoObject: videoObject = VideoObject(userId)
 		videoObject.position = pos
 		videoObject.size = size
 		videoObject.shape = shape
 		videoObject.locked = true
+		
+	private VideoObject getVideoObject: int userId
+		for Framework.objects
+			if .type == VideoObject
+				VideoObject v = cast .
+				if v.userId == userId
+					return v
+		return null
 		
 enum Side: Front, Back
 		
