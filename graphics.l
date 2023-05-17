@@ -551,6 +551,8 @@ transient global unit graphics
 		                      implicit layer = 0         // Higher layers are drawn in front of lower layers
 		                      alpha = 1.0                // The opacity of the image (0: fully transparent, 1: fully visible)
 		                      Color color = White        // Tint the image with this color (white for no tint)
+		                      HorizontalAlignment align = Center // The horizontal alignment of the image
+		                      VerticalAlignment valign = Middle  // The vertical alignment of the image
 		                      SourceCodeLocation location
 		if(!image.texture?.ensureIsAvailable()) return
 		if(graphics_isVisibleFor(visibleFor)) {
@@ -559,8 +561,8 @@ transient global unit graphics
 			let sizeY = size.y || (sizeX/f.w)*f.h
 			graphics_items.push(new DisplayImage(
 				graphics_totalMatrix,
-				position.x-sizeX/2,
-				position.y-sizeY/2,
+				align == 0  ? position.x : align  == 1 ? position.x-sizeX*.5 : position.x-sizeX,
+				valign == 0 ? position.y : valign == 1 ? position.y-sizeY*.5 : position.y-sizeY,
 				sizeX, sizeY,
 				layer, alpha, graphics_currentClippingPath, image.file,
 				location, position.location, size.location,
@@ -578,6 +580,8 @@ transient global unit graphics
 		                      implicit layer = 0         // Higher layers are drawn in front of lower layers
 		                      alpha = 1.0                // The opacity of the image (0: fully transparent, 1: fully visible)
 		                      Color color = White        // Tint the image with this color (white for no tint)
+		                      HorizontalAlignment align = Center // The horizontal alignment of the image
+		                      VerticalAlignment valign = Middle  // The vertical alignment of the image
 		                      SourceCodeLocation location
 		if(!image.texture?.ensureIsAvailable()) return
 		if(graphics_isVisibleFor2(visibleFor)) {
@@ -586,8 +590,8 @@ transient global unit graphics
 			let sizeY = size.y || (sizeX/f.w)*f.h
 			graphics_items.push(new DisplayImage(
 				graphics_totalMatrix,
-				position.x-sizeX/2,
-				position.y-sizeY/2,
+				align == 0  ? position.x : align  == 1 ? position.x-sizeX*.5 : position.x-sizeX,
+				valign == 0 ? position.y : valign == 1 ? position.y-sizeY*.5 : position.y-sizeY,
 				sizeX, sizeY,
 				layer, alpha, graphics_currentClippingPath, image.file,
 				location, position.location, size.location,
