@@ -1,10 +1,8 @@
 [System]
-Predict the next line of code in LiveTime language.
-Only output a single raw line of code.
+Output the next line of code.
 Do NOT output explanations or comments.
 Only call functions that are present in the given code.
 [Example]
-This is an example app in the LiveTime language:
 exampleApp
 	int round
 	// Lists
@@ -258,4 +256,3 @@ unit graphics
 	void drawPolygon(Vector2[] points, Vector2 position = {0,0}, Color fillColor = null, Color outlineColor = null, outlineWidth = 0, smooth = false, visibleFor = -1, implicit int layer = 0, alpha = 1.0)
 
 [Context]
-Output the next line of code given the following context. Do NOT output explanations or comments. Only output code.
