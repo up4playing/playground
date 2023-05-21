@@ -872,3 +872,101 @@ unit networkVisualizer
 	
 	private getHeightForFrame: int frame
 		return (50+frame-Network.frame)*20
+
+global skipInit unit Math
+	init
+		initDefaultRandomGenerator
+		
+	js void initDefaultRandomGenerator
+		Math_randomGenerator = Math.random
+		
+	js string generateRandomSeed:
+		let crypto = !window.crypto && typeof(require) != "undefined" ? require("crypto") : window.crypto
+		if(crypto) {
+			let out = new Uint8Array(256);
+			crypto.getRandomValues(out);
+			return out.toString();
+		}
+		
+	internal string randomSeed
+	internal int randomValueIndex
+	transient internal float[] randomValues
+	
+	internal recreateRandomValues
+		let targetRandomValueIndex = randomValueIndex
+		setRandomSeed randomSeed
+		for targetRandomValueIndex: randomFloat
+	
+	js void setRandomSeed: string seed
+		Math_randomSeed = seed
+		Math_randomValues.length = 0
+		Math_randomValueIndex = 0
+		
+		// Seeding the random number generator in Javascript
+		// https://stackoverflow.com/a/47593316
+		function xmur3(str) {
+		    for(var i = 0, h = 1779033703 ^ str.length; i < str.length; i++) {
+		        h = Math.imul(h ^ str.charCodeAt(i), 3432918353);
+		        h = h << 13 | h >>> 19;
+		    } return function() {
+		        h = Math.imul(h ^ (h >>> 16), 2246822507);
+		        h = Math.imul(h ^ (h >>> 13), 3266489909);
+		        return (h ^= h >>> 16) >>> 0;
+		    }
+		}
+		
+		function sfc32(a, b, c, d) {
+		    return function() {
+		      a >>>= 0; b >>>= 0; c >>>= 0; d >>>= 0; 
+		      var t = (a + b) | 0;
+		      a = b ^ b >>> 9;
+		      b = c + (c << 3) | 0;
+		      c = (c << 21 | c >>> 11);
+		      d = d + 1 | 0;
+		      t = t + d | 0;
+		      c = c + t | 0;
+		      return (t >>> 0) / 4294967296;
+		    }
+		}
+		
+		function mulberry32(a) {
+		    return function() {
+		      var t = a += 0x6D2B79F5;
+		      t = Math.imul(t ^ t >>> 15, t | 1);
+		      t ^= t + Math.imul(t ^ t >>> 7, t | 61);
+		      return ((t ^ t >>> 14) >>> 0) / 4294967296;
+		    }
+		}
+		
+		var seed = xmur3(seed);
+		var rand = sfc32(seed(), seed(), seed(), seed());
+		var rand = mulberry32(seed());
+		
+		Math_randomGenerator = function() {
+			let value
+			if(Math_randomValueIndex < Math_randomValues.length) {
+				value = Math_randomValues[Math_randomValueIndex]
+				// Log random numbers for testing
+				// Network_log("rnd("+Math_randomValueIndex+"/"+Math_randomValues.length+") replay "+value)
+				Math_randomValueIndex++
+			} else {
+				value = rand()
+				// Log random numbers for testing
+				// Network_log("rnd("+Math_randomValueIndex+"/"+Math_randomValues.length+"):"+value)
+				Math_randomValues[Math_randomValueIndex++] = value;
+			}
+			return value
+		}
+
+	// Generates a random integer
+	global js int randomInteger: int min // The inclusive lower bound of the random integer
+		                         int max // The exclusive upper bound of the random integer
+		return min + Math.floor(Math_randomGenerator() * (max-min))
+	
+	global js int randomInteger: int max = 2147483647 // The exclusive upper bound of the random integer
+		return Math.floor(Math_randomGenerator() * max)
+	
+	// Generates a random float
+	global inline js int randomFloat
+		Math_randomGenerator()
+	
