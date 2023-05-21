@@ -266,7 +266,8 @@ class string
 	inline js string[] split: string character = " "
 		this.split(character)
 		
-	inline js bool startsWith(string str) (this.indexOf(str) == 0)
+	inline js bool startsWith(string str) this.startsWith(str)
+	inline js bool endsWith(string str) this.endsWith(str)
 		
 	inline js int indexOf(string str) this.indexOf(str)
 	inline js int indexOf(string str, int startPos) this.indexOf(str, startPos)
