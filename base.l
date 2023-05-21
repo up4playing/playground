@@ -377,8 +377,6 @@ class List<T>
 			}
 		}
 			
-			
-		
 	// Adds an item to the end of the list
 	inline js void add: T item // The item to add
 		this.push(item)
@@ -1018,6 +1016,12 @@ class List<T>
 			if (a[i] in map) result.push(a[i]);
 		}
 		return result;
+		
+	// The first item of the list
+	inline js T first() this[0]
+	
+	// The last item of the list
+	inline js T last() this[this.length-1]
 		
 	// Gets an item from the list
 	js T get: implicit int index // The index of the item to get
