@@ -1087,6 +1087,13 @@ struct void
 // Denotes a type that can be null
 struct Nullable<T>
 	
+// A Hashtable with keys of type 'string' and values of type 'any'
+interface dynamic
+	
+// Any type
+interface any
+	
+// The base class for all classes
 interface object
 	inline js bool toBool() (this != null)
 	inline js string toString() object_stringify(this, 3)
