@@ -21,6 +21,8 @@ struct int
 	
 	inline js string toString := this.toString()
 		
+	static inline js int fromString(string value) parseInt(value) 
+		
 	inline js string formatWithSpaces := this.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ")
 		
 	inline js string format: int minIntegerDigits = 1, bool grouping = false
@@ -717,6 +719,15 @@ class List<T>
 		 float threshold = float.maxValue
 		 float default = 0
 		float resultValue = threshold
+		for this
+			let value = selector(.)
+			if value < resultValue: resultValue = value
+		return resultValue != threshold ? resultValue : default
+		
+	min: Time(T a) selector 
+		 Time threshold = Time.maxValue
+		 Time default = 0
+		Time resultValue = threshold
 		for this
 			let value = selector(.)
 			if value < resultValue: resultValue = value
