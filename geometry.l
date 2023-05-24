@@ -512,6 +512,55 @@ class List<T>
 		Vector2 sum = {0,0}
 		for this: sum += selector(.)
 		return sum	
+transient float Angle
+	inline js float toFloat() this
+	inline js string toString() this.toString()
+		
+	// Returns true if the angle is not zero
+	inline js bool toBool := this
+	
+	inline js Angle operator +  (Angle a, Angle b) a+b
+	inline js Angle operator +  (Angle a, int b) a+b
+	inline js Angle operator +  (Angle a, float b) a+b
+	
+	inline js Angle operator -  (Angle a, Angle b) a-b
+	inline js Angle operator -  (Angle a, int b) a-b
+	inline js Angle operator -  (Angle a, float b) a-b
+	inline js Angle operator -  (Angle a) -a
+	
+	inline js float operator /  (Angle a, Angle b) a/b
+	inline js Angle operator /  (Angle a, int b) a/b
+	inline js Angle operator /  (Angle a, float b) a/b
+	
+	inline js Angle operator *  (Angle a, int b) a*b
+	inline js Angle operator *  (Angle a, float b) a*b
+	inline js Angle operator *  (int a, Angle b) a*b
+	inline js Angle operator *  (float a, Angle b) a*b
+	
+	inline js Angle operator %  (Angle a, int b) a%b
+	inline js Angle operator %  (Angle a, Angle b) a%b
+	
+	inline js bool  operator <  (Angle a, Angle b) a<b
+	inline js bool  operator <= (Angle a, Angle b) a<=b
+	inline js bool  operator >  (Angle a, Angle b) a>b
+	inline js bool  operator >= (Angle a, Angle b) a>=b
+	
+	inline js bool  operator == (Angle a, Angle b) a==b
+	inline js bool  operator == (Angle a, int b) a==b
+	inline js bool  operator == (Angle a, float b) a==b
+	
+	inline js bool  operator != (Angle a, Angle b) a!=b
+	inline js bool  operator != (Angle a, int b) a!=b
+	inline js bool  operator != (Angle a, float b) a!=b
+	
+	inline js float in: AngleUnit unit
+		(unit==1 ? this*Math_TwoPI : unit==2 ? this*360 : unit==3 ? this*400 : this)
+		
+enum AngleUnit
+	turns // Turn (one full rotation is 1)
+	rad   // Radians (one full rotation is 2π)
+	deg   // Degrees (one full rotation is 360)
+	grad  // Gradiants (one full rotation is 400)
 
 unit Math
 	// Returns the arctangent of the quotient of the given values

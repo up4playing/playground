@@ -440,14 +440,6 @@ transient skipInit unit Platform
 		
 	inline js void reload
 		if(!Platform_isDebug) location.reload();
-			
-skipInit transient float Time
-	// The number of milliseconds elapsed since January 1, 1970
-	static Time now
-	
-js(Date) transient struct Date
-	inline js Date() new Date(Time_now)
-	static inline js Date now := new Date(Time_now)
 	
 unit File
 	js string readPartial: string filename, int offset=0, int length, void(string result) callback
