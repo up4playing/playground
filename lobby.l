@@ -38,7 +38,7 @@ unit lobby
 		if Loca.supportedLanguages.length > 1
 			forPositions Loca.supportedLanguages, end:{930,-510}, delta:{40}
 				drawImage Flag[i], pos, frame:Loca.language == cast(i) ? 1 : 0
-					Loca.set cast(i)
+					Loca.setLanguage cast(i)
 			
 		if Network.mode == Ping
 			drawText "Connecting...", size:32

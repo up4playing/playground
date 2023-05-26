@@ -32,7 +32,7 @@ transient skipInit unit Platform
 	// Info
 	public inline js string url := location.href
 	public inline js string host := location.host
-	public protocalAndHost := host ? "https://"+host : "http://localhost"
+	public protocolAndHost := host ? "https://"+host : "http://localhost"
 	
 	public inline js int appName := appName
 	public inline js int version := version
@@ -43,6 +43,7 @@ transient skipInit unit Platform
 	visible bool isMobile
 	visible bool isBrowser
 	visible bool isDebug
+	visible bool isSmallScreen
 	public bool isStaging
 	
 	visible Vector2 pixelSize
@@ -56,7 +57,10 @@ transient skipInit unit Platform
 	internal bool engineStarted
 	internal PlatformMode mode
 	internal bool fastForward
-	internal bool isWaitingForInitialData
+	internal int waitingForInitialData
+	
+	inline js void preventScrolling
+		window.scrollTo(0,0)
 	
 	private inline js void initMedia
 		audio_init();
@@ -71,6 +75,7 @@ transient skipInit unit Platform
 		Network_init();
 		Input_init();
 		gizmo_init();
+		Loca_init();
 		Network_log("Loading...")
 		Platform_isMobile = false;
 		Platform_isBrowser = !window.require;
@@ -92,6 +97,7 @@ transient skipInit unit Platform
 		Platform_context = Platform_canvas.getContext("2d");
 		Platform_pixelRatio = window.devicePixelRatio;
 		Platform_pixelSize = new Vector2(window.innerWidth*Platform_pixelRatio, window.innerHeight*Platform_pixelRatio, null);
+		Platform_isSmallScreen = screen.width < 600 || (localStorage.getItem("smallScreen") == "true")
 		Platform_canvas.style.width = window.innerWidth + "px";
 		Platform_canvas.style.height = window.innerHeight + "px";
 		Platform_canvas.width = Platform_pixelSize.x;
@@ -118,17 +124,17 @@ transient skipInit unit Platform
 		if scaleMode == Auto
 			if ratio.x < ratio.y: effectiveScaleMode = FixedWidth;  scale = ratio.x
 			else                  effectiveScaleMode = FixedHeight; scale = ratio.y
-			size = referenceSizeWithMargin
+			size = referenceSize
 		else
 		if scaleMode == FixedWidth
 			effectiveScaleMode = scaleMode
 			scale = ratio.x
-			size = {referenceSizeWithMargin.x, pixelSize.y/scale}
+			size = {referenceSize.x, pixelSize.y/scale}
 		else
 		if scaleMode == FixedHeight
 			effectiveScaleMode = scaleMode
 			scale = ratio.y; 
-			size = {pixelSize.x/scale, referenceSizeWithMargin.y}
+			size = {pixelSize.x/scale, referenceSize.y}
 			
 		let offsetX = anchor > 0 ? pixelSize.x/2 : 0
 		let offsetY = anchor > 1 ? pixelSize.y/2 : 0
@@ -196,7 +202,7 @@ transient skipInit unit Platform
 		}
 	
 	// This is called every animation frame
-	private tick()   if mode == Play or mode == Record or isWaitingForInitialData: Network.animationFrame
+	private tick()   if mode == Play or mode == Record or waitingForInitialData: Network.animationFrame
 	
 	private enterSlideMode(PlatformMode mode) this.mode = mode; sendMode
 	
@@ -205,7 +211,7 @@ transient skipInit unit Platform
 	internal record()  Network.adjustStartTimeIfNeeded; mode = Record; gizmo.clear; sendMode
 	internal play()    Network.adjustStartTimeIfNeeded; mode = Play;   gizmo.clear; sendMode
 	
-	private goToFrame(int targetFrame) Network.goToFrame(targetFrame)
+	private goToFrame(int targetFrame) pause(); Network.goToFrame(targetFrame)
 		
 	internal js void sendSelectToEditor: string cursorFile, int cursorPos
 		_sendToEditor({type:"select", cursorFile, cursorPos})
@@ -241,6 +247,11 @@ transient skipInit unit Platform
 		showDebugInfo = !showDebugInfo;
 		setLocalStorageObject("showDebugInfo", showDebugInfo ? "true" : "false")
 		updateBaseMatrix
+		
+	void toggleSmallScreen
+		isSmallScreen = !isSmallScreen;
+		print isSmallScreen
+		setLocalStorageObject("smallScreen", isSmallScreen ? "true" : "false")
 		
 	inline js void setFullscreen: value = true, forUser = -1
 		if(!Platform_isStaging && !Platform_isDebug && (forUser == -1 || Input_localUser?.id == forUser)) {
@@ -308,10 +319,10 @@ transient skipInit unit Platform
 		document.body.appendChild(fileInput)
 		fileInput.click()
 		
-	inline js void setLocalStorageObject: string key, dynamic value
+	inline js void setLocalStorageObject: string key, any value
 		localStorage.setItem(key, JSON.stringify(value))
 		
-	js dynamic getLocalStorageObject: string key
+	js any getLocalStorageObject: string key
 		let str = localStorage.getItem(key)
 		return str ? JSON.parse(str) : null 
 		
@@ -361,10 +372,15 @@ transient skipInit unit Platform
 		setTimeout(then, time)
 		
 	inline js void copyToClipboard(string text)
-		navigator.clipboard.writeText(text)
+		if(Network_isPremiere && Input_isCertain) {
+			navigator.clipboard.writeText(text)
+		}
 		
 	inline js void setLocation: string url
 		location.href = url
+		
+	inline js void openLink: string url
+		window.open(url)
 		
 	js void showIcon
 		if(!Platform_isDebug && window.require) {
@@ -424,9 +440,7 @@ transient skipInit unit Platform
 		
 	inline js void reload
 		if(!Platform_isDebug) location.reload();
-			
-
-		
+	
 unit File
 	js string readPartial: string filename, int offset=0, int length, void(string result) callback
 		let fs = require("fs")

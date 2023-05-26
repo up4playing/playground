@@ -46,14 +46,14 @@ class Texture
 		let image = _htmlImageCache[this.file]
 		if(!image) {
 			return new Promise((resolve, reject) => {
-				image = new HTMLImage()
-				image.src = this.file.startsWith("http") ? this.file : _basePath+this.file
+				image = new Image()
 				image.onload = e => {
 					this._htmlImage = image
 					window._htmlImageCache[this.file] = image
 					this.size = new Vector2(image.width, image.height, null)
 					resolve(this);
 				}
+				image.src = this.file.startsWith("http") ? this.file : _basePath+this.file
 			})
 		} else {
 			this._htmlImage = image
@@ -124,10 +124,10 @@ struct ImageFrame
 
 // An image that can be drawn on the screen and can have several frames of animation
 skipInit class Image
+	string file
 	Texture texture
 	Vector2 size
 	ImageFrame[] frames
-	string file
 	
 enum HorizontalAlignment: Left, Center, Right
 enum VerticalAlignment: Top, Middle, Bottom
@@ -141,7 +141,7 @@ transient global unit graphics
 		
 	internal js void startFrame
 		graphics_reset()
-		if(!Platform_fastForward && !Platform_isWaitingForInitialData)
+		if(!Platform_fastForward && !Platform_waitingForInitialData)
 			if(!graphics_backgroundColor || graphics_backgroundColor.hex == "#000000") {
 				Platform_context.clearRect(0, 0, Platform_pixelSize.x, Platform_pixelSize.y)
 			} else {
@@ -150,9 +150,6 @@ transient global unit graphics
 			}
 			Platform_context.textBaseline = "top"
 
-	internal resetMatrix
-		totalMatrix = Platform.baseMatrix
-		localMatrix.clear	
 
 	internal reset
 		totalMatrix = Platform.baseMatrix
@@ -476,24 +473,6 @@ transient global unit graphics
 		let sizeX = size.x || imageSize.x
 		let sizeY = size.y || (sizeX/imageSize.x)*imageSize.y
 		return {sizeX, sizeY}
-				
-	private smoothVector2: SmoothVector2 position
-		let x = position.x, y = position.y
-		let deltaX = x - position.viewX
-		let deltaY = y - position.viewY
-		if deltaX or deltaY
-			if Time.frame > position.lastMoveFrame
-				let factor = position.speed / Math.sqrt(deltaX * deltaX + deltaY * deltaY)
-				if deltaX > 0: x = position.viewX = Math.min(position.viewX + deltaX * factor, x)
-				else           x = position.viewX = Math.max(position.viewX + deltaX * factor, x)
-				if deltaY > 0: y = position.viewY = Math.min(position.viewY + deltaY * factor, y)
-				else           y = position.viewY = Math.max(position.viewY + deltaY * factor, y)
-				position.lastMoveFrame = Time.frame
-				return {x,y}
-			else
-				return {position.viewX, position.viewY}
-		else
-			return position
 		
 	// Draws an image on the screen
 	global void drawImage: Image image                // The image to draw
@@ -503,7 +482,7 @@ transient global unit graphics
 		                   visibleFor = -1            // Only this user will see the image
 		                   implicit int layer = 0     // Higher layers are drawn in front of lower layers
 		                   alpha = 1.0                // The opacity of the image (0: fully transparent, 1: fully visible)
-		                   Color color = White        // Tint the image with this color
+		                   Color color = White        // Tint the image with this color (white for no tint)
 		                   SourceCodeLocation location
 		var frame = Math.floor(Network.frame * Math.max(framesPerSecond, 0) / Network.targetFps) % image.frames.length;
 		drawImage image, position, frame, size, visibleFor, layer, alpha, color, location
@@ -516,7 +495,7 @@ transient global unit graphics
 		                   int[] visibleFor           // Only this user will see the image
 		                   implicit int layer = 0     // Higher layers are drawn in front of lower layers
 		                   alpha = 1.0                // The opacity of the image (0: fully transparent, 1: fully visible)
-		                   Color color = White        // Tint the image with this color
+		                   Color color = White        // Tint the image with this color (white for no tint)
 		                   SourceCodeLocation location
 		var frame = Math.floor(Network.frame * Math.max(framesPerSecond, 0) / Network.targetFps) % image.frames.length;
 		drawImage image, position, frame, size, visibleFor, layer, alpha, color, location
@@ -532,7 +511,7 @@ transient global unit graphics
 		                   visibleFor = -1            // Only this user will see the image
 		                   implicit int layer = 0     // Higher layers are drawn in front of lower layers
 		                   alpha = 1.0                // The opacity of the image (0: fully transparent, 1: fully visible)
-		                   Color color = White        // Tint the image with this color
+		                   Color color = White        // Tint the image with this color (white for no tint)
 		                   SourceCodeLocation location
 		var frame = Math.floor(Network.frame * Math.max(framesPerSecond, 0) / Network.targetFps) % image.frames.length;
 		drawImage image, position, frame, size, angle, flipX, flipY, visibleFor, layer, alpha, color, location
@@ -550,15 +529,15 @@ transient global unit graphics
 		                   hotkey = Key.None            // This keyboard shortcut will execute the onClick handler
 		                   implicit layer = 0           // Higher layers are drawn in front of lower layers
 		                   alpha = 1.0                  // The opacity of the button 0: fully transparent, 1: fully visible)
-		                   Color color = White          // Tint the image with this color
+		                   Color color = White          // Tint the image with this color (white for no tint)
 		                   void(Touch touch) onClick    // Execute this code when the user clicks on the image or presses the hotkey
 		                   SourceCodeLocation location
 		drawImage image, position, frame, size, angle, visibleFor, layer, alpha, color, location
 			
 		// Handle click (only visible buttons are clickable)
 		int[] effectiveClickableBy = getClickableBy(visibleFor, clickableBy)
-		Input.onTouchDownWithin position, image.size + touchMargin, userId:effectiveClickableBy, showTouchArea
-			onClick touch
+		if size.x == 0 and size.y == 0: size = image.size
+		Input.onTouchDownWithin position, size + touchMargin, userId:effectiveClickableBy, showTouchArea, do:onClick
 		if hotkey
 			Input.onKeyDown hotkey, userId:effectiveClickableBy
 				onClick null
@@ -571,18 +550,19 @@ transient global unit graphics
 		                      visibleFor = -1            // Only this user will see the image
 		                      implicit layer = 0         // Higher layers are drawn in front of lower layers
 		                      alpha = 1.0                // The opacity of the image (0: fully transparent, 1: fully visible)
-		                      Color color = White        // Tint the image with this color
+		                      Color color = White        // Tint the image with this color (white for no tint)
+		                      HorizontalAlignment align = Center // The horizontal alignment of the image
+		                      VerticalAlignment valign = Middle  // The vertical alignment of the image
 		                      SourceCodeLocation location
 		if(!image.texture?.ensureIsAvailable()) return
 		if(graphics_isVisibleFor(visibleFor)) {
-			if(position.speed) position = graphics_smoothVector2(position)
 			let f = image.frames[frame % image.frames.length]
 			let sizeX = size.x || f.w
 			let sizeY = size.y || (sizeX/f.w)*f.h
 			graphics_items.push(new DisplayImage(
 				graphics_totalMatrix,
-				position.x-sizeX/2,
-				position.y-sizeY/2,
+				align == 0  ? position.x : align  == 1 ? position.x-sizeX*.5 : position.x-sizeX,
+				valign == 0 ? position.y : valign == 1 ? position.y-sizeY*.5 : position.y-sizeY,
 				sizeX, sizeY,
 				layer, alpha, graphics_currentClippingPath, image.file,
 				location, position.location, size.location,
@@ -599,18 +579,19 @@ transient global unit graphics
 		                      int[] visibleFor           // Only this user will see the image
 		                      implicit layer = 0         // Higher layers are drawn in front of lower layers
 		                      alpha = 1.0                // The opacity of the image (0: fully transparent, 1: fully visible)
-		                      Color color = White        // Tint the image with this color
+		                      Color color = White        // Tint the image with this color (white for no tint)
+		                      HorizontalAlignment align = Center // The horizontal alignment of the image
+		                      VerticalAlignment valign = Middle  // The vertical alignment of the image
 		                      SourceCodeLocation location
 		if(!image.texture?.ensureIsAvailable()) return
 		if(graphics_isVisibleFor2(visibleFor)) {
-			if(position.speed) position = graphics_smoothVector2(position)
 			let f = image.frames[frame % image.frames.length]
 			let sizeX = size.x || f.w
 			let sizeY = size.y || (sizeX/f.w)*f.h
 			graphics_items.push(new DisplayImage(
 				graphics_totalMatrix,
-				position.x-sizeX/2,
-				position.y-sizeY/2,
+				align == 0  ? position.x : align  == 1 ? position.x-sizeX*.5 : position.x-sizeX,
+				valign == 0 ? position.y : valign == 1 ? position.y-sizeY*.5 : position.y-sizeY,
 				sizeX, sizeY,
 				layer, alpha, graphics_currentClippingPath, image.file,
 				location, position.location, size.location,
@@ -631,11 +612,10 @@ transient global unit graphics
 		                      visibleFor = -1            // Only this user will see the image
 		                      implicit layer = 0         // Higher layers are drawn in front of lower layers
 		                      alpha = 1.0                // The opacity of the image (0: fully transparent, 1: fully visible)
-		                      Color color = White        // Tint the image with this color
+		                      Color color = White        // Tint the image with this color (white for no tint)
 		                      SourceCodeLocation location
 		if(!image.texture?.ensureIsAvailable()) return
 		if(graphics_isVisibleFor(visibleFor)) {
-			if(position.speed) position = graphics_smoothVector2(position)
 			let f = image.frames[frame % image.frames.length]
 			let sizeX = size.x || f.w
 			let sizeY = size.y || (sizeX/f.w)*f.h
@@ -666,11 +646,10 @@ transient global unit graphics
 		                      int[] visibleFor           // Only this user will see the image
 		                      implicit layer = 0         // Higher layers are drawn in front of lower layers
 		                      alpha = 1.0                // The opacity of the image (0: fully transparent, 1: fully visible)
-		                      Color color = White        // Tint the image with this color
+		                      Color color = White        // Tint the image with this color (white for no tint)
 		                      SourceCodeLocation location
 		if(!image.texture?.ensureIsAvailable()) return
 		if(graphics_isVisibleFor2(visibleFor)) {
-			if(position.speed) position = graphics_smoothVector2(position)
 			let f = image.frames[frame % image.frames.length]
 			let sizeX = size.x || f.w
 			let sizeY = size.y || (sizeX/f.w)*f.h
@@ -694,7 +673,7 @@ transient global unit graphics
 	const alignmentFactor = [0, .5, 1]
 	
 	// Draws text on the screen
-	global js void drawText: string text                        // The text to draw
+	global js void drawText: implicit string text               // The text to draw
 		                     Vector2 position = {}              // The position to draw to
 		                     implicit Vector2 size = {}         // The size of the text
 		                     Color color = null                 // The color of the text
@@ -709,7 +688,6 @@ transient global unit graphics
 		                     alpha = 1.0                        // The opacity of the text (0: fully transparent, 1: fully visible)
 		                     SourceCodeLocation location
 		if(graphics_isVisibleFor(visibleFor)) {
-			if(position.speed) position = graphics_smoothVector2(position)
 			let effectiveFont = font || graphics_currentFont
 			let fontSize = size.y || size.x || graphics_currentFontSize
 			let contextFont = (style ? "bold ":"")+fontSize+"px "+effectiveFont.name;
@@ -747,7 +725,6 @@ transient global unit graphics
 		                     alpha = 1.0                        // The opacity of the text (0: fully transparent, 1: fully visible)
 		                     SourceCodeLocation location
 		if(graphics_isVisibleFor2(visibleFor)) {
-			if(position.speed) position = graphics_smoothVector2(position)
 			let effectiveFont = font || graphics_currentFont
 			let fontSize = size.y || size.x || graphics_currentFontSize
 			let contextFont = (style ? "bold ":"")+fontSize+"px "+effectiveFont.name;
@@ -814,8 +791,7 @@ transient global unit graphics
 		// Handle click (only visible buttons are clickable)
 		int[] effectiveClickableBy = getClickableBy(visibleFor, clickableBy)
 		Vector2 effectiveSize = image ? getEffectiveSize(image.size, size) : {getTextWidth(text), fontSize}
-		Input.onTouchDownWithin position, effectiveSize + touchMargin, userId:effectiveClickableBy, showTouchArea
-			onClick touch
+		Input.onTouchDownWithin position, effectiveSize + touchMargin, userId:effectiveClickableBy, showTouchArea, do:onClick
 		if hotkey
 			Input.onKeyDown hotkey, userId:effectiveClickableBy
 				onClick null
@@ -844,8 +820,7 @@ transient global unit graphics
 		// Handle click (only visible buttons are clickable)
 		int[] effectiveClickableBy = getClickableBy(visibleFor, clickableBy)
 		Vector2 effectiveSize = image ? getEffectiveSize(image.size, size) : {getTextWidth(text), fontSize}
-		Input.onTouchDownWithin position, effectiveSize + touchMargin, userId:effectiveClickableBy, showTouchArea
-			onClick touch
+		Input.onTouchDownWithin position, effectiveSize + touchMargin, userId:effectiveClickableBy, showTouchArea, do:onClick
 		if hotkey
 			Input.onKeyDown hotkey, userId:effectiveClickableBy
 				onClick null
@@ -863,7 +838,6 @@ transient global unit graphics
 		                          VerticalAlignment valign = Middle  // The vertical alignment of the rectangle
 		                          SourceCodeLocation location
 		if(graphics_isVisibleFor(visibleFor)) {
-			if(position.speed) position = graphics_smoothVector2(position)
 			let sizeX = size.x
 			let sizeY = size.y || size.x
 			graphics_items.push(new DisplayRectangle(
@@ -891,7 +865,6 @@ transient global unit graphics
 		                          VerticalAlignment valign = Middle  // The vertical alignment of the rectangle
 		                          SourceCodeLocation location
 		if(graphics_isVisibleFor2(visibleFor)) {
-			if(position.speed) position = graphics_smoothVector2(position)
 			let sizeX = size.x
 			let sizeY = size.y || size.x
 			graphics_items.push(new DisplayRectangle(
@@ -921,7 +894,6 @@ transient global unit graphics
 		                       alpha = 1.0                // The opacity of the circle (0: fully transparent, 1: fully visible)
 		                       SourceCodeLocation location
 		if(graphics_isVisibleFor(visibleFor)) {
-			if(position.speed) position = graphics_smoothVector2(position)
 			let sizeX = size.x, sizeY = size.y || size.x
 			graphics_items.push(new DisplayCircle(
 				graphics_totalMatrix, 
@@ -951,7 +923,6 @@ transient global unit graphics
 		                       alpha = 1.0               // The opacity of the circle (0: fully transparent, 1: fully visible)
 		                       SourceCodeLocation location
 		if(graphics_isVisibleFor2(visibleFor)) {
-			if(position.speed) position = graphics_smoothVector2(position)
 			let sizeX = size.x, sizeY = size.y || size.x
 			graphics_items.push(new DisplayCircle(
 				graphics_totalMatrix, 
@@ -975,10 +946,9 @@ transient global unit graphics
 		                        visibleFor = -1              // Only this user will see the texture
 		                        implicit int layer = 0       // Higher layers are drawn in front of lower layers
 		                        alpha = 1.0                  // The opacity of the texture (0: fully transparent, 1: fully visible)
-		                        Color color = White        // Tint the image with this color
+		                        Color color = White          // Tint the image with this color (white for no tint)
 		if(!texture?.ensureIsAvailable()) return
 		if(graphics_isVisibleFor(visibleFor)) {
-			if(position.speed) position = graphics_smoothVector2(position)
 			let sizeX = size.x || texture.size.x
 			let sizeY = size.y || (sizeX/texture.size.x)*texture.size.y
 			graphics_items.push(new DisplayImage(
@@ -1003,10 +973,9 @@ transient global unit graphics
 		                        visibleFor = -1             // Only this user will see the texture
 		                        implicit int layer = 0      // Higher layers are drawn in front of lower layers
 		                        alpha = 1.0                 // The opacity of the texture (0: fully transparent, 1: fully visible)
-		                        Color color = White        // Tint the image with this color
+		                        Color color = White         // Tint the image with this color (white for no tint)
 		if(!image.texture?.ensureIsAvailable()) return
 		if(graphics_isVisibleFor(visibleFor)) {
-			if(position.speed) position = graphics_smoothVector2(position)
 			let sizeX = size.x || texture.size.x
 			let sizeY = size.y || (sizeX/texture.size.x)*texture.size.y
 			graphics_items.push(new DisplayImage(
@@ -1036,7 +1005,6 @@ transient global unit graphics
 		                        implicit int layer = 0     // Higher layers are drawn in front of lower layers
 		                        alpha = 1.0                // The opacity of the polygon (0: fully transparent, 1: fully visible)
 		if(graphics_isVisibleFor(visibleFor)) {
-			if(position.speed) position = graphics_smoothVector2(position)
 			graphics_items.push(new DisplayPolygon(
 				graphics_totalMatrix,
 				position.x, position.y,
@@ -1064,7 +1032,6 @@ transient global unit graphics
 		                                 HorizontalAlignment align = Center // The horizontal alignment of the rectangle
 		                                 VerticalAlignment valign = Middle  // The vertical alignment of the rectangle
 		if(graphics_isVisibleFor(visibleFor)) {
-			if(position.speed) position = graphics_smoothVector2(position)
 			let sizeX = size.x
 			let sizeY = size.y || size.x
 			graphics_items.push(new DisplayRoundedRectangle(
@@ -1090,7 +1057,6 @@ transient global unit graphics
 		                     implicit int layer = 0 // Higher layers are drawn in front of lower layers
 		                     alpha = 1.0            // The opacity of the line (0: fully transparent, 1: fully visible)
 		if(graphics_isVisibleFor(visibleFor)) {
-			if(position.speed) position = graphics_smoothVector2(position)
 			graphics_items.push(new DisplayLine(
 				graphics_totalMatrix,
 				from.x, from.y,
@@ -1113,7 +1079,6 @@ transient global unit graphics
 		                      implicit int layer = 0 // Higher layers are drawn in front of lower layers
 		                      alpha = 1.0            // The opacity of the lines (0: fully transparent, 1: fully visible)
 		if(graphics_isVisibleFor(visibleFor)) {
-			if(position.speed) position = graphics_smoothVector2(position)
 			graphics_items.push(new DisplayPolygon(
 				graphics_totalMatrix,
 				position.x, position.y,
@@ -1135,7 +1100,6 @@ transient global unit graphics
 		                           visibleFor = -1                  // Only clear the rectangle for this user
 		                           implicit layer = 0               // Higher layers are process after lower layers
 		if(graphics_isVisibleFor(visibleFor)) {
-			if(position.speed) position = graphics_smoothVector2(position)
 			let sizeX = size.x
 			let sizeY = size.y || size.x
 			graphics_items.push(new DisplayRectangle(
@@ -1614,12 +1578,11 @@ transient DisplayItem DisplayPolygon
 			let p1 = points[i], p2 = points[i + 1]
 			Platform_context.quadraticCurveTo(p1.x, p1.y, p2.x,p2.y);
 		}
-		if(this.close) {
+		if(this.close || this.fillColor) {
 			Platform_context.closePath()
 		}
 		if(this.fillColor) {
 			// Close the polygon and fill it
-			Platform_context.lineTo(x + startPoint.x, y + startPoint.y)
 			Platform_context.fillStyle = this.fillColor
 			Platform_context.fill()
 		}

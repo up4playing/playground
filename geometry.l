@@ -112,6 +112,19 @@ struct Vector2
 	// The smaller of the two coordinates
 	min := x < y ? x : y
 	
+	// Move the vector
+	move: Vector2 delta // The vector to move by
+		this.x += delta.x
+		this.y += delta.y
+		return this
+	
+	// Move the vector	
+	move: float x // Move horizontally by this value
+		  float y // Move vertically by this value
+		this.x += x
+		this.y += y
+		return this
+		
 	rotate: Angle angle // The angle in turns (one full rotation is 1)
 		let x = this.x, y = this.y
 		let sn = Math.sin(angle)
@@ -494,17 +507,60 @@ struct Matrix2D
 		result.m5 = b1 * a4 + b3 * a5 + b5
 		return result
 		
-Vector2 SmoothVector2
-	internal transient float viewX, viewY
-	internal transient float lastMoveFrame
-	float speed = 10
-	Vector2 operator = (SmoothVector2 a, Vector2 b) a.x = b.x; a.y = b.y; a.location = b.location; return a
-
 class List<T>
 	Vector2 total: Vector2(T it) selector
 		Vector2 sum = {0,0}
 		for this: sum += selector(.)
 		return sum	
+transient float Angle
+	inline js float toFloat() this
+	inline js string toString() this.toString()
+		
+	// Returns true if the angle is not zero
+	inline js bool toBool := this
+	
+	inline js Angle operator +  (Angle a, Angle b) a+b
+	inline js Angle operator +  (Angle a, int b) a+b
+	inline js Angle operator +  (Angle a, float b) a+b
+	
+	inline js Angle operator -  (Angle a, Angle b) a-b
+	inline js Angle operator -  (Angle a, int b) a-b
+	inline js Angle operator -  (Angle a, float b) a-b
+	inline js Angle operator -  (Angle a) -a
+	
+	inline js float operator /  (Angle a, Angle b) a/b
+	inline js Angle operator /  (Angle a, int b) a/b
+	inline js Angle operator /  (Angle a, float b) a/b
+	
+	inline js Angle operator *  (Angle a, int b) a*b
+	inline js Angle operator *  (Angle a, float b) a*b
+	inline js Angle operator *  (int a, Angle b) a*b
+	inline js Angle operator *  (float a, Angle b) a*b
+	
+	inline js Angle operator %  (Angle a, int b) a%b
+	inline js Angle operator %  (Angle a, Angle b) a%b
+	
+	inline js bool  operator <  (Angle a, Angle b) a<b
+	inline js bool  operator <= (Angle a, Angle b) a<=b
+	inline js bool  operator >  (Angle a, Angle b) a>b
+	inline js bool  operator >= (Angle a, Angle b) a>=b
+	
+	inline js bool  operator == (Angle a, Angle b) a==b
+	inline js bool  operator == (Angle a, int b) a==b
+	inline js bool  operator == (Angle a, float b) a==b
+	
+	inline js bool  operator != (Angle a, Angle b) a!=b
+	inline js bool  operator != (Angle a, int b) a!=b
+	inline js bool  operator != (Angle a, float b) a!=b
+	
+	inline js float in: AngleUnit unit
+		(unit==1 ? this*Math_TwoPI : unit==2 ? this*360 : unit==3 ? this*400 : this)
+		
+enum AngleUnit
+	turns // Turn (one full rotation is 1)
+	rad   // Radians (one full rotation is 2π)
+	deg   // Degrees (one full rotation is 360)
+	grad  // Gradiants (one full rotation is 400)
 
 unit Math
 	// Returns the arctangent of the quotient of the given values

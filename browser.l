@@ -18,6 +18,8 @@ HTMLElement
 		
 HTMLElement HTMLInput
 	fontSize = 50
+	borderColor = Color("ffffff00")
+	HorizontalAlignment align = Center
 	visible string value
 	
 	void(string value) onEnterKey
@@ -37,9 +39,10 @@ HTMLElement HTMLInput
 		
 	private js void ensureElement
 		if(this.element) return
+		let alignString = this.align == 0 ? "left" : this.align == 1 ? "center" : "right";
 		this.element = document.createElement('input')
 		this.element.type = "text"
-		this.element.style = "margin:0;padding:0;position:absolute;border:none;text-align:center;outline:none;background-color:#00000000"
+		this.element.style = "margin:0;padding:0 12px 0 12px;position:absolute;border:1px solid "+this.borderColor.hex+";text-align:"+alignString+";outline:none;background-color:#00000000"
 		this.element.value = this.value
 		let prevValue = this.value
 		this.element.onkeyup = e => {
