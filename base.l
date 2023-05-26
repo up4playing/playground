@@ -619,8 +619,13 @@ class List<T>
 	inline js bool all: bool(T a) predicate // The condition to check
 		this.every(predicate)
 		
+	// Return a list that contains the selected field or expression for each item
 	inline js TValue[] select: TValue(T it) selector
 		this.map(selector)
+		
+	// Get the selected field or expression for each item and flattens the result
+	inline js TValue[] flatten: TValue[](T it) selector
+		this.flatMap(selector)
 		
 	inline js T find: bool(T a) condition // The condition to check
 		this.find(condition)

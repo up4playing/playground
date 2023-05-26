@@ -857,6 +857,14 @@ class Grid<T>
 		                 ) do           // Do this for each item in a list
 		for(let _size=this.size, y=0, _items=this.items; y<_size.y; ++y) for(let x=0; x<_size.x; ++x) { let it = _items[y*_size.x + x]; let pos = new IntVector2(x,y); do()}
 			
+	// Return a list that contains the selected field or expression for each item
+	inline js TValue[] select: TValue(T it) selector
+		this.items.map(selector)
+		
+	// Get the selected field or expression for each item and flattens the result
+	inline js TValue[] flatten: TValue[](T it) selector
+		this.items.flatMap(selector)
+		
 global transient unit System
 	global inline js void for: IntVector2 subject    // The exclusive upper bound to iterate towards
 		                       -> void(
