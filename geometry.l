@@ -825,6 +825,9 @@ class Grid<T>
 	IntVector2 size
 	T[] items
 	
+	Grid
+		for size.x * size.y: items.add null
+	
 	get: int x // The column to get the value from
 		 int y // The row to get the value from
 		return items[y*size.x + x]
