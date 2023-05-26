@@ -868,6 +868,22 @@ class Grid<T>
 	inline js TValue[] flatten: TValue[](T it) selector
 		this.items.flatMap(selector)
 		
+	// Returns true if the given condition is true for any item in the list
+	inline js bool any
+		this.items.some(a => a)
+		
+	// Returns true if the given condition is true for any item in the list
+	inline js bool any: bool(T a) predicate // The condition to check
+		this.items.some(predicate)
+		
+	// Returns true if the given condition is true for all items in the list
+	inline js bool all
+		this.items.every(a => a)
+		
+	// Returns true if the given condition is true for all items in the list
+	inline js bool all: bool(T a) predicate // The condition to check
+		this.items.every(predicate)
+			
 global transient unit System
 	global inline js void for: IntVector2 subject    // The exclusive upper bound to iterate towards
 		                       -> void(
