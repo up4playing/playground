@@ -784,6 +784,22 @@ class Grid<T>
 	set: IntVector2 position // The grid position of the value to set
 		 T value             // The value to set
 		items[position.y*size.x + position.x] = value
+		
+	// Do something for each item in the grid
+	inline js void each: -> void(
+		                     T it,      // The current item of the list we are iterating over with the for-loop
+		                     IntVector2 pos,
+		                     int i      // The index of the current item of the list we are iterating over with the for-loop
+		                 ) do           // Do this for each item in a list
+		for(let i=0, _subject=this.items, _len=_subject.length; i<_len; ++i) { let it = _subject[i]; if(it) { let pos = new IntVector2(i%this.size.x, Math.floor(i/this.size.x)); do()}}
+			
+	inline js void each: includeEmpty = false
+		                 -> void(
+		                     T it,      // The current item of the list we are iterating over with the for-loop
+		                     IntVector2 pos,
+		                     int i      // The index of the current item of the list we are iterating over with the for-loop
+		                 ) do           // Do this for each item in a list
+		for(let _size=this.size, y=0, _items=this.items; y<_size.y; ++y) for(let x=0; x<_size.x; ++x) { let it = _items[y*_size.x + x]; let pos = new IntVector2(x,y); do()}
 			
 global transient unit System
 	global inline js void for: IntVector2 subject    // The exclusive upper bound to iterate towards
