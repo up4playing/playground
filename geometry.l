@@ -704,11 +704,11 @@ class Direction
 	// List of the primary direction and the diagonals
 	const Direction[] allDirections = [Right, DownRight, Down, DownLeft, Left, UpLeft, Up, UpRight]
 
-	string name
-	int index
-	IntVector2 vector
-	Angle angle
-	Angle isoAngle
+	string name       // The name of the direction (e.g. "Left", "Right", "Up", "Down", "UpLeft", "DownRight", ...)
+	int index         // The index starting with "Right" and going around clockwise (0: Right, 1: Down, 2: Left, 3: Up)
+	IntVector2 vector // The vector of the direction (Right: {1,0}, Down:{0,1}, Left:{-1,0}, Up:{0,-1})
+	Angle angle       // The angle in turns starting with "Right" and going around clockwise
+	Angle isoAngle    // The angle in turns within an isometric grid
 	
 	toString := name
 	
