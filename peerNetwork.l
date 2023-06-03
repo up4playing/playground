@@ -510,7 +510,7 @@ transient unit PeerNetwork
 		
 	private sendState: InternalUser to, Buffer buffer
 		Network.log "Sending state to {to.id}"
-		let localPlayer = Input.localUser
+		let localUser = Input.localUser
 		sendBuffer.reset
 		sendBuffer.writeInt8 cast NetworkMessageType.State
 		sendBuffer.writeInt32 Network.frame-1
@@ -520,7 +520,7 @@ transient unit PeerNetwork
 			sendBuffer.writeInt32 .id
 			sendBuffer.writeInt32 .inputs.readPos
 			sendBuffer.writeBool .active
-		to.inputsSentPos = localPlayer.inputs.readPos
+		to.inputsSentPos = localUser.inputs.readPos
 		sendBuffer.writeBuffer buffer
 		send to, sendBuffer
 		
@@ -591,8 +591,8 @@ transient unit PeerNetwork
 		
 	// // Send inputs to other user. This is called in animationFrame.
 	// private sendInputs: int inputFrame, float aheadAverage
-	// 	let localPlayer = Input.internalUsers[userId]
-	// 	let inputs = localPlayer.inputs
+	// 	let localUser = Input.internalUsers[userId]
+	// 	let inputs = localUser.inputs
 	// 	for c -> connections
 	// 		if c.state == Connected
 	// 			let receiver = Input.internalUsers[c.userId]
@@ -710,7 +710,7 @@ transient unit PeerNetwork
 	// 	sendState c, snapshotBuffer
 		
 	// private sendState: Connection to, Buffer buffer
-	// 	let localPlayer = Input.internalUsers[userId]
+	// 	let localUser = Input.internalUsers[userId]
 	// 	sendBuffer.reset
 	// 	sendBuffer.writeInt8 cast NetworkMessageType.State
 	// 	sendBuffer.writeInt32 frame-1
@@ -722,7 +722,7 @@ transient unit PeerNetwork
 	// 			sendBuffer.writeInt32 .inputs.readPos
 	// 	sendBuffer.writeBuffer buffer
 	// 	send to, sendBuffer	
-	// 	log "sending state to {to.userId} frame:{frame-1} readPos:{localPlayer.inputs.readPos} size:{buffer.writePos}"	
+	// 	log "sending state to {to.userId} frame:{frame-1} readPos:{localUser.inputs.readPos} size:{buffer.writePos}"	
 		
 	// private onState: Connection c, Buffer buffer
 	// 	snapshotBuffer.reset

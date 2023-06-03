@@ -427,7 +427,7 @@ transient global unit graphics
 		
 	private ClippingPath currentClippingPath
 		
-	// The default user for which all draw operations will be visible
+	// The default player for which all draw operations will be visible
 	visibleFor
 		return currentlyVisibleFor
 		
@@ -1114,18 +1114,14 @@ transient global unit graphics
 		}
 		
 	const Color[] defaultColors = [{"398CA9"},{"C01352"},{"16C66E"},{"FFD166"}]
-	setUserColor: int userId
-		          Color color = null
-		let user = Input.usersById[userId]
-			user.color = color || defaultColors[user.index]
 		
 	global drawPointer: int userId
 		                Color color = null
 		                bool showLocalPointer = Input.showLocalPointer
 		if userId != Input.localUser.id or showLocalPointer
-			let user = Input.usersById[userId]
-				if !color: color = user.color
-				for user.touches
+			let player = Input.playersById[userId]
+				if !color: color = player.color
+				for player.touches
 					drawImage finger, .smoothPosition+{11,32}, frame:.isDown ? 1 : 0, layer:int.maxValue
 					if color
 						if color == Black
@@ -1143,7 +1139,7 @@ transient global unit graphics
 		if isVisibleFor(visibleFor)
 			if not size.y: size.y = shape == Rectangle ? size.x * 3/4 : size.x
 			if Network.mode == Local or !PeerNetwork.enableVideo
-				NetworkUser user = Input.usersById[userId]
+				Player player = Input.playersById[userId]
 				drawImage VideoScreen, position, size, frame:shape == Circle ? 1:0, layer:1000000, location
 			else
 				items.add DisplayVideo(
@@ -1163,7 +1159,7 @@ transient global unit graphics
 		if isVisibleFor(visibleFor)
 			if not size.y: size.y = size.x * 3/4
 			if Network.mode == Local or !PeerNetwork.enableVideo
-				NetworkUser user = Input.usersById[userId]
+				Player player = Input.playersById[userId]
 				drawImage VideoScreen, position, size, frame:0, layer:1000000
 			else
 				items.add DisplayVideo(

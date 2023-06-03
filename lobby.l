@@ -20,9 +20,9 @@ unit lobby
 			drawText Network.errorMessage, size:14, position:{0,40}
 			return
 			
-		int count = Input.users.length
+		int count = players.length
 			float width = count<2 ? 900.0 : 1920/count, offset = -width*(count-1)/2
-			for Input.users
+			for players
 				Vector2 pos = {offset+width*.index, 0}
 				drawVideo .id, pos, {width}
 				if .isReady
@@ -43,13 +43,13 @@ unit lobby
 		if Network.mode == Ping
 			drawText "Connecting...", size:32
 		else
-		if Input.users.length withinInclusively Platform.supportedUserCount
-			for Input.users
+		if players.length withinInclusively Platform.supportedUserCount
+			for players
 				if !.isReady
 					drawButton Button, "Start", {0, 450}, visibleFor:.id
 						if enableFullscreen: Platform.setFullscreen true forUser:touch.userId
-						Input.usersById[touch.userId].isReady = true
-						if Input.users.all.isReady
+						Input.playersById[touch.userId].isReady = true
+						if players.all.isReady
 							Network.startApp
 							
 	private showSettings = false
