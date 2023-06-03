@@ -49,6 +49,12 @@ transient unit PeerNetwork
 			// 	username: 'play-user-x8env28gx41odbxzwjyut2oq871987syq8ovyuqp-alwyzon',
 			// 	credential: 'qoy91n981vlplabb1873jdcgsouz2qm87qmmakqpc-alwyzon'
 			// });
+			// --- Strato-v30 ---
+			// options.iceServers.push({
+			// 	urls: 'turn:85.214.133.53:39571',
+			// 	username: 'play-user-9q2gy75kmlp4qn7tb86pogsmtyp7qqo0n5-strato-v30',
+			// 	credential: '8q76nby32odjamuzbexi6eb2f1k9gc3my99o-strato-v30'
+			// });
 			// --- Strato ---
 			// options.iceServers.push({
 			// 	urls: 'turn:81.169.197.127',
