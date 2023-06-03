@@ -150,9 +150,9 @@ transient unit ServerNetwork
 		int deltaFromAverage = Math.round(calculatedStartTime - Network.startTime)
 		int deltaFromReference = Math.round(calculatedStartTime - referenceStartTime)
 		statistics.serverPings.add pingPongTime
-		Network.log "<<< Pong ({pongCount})", pingPongTime, calculatedStartTime
-		Network.log "average", Network.startTime, deltaFromAverage 
-		Network.log "reference", referenceStartTime, deltaFromReference 
+		// Network.log "<<< Pong ({pongCount})", pingPongTime, calculatedStartTime
+		// Network.log "average", Network.startTime, deltaFromAverage 
+		// Network.log "reference", referenceStartTime, deltaFromReference 
 		
 		// Ignore pings that took more than twice as long as the average
 		pongCount++
