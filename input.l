@@ -1267,11 +1267,11 @@ skipInit global unit Input
 	// Do something when a player pressed a key
 	onKeyDown: Key key                     // The key that will trigger the event
 		       implicit nocolon Player[] by = null // Only consider keys pressed by this player of list of players
-		       void(Player pressedBy) do   // Do this for each key that is pressed
+		       void(Key key, Player pressedBy) do   // Do this for each key that is pressed
 		for getTargetedPlayers(by) -> player
 			for internalUsers[.id].downKeys
 				if . == key
-					do player
+					do key, player
 				
 	// Do something when a player pressed a key
 	onKeyDown: implicit nocolon Player[] by = null        // Only consider keys pressed by this player of list of players
@@ -1288,8 +1288,8 @@ skipInit global unit Input
 				do key, player
 					
 	// Do something when a player types a character
-	onTypeCharacter: implicit nocolon Player[] by = null                 // Only consider keys pressed by this player of list of players
-		             void(string character, Player pressedBy) do // Do this for each character that is typed
+	onType: implicit nocolon Player[] by = null                 // Only consider keys pressed by this player of list of players
+		    void(string character, Player pressedBy) do // Do this for each character that is typed
 		for getTargetedPlayers(by) -> player
 			for internalUsers[.id].pressedKeys -> character
 				do character, player
