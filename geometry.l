@@ -760,11 +760,11 @@ class Direction
 	// List of the primary direction and the diagonals
 	const Direction[] allDirections = [Right, DownRight, Down, DownLeft, Left, UpLeft, Up, UpRight]
 
-	string name
-	int index
-	IntVector2 vector
-	Angle angle
-	Angle isoAngle
+	string name       // The name of the direction (e.g. "Left", "Right", "Up", "Down", "UpLeft", "DownRight", ...)
+	int index         // The index starting with "Right" and going around clockwise (0: Right, 1: Down, 2: Left, 3: Up)
+	IntVector2 vector // The vector of the direction (Right: {1,0}, Down:{0,1}, Left:{-1,0}, Up:{0,-1})
+	Angle angle       // The angle in turns starting with "Right" and going around clockwise
+	Angle isoAngle    // The angle in turns within an isometric grid
 	
 	toString := name
 	
@@ -825,6 +825,9 @@ class Grid<T>
 	IntVector2 size
 	T[] items
 	
+	Grid
+		for size.x * size.y: items.add null
+	
 	get: int x // The column to get the value from
 		 int y // The row to get the value from
 		return items[y*size.x + x]
@@ -840,6 +843,46 @@ class Grid<T>
 	set: IntVector2 position // The grid position of the value to set
 		 T value             // The value to set
 		items[position.y*size.x + position.x] = value
+		
+	// Do something for each item in the grid
+	inline js void each: -> void(
+		                     T it,      // The current item of the list we are iterating over with the for-loop
+		                     IntVector2 pos,
+		                     int i      // The index of the current item of the list we are iterating over with the for-loop
+		                 ) do           // Do this for each item in a list
+		for(let i=0, _subject=this.items, _len=_subject.length; i<_len; ++i) { let it = _subject[i]; if(it) { let pos = new IntVector2(i%this.size.x, Math.floor(i/this.size.x)); do()}}
+			
+	inline js void each: includeEmpty = false
+		                 -> void(
+		                     T it,      // The current item of the list we are iterating over with the for-loop
+		                     IntVector2 pos,
+		                     int i      // The index of the current item of the list we are iterating over with the for-loop
+		                 ) do           // Do this for each item in a list
+		for(let _size=this.size, y=0, _items=this.items; y<_size.y; ++y) for(let x=0; x<_size.x; ++x) { let it = _items[y*_size.x + x]; let pos = new IntVector2(x,y); do()}
+			
+	// Return a list that contains the selected field or expression for each item
+	inline js TValue[] select: TValue(T it) selector
+		this.items.map(selector)
+		
+	// Get the selected field or expression for each item and flattens the result
+	inline js TValue[] flatten: TValue[](T it) selector
+		this.items.flatMap(selector)
+		
+	// Returns true if the given condition is true for any item in the list
+	inline js bool any
+		this.items.some(a => a)
+		
+	// Returns true if the given condition is true for any item in the list
+	inline js bool any: bool(T a) predicate // The condition to check
+		this.items.some(predicate)
+		
+	// Returns true if the given condition is true for all items in the list
+	inline js bool all
+		this.items.every(a => a)
+		
+	// Returns true if the given condition is true for all items in the list
+	inline js bool all: bool(T a) predicate // The condition to check
+		this.items.every(predicate)
 			
 global transient unit System
 	global inline js void for: IntVector2 subject    // The exclusive upper bound to iterate towards

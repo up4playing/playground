@@ -90,7 +90,7 @@ transient skipInit unit Network
 	internal int frames             // Total number of frames we have inputs for
 	internal int frameWithNewWatches = 0 // First frame with new watches, do not send watches for frames below this
 	internal bool startInLobby      // Connected sessions usually start in the lobby, local sessions start in the app
-	private int joinFrame           // The frame the current user joined
+	private int joinFrame           // The frame the local user joined
 	bool isPremiere
 	
 	// Checksum
@@ -142,11 +142,11 @@ transient skipInit unit Network
 		reset
 		animationFrame
 				
-	// Keep inputs, call init functions, create the local users, reset read positions and start app
+	// Keep inputs, call init functions, create the local players, reset read positions and start app
 	// This is called on startup, after every code change and when going backwards in the timeline
 	reset
-		Input.users.clear
-		Input.usersById.clear
+		players.clear
+		Input.playersById.clear
 		errorMessage = ""
 		HTMLElement.clear
 		Math.randomValueIndex = 0
@@ -167,15 +167,17 @@ transient skipInit unit Network
 			if Input.internalUsers.length > Platform.userCount
 				Input.internalUsers.removeRange Platform.userCount, count: Input.internalUsers.length - Platform.userCount
 			
-			// We always recreating users, because developers might have added fields to NetworkUser or Touch
-			// By the time we call startApp, all users need to exist
+			// We always recreating players, because developers might have added fields to Player or Touch
+			// By the time we call startApp, all players need to exist
 			for Input.internalUsers -> internalUser
-				NetworkUser user = {id:.id, index:i}
-				Input.usersById[.id] = user
-				Input.users.add user
+				Player user = {id:.id, index:i, color:graphics.defaultColors[i]}
+				Input.playersById[.id] = user
+				players.add user
 				
 			// Set local user
-			Input.localUser = Input.localUser?.id < Input.internalUsers.length ? Input.internalUsers[Input.localUser.id] : Input.internalUsers[0]
+			let localUserId = Input.localUser?.id < Input.internalUsers.length ? Input.localUser.id : 0
+			Input.localUser = Input.internalUsers[localUserId]
+			Input.localPlayer = Input.playersById[localUserId]
 			
 		// Reset read pos to replay inputs from the beginning
 		for Input.internalUsers if .
@@ -202,9 +204,9 @@ transient skipInit unit Network
 		isPremiere = true
 
 	// Smooth out animations by only executing code when we received inputs from everybody	
-	smooth: int userId
+	smooth: Player player
 		    void() do
-		let user = Input.internalUsers[userId]
+		let user = Input.internalUsers[player.id]
 		if user and (user.local or frame <= user.smoothFrame): do
 
 	// animationFrame --> step --> tick
@@ -280,8 +282,8 @@ transient skipInit unit Network
 	int replayFrom = -1
 	
 	collectStatistics
-		if mode == Connected and Input.users.length > 1 and frame > joinFrame + 120
-			for Input.users
+		if mode == Connected and players.length > 1 and frame > joinFrame + 120
+			for players
 				let internalUser = Input.internalUsers[.id]
 				if not internalUser.local
 					internalUser.collectStatistics frame
@@ -304,7 +306,7 @@ transient skipInit unit Network
 					
 				logTable += ",{tickMessageSize},{now},{now - lastAnimationFrame},{now - lastNetworkFrame},{tickTime.format(fractionDigits:2)},{drawTime.format(fractionDigits:2)},{displayItems},{frame-animationStartFrame}"
 				logTable += ",{restoreTime.format(fractionDigits:2)},{replayFrames},{replayTime.format(fractionDigits:2)},{snapshot.writePos},{saveTime.format(fractionDigits:2)},{ServerNetwork.lastPingPongTime}"
-				logTable += ",\"{checksumLog.trim}\",\"{eventLog.trim}\",\"{replayLog.trim}\",\"{Input.users[0]?.controller?.leftStick}\",\"{sentLog.trim}\",\"{receivedLog.trim}\",\"{writeLog.trim}\",\"{parseLog.trim}\",\"{touchLog.trim}\"\n"
+				logTable += ",\"{checksumLog.trim}\",\"{eventLog.trim}\",\"{replayLog.trim}\",\"{players[0]?.controller?.leftStick}\",\"{sentLog.trim}\",\"{receivedLog.trim}\",\"{writeLog.trim}\",\"{parseLog.trim}\",\"{touchLog.trim}\"\n"
 			catch
 				onError error
 			
@@ -330,8 +332,11 @@ transient skipInit unit Network
 			lastSendFrame = frame
 			
 	switchUser: int userIndex
-		let user = Input.users[userIndex]
-			Input.localUser = Input.internalUsers.find.id == user.id
+		let prevPlayer = Input.localPlayer 
+		Input.localPlayer = players[userIndex]
+			Input.localUser = Input.internalUsers.find.id == Input.localPlayer.id
+			for prevPlayer.touches
+				Input.handleUpdateTouchAfterSwitchingUser .id, .referencePosition
 			
 	switchSendInterval: int sendInterval
 		this.sendInterval = sendInterval
@@ -373,7 +378,7 @@ transient skipInit unit Network
 			// Update game controllers
 			Input.updateGameControllers
 			
-			// Post lost messages and remove users if nobody disagrees
+			// Post lost messages and remove players if nobody disagrees
 			Input.handleLost
 			
 			// Parse inputs
@@ -397,7 +402,7 @@ transient skipInit unit Network
 		// Cleanup
 		for Input.internalUsers if .
 			.clearEvent
-		Input.users.each.clearEvents
+		players.each.clearEvents
 		
 		// Advance frame
 		frame++
@@ -409,9 +414,10 @@ transient skipInit unit Network
 	internal tick: bool draw
 		graphics.startFrame
 		if draw and not Platform.waitingForInitialData
-			let isPlayback = Platform.mode == Play or frame+1 < frames
-			if Input.showPointers or isPlayback
-				Input.users.each drawPointer .id, showLocalPointer:isPlayback or Input.showLocalPointer
+			if Input.showPointers >= Local
+			or (mode == Connected and Input.showPointers == Remote) 
+			or Platform.mode == Play
+				players.each drawPointer .
 		audio.startFrame
 		
 		if Platform.showDebugInfo
@@ -502,7 +508,7 @@ transient skipInit unit Network
 				onError {"Inconsistent serialization"}
 												
 		// Checksum
-		if Input.users.length >= 2 and frame > 200
+		if players.length >= 2 and frame > 200
 			float myChecksum = Framework.checksum + snapshot.writePos
 			float theirChecksum = checksums[frame]
 			if logging: checksumLog += " <{Input.localUser.id}*> #{frame} {myChecksum}"
@@ -730,7 +736,7 @@ skipInit transient unit statistics
 		let server = Platform.host.getUntil(".")
 		StatisticsGraphSeries[] series
 		string[] connections
-		for Input.users
+		for players
 			let internalUser = Input.internalUsers[.id]
 			connections.add internalUser.connectionType
 			series.add this.series.find.userIndex == i
@@ -834,26 +840,26 @@ skipInit transient unit statistics
 		drawRectangle position, size, fillColor:backgroundColor, align:Left, valign:Top
 
 unit networkVisualizer		
-	private int[] posForUser = [0,-10000,-10000,-10000,-10000,-10000]
+	private int[] posForPlayer = [0,-10000,-10000,-10000,-10000,-10000]
 		
 	internal tick
 		if Network.simulateInputsForTesting
-			for Input.users
-				if posForUser[.index] == -10000: posForUser[.index] = posForUser[0]
+			for players
+				if posForPlayer[.index] == -10000: posForPlayer[.index] = posForPlayer[0]
 					
 			// Move circle with artificially created inputs to test the smoothness
-			for Input.users -> user
-				Network.smooth user.id
-					if user.id == 1: Network.replayLog += "C"
-					// Network.log "[{Network.frame}] <{user.id}> networkVisualizer", Network.isSmooth
-					Input.onKeyDown F24, userId:user.id
-						if user.id == 1: Network.replayLog += "D"
-						if (posForUser[user.index] += 2) > 1080
-							posForUser[user.index] -= 1080
-						// Network.log "[{Network.frame}] <{user.id}> networkVisualizer Input.onKeyDown", posForUser[user.index]
+			for players -> player
+				Network.smooth player
+					if player.id == 1: Network.replayLog += "C"
+					// Network.log "[{Network.frame}] <{player.id}> networkVisualizer", Network.isSmooth
+					Input.onKeyDown by:player
+						if player.id == 1: Network.replayLog += "D"
+						if (posForPlayer[player.index] += 2) > 1080
+							posForPlayer[player.index] -= 1080
+						// Network.log "[{Network.frame}] <{player.id}> networkVisualizer Input.onKeyDown", posForPlayer[player.index]
 				
-			for Input.users -> user
-				drawCircle {1110+user.index*20, -540+posForUser[user.index]}, size:20, fillColor:.color
+			for players -> player
+				drawCircle {1110+player.index*20, -540+posForPlayer[player.index]}, size:20, fillColor:.color
 		
 		// // AheadMin
 		// let minY = 510 - getHeightForFrame(Network.frame-Network.aheadMin+1)
@@ -861,14 +867,14 @@ unit networkVisualizer
 		// drawText cast Network.aheadMin, {1110, minY}, size:20, align:Left
 		
 		// Draw bar to visualizue up to which frame we got input from each player
-		for Input.users -> user
+		for players -> player
 			let internaluser = Input.internalUsers[.id]
 				// BufferFrames
 				let bufferY = 510 - getHeightForFrame(Network.frame-internaluser.bufferFrames+1)
 				drawLine {960,bufferY} to {1100,bufferY} width:3, color:.color
 				drawText cast internaluser.bufferFrames, {1110, bufferY}, size:20, color:.color, align:Left
 		
-				drawRectangle {984+user.index*32, 510} size:{24, getHeightForFrame(internaluser.inputFrame)}, valign:Bottom, fillColor:.color
+				drawRectangle {984+player.index*32, 510} size:{24, getHeightForFrame(internaluser.inputFrame)}, valign:Bottom, fillColor:.color
 		
 		// Replay from
 		if Network.replayFrom != -1
