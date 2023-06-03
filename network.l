@@ -174,7 +174,9 @@ transient skipInit unit Network
 				players.add user
 				
 			// Set local user
-			Input.localUser = Input.localUser?.id < Input.internalUsers.length ? Input.internalUsers[Input.localUser.id] : Input.internalUsers[0]
+			let localUserId = Input.localUser?.id < Input.internalUsers.length ? Input.localUser.id : 0
+			Input.localUser = Input.internalUsers[localUserId]
+			Input.localPlayer = Input.playersById[localUserId]
 			
 		// Reset read pos to replay inputs from the beginning
 		for Input.internalUsers if .
@@ -201,9 +203,9 @@ transient skipInit unit Network
 		isPremiere = true
 
 	// Smooth out animations by only executing code when we received inputs from everybody	
-	smooth: int userId
+	smooth: Player player
 		    void() do
-		let user = Input.internalUsers[userId]
+		let user = Input.internalUsers[player.id]
 		if user and (user.local or frame <= user.smoothFrame): do
 
 	// animationFrame --> step --> tick
@@ -411,7 +413,7 @@ transient skipInit unit Network
 			if Input.showPointers >= Local
 			or (mode == Connected and Input.showPointers == Remote) 
 			or Platform.mode == Play
-				players.each drawPointer .id
+				players.each drawPointer .
 		audio.startFrame
 		
 		if Platform.showDebugInfo
@@ -838,10 +840,10 @@ unit networkVisualizer
 					
 			// Move circle with artificially created inputs to test the smoothness
 			for players -> player
-				Network.smooth player.id
+				Network.smooth player
 					if player.id == 1: Network.replayLog += "C"
 					// Network.log "[{Network.frame}] <{player.id}> networkVisualizer", Network.isSmooth
-					Input.onKeyDown F24, userId:player.id
+					Input.onKeyDown by:player
 						if player.id == 1: Network.replayLog += "D"
 						if (posForPlayer[player.index] += 2) > 1080
 							posForPlayer[player.index] -= 1080

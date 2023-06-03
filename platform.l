@@ -19,7 +19,7 @@ enum TickMode: Interval, AnimationFrame
 transient skipInit unit Platform
 	
 	// Configuration
-	public userCount = 2
+	public userCount = 4
 	public supportedUserCount = Range 2..4
 	public bool showSafeArea = true
 	public bool showDebugInfo = false
@@ -253,8 +253,9 @@ transient skipInit unit Platform
 		print isSmallScreen
 		setLocalStorageObject("smallScreen", isSmallScreen ? "true" : "false")
 		
-	inline js void setFullscreen: value = true, forUser = -1
-		if(!Platform_isStaging && !Platform_isDebug && (forUser == -1 || Input_localUser?.id == forUser)) {
+	inline js void setFullscreen: value = true
+		                          Player forPlayer = null
+		if(!Platform_isStaging && !Platform_isDebug && (forPlayer == null || Input_localUser?.id == forPlayer.id)) {
 			try {
 				if(value) {
 					document.body.requestFullscreen()
