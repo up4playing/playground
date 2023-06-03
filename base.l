@@ -1698,7 +1698,7 @@ class Range
 
 unit Json
 	inline js dynamic parse(string str) JSON.parse(str)
-	inline js string stringify(dynamic object) JSON.stringify(object)
+	inline js string stringify(any object) JSON.stringify(object)
 		
 enum Language: English, German, Spanish, Frensh, Italian, Portuguese, Japanese, Chinese, Korean, Dutch, Turkish, Polish, Russian, Hindi, Arabic, Bengali, Urdu, Indonesian, Invariant = 1000
 
