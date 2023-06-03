@@ -1249,7 +1249,8 @@ skipInit global unit Input
 		Input_handleTextInput(7, value)
 		
 	js void updateCursor
-		document.body.style.cursor = (Input_showPointers == 2 && Platform_mode == 4 ? "none" : Input_cursor)
+		// document.body.style.cursor = (Input_showPointers == 2 && Platform_mode == 4 ? "none" : Input_cursor)
+		document.body.style.cursor = Input_cursor
 
 	onTextComposition: void(string characters) do
 		for internalUsers -> user if .
