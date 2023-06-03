@@ -414,7 +414,7 @@ transient skipInit unit Platform
 			remote.globalShortcut.register(shortcut, () => do())
 		}
 		
-	js void setInterval: int interval
+	js void setInterval: Time interval
 		                 void() code
 		setInterval(code, interval)
 		
