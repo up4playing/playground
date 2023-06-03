@@ -494,7 +494,17 @@ skipInit global unit Input
 		inputs.writeInt16 Math.round(referencePos.x)
 		inputs.writeInt16 Math.round(referencePos.y)
 		if Network.logging: Network.writeLog += " #{localUser.inputFrame} {composite} {Math.round(referencePos.x)} {Math.round(referencePos.y)} ({inputs.readPos}/{inputs.writePos})"
-		
+	
+	internal handleUpdateTouchAfterSwitchingUser: int id, Vector2 referencePos
+		let inputs = localUser.inputs
+		int composite = cast(InputType.TouchMove)                       // inputType: 0 -  31 (5 bit)
+		              + Math.shiftLeft(cast TouchType.Left, 5)          // touchType: 0 -   7 (3 bit)
+		              + Math.shiftLeft(Math.floor(Math.abs(id))%128, 8) // id:        0 - 127 (7 bit)
+		inputs.writeInt32 localUser.inputFrame
+		inputs.writeUnsignedInt16 composite
+		inputs.writeInt16 Math.round(referencePos.x)
+		inputs.writeInt16 Math.round(referencePos.y)
+	
 	private handleWheelEvent: float x, float y, float deltaX, float deltaY
 		if Network.mode == None || Platform.mode != Record || !localUser || !localUser.collectInputs: return
 		let inputs = localUser.inputs

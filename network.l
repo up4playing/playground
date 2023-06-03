@@ -331,8 +331,11 @@ transient skipInit unit Network
 			lastSendFrame = frame
 			
 	switchUser: int userIndex
-		let user = players[userIndex]
-			Input.localUser = Input.internalUsers.find.id == user.id
+		let prevPlayer = Input.localPlayer 
+		Input.localPlayer = players[userIndex]
+			Input.localUser = Input.internalUsers.find.id == Input.localPlayer.id
+			for prevPlayer.touches
+				Input.handleUpdateTouchAfterSwitchingUser .id, .referencePosition
 			
 	switchSendInterval: int sendInterval
 		this.sendInterval = sendInterval
