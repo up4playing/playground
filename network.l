@@ -71,6 +71,7 @@ transient skipInit unit Network
 	bool simulateConnection = true
 	bool simulateInputsForTesting = false
 	bool simulateRollback = false
+	Time sendLogfileEvery = 0
 	bool showVideoForStaging = true
 	bool muteInvisibleUsers = false
 	int checksumInterval = 30
@@ -630,6 +631,8 @@ transient skipInit unit Network
 	join: string gameId, string roomString, int userId
 		// Send statistics after 25 seconds
 		Platform.setTimeout 25 seconds: statistics.manuallyTriggerSend -1, clear:false
+		if sendLogfileEvery
+			Platform.setInterval sendLogfileEvery: statistics.manuallyTriggerSend -2, clear:true
 		
 		isPremiere = true
 		initAll
@@ -716,10 +719,13 @@ skipInit transient unit statistics
 		series.each.values.clear
 		serverPings.clear
 		log = ""
+		
+	int lastSendFrame = -1
 	
 	send: any data = null, int game = 0, int round = 0, int step = 0, bool clear = true
-		if not Input.isCertain or Platform.isDebug: return
-		print "sending statistics", round
+		print "sending statistics", round, Time.frame, lastSendFrame
+		if Time.frame <= lastSendFrame or Platform.isDebug: return
+		lastSendFrame = Time.frame
 		let userName = localStorage.getStringDirectly("play-userId")
 		let server = Platform.host.getUntil(".")
 		StatisticsGraphSeries[] series
