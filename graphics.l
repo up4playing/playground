@@ -1117,8 +1117,10 @@ transient global unit graphics
 		
 	global drawPointer: int userId
 		                Color color = null
-		                bool showLocalPointer = Input.showLocalPointer
-		if userId != Input.localUser.id or showLocalPointer
+		                showPointer = Input.showPointers
+		if showPointer == All
+		or (userId == Input.localUser.id and showPointer == Local)
+		or (userId != Input.localUser.id and showPointer == Remote)
 			let player = Input.playersById[userId]
 				if !color: color = player.color
 				for player.touches

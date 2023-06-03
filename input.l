@@ -291,6 +291,12 @@ class InternetGamePad
 	InternetGamePadButton[] buttons
 	string id
 	
+enum ShowPointersMode
+	None   // Never show the mouse pointer
+	Remote // Show the mouse pointer only for remote players
+	Local  // Show the mouse pointer only for the local player
+	All    // Show the mouse pointers of all players
+	
 // A collection of methods to receive input
 skipInit global unit Input
 	transient visible InternalUser[] internalUsers
@@ -301,8 +307,7 @@ skipInit global unit Input
 	internal Player[] playersById
 	string cursor
 	
-	bool showLocalPointer = false
-	bool showPointers = true
+	ShowPointersMode showPointers = Remote
 	
 	string textInput
 		let localPlayer = playersById[Input.localUser.id]
@@ -1429,7 +1434,7 @@ skipInit global unit Input
 		Input_handleTextInput(7, value)
 		
 	js void updateCursor
-		document.body.style.cursor = Input_cursor
+		document.body.style.cursor = (Input_showPointers == 2 && Platform_mode == 4 ? "none" : Input_cursor)
 
 	onTextComposition: void(string characters) do
 		for internalUsers -> user if .

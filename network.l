@@ -408,9 +408,10 @@ transient skipInit unit Network
 	internal tick: bool draw
 		graphics.startFrame
 		if draw and not Platform.waitingForInitialData
-			let isPlayback = Platform.mode == Play or frame+1 < frames
-			if Input.showPointers or isPlayback
-				players.each drawPointer .id, showLocalPointer:isPlayback or Input.showLocalPointer
+			if Input.showPointers >= Local
+			or (mode == Connected and Input.showPointers == Remote) 
+			or Platform.mode == Play
+				players.each drawPointer .id
 		audio.startFrame
 		
 		if Platform.showDebugInfo
