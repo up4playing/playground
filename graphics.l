@@ -604,7 +604,7 @@ transient global unit graphics
 	// ------------------------------------------------------- Text -------------------------------------------------------
 	
 	// Draws text on the screen
-	global js void drawText: string text                        // The text to draw
+	global js void drawText: implicit string text               // The text to draw
 		                     Vector2 position = {}              // The position to draw to
 		                     implicit Vector2 size = {}         // The size of the text
 		                     Color color = null                 // The color of the text
