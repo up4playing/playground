@@ -255,12 +255,14 @@ Object Button
     implicit Player[] clickableBy = null // Only this user can click the button
     implicit layer = 0           // Higher layers are drawn in front of lower layers
     alpha = 1.0                  // The opacity of the button 0: fully transpart, 1: fully visible)
+	enabled = true               // When not enabled, the button can't be clicked and is drawn transparently (50% by default)
+	alphaWhenDisabled = .5       // The opacity of the button will be multiplied with this factor when its disabled
 	Key hotkey                   // This keyboard shortcut will execute the onClick handler
     void(Touch touch) onClick    // Execute this code when the user clicks the button
+	
 	override tick
-		drawButton image, text, position, textColor, frame, size, fontSize, touchMargin, textOffset, showTouchArea, visibleFor, clickableBy, hotkey, layer, alpha, onClick(touch)
+		drawButton image, text, position, textColor, frame, size, fontSize, touchMargin, textOffset, showTouchArea, visibleFor, clickableBy, hotkey, layer, alpha, enabled, alphaWhenDisabled, onClick(touch)
 
-		
 Object Piece
 	const Vector2 stackOffset = {8,8}
 	// const minSize = 75 // EVAL

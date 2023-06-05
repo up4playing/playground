@@ -349,7 +349,7 @@ transient global unit graphics
 	const Color backgroundColor = Black
 	
 	// Teh default player colors
-	const Color[] defaultColors = [{"398CA9"},{"C01352"},{"16C66E"},{"FFD166"}]
+	const Color[] defaultColors = [{"398CA9", "Blue"}, {"C01352", "Red"}, {"16C66E", "Green"}, {"FFD166", "Yellow"}]
 
 	// The default color for all draw operations
 	color
@@ -644,9 +644,6 @@ transient global unit graphics
 	// ------------------------------------------------------- Button -------------------------------------------------------
 	
 	// Draws an image on the screen
-		                    enabled = true
-		                    alphaWhenDisabled = .5
-			if !enabled: alpha *= alphaWhenDisabled
 	global void drawButton: Image image = null            // The image of the button
 		                    text = ""                     // The text of the button
 		                    Vector2 position = {}         // The position to draw to
@@ -661,14 +658,17 @@ transient global unit graphics
 		                    implicit Player[] clickableBy = null // Only this player or list of players can click the button
 		                    hotkey = Key.None             // This keyboard shortcut will execute the onClick handler
 		                    implicit layer = 0            // Higher layers are drawn in front of lower layers
-		                    alpha = 1.0                   // The opacity of the button 0: fully transparent, 1: fully visible)
+		                    alpha = 1.0                   // The opacity of the button (0: fully transparent, 1: fully visible)
+		                    enabled = true                // When not enabled, the button can't be clicked and is drawn transparently (50% by default)
+		                    alphaWhenDisabled = .5        // The opacity of the button will be multiplied with this factor when its disabled
 		                    void(Touch touch) onClick = null // Execute this code when the user clicks the button or presses the hotkey
 	                        SourceCodeLocation location
 		if isVisibleFor(visibleFor)
-			if text:  drawText text, position+textOffset, fontSize, textColor, visibleFor, layer, alpha, location
-			if image: drawImage image, position, frame, size, visibleFor, layer, alpha, location
+			let effectiveAlpha = enabled ? alpha : alpha * alphaWhenDisabled
+			if text:  drawText text, position+textOffset, fontSize, textColor, visibleFor, layer, effectiveAlpha, location
+			if image: drawImage image, position, frame, size, visibleFor, layer, effectiveAlpha, location
 			
-		if onClick != null
+		if enabled and onClick != null
 			// Handle click (only visible buttons are clickable)
 			let effectiveClickableBy = getClickableBy(visibleFor, clickableBy)
 			Vector2 effectiveSize = image ? getEffectiveSize(image.size, size) : {getTextWidth(text), fontSize}
@@ -923,7 +923,6 @@ transient global unit graphics
 			))
 		}
 		
-	const Color[] defaultColors = [{"398CA9", "Blue"},{"C01352", "Red"},{"16C66E", "Green"},{"FFD166", "Yellow"}]
 	// ------------------------------------------------------- Pointer -------------------------------------------------------
 	
 	global drawPointer: Player player
