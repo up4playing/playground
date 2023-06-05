@@ -971,12 +971,12 @@ global skipInit unit Math
 		}
 
 	// Generates a random integer
-	global js int randomInteger: int min // The inclusive lower bound of the random integer
-		                         int max // The exclusive upper bound of the random integer
-		return min + Math.floor(Math_randomGenerator() * (max-min))
+	global js int randomInteger: int from // The inclusive lower bound of the random integer
+		                         int to // The exclusive upper bound of the random integer
+		return from + Math.floor(Math_randomGenerator() * (to-from))
 	
-	global js int randomInteger: int max = 2147483647 // The exclusive upper bound of the random integer
-		return Math.floor(Math_randomGenerator() * max)
+	global js int randomInteger: int to = 2147483647 // The exclusive upper bound of the random integer
+		return Math.floor(Math_randomGenerator() * to)
 	
 	// Generates a random float
 	global inline js int randomFloat
