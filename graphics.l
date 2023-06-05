@@ -785,19 +785,23 @@ transient global unit graphics
 		                    hotkey = Key.None             // This keyboard shortcut will execute the onClick handler
 		                    implicit layer = 0            // Higher layers are drawn in front of lower layers
 		                    alpha = 1.0                   // The opacity of the button 0: fully transparent, 1: fully visible)
+		                    enabled = true
+		                    alphaWhenDisabled = .5
 		                    void(Touch touch) onClick     // Execute this code when the user clicks the button or presses the hotkey
 	                        SourceCodeLocation location
 		if isVisibleFor(visibleFor)
+			if !enabled: alpha *= alphaWhenDisabled
 			if text:  drawText text, position+textOffset, fontSize, textColor, visibleFor, layer, alpha, location
 			if image: drawImage image, position, frame, size, visibleFor, layer, alpha, location
 			
 		// Handle click (only visible buttons are clickable)
-		int[] effectiveClickableBy = getClickableBy(visibleFor, clickableBy)
-		Vector2 effectiveSize = image ? getEffectiveSize(image.size, size) : {getTextWidth(text), fontSize}
-		Input.onTouchDownWithin position, effectiveSize + touchMargin, userId:effectiveClickableBy, showTouchArea, do:onClick
-		if hotkey
-			Input.onKeyDown hotkey, userId:effectiveClickableBy
-				onClick null
+		if enabled
+			int[] effectiveClickableBy = getClickableBy(visibleFor, clickableBy)
+			Vector2 effectiveSize = image ? getEffectiveSize(image.size, size) : {getTextWidth(text), fontSize}
+			Input.onTouchDownWithin position, effectiveSize + touchMargin, userId:effectiveClickableBy, showTouchArea, do:onClick
+			if hotkey
+				Input.onKeyDown hotkey, userId:effectiveClickableBy
+					onClick null
 			
 	global void drawButton: Image image = null            // The image of the button
 		                    text = ""                     // The text of the button
