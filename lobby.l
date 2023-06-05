@@ -13,19 +13,20 @@ unit lobby
 			ticks++
 			
 			drawButton Button, "Send Statistics", {864,498}
-				statistics.send round:-1 game:-1
+				Input.isCertain = true
+				statistics.send round:-2 game:-2
 		
 		if PeerNetwork.error or Network.errorMessage
 			drawText PeerNetwork.error, size:40
 			drawText Network.errorMessage, size:14, position:{0,40}
 			return
 			
-		int count = Input.users.length
+		int count = players.length
 			float width = count<2 ? 900.0 : 1920/count, offset = -width*(count-1)/2
-			for Input.users
+			for players
 				Vector2 pos = {offset+width*.index, 0}
-				drawVideo .id, pos, {width}
-				if .isReady
+				drawVideo ., pos, width
+				if .isReadyInLobby
 					let text = Loca.language == English ? "I'm ready" : "Ich bin bereit"
 					let basePos = pos+{-(graphics.getTextWidth(text, size:32)+28)/2,width*3/8+40}
 					drawImage ThumbsUp, basePos
@@ -43,20 +44,20 @@ unit lobby
 		if Network.mode == Ping
 			drawText "Connecting...", size:32
 		else
-		if Input.users.length withinInclusively Platform.supportedUserCount
-			for Input.users
-				if !.isReady
-					drawButton Button, "Start", {0, 450}, visibleFor:.id
-						if enableFullscreen: Platform.setFullscreen true forUser:touch.userId
-						Input.usersById[touch.userId].isReady = true
-						if Input.users.all.isReady
+		if players.length withinInclusively Platform.supportedUserCount
+			for players
+				if !.isReadyInLobby
+					drawButton Button, "Start", {0, 450}, visibleFor:.
+						if enableFullscreen: Platform.setFullscreen true forPlayer:touch.by
+						Input.playersById[touch.by.id].isReadyInLobby = true
+						if players.all.isReadyInLobby
 							Network.startApp
 							
 	private showSettings = false
 	
 	tickSettings
 		if not Input.localUser: return
-		drawImage settingsIcon, {-920,-500}, clickableBy:Input.localUser.id, size:32
+		drawImage settingsIcon, {-920,-500}, clickableBy:Input.localPlayer, size:32
 			showSettings = !showSettings
 			
 		if showSettings
@@ -66,7 +67,7 @@ unit lobby
 				drawImage cameraIcon, pos
 				forPositions PeerNetwork.devices.videoInput start:pos+{36} delta:{0,26} -> device
 					drawText .label, pos, size:18, align:Left, color:PeerNetwork.videoInputId == .deviceId ? Green : White
-					Input.onTouchDownWithin pos+{200,0}, size:{400,30}, showTouchArea:false, userId:Input.localUser.id
+					Input.onTouchDownWithin pos+{200,0}, size:{400,30}, showTouchArea:false, by:Input.localPlayer
 						PeerNetwork.setVideoInput device.deviceId
 				pos += {450}
 			
@@ -74,7 +75,7 @@ unit lobby
 				drawImage microphoneIcon, pos
 				forPositions PeerNetwork.devices.audioInput start:pos+{36} delta:{0,26} -> device
 					drawText .label, pos, size:18, align:Left, color:PeerNetwork.audioInputId == .deviceId ? Green : White
-					Input.onTouchDownWithin pos+{200,0}, size:{400,30}, showTouchArea:false, userId:Input.localUser.id
+					Input.onTouchDownWithin pos+{200,0}, size:{400,30}, showTouchArea:false, by:Input.localPlayer
 						PeerNetwork.setAudioInput device.deviceId
 				pos += {550}
 				
@@ -82,5 +83,5 @@ unit lobby
 				drawImage speakerIcon, pos
 				forPositions PeerNetwork.devices.audioOutput start:pos+{36} delta:{0,26} -> device
 					drawText .label, pos, size:18, align:Left, color:PeerNetwork.audioOutputId == .deviceId ? Green : White
-					Input.onTouchDownWithin pos+{200,0}, size:{400,30}, showTouchArea:false, userId:Input.localUser.id
+					Input.onTouchDownWithin pos+{200,0}, size:{400,30}, showTouchArea:false, by:Input.localPlayer
 						PeerNetwork.setAudioOutput device.deviceId

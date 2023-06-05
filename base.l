@@ -381,13 +381,18 @@ class List<T>
 	inline js void add: T item // The item to add
 		this.push(item)
 		
-	inline js void add: T item
-		      int maxLength
+	inline js void add: T item // The item to add
+		      int maxLength    // If the list gets longer than this maximum length, remove an item from the beginning
 		this.push(item)
 		if(this.length > maxLength) this.splice(0, 1)
 			
-	inline js void insert: T item // The item to add
-		                   index = 0
+	// Adds an list of item to the end of the list
+	inline js void add: T[] items // The list of items to add
+		this.push(...items)
+			
+	// Insert an item at a given index
+	inline js void insert: T item    // The item to insert
+		                   index = 0 // Insert the item at this index
 		this.splice(index, 0, item)
 		
 	// Removes an item from the list
@@ -420,12 +425,16 @@ class List<T>
 		return null
 	
 	// Adds an item to the list if it isn't already in there
-	inline js void ensure: T item // The item to add
-		if(this.indexOf(item) == -1) this.push(item)
+	js void ensure: T item // The item to add
+		if(this.indexOf(item) == -1)
+			this.push(item)
 		
-	inline js void addRange: T[] items
-		this.push(...items)
-			
+	// Adds each item from a list if it isn't already in there
+	js void ensure: T[] items // The list of items to add
+		for(let it of items)
+			if(this.indexOf(it) == -1)
+				this.push(it)
+		
 	inline js bool contains: T item
 		(this.indexOf(item) != -1)
 		
@@ -619,8 +628,13 @@ class List<T>
 	inline js bool all: bool(T a) predicate // The condition to check
 		this.every(predicate)
 		
+	// Return a list that contains the selected field or expression for each item
 	inline js TValue[] select: TValue(T it) selector
 		this.map(selector)
+		
+	// Get the selected field or expression for each item and flattens the result
+	inline js TValue[] flatten: TValue[](T it) selector
+		this.flatMap(selector)
 		
 	inline js T find: bool(T a) condition // The condition to check
 		this.find(condition)
@@ -1698,7 +1712,7 @@ class Range
 
 unit Json
 	inline js dynamic parse(string str) JSON.parse(str)
-	inline js string stringify(dynamic object) JSON.stringify(object)
+	inline js string stringify(any object) JSON.stringify(object)
 		
 enum Language: English, German, Spanish, Frensh, Italian, Portuguese, Japanese, Chinese, Korean, Dutch, Turkish, Polish, Russian, Hindi, Arabic, Bengali, Urdu, Indonesian, Invariant = 1000
 
