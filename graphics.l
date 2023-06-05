@@ -1,14 +1,17 @@
 // A color comprised of a red, green, blue and alpha component
 class Color
-	global const Color White   = {"ffffff"}
-	global const Color Black   = {"000000"}
-	global const Color Red     = {"ef476f"}
-	global const Color Yellow  = {"ffd166"}
-	global const Color Green   = {"06d6a0"}
-	global const Color Blue    = {"118ab2"}
-	global const Color Gray    = {"3d3d3d"}
-	global const Color TransparentRed   = {"ff000080"}
+	global const Color White   = {"ffffff", "White"}
+	global const Color Black   = {"000000", "Black"}
+	global const Color Red     = {"ef476f", "Red"}
+	global const Color Yellow  = {"ffd166", "Yellow"}
+	global const Color Green   = {"06d6a0", "Green"}
+	global const Color Blue    = {"118ab2", "Blue"}
+	global const Color Gray    = {"3d3d3d", "Gray"}
+	global const Color TransparentRed   = {"ff000080", "Transparent Red"}
 	string hex
+	string name
+	
+	string toString := name or hex
 	
 	Color: string hex = ""
 		   int red = 0
@@ -1113,7 +1116,7 @@ transient global unit graphics
 			))
 		}
 		
-	const Color[] defaultColors = [{"398CA9"},{"C01352"},{"16C66E"},{"FFD166"}]
+	const Color[] defaultColors = [{"398CA9", "Blue"},{"C01352", "Red"},{"16C66E", "Green"},{"FFD166", "Yellow"}]
 	setUserColor: int userId
 		          Color color = null
 		let user = Input.usersById[userId]
