@@ -304,14 +304,15 @@ enum ShowPointersMode
 skipInit global unit Input
 	transient visible InternalUser[] internalUsers
 	transient InternalUser localUser
+	transient internal Player localPlayer
 	transient bool isCertain
 
 	global Player[] players
 	internal Player[] playersById
-	internal Player localPlayer
 	string cursor
 	
 	ShowPointersMode showPointers = Remote
+	bool ignoreFirstClick
 	
 	string textInput
 		let localPlayer = playersById[Input.localUser.id]
@@ -326,7 +327,10 @@ skipInit global unit Input
 
 	private js void initHandlers
 		window.onpointerdown = e => {
-			if(e.button == 0 && Platform_mode == 0) Platform_record();
+			if(e.button == 0 && Platform_mode == 0) {
+				Platform_record();
+				if(Input_ignoreFirstClick) return;
+			}
 			Input_handleTouchEvent(1, e.pageX, e.pageY, e.pointerType, e.pointerId, e.button, e.shiftKey, e.altKey, e.ctrlKey || e.metaKey);
 		}
 		window.onpointermove = e => {
