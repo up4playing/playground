@@ -260,7 +260,7 @@ struct Vector2
 	deserialize: Buffer buffer
 		x = buffer.readFloat64
 		y = buffer.readFloat64
-		
+				
 // A 2D vector comprised of an integer x and y coordinate
 struct IntVector2
 	int x // The x-coordinate of the vector
@@ -403,6 +403,18 @@ struct IntVector2
 	normalized
 		let len = Math.sqrt(x * x + y * y)
 		return len != 0 ? Vector2(x / len, y / len) : Vector2(0, 0)
+		
+	static js TResult[] enumerate: IntVector2 from
+	                               IntVector2 to
+	                               TResult(IntVector2 it) selector
+		let result = []
+		for(let y=from.y; y < to.y; ++y)
+			for(let x=from.x; x < to.x; ++x)
+				result.push(selector(new IntVector2(x,y)))
+		return result
+		
+	inline js TResult[] times: TResult(IntVector2 it) selector
+		Vector2_enumerate(new IntVector2(0,0), this, selector)
 	
 // A 3x2 matrix used to transform vectors in 2D space
 struct Matrix2D
@@ -512,6 +524,7 @@ class List<T>
 		Vector2 sum = {0,0}
 		for this: sum += selector(.)
 		return sum	
+		
 transient float Angle
 	inline js float toFloat() this
 	inline js string toString() this.toString()
@@ -885,20 +898,20 @@ class Grid<T>
 		this.items.every(predicate)
 			
 global transient unit System
-	global inline js void for: IntVector2 subject    // The exclusive upper bound to iterate towards
+	global inline js void for: IntVector2 subject  // The exclusive upper bound to iterate towards
 		                       -> void(
 		                           IntVector2 pos, // The current position of the vector we are iterating over with the for-loop
 		                           int x,          // The x component of the current position we are iterating over with the for-loop
 		                           int y           // The y component of the current position we are iterating over with the for-loop
-		                       ) do           // Do this the given number of times
+		                       ) do                // Do this the given number of times
 		for(let _size=subject, y=0; y<_size.y; ++y) for(let x=0; x<_size.x; ++x) { let pos = new IntVector2(x,y); do()}
 			
-	global inline js void for: IntVector2 subject    // The exclusive upper bound to iterate towards
+	global inline js void for: IntVector2 subject  // The exclusive upper bound to iterate towards
 		                       <- void(
 		                           IntVector2 pos, // The current position of the vector we are iterating over with the for-loop
 		                           int x,          // The x component of the current position we are iterating over with the for-loop
 		                           int y           // The y component of the current position we are iterating over with the for-loop
-		                       ) do           // Do this the given number of times
+		                       ) do                // Do this the given number of times
 		for(let _size=subject, y=_size.y-1; y>=0; --y) for(let x=_size.x-1; x>=0; --x) { let pos = new IntVector2(x,y); do()}
 			
 	global inline js void for: Grid<T> subject    // The grid to iterate over
@@ -909,7 +922,7 @@ global transient unit System
 		                       ) do           // Do this for each item in a list
 		for(let i=0, _subject=subject.items, _len=_subject.length; i<_len; ++i) { let it = _subject[i]; if(it) { let pos = new IntVector2(i%subject.size.x, Math.floor(i/subject.size.x)); do()}}
 			
-	global inline js void for: Grid<T> subject    // The grid to iterate over
+	global inline js void for: Grid<T> subject      // The grid to iterate over
 		                       includeEmpty = false // Include items that are null
 		                       -> void(
 		                           T it,      // The current item of the list we are iterating over with the for-loop
@@ -917,3 +930,17 @@ global transient unit System
 		                           int i      // The index of the current item of the list we are iterating over with the for-loop
 		                       ) do           // Do this for each item in a list
 		for(let _size=subject.size, y=0, _items=subject.items; y<_size.y; ++y) for(let x=0; x<_size.x; ++x) { let it = _items[y*_size.x + x]; let pos = new IntVector2(x,y); do()}
+
+	global inline js TResult[] for: IntVector2 to     // Iterator over both dimensions of the vector towards this exclusive upper bound
+		                            TResult(
+		                                IntVector2 it // The current position of the vector we are iterating over with the for-loop
+		                            ) do              // Select the field or expression to be included in the result
+		IntVector2_enumerate(new IntVector2(0,0), to, do)
+
+	global inline js TResult[] for: IntVector2 from     // Iterator over both dimensions of the vector starting from this vector
+		                            TResult(
+		                                IntVector2 it   // The current position of the vector we are iterating over with the for-loop
+		                            ) do                // Select the field or expression to be included in the result
+		                            label IntVector2 to // Iterator over both dimensions of the vector towards this exclusive upper bound
+		IntVector2_enumerate(new IntVector2(0,0), to, do)
+		

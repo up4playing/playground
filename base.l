@@ -97,6 +97,15 @@ struct int
 		
 	inline js int assignIfGreater: int value
 		(value > this ? this = value : this)
+		
+	static js TResult[] enumerate: int from, int to, TResult(int i) selector
+		let result = []
+		for(let i=from; i < to; ++i)
+			result.push(selector(i))
+		return result
+		
+	inline js TResult[] times: TResult(int i) selector
+		int_enumerate(0, this, selector)
 	
 // A number stored as a double precision 64-bit floating point value
 struct float
@@ -1288,6 +1297,18 @@ global transient unit System
 		                       ) do           // Do this the given number of times
 		for(let i=to-1; i>=0; --i) do()
 		
+	global inline js TResult[] for: int to,    // The exclusive upper bound to iterate towards
+		                            TResult(
+		                                int i  // The iteration variable of the for-loop
+		                            ) do       // Select the field or expression to be included in the result
+		int_enumerate(0, to, do)
+		
+	global inline js TResult[] for: int from,    // The integer to start iterating from
+		                            TResult(
+		                                int i    // The iteration variable of the for-loop
+		                            ) do         // Select the field or expression to be included in the result
+		                            label int to // The exclusive upper bound to iterate towards
+		int_enumerate(from, to, do)
 		
 	global inline js void for: string subject // Iterate over every character of this string
 		                       -> inline void(
