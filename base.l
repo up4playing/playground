@@ -1235,15 +1235,15 @@ global transient unit System
 	global inline js TResult[] for: T[] subject // The list to iterate over
 		                       -> TResult(
 		                           T it         // The current item of the list we are iterating over with the for-loop
-		                       ) selector       // Select the field or expression to be included in the result
-		subject.map(selector)
+		                       ) do             // Select the field or expression to be included in the result
+		subject.map(do)
 		
 	// Creates a new list populated with the results of calling a function on every element of the list
 	global inline js TResult[] for: T[] subject // The list to iterate over
 		                       <- TResult(
 		                           T it         // The current item of the list we are iterating over with the for-loop
-		                       ) selector       // Select the field or expression to be included in the result
-		subject.map(selector).reverse()
+		                       ) do             // Select the field or expression to be included in the result
+		subject.map(do).reverse()
 		
 		for(let _subject=subject, i=_subject.length-1; i>=0; --i) { let it = _subject[i]; do()}
 	// Do something for each item in a list. You can add or remove items inside the loop.
@@ -1262,40 +1262,41 @@ global transient unit System
 		                       ) do           // Do this for each item in a list
 		for(let _subject=[...subject], i=_subject.length-1; i>=0; --i) { let it = _subject[i]; do()}
 		
-	global inline js void for: int subject    // The exclusive upper bound to iterate towards
-		                       -> inline void(
-		                           int i      // The iteration variable of the for-loop
-		                       ) do           // Do this the given number of times
-		for(let i=0; i<subject; ++i) do()
-		
-	global inline js void for: int subject    // The exclusive upper bound to iterate towards
-		                       <- inline void(
-		                           int i      // The iteration variable of the for-loop
-		                       ) do           // Do this the given number of times
-		for(let i=subject-1; i>=0; --i) do()
-		
-	global inline js void for: int subject
+	global inline js void for: int from       // The integer to start iterating from (for exmaple "for 2 to 5: print ." prints 2, 3, 4)
 		                       -> inline void(
 		                           int i      // The iteration variable of the for-loop
 		                       ) do           // Do this for each value in the given range
-		                       int to         // If specified, we iterate from given start value to this exclusive upper bound 
-		for(let i=subject; i<to; ++i) do()
+		                       label int to   // The exclusive upper bound to iterate towards (for exmaple "for 3: print ." prints 0, 1, 2)
+		for(let i=from; i<to; ++i) do()
 		
-	global inline js void for: int subject
+	global inline js void for: int from       // The integer to start iterating from
 		                       <- inline void(
 		                           int i      // The iteration variable of the for-loop
 		                       ) do           // Do this for each value in the given range
-		                       int to         // If specified, we iterate from given start value to this exclusive upper bound 
-		for(let i=to-1; i>=subject; --i) do()
+		                       label int to   // The exclusive upper bound to iterate towards
+		for(let i=to-1; i>=from; --i) do()
 		
-	global inline js void for: string subject
+	global inline js void for: int to         // The exclusive upper bound to iterate towards
+		                       -> inline void(
+		                           int i      // The iteration variable of the for-loop
+		                       ) do           // Do this the given number of times
+		for(let i=0; i<to; ++i) do()
+		
+	global inline js void for: int to         // The exclusive upper bound to iterate towards
+		                       <- inline void(
+		                           int i      // The iteration variable of the for-loop
+		                       ) do           // Do this the given number of times
+		for(let i=to-1; i>=0; --i) do()
+		
+		
+	global inline js void for: string subject // Iterate over every character of this string
 		                       -> inline void(
 		                           string it, // The current character of the string we are iterating over with the for-loop
 		                           int i      // The index of the current character of the string we are iterating over with the for-loop
 		                       ) do           // Do this for each character in the given string
 		for(let i=0, _subject=subject, _len=_subject.length; i<_len; ++i) { let it = _subject[i]; do()}
 	
-	global inline js void for: string subject
+	global inline js void for: string subject // Iterate over every character of this string
 		                       <- void(
 		                           string it, // The current character of the string we are iterating over with the for-loop
 		                           int i      // The index of the current character of the string we are iterating over with the for-loop

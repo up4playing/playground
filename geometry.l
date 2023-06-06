@@ -852,7 +852,7 @@ class Grid<T>
 		                 ) do           // Do this for each item in a list
 		for(let i=0, _subject=this.items, _len=_subject.length; i<_len; ++i) { let it = _subject[i]; if(it) { let pos = new IntVector2(i%this.size.x, Math.floor(i/this.size.x)); do()}}
 			
-	inline js void each: includeEmpty = false
+	inline js void each: includeEmpty = false // Include items that are null
 		                 -> void(
 		                     T it,      // The current item of the list we are iterating over with the for-loop
 		                     IntVector2 pos,
@@ -910,7 +910,7 @@ global transient unit System
 		for(let i=0, _subject=subject.items, _len=_subject.length; i<_len; ++i) { let it = _subject[i]; if(it) { let pos = new IntVector2(i%subject.size.x, Math.floor(i/subject.size.x)); do()}}
 			
 	global inline js void for: Grid<T> subject    // The grid to iterate over
-		                       includeEmpty = false
+		                       includeEmpty = false // Include items that are null
 		                       -> void(
 		                           T it,      // The current item of the list we are iterating over with the for-loop
 		                           IntVector2 pos,
