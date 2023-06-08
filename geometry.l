@@ -837,9 +837,19 @@ class Line
 
 class Rect
 	Vector2 position, size
-	bool contains: Vector2 position
-		return this.position-this.size/2 <=  position < this.position+this.size/2
 	
+	float left := position.x - size.x/2
+	float right := position.x + size.x/2
+	float top := position.y - size.y/2
+	float bottom := position.y + size.y/2
+	
+	bool contains: Vector2 position
+		return this.position - this.size/2 <=  position < this.position + this.size/2
+	
+	bool intersectsWith: Vector2 position
+		                 Vector2 size
+		return this.position - this.size/2 - size/2 <=  position < this.position + this.size/2 + size/2
+
 class Grid<T>
 	IntVector2 size
 	T[] items
