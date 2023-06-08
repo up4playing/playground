@@ -630,9 +630,11 @@ Spot SpotHexGrid
 		
 struct Particle
 	Vector2 pos, speed
+	Angle angle, rotationSpeed
 	int frame
-	Angle angle     // The rotation of the particle in turns (one full rotation is 1)
 
+enum ParticleMode: Burst, Break
+	
 Object ParticleSystem
 	private Particle[] particles
 	Image particleImage = starParticle
@@ -642,21 +644,34 @@ Object ParticleSystem
 	burstInterval = 500
 	Time nextBurst = -1
 	bursts = 10
+	mode = ParticleMode.Burst
 	
 	private int burst
 	debugString := "(ParticleSystem {position.x} {position.y} {particles.length})"
 	
 	override tick
 		if Time.now > nextBurst
-			for particlesPerBurst
-				let r = -Math.randomFloat
-				let speedFactor = Math.randomFloat*(maxSpeed-minSpeed) + minSpeed
-				particles.add Particle
-					pos: position
-					speed: {Math.cos(r), Math.sin(r)} * speedFactor
-					frame: Math.randomInteger(particleImage.frames.length)
-					angle: Math.randomFloat
-			nextBurst = ++burst < bursts ? Time.now + burstInterval : Time.maxValue
+			if mode == Break
+				for particleImage.frames.length
+					let r = -Math.randomFloat .5
+					let speedFactor = Math.randomFloat 10..15
+					particles.add Particle
+						pos: position
+						speed: {Math.cos(r), Math.sin(r)} * speedFactor
+						angle: randomFloat*.05
+						rotationSpeed: Math.randomFloat -.01 to .01
+						frame: .
+				nextBurst = Time.maxValue
+			else
+				for particlesPerBurst
+					let r = -Math.randomFloat
+					let speedFactor = Math.randomFloat*(maxSpeed-minSpeed) + minSpeed
+					particles.add Particle
+						pos: position
+						speed: {Math.cos(r), Math.sin(r)} * speedFactor
+						angle: Math.randomFloat
+						frame: Math.randomInteger(particleImage.frames.length)
+				nextBurst = ++burst < bursts ? Time.now + burstInterval : Time.maxValue
 
 		for particles <-
 			graphics.move .pos
@@ -664,7 +679,7 @@ Object ParticleSystem
 					drawImage particleImage, frame:.frame
 			.pos += .speed
 			.speed.y += 1
-			.angle += .05
+			.angle += .rotationSpeed
 			if .pos.y > Platform.size.y/2
 				particles.removeAt i
 		
