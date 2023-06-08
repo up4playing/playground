@@ -173,7 +173,17 @@ class Object
 	fadeOut: Time duration = 100
 		     Time delay = -100
 		     bool removeWhenDone = true
-		fx.add FadeEffect startTime:fx.endOfPrevEffect(this)+delay, duration, this, startValue:1, delta:-1, removeWhenDone
+		float startValue = alpha
+		
+		// When chaining serveral fade effects together, continue where the last one left off
+		// If the last fade effect is already a fade out, don't do anything
+		FadeEffect lastFadeEffect = cast fx.effects.findLast.type == FadeEffect and .object == this
+			if lastFadeEffect.startValue + lastFadeEffect.delta <= 0: 
+				watch "ignoring"
+				return
+			startValue = lastFadeEffect.startValue
+				
+		fx.add FadeEffect startTime:fx.endOfPrevEffect(this)+delay, duration, this, startValue, delta:-startValue, removeWhenDone
 		return this
 		
 	scaleTo: implicit Vector2 size
