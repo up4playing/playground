@@ -770,6 +770,12 @@ class Direction
 	// List of the four diagonals: UpLeft, UpRight, DownLeft, DownRight
 	const Direction[] diagonalDirections = [DownRight, DownLeft, UpLeft, UpRight]
 	
+	// The two horitontal directions: Left and Right
+	const Direction[] horizontalDirections = [Left, Right]
+	
+	// The two vertical directions: Up and Down
+	const Direction[] verticalDirections = [Up, Down]
+	
 	// List of the primary direction and the diagonals
 	const Direction[] allDirections = [Right, DownRight, Down, DownLeft, Left, UpLeft, Up, UpRight]
 
