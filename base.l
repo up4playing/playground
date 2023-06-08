@@ -390,6 +390,28 @@ class List<T>
 	inline js void add: T item // The item to add
 		this.push(item)
 		
+	inline js void add: T item  // The item to add
+		                T item2 // The second item to add
+		this.push(item, item2)
+		
+	inline js void add: T item  // The item to add
+		                T item2 // The second item to add
+		                T item3 // The third item to add
+		this.push(item, item2, item3)
+		
+	inline js void add: T item  // The item to add
+		                T item2 // The second item to add
+		                T item3 // The third item to add
+		                T item4 // The fourth item to add
+		this.push(item, item2, item3, item4)
+		
+	inline js void add: T item  // The item to add
+		                T item2 // The second item to add
+		                T item3 // The third item to add
+		                T item4 // The fourth item to add
+		                T item5 // The fifth item to add
+		this.push(item, item2, item3, item4, item5)
+		
 	inline js void add: T item // The item to add
 		      int maxLength    // If the list gets longer than this maximum length, remove an item from the beginning
 		this.push(item)
