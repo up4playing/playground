@@ -119,7 +119,7 @@ transient skipInit unit Network
 		statistics.connectTime = Time.preciseTime
 		log "Connected", user.id, frame, startTime, serverStartTime
 		
-	startLocal: userCount = 1
+	startLocal
 		mode = Local
 		Input.internalUsers.clear
 		Math.setRandomSeed Math.generateRandomSeed 
@@ -185,6 +185,19 @@ transient skipInit unit Network
 			
 		if !startInLobby: startApp
 		if simulateRollback: checkSaveState
+		
+	// Keep event stream running, recreate players, call init function and start app
+	// Called manually with the global "restart" function	
+	restart
+		Player[] newPlayers
+		for Input.players
+			Player user = {id:.id, index:i}
+			Input.playersById[.id] = user
+			newPlayers.add user
+		Input.players = newPlayers
+		Input.updatePlayerIndices
+		initAll
+		startApp
 	
 	// Steps forward when going to a frame in the future
 	// or replays from the beginning when going to a frame in the past
@@ -680,6 +693,10 @@ transient skipInit unit Network
 		// 	alert "Please send me the log file that will be created.\n\n{errorMessage}"
 		// 	saveLogs
 		// 	alertShown = true
+		
+global transient unit System
+	// Reset all variables to their initial value and restart the app
+	global inline restart() Network.restart
 
 class StatisticsGraphSeries
 	int userIndex = -1
