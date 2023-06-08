@@ -996,6 +996,10 @@ global skipInit unit Math
 		return Math.floor(Math_randomGenerator() * to)
 	
 	// Generates a random float
-	global inline js int randomFloat
-		Math_randomGenerator()
+	global js int randomFloat: float from
+		                              float to
+		return from + Math_randomGenerator() * (to-from)
+	
+	global js int randomFloat: float to = 1.0
+		return Math_randomGenerator() * to
 	
