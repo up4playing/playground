@@ -2,7 +2,7 @@ enum PlatformMode: Pause, Manipulator, Slide, Play, Record
 enum ScaleMode: Auto, FixedWidth, FixedHeight, None
 enum AnchorMode: TopLeft, TopCenter, Center
 enum OperatingSystem: Windows, Mac, Linux, Android, iOS
-enum TickMode: Interval, AnimationFrame
+enum IntervalMode: JavaScriptInterval, AnimationFrame
 
 // Basic platform functionality
 // Screen space
@@ -24,7 +24,7 @@ transient skipInit unit Platform
 	public bool showSafeArea = true
 	public bool showDebugInfo = false
 	public bool isLocal = false
-	public TickMode tickMode = Interval
+	public IntervalMode intervalMode = JavaScriptInterval
 	public Vector2 referenceSize = {1920, 1080}
 	public ScaleMode scaleMode = Auto, effectiveScaleMode
 	public AnchorMode anchor = Center
@@ -173,7 +173,7 @@ transient skipInit unit Platform
 			this.engineStarted = true
 			statistics.loadTime = Time.preciseTime
 			startInterval
-			if isDebug || isLocal || roomId == "local" || url.startsWith("file"): Network.startLocal userCount:userCount
+			if isDebug || isLocal || roomId == "local" || url.startsWith("file"): Network.startLocal
 			else                                                                  Network.join gameId, roomId, userId
 			sendEvaluateFinished
 			
@@ -191,7 +191,7 @@ transient skipInit unit Platform
 		if(Platform_interval) clearInterval(Platform_interval)
 		if(window.tick) return
 			
-		if(Platform_tickMode == 0) {
+		if(Platform_intervalMode == 0) {
 			Platform_interval = setInterval(() => Platform_tick(), 1000/Network_targetFps)
 		} else {
 			window.tick = function() {
