@@ -1120,11 +1120,23 @@ class List<T>
 // A data container that stores key-value pairs
 js Map
 class Map<TKey, TValue>
-	inline js TValue get: TKey key
+	// Get the item assosiated with the given key
+	inline js TValue get: TKey key  // The key of the item to get from the map
 		this.get(key)
-	inline js void set: TKey key
-		                TValue value
+	
+	// Set the item for the given key
+	inline js void set: TKey key     // The key of the item to add to the map
+		                TValue value // The item to add to the map
 		this.set(key, value)
+		
+	// Remove the item assosiated with the given key
+	inline js void delete: TKey key  // The key of the item to remove from the map
+		this.delete(key)
+		
+	// Remove all items from the map
+	inline js void clear
+		this.clear()
+	
 
 // Specifies that a function doesn't return a value
 struct void

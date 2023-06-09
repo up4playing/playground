@@ -76,6 +76,8 @@ class Player
 	int index
 	Color color = null
 	
+	toString := color ? color.name : ""
+	
 	// Touch input
 	internal Touch[] touches
 	internal bool enableTouch = true
@@ -86,7 +88,6 @@ class Player
 	
 	// Controller input
 	visible GameController controller = {}
-	internal Key[] mapKeyToController = [Right, Down, Left, Up, Space, X, Alt, Ctrl]
 	internal int[] controllerKeyDownFrame = [0, 0, 0, 0, 0, 0]
 	
 	// If a player was lost by anybody and nobody who is still connected to that player
@@ -97,12 +98,6 @@ class Player
 	
 	// The current player instance, equivalent to "this"
 	inline js Player me() this
-	
-	Player
-		controller.a.name = "SPACE"
-		controller.b.name = "X"
-		controller.x.name = "ALT"
-		controller.y.name = "CTRL"
 
 	internal clearEvents
 		bool hasTouch = touches.any.type == Touch
@@ -251,27 +246,46 @@ enum Key
 	CloseBraket  = 221
 	SingleQuote  = 222
 	
-class DigitalButton
+struct DigitalButton
+	string name
+	Key key
+	
 	bool state, prevState
 	bool down := state and not prevState
 	bool up   := not state and prevState
-	string name
+	
+	toString := name
+	
+	internal assign: string name, Key key
+		this.name = name
+		this.key = key
+		state = false
+		prevState = false
 	
 	internal startFrame
 		prevState = state
 		state = false
+		
+transient struct ControllerButtonPlayerAndIndex
+	int userId
+	int buttonIndex
 	
 enum GameControllerType: Keyboard, Xbox, PlayStation
-	
 class GameController
 	static deadZone = .1
 	
-	Vector2 leftStick
-	Vector2 rightStick
-	DigitalButton a = {}
-	DigitalButton b = {}
-	DigitalButton x = {}
-	DigitalButton y = {}
+	visible Vector2 leftStick
+	visible Vector2 rightStick
+	visible DigitalButton right
+	visible DigitalButton down
+	visible DigitalButton left
+	visible DigitalButton up
+	visible DigitalButton a
+	visible DigitalButton b
+	visible DigitalButton x
+	visible DigitalButton y
+	visible DigitalButton[] buttons = [right, down, left, up, a, b, x, y]
+	
 	bool inMotion
 	GameControllerType type
 	
@@ -306,6 +320,7 @@ skipInit global unit Input
 	transient InternalUser localUser
 	transient internal Player localPlayer
 	transient bool isCertain
+	transient ControllerButtonPlayerAndIndex[Key] controllerButtonMap
 
 	global Player[] players
 	internal Player[] playersById
@@ -456,14 +471,20 @@ skipInit global unit Input
 		inputs.writeUnsignedInt16 cast type
 		inputs.writeString text
 			
-	internal handleKeyEvent: InputType type, int keyCode, string key
+	internal handleKeyEvent: InputType inputType, Key keyCode, string key
 		if Network.mode == None || Platform.mode != Record || !localUser || !localUser.collectInputs: return
 		let inputs = localUser.inputs
+		int composite = cast inputType                                  // inputType:   0 - 31 (5 bit)
 		
+		let controllerButton = controllerButtonMap[keyCode]
+			composite += (controllerButton.buttonIndex + 1) shiftLeft 5 // buttonIndex: 0 - 15 (4 bit)
+			if Network.mode == Local and not Network.simulateConnection
+				inputs = internalUsers[controllerButton.userId].inputs
+			
 		inputs.writeInt32 localUser.inputFrame
-		inputs.writeUnsignedInt16 cast type
-		inputs.writeInt32 keyCode
-		if type == KeyDown: inputs.writeString key
+		inputs.writeUnsignedInt16 composite
+		inputs.writeInt32 cast keyCode
+		if inputType == KeyDown: inputs.writeString key
 		
 	internal handleTouchEvent: InputType inputType, float x, float y, string pointerType, int pointerId, int button, shift = false, alt = false, cmdOrCtrl = false
 		int touchType, id
@@ -553,7 +574,7 @@ skipInit global unit Input
 					players.remove player
 					playersById[player.id] = null
 					internalUser.active = false
-					updatePlayerIndices
+					updatePlayers
 				else	
 				if Network.frame > internalUser.inputFrame + Network.targetFps * 8
 				and Network.frame > internalUser.nextLostMessageAtFrame
@@ -668,7 +689,7 @@ skipInit global unit Input
 					playersById[userId] = player
 					if internalUser.local: localPlayer = player
 					internalUser.active = true
-					updatePlayerIndices
+					updatePlayers
 				
 				let value = inputs.readUnsignedInt16
 				InputType inputType = cast(value % 32)
@@ -752,16 +773,20 @@ skipInit global unit Input
 					internalUser.downKeys.add key
 					player.keysCurrentlyDown.ensure key
 					if keyPressed: internalUser.pressedKeys.add keyPressed
-					let keyIndex = player.mapKeyToController.indexOf(key)
-					if keyIndex != -1: player.controllerKeyDownFrame[keyIndex] = frame
+						
+					int controllerButtonIndex = cast((value shiftRight 5) % 16)
+						player.controllerKeyDownFrame[controllerButtonIndex-1] = frame
+					
 					if Network.logging: Network.parseLog += " KeyDown {key}"
 				else
 				if inputType == KeyUp
 					Key key = cast inputs.readInt32
 					internalUser.upKeys.add key
 					player.keysCurrentlyDown.remove key
-					let keyIndex = player.mapKeyToController.indexOf(key)
-					if keyIndex != -1: player.controllerKeyDownFrame[keyIndex] = 0
+					
+					int controllerButtonIndex = cast((value shiftRight 5) % 16)
+						player.controllerKeyDownFrame[controllerButtonIndex-1] = 0
+					
 					if Network.logging: Network.parseLog += " KeyUp {key}"
 				else
 				if inputType == Navigate
@@ -877,12 +902,69 @@ skipInit global unit Input
 				.controller.inMotion = Math.abs(.controller.leftStick.x) >= GameController.deadZone
 				                    or Math.abs(.controller.leftStick.y) >= GameController.deadZone
 						
-	internal updatePlayerIndices
+	internal updatePlayers
 		players.orderBy.id
 		for players
 			.index = i
 			.color = graphics.defaultColors[i]
 			internalUsers[.id].index = i
+			
+		if Network.mode == Local and not Network.simulateConnection
+			if players.length >= 1
+				GameController c = players[0].controller
+				if c.type == Keyboard
+					c.right.assign "→"     Right
+					c.down.assign  "↓"     Down
+					c.left.assign  "←"     Left
+					c.up.assign    "↑"     Up
+					c.a.assign     "SPACE" Space
+					c.b.assign     "B"     B
+			
+			if players.length >= 2
+				GameController c = players[1].controller
+				if c.type == Keyboard
+					c.right.assign "D"     D
+					c.down.assign  "S"     S
+					c.left.assign  "A"     A
+					c.up.assign    "W"     W
+					c.a.assign     "F"     F
+					c.b.assign     "G"     G
+			
+			if players.length >= 3
+				GameController c = players[2].controller
+				if c.type == Keyboard
+					c.right.assign "L"     L
+					c.down.assign  "K"     K
+					c.left.assign  "J"     J
+					c.up.assign    "I"     I
+					c.a.assign     "O"     O
+					c.b.assign     "P"     P
+			
+			controllerButtonMap.clear
+			for players -> player
+				for .controller.buttons
+					controllerButtonMap[.key] = {userId:player.id, buttonIndex:i}
+		else
+			controllerButtonMap.clear
+			for players
+				GameController c = .controller
+				if c.type == Keyboard
+					c.right.assign "→"     Right
+					c.down.assign  "↓"     Down
+					c.left.assign  "←"     Left
+					c.up.assign    "↑"     Up
+					c.a.assign     "SPACE" Space
+					c.b.assign     "B"     B
+			
+			controllerButtonMap.clear
+			for localPlayer.controller.buttons
+				controllerButtonMap[.key] = {userId:localPlayer.id, buttonIndex:i}
+				
+			controllerButtonMap[D] = {userId:localUser.id, buttonIndex:0}
+			controllerButtonMap[S] = {userId:localUser.id, buttonIndex:1}
+			controllerButtonMap[A] = {userId:localUser.id, buttonIndex:2}
+			controllerButtonMap[W] = {userId:localUser.id, buttonIndex:3}
+			
 		
 	// Returns true if given key is currently held down
 	isKeyDown: Key key          // The key to check

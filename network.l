@@ -170,7 +170,7 @@ transient skipInit unit Network
 			// We always recreating players, because developers might have added fields to Player or Touch
 			// By the time we call startApp, all players need to exist
 			for Input.internalUsers -> internalUser
-				Player user = {id:.id, index:i, color:graphics.defaultColors[i]}
+				Player user = {id:.id, index:i}
 				Input.playersById[.id] = user
 				players.add user
 				
@@ -178,6 +178,7 @@ transient skipInit unit Network
 			let localUserId = Input.localUser?.id < Input.internalUsers.length ? Input.localUser.id : 0
 			Input.localUser = Input.internalUsers[localUserId]
 			Input.localPlayer = Input.playersById[localUserId]
+			Input.updatePlayers
 			
 		// Reset read pos to replay inputs from the beginning
 		for Input.internalUsers if .
@@ -195,7 +196,10 @@ transient skipInit unit Network
 			Input.playersById[.id] = user
 			newPlayers.add user
 		Input.players = newPlayers
-		Input.updatePlayerIndices
+		let localUserId = Input.localUser?.id < Input.internalUsers.length ? Input.localUser.id : 0
+		Input.localUser = Input.internalUsers[localUserId]
+		Input.localPlayer = Input.playersById[localUserId]
+		Input.updatePlayers
 		initAll
 		startApp
 	
