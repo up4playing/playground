@@ -141,13 +141,15 @@ transient skipInit unit Platform
 		baseMatrix = {scale,0,0,scale,offsetX-(statisticsMargin.x/2)*scale,offsetY-(statisticsMargin.y/2)*scale}
 	
 	// This is called when the application starts for the first time	
-	private start: bool isDebug
+	private start: bool isDebug, int userCount, bool simulateConnection, bool showSafeArea
 		initMedia
 		initPlatform
 		statistics.startTime = Time.preciseTime
 		this.engineStarted = false
 		this.isDebug = isDebug
-		if !isDebug: showSafeArea = false; Network.simulateConnection = false
+		this.userCount = userCount
+		Network.simulateConnection = simulateConnection
+		this.showSafeArea = showSafeArea
 		showDebugInfo = getLocalStorageObject("showDebugInfo") == "true"
 		
 		onResize
