@@ -1099,7 +1099,82 @@ skipInit global unit Input
 						this.cursor = cursor
 				
 		if showTouchArea: drawPolygon position, points, fillColor:{"ff0000b0"}
+			
+	// Do something when the player touches or clicks
+	onTouchDown: implicit nocolon Player[] by = null // Only consider touches or clicks by this player of list of players
+		         void(Touch touch) do        // Do this for each touch or click
+		for getTargetedPlayers(by) -> player
+			for internalUsers[player.id].downTouches -> touch
+				if !touch.handled and (player.enableTouch or touch.type != Touch)
+					log "down", touch.referencePosition
+					do touch
 
+	// Do something when the player touches or clicks, even if the event is already handled
+	onTouchDownAny: implicit nocolon Player[] by = null // Only consider touches or clicks by this player of list of players
+		            void(Touch touch) do        // Do this for each touch or click
+		for getTargetedPlayers(by) -> player
+			for internalUsers[player.id].downTouches -> touch
+				if player.enableTouch or touch.type != Touch
+					log "down", touch.referencePosition
+					do touch
+
+	// ---------------------------------------------- Touch Over ----------------------------------------------
+	
+	// Do something when the mouse moves over a given area
+	onTouchOver: Vector2 position            // The center of the touch area
+		         Vector2 size                // The size of a rectangular touch area
+		         implicit nocolon Player[] by = null // Only consider the mouse from this player  
+		         string cursor = ""          // Change the mouse cursor image when hovering over this area
+		         bool showTouchArea = false  // Draw a red rectangle to visualize that area to touch
+		         bool markAsHandled = true   // Mark the touch as handled so it won't trigger more touch events
+		         void(Touch touch) do        // Do this for each touch or click
+		Vector2[] poly = [
+			{ position.x-size.x/2, position.y-size.y/2 }.transform(graphics.localMatrix),
+			{ position.x+size.x/2, position.y-size.y/2 }.transform(graphics.localMatrix),
+			{ position.x+size.x/2, position.y+size.y/2 }.transform(graphics.localMatrix),
+			{ position.x-size.x/2, position.y+size.y/2 }.transform(graphics.localMatrix),
+		]
+		for getTargetedPlayers(by) -> player
+			for player.touches -> touch
+				if touch.referencePosition.isInsidePoygon(poly)
+					log "over", touch.referencePosition
+					do touch
+					
+			if cursor
+				for localUser.movingTouches -> touch
+					if !touch.handled && touch.referencePosition.isInsidePoygon(poly)
+						this.cursor = cursor
+				
+		if showTouchArea: drawRectangle position, size, fillColor:{"ff000080"}
+
+			
+	// ---------------------------------------------- Touch Move ----------------------------------------------
+	
+	// Do something when a touch or click moves
+	onTouchMove: Touch touch                 // Only do this if this particular touch or click moves
+		         triggeredOnTouchDown = true // Also trigger this event right after the player touches or clicks before moving
+		         void(Touch touch) do        // Do this for each touch or click
+		if !touch: return
+		let touchId = touch.id
+		let user = internalUsers[touch.by.id]
+			if triggeredOnTouchDown
+				for user.downTouches
+					if .id == touchId
+						log "down triggers move", .referencePosition
+						do .
+			for user.movingTouches
+				if .id == touchId
+					log "move", .referencePosition
+					do .
+	
+	// Do something when a touch or click moves
+	onTouchMove: implicit nocolon Player[] by = null // Only consider touches or clicks by this player of list of players
+		         void(Touch touch) do        // Do this for each touch or click
+		for getTargetedPlayers(by)
+			for internalUsers[.id].movingTouches
+				log "move", .referencePosition
+				do .
+					
 	// ---------------------------------------------- Touch Up ----------------------------------------------
 	
 	// Do something when the player ends a touch or click within a given area
@@ -1150,84 +1225,6 @@ skipInit global unit Input
 				
 		if showTouchArea: drawCircle position, radius*2, fillColor:{"ff000080"}
 
-	// ---------------------------------------------- Touch Over ----------------------------------------------
-	
-	// Do something when the mouse moves over a given area
-	onTouchOver: Vector2 position            // The center of the touch area
-		         Vector2 size                // The size of a rectangular touch area
-		         implicit nocolon Player[] by = null // Only consider the mouse from this player  
-		         string cursor = ""          // Change the mouse cursor image when hovering over this area
-		         bool showTouchArea = false  // Draw a red rectangle to visualize that area to touch
-		         bool markAsHandled = true   // Mark the touch as handled so it won't trigger more touch events
-		         void(Touch touch) do        // Do this for each touch or click
-		Vector2[] poly = [
-			{ position.x-size.x/2, position.y-size.y/2 }.transform(graphics.localMatrix),
-			{ position.x+size.x/2, position.y-size.y/2 }.transform(graphics.localMatrix),
-			{ position.x+size.x/2, position.y+size.y/2 }.transform(graphics.localMatrix),
-			{ position.x-size.x/2, position.y+size.y/2 }.transform(graphics.localMatrix),
-		]
-		for getTargetedPlayers(by) -> player
-			for player.touches -> touch
-				if touch.referencePosition.isInsidePoygon(poly)
-					log "over", touch.referencePosition
-					do touch
-					
-			if cursor
-				for localUser.movingTouches -> touch
-					if !touch.handled && touch.referencePosition.isInsidePoygon(poly)
-						this.cursor = cursor
-				
-		if showTouchArea: drawRectangle position, size, fillColor:{"ff000080"}
-
-	// ---------------------------------------------- Touch Down ----------------------------------------------
-	
-	// Do something when the player touches or clicks
-	onTouchDown: implicit nocolon Player[] by = null // Only consider touches or clicks by this player of list of players
-		         void(Touch touch) do        // Do this for each touch or click
-		for getTargetedPlayers(by) -> player
-			for internalUsers[player.id].downTouches -> touch
-				if !touch.handled and (player.enableTouch or touch.type != Touch)
-					log "down", touch.referencePosition
-					do touch
-
-	// Do something when the player touches or clicks, even if the event is already handled
-	onTouchDownAny: implicit nocolon Player[] by = null // Only consider touches or clicks by this player of list of players
-		            void(Touch touch) do        // Do this for each touch or click
-		for getTargetedPlayers(by) -> player
-			for internalUsers[player.id].downTouches -> touch
-				if player.enableTouch or touch.type != Touch
-					log "down", touch.referencePosition
-					do touch
-			
-	// ---------------------------------------------- Touch Move ----------------------------------------------
-	
-	// Do something when a touch or click moves
-	onTouchMove: Touch touch                 // Only do this if this particular touch or click moves
-		         triggeredOnTouchDown = true // Also trigger this event right after the player touches or clicks before moving
-		         void(Touch touch) do        // Do this for each touch or click
-		if !touch: return
-		let touchId = touch.id
-		let user = internalUsers[touch.by.id]
-			if triggeredOnTouchDown
-				for user.downTouches
-					if .id == touchId
-						log "down triggers move", .referencePosition
-						do .
-			for user.movingTouches
-				if .id == touchId
-					log "move", .referencePosition
-					do .
-	
-	// Do something when a touch or click moves
-	onTouchMove: implicit nocolon Player[] by = null // Only consider touches or clicks by this player of list of players
-		         void(Touch touch) do        // Do this for each touch or click
-		for getTargetedPlayers(by)
-			for internalUsers[.id].movingTouches
-				log "move", .referencePosition
-				do .
-					
-	// ---------------------------------------------- Touch Up ----------------------------------------------
-	
 	// Do something when a touch or click ends
 	onTouchUp: Touch touch          // Only do this if this particular touch or click ended
 		       markAsHandled = true // Mark the touch as handled so it won't trigger more touch events
