@@ -865,24 +865,24 @@ skipInit global unit Input
 				else
 				if inputType == String
 					int id = inputs.readInt
-					string value = inputs.readString
-					if Network.logging: Network.parseLog += " string {id}: {value}"
-					networkData.call id, value
+					string valueString = inputs.readString
+					if Network.logging: Network.parseLog += " string {id}: {valueString}"
+					networkData.call id, valueString
 					if Platform.waitingForInitialData > 0: Platform.waitingForInitialData--
 				else
 				if inputType == Json
 					int id = inputs.readInt
-					string value = inputs.readString
-					if Network.logging: Network.parseLog += " json {id}: {value}"
-					dynamic object = Json.parse value
+					string valueString = inputs.readString
+					if Network.logging: Network.parseLog += " json {id}: {valueString}"
+					dynamic object = Json.parse valueString
 					networkData.call id, object
 					if Platform.waitingForInitialData > 0: Platform.waitingForInitialData--
 				else
 				if inputType == Object
 					int id = inputs.readInt
-					string value = inputs.readString
-					if Network.logging: Network.parseLog += " object {id}: {value}"
-					dynamic object = Json.parse value
+					string valueString = inputs.readString
+					if Network.logging: Network.parseLog += " object {id}: {valueString}"
+					dynamic object = Json.parse valueString
 					networkData.call id, object
 					if Platform.waitingForInitialData > 0: Platform.waitingForInitialData--
 	

@@ -408,8 +408,8 @@ unit game
 			// If we collided, we check if we weren't pushed into another collider,
 			// until there are no more collision. This time, we only check the sides (not the corners).
 			// This prevents beeing pushed through a collider by being pushed around two corners.
-			let primarilyX = Math.abs(targetPosition.x - sourcePosition.x) > Math.abs(targetPosition.y - sourcePosition.y)
-			Line movement = {sourcePosition, targetPosition, Segment}
+			primarilyX = Math.abs(targetPosition.x - sourcePosition.x) > Math.abs(targetPosition.y - sourcePosition.y)
+			movement = {sourcePosition, targetPosition, Segment}
 			hasCollided = false
 			
 			// Prevent endless loops: If we are still colliding after 3 iteration, we don't move at all
