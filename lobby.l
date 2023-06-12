@@ -33,8 +33,9 @@ unit lobby
 					drawText text, basePos+{32,4}, size:32, font:OpenSans, align:Left
 			
 		// Place points with a click for testing
-		// Input.onTouchDown: points.add .position.clone
-		// points.each drawCircle ., size:50
+		if Core.drawPointsForTesting
+			Input.onTouchDown: points.add .position.clone
+				points.each drawCircle ., size:50
 		
 		if Loca.supportedLanguages.length > 1
 			forPositions Loca.supportedLanguages, end:{930,-510}, delta:{40}
