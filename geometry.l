@@ -284,31 +284,6 @@ struct IntVector2
 	
 	implicit Vector2 toVector2 := {x, y, location}
 	
-	// IntVector2 operator = (IntVector2 a, IntVector2 b) a.x = b.x; a.y = b.y; return a
-	
-	// IntVector2 operator +  (IntVector2 a, IntVector2 b) return IntVector2(a.x+b.x, a.y+b.y)
-	// IntVector2 operator -  (IntVector2 a, IntVector2 b) return IntVector2(a.x-b.x, a.y-b.y)
-		
-	// IntVector2 operator * (IntVector2 a, IntVector2 b) return IntVector2(a.x*b.x, a.y*b.y)
-	// IntVector2 operator * (IntVector2 a, int b) return IntVector2(a.x*b, a.y*b)
-	// IntVector2 operator * (int a, IntVector2 b) return IntVector2(a*b.x, a*b.y)
-		
-	// Vector2 operator * (IntVector2 a, float b) return Vector2(a.x*b, a.y*b)
-	// Vector2 operator * (float a, IntVector2 b) return Vector2(a*b.x, a*b.y)
-		
-	// Vector2 operator / (IntVector2 a, IntVector2 b) return Vector2(a.x/b.x, a.y/b.y)
-	// Vector2 operator / (IntVector2 a, float b) return Vector2(a.x/b, a.y/b)
-	
-	// IntVector2 operator % (IntVector2 a, int b) return IntVector2(a.x%b, a.y%b)
-	// IntVector2 operator % (IntVector2 a, IntVector2 b) return IntVector2(a.x%b.x, a.y%b.y)
-	// Vector2 operator % (IntVector2 a, float b) return Vector2(a.x%b, a.y%b)
-	// Vector2 operator % (IntVector2 a, Vector2 b) return Vector2(a.x%b.x, a.y%b.y)
-	
-	// IntVector2 operator += (IntVector2 a, IntVector2 b) a.x += b.x; a.y += b.y; return a
-	// IntVector2 operator -= (IntVector2 a, IntVector2 b) a.x -= b.x; a.y -= b.y; return a
-	// IntVector2 operator *= (IntVector2 a, IntVector2 b) a.x *= b.x; a.y *= b.y; return a
-	// IntVector2 operator /= (IntVector2 a, IntVector2 b) a.x /= b.x; a.y /= b.y; return a
-	
 	IntVector2 operator = (IntVector2 a, IntVector2 b) a.x = b.x; a.y = b.y; a.location = b.location; return a
 	
 	IntVector2 operator + (IntVector2 a, IntVector2 b) return {a.x+b.x, a.y+b.y, a.location || b.location ? new SourceCodeLocation(null, 0, 0, a.location, b.location) : null}

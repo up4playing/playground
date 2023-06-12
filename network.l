@@ -1,10 +1,3 @@
-// States
-// 
-// fastForward: When replaying, all frames except the last are fast forward and are not drawn
-// isCertain:
-// isSmooth:
-// isPremiere:
-	
 enum NetworkMode: None, Ping, Local, Connected
 transient class RoomInfo: int time, userId
 enum SendInputsMode: None, Peer, Server
@@ -79,8 +72,6 @@ transient skipInit unit Core
 	SendInputsMode sendInputsMode = Peer
 	internal const targetFps = 30
 	const targetFrameTime = 1000/targetFps
-	
-	// TODO: Why is serverStartTime and startTime different in local game?
 	
 	NetworkMode mode                // Whether we are in local or connected mode
 	visible string errorMessage     // The error message if we caught any exceptions in the main loop
@@ -335,14 +326,6 @@ transient skipInit unit Core
 	private sendInputs: int inputFrame
 		if mode != Connected: return
 			
-		// We used to dynamically adjust the send interval
-		// sendInterval = aheadsShort.length < 15 or (aheadsShort.min .) < 5 ? sendIntervalMin : sendInvervalMax
-
-		// We used to dynamically adjust if we are using the peer or the server connection
-		// if sendInputsMode != Server and Input.internalUsers.any.bufferFrames > 300
-		// 	sendInputsMode = Server
-		// 	ServerNetwork.sendSwitch Server
-		
 		if frame >= lastSendFrame + sendInterval
 			if sendInputsMode == Peer:   PeerNetwork.sendInputs inputFrame
 			if sendInputsMode == Server: ServerNetwork.sendInputs inputFrame
@@ -408,10 +391,6 @@ transient skipInit unit Core
 			tick draw
 			
 			if HTMLElement.elements: HTMLElement.elements.each.tick
-			
-			if mode != Local and isCertain
-				// Take snapshot
-				Snapshot.onEndOfStep
 			
 		catch
 			onError error
@@ -513,9 +492,6 @@ transient skipInit unit Core
 		snapshot.reset
 		saveTime = Time.measure
 			Snapshot.serialize snapshot
-			// TEMP logging
-			// let serializeLog = Snapshot.serialize snapshot
-			// eventLog += serializeLog
 				
 		// To check if serialization works consistently, deserialize, serialize a second snapshot and compare it with the first
 		if simulateRollback
@@ -533,10 +509,6 @@ transient skipInit unit Core
 			if !theirChecksum.isApproximately(myChecksum) onWrongChecksum mine:myChecksum theirs:theirChecksum
 			lastChecksumFrame = frame
 			
-			// TEMP logging
-			// eventLog += "objects:{Framework.objects.length} fx:{fx.effects.length} Platform.size:{Platform.size} "
-			// eventLog += Framework.debugString + appDebugString
-			
 		snapshot.writeInt Input.internalUsers.length
 		for Input.internalUsers
 			snapshot.writeInt .inputs.readPos
@@ -551,7 +523,6 @@ transient skipInit unit Core
 		}
 		
 	inline js int currentTime := Date.now()
-	// inline js int currentTime := Math.round(performance.now())
 	
 	js void startApp
 		lobby_inLobby = false
@@ -559,29 +530,11 @@ transient skipInit unit Core
 		
 	private adjustStartTime
 		startTime = Math.round(currentTime - frame*targetFrameTime - (targetFrameTime*.5))
-		// timeOffset = Math.round(currentTime - frame*targetFrameTime - (targetFrameTime*.5)) - startTime
 		
 	adjustStartTimeIfNeeded
 		if Platform.mode < Play: adjustStartTime
 		
 	Buffer snapshotBuffer = {}
-		
-	save: int slot
-		// Database disabled for now
-		// snapshotBuffer.reset
-		// Snapshot.serialize snapshotBuffer
-		// IndexedDB.saveBuffer "snapshot", "{gameId}-{slot}", snapshotBuffer
-		// 	print "saved snapshot {gameId}-{slot} ({snapshotBuffer.writePos} bytes)"
-		// else
-		// 	print "save failed"
-		
-	restore: int slot
-		// Database disabled for now
-		// IndexedDB.openBuffer "snapshot", "{gameId}-{slot}"
-		// 	Input.handleSetState buffer
-		// 	print "restored snapshot {gameId}-{slot} ({buffer.writePos} bytes)"
-		// else
-		// 	print "restore failed"
 		
 	saveEventStreamAndLogs
 		if Input.isCertain
@@ -593,10 +546,6 @@ transient skipInit unit Core
 		// Ensure that current eventLog is added to the table even if we haven't processed a single frame
 		logTable += ",,,,,,,,,,,,,,,,,,,,,,,,\"{eventLog.trim}\""
 		Platform.saveTextFile "{Input.localUser.id} {Platform.appName} {Date.now.invariantDayMonthYearHourMinuteSecondString} v{Platform.version}.csv", logTable
-		// Http.post "/saveLog/{gameId}/{roomId}/{userId}", logTable
-		// 	log "save logs"
-		// else
-		// 	print "save logs failed {error}"
 			
 	saveEventStream
 		Buffer buffer = {}
@@ -673,7 +622,6 @@ transient skipInit unit Core
 		
 	private js void initAll
 		init()
-		// TODO: Is this needed?
 		Platform_updateBaseMatrix();
 		
 	private js void setupVideoAndNetwork 
@@ -693,10 +641,6 @@ transient skipInit unit Core
 		statistics.log += errorMessage + "\n" 
 		Platform.sendErrorToEditor error
 		
-		// if !Platform.isDebug and !alertShown
-		// 	alert "Please send me the log file that will be created.\n\n{errorMessage}"
-		// 	saveLogs
-		// 	alertShown = true
 		
 global transient unit System
 	// Reset all variables to their initial value and restart the app
@@ -979,13 +923,9 @@ global skipInit unit Math
 			let value
 			if(Math_randomValueIndex < Math_randomValues.length) {
 				value = Math_randomValues[Math_randomValueIndex]
-				// Log random numbers for testing
-				// Core_log("rnd("+Math_randomValueIndex+"/"+Math_randomValues.length+") replay "+value)
 				Math_randomValueIndex++
 			} else {
 				value = rand()
-				// Log random numbers for testing
-				// Core_log("rnd("+Math_randomValueIndex+"/"+Math_randomValues.length+"):"+value)
 				Math_randomValues[Math_randomValueIndex++] = value;
 			}
 			return value

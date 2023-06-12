@@ -432,14 +432,6 @@ skipInit global unit Input
 			}
 		}
 		window.onkeyup = e => {
-			// if(e.key == "F1")
-			// 	// TEMP for testing
-			// 	Core_skipAnimationFrame = false;
-			// else
-			// if(e.key == "F2")
-			// 	// TEMP for testing
-			// 	Core_skipSending = false;
-			// else
 			Input_handleKeyEvent(6, e.keyCode)
 		}
 			
