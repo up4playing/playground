@@ -33,7 +33,7 @@ skipInit class Sound
 		let playingSound = audio.playingSounds.find(.sound == this and .frame == Time.frame)
 		if !playingSound
 			audio.playingSounds.add playingSound = {this, frame:Time.frame, isConfirmed:true}
-			if Network.isPremiere: doPlay playingSound
+			if Core.isPremiere: doPlay playingSound
 		else
 			playingSound.isConfirmed = true
 			
@@ -114,7 +114,7 @@ transient global skipInit unit audio
 		if needsToBeCertain and not Input.isCertain: return
 			
 		if Time.frame == 0
-			fx.add PlaySoundEffect startTime:Math.ceil(Time.now+Network.targetFrameTime)+delay, sound
+			fx.add PlaySoundEffect startTime:Math.ceil(Time.now+Core.targetFrameTime)+delay, sound
 		else
 		if delay
 			fx.add PlaySoundEffect startTime:Time.now+delay, sound

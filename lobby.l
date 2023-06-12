@@ -16,9 +16,9 @@ unit lobby
 				Input.isCertain = true
 				statistics.send round:-2 game:-2
 		
-		if PeerNetwork.error or Network.errorMessage
+		if PeerNetwork.error or Core.errorMessage
 			drawText PeerNetwork.error, size:40
-			drawText Network.errorMessage, size:14, position:{0,40}
+			drawText Core.errorMessage, size:14, position:{0,40}
 			return
 			
 		int count = players.length
@@ -41,7 +41,7 @@ unit lobby
 				drawImage Flag[i], pos, frame:Loca.language == cast(i) ? 1 : 0
 					Loca.setLanguage cast(i)
 			
-		if Network.mode == Ping
+		if Core.mode == Ping
 			drawText "Connecting...", size:32
 		else
 		if players.length withinInclusively Platform.supportedUserCount
@@ -51,7 +51,7 @@ unit lobby
 						if enableFullscreen: Platform.setFullscreen true forPlayer:touch.by
 						Input.playersById[touch.by.id].isReadyInLobby = true
 						if players.all.isReadyInLobby
-							Network.startApp
+							Core.startApp
 							
 	private showSettings = false
 	

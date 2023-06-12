@@ -11,7 +11,7 @@ skipInit transient float Time
 	static internal inline js float realTime := Date.now()
 
 	// The current frame
-	static inline js int frame := Network_frame
+	static inline js int frame := Core_frame
 	
 	static Time fromTimeString(string timeString)
 		Time value = 0

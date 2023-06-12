@@ -28,7 +28,7 @@ HTMLElement HTMLInput
 	HTMLInput
 		changeCallbackId = networkData.addCallback
 			value = .
-			if not Network.isPremiere: this.element.value = .
+			if not Core.isPremiere: this.element.value = .
 				
 		enterCallbackId = networkData.addCallback
 			value = .

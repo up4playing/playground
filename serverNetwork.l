@@ -12,7 +12,7 @@ transient unit ServerNetwork
 		else                                         socket = new WebSocket("wss://"+location.host+":3112");
 		socket.binaryType = "arraybuffer";
 		socket.onopen = function() {
-			Network_log("Websocket open");
+			Core_log("Websocket open");
 			ServerNetwork_socket = socket
 			ServerNetwork_onConnectedToServer();
 		}
@@ -20,16 +20,16 @@ transient unit ServerNetwork
 			ServerNetwork_onMessageFromServer(new Buffer(event.data, 0, 0, 0));
 		}
 		socket.onclose = function(ev) {
-			Network_log("Websocket closed "+ev.code+" "+ev.reason)
+			Core_log("Websocket closed "+ev.code+" "+ev.reason)
 			ServerNetwork_socket = null
 			if(Date.now() - startTime < 30000) {
-				location.href = "/{Network_gameId}/{Network_roomId}"
+				location.href = "/{Core_gameId}/{Core_roomId}"
 			}
 		}
 		socket.onerror = error => {
-			Network_error = "Can't connect to server."
-			Network_errorMessage = error.message
-			Network_log(error.message)
+			Core_error = "Can't connect to server."
+			Core_errorMessage = error.message
+			Core_log(error.message)
 		}
 		
 	// We set the internal user to active when we receive the first signal (offer or answer)
@@ -41,12 +41,12 @@ transient unit ServerNetwork
 	private onConnectedToServer
 		if Input.localUser.id == -1 and !Platform.isStaging
 			// We were in this room before -> connect with the same userId we had before
-			RoomInfo roomInfo = cast Platform.getLocalStorageObject "room"+Network.roomId
-			Input.localUser.id = roomInfo && roomInfo.time > Network.currentTime - 3600000*6 ? roomInfo.userId : -1
-			Network.log roomInfo, Input.localUser.id
+			RoomInfo roomInfo = cast Platform.getLocalStorageObject "room"+Core.roomId
+			Input.localUser.id = roomInfo && roomInfo.time > Core.currentTime - 3600000*6 ? roomInfo.userId : -1
+			Core.log roomInfo, Input.localUser.id
 		
-		Network.log "onConnectedToServer as {Input.localUser.id} {Network.roomId}"
-		sendJoinMessage Network.roomString, Input.localUser.id, version:Platform.version
+		Core.log "onConnectedToServer as {Input.localUser.id} {Core.roomId}"
+		sendJoinMessage Core.roomString, Input.localUser.id, version:Platform.version
 		
 	js int bufferedAmount
 		return ServerNetwork_socket.bufferedAmount 
@@ -57,7 +57,7 @@ transient unit ServerNetwork
 			ServerNetwork_socket.send(data)
 			return data.byteLength
 		} catch(e) { 
-			Network_log(e)
+			Core_log(e)
 			return 0
 		}
 		
@@ -95,10 +95,10 @@ transient unit ServerNetwork
 			Input.internalUsers[id] = user
 			buffer.readBuffer user.inputs
 
-		if roomId != Network.roomId
-			Network.log "Received room id {roomId}"
-			Platform.pushState "/{Network.gameId}/{roomId}"
-			Network.roomId = roomId
+		if roomId != Core.roomId
+			Core.log "Received room id {roomId}"
+			Platform.pushState "/{Core.gameId}/{roomId}"
+			Core.roomId = roomId
 			
 		if version != Platform.version
 			alert "You are using an old version of this application. Please refresh your browser."
@@ -106,53 +106,53 @@ transient unit ServerNetwork
 		inputsSentPos = Input.localUser.inputs.writePos
 		Input.localUser.id = userId
 		Math.setRandomSeed seed
-		Network.serverStartTime = serverStartTime
-		Network.mode = Ping
+		Core.serverStartTime = serverStartTime
+		Core.mode = Ping
 		for Input.internalUsers
 			if . and !.local: PeerNetwork.createOffer .
-		Network.storeUserId
+		Core.storeUserId
 		
 		if userCount <= 1
-			Network.log "We are the only user so far -> Make primary user"
+			Core.log "We are the only user so far -> Make primary user"
 			PeerNetwork.makePrimaryUser
 		else
 			PeerNetwork.makePrimiaryUserIfStateIsNotReceived
 
-		Network.log "Joining room {roomId} as user {userId}"
+		Core.log "Joining room {roomId} as user {userId}"
 		
 		// The first person in the room triggers sending an notification with the link to everybody
-		if userCount <= 1 and !Platform.isStaging: http.getInternal "{Platform.protocolAndHost}:3114/sendGamedayNotification/{Network.gameId}/{Network.roomId}/hasStarted"
+		if userCount <= 1 and !Platform.isStaging: http.getInternal "{Platform.protocolAndHost}:3114/sendGamedayNotification/{Core.gameId}/{Core.roomId}/hasStarted"
 
 		
 	float nextPingTime, fastestPingPongTime = int.maxValue, lastPingPongTime
 	int pongCount
 	
 	ping
-		let now = Network.currentTime
-		if (Network.mode == Ping or Network.mode == Connected) and now >= nextPingTime
+		let now = Core.currentTime
+		if (Core.mode == Ping or Core.mode == Connected) and now >= nextPingTime
 			sendBuffer.reset
 			sendBuffer.writeInt8 cast NetworkMessageType.Ping
 			sendBuffer.writeFloat64 now
 			send sendBuffer
-			nextPingTime = now + (Network.mode == Ping ? 200 : pongCount < 20 ? 1000 : 6000)
+			nextPingTime = now + (Core.mode == Ping ? 200 : pongCount < 20 ? 1000 : 6000)
 			
 	float[] calculatedStartTimes
 	float referenceStartTime
 	float[] pingPongTimes
 			
 	private onPong: Buffer buffer
-		float now = Network.currentTime
+		float now = Core.currentTime
 		float timeSinceStart = buffer.readFloat64
 		float pingTime = buffer.readFloat64
 		float pingPongTime = now - pingTime
 		float calculatedStartTime = now - pingPongTime/2 - timeSinceStart
 		
-		int deltaFromAverage = Math.round(calculatedStartTime - Network.startTime)
+		int deltaFromAverage = Math.round(calculatedStartTime - Core.startTime)
 		int deltaFromReference = Math.round(calculatedStartTime - referenceStartTime)
 		statistics.serverPings.add pingPongTime
-		// Network.log "<<< Pong ({pongCount})", pingPongTime, calculatedStartTime
-		// Network.log "average", Network.startTime, deltaFromAverage 
-		// Network.log "reference", referenceStartTime, deltaFromReference 
+		// Core.log "<<< Pong ({pongCount})", pingPongTime, calculatedStartTime
+		// Core.log "average", Core.startTime, deltaFromAverage 
+		// Core.log "reference", referenceStartTime, deltaFromReference 
 		
 		// Ignore pings that took more than twice as long as the average
 		pongCount++
@@ -160,20 +160,20 @@ transient unit ServerNetwork
 		pingPongTimes.add pingPongTime maxLength:30
 		let pingPongTimesAverage = pingPongTimes.average
 		if pingPongTime > 400 or (pingPongTimes.length >= 15 and pingPongTime > pingPongTimesAverage * 2)
-			Network.log "ignoring ping-pong", pingPongTimes.length, pingPongTimesAverage
+			Core.log "ignoring ping-pong", pingPongTimes.length, pingPongTimesAverage
 			return
 			
 		statistics.addInfo "from average", deltaFromAverage
 		statistics.addInfo "from reference", deltaFromReference
 		
 		calculatedStartTimes.add calculatedStartTime maxLength:20
-		Network.startTime = calculatedStartTimes.average
+		Core.startTime = calculatedStartTimes.average
 			
 		// Use the fastest ping-pong-time we have ever seen to calculate the reference start time
 		if pingPongTime < fastestPingPongTime
 			fastestPingPongTime = pingPongTime
 			referenceStartTime = calculatedStartTime
-			Network.log "New fastest pingPongTime", pongCount, now, pingPongTime, timeSinceStart, Network.startTime, referenceStartTime
+			Core.log "New fastest pingPongTime", pongCount, now, pingPongTime, timeSinceStart, Core.startTime, referenceStartTime
 			
 	sendSignal:	int receiverId, string type, string sdp
 		sendBuffer.reset
@@ -227,14 +227,14 @@ transient unit ServerNetwork
 		sendBuffer.writeInt32 Input.localUser.id
 		sendBuffer.writeInt32 inputFrame // You got all inputs up to and including this frame
 		sendBuffer.writeBuffer inputs, inputsSentPos, length
-		sendBuffer.writeInt Network.lastChecksumFrame                              // The last certain frame with inputs from everybody
-		sendBuffer.writeFloat64 Network.checksums[Network.lastChecksumFrame] || 0  // The checksum of the last certain frame
+		sendBuffer.writeInt Core.lastChecksumFrame                           // The last certain frame with inputs from everybody
+		sendBuffer.writeFloat64 Core.checksums[Core.lastChecksumFrame] || 0  // The checksum of the last certain frame
 		send sendBuffer
 		
-		if Network.logging: Network.sentLog += " #{inputFrame} {inputsSentPos}->{inputs.writePos} {inputs.toRangeString(inputsSentPos, inputs.writePos)}"
+		if Core.logging: Core.sentLog += " #{inputFrame} {inputsSentPos}->{inputs.writePos} {inputs.toRangeString(inputsSentPos, inputs.writePos)}"
 		
 		inputsSentPos = inputs.writePos
-		Network.tickMessageSize = sendBuffer.writePos	
+		Core.tickMessageSize = sendBuffer.writePos	
 						
 	private onTick: Buffer buffer
 		let senderId = buffer.readInt32
@@ -244,7 +244,7 @@ transient unit ServerNetwork
 		sender.inputFrame = buffer.readInt32
 		buffer.readBuffer sender.inputs, prevWritePos
 
-		if Network.logging: Network.receivedLog += " [{Network.currentTime}] <{senderId}> #{sender.inputFrame} {prevWritePos}->{sender.inputs.writePos} {sender.inputs.toRangeString(prevWritePos, sender.inputs.writePos)}"
+		if Core.logging: Core.receivedLog += " [{Core.currentTime}] <{senderId}> #{sender.inputFrame} {prevWritePos}->{sender.inputs.writePos} {sender.inputs.toRangeString(prevWritePos, sender.inputs.writePos)}"
 	
 	sendSwitch: SendInputsMode mode, int sendInterval
 		sendBuffer.reset
@@ -255,13 +255,13 @@ transient unit ServerNetwork
 
 	onSwitch: Buffer buffer
 		SendInputsMode mode = cast buffer.readInt32
-		Network.sendInterval = buffer.readInt32
+		Core.sendInterval = buffer.readInt32
 		
-		if mode != Network.sendInputsMode
-			Network.sendInputsMode = mode
+		if mode != Core.sendInputsMode
+			Core.sendInputsMode = mode
 	
 	sendReload: bool newRoom, bool newUserId, bool keepMaster
-		string url = "/{Network.gameId}/{newRoom ? Network.roomId+(Network.roomId < 0 ? -1 : 1) : Network.roomId}"
+		string url = "/{Core.gameId}/{newRoom ? Core.roomId+(Core.roomId < 0 ? -1 : 1) : Core.roomId}"
 		sendBuffer.reset
 		sendBuffer.writeInt8 cast NetworkMessageType.Reload
 		sendBuffer.writeBool keepMaster
