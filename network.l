@@ -2,60 +2,6 @@ enum NetworkMode: None, Ping, Local, Connected
 transient class RoomInfo: int time, userId
 enum SendInputsMode: None, Peer, Server
 	
-transient unit Snapshot
-	int autoSaveCount
-	int lastSnapshotSize
-	
-	Buffer snapshots = {}
-	int[] snapshotStarts
-	int snapshotEvery = 100
-	
-	private bool autoSaveAtEndOfStep
-	
-	inline js string serialize(Buffer buffer) serialize_internal(buffer)
-	inline js void deserialize(Buffer buffer) deserialize_internal(buffer)
-		
-	js string toString: object value
-		let buffer = new Buffer(null, 1024, 0, 0);
-		setup_serialize();
-		value.serialize_external(buffer);
-		return btoa(String.fromCharCode(...new Uint8Array(buffer.buffer, 0, buffer.writePos)));	
-		
-	js void fromString: object value, string base64String
-		let bytes = Uint8Array.from(atob(base64String), c => c.charCodeAt(0))
-		let buffer = new Buffer(bytes.buffer,0,0,0);
-		setup_deserialize();
-		value.deserialize_external(buffer);
-		
-	js void fromBase64: object value, string base64String
-		let bytes = Uint8Array.from(atob(base64String), c => c.charCodeAt(0))
-		let buffer = new Buffer(bytes.buffer,0,0,0);
-		setup_deserialize();
-		value.deserialize_internal(buffer);
-				
-	Buffer save
-		Buffer buffer = {}
-		serialize(buffer)
-		return buffer
-		
-	restore: Buffer buffer
-		deserialize(buffer)
-		
-	autoSave() autoSaveAtEndOfStep = true
-	
-	internal onEndOfStep
-		// Disabled automatically saving snapshots because they haven't been used for while,
-		// might use a lot of memory over time and IndexDB is one potential cause for Felix' startup problems
-		// if Input.isCertain
-		// 	if autoSaveAtEndOfStep and ++autoSaveCount > 5
-		// 		let snap = save
-		// 		IndexedDB.saveBuffer "snapshot", "{Core.gameId}-0", snap
-		// 		lastSnapshotSize = snap.writePos
-		// 	if Core.frame/snapshotEvery > snapshotStarts.length
-		// 		snapshotStarts.add snapshots.writePos
-		// 		serialize(snapshots)
-		// 	autoSaveAtEndOfStep = false
-	
 transient skipInit unit Core
 	int eventStreamVersion = 1
 	int sendInterval = 1
@@ -64,6 +10,7 @@ transient skipInit unit Core
 	bool simulateConnection = true
 	bool simulateInputsForTesting = false
 	bool simulateRollback = false
+	bool drawPointsForTesting = false
 	Time sendLogfileEvery = 0
 	bool showVideoForStaging = true
 	bool muteInvisibleUsers = false
@@ -325,7 +272,7 @@ transient skipInit unit Core
 	
 	private sendInputs: int inputFrame
 		if mode != Connected: return
-			
+		
 		if frame >= lastSendFrame + sendInterval
 			if sendInputsMode == Peer:   PeerNetwork.sendInputs inputFrame
 			if sendInputsMode == Server: ServerNetwork.sendInputs inputFrame
@@ -641,7 +588,58 @@ transient skipInit unit Core
 		statistics.log += errorMessage + "\n" 
 		Platform.sendErrorToEditor error
 		
+transient unit Snapshot
+	int autoSaveCount
+	int lastSnapshotSize
+	
+	Buffer snapshots = {}
+	int[] snapshotStarts
+	int snapshotEvery = 100
+	
+	private bool autoSaveAtEndOfStep
+	
+	inline js string serialize(Buffer buffer) serialize_internal(buffer)
+	inline js void deserialize(Buffer buffer) deserialize_internal(buffer)
 		
+	js string toString: object value
+		let buffer = new Buffer(null, 1024, 0, 0);
+		setup_serialize();
+		value.serialize_external(buffer);
+		return btoa(String.fromCharCode(...new Uint8Array(buffer.buffer, 0, buffer.writePos)));	
+		
+	js void fromString: object value, string base64String
+		let bytes = Uint8Array.from(atob(base64String), c => c.charCodeAt(0))
+		let buffer = new Buffer(bytes.buffer,0,0,0);
+		setup_deserialize();
+		value.deserialize_external(buffer);
+		
+	js void fromBase64: object value, string base64String
+		let bytes = Uint8Array.from(atob(base64String), c => c.charCodeAt(0))
+		let buffer = new Buffer(bytes.buffer,0,0,0);
+		setup_deserialize();
+		value.deserialize_internal(buffer);
+				
+	Buffer save
+		Buffer buffer = {}
+		serialize(buffer)
+		return buffer
+		
+	restore: Buffer buffer
+		deserialize(buffer)
+		
+	autoSave() autoSaveAtEndOfStep = true
+	
+	internal onEndOfStep
+		if Input.isCertain
+			if autoSaveAtEndOfStep and ++autoSaveCount > 5
+				let snap = save
+				IndexedDB.saveBuffer "snapshot", "{Core.gameId}-0", snap
+				lastSnapshotSize = snap.writePos
+			if Core.frame/snapshotEvery > snapshotStarts.length
+				snapshotStarts.add snapshots.writePos
+				serialize(snapshots)
+			autoSaveAtEndOfStep = false
+	
 global transient unit System
 	// Reset all variables to their initial value and restart the app
 	global inline restart() Core.restart
