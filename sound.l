@@ -26,7 +26,7 @@ skipInit class Sound
 		if(this.audioElement) this.audioElement.pause()
 		
 	play: needsToBeCertain = false
-		if needsToBeCertain and not Input.isCertain: return
+		if needsToBeCertain and not input.isCertain: return
 			
 		// We can play sounds immediately to ensure there is no lag
 		// If a sound turns out to be wrong after receiving new inputs, we stop it
@@ -97,13 +97,13 @@ transient global skipInit unit audio
 		playingSounds.clear
 	
 	mute: int forUser = -1
-		if forUser == -1 or forUser == Input.localUser?.id
+		if forUser == -1 or forUser == input.localUser?.id
 			volumeLevel = 0
 			volume = volumeLevels[volumeLevel]
 			playingSounds.each.sound.updateVolume
 	
 	adjustVolume: int delta = 1, int forUser = -1
-		if forUser == -1 or forUser == Input.localUser?.id
+		if forUser == -1 or forUser == input.localUser?.id
 			volumeLevel = Math.limit(volumeLevel+delta, min:0, max:volumeLevels.length-1)
 			volume = volumeLevels[volumeLevel]
 			playingSounds.each.sound.updateVolume
@@ -111,7 +111,7 @@ transient global skipInit unit audio
 	global playSound: Sound sound
 		              Time delay = 0
 		              bool needsToBeCertain = false
-		if needsToBeCertain and not Input.isCertain: return
+		if needsToBeCertain and not input.isCertain: return
 			
 		if Time.frame == 0
 			fx.add PlaySoundEffect startTime:Math.ceil(Time.now+Core.targetFrameTime)+delay, sound

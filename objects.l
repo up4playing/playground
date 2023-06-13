@@ -23,7 +23,7 @@ unit Framework
 	tick
 		fx.tick
 		objects.eachChangable.tick
-		Input.onTouchUp: deselect touch.by
+		onTouchUp: deselect touch.by
 		
 		if toBeRemoved
 			toBeRemoved.each.siblings.remove .
@@ -342,17 +342,17 @@ Object Piece
 		// Rotate	
 		Vector2 iconPos = this.iconPos ? this.iconPos : (rotatable ? {(size.x+size.y)*.29, (size.x+size.y)*.29}*{1,-1} : size/2*{1,-1})
 		if rotatable and Framework.selectedObjects.contains(this)
-			Input.onTouchDownWithin position:position+iconPos, size:Image.rotateIcon.size+touchMargin, by:visibleFor
+			onTouchDownWithin position:position+iconPos, size:Image.rotateIcon.size+touchMargin, by:visibleFor
 				rotateTouch = touch
 				rotateOffset = angle - Math.getAngleForVector(touch.position - position)
 				rotatedOverThreshold = false
 				
-			Input.onTouchMove rotateTouch
+			onTouchMove rotateTouch
 				Core.smooth touch.by
 					angle = targetAngle = Math.getAngleForVector(touch.position - position) + rotateOffset
 				if (touch.position - touch.startPosition).length > 16: rotatedOverThreshold = true
 				
-			Input.onTouchUp rotateTouch
+			onTouchUp rotateTouch
 				targetAngle = Math.round(angle / .25) * .25
 				rotateTouch = null
 				if !rotatedOverThreshold: targetAngle += .25
@@ -360,21 +360,21 @@ Object Piece
 				if angle == targetAngle: onRotate
 		
 		// Move
-		Input.onTouchDownWithin position, size, angle, by:visibleFor
+		onTouchDownWithin position, size, angle, by:visibleFor
 			if movable
 				moveTouch = touch
 				touchOffset = position - touch.position
 				siblings.moveToFront this
 				isBeingMoved = false
 			
-		Input.onTouchMove moveTouch
+		onTouchMove moveTouch
 			Core.smooth moveTouch.by
 				position = touch.position + touchOffset
 				if touch.position - touch.startPosition > 8: isBeingMoved = true
 				if board: board.snap this, touch.position
 				checkBoardsWhileMoving touch
 							
-		Input.onTouchUp moveTouch
+		onTouchUp moveTouch
 			Framework.selectedObjects[touch.by.id] = this
 			moveTouch = null
 			onDrop
@@ -465,7 +465,7 @@ Piece Stack
 			
 		// We pop after drawing, because the newly created card won't be drawn until the next frame
 		// and we don't want to draw the new, smaller stack without drawing the popped card as well
-		Input.onTouchDownWithin position, size
+		onTouchDownWithin position, size
 			let obj = pop
 			obj.moveTouch = touch
 			obj.touchOffset = obj.position - touch.position
@@ -527,19 +527,19 @@ Piece Board
 		
 		// Pan
 		if panable	
-			Input.onTouchDownWithin position, size, by:visibleFor
+			onTouchDownWithin position, size, by:visibleFor
 				panTouch = touch
 				downMatrix = matrix
-			Input.onTouchMove panTouch
+			onTouchMove panTouch
 				matrix = downMatrix
 				matrix.move touch.position - touch.startPosition
-			Input.onTouchUp panTouch
+			onTouchUp panTouch
 				panTouch = null
 				Framework.deselect touch.by
 				
 		// Zoom
 		if zoomable	
-			Input.onWheelWithin position, size, by:visibleFor
+			onWheelWithin position, size, by:visibleFor
 				float factor = zoomLookupTable[Math.limit Math.round(event.delta.y)+40, min:0, max:zoomLookupTable.length-1]
 				if Core.logging: Core.touchLog += "[{Core.frame}] zoom value:{event.delta} factor:{factor} matrix:{matrix}"
 				matrix.move event.position
@@ -708,27 +708,27 @@ Piece Coin
 	
 	override tick
 		if movable
-			Input.onTouchDownWithin position, radius:40, by:owner
+			onTouchDownWithin position, radius:40, by:owner
 				moveTouch = touch
 				touchOffset = position - touch.position
 				siblings.moveToFront this
 				isBeingMoved = false
 			
-			Input.onTouchMove moveTouch
+			onTouchMove moveTouch
 				Core.smooth touch.by
 					position = touch.position + touchOffset
 				if touch.position - touch.startPosition > 8: isBeingMoved = true
 				updateNeighbors siblings, isBeingMoved
 				checkBoardsWhileMoving touch
 			
-			Input.onTouchUp moveTouch
+			onTouchUp moveTouch
 				Framework.selectedObjects[touch.by.id] = this
 				moveTouch = null
 				
 				if closestCoinType == Over: mergeWith closestCoin; else
 				if !isBeingMoved:           transferToNeighbor closestCoin
 		else
-			Input.onTouchUpWithin position, radius:64, by:owner
+			onTouchUpWithin position, radius:64, by:owner
 				transferToNeighbor closestCoin
 			
 		if isInfinate or value or allowZero
@@ -832,11 +832,11 @@ Object Menu
 				drawText .label, pos+{-60}, size:30, align:Left, layer:int.maxValue
 				if item.type == Button
 					if .image: drawImage .image, pos+{-120}, layer:int.maxValue
-					Input.onTouchDownWithin pos, size:{500,60}, do:item.onClick(true, touch)
+					onTouchDownWithin pos, size:{500,60}, do:item.onClick(true, touch)
 				else
 				if item.type == Check
 					if .image: drawImage Checkbox, pos+{-120}, layer:int.maxValue, frame:item.value ? 1 : 0
-					Input.onTouchDownWithin pos, size:{500,60}
+					onTouchDownWithin pos, size:{500,60}
 						item.value = !item.value
 						item.onClick(item.value, touch)
 						doNotClose = true
@@ -845,7 +845,7 @@ Object Menu
 			drawRectangle size:{1920,1080}, fillColor:overlayColor, layer:int.maxValue
 			
 			if not doNotClose
-				Input.onTouchDownAny
+				onTouchDownAny
 					active = false
 				
 		drawImage Menu, position, location

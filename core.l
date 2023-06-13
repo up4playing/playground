@@ -41,10 +41,10 @@ transient skipInit unit Core
 	startConnected: int frame
 		if mode == Connected: return
 				
-		let user = Input.localUser
+		let user = input.localUser
 		user.startInputFrame 0
 		
-		Input.handleJoin frame 
+		input.handleJoin frame 
 		user.collectInputs = true
 		if Core.logging: writeLog += " #{joinFrame} Join"
 		log "startConnected", joinFrame
@@ -59,14 +59,14 @@ transient skipInit unit Core
 		
 	startLocal
 		mode = Local
-		Input.internalUsers.clear
+		input.internalUsers.clear
 		Math.setRandomSeed Math.generateRandomSeed 
 		// initDatabase
 		stop
 		
 	// Clear all inputs and reset the application to the first frame
 	stop
-		for Input.internalUsers if .
+		for input.internalUsers if .
 			.inputs.reset
 			.startInputFrame 0
 		startTime = serverStartTime = currentTime
@@ -84,12 +84,12 @@ transient skipInit unit Core
 	// This is called on startup, after every code change and when going backwards in the timeline
 	reset
 		players.clear
-		Input.playersById.clear
+		input.playersById.clear
 		errorMessage = ""
 		HTMLElement.clear
 		Math.randomValueIndex = 0
 		frame = 0
-		Input.isCertain = true
+		input.isCertain = true
 		lobby.inLobby = startInLobby
 		Time.now = serverStartTime
 		snapshotFrame = -1
@@ -100,26 +100,26 @@ transient skipInit unit Core
 		
 		if !startInLobby
 			// When the developer changed Platform.userCount, add or remove internal users accordingly
-			for Input.internalUsers.length to Platform.userCount
-				Input.internalUsers.add {id:i, local:true, collectInputs:true}
-			if Input.internalUsers.length > Platform.userCount
-				Input.internalUsers.removeRange Platform.userCount, count: Input.internalUsers.length - Platform.userCount
+			for input.internalUsers.length to Platform.userCount
+				input.internalUsers.add {id:i, local:true, collectInputs:true}
+			if input.internalUsers.length > Platform.userCount
+				input.internalUsers.removeRange Platform.userCount, count: input.internalUsers.length - Platform.userCount
 			
 			// We always recreating players, because developers might have added fields to Player or Touch
 			// By the time we call startApp, all players need to exist
-			for Input.internalUsers -> internalUser
+			for input.internalUsers -> internalUser
 				Player user = {id:.id, index:i}
-				Input.playersById[.id] = user
+				input.playersById[.id] = user
 				players.add user
 				
 			// Set local user
-			let localUserId = Input.localUser?.id < Input.internalUsers.length ? Input.localUser.id : 0
-			Input.localUser = Input.internalUsers[localUserId]
-			Input.localPlayer = Input.playersById[localUserId]
-			Input.updatePlayers
+			let localUserId = input.localUser?.id < input.internalUsers.length ? input.localUser.id : 0
+			input.localUser = input.internalUsers[localUserId]
+			input.localPlayer = input.playersById[localUserId]
+			input.updatePlayers
 			
 		// Reset read pos to replay inputs from the beginning
-		for Input.internalUsers if .
+		for input.internalUsers if .
 			.inputs.readPos = 0
 			
 		if !startInLobby: startApp
@@ -129,15 +129,15 @@ transient skipInit unit Core
 	// Called manually with the global "restart" function	
 	restart
 		Player[] newPlayers
-		for Input.players
+		for input.players
 			Player user = {id:.id, index:i}
-			Input.playersById[.id] = user
+			input.playersById[.id] = user
 			newPlayers.add user
-		Input.players = newPlayers
-		let localUserId = Input.localUser?.id < Input.internalUsers.length ? Input.localUser.id : 0
-		Input.localUser = Input.internalUsers[localUserId]
-		Input.localPlayer = Input.playersById[localUserId]
-		Input.updatePlayers
+		input.players = newPlayers
+		let localUserId = input.localUser?.id < input.internalUsers.length ? input.localUser.id : 0
+		input.localUser = input.internalUsers[localUserId]
+		input.localPlayer = input.playersById[localUserId]
+		input.updatePlayers
 		initAll
 		startApp
 	
@@ -161,7 +161,7 @@ transient skipInit unit Core
 	// Smooth out animations by only executing code when we received inputs from everybody	
 	smooth: Player player
 		    void() do
-		let user = Input.internalUsers[player.id]
+		let user = input.internalUsers[player.id]
 		if user and (user.local or frame <= user.smoothFrame): do
 
 	// animationFrame --> step --> tick
@@ -211,10 +211,10 @@ transient skipInit unit Core
 			// Ensure that step is called every targetFrameTime milliseconds
 			while frame < targetFrame
 				// Create artificial inputs to test the smoothness
-				if simulateInputsForTesting and Input.localUser and Input.localUser.collectInputs
-					Input.handleKeyEvent KeyDown, cast Key.F24, ""
+				if simulateInputsForTesting and input.localUser and input.localUser.collectInputs
+					input.handleKeyEvent KeyDown, cast Key.F24, ""
 
-				for Input.internalUsers -> user
+				for input.internalUsers -> user
 					if user?.local: user.startInputFrame frame+1
 				step fastForward:false, draw:frame == targetFrame-1
 				collectStatistics
@@ -239,7 +239,7 @@ transient skipInit unit Core
 	collectStatistics
 		if mode == Connected and players.length > 1 and frame > joinFrame + 120
 			for players
-				let internalUser = Input.internalUsers[.id]
+				let internalUser = input.internalUsers[.id]
 				if not internalUser.local
 					internalUser.collectStatistics frame
 					statistics.add .index, frame - internalUser.inputFrame, .color, set:0
@@ -247,14 +247,14 @@ transient skipInit unit Core
 			if replayFrom != -1: statistics.add "replay", frame - replayFrom, Gray
 		else
 		if mode == Local and simulateRollback
-			Input.internalUsers.each.simulateRollback frame
+			input.internalUsers.each.simulateRollback frame
 			
 		// Logs
 		if logging
 			try
 				logTable += "{frame-1}"
 				for 4
-					let user = Input.internalUsers.find.index == i
+					let user = input.internalUsers.find.index == i
 						logTable += ",{user.id},{user.inputFrame},{frame-user.inputFrame},{user.bufferFrames}"
 					else
 						logTable += ",,,,"
@@ -279,11 +279,11 @@ transient skipInit unit Core
 			lastSendFrame = frame
 			
 	switchUser: int userIndex
-		let prevPlayer = Input.localPlayer 
-		Input.localPlayer = players[userIndex]
-			Input.localUser = Input.internalUsers.find.id == Input.localPlayer.id
+		let prevPlayer = input.localPlayer 
+		input.localPlayer = players[userIndex]
+			input.localUser = input.internalUsers.find.id == input.localPlayer.id
 			for prevPlayer.touches
-				Input.handleUpdateTouchAfterSwitchingUser .id, .referencePosition
+				input.handleUpdateTouchAfterSwitchingUser .id, .referencePosition
 			
 	switchSendInterval: int sendInterval
 		this.sendInterval = sendInterval
@@ -306,7 +306,7 @@ transient skipInit unit Core
 			
 			// Flags
 			Platform.fastForward = fastForward
-			int certainFrame = Input.internalUsers.min Math.min(.inputFrame, .smoothFrame) where .active
+			int certainFrame = input.internalUsers.min Math.min(.inputFrame, .smoothFrame) where .active
 			bool isCertain = frame <= certainFrame
 			
 			// Send current frame to editor	
@@ -323,13 +323,13 @@ transient skipInit unit Core
 				if isCertain:   parseLog += "c"; replayLog += "c"
 				
 			// Update game controllers
-			Input.updateGameControllers
+			input.updateGameControllers
 			
 			// Post lost messages and remove players if nobody disagrees
-			Input.handleLost
+			input.handleLost
 			
 			// Parse inputs
-			Input.parseInputs(frame)
+			input.parseInputs(frame)
 			
 			// Physics
 			Physics.step
@@ -343,7 +343,7 @@ transient skipInit unit Core
 			onError error
 			
 		// Cleanup
-		for Input.internalUsers if .
+		for input.internalUsers if .
 			.clearEvent
 		players.each.clearEvents
 		
@@ -357,8 +357,8 @@ transient skipInit unit Core
 	internal tick: bool draw
 		graphics.startFrame
 		if draw and not Platform.waitingForInitialData
-			if Input.showPointers >= Local
-			or (mode == Connected and Input.showPointers == Remote) 
+			if input.showPointers >= Local
+			or (mode == Connected and input.showPointers == Remote) 
 			or Platform.mode == Play
 				players.each drawPointer .
 		audio.startFrame
@@ -380,7 +380,7 @@ transient skipInit unit Core
 		if draw and not Platform.waitingForInitialData
 			drawTime = Time.measure
 				graphics.finishFrame
-			if Platform.mode != Manipulator: Input.updateCursor
+			if Platform.mode != Manipulator: input.updateCursor
 		audio.finishFrame
 				
 	js void appTick() if(window.app_tick) app_tick();
@@ -393,10 +393,10 @@ transient skipInit unit Core
 	
 	// This is called at the begining of animationFrame before we start stepping.
 	private checkRewindAndReplayState
-		if (mode != Connected and !simulateRollback) or Input.internalUsers.length == 1: return
+		if (mode != Connected and !simulateRollback) or input.internalUsers.length == 1: return
 			
 		if mode == Local and simulateRollback: nextSnapshotFrame = frame - 5
-		else                                   nextSnapshotFrame = (Input.internalUsers.min Math.min(.smoothFrame, .inputFrame) where .active and not .local)+1
+		else                                   nextSnapshotFrame = (input.internalUsers.min Math.min(.smoothFrame, .inputFrame) where .active and not .local)+1
 		replayLog += "(next:{nextSnapshotFrame})"
 		if snapshotFrame != -1: rewindAndReplayState snapshot, snapshotFrame
 
@@ -409,7 +409,7 @@ transient skipInit unit Core
 			
 			let userCount = snapshot.readInt
 			for userCount
-				let user = Input.internalUsers[.]
+				let user = input.internalUsers[.]
 				user.inputs.readPos = snapshot.readInt
 		replayLog += ")"
 		
@@ -451,13 +451,13 @@ transient skipInit unit Core
 		if players.length >= 2 and frame > 200
 			float myChecksum = Framework.checksum + snapshot.writePos
 			float theirChecksum = checksums[frame]
-			if logging: checksumLog += " <{Input.localUser.id}*> #{frame} {myChecksum}"
+			if logging: checksumLog += " <{input.localUser.id}*> #{frame} {myChecksum}"
 			if !theirChecksum                             checksums[frame] = myChecksum; else
 			if !theirChecksum.isApproximately(myChecksum) onWrongChecksum mine:myChecksum theirs:theirChecksum
 			lastChecksumFrame = frame
 			
-		snapshot.writeInt Input.internalUsers.length
-		for Input.internalUsers
+		snapshot.writeInt input.internalUsers.length
+		for input.internalUsers
 			snapshot.writeInt .inputs.readPos
 		replayLog += "sn.writepos:{snapshot.writePos} "
 				
@@ -484,7 +484,7 @@ transient skipInit unit Core
 	Buffer snapshotBuffer = {}
 		
 	saveEventStreamAndLogs
-		if Input.isCertain
+		if input.isCertain
 			saveEventStream
 			Platform.delay 1 seconds
 				saveLogs
@@ -492,7 +492,7 @@ transient skipInit unit Core
 	internal saveLogs
 		// Ensure that current eventLog is added to the table even if we haven't processed a single frame
 		logTable += ",,,,,,,,,,,,,,,,,,,,,,,,\"{eventLog.trim}\""
-		Platform.saveTextFile "{Input.localUser.id} {Platform.appName} {Date.now.invariantDayMonthYearHourMinuteSecondString} v{Platform.version}.csv", logTable
+		Platform.saveTextFile "{input.localUser.id} {Platform.appName} {Date.now.invariantDayMonthYearHourMinuteSecondString} v{Platform.version}.csv", logTable
 			
 	saveEventStream
 		Buffer buffer = {}
@@ -502,9 +502,9 @@ transient skipInit unit Core
 		buffer.writeString Math.randomSeed
 		buffer.writeBool startInLobby
 		buffer.writeBool Platform.isStaging
-		let userCount = Input.internalUsers.count . != null
+		let userCount = input.internalUsers.count . != null
 		buffer.writeInt8 userCount
-		for Input.internalUsers if .
+		for input.internalUsers if .
 			buffer.writeInt .id
 			buffer.writeBool .local
 			buffer.writeBuffer .inputs
@@ -522,18 +522,18 @@ transient skipInit unit Core
 			startInLobby = buffer.readBool
 			Platform.isStaging = buffer.readBool
 			let userCount = buffer.readInt8
-			Input.internalUsers.clear
+			input.internalUsers.clear
 			for userCount
 				InternalUser user = {
 					id: buffer.readInt
 					local: buffer.readBool
 				}
-				if user.local: Input.localUser = user
+				if user.local: input.localUser = user
 				buffer.readBuffer user.inputs
-				Input.internalUsers[user.id] = user
+				input.internalUsers[user.id] = user
 				
 			// Replay
-			for Input.internalUsers if .
+			for input.internalUsers if .
 				.collectInputs = true
 				if Platform.isDebug: .local = true
 				.startInputFrame frames
@@ -562,7 +562,7 @@ transient skipInit unit Core
 		this.gameId = gameId
 		this.roomString = roomString
 		this.roomId = cast roomString
-		Input.localUser = {userId, local:true, connectionId:0}
+		input.localUser = {userId, local:true, connectionId:0}
 		//initDatabase
 		setupVideoAndNetwork
 		lobby.enableFullscreen = !Platform.isStaging
@@ -576,7 +576,7 @@ transient skipInit unit Core
 		ServerNetwork_setup()
 		
 	internal storeUserId
-		Platform.setLocalStorageObject "room"+roomId, RoomInfo(currentTime, Input.localUser.id)
+		Platform.setLocalStorageObject "room"+roomId, RoomInfo(currentTime, input.localUser.id)
 		
 	onWrongChecksum: float mine, float theirs
 		if logging: checksumLog += " MISMATCH mine:{mine} theirs:{theirs}"
@@ -630,7 +630,7 @@ transient unit Snapshot
 	autoSave() autoSaveAtEndOfStep = true
 	
 	internal onEndOfStep
-		if Input.isCertain
+		if input.isCertain
 			if autoSaveAtEndOfStep and ++autoSaveCount > 5
 				let snap = save
 				IndexedDB.saveBuffer "snapshot", "{Core.gameId}-0", snap
@@ -700,15 +700,15 @@ skipInit transient unit statistics
 		StatisticsGraphSeries[] series
 		string[] connections
 		for players
-			let internalUser = Input.internalUsers[.id]
+			let internalUser = input.internalUsers[.id]
 			connections.add internalUser.connectionType
 			series.add this.series.find.userIndex == i
 		http.post "{Platform.protocolAndHost}:3114/stats", body:{
 			time: Date.now.isoString
 			gameId: Core.gameId
 			roomId: Core.roomId
-			userId: Input.localUser.id
-			userIndex: Input.localUser.index
+			userId: input.localUser.id
+			userIndex: input.localUser.index
 			userName
 			game
 			round
@@ -734,10 +734,10 @@ skipInit transient unit statistics
 		if clear: this.clear
 			
 	internal manuallyTriggerSend: int value, bool clear
-		let prevIsCertain = Input.isCertain
-		Input.isCertain = true
+		let prevIsCertain = input.isCertain
+		input.isCertain = true
 		statistics.send round:value game:value clear
-		Input.isCertain = prevIsCertain
+		input.isCertain = prevIsCertain
 			
 	add: string name, float value, Color color = White, int set = 0
 		var s = series.find.name == name and .set == set
@@ -763,7 +763,7 @@ skipInit transient unit statistics
 		infos.add {value, index, frame:Core.frame}
 		
 	internal tick
-		Input.onTouchDownWithin position, size, align:Left, valign:Top
+		input.onTouchDownWithin position, size, align:Left, valign:Top
 			currentSet incrementAndWrap sets
 	
 		maxValue = 12
@@ -815,11 +815,11 @@ unit networkVisualizer
 				Core.smooth player
 					if player.id == 1: Core.replayLog += "C"
 					// Core.log "[{Core.frame}] <{player.id}> networkVisualizer", Core.isSmooth
-					Input.onKeyDown by:player
+					input.onKeyDown by:player
 						if player.id == 1: Core.replayLog += "D"
 						if (posForPlayer[player.index] += 2) > 1080
 							posForPlayer[player.index] -= 1080
-						// Core.log "[{Core.frame}] <{player.id}> networkVisualizer Input.onKeyDown", posForPlayer[player.index]
+						// Core.log "[{Core.frame}] <{player.id}> networkVisualizer input.onKeyDown", posForPlayer[player.index]
 				
 			for players -> player
 				drawCircle {1110+player.index*20, -540+posForPlayer[player.index]}, size:20, fillColor:.color
@@ -831,7 +831,7 @@ unit networkVisualizer
 		
 		// Draw bar to visualizue up to which frame we got input from each player
 		for players -> player
-			let internaluser = Input.internalUsers[.id]
+			let internaluser = input.internalUsers[.id]
 				// BufferFrames
 				let bufferY = 510 - getHeightForFrame(Core.frame-internaluser.bufferFrames+1)
 				drawLine {960,bufferY} to {1100,bufferY} width:3, color:.color

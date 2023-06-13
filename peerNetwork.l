@@ -206,9 +206,9 @@ transient unit PeerNetwork
 	Buffer sendBuffer = {}
 	
 	sendInputs: int inputFrame
-		for Input.internalUsers -> user
+		for input.internalUsers -> user
 			if user?.dataChannel
-				let inputs = Input.localUser.inputs
+				let inputs = input.localUser.inputs
 				let length = inputs.writePos - user.inputsSentPos
 				sendBuffer.reset
 				sendBuffer.writeInt8 cast NetworkMessageType.Tick
@@ -303,7 +303,7 @@ transient unit PeerNetwork
 		sendBuffer.writeInt checksumFor
 		sendBuffer.writeFloat64 checksum
 		
-		for Input.internalUsers -> user
+		for input.internalUsers -> user
 			if user?.dataChannel		
 				send ., sendBuffer
 
@@ -332,7 +332,7 @@ transient unit PeerNetwork
 			
 		try {
 			// Create local media stream
-			Input_localUser.mediaStream = await navigator.mediaDevices.getUserMedia({
+			input_localUser.mediaStream = await navigator.mediaDevices.getUserMedia({
 				video: {width: 500, height: 375},
 				audio: enableAudio
 			});
@@ -349,8 +349,8 @@ transient unit PeerNetwork
 					case "audiooutput": PeerNetwork_devices.audioOutput.push(device); break;
 				}
 			}
-			PeerNetwork_videoInputId = Input_localUser.mediaStream.getVideoTracks()[0]?.getSettings().deviceId || PeerNetwork_devices.videoInput[0]?.deviceId
-			PeerNetwork_audioInputId = Input_localUser.mediaStream.getAudioTracks()[0]?.getSettings().deviceId || PeerNetwork_devices.audioInput[0]?.deviceId
+			PeerNetwork_videoInputId = input_localUser.mediaStream.getVideoTracks()[0]?.getSettings().deviceId || PeerNetwork_devices.videoInput[0]?.deviceId
+			PeerNetwork_audioInputId = input_localUser.mediaStream.getAudioTracks()[0]?.getSettings().deviceId || PeerNetwork_devices.audioInput[0]?.deviceId
 			PeerNetwork_audioOutputId = PeerNetwork_devices.audioInput[0]?.deviceId
 			Core_log("setupLocalMedia: success")
 			
@@ -370,17 +370,17 @@ transient unit PeerNetwork
 		PeerNetwork_videoInputId = videoInputId;
 		
 		// Create local media stream
-		Input_localUser.mediaStream = await navigator.mediaDevices.getUserMedia({
+		input_localUser.mediaStream = await navigator.mediaDevices.getUserMedia({
 			audio: {deviceId: PeerNetwork_audioInputId},
 			video: {deviceId: PeerNetwork_videoInputId},
 		});
 		
 		// Update video elements and tracks
-		for(let el of Input_localUser.videoElements) {
-			el.srcObject = Input_localUser.mediaStream;
+		for(let el of input_localUser.videoElements) {
+			el.srcObject = input_localUser.mediaStream;
 		}
-		const [videoTrack] = Input_localUser.mediaStream.getVideoTracks();
-		for(let user of Input_internalUsers) {
+		const [videoTrack] = input_localUser.mediaStream.getVideoTracks();
+		for(let user of input_internalUsers) {
 			if(user?.peerConnection) {
 				const sender = user.peerConnection.getSenders().find((s) => s.track.kind === videoTrack.kind);
 				sender.replaceTrack(videoTrack);
@@ -392,14 +392,14 @@ transient unit PeerNetwork
 		PeerNetwork_audioInputId = audioInputId;
 		
 		// Create local media stream
-		Input_localUser.mediaStream = await navigator.mediaDevices.getUserMedia({
+		input_localUser.mediaStream = await navigator.mediaDevices.getUserMedia({
 			audio: {deviceId: PeerNetwork_audioInputId},
 			video: {deviceId: PeerNetwork_videoInputId},
 		});
 		
 		// Update tracks
-		const [audioTrack] = Input_localUser.mediaStream.getAudioTracks();
-		for(let user of Input_internalUsers) {
+		const [audioTrack] = input_localUser.mediaStream.getAudioTracks();
+		for(let user of input_internalUsers) {
 			if(user?.peerConnection) {
 				const sender = user.peerConnection.getSenders().find((s) => s.track.kind === audioTrack.kind);
 				log('Found sender:', sender);
@@ -411,7 +411,7 @@ transient unit PeerNetwork
 		PeerNetwork_audioOutputId = audioOutputId;
 		
 		// Update audio elements
-		for(let user of Input_internalUsers) {
+		for(let user of input_internalUsers) {
 			if(user?.audioElement && user.audioElement.setSinkId) {
 				user.audioElement.setSinkId(PeerNetwork_audioOutputId);
 			}
@@ -427,8 +427,8 @@ transient unit PeerNetwork
 		if(!PeerNetwork_enableVideo && !PeerNetwork_enableAudio) return
 			
 		// Add local tracks to peer connection
-		for(let track of Input_localUser.mediaStream.getTracks())
-			user.peerConnection.addTrack(track, Input_localUser.mediaStream);
+		for(let track of input_localUser.mediaStream.getTracks())
+			user.peerConnection.addTrack(track, input_localUser.mediaStream);
 		
 		// Create media stream for remote player
 		user.mediaStream = new MediaStream();
@@ -483,7 +483,7 @@ transient unit PeerNetwork
 	makePrimiaryUserIfStateIsNotReceived
 		requestedState = false
 		stateTimeout = Platform.setTimeout 25 seconds
-			if Input.internalUsers.any.receivedAnswer
+			if input.internalUsers.any.receivedAnswer
 				Core.log "No state after 25s, but we received answers -> Alert the user to make sure WebRTC connections aren't blocked."
 				alert "Could not connect. Please make sure WebRTC connections aren't block by your router, firewall or a browser extension. If you have a VPN browser extension installed, please check your settings and make sure WebRTC connections aren't blocked."
 			else
@@ -509,20 +509,20 @@ transient unit PeerNetwork
 			snapshotBuffer.reset
 			Snapshot.serialize snapshotBuffer
 			for sendStateQueue <-
-				let user = Input.internalUsers[.]
+				let user = input.internalUsers[.]
 				if user?.dataChannel
 					sendState user, snapshotBuffer
 					sendStateQueue.removeAt i
 		
 	private sendState: InternalUser to, Buffer buffer
 		Core.log "Sending state to {to.id}"
-		let localUser = Input.localUser
+		let localUser = input.localUser
 		sendBuffer.reset
 		sendBuffer.writeInt8 cast NetworkMessageType.State
 		sendBuffer.writeInt32 Core.frame-1
-		let userCount = Input.internalUsers.count . != null
+		let userCount = input.internalUsers.count . != null
 		sendBuffer.writeInt32 userCount
-		for Input.internalUsers if .
+		for input.internalUsers if .
 			sendBuffer.writeInt32 .id
 			sendBuffer.writeInt32 .inputs.readPos
 			sendBuffer.writeBool .active
@@ -543,13 +543,13 @@ transient unit PeerNetwork
 			let id = buffer.readInt32
 			let readPos = buffer.readInt32
 			let active = buffer.readBool
-			let user = Input.internalUsers[id]
+			let user = input.internalUsers[id]
 				user.inputFrame = frame
 				user.inputs.readPos = user.inputs.writePos = readPos
 				user.active = active
 				
-		for Input.internalUsers if .
-			.inputsSentPos = Input.localUser.inputs.writePos
+		for input.internalUsers if .
+			.inputsSentPos = input.localUser.inputs.writePos
 			
 		snapshotBuffer.reset
 		buffer.readBuffer snapshotBuffer

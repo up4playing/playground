@@ -36,17 +36,17 @@ transient unit ServerNetwork
 	// to ensure we hold on to the current snapshot, so we can later rewind to a frame before the new user joined.
 	// This ensured that the user joins on the same frame on all clients
 	private getOrCreateUser: int id
-		return Input.internalUsers[id] || (Input.internalUsers[id] = {id, local:false, active:true})
+		return input.internalUsers[id] || (input.internalUsers[id] = {id, local:false, active:true})
 		
 	private onConnectedToServer
-		if Input.localUser.id == -1 and !Platform.isStaging
+		if input.localUser.id == -1 and !Platform.isStaging
 			// We were in this room before -> connect with the same userId we had before
 			RoomInfo roomInfo = cast Platform.getLocalStorageObject "room"+Core.roomId
-			Input.localUser.id = roomInfo && roomInfo.time > Core.currentTime - 3600000*6 ? roomInfo.userId : -1
-			Core.log roomInfo, Input.localUser.id
+			input.localUser.id = roomInfo && roomInfo.time > Core.currentTime - 3600000*6 ? roomInfo.userId : -1
+			Core.log roomInfo, input.localUser.id
 		
-		Core.log "onConnectedToServer as {Input.localUser.id} {Core.roomId}"
-		sendJoinMessage Core.roomString, Input.localUser.id, version:Platform.version
+		Core.log "onConnectedToServer as {input.localUser.id} {Core.roomId}"
+		sendJoinMessage Core.roomString, input.localUser.id, version:Platform.version
 		
 	js int bufferedAmount
 		return ServerNetwork_socket.bufferedAmount 
@@ -89,10 +89,10 @@ transient unit ServerNetwork
 		for userCount
 			let id = buffer.readInt32
 			InternalUser user
-			if id == userId: user = Input.localUser
+			if id == userId: user = input.localUser
 			else             user = {offerByMe:true, connectionId:nextConnectionId++}
 			user.id = id
-			Input.internalUsers[id] = user
+			input.internalUsers[id] = user
 			buffer.readBuffer user.inputs
 
 		if roomId != Core.roomId
@@ -103,12 +103,12 @@ transient unit ServerNetwork
 		if version != Platform.version
 			alert "You are using an old version of this application. Please refresh your browser."
 			
-		inputsSentPos = Input.localUser.inputs.writePos
-		Input.localUser.id = userId
+		inputsSentPos = input.localUser.inputs.writePos
+		input.localUser.id = userId
 		Math.setRandomSeed seed
 		Core.serverStartTime = serverStartTime
 		Core.mode = Ping
-		for Input.internalUsers
+		for input.internalUsers
 			if . and !.local: PeerNetwork.createOffer .
 		Core.storeUserId
 		
@@ -179,7 +179,7 @@ transient unit ServerNetwork
 		sendBuffer.reset
 		sendBuffer.writeInt8 cast NetworkMessageType.Signal
 		sendBuffer.writeInt32 receiverId
-		sendBuffer.writeInt32 Input.localUser.id
+		sendBuffer.writeInt32 input.localUser.id
 		sendBuffer.writeString type
 		sendBuffer.writeString sdp
 		send sendBuffer
@@ -204,7 +204,7 @@ transient unit ServerNetwork
 		sendBuffer.reset
 		sendBuffer.writeInt8 cast NetworkMessageType.Ice
 		sendBuffer.writeInt32 receiverId
-		sendBuffer.writeInt32 Input.localUser.id
+		sendBuffer.writeInt32 input.localUser.id
 		sendBuffer.writeString candidate
 		send sendBuffer
 		
@@ -219,12 +219,12 @@ transient unit ServerNetwork
 	int inputsSentPos
 		
 	sendInputs: int inputFrame
-		let inputs = Input.localUser.inputs
+		let inputs = input.localUser.inputs
 		
 		let length = inputs.writePos - inputsSentPos
 		sendBuffer.reset
 		sendBuffer.writeInt8 cast NetworkMessageType.Tick
-		sendBuffer.writeInt32 Input.localUser.id
+		sendBuffer.writeInt32 input.localUser.id
 		sendBuffer.writeInt32 inputFrame // You got all inputs up to and including this frame
 		sendBuffer.writeBuffer inputs, inputsSentPos, length
 		sendBuffer.writeInt Core.lastChecksumFrame                           // The last certain frame with inputs from everybody
@@ -273,6 +273,6 @@ transient unit ServerNetwork
 		let keepMaster = buffer.readBool
 		let newUserId = buffer.readBool
 		let url = buffer.readString
-		if !newUserId: url += "u{Input.localUser.id}"
+		if !newUserId: url += "u{input.localUser.id}"
 		Platform.setLocation url
 			

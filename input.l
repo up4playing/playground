@@ -125,7 +125,7 @@ class Touch
 	bool handled
 	
 	// Calculate position and startPositio dynamically to ensure it is always valid and relative to the current matrix
-	// even if we never check the touch with a Input.onTouch method
+	// even if we never check the touch with a input.onTouch method
 	
 	Vector2 position := referencePosition.getRelativeTo(graphics.localMatrix)
 	Vector2 startPosition := referenceStartPosition.getRelativeTo(graphics.localMatrix)
@@ -315,7 +315,7 @@ enum ShowPointersMode
 	All    // Show the mouse pointers of all players
 	
 // A collection of methods to receive input
-skipInit global unit Input
+skipInit global unit input
 	transient visible InternalUser[] internalUsers
 	transient InternalUser localUser
 	transient internal Player localPlayer
@@ -330,7 +330,7 @@ skipInit global unit Input
 	bool ignoreFirstClick
 	
 	string textInput
-		let localPlayer = playersById[Input.localUser.id]
+		let localPlayer = playersById[input.localUser.id]
 		return localPlayer.textInput
 	
 	internal init
@@ -344,15 +344,15 @@ skipInit global unit Input
 		window.onpointerdown = e => {
 			if(e.button == 0 && Platform_mode == 0) {
 				Platform_record();
-				if(Input_ignoreFirstClick) return;
+				if(input_ignoreFirstClick) return;
 			}
-			Input_handleTouchEvent(1, e.pageX, e.pageY, e.pointerType, e.pointerId, e.button, e.shiftKey, e.altKey, e.ctrlKey || e.metaKey);
+			input_handleTouchEvent(1, e.pageX, e.pageY, e.pointerType, e.pointerId, e.button, e.shiftKey, e.altKey, e.ctrlKey || e.metaKey);
 		}
 		window.onpointermove = e => {
-			Input_handleTouchEvent(2, e.pageX, e.pageY, e.pointerType, e.pointerId, e.button, e.shiftKey, e.altKey, e.ctrlKey || e.metaKey);
+			input_handleTouchEvent(2, e.pageX, e.pageY, e.pointerType, e.pointerId, e.button, e.shiftKey, e.altKey, e.ctrlKey || e.metaKey);
 		}
 		window.onpointerup = e => {
-			Input_handleTouchEvent(3, e.pageX, e.pageY, e.pointerType, e.pointerId, e.button, e.shiftKey, e.altKey, e.ctrlKey || e.metaKey);
+			input_handleTouchEvent(3, e.pageX, e.pageY, e.pointerType, e.pointerId, e.button, e.shiftKey, e.altKey, e.ctrlKey || e.metaKey);
 		}
 		window.oncontextmenu = e => {
 			e.preventDefault();
@@ -363,7 +363,7 @@ skipInit global unit Input
 			e.preventDefault();
 			e.stopPropagation();
 			if(e.button == 0 && Platform_mode == 0) Platform_record();
-			Input_handleWheelEvent(e.pageX, e.pageY, -e.deltaX, -e.deltaY)
+			input_handleWheelEvent(e.pageX, e.pageY, -e.deltaX, -e.deltaY)
 			return false;			
 		}
 		window.onkeydown = e => {
@@ -427,17 +427,17 @@ skipInit global unit Input
 			} else if(key == "F10") { 
 				Platform_toggleSmallScreen();
 			} else {
-				Input_handleKeyEvent(5, keyCode, key?.length == 1 ? key : "")
+				input_handleKeyEvent(5, keyCode, key?.length == 1 ? key : "")
 				if(keyCode == 9) e.preventDefault();
 			}
 		}
 		window.onkeyup = e => {
-			Input_handleKeyEvent(6, e.keyCode)
+			input_handleKeyEvent(6, e.keyCode)
 		}
 			
 		// Handles navigating back or forward in the browser	
 		window.onpopstate = e => {
-			Input_handleNavigate(location.pathname);
+			input_handleNavigate(location.pathname);
 		}
 		
 		if(window._input) window._input.value = ""
@@ -1295,9 +1295,9 @@ skipInit global unit Input
 			_input.style.height = "1px"
 			_input.style.fontSize = "1px"
 			_input.style.backgroundColor = "#000000"
-			_input.oninput = e => Input_handleTextInput(7, _input.value)
+			_input.oninput = e => input_handleTextInput(7, _input.value)
 			_input.onblur = e => {
-				if(Input_isTextInputActive) {
+				if(input_isTextInputActive) {
 					_input.focus()
 				}
 			}
@@ -1306,26 +1306,26 @@ skipInit global unit Input
 		return _input
 				
 	js void startTextInput: string initalValue = null, int forUser = -1
-		if(forUser == -1 || Input_localUser?.id == forUser) {
-			let input = Input_getOrCreateInputField()
+		if(forUser == -1 || input_localUser?.id == forUser) {
+			let input = input_getOrCreateInputField()
 			if(initalValue != null) { 
 				input.value = initalValue
 			}
 			_input.focus()
-			Input_isTextInputActive = true
+			input_isTextInputActive = true
 		}
 		
 	js void stopTextInput
-		Input_isTextInputActive = false
+		input_isTextInputActive = false
 		
 	js void setTextInput: string value
-		let input = Input_getOrCreateInputField()
+		let input = input_getOrCreateInputField()
 		input.value = value
-		Input_handleTextInput(7, value)
+		input_handleTextInput(7, value)
 		
 	js void updateCursor
-		// document.body.style.cursor = (Input_showPointers == 2 && Platform_mode == 4 ? "none" : Input_cursor)
-		document.body.style.cursor = Input_cursor
+		// document.body.style.cursor = (input_showPointers == 2 && Platform_mode == 4 ? "none" : input_cursor)
+		document.body.style.cursor = input_cursor
 
 	onTextComposition: void(string characters) do
 		for internalUsers -> user if .

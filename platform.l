@@ -73,7 +73,7 @@ transient skipInit unit Platform
 		Platform_init();
 		Math_init();
 		Core_init();
-		Input_init();
+		input_init();
 		gizmo_init();
 		Loca_init();
 		Core_log("Loading...")
@@ -257,7 +257,7 @@ transient skipInit unit Platform
 		
 	inline js void setFullscreen: value = true
 		                          Player forPlayer = null
-		if(!Platform_isStaging && !Platform_isDebug && (forPlayer == null || Input_localUser?.id == forPlayer.id)) {
+		if(!Platform_isStaging && !Platform_isDebug && (forPlayer == null || input_localUser?.id == forPlayer.id)) {
 			try {
 				if(value) {
 					document.body.requestFullscreen()
@@ -375,7 +375,7 @@ transient skipInit unit Platform
 		setTimeout(then, time)
 		
 	inline js void copyToClipboard(string text)
-		if(Core_isPremiere && Input_isCertain) {
+		if(Core_isPremiere && input_isCertain) {
 			navigator.clipboard.writeText(text)
 		}
 		
@@ -461,7 +461,7 @@ unit File
 		})		
 		
 	js string write: string filename, string data, void() then = null
-		if(Core_isPremiere && Input_isCertain) {
+		if(Core_isPremiere && input_isCertain) {
 			require("fs").writeFile(filename, data, "utf8", (err, data) => {
 				then?.()
 			})

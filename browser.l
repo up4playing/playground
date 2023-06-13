@@ -48,11 +48,11 @@ HTMLElement HTMLInput
 		this.element.onkeyup = e => {
 			let value = this.element.value
 			if(value != prevValue) {
-				Input_handleString(this.changeCallbackId, value);
+				input_handleString(this.changeCallbackId, value);
 				prevValue = value;
 			}
 			if(e.keyCode == 13) {
-				Input_handleString(this.enterCallbackId, value);
+				input_handleString(this.enterCallbackId, value);
 			}
 		}
 		document.body.appendChild(this.element)

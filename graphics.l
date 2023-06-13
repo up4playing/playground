@@ -164,11 +164,11 @@ transient global unit graphics
 
 	internal finishFrame
 		if(Platform.fastForward) return
-		for Input.internalUsers if .
+		for input.internalUsers if .
 			.videoElementIndex = 0
 		drawItems
 		drawSafeArea
-		for Input.internalUsers -> user if .
+		for input.internalUsers -> user if .
 			for user.videoElementIndex to user.videoElements.length
 				PeerNetwork.removeVideoElement user.videoElements[.]
 			user.videoElements.setLength user.videoElementIndex
@@ -188,7 +188,7 @@ transient global unit graphics
 	private isVisibleFor: Player[] visibleFor
 		if(Platform.fastForward) return false
 		let effectiveVisibleFor = visibleFor or currentlyVisibleFor
-		return effectiveVisibleFor == null or effectiveVisibleFor.any.id == Input.localUser.id
+		return effectiveVisibleFor == null or effectiveVisibleFor.any.id == input.localUser.id
 		
 	private Player[] getClickableBy: Player[] visibleFor, Player[] clickableBy
 		Player[] effectiveVisibleBy = visibleFor or currentlyVisibleFor
@@ -596,9 +596,9 @@ transient global unit graphics
 		// Handle click (only visible buttons are clickable)
 		let effectiveClickableBy = getClickableBy(visibleFor, clickableBy)
 		if size.x == 0 and size.y == 0: size = image.size
-		Input.onTouchDownWithin position, size + touchMargin, by:effectiveClickableBy, showTouchArea, do:onClick
+		input.onTouchDownWithin position, size + touchMargin, by:effectiveClickableBy, showTouchArea, do:onClick
 		if hotkey
-			Input.onKeyDown hotkey, by:effectiveClickableBy
+			input.onKeyDown hotkey, by:effectiveClickableBy
 				onClick null
 		
 	// ------------------------------------------------------- Text -------------------------------------------------------
@@ -672,9 +672,9 @@ transient global unit graphics
 			// Handle click (only visible buttons are clickable)
 			let effectiveClickableBy = getClickableBy(visibleFor, clickableBy)
 			Vector2 effectiveSize = image ? getEffectiveSize(image.size, size) : {getTextWidth(text), fontSize}
-			Input.onTouchDownWithin position, effectiveSize + touchMargin, by:effectiveClickableBy, showTouchArea, do:onClick
+			input.onTouchDownWithin position, effectiveSize + touchMargin, by:effectiveClickableBy, showTouchArea, do:onClick
 			if hotkey
-				Input.onKeyDown hotkey, by:effectiveClickableBy
+				input.onKeyDown hotkey, by:effectiveClickableBy
 					onClick null
 			
 	// ------------------------------------------------------- Rectangle -------------------------------------------------------
@@ -870,10 +870,10 @@ transient global unit graphics
 	// Draw a pointer to indicate the mouse position of the given player on the screen
 	global drawPointer: Player player                    // Show the mouse position of this player
 		                Color color = null               // The color of pointer. If this is left out, the player color is used
-		                showPointer = Input.showPointers // Choose whether you want to draw the pointers for local player, remote players or both
+		                showPointer = input.showPointers // Choose whether you want to draw the pointers for local player, remote players or both
 		if showPointer == All
-		or (player == Input.localPlayer and showPointer == Local)
-		or (player != Input.localPlayer and showPointer == Remote)
+		or (player == input.localPlayer and showPointer == Local)
+		or (player != input.localPlayer and showPointer == Remote)
 			if !color: color = player.color
 			for player.touches
 				drawImage finger, .smoothPosition+{11,32}, frame:.isDown ? 1 : 0, layer:int.maxValue
@@ -1047,12 +1047,12 @@ skipInit unit gizmo
 		min = Vector2.none
 		max = Vector2.none
 	
-	internal onTouch: InputType inputType, int id, Vector2 pixelPos, Vector2 referencePos, shift = false, alt = false, cmdOrCtrl = false	
+	internal onTouch: InputType InputType, int id, Vector2 pixelPos, Vector2 referencePos, shift = false, alt = false, cmdOrCtrl = false	
 		if Platform.mode != Manipulator: return
 		let movedSinceTouchDown = (referencePos manhattanDistanceTo touchDownPos) > 8
 		let insideGizmo = referencePos >= gizmo.min and referencePos <= gizmo.max
-		if inputType == TouchDown: touchDownPos = referencePos; touchDownInsideGizmo = insideGizmo; else
-		if inputType == TouchUp:   touchDownPos = Vector2.none; isManipulating = false
+		if InputType == TouchDown: touchDownPos = referencePos; touchDownInsideGizmo = insideGizmo; else
+		if InputType == TouchUp:   touchDownPos = Vector2.none; isManipulating = false
 			
 		// Which handle are we currently hovering over?
 		if items and not touchDownPos
@@ -1070,8 +1070,8 @@ skipInit unit gizmo
 		// If we touch down outside the selection, we select an item immediately, so we can directly move it
 		// If we touch up inside the selection without moving, we cycle through all items the pointer is over
 		if !overHandleDirection and codeId >= waitingForCodeId
-			if (inputType == TouchDown and !insideGizmo)
-			or (inputType == TouchUp and touchDownInsideGizmo and !movedSinceTouchDown)
+			if (InputType == TouchDown and !insideGizmo)
+			or (InputType == TouchUp and touchDownInsideGizmo and !movedSinceTouchDown)
 			
 				// Collect all items and locations the mouse pointer is over
 				GizmoOverItem[] overItems
@@ -1082,7 +1082,7 @@ skipInit unit gizmo
 									
 				if overItems.length
 					// Select next item cycling through all items the mouse pointer is over
-					if inputType == TouchDown: locationIndex = 0
+					if InputType == TouchDown: locationIndex = 0
 					let selectedStackItem = overItems[locationIndex++ % overItems.length]
 					cursorLocation = selectedStackItem.location
 					cursorItem = selectedStackItem.item
@@ -1140,7 +1140,7 @@ skipInit unit gizmo
 					influences.add {cursorLocation.file, cursorLocation.end, cursorLocation.end, deltas:[referencePos.x - touchDownPos.x, referencePos.y - touchDownPos.y], initialValues:[0,0], label:"position"}
 				
 			// Send manipulation to editor	
-			if inputType == TouchMove and touchDownPos and codeId >= waitingForCodeId
+			if InputType == TouchMove and touchDownPos and codeId >= waitingForCodeId
 				if not isManipulating and movedSinceTouchDown
 					// Start manipulation as soon as we dragged more than a certain threshold
 					isManipulating = true
@@ -1442,7 +1442,7 @@ transient DisplayItem DisplayVideo
 	int userId
 	VideoShape shape
 	draw
-		InternalUser user = Input.internalUsers[userId]
+		InternalUser user = input.internalUsers[userId]
 			let videoElement = user.videoElements[user.videoElementIndex]
 			               or (user.videoElements[user.videoElementIndex] = PeerNetwork.createVideoElement(user.mediaStream, user.local))
 			

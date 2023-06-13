@@ -18,7 +18,7 @@ localStorage
 	get: string key, stored void(any data) do
 		let id = networkData.addCallback do
 		let data = getStringDirectly(key)
-		Input.handleObject id, data
+		input.handleObject id, data
 		
 http
 	// Perform an http get request
@@ -26,10 +26,10 @@ http
 		         stored void(any result) code
 		let id = networkData_addCallback(code)
 		if(Core_frame == 0) Platform_waitingForInitialData++
-		if(Core_isPremiere && Input_isCertain) {
+		if(Core_isPremiere && input_isCertain) {
 			let data = await (await fetch(url)).text()
 			log("http.get "+url+" -> "+data?.length+" bytes")
-			Input_handleObject(id, data, 1)
+			input_handleObject(id, data, 1)
 		}
 		
 	internal js void getInternal: string url
@@ -40,10 +40,10 @@ http
 		          stored void(any result) code
 		let id = networkData_addCallback(code)
 		if(Core_frame == 0) Platform_waitingForInitialData++
-		if(Core_isPremiere && Input_isCertain) {
+		if(Core_isPremiere && input_isCertain) {
 			let data = await (await fetch(url, {method:"POST"})).text()
 			log("http.post "+url+" -> "+data?.length+" bytes")
-			Input_handleObject(id, data)
+			input_handleObject(id, data)
 		}
 		
 	// Perform an http post request
@@ -52,16 +52,16 @@ http
 		          stored void(any result) code
 		let id = networkData_addCallback(code)
 		if(Core_frame == 0) Platform_waitingForInitialData++
-		if(Core_isPremiere && Input_isCertain) {
+		if(Core_isPremiere && input_isCertain) {
 			log("Actually fetching data: POST "+url)
 			let data = await (await fetch(url, {method:"POST", body:JSON.stringify(body)})).text()
 			log("http.post "+url+" -> "+data?.length+" bytes")
-			Input_handleObject(id, data)
+			input_handleObject(id, data)
 		}
 		
 	js void post: string url
 		          any body
-		if(Core_isPremiere && Input_isCertain) {
+		if(Core_isPremiere && input_isCertain) {
 			(await fetch(url, {method:"POST", body:JSON.stringify(body)})).text()
 		}
 		
@@ -70,10 +70,10 @@ http
 		         stored void(any result) code
 		let id = networkData_addCallback(code)
 		if(Core_frame == 0) Platform_waitingForInitialData++
-		if(Core_isPremiere && Input_isCertain) {
+		if(Core_isPremiere && input_isCertain) {
 			let data = await (await fetch(url, {method:"PUT"})).text()
 			log("http.put "+url+" -> "+data?.length+" bytes")
-			Input_handleObject(id, data)
+			input_handleObject(id, data)
 		}
 		
 	// Perform an http put request
@@ -82,20 +82,20 @@ http
 		         stored void(any result) code
 		let id = networkData_addCallback(code)
 		if(Core_frame == 0) Platform_waitingForInitialData++
-		if(Core_isPremiere && Input_isCertain) {
+		if(Core_isPremiere && input_isCertain) {
 			let data = await (await fetch(url, {method:"PUT", body:JSON.stringify(body)})).text()
 			log("http.put "+url+" -> "+data?.length+" bytes")
-			Input_handleObject(id, data)
+			input_handleObject(id, data)
 		}
 		
 	// Perform an http delete request
 	js void delete: string url
 		            stored void(any result) code
 		let id = networkData_addCallback(code)
-		if(Core_isPremiere && Input_isCertain) {
+		if(Core_isPremiere && input_isCertain) {
 			let data = await (await fetch(url, {method:"DELETE"})).text()
 			log("http.delete "+url+" -> "+data?.length+" bytes")
-			Input_handleObject(id, data)
+			input_handleObject(id, data)
 		}
 		
 	// Perform an http delete request
@@ -103,8 +103,8 @@ http
 		            any body
 		            stored void(any result) code
 		let id = networkData_addCallback(code)
-		if(Core_isPremiere && Input_isCertain) {
+		if(Core_isPremiere && input_isCertain) {
 			let data = await (await fetch(url, {method:"DELETE", body:JSON.stringify(body)})).text()
 			log("http.delete "+url+" -> "+data?.length+" bytes")
-			Input_handleObject(id, data)
+			input_handleObject(id, data)
 		}
