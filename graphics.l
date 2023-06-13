@@ -172,10 +172,10 @@ transient global unit graphics
 			for user.videoElementIndex to user.videoElements.length
 				PeerNetwork.removeVideoElement user.videoElements[.]
 			user.videoElements.setLength user.videoElementIndex
-			PeerNetwork.setAudioMuted user.audioElement, muted:Core.muteInvisibleUsers and user.videoElementIndex == 0
+			PeerNetwork.setAudioMuted user.audioElement, muted:core.muteInvisibleUsers and user.videoElementIndex == 0
 		
 	private drawItems
-		Core.displayItems = items.length
+		core.displayItems = items.length
 		gizmo.tick
 		items.sort b.layer - a.layer
 		items.each <- .draw
@@ -556,7 +556,7 @@ transient global unit graphics
 		                   alpha = 1.0                         // The opacity of the image (0: fully transparent, 1: fully visible)
 		                   Color color = White                 // Tint the image with this color (white for no tint)
 		                   SourceCodeLocation location
-		var frame = Math.floor(Core.frame * Math.max(framesPerSecond, 0) / Core.targetFps) % image.frames.length;
+		var frame = Math.floor(core.frame * Math.max(framesPerSecond, 0) / core.targetFps) % image.frames.length;
 		drawImage image, position, frame, size, visibleFor, layer, alpha, color, location
 	
 	// Draw an image on the screen (with framesPerSecond, flipX, flipY)
@@ -572,7 +572,7 @@ transient global unit graphics
 		                   alpha = 1.0                          // The opacity of the image (0: fully transparent, 1: fully visible)
 		                   Color color = White                  // Tint the image with this color (white for no tint)
 		                   SourceCodeLocation location
-		var frame = Math.floor(Core.frame * Math.max(framesPerSecond, 0) / Core.targetFps) % image.frames.length;
+		var frame = Math.floor(core.frame * Math.max(framesPerSecond, 0) / core.targetFps) % image.frames.length;
 		drawImage image, position, frame, size, angle, flipX, flipY, visibleFor, layer, alpha, color, location
 	
 	// Draw an image on the screen (clickable)                 
@@ -854,7 +854,7 @@ transient global unit graphics
 		              SourceCodeLocation location
 		if isVisibleFor(visibleFor)
 			if not size.y: size.y = shape == Rectangle ? size.x * 3/4 : size.x
-			if Core.mode == Local or !PeerNetwork.enableVideo
+			if core.mode == Local or !PeerNetwork.enableVideo
 				drawImage VideoScreen, position, size, frame:shape == Circle ? 1:0, layer:1000000, location
 			else
 				items.add DisplayVideo(

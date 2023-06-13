@@ -2,7 +2,7 @@ enum NetworkMode: None, Ping, Local, Connected
 transient class RoomInfo: int time, userId
 enum SendInputsMode: None, Peer, Server
 	
-transient skipInit unit Core
+transient skipInit unit core
 	int eventStreamVersion = 1
 	int sendInterval = 1
 	int smoothStrength = 90
@@ -46,7 +46,7 @@ transient skipInit unit Core
 		
 		input.handleJoin frame 
 		user.collectInputs = true
-		if Core.logging: writeLog += " #{joinFrame} Join"
+		if core.logging: writeLog += " #{joinFrame} Join"
 		log "startConnected", joinFrame
 		
 		this.frame = frame
@@ -464,8 +464,8 @@ transient skipInit unit Core
 	js void log: logstring text
 		let str = new Date().hourMinuteSecondString() + " " + text
 		statistics_log += str + "\n"
-		if(Core_logging) {
-			Core_eventLog += str + "\n"
+		if(core_logging) {
+			core_eventLog += str + "\n"
 			console.log(str)
 		}
 		
@@ -572,7 +572,7 @@ transient skipInit unit Core
 		Platform_updateBaseMatrix();
 		
 	private js void setupVideoAndNetwork 
-		await PeerNetwork_setupLocalMedia(/*enableVideo*/!Platform_isStaging || Core_showVideoForStaging, /*enableAudio*/!Platform_isStaging)
+		await PeerNetwork_setupLocalMedia(/*enableVideo*/!Platform_isStaging || core_showVideoForStaging, /*enableAudio*/!Platform_isStaging)
 		ServerNetwork_setup()
 		
 	internal storeUserId
@@ -633,16 +633,16 @@ transient unit Snapshot
 		if input.isCertain
 			if autoSaveAtEndOfStep and ++autoSaveCount > 5
 				let snap = save
-				IndexedDB.saveBuffer "snapshot", "{Core.gameId}-0", snap
+				IndexedDB.saveBuffer "snapshot", "{core.gameId}-0", snap
 				lastSnapshotSize = snap.writePos
-			if Core.frame/snapshotEvery > snapshotStarts.length
+			if core.frame/snapshotEvery > snapshotStarts.length
 				snapshotStarts.add snapshots.writePos
 				serialize(snapshots)
 			autoSaveAtEndOfStep = false
 	
 global transient unit System
 	// Reset all variables to their initial value and restart the app
-	global inline restart() Core.restart
+	global inline restart() core.restart
 
 class StatisticsGraphSeries
 	int userIndex = -1
@@ -705,8 +705,8 @@ skipInit transient unit statistics
 			series.add this.series.find.userIndex == i
 		http.post "{Platform.protocolAndHost}:3114/stats", body:{
 			time: Date.now.isoString
-			gameId: Core.gameId
-			roomId: Core.roomId
+			gameId: core.gameId
+			roomId: core.roomId
 			userId: input.localUser.id
 			userIndex: input.localUser.index
 			userName
@@ -760,7 +760,7 @@ skipInit transient unit statistics
 	addInfo: string name, float value
 		int index = infoNames.indexOf name
 		if index == -1: index = infoNames.length; infoNames.add name
-		infos.add {value, index, frame:Core.frame}
+		infos.add {value, index, frame:core.frame}
 		
 	internal tick
 		input.onTouchDownWithin position, size, align:Left, valign:Top
@@ -794,59 +794,59 @@ skipInit transient unit statistics
 				
 		// Draw infos
 		for infos <-
-			let x = (Core.frame - .frame)/framesPerValue
+			let x = (core.frame - .frame)/framesPerValue
 			if x > size.x: break
 			drawText cast .value, {position.x + size.x - x, position.y + 10*.index}, size:8, valign:Top
 				
-		if Core.errorMessage: drawText Core.errorMessage, position, align:Left, size:12, color:{"ffff00"}
-		drawText "#{Core.frame} {maxValue}", {position.x+size.x-8, labelPos.y}, align:Right, size:12
+		if core.errorMessage: drawText core.errorMessage, position, align:Left, size:12, color:{"ffff00"}
+		drawText "#{core.frame} {maxValue}", {position.x+size.x-8, labelPos.y}, align:Right, size:12
 		drawRectangle position, size, fillColor:backgroundColor, align:Left, valign:Top
 
 unit networkVisualizer		
 	private int[] posForPlayer = [0,-10000,-10000,-10000,-10000,-10000]
 		
 	internal tick
-		if Core.simulateInputsForTesting
+		if core.simulateInputsForTesting
 			for players
 				if posForPlayer[.index] == -10000: posForPlayer[.index] = posForPlayer[0]
 					
 			// Move circle with artificially created inputs to test the smoothness
 			for players -> player
-				Core.smooth player
-					if player.id == 1: Core.replayLog += "C"
-					// Core.log "[{Core.frame}] <{player.id}> networkVisualizer", Core.isSmooth
+				core.smooth player
+					if player.id == 1: core.replayLog += "C"
+					// core.log "[{core.frame}] <{player.id}> networkVisualizer", core.isSmooth
 					input.onKeyDown by:player
-						if player.id == 1: Core.replayLog += "D"
+						if player.id == 1: core.replayLog += "D"
 						if (posForPlayer[player.index] += 2) > 1080
 							posForPlayer[player.index] -= 1080
-						// Core.log "[{Core.frame}] <{player.id}> networkVisualizer input.onKeyDown", posForPlayer[player.index]
+						// core.log "[{core.frame}] <{player.id}> networkVisualizer input.onKeyDown", posForPlayer[player.index]
 				
 			for players -> player
 				drawCircle {1110+player.index*20, -540+posForPlayer[player.index]}, size:20, fillColor:.color
 		
 		// // AheadMin
-		// let minY = 510 - getHeightForFrame(Core.frame-Core.aheadMin+1)
+		// let minY = 510 - getHeightForFrame(core.frame-core.aheadMin+1)
 		// drawLine {960,minY} to {1100,minY} width:3
-		// drawText cast Core.aheadMin, {1110, minY}, size:20, align:Left
+		// drawText cast core.aheadMin, {1110, minY}, size:20, align:Left
 		
 		// Draw bar to visualizue up to which frame we got input from each player
 		for players -> player
 			let internaluser = input.internalUsers[.id]
 				// BufferFrames
-				let bufferY = 510 - getHeightForFrame(Core.frame-internaluser.bufferFrames+1)
+				let bufferY = 510 - getHeightForFrame(core.frame-internaluser.bufferFrames+1)
 				drawLine {960,bufferY} to {1100,bufferY} width:3, color:.color
 				drawText cast internaluser.bufferFrames, {1110, bufferY}, size:20, color:.color, align:Left
 		
 				drawRectangle {984+player.index*32, 510} size:{24, getHeightForFrame(internaluser.inputFrame)}, valign:Bottom, fillColor:.color
 		
 		// Replay from
-		if Core.replayFrom != -1
-			let bufferY = 510 - getHeightForFrame(Core.replayFrom)
+		if core.replayFrom != -1
+			let bufferY = 510 - getHeightForFrame(core.replayFrom)
 			drawLine {960,bufferY} to {1100,bufferY} width:3, color:White
-			drawText cast(Core.frame - Core.replayFrom), {1110, bufferY}, size:20, color:White, align:Left
+			drawText cast(core.frame - core.replayFrom), {1110, bufferY}, size:20, color:White, align:Left
 	
 	private getHeightForFrame: int frame
-		return (50+frame-Core.frame)*20
+		return (50+frame-core.frame)*20
 
 global skipInit unit Math
 	init

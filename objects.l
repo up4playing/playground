@@ -348,7 +348,7 @@ Object Piece
 				rotatedOverThreshold = false
 				
 			onTouchMove rotateTouch
-				Core.smooth touch.by
+				core.smooth touch.by
 					angle = targetAngle = Math.getAngleForVector(touch.position - position) + rotateOffset
 				if (touch.position - touch.startPosition).length > 16: rotatedOverThreshold = true
 				
@@ -368,7 +368,7 @@ Object Piece
 				isBeingMoved = false
 			
 		onTouchMove moveTouch
-			Core.smooth moveTouch.by
+			core.smooth moveTouch.by
 				position = touch.position + touchOffset
 				if touch.position - touch.startPosition > 8: isBeingMoved = true
 				if board: board.snap this, touch.position
@@ -386,7 +386,7 @@ Object Piece
 		
 		// Animate rotation
 		if angle != targetAngle
-			Core.smooth interactingPlayer
+			core.smooth interactingPlayer
 				angle = Math.moveTowards(angle, targetAngle, .03)
 				if angle == targetAngle: onRotate
 		
@@ -541,11 +541,11 @@ Piece Board
 		if zoomable	
 			onWheelWithin position, size, by:visibleFor
 				float factor = zoomLookupTable[Math.limit Math.round(event.delta.y)+40, min:0, max:zoomLookupTable.length-1]
-				if Core.logging: Core.touchLog += "[{Core.frame}] zoom value:{event.delta} factor:{factor} matrix:{matrix}"
+				if core.logging: core.touchLog += "[{core.frame}] zoom value:{event.delta} factor:{factor} matrix:{matrix}"
 				matrix.move event.position
 				matrix.scale {factor, factor}
 				matrix.move event.position*{-1,-1}
-				if Core.logging: Core.touchLog += " -> {matrix}"
+				if core.logging: core.touchLog += " -> {matrix}"
 			
 		// Visiblity icon
 		if contentVisibleForOthers == On or contentVisibleForOthers == Off
@@ -715,7 +715,7 @@ Piece Coin
 				isBeingMoved = false
 			
 			onTouchMove moveTouch
-				Core.smooth touch.by
+				core.smooth touch.by
 					position = touch.position + touchOffset
 				if touch.position - touch.startPosition > 8: isBeingMoved = true
 				updateNeighbors siblings, isBeingMoved
@@ -819,7 +819,7 @@ Object Menu
 	Menu
 		if includeDefaultItems
 			items.insert {New,  "New Game",        onClick:startGame}, 0
-			items.add    {Save, "Save Game"        onClick:Core.saveEventStreamAndLogs}
+			items.add    {Save, "Save Game"        onClick:core.saveEventStreamAndLogs}
 			items.add    {Quit, "Exit Fullscreen", onClick:Platform.setFullscreen false, forPlayer:touch.by}
 		
 	private inline js void startGame

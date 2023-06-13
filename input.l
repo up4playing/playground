@@ -375,33 +375,33 @@ skipInit global unit input
 			else
 			if(ctrlOrCmd && key == "o") {
 				// Open event stream
-				Core_openEventStream();
+				core_openEventStream();
 				e.preventDefault();
 			}
 			else
 			if(ctrlOrCmd && key == "s") {
 				// Save event steam
-				Core_saveEventStream();
+				core_saveEventStream();
 				e.preventDefault();
 			}
 			else
 			if(ctrlOrCmd && key == "l") {
 				// Save logs
 				statistics_manuallyTriggerSend(-2, /*clear*/false);
-				Core_saveLogs();
+				core_saveLogs();
 				e.preventDefault();
 			}
 			else
 			if((key == "F1" || key == "F2" || key == "F3" || key == "F4") && !ctrlOrCmd && Platform_isDebug) {
 				let index = key[1] - "1"
-				Core_switchUser(index);
+				core_switchUser(index);
 				e.preventDefault();
 			}
 			else
 			if(key >= "1" && key <= "0") {
 				let index = key - "0"
-				if(e.altKey)  { Core_save(index); e.preventDefault(); } else
-				if(e.ctrlKey) { Core_restore(index); e.preventDefault(); }
+				if(e.altKey)  { core_save(index); e.preventDefault(); } else
+				if(e.ctrlKey) { core_restore(index); e.preventDefault(); }
 			}
 			else
 			// Reload
@@ -411,17 +411,17 @@ skipInit global unit input
 			if(ctrlOrCmd && key == "F4") {/*new  room, new  userId, everybody*/   ServerCore_sendReload(true,  true,  false);  e.preventDefault();} else
 			
 			// Switch send interval
-			if(ctrlOrCmd && key == "F5") {Core_switchSendInterval( 3); e.preventDefault();} else
-			if(ctrlOrCmd && key == "F6") {Core_switchSendInterval(10); e.preventDefault();} else
-			if(ctrlOrCmd && key == "F7") {Core_switchSendInterval(20); e.preventDefault();} else
-			if(ctrlOrCmd && key == "F8") {Core_switchSendInterval(30); e.preventDefault();} else
-			if(ctrlOrCmd && key == "F9") {Core_switchSendInterval(40); e.preventDefault();} else
+			if(ctrlOrCmd && key == "F5") {core_switchSendInterval( 3); e.preventDefault();} else
+			if(ctrlOrCmd && key == "F6") {core_switchSendInterval(10); e.preventDefault();} else
+			if(ctrlOrCmd && key == "F7") {core_switchSendInterval(20); e.preventDefault();} else
+			if(ctrlOrCmd && key == "F8") {core_switchSendInterval(30); e.preventDefault();} else
+			if(ctrlOrCmd && key == "F9") {core_switchSendInterval(40); e.preventDefault();} else
 				
-			if(ctrlOrCmd && key == "F10") {Core_switchSendInputMode(1); e.preventDefault();} else
-			if(ctrlOrCmd && key == "F11") {Core_switchSendInputMode(2); e.preventDefault();} else
+			if(ctrlOrCmd && key == "F10") {core_switchSendInputMode(1); e.preventDefault();} else
+			if(ctrlOrCmd && key == "F11") {core_switchSendInputMode(2); e.preventDefault();} else
 				
 			if(key == "F9") {
-				if(e.shiftKey) { Core_saveLogs(); }
+				if(e.shiftKey) { core_saveLogs(); }
 				else           { Platform_toggleDebugInfo(); }
 				e.preventDefault();
 			} else if(key == "F10") { 
@@ -456,7 +456,7 @@ skipInit global unit input
 		return 0
 		
 	private handleTextInput: InputType type, string text
-		if Core.mode == None || Platform.mode != Record || !localUser || !localUser.collectInputs: return
+		if core.mode == None || Platform.mode != Record || !localUser || !localUser.collectInputs: return
 		let inputs = localUser.inputs
 		
 		inputs.writeInt32 localUser.inputFrame
@@ -464,13 +464,13 @@ skipInit global unit input
 		inputs.writeString text
 			
 	internal handleKeyEvent: InputType inputType, Key keyCode, string key
-		if Core.mode == None || Platform.mode != Record || !localUser || !localUser.collectInputs: return
+		if core.mode == None || Platform.mode != Record || !localUser || !localUser.collectInputs: return
 		let inputs = localUser.inputs
 		int composite = cast inputType                                  // inputType:   0 - 31 (5 bit)
 		
 		let controllerButton = controllerButtonMap[keyCode]
 			composite += (controllerButton.buttonIndex + 1) shiftLeft 5 // buttonIndex: 0 - 15 (4 bit)
-			if Core.mode == Local and not Core.simulateConnection
+			if core.mode == Local and not core.simulateConnection
 				inputs = internalUsers[controllerButton.userId].inputs
 			
 		inputs.writeInt32 localUser.inputFrame
@@ -488,7 +488,7 @@ skipInit global unit input
 		Vector2 referencePos = pixelPos.getRelativeTo(Platform.baseMatrix)
 		gizmo.onTouch inputType, id, pixelPos, referencePos, shift, alt, cmdOrCtrl
 		
-		if Core.mode == None || Platform.mode != Record || !localUser || !localUser.collectInputs: return
+		if core.mode == None || Platform.mode != Record || !localUser || !localUser.collectInputs: return
 		let inputs = localUser.inputs
 
 		if inputType == TouchMove
@@ -497,11 +497,11 @@ skipInit global unit input
 				// We already moved the pointer this input frame, so just update the last move
 				inputs.setInt16 index, Math.round(referencePos.x)
 				inputs.setInt16 index+2, Math.round(referencePos.y)
-				if Core.logging: Core.writeLog += " #{localUser.inputFrame} override {id} at {index} to {Math.round(referencePos.x)} {Math.round(referencePos.y)}"
+				if core.logging: core.writeLog += " #{localUser.inputFrame} override {id} at {index} to {Math.round(referencePos.x)} {Math.round(referencePos.y)}"
 				return
 			else
 				setLastTouchMoveIndex id, inputs.writePos+6
-				if Core.logging: Core.writeLog += " save {id} at {inputs.writePos+6}"
+				if core.logging: core.writeLog += " save {id} at {inputs.writePos+6}"
 			
 		int composite = cast(inputType)                                 // inputType: 0 -  31 (5 bit)
 		              + Math.shiftLeft(touchType, 5)                    // touchType: 0 -   7 (3 bit)
@@ -510,7 +510,7 @@ skipInit global unit input
 		inputs.writeUnsignedInt16 composite
 		inputs.writeInt16 Math.round(referencePos.x)
 		inputs.writeInt16 Math.round(referencePos.y)
-		if Core.logging: Core.writeLog += " #{localUser.inputFrame} {composite} {Math.round(referencePos.x)} {Math.round(referencePos.y)} ({inputs.readPos}/{inputs.writePos})"
+		if core.logging: core.writeLog += " #{localUser.inputFrame} {composite} {Math.round(referencePos.x)} {Math.round(referencePos.y)} ({inputs.readPos}/{inputs.writePos})"
 	
 	internal handleUpdateTouchAfterSwitchingUser: int id, Vector2 referencePos
 		let inputs = localUser.inputs
@@ -523,7 +523,7 @@ skipInit global unit input
 		inputs.writeInt16 Math.round(referencePos.y)
 	
 	private handleWheelEvent: float x, float y, float deltaX, float deltaY
-		if Core.mode == None || Platform.mode != Record || !localUser || !localUser.collectInputs: return
+		if core.mode == None || Platform.mode != Record || !localUser || !localUser.collectInputs: return
 		let inputs = localUser.inputs
 		
 		Vector2 referencePos = {x*Platform.pixelRatio, y*Platform.pixelRatio}.getRelativeTo(Platform.baseMatrix)
@@ -533,7 +533,7 @@ skipInit global unit input
 		inputs.writeInt16 Math.round(referencePos.y)
 		inputs.writeInt16 Math.round(deltaX)
 		inputs.writeInt16 Math.round(deltaY)
-		if Core.logging: Core.writeLog += " [{localUser.inputFrame}] wheel {Math.round(referencePos.x)} {Math.round(referencePos.y)} {deltaX} {deltaY} \{r:{inputs.readPos} w:{inputs.writePos}\}"
+		if core.logging: core.writeLog += " [{localUser.inputFrame}] wheel {Math.round(referencePos.x)} {Math.round(referencePos.y)} {deltaX} {deltaY} \{r:{inputs.readPos} w:{inputs.writePos}\}"
 		
 	internal handleSetState: Buffer buffer
 		let inputs = localUser.inputs
@@ -548,7 +548,7 @@ skipInit global unit input
 				
 	// Handles navigating back or forward in the browser	
 	internal handleNavigate: string url
-		if Core.mode == None || Platform.mode != Record || !localUser || !localUser.collectInputs: return
+		if core.mode == None || Platform.mode != Record || !localUser || !localUser.collectInputs: return
 		let inputs = localUser.inputs
 		inputs.writeInt32 localUser.inputFrame
 		inputs.writeInt16 cast InputType.Navigate
@@ -556,27 +556,27 @@ skipInit global unit input
 		
 	// Post lost messages and remove players if nobody disagrees
 	internal handleLost
-		if Core.mode < Local or !lobby.inLobby: return
+		if core.mode < Local or !lobby.inLobby: return
 		for players <- player
 			let internalUser = internalUsers[.id]
-				if player.lostAtFrame and Core.frame > player.lostAtFrame + Core.targetFps * 3
+				if player.lostAtFrame and core.frame > player.lostAtFrame + core.targetFps * 3
 					// If a player was lost by anybody and nobody who is still connected to that player
 					// disagrees within a certrain time, we remove this player
-					Core.log "Removing player {player.id} at frame {Core.frame}, player was lost at frame {player.lostAtFrame} and nobody disagreed", isCertain
+					core.log "Removing player {player.id} at frame {core.frame}, player was lost at frame {player.lostAtFrame} and nobody disagreed", isCertain
 					players.remove player
 					playersById[player.id] = null
 					internalUser.active = false
 					updatePlayers
 				else	
-				if Core.frame > internalUser.inputFrame + Core.targetFps * 8
-				and Core.frame > internalUser.nextLostMessageAtFrame
+				if core.frame > internalUser.inputFrame + core.targetFps * 8
+				and core.frame > internalUser.nextLostMessageAtFrame
 					// If we lost the connection to a player, we post a lost message to everybody every 12 seconds
-					Core.log "Sending lost message for player {player.id} at frame {Core.frame}", internalUser.inputFrame
+					core.log "Sending lost message for player {player.id} at frame {core.frame}", internalUser.inputFrame
 					let inputs = localUser.inputs
 					inputs.writeInt32 localUser.inputFrame
 					inputs.writeInt16 cast InputType.Lost
 					inputs.writeInt16 player.id
-					internalUser.nextLostMessageAtFrame = Core.frame + Core.targetFps * 12
+					internalUser.nextLostMessageAtFrame = core.frame + core.targetFps * 12
 					
 					// Send logfiles to server
 					Platform.setTimeout 7 seconds: statistics.manuallyTriggerSend -3, clear:false
@@ -588,7 +588,7 @@ skipInit global unit input
 		inputs.writeInt16 userId
 				
 	internal handleString: int id, string data
-		if !data || Core.mode == None || Core.frames > Core.frame || !localUser || !localUser.collectInputs: return
+		if !data || core.mode == None || core.frames > core.frame || !localUser || !localUser.collectInputs: return
 		let inputs = localUser.inputs
 		inputs.writeInt32 localUser.inputFrame
 		inputs.writeInt16 cast InputType.String
@@ -596,7 +596,7 @@ skipInit global unit input
 		inputs.writeString data
 		
 	internal handleJson: int id, string data
-		if !data || Core.mode == None || Core.frames > Core.frame || !localUser || !localUser.collectInputs: return
+		if !data || core.mode == None || core.frames > core.frame || !localUser || !localUser.collectInputs: return
 		let inputs = localUser.inputs
 		inputs.writeInt32 localUser.inputFrame
 		inputs.writeInt16 cast InputType.Json
@@ -604,7 +604,7 @@ skipInit global unit input
 		inputs.writeString data
 		
 	internal handleObject: int id, string data
-		if !data || Core.mode == None || Core.frames > Core.frame || !localUser || !localUser.collectInputs: return
+		if !data || core.mode == None || core.frames > core.frame || !localUser || !localUser.collectInputs: return
 		let inputs = localUser.inputs
 		inputs.writeInt32 localUser.inputFrame
 		inputs.writeInt16 cast InputType.Object
@@ -660,14 +660,14 @@ skipInit global unit input
 			let inputs = internalUser.inputs
 			let userId = internalUser.id
 			let player = playersById[userId]
-			if Core.logging: Core.parseLog += " <{userId}>"
+			if core.logging: core.parseLog += " <{userId}>"
 			player?.controller.startFrame
 			
 			while true
 				int nextFrame = inputs.canRead ? inputs.peekInt32 : int.maxValue
-				if Core.logging: 
-					Core.parseLog += " ({inputs.readPos}/{inputs.writePos})"
-					if inputs.canRead: Core.parseLog += " *{nextFrame}"
+				if core.logging: 
+					core.parseLog += " ({inputs.readPos}/{inputs.writePos})"
+					if inputs.canRead: core.parseLog += " *{nextFrame}"
 				if nextFrame > frame: break
 				inputs.readPos += 4
 				
@@ -675,8 +675,8 @@ skipInit global unit input
 				// which is typically the "Join" message that is sent in "startConnected",
 				// but could also be a player reconnecting that was previously kicked out
 				if not player
-					Core.log "#{frame} Add {userId}"
-					if Core.logging: Core.parseLog += " Add {userId}"
+					core.log "#{frame} Add {userId}"
+					if core.logging: core.parseLog += " Add {userId}"
 					players.add player = {id:userId, index:players.length}
 					playersById[userId] = player
 					if internalUser.local: localPlayer = player
@@ -687,12 +687,12 @@ skipInit global unit input
 				InputType inputType = cast(value % 32)
 				
 				if inputType >= TouchDown && inputType <= Wheel
-					if !player: Core.log " ERROR: userId {userId} not in playersById"
+					if !player: core.log " ERROR: userId {userId} not in playersById"
 					TouchType type = cast((value shiftRight 5) % 8)
 					int id = (value shiftRight 8) % 128
 					Vector2 referencePos = {inputs.readInt16, inputs.readInt16}
-					bool isSmoothPosition = !Core.smoothTouchPosition or internalUser.local or frame <= internalUser.smoothFrame
-					if Core.logging: Core.parseLog += " "+id
+					bool isSmoothPosition = !core.smoothTouchPosition or internalUser.local or frame <= internalUser.smoothFrame
+					if core.logging: core.parseLog += " "+id
 					
 					if inputType == TouchDown
 						let touch = player.touches.find.id == id
@@ -707,12 +707,12 @@ skipInit global unit input
 							// This flag is preserved throughout "TouchMove" and "TouchUp", so if we mark the touch
 							// as handled at any point, the flags stays set to "true" until we touch down again
 							touch.handled = false
-							if Core.logging: Core.parseLog += " down {id} {referencePos} {type}"
+							if core.logging: core.parseLog += " down {id} {referencePos} {type}"
 							if isSmoothPosition: touch.smoothPosition = referencePos
 						else
 							touch = {id, player, cast inputType, type, referencePos, referencePos, referencePos, isDown:true}
 							player.touches.add touch
-							if Core.logging: Core.parseLog += " down(new) {id} {referencePos} {type}"
+							if core.logging: core.parseLog += " down(new) {id} {referencePos} {type}"
 							
 						internalUser.downTouches.add touch
 					else
@@ -724,11 +724,11 @@ skipInit global unit input
 							touch.referencePosition = referencePos
 							touch.type = type
 							if isSmoothPosition: touch.smoothPosition = referencePos
-							if Core.logging: Core.parseLog += " move {id} {referencePos} {type}"
+							if core.logging: core.parseLog += " move {id} {referencePos} {type}"
 						else
 							touch = {id, player, cast inputType, type, referencePos, referenceStartPosition:Vector2.none, referencePos, isDown:false}
 							player.touches.add touch
-							if Core.logging: Core.parseLog += " move(new) {id} {referencePos} {type}"
+							if core.logging: core.parseLog += " move(new) {id} {referencePos} {type}"
 
 						internalUser.movingTouches.add touch
 						cursor = "auto"
@@ -742,11 +742,11 @@ skipInit global unit input
 							touch.type = type
 							touch.isDown = false
 							if isSmoothPosition: touch.smoothPosition = referencePos
-							if Core.logging: Core.parseLog += " up {id} {referencePos} {type}"
+							if core.logging: core.parseLog += " up {id} {referencePos} {type}"
 						else
 							touch = {id, player, cast inputType, type, referencePos, referenceStartPosition:Vector2.none, referencePos, isDown:false}
 							player.touches.add touch
-							if Core.logging: Core.parseLog += " up(new) {id} {referencePos} {type}"
+							if core.logging: core.parseLog += " up(new) {id} {referencePos} {type}"
 							
 						internalUser.upTouches.add touch
 					else
@@ -769,7 +769,7 @@ skipInit global unit input
 					int controllerButtonIndex = cast((value shiftRight 5) % 16)
 						player.controllerKeyDownFrame[controllerButtonIndex-1] = frame
 					
-					if Core.logging: Core.parseLog += " KeyDown {key}"
+					if core.logging: core.parseLog += " KeyDown {key}"
 				else
 				if inputType == KeyUp
 					Key key = cast inputs.readInt32
@@ -779,7 +779,7 @@ skipInit global unit input
 					int controllerButtonIndex = cast((value shiftRight 5) % 16)
 						player.controllerKeyDownFrame[controllerButtonIndex-1] = 0
 					
-					if Core.logging: Core.parseLog += " KeyUp {key}"
+					if core.logging: core.parseLog += " KeyUp {key}"
 				else
 				if inputType == Navigate
 					internalUser.navigations.add inputs.readString
@@ -816,8 +816,8 @@ skipInit global unit input
 					// We created the player above as soon as received the first input from that player,
 					// which is typically the "Join" message that is sent in "startConnected",
 					// but could also be a player reconnecting that was previously kicked out
-					Core.log "#{frame} Join {userId}", isCertain
-					if Core.logging: Core.parseLog += " Join {userId}"
+					core.log "#{frame} Join {userId}", isCertain
+					if core.logging: core.parseLog += " Join {userId}"
 				else
 				if inputType == Lost
 					let lostUserId = inputs.readInt16
@@ -828,44 +828,44 @@ skipInit global unit input
 						// disagrees within a certrain time, we will remove this player in "handleLost"
 						if lostPlayer and lostPlayer.lostAtFrame == 0
 							lostPlayer.lostAtFrame = frame
-							Core.log "Lost {lostUserId} by {userId} -> Set lostAtFrame to {lostPlayer.lostAtFrame}"
+							core.log "Lost {lostUserId} by {userId} -> Set lostAtFrame to {lostPlayer.lostAtFrame}"
 							
 						// If we are still connected to that player, we disagree to their removal
 						// by posting the "StillConnected" message
-						if lostInternalUser.dataChannel and Core.frame < lostInternalUser.inputFrame + Core.targetFps * 5
-							Core.log "Lost {lostUserId} by {userId} -> We are still connected, sending StillConnected", lostInternalUser.dataChannel, Core.frame, lostInternalUser.inputFrame, isCertain
+						if lostInternalUser.dataChannel and core.frame < lostInternalUser.inputFrame + core.targetFps * 5
+							core.log "Lost {lostUserId} by {userId} -> We are still connected, sending StillConnected", lostInternalUser.dataChannel, core.frame, lostInternalUser.inputFrame, isCertain
 							handleStillConnected lostUserId
 						else
-							Core.log "Lost {lostUserId} by {userId} -> We also aren't connected", lostInternalUser.dataChannel, Core.frame, lostInternalUser.inputFrame, isCertain
+							core.log "Lost {lostUserId} by {userId} -> We also aren't connected", lostInternalUser.dataChannel, core.frame, lostInternalUser.inputFrame, isCertain
 					else
-						Core.log "Lost {lostUserId} by {userId} -> No internal user!"
+						core.log "Lost {lostUserId} by {userId} -> No internal user!"
 				else
 				if inputType == StillConnected
 					// Somebody disagreed with the removal of that player because they are still connected,
 					// so we cancel the removal
 					let lostUserId = inputs.readInt16
-					Core.log "Still connected to {lostUserId} by {userId}"
+					core.log "Still connected to {lostUserId} by {userId}"
 					let lostPlayer = playersById[lostUserId]
 						lostPlayer.lostAtFrame = 0
 				else
 				if inputType == SetState
-					if Core.logging: Core.parseLog += " setState"
-					Core.snapshotBuffer.reset
-					inputs.readBuffer Core.snapshotBuffer
-					Snapshot.deserialize Core.snapshotBuffer
+					if core.logging: core.parseLog += " setState"
+					core.snapshotBuffer.reset
+					inputs.readBuffer core.snapshotBuffer
+					Snapshot.deserialize core.snapshotBuffer
 					Math.recreateRandomValues
 				else
 				if inputType == String
 					int id = inputs.readInt
 					string valueString = inputs.readString
-					if Core.logging: Core.parseLog += " string {id}: {valueString}"
+					if core.logging: core.parseLog += " string {id}: {valueString}"
 					networkData.call id, valueString
 					if Platform.waitingForInitialData > 0: Platform.waitingForInitialData--
 				else
 				if inputType == Json
 					int id = inputs.readInt
 					string valueString = inputs.readString
-					if Core.logging: Core.parseLog += " json {id}: {valueString}"
+					if core.logging: core.parseLog += " json {id}: {valueString}"
 					dynamic object = Json.parse valueString
 					networkData.call id, object
 					if Platform.waitingForInitialData > 0: Platform.waitingForInitialData--
@@ -873,7 +873,7 @@ skipInit global unit input
 				if inputType == Object
 					int id = inputs.readInt
 					string valueString = inputs.readString
-					if Core.logging: Core.parseLog += " object {id}: {valueString}"
+					if core.logging: core.parseLog += " object {id}: {valueString}"
 					dynamic object = Json.parse valueString
 					networkData.call id, object
 					if Platform.waitingForInitialData > 0: Platform.waitingForInitialData--
@@ -901,7 +901,7 @@ skipInit global unit input
 			.color = graphics.defaultColors[i]
 			internalUsers[.id].index = i
 			
-		if Core.mode == Local and not Core.simulateConnection
+		if core.mode == Local and not core.simulateConnection
 			if players.length >= 1
 				GameController c = players[0].controller
 				if c.type == Keyboard
@@ -961,7 +961,7 @@ skipInit global unit input
 	// Returns true if given key is currently held down
 	isKeyDown: Key key          // The key to check
 		       Player by = null // Only consider key presses by this player 
-		if (Core.mode == Connected || Core.simulateConnection) && by
+		if (core.mode == Connected || core.simulateConnection) && by
 			let player = playersById[by.id]
 				return player.keysCurrentlyDown.contains key
 		else
@@ -969,10 +969,10 @@ skipInit global unit input
 		return false
 		
 	private log: string text, Vector2 pos
-		if Core.logging: Core.touchLog += " #{Core.frame}{isCertain ? " c" : ""} {text} {pos}"
+		if core.logging: core.touchLog += " #{core.frame}{isCertain ? " c" : ""} {text} {pos}"
 
 	private getTargetedPlayers: Player[] by
-		return (Core.mode == Connected || Core.simulateConnection) && by ? by : players
+		return (core.mode == Connected || core.simulateConnection) && by ? by : players
 		
 	// ---------------------------------------------- Touch Down ----------------------------------------------
 	
