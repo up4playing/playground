@@ -9,7 +9,7 @@ global unit fx
 	endOfPrevEffect: Object object
 		let lastEffect = effects[-1]
 		if lastEffect?.object == object
-			return Math.max(Time.now, lastEffect.startTime + lastEffect.duration)
+			return math.max(Time.now, lastEffect.startTime + lastEffect.duration)
 		return Time.now
 		
 	internal tick

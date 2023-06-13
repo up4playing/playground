@@ -491,7 +491,7 @@ transient unit PeerNetwork
 				makePrimaryUser
 	
 	makePrimaryUser
-		let frame = Math.floor((core.currentTime - core.startTime)/core.targetFrameTime)+3
+		let frame = math.floor((core.currentTime - core.startTime)/core.targetFrameTime)+3
 		core.startConnected frame
 	
 	private requestState: InternalUser from
@@ -554,6 +554,6 @@ transient unit PeerNetwork
 		snapshotBuffer.reset
 		buffer.readBuffer snapshotBuffer
 		Snapshot.deserialize snapshotBuffer
-		Math.recreateRandomValues
+		math.recreateRandomValues
 		core.startConnected frame+1
 		

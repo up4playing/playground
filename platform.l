@@ -71,7 +71,7 @@ transient skipInit unit Platform
 	private js void initPlatform
 		statistics_init();
 		Platform_init();
-		Math_init();
+		math_init();
 		core_init();
 		input_init();
 		gizmo_init();
@@ -338,7 +338,7 @@ transient skipInit unit Platform
 	js string generateObjectId
 		var result = (Date.now() / 1000 | 0).toString(16)
 		for(let i=0; i<16; i++)
-			result += (Math.random() * 16 | 0).toString(16)
+			result += (math.random() * 16 | 0).toString(16)
 		return result.toLowerCase()
 		
 	inline js void vibrate: int duration = 100

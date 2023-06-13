@@ -556,7 +556,7 @@ transient global unit graphics
 		                   alpha = 1.0                         // The opacity of the image (0: fully transparent, 1: fully visible)
 		                   Color color = White                 // Tint the image with this color (white for no tint)
 		                   SourceCodeLocation location
-		var frame = Math.floor(core.frame * Math.max(framesPerSecond, 0) / core.targetFps) % image.frames.length;
+		var frame = math.floor(core.frame * math.max(framesPerSecond, 0) / core.targetFps) % image.frames.length;
 		drawImage image, position, frame, size, visibleFor, layer, alpha, color, location
 	
 	// Draw an image on the screen (with framesPerSecond, flipX, flipY)
@@ -572,7 +572,7 @@ transient global unit graphics
 		                   alpha = 1.0                          // The opacity of the image (0: fully transparent, 1: fully visible)
 		                   Color color = White                  // Tint the image with this color (white for no tint)
 		                   SourceCodeLocation location
-		var frame = Math.floor(core.frame * Math.max(framesPerSecond, 0) / core.targetFps) % image.frames.length;
+		var frame = math.floor(core.frame * math.max(framesPerSecond, 0) / core.targetFps) % image.frames.length;
 		drawImage image, position, frame, size, angle, flipX, flipY, visibleFor, layer, alpha, color, location
 	
 	// Draw an image on the screen (clickable)                 
@@ -1013,7 +1013,7 @@ skipInit unit gizmo
 					if .y < min.y: min.y = .y
 					if .x + .w > max.x: max.x = .x + .w
 					if .y + .h > max.y: max.y = .y + .h
-		handleSize = Math.map Math.min(max.x-min.x, max.y-min.y) 64..256 start:16 target:32
+		handleSize = math.map math.min(max.x-min.x, max.y-min.y) 64..256 start:16 target:32
 	
 	internal tick
 		findInfluencedItems
@@ -1399,14 +1399,14 @@ transient DisplayItem DisplayCircle
 		if(this.w == this.h) {
 			let radius = this.w/2
 			if(this.angle == 1) {
-				Platform_context.arc(this.x+radius, this.y+radius, radius, 0, Math_TwoPI, this.direction);
+				Platform_context.arc(this.x+radius, this.y+radius, radius, 0, math_TwoPI, this.direction);
 			} else {
-				Platform_context.arc(this.x+radius, this.y+radius, radius, this.startAngle*Math_TwoPI, (this.startAngle+this.angle)*Math_TwoPI, this.direction);
+				Platform_context.arc(this.x+radius, this.y+radius, radius, this.startAngle*math_TwoPI, (this.startAngle+this.angle)*math_TwoPI, this.direction);
 			}
 		} else {
 			let radiusX = this.w/2
 			let radiusY = this.h/2
-			Platform_context.ellipse(this.x+radiusX, this.y+radiusY, radiusX, radiusY, this.startAngle*Math_TwoPI, (this.startAngle+this.angle)*Math_TwoPI, this.direction);
+			Platform_context.ellipse(this.x+radiusX, this.y+radiusY, radiusX, radiusY, this.startAngle*math_TwoPI, (this.startAngle+this.angle)*math_TwoPI, this.direction);
 		}
 		if(this.fillColor) {
 			Platform_context.fillStyle = this.fillColor

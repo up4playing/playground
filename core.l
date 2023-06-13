@@ -60,7 +60,7 @@ transient skipInit unit core
 	startLocal
 		mode = Local
 		input.internalUsers.clear
-		Math.setRandomSeed Math.generateRandomSeed 
+		math.setRandomSeed math.generateRandomSeed 
 		// initDatabase
 		stop
 		
@@ -87,7 +87,7 @@ transient skipInit unit core
 		input.playersById.clear
 		errorMessage = ""
 		HTMLElement.clear
-		Math.randomValueIndex = 0
+		math.randomValueIndex = 0
 		frame = 0
 		input.isCertain = true
 		lobby.inLobby = startInLobby
@@ -187,14 +187,14 @@ transient skipInit unit core
 		if mode == Connected
 			PeerNetwork.processSendStateQueue
 			
-		let targetFrame = Math.floor((now - startTime)/targetFrameTime)+1
+		let targetFrame = math.floor((now - startTime)/targetFrameTime)+1
 		
 		if mode == Local && targetFrame > frame + targetFps*2
 			// After a long pause in local mode, we do not want to process all missed frames, so we adjust the start time
 			let prevTargetFrame = targetFrame
 			targetFrame = frame
-			startTime = Math.round(now - targetFrame*targetFrameTime)
-			log "Paused {prevTargetFrame-frame} frames, adjusting startTime. prevTargetTime:{prevTargetFrame} frame:{frame} targetFrame:{Math.floor((now - startTime)/targetFrameTime)}"
+			startTime = math.round(now - targetFrame*targetFrameTime)
+			log "Paused {prevTargetFrame-frame} frames, adjusting startTime. prevTargetTime:{prevTargetFrame} frame:{frame} targetFrame:{math.floor((now - startTime)/targetFrameTime)}"
 		
 		if frame < targetFrame
 			animationStartFrame = frame
@@ -302,15 +302,15 @@ transient skipInit unit core
 		          bool draw        // We don't draw if we are stepping multiple frames in one animation frame
 		try
 			// Set time
-			Time.now = serverStartTime + Math.round(frame * targetFrameTime)
+			Time.now = serverStartTime + math.round(frame * targetFrameTime)
 			
 			// Flags
 			Platform.fastForward = fastForward
-			int certainFrame = input.internalUsers.min Math.min(.inputFrame, .smoothFrame) where .active
+			int certainFrame = input.internalUsers.min math.min(.inputFrame, .smoothFrame) where .active
 			bool isCertain = frame <= certainFrame
 			
 			// Send current frame to editor	
-			if Platform.isDebug and !fastForward and (Platform.mode == Record or Platform.mode == Play or Platform.waitingForInitialData): Platform.sendFrame(frame, Math.max(frame+1, frames))
+			if Platform.isDebug and !fastForward and (Platform.mode == Record or Platform.mode == Play or Platform.waitingForInitialData): Platform.sendFrame(frame, math.max(frame+1, frames))
 			
 			// Save a snapshot when we are about to start the frame after the last certain frame where we got all inputs
 			checkSaveState
@@ -396,7 +396,7 @@ transient skipInit unit core
 		if (mode != Connected and !simulateRollback) or input.internalUsers.length == 1: return
 			
 		if mode == Local and simulateRollback: nextSnapshotFrame = frame - 5
-		else                                   nextSnapshotFrame = (input.internalUsers.min Math.min(.smoothFrame, .inputFrame) where .active and not .local)+1
+		else                                   nextSnapshotFrame = (input.internalUsers.min math.min(.smoothFrame, .inputFrame) where .active and not .local)+1
 		replayLog += "(next:{nextSnapshotFrame})"
 		if snapshotFrame != -1: rewindAndReplayState snapshot, snapshotFrame
 
@@ -476,7 +476,7 @@ transient skipInit unit core
 		if(window.app_start) app_start()
 		
 	private adjustStartTime
-		startTime = Math.round(currentTime - frame*targetFrameTime - (targetFrameTime*.5))
+		startTime = math.round(currentTime - frame*targetFrameTime - (targetFrameTime*.5))
 		
 	adjustStartTimeIfNeeded
 		if Platform.mode < Play: adjustStartTime
@@ -499,7 +499,7 @@ transient skipInit unit core
 		buffer.writeInt eventStreamVersion
 		buffer.writeInt frame-1
 		buffer.writeInt frames
-		buffer.writeString Math.randomSeed
+		buffer.writeString math.randomSeed
 		buffer.writeBool startInLobby
 		buffer.writeBool Platform.isStaging
 		let userCount = input.internalUsers.count . != null
@@ -537,7 +537,7 @@ transient skipInit unit core
 				.collectInputs = true
 				if Platform.isDebug: .local = true
 				.startInputFrame frames
-			Math.setRandomSeed randomSeed
+			math.setRandomSeed randomSeed
 			
 			Platform.sendClearTimeline
 			goToFrame targetFrame, replayFromStart:true
@@ -769,7 +769,7 @@ skipInit transient unit statistics
 		maxValue = 12
 		for series -> s
 			if .set != currentSet: continue
-			int len = Math.min(.values.length, 50)
+			int len = math.min(.values.length, 50)
 			for len: 
 				let value = s.values[-1-i]
 				if value > maxValue: maxValue = value
@@ -784,7 +784,7 @@ skipInit transient unit statistics
 			drawText text, labelPos+{11, -2}, align:Left, size:12
 			labelPos.x += graphics.getTextWidth(text, size:12) + 20
 			
-			int len = Math.min(.values.length, size.x.round)
+			int len = math.min(.values.length, size.x.round)
 			float prevY = 0
 			for len
 				let value = s.values[-1-i]
@@ -848,12 +848,12 @@ unit networkVisualizer
 	private getHeightForFrame: int frame
 		return (50+frame-core.frame)*20
 
-global skipInit unit Math
+global skipInit unit math
 	init
 		initDefaultRandomGenerator
 		
 	js void initDefaultRandomGenerator
-		Math_randomGenerator = Math.random
+		math_randomGenerator = Math.random
 		
 	js string generateRandomSeed:
 		let crypto = !window.crypto && typeof(require) != "undefined" ? require("crypto") : window.crypto
@@ -873,9 +873,9 @@ global skipInit unit Math
 		for targetRandomValueIndex: randomFloat
 	
 	js void setRandomSeed: string seed
-		Math_randomSeed = seed
-		Math_randomValues.length = 0
-		Math_randomValueIndex = 0
+		math_randomSeed = seed
+		math_randomValues.length = 0
+		math_randomValueIndex = 0
 		
 		// Seeding the random number generator in Javascript
 		// https://stackoverflow.com/a/47593316
@@ -917,14 +917,14 @@ global skipInit unit Math
 		var rand = sfc32(seed(), seed(), seed(), seed());
 		var rand = mulberry32(seed());
 		
-		Math_randomGenerator = function() {
+		math_randomGenerator = function() {
 			let value
-			if(Math_randomValueIndex < Math_randomValues.length) {
-				value = Math_randomValues[Math_randomValueIndex]
-				Math_randomValueIndex++
+			if(math_randomValueIndex < math_randomValues.length) {
+				value = math_randomValues[math_randomValueIndex]
+				math_randomValueIndex++
 			} else {
 				value = rand()
-				Math_randomValues[Math_randomValueIndex++] = value;
+				math_randomValues[math_randomValueIndex++] = value;
 			}
 			return value
 		}
@@ -932,16 +932,16 @@ global skipInit unit Math
 	// Generates a random integer
 	global js int randomInteger: int from // The inclusive lower bound of the random integer
 		                         int to // The exclusive upper bound of the random integer
-		return from + Math.floor(Math_randomGenerator() * (to-from))
+		return from + Math.floor(math_randomGenerator() * (to-from))
 	
 	global js int randomInteger: int to = 2147483647 // The exclusive upper bound of the random integer
-		return Math.floor(Math_randomGenerator() * to)
+		return Math.floor(math_randomGenerator() * to)
 	
 	// Generates a random float
 	global js int randomFloat: float from
-		                              float to
-		return from + Math_randomGenerator() * (to-from)
+		                       float to
+		return from + math_randomGenerator() * (to-from)
 	
 	global js int randomFloat: float to = 1.0
-		return Math_randomGenerator() * to
+		return math_randomGenerator() * to
 	

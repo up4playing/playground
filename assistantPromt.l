@@ -93,7 +93,7 @@ exampleApp
 		// Find player with highest score from all alive players
 		let winner = players.withMax.score where .alive
 		
-		let maxScore = Math.max players[0].score, players[1].score
+		let maxScore = math.max players[0].score, players[1].score
 		
 		let firstThreePlayers = players[..3]
 		
@@ -181,7 +181,7 @@ unit input
 	onTouchUp(Touch touch, markAsHandled = true, void(Touch touch) do)
 	onTouchUp(int userId = -1, bool markAsHandled = true, void(Touch touch) do)
 		
-unit Math
+unit math
 	int randomInteger(int min, int max)
 	float randomFloat()
 	float min(float a, float b)

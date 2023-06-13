@@ -236,7 +236,7 @@ struct float
 	inline js Angle turns() this
 	
 	// Radians (one full rotation is 1π) 
-	inline js Angle rad() (this/Math_TwoPI)
+	inline js Angle rad() (this/math_TwoPI)
 		
 	// Degrees (one full rotation is 360)
 	inline js Angle deg() (this/360)
@@ -249,7 +249,7 @@ class EaseFunction
 	
 	global const EaseFunction None    = { . }
 	global const EaseFunction InQuad  = { . * . }
-	global const EaseFunction OutBack = { 1 + 2.70158 * Math.pow(. - 1, 3) + 1.70158 * Math.pow(. - 1, 2) }
+	global const EaseFunction OutBack = { 1 + 2.70158 * math.pow(. - 1, 3) + 1.70158 * math.pow(. - 1, 2) }
 	
 // A sequence of characters
 js String
@@ -534,12 +534,12 @@ class List<T>
 		
 	// Gets a random item from the list
 	T random()
-		let randomInteger = Math.randomInteger(length)
+		let randomInteger = math.randomInteger(length)
 		// print randomInteger, length
 		return get(randomInteger)
 		
 	T popRandom()
-		int index = Math.randomInteger(length)
+		int index = math.randomInteger(length)
 		T item = get(index)
 		this.removeAt(index)
 		return item
@@ -732,7 +732,7 @@ class List<T>
 		
 	shuffle
 		for 1 to length <- i
-			var j = Math.floor(Math.randomFloat * (i + 1))
+			var j = math.floor(math.randomFloat * (i + 1))
 			var temp = this.get(i)
 			this.set(i, this.get(j))
 			this.set(j, temp)
@@ -1519,7 +1519,7 @@ global transient unit System
 		
 		
 // A collection of mathematical functions and constants
-global skipInit unit Math
+global skipInit unit math
 	// Returns the absolute value
 	inline js int abs: int value // The value to return the absolute value of
 		Math.abs(value)
@@ -1627,16 +1627,16 @@ global skipInit unit Math
 		
 	// Returns the sine of an angle in turns
 	sin: Angle angle // The angle in turns (one full rotation is 1)
-	    float result = cast(angle - .5 - Math.floor(angle))
-	    result *= 16 * (Math.abs(result) - .5)
-	    result += .225 * result * (Math.abs(result) - 1)
+	    float result = cast(angle - .5 - math.floor(angle))
+	    result *= 16 * (math.abs(result) - .5)
+	    result += .225 * result * (math.abs(result) - 1)
 	    return result
 
 	// Returns the cosine of an angle in turns
 	cos: Angle angle // The angle in turns (one full rotation is 1)
-	    float result = cast(angle - .25 - Math.floor(angle + .25))
-	    result *= 16 * (Math.abs(result) - .5)
-	    result += .225 * result * (Math.abs(result) - 1)
+	    float result = cast(angle - .25 - math.floor(angle + .25))
+	    result *= 16 * (math.abs(result) - .5)
+	    result += .225 * result * (math.abs(result) - 1)
 	    return result
 	
 	// Returns the tangent of an angle in turns
@@ -1646,7 +1646,7 @@ global skipInit unit Math
 	// Returns the inverse tangent in turns
 	Angle atan2: float y, float x
 		float r, angle;
-		float abs_y = Math.abs(y) + .00000000001
+		float abs_y = math.abs(y) + .00000000001
 		if x < 0.0
 			r = (x + abs_y) / (abs_y - x);
 			angle = .375;
@@ -1668,14 +1668,14 @@ global skipInit unit Math
 	moveTowards: float value
 		         float targetValue
 		         float speed = 1
-		if targetValue > value: return Math.min(value + speed, targetValue) else
-		if targetValue < value: return Math.max(value - speed, targetValue)
+		if targetValue > value: return math.min(value + speed, targetValue) else
+		if targetValue < value: return math.max(value - speed, targetValue)
 			
 	moveTowards: Angle value
 		         Angle targetValue
 		         Angle speed = 1
-		if targetValue > value: return Math.min(value + speed, targetValue) else
-		if targetValue < value: return Math.max(value - speed, targetValue)
+		if targetValue > value: return math.min(value + speed, targetValue) else
+		if targetValue < value: return math.max(value - speed, targetValue)
 			
 	limit: int value
 		   int min

@@ -160,7 +160,7 @@ class Object
 		    float speed = 1
 		    Time delay = 0
 		let delta = pos - position
-		let duration = Math.floor(delta.length / speed)
+		let duration = math.floor(delta.length / speed)
 		fx.add MoveEffect startTime:fx.endOfPrevEffect(this)+delay, duration, this, startValue:position, delta
 		return this
 		
@@ -344,16 +344,16 @@ Object Piece
 		if rotatable and Framework.selectedObjects.contains(this)
 			onTouchDownWithin position:position+iconPos, size:Image.rotateIcon.size+touchMargin, by:visibleFor
 				rotateTouch = touch
-				rotateOffset = angle - Math.getAngleForVector(touch.position - position)
+				rotateOffset = angle - math.getAngleForVector(touch.position - position)
 				rotatedOverThreshold = false
 				
 			onTouchMove rotateTouch
 				core.smooth touch.by
-					angle = targetAngle = Math.getAngleForVector(touch.position - position) + rotateOffset
+					angle = targetAngle = math.getAngleForVector(touch.position - position) + rotateOffset
 				if (touch.position - touch.startPosition).length > 16: rotatedOverThreshold = true
 				
 			onTouchUp rotateTouch
-				targetAngle = Math.round(angle / .25) * .25
+				targetAngle = math.round(angle / .25) * .25
 				rotateTouch = null
 				if !rotatedOverThreshold: targetAngle += .25
 				interactingPlayer = touch.by
@@ -387,7 +387,7 @@ Object Piece
 		// Animate rotation
 		if angle != targetAngle
 			core.smooth interactingPlayer
-				angle = Math.moveTowards(angle, targetAngle, .03)
+				angle = math.moveTowards(angle, targetAngle, .03)
 				if angle == targetAngle: onRotate
 		
 		// Draw rotation icon
@@ -449,7 +449,7 @@ Piece Stack
 		
 	private updatePositions
 		if objects.length == 0: return
-		shownObjectCount = Math.min(3, objects.length)
+		shownObjectCount = math.min(3, objects.length)
 		position = basePosition + (shownObjectCount-1)/2 * stackOffset
 		for shownObjectCount: objects[objects.length-shownObjectCount+i].position = basePosition + i * stackOffset
 			
@@ -458,7 +458,7 @@ Piece Stack
 		size = (b.position+{b.size.x/2, b.image.size.y/2}) - (a.position-{a.size.x/2, a.size.y/2})
 	
 	override tick
-		for Math.limit(objects.length-shownObjectCount, min:0) to objects.length <- i
+		for math.limit(objects.length-shownObjectCount, min:0) to objects.length <- i
 			let obj = objects[i]
 			let image = obj.backImage || obj.image
 			drawImage image, obj.position, frame:obj.frame%image.frames.length, size:obj.size
@@ -540,7 +540,7 @@ Piece Board
 		// Zoom
 		if zoomable	
 			onWheelWithin position, size, by:visibleFor
-				float factor = zoomLookupTable[Math.limit Math.round(event.delta.y)+40, min:0, max:zoomLookupTable.length-1]
+				float factor = zoomLookupTable[math.limit math.round(event.delta.y)+40, min:0, max:zoomLookupTable.length-1]
 				if core.logging: core.touchLog += "[{core.frame}] zoom value:{event.delta} factor:{factor} matrix:{matrix}"
 				matrix.move event.position
 				matrix.scale {factor, factor}
@@ -653,24 +653,24 @@ Object ParticleSystem
 		if Time.now > nextBurst
 			if mode == Break
 				for particleImage.frames.length
-					let r = -Math.randomFloat .5
-					let speedFactor = Math.randomFloat 10..15
+					let r = -math.randomFloat .5
+					let speedFactor = math.randomFloat 10..15
 					particles.add Particle
 						pos: position
-						speed: {Math.cos(r), Math.sin(r)} * speedFactor
+						speed: {math.cos(r), math.sin(r)} * speedFactor
 						angle: randomFloat*.05
-						rotationSpeed: Math.randomFloat -.01 to .01
+						rotationSpeed: math.randomFloat -.01 to .01
 						frame: .
 				nextBurst = Time.maxValue
 			else
 				for particlesPerBurst
-					let r = -Math.randomFloat
-					let speedFactor = Math.randomFloat*(maxSpeed-minSpeed) + minSpeed
+					let r = -math.randomFloat
+					let speedFactor = math.randomFloat*(maxSpeed-minSpeed) + minSpeed
 					particles.add Particle
 						pos: position
-						speed: {Math.cos(r), Math.sin(r)} * speedFactor
-						angle: Math.randomFloat
-						frame: Math.randomInteger(particleImage.frames.length)
+						speed: {math.cos(r), math.sin(r)} * speedFactor
+						angle: math.randomFloat
+						frame: math.randomInteger(particleImage.frames.length)
 				nextBurst = ++burst < bursts ? Time.now + burstInterval : Time.maxValue
 
 		for particles <-

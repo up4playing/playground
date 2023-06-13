@@ -62,7 +62,7 @@ transient class InternalUser
 		if ahead < 50: aheads.add ahead, maxLength:200
 		int aheadMax = aheads.max .
 		aheadsMax.add aheadMax maxLength:600
-		bufferFrames = Math.ceil(aheadsMax.average)
+		bufferFrames = math.ceil(aheadsMax.average)
 		// bufferFrames = 10
 		smoothFrame = frame - bufferFrames
 		
@@ -495,32 +495,32 @@ skipInit global unit input
 			int index = getLastTouchMoveIndex id
 			if index
 				// We already moved the pointer this input frame, so just update the last move
-				inputs.setInt16 index, Math.round(referencePos.x)
-				inputs.setInt16 index+2, Math.round(referencePos.y)
-				if core.logging: core.writeLog += " #{localUser.inputFrame} override {id} at {index} to {Math.round(referencePos.x)} {Math.round(referencePos.y)}"
+				inputs.setInt16 index, math.round(referencePos.x)
+				inputs.setInt16 index+2, math.round(referencePos.y)
+				if core.logging: core.writeLog += " #{localUser.inputFrame} override {id} at {index} to {math.round(referencePos.x)} {math.round(referencePos.y)}"
 				return
 			else
 				setLastTouchMoveIndex id, inputs.writePos+6
 				if core.logging: core.writeLog += " save {id} at {inputs.writePos+6}"
 			
 		int composite = cast(inputType)                                 // inputType: 0 -  31 (5 bit)
-		              + Math.shiftLeft(touchType, 5)                    // touchType: 0 -   7 (3 bit)
-		              + Math.shiftLeft(Math.floor(Math.abs(id))%128, 8) // id:        0 - 127 (7 bit)
+		              + math.shiftLeft(touchType, 5)                    // touchType: 0 -   7 (3 bit)
+		              + math.shiftLeft(math.floor(math.abs(id))%128, 8) // id:        0 - 127 (7 bit)
 		inputs.writeInt32 localUser.inputFrame
 		inputs.writeUnsignedInt16 composite
-		inputs.writeInt16 Math.round(referencePos.x)
-		inputs.writeInt16 Math.round(referencePos.y)
-		if core.logging: core.writeLog += " #{localUser.inputFrame} {composite} {Math.round(referencePos.x)} {Math.round(referencePos.y)} ({inputs.readPos}/{inputs.writePos})"
+		inputs.writeInt16 math.round(referencePos.x)
+		inputs.writeInt16 math.round(referencePos.y)
+		if core.logging: core.writeLog += " #{localUser.inputFrame} {composite} {math.round(referencePos.x)} {math.round(referencePos.y)} ({inputs.readPos}/{inputs.writePos})"
 	
 	internal handleUpdateTouchAfterSwitchingUser: int id, Vector2 referencePos
 		let inputs = localUser.inputs
 		int composite = cast(InputType.TouchMove)                       // inputType: 0 -  31 (5 bit)
-		              + Math.shiftLeft(cast TouchType.Left, 5)          // touchType: 0 -   7 (3 bit)
-		              + Math.shiftLeft(Math.floor(Math.abs(id))%128, 8) // id:        0 - 127 (7 bit)
+		              + math.shiftLeft(cast TouchType.Left, 5)          // touchType: 0 -   7 (3 bit)
+		              + math.shiftLeft(math.floor(math.abs(id))%128, 8) // id:        0 - 127 (7 bit)
 		inputs.writeInt32 localUser.inputFrame
 		inputs.writeUnsignedInt16 composite
-		inputs.writeInt16 Math.round(referencePos.x)
-		inputs.writeInt16 Math.round(referencePos.y)
+		inputs.writeInt16 math.round(referencePos.x)
+		inputs.writeInt16 math.round(referencePos.y)
 	
 	private handleWheelEvent: float x, float y, float deltaX, float deltaY
 		if core.mode == None || Platform.mode != Record || !localUser || !localUser.collectInputs: return
@@ -529,11 +529,11 @@ skipInit global unit input
 		Vector2 referencePos = {x*Platform.pixelRatio, y*Platform.pixelRatio}.getRelativeTo(Platform.baseMatrix)
 		inputs.writeInt32 localUser.inputFrame
 		inputs.writeUnsignedInt16 cast InputType.Wheel
-		inputs.writeInt16 Math.round(referencePos.x)
-		inputs.writeInt16 Math.round(referencePos.y)
-		inputs.writeInt16 Math.round(deltaX)
-		inputs.writeInt16 Math.round(deltaY)
-		if core.logging: core.writeLog += " [{localUser.inputFrame}] wheel {Math.round(referencePos.x)} {Math.round(referencePos.y)} {deltaX} {deltaY} \{r:{inputs.readPos} w:{inputs.writePos}\}"
+		inputs.writeInt16 math.round(referencePos.x)
+		inputs.writeInt16 math.round(referencePos.y)
+		inputs.writeInt16 math.round(deltaX)
+		inputs.writeInt16 math.round(deltaY)
+		if core.logging: core.writeLog += " [{localUser.inputFrame}] wheel {math.round(referencePos.x)} {math.round(referencePos.y)} {deltaX} {deltaY} \{r:{inputs.readPos} w:{inputs.writePos}\}"
 		
 	internal handleSetState: Buffer buffer
 		let inputs = localUser.inputs
@@ -651,8 +651,8 @@ skipInit global unit input
 		let inputs = localUser.inputs
 		inputs.writeInt32 localUser.inputFrame
 		inputs.writeInt16 cast InputType.GameController
-		inputs.writeFloat32 Math.abs(leftStickX) > GameController.deadZone ? leftStickX : 0
-		inputs.writeFloat32 Math.abs(leftStickY) > GameController.deadZone ? leftStickY : 0
+		inputs.writeFloat32 math.abs(leftStickX) > GameController.deadZone ? leftStickX : 0
+		inputs.writeFloat32 math.abs(leftStickY) > GameController.deadZone ? leftStickY : 0
 		inputs.writeUnsignedInt16 buttons
 			
 	internal parseInputs: int frame
@@ -853,7 +853,7 @@ skipInit global unit input
 					core.snapshotBuffer.reset
 					inputs.readBuffer core.snapshotBuffer
 					Snapshot.deserialize core.snapshotBuffer
-					Math.recreateRandomValues
+					math.recreateRandomValues
 				else
 				if inputType == String
 					int id = inputs.readInt
@@ -891,8 +891,8 @@ skipInit global unit input
 				if .controllerKeyDownFrame[5]: .controller.b.state = true
 				if .controllerKeyDownFrame[6]: .controller.x.state = true
 				if .controllerKeyDownFrame[7]: .controller.y.state = true
-				.controller.inMotion = Math.abs(.controller.leftStick.x) >= GameController.deadZone
-				                    or Math.abs(.controller.leftStick.y) >= GameController.deadZone
+				.controller.inMotion = math.abs(.controller.leftStick.x) >= GameController.deadZone
+				                    or math.abs(.controller.leftStick.y) >= GameController.deadZone
 						
 	internal updatePlayers
 		players.orderBy.id

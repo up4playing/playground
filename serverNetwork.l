@@ -105,7 +105,7 @@ transient unit ServerNetwork
 			
 		inputsSentPos = input.localUser.inputs.writePos
 		input.localUser.id = userId
-		Math.setRandomSeed seed
+		math.setRandomSeed seed
 		core.serverStartTime = serverStartTime
 		core.mode = Ping
 		for input.internalUsers
@@ -147,8 +147,8 @@ transient unit ServerNetwork
 		float pingPongTime = now - pingTime
 		float calculatedStartTime = now - pingPongTime/2 - timeSinceStart
 		
-		int deltaFromAverage = Math.round(calculatedStartTime - core.startTime)
-		int deltaFromReference = Math.round(calculatedStartTime - referenceStartTime)
+		int deltaFromAverage = math.round(calculatedStartTime - core.startTime)
+		int deltaFromReference = math.round(calculatedStartTime - referenceStartTime)
 		statistics.serverPings.add pingPongTime
 		// core.log "<<< Pong ({pongCount})", pingPongTime, calculatedStartTime
 		// core.log "average", core.startTime, deltaFromAverage 

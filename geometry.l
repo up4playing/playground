@@ -78,15 +78,15 @@ struct Vector2
 	bool operator <  (Vector2 a, Vector2 b) return a.x <  b.x && a.y <  b.y
 	bool operator <= (Vector2 a, Vector2 b) return a.x <= b.x && a.y <= b.y
 	
-	bool operator == (Vector2 a, float length) let x = a.x, y = a.y; return Math.sqrt(x*x + y*y) == length
-	bool operator != (Vector2 a, float length) let x = a.x, y = a.y; return Math.sqrt(x*x + y*y) != length
-	bool operator >  (Vector2 a, float length) let x = a.x, y = a.y; return Math.sqrt(x*x + y*y) >  length
-	bool operator >= (Vector2 a, float length) let x = a.x, y = a.y; return Math.sqrt(x*x + y*y) >= length
-	bool operator <  (Vector2 a, float length) let x = a.x, y = a.y; return Math.sqrt(x*x + y*y) <  length
-	bool operator <= (Vector2 a, float length) let x = a.x, y = a.y; return Math.sqrt(x*x + y*y) <= length
+	bool operator == (Vector2 a, float length) let x = a.x, y = a.y; return math.sqrt(x*x + y*y) == length
+	bool operator != (Vector2 a, float length) let x = a.x, y = a.y; return math.sqrt(x*x + y*y) != length
+	bool operator >  (Vector2 a, float length) let x = a.x, y = a.y; return math.sqrt(x*x + y*y) >  length
+	bool operator >= (Vector2 a, float length) let x = a.x, y = a.y; return math.sqrt(x*x + y*y) >= length
+	bool operator <  (Vector2 a, float length) let x = a.x, y = a.y; return math.sqrt(x*x + y*y) <  length
+	bool operator <= (Vector2 a, float length) let x = a.x, y = a.y; return math.sqrt(x*x + y*y) <= length
 	
 	// The length of the vector
-	length := Math.sqrt(x * x + y * y)
+	length := math.sqrt(x * x + y * y)
 		
 	// A vector that is orthogonal to the existing vector
 	orthogonal := Vector2(x:-y, y:x)
@@ -95,16 +95,16 @@ struct Vector2
 	inverse := Vector2(-x, -y)
 		
 	// A vector with each coordinate rounded to the closest integer value
-	rounded := IntVector2(Math.round(x), Math.round(y))
+	rounded := IntVector2(math.round(x), math.round(y))
 	
 	// A vector with each coordinate rounded down to an integer value
-	floor := IntVector2(Math.floor(x), Math.floor(y))
+	floor := IntVector2(math.floor(x), math.floor(y))
 		
 	// A vector with each coordinate rounded up to an integer value
-	ceil := IntVector2(Math.ceil(x), Math.ceil(y))
+	ceil := IntVector2(math.ceil(x), math.ceil(y))
 		
 	// A vector with the absolute value of each coordinate
-	abs := Vector2(Math.abs(x), Math.abs(y))
+	abs := Vector2(math.abs(x), math.abs(y))
 		
 	// The larger of the two coordinates
 	max := x > y ? x : y
@@ -127,8 +127,8 @@ struct Vector2
 		
 	rotate: Angle angle // The angle in turns (one full rotation is 1)
 		let x = this.x, y = this.y
-		let sn = Math.sin(angle)
-		let cs = Math.cos(angle)
+		let sn = math.sin(angle)
+		let cs = math.cos(angle)
 		this.x = x * cs - y * sn;
 		this.y = x * sn + y * cs;
 		return this
@@ -137,15 +137,15 @@ struct Vector2
 	distanceTo: Vector2 value // The second vector
 		let x = x - value.x
 		let y = y - value.y
-		return Math.sqrt(x*x + y*y)
+		return math.sqrt(x*x + y*y)
 
 	// The distance to another vector along axes at right angles
 	manhattanDistanceTo: Vector2 value // The second vector
-		return Math.abs(x - value.x) + Math.abs(y - value.y)
+		return math.abs(x - value.x) + math.abs(y - value.y)
 
 	// The angle to another vector in turns (one full rotation is 1)
 	angleTo: Vector2 value // The second vector
-		return Math.getAngleForVector(value - this)
+		return math.getAngleForVector(value - this)
 
 	// Interpolates to another vector
 	interpolateTo: Vector2 target  // The target position to interpolate to
@@ -184,7 +184,7 @@ struct Vector2
 
 	// A vector that points in the same direction, but has a length of 1
 	normalized
-		let len = Math.sqrt(x * x + y * y)
+		let len = math.sqrt(x * x + y * y)
 		return len != 0 ? Vector2(x / len, y / len) : Vector2(0, 0)
 	
 	// Moves the vector towards the given target by the given distance	
@@ -193,10 +193,10 @@ struct Vector2
 		let delta = targetPosition - this
 		if delta.x != 0 || delta.y != 0
 			delta = delta.normalized * speed
-			if delta.x > 0: x = Math.min(x + delta.x, targetPosition.x)
-			else            x = Math.max(x + delta.x, targetPosition.x)
-			if delta.y > 0: y = Math.min(y + delta.y, targetPosition.y)
-			else            y = Math.max(y + delta.y, targetPosition.y)
+			if delta.x > 0: x = math.min(x + delta.x, targetPosition.x)
+			else            x = math.max(x + delta.x, targetPosition.x)
+			if delta.y > 0: y = math.min(y + delta.y, targetPosition.y)
+			else            y = math.max(y + delta.y, targetPosition.y)
 		
 	// Transforms the vector by a given matrix
 	transform: Matrix2D matrix // The matrix to transform the vector by
@@ -312,7 +312,7 @@ struct IntVector2
 	bool operator <= (IntVector2 a, IntVector2 b) return a.x <= b.x && a.y <= b.y
 	
 	// The length of the vector
-	length := Math.sqrt(x * x + y * y)
+	length := math.sqrt(x * x + y * y)
 		
 	// A vector that is orthogonal to the existing vector
 	orthogonal := IntVector2(x:-y, y:x)
@@ -321,7 +321,7 @@ struct IntVector2
 	inverse := IntVector2(-x, -y)
 		
 	// A vector with the absolute value of each coordinate
-	abs := IntVector2(Math.abs(x), Math.abs(y))
+	abs := IntVector2(math.abs(x), math.abs(y))
 		
 	// The larger of the two coordinates
 	max := x > y ? x : y
@@ -332,20 +332,20 @@ struct IntVector2
 	limit: IntVector2 min
 		   IntVector2 max
 		return IntVector2(
-			Math.limit x, min:min.x, max:max.x
-			Math.limit y, min:min.y, max:max.y
+			math.limit x, min:min.x, max:max.x
+			math.limit y, min:min.y, max:max.y
 		)
 		
 	limit: IntVector2 max
 		return IntVector2(
-			Math.limit x, max:max.x
-			Math.limit y, max:max.y
+			math.limit x, max:max.x
+			math.limit y, max:max.y
 		)
 		
 	limit: IntVector2 min
 		return IntVector2(
-			Math.limit x, min:min.x
-			Math.limit y, min:min.y
+			math.limit x, min:min.x
+			math.limit y, min:min.y
 		)
 		
 	// Interpolates linearly to another vector
@@ -358,25 +358,25 @@ struct IntVector2
 	distanceTo: IntVector2 value // The second vector
 		let x = x - value.x
 		let y = y - value.y
-		return Math.sqrt(x*x + y*y)
+		return math.sqrt(x*x + y*y)
 		
 	// The distance to another vector
 	distanceTo: Vector2 value // The second vector
 		let x = x - value.x
 		let y = y - value.y
-		return Math.sqrt(x*x + y*y)
+		return math.sqrt(x*x + y*y)
 
 	// The distance to another vector along axes at right angles
 	manhattanDistanceTo: IntVector2 value // The second vector
-		return Math.abs(x - value.x) + Math.abs(y - value.y)
+		return math.abs(x - value.x) + math.abs(y - value.y)
 
 	// The angle to another vector in turns (one full rotation is 1)
 	angleTo: IntVector2 value // The second vector
-		return Math.getAngleForVector(value - this)
+		return math.getAngleForVector(value - this)
 		
 	// A float vector that points in the same direction, but has a length of 1
 	normalized
-		let len = Math.sqrt(x * x + y * y)
+		let len = math.sqrt(x * x + y * y)
 		return len != 0 ? Vector2(x / len, y / len) : Vector2(0, 0)
 		
 	static js TResult[] enumerate: IntVector2 from
@@ -456,7 +456,7 @@ struct Matrix2D
 	// Rotates the matrix by a given angle
 	rotate: Angle angle // The angle in turns (one full rotation is 1)
 		let a0 = m0, a1 = m1, a2 = m2, a3 = m3
-		let sin = Math.sin(angle), cos = Math.cos(angle)
+		let sin = math.sin(angle), cos = math.cos(angle)
 		m0 = a0 *  cos + a2 * sin
 		m1 = a1 *  cos + a3 * sin
 		m2 = a0 * -sin + a2 * cos
@@ -542,7 +542,7 @@ transient float Angle
 	inline js bool  operator != (Angle a, float b) a!=b
 	
 	inline js float in: AngleUnit unit
-		(unit==1 ? this*Math_TwoPI : unit==2 ? this*360 : unit==3 ? this*400 : this)
+		(unit==1 ? this*math_TwoPI : unit==2 ? this*360 : unit==3 ? this*400 : this)
 		
 enum AngleUnit
 	turns // Turn (one full rotation is 1)
@@ -550,14 +550,14 @@ enum AngleUnit
 	deg   // Degrees (one full rotation is 360)
 	grad  // Gradiants (one full rotation is 400)
 
-unit Math
+unit math
 	// Returns the arctangent of the quotient of the given values
 	Angle getAngleForVector: Vector2 vector
-		return Math.atan2(vector.y, vector.x)
+		return math.atan2(vector.y, vector.x)
 		
 	Vector2 getVectorForAngle: Angle angle      // The angle in turns (one full rotation is 1)
 		                       float radius = 1
-		return new Vector2(Math.cos(angle)*radius, Math.sin(angle)*radius)
+		return new Vector2(math.cos(angle)*radius, math.sin(angle)*radius)
 		
 	Vector2 intersectLines: Vector2 startA
 		                    Vector2 endA
@@ -711,8 +711,8 @@ class IsometicGrid
 	getGridPosition: Vector2 screenPos // The screen position
 		             bool allowOutside = false
 		Vector2 t = screenPos - basePos + topFaceOffset
-		let x = Math.round((xOffset.x*t.y + xOffset.y*t.x) / (2*xOffset.x*xOffset.y))
-		let y = Math.round((xOffset.x*t.y - xOffset.y*t.x) / (2*xOffset.x*xOffset.y))
+		let x = math.round((xOffset.x*t.y + xOffset.y*t.x) / (2*xOffset.x*xOffset.y))
+		let y = math.round((xOffset.x*t.y - xOffset.y*t.x) / (2*xOffset.x*xOffset.y))
 		if allowOutside or (x >= 0 and x < size.x and y >= 0 and y < size.y): return IntVector2(x,y)
 		else                                                                  return IntVector2.none
 		
@@ -721,8 +721,8 @@ class IsometicGrid
 		
 	limitToInside: IntVector2 position
 		return IntVector2(
-			Math.limit position.x, min:0, max:size.x-1
-			Math.limit position.y, min:0, max:size.y-1
+			math.limit position.x, min:0, max:size.x-1
+			math.limit position.y, min:0, max:size.y-1
 		)
 		
 	getScreenVector: Vector2 worldVector

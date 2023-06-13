@@ -104,7 +104,7 @@ transient global skipInit unit audio
 	
 	adjustVolume: int delta = 1, int forUser = -1
 		if forUser == -1 or forUser == input.localUser?.id
-			volumeLevel = Math.limit(volumeLevel+delta, min:0, max:volumeLevels.length-1)
+			volumeLevel = math.limit(volumeLevel+delta, min:0, max:volumeLevels.length-1)
 			volume = volumeLevels[volumeLevel]
 			playingSounds.each.sound.updateVolume
 	
@@ -114,7 +114,7 @@ transient global skipInit unit audio
 		if needsToBeCertain and not input.isCertain: return
 			
 		if Time.frame == 0
-			fx.add PlaySoundEffect startTime:Math.ceil(Time.now+core.targetFrameTime)+delay, sound
+			fx.add PlaySoundEffect startTime:math.ceil(Time.now+core.targetFrameTime)+delay, sound
 		else
 		if delay
 			fx.add PlaySoundEffect startTime:Time.now+delay, sound
