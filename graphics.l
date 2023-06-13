@@ -215,270 +215,6 @@ transient global unit graphics
 			}
 		}
 		
-	// ------------------------------------------------------- Transform -------------------------------------------------------
-	
-	// Moves all subsequent operations by a given vector						
-	move: Vector2 distance // The distance to move
-		localMatrix.move distance
-		totalMatrix.move distance
-							
-	// Moves all operations in a block by a given vector						
-	move: Vector2 distance // The distance to move
-		  void() block     // All operations within this block will be moved
-		let a0 = localMatrix.m0, a1 = localMatrix.m1, a2 = localMatrix.m2, a3 = localMatrix.m3, a4 = localMatrix.m4, a5 = localMatrix.m5
-		let b0 = totalMatrix.m0, b1 = totalMatrix.m1, b2 = totalMatrix.m2, b3 = totalMatrix.m3, b4 = totalMatrix.m4, b5 = totalMatrix.m5
-		localMatrix.move distance
-		totalMatrix.move distance
-		block
-		localMatrix.m0 = a0; localMatrix.m1 = a1; localMatrix.m2 = a2; localMatrix.m3 = a3; localMatrix.m4 = a4; localMatrix.m5 = a5 
-		totalMatrix.m0 = b0; totalMatrix.m1 = b1; totalMatrix.m2 = b2; totalMatrix.m3 = b3; totalMatrix.m4 = b4; totalMatrix.m5 = b5 
-							
-	// Rotates all subsequent operations by a given angle	
-	rotate: Angle angle // The angle in turns (one full rotation is 1)
-		localMatrix.rotate angle
-		totalMatrix.rotate angle
-		
-	// Rotates all operation in a block by a given angle				
-	rotate: Angle angle  // The angle in turns (one full rotation is 1)
-		    void() block // All operations within this block will be rotated
-		if angle == 0: block; return
-		let a0 = localMatrix.m0, a1 = localMatrix.m1, a2 = localMatrix.m2, a3 = localMatrix.m3, a4 = localMatrix.m4, a5 = localMatrix.m5
-		let b0 = totalMatrix.m0, b1 = totalMatrix.m1, b2 = totalMatrix.m2, b3 = totalMatrix.m3, b4 = totalMatrix.m4, b5 = totalMatrix.m5
-		localMatrix.rotate angle
-		totalMatrix.rotate angle
-		block
-		localMatrix.m0 = a0; localMatrix.m1 = a1; localMatrix.m2 = a2; localMatrix.m3 = a3; localMatrix.m4 = a4; localMatrix.m5 = a5 
-		totalMatrix.m0 = b0; totalMatrix.m1 = b1; totalMatrix.m2 = b2; totalMatrix.m3 = b3; totalMatrix.m4 = b4; totalMatrix.m5 = b5 
-	
-	// Scales all subsequent operations by a given factor
-	scale: float factor // The factor to scale by
-		localMatrix.scale {factor, factor}
-		totalMatrix.scale {factor, factor}
-		
-	// Scales all operation in a block by a given factor
-	scale: float factor // The factor to scale by
-		   void() block // All operations within this block will be scaled
-		let a0 = localMatrix.m0, a1 = localMatrix.m1, a2 = localMatrix.m2, a3 = localMatrix.m3, a4 = localMatrix.m4, a5 = localMatrix.m5
-		let b0 = totalMatrix.m0, b1 = totalMatrix.m1, b2 = totalMatrix.m2, b3 = totalMatrix.m3, b4 = totalMatrix.m4, b5 = totalMatrix.m5
-		localMatrix.scale {factor, factor}
-		totalMatrix.scale {factor, factor}
-		block
-		localMatrix.m0 = a0; localMatrix.m1 = a1; localMatrix.m2 = a2; localMatrix.m3 = a3; localMatrix.m4 = a4; localMatrix.m5 = a5 
-		totalMatrix.m0 = b0; totalMatrix.m1 = b1; totalMatrix.m2 = b2; totalMatrix.m3 = b3; totalMatrix.m4 = b4; totalMatrix.m5 = b5 
-	
-	transform: Vector2 move = Vector2.none  // The distance to move
-		       float scale = 1              // The factor to scale by
-		       Angle rotate = 0             // The angle in turns (0: no rotation, 1: one full rotation)
-		       void() do                    // All operations within this block will be scaled
-		let a0 = localMatrix.m0, a1 = localMatrix.m1, a2 = localMatrix.m2, a3 = localMatrix.m3, a4 = localMatrix.m4, a5 = localMatrix.m5
-		let b0 = totalMatrix.m0, b1 = totalMatrix.m1, b2 = totalMatrix.m2, b3 = totalMatrix.m3, b4 = totalMatrix.m4, b5 = totalMatrix.m5
-		if move
-			localMatrix.move move
-			totalMatrix.move move
-		if scale != 1
-			localMatrix.scale {scale, scale}
-			totalMatrix.scale {scale, scale}
-		if rotate
-			localMatrix.rotate rotate
-			totalMatrix.rotate rotate
-		do
-		localMatrix.m0 = a0; localMatrix.m1 = a1; localMatrix.m2 = a2; localMatrix.m3 = a3; localMatrix.m4 = a4; localMatrix.m5 = a5 
-		totalMatrix.m0 = b0; totalMatrix.m1 = b1; totalMatrix.m2 = b2; totalMatrix.m3 = b3; totalMatrix.m4 = b4; totalMatrix.m5 = b5 
-	
-	// Apply a matrix to all subsequent operation
-	applyMatrix: Matrix2D matrix
-		localMatrix.multiplyRight matrix
-		matrix.multiplyRight matrix
-	
-	// Applies a matrix to all operations in a block
-	applyMatrix: Matrix2D matrix // The matrix to appy
-		         void() block    // All operations within this block will be scaled
-		let a0 = localMatrix.m0, a1 = localMatrix.m1, a2 = localMatrix.m2, a3 = localMatrix.m3, a4 = localMatrix.m4, a5 = localMatrix.m5
-		let b0 = totalMatrix.m0, b1 = totalMatrix.m1, b2 = totalMatrix.m2, b3 = totalMatrix.m3, b4 = totalMatrix.m4, b5 = totalMatrix.m5
-		this.localMatrix.multiplyLeft matrix
-		this.totalMatrix.multiplyLeft matrix
-		block
-		localMatrix.m0 = a0; localMatrix.m1 = a1; localMatrix.m2 = a2; localMatrix.m3 = a3; localMatrix.m4 = a4; localMatrix.m5 = a5 
-		totalMatrix.m0 = b0; totalMatrix.m1 = b1; totalMatrix.m2 = b2; totalMatrix.m3 = b3; totalMatrix.m4 = b4; totalMatrix.m5 = b5
-	
-	// --------------------------------------------- Create and Manipulate Images ---------------------------------------------
-	
-	// Directly manipulate the pixels on the screen or an image
-	js int[] manipulate: void(int[] pixels) code // This code can manipulate the pixels
-		let imageData = Platform_context.getImageData(0,0,Platform_pixelSize.x, Platform_pixelSize.y)
-		code(imageData.data)
-		Platform_context.putImageData(imageData, 0, 0)
-		
-	// Creates an image to draw to
-	js void createImage: Vector2 size     // The size of the image
-		                 string file = "" // Save the image to a file with this filename
-		                 void() code      // This code will draw on the created image instead of drawing on the screen
-		// let prevCanvas = Platform_canvas
-		let prevContext = Platform_context
-		let prevPixelSizeX = Platform_pixelSize.x
-		let prevPixelSizeY = Platform_pixelSize.y
-		let prevItems = graphics_items
-		graphics_items = []
-		let canvas = document.createElement("canvas")
-		canvas.width = size.x
-		canvas.height = size.y
-		Platform_context = canvas.getContext("2d")
-		Platform_pixelSize.x = size.x
-		Platform_pixelSize.y = size.y
-		let a = graphics_localMatrix.matrix, b = graphics_totalMatrix.matrix
-		let a0 = graphics_localMatrix.m0, a1 = graphics_localMatrix.m1, a2 = graphics_localMatrix.m2, a3 = graphics_localMatrix.m3, a4 = graphics_localMatrix.m4, a5 = graphics_localMatrix.m5
-		let b0 = graphics_totalMatrix.m0, b1 = graphics_totalMatrix.m1, b2 = graphics_totalMatrix.m2, b3 = graphics_totalMatrix.m3, b4 = graphics_totalMatrix.m4, b5 = graphics_totalMatrix.m5
-		graphics_localMatrix.set(1, 0, 0, 1, -size.x/2, -size.y/2)
-		graphics_totalMatrix.set(1, 0, 0, 1, size.x/2, size.y/2)
-		code()
-		graphics_drawItems()
-		var dataUrl = canvas.toDataURL('image/png');
-		if(file) Platform_saveImage(dataUrl, file);
-		graphics_localMatrix.m0 = a0; graphics_localMatrix.m1 = a1; graphics_localMatrix.m2 = a2; graphics_localMatrix.m3 = a3; graphics_localMatrix.m4 = a4; graphics_localMatrix.m5 = a5
-		graphics_totalMatrix.m0 = b0; graphics_totalMatrix.m1 = b1; graphics_totalMatrix.m2 = b2; graphics_totalMatrix.m3 = b3; graphics_totalMatrix.m4 = b4; graphics_totalMatrix.m5 = b5
-		Platform_context = prevContext
-		// canvas = prevCanvas
-		Platform_pixelSize.x = prevPixelSizeX
-		Platform_pixelSize.y = prevPixelSizeY
-		graphics_items = prevItems
-		return dataUrl
-		
-	// ------------------------------------------------------- Color -------------------------------------------------------
-	
-	// The default background color
-	const Color backgroundColor = Black
-	
-	// Teh default player colors
-	const Color[] defaultColors = [{"398CA9", "Blue"}, {"C01352", "Red"}, {"16C66E", "Green"}, {"FFD166", "Yellow"}]
-
-	// The default color for all draw operations
-	color
-		return currentColor
-	color: Color color
-		currentColor = color
-		return currentColor
-	color: Color color
-		   void() code
-		let prev = currentColor
-		currentColor = color
-		code()
-		currentColor = prev
-		return currentColor
-	private Color currentColor = {"ffffff"}
-	
-	// ------------------------------------------------------- Font -------------------------------------------------------
-	
-	// The default font for all draw operations
-	font
-		return currentFont
-	font: Font font
-		currentFont = font
-		return currentFont
-	font: Font font
-		  void() code
-		let prev = currentFont
-		currentFont = font
-		code()
-		currentFont = prev
-		return currentFont
-	private Font currentFont = OpenSans
-	
-	// The default font size for all draw operations
-	fontSize
-		return currentFontSize
-	fontSize: int fontSize
-		currentFontSize = fontSize
-		return currentFontSize
-	fontSize: int fontSize
-		      void() code
-		let prev = currentFontSize
-		currentFontSize = fontSize
-		code()
-		currentFontSize = prev
-		return currentFontSize
-	private currentFontSize = 64
-	
-	// ------------------------------------------------------- Line Width -------------------------------------------------------
-	
-	// The default line width for all draw operations
-	lineWidth
-		return currentLineWidth
-	lineWidth: int lineWidth
-		currentLineWidth = lineWidth
-		return currentLineWidth
-	lineWidth: int lineWidth
-		      void() code
-		let prev = currentLineWidth
-		currentLineWidth = lineWidth
-		code()
-		currentLineWidth = prev
-		return currentLineWidth
-	private currentLineWidth = 8
-	
-	// ------------------------------------------------------- Clip -------------------------------------------------------
-	
-	// For all drawings in code block, only pixels inside the given polygon are drawn
-	clip: Vector2[] points      // A list of points that define the area to be clipped
-		  Vector2 position = {} // The position all points are relative to 
-		  bool show = false     // Visualizes the clipping area by shading it transparent red
-		if show: drawPolygon position, points, fillColor:TransparentRed
-				
-	// For all drawings in code block, only pixels inside the given polygon are drawn
-	clip: Vector2[] points      // A list of points that define the area to be clipped
-		  Vector2 position = {} // The position all points are relative to 
-		  bool show = false     // Visualizes the clipping area by shading it transparent red
-		  void() code           // All draw operation within this code block will be clipped
-		let prev = currentClippingPath
-		currentClippingPath = ClippingPath(show)
-		for points: currentClippingPath.points.add position + .
-		code()
-		currentClippingPath = prev
-		
-	private ClippingPath currentClippingPath
-		
-	// ------------------------------------------------------- Visibility -------------------------------------------------------
-	
-	// The default player for which all draw operations will be visible
-	visibleFor
-		return currentlyVisibleFor
-		
-	visibleFor: implicit Player[] visibleFor
-		        void() code
-		let prev = currentlyVisibleFor
-		currentlyVisibleFor = visibleFor
-		code()
-		currentlyVisibleFor = prev
-		return currentlyVisibleFor
-		
-	private Player[] currentlyVisibleFor = null
-		
-	// Returns the width of a string in pixels
-	global js int getTextWidth: string text                 // The string to get the width of
-		                         implicit Vector2 size = {} // The size of the text
-		                        Font font = null            // The font of the text
-		                        FontStyle style = Normal    // Whether the text should be bold or normal style
-		let effectiveFont = font || graphics_currentFont
-		let fontSize = size.y || size.x || graphics_currentFontSize
-		Platform_context.font =  (style ? "bold ":"")+fontSize+"px "+effectiveFont.name;
-		let textSize = Platform_context.measureText(text)
-		return textSize.width
-		
-	// ------------------------------------------------------- Position -------------------------------------------------------
-	
-	getAbsolutPosition: Vector2 position
-		return position.getTransformed(localMatrix)
-		
-	getPixelPosition: Vector2 position
-		return position.getTransformed(totalMatrix) / Platform.pixelRatio
-		
-	getPixelSize: Vector2 size
-		return size * {totalMatrix.m0, totalMatrix.m3} / Platform.pixelRatio
-		
-	private Vector2 getEffectiveSize: Vector2 imageSize, Vector2 size
-		let sizeX = size.x || imageSize.x
-		let sizeY = size.y || (sizeX/imageSize.x)*imageSize.y
-		return {sizeX, sizeY}
-		
 	// ------------------------------------------------------- Image -------------------------------------------------------
 	
 	// Draw an image on the screen
@@ -960,6 +696,270 @@ transient global unit graphics
 				"clear", null, 0
 			))
 		}
+		
+	// ------------------------------------------------------- Transform -------------------------------------------------------
+	
+	// Moves all subsequent operations by a given vector						
+	move: Vector2 distance // The distance to move
+		localMatrix.move distance
+		totalMatrix.move distance
+							
+	// Moves all operations in a block by a given vector						
+	move: Vector2 distance // The distance to move
+		  void() block     // All operations within this block will be moved
+		let a0 = localMatrix.m0, a1 = localMatrix.m1, a2 = localMatrix.m2, a3 = localMatrix.m3, a4 = localMatrix.m4, a5 = localMatrix.m5
+		let b0 = totalMatrix.m0, b1 = totalMatrix.m1, b2 = totalMatrix.m2, b3 = totalMatrix.m3, b4 = totalMatrix.m4, b5 = totalMatrix.m5
+		localMatrix.move distance
+		totalMatrix.move distance
+		block
+		localMatrix.m0 = a0; localMatrix.m1 = a1; localMatrix.m2 = a2; localMatrix.m3 = a3; localMatrix.m4 = a4; localMatrix.m5 = a5 
+		totalMatrix.m0 = b0; totalMatrix.m1 = b1; totalMatrix.m2 = b2; totalMatrix.m3 = b3; totalMatrix.m4 = b4; totalMatrix.m5 = b5 
+							
+	// Rotates all subsequent operations by a given angle	
+	rotate: Angle angle // The angle in turns (one full rotation is 1)
+		localMatrix.rotate angle
+		totalMatrix.rotate angle
+		
+	// Rotates all operation in a block by a given angle				
+	rotate: Angle angle  // The angle in turns (one full rotation is 1)
+		    void() block // All operations within this block will be rotated
+		if angle == 0: block; return
+		let a0 = localMatrix.m0, a1 = localMatrix.m1, a2 = localMatrix.m2, a3 = localMatrix.m3, a4 = localMatrix.m4, a5 = localMatrix.m5
+		let b0 = totalMatrix.m0, b1 = totalMatrix.m1, b2 = totalMatrix.m2, b3 = totalMatrix.m3, b4 = totalMatrix.m4, b5 = totalMatrix.m5
+		localMatrix.rotate angle
+		totalMatrix.rotate angle
+		block
+		localMatrix.m0 = a0; localMatrix.m1 = a1; localMatrix.m2 = a2; localMatrix.m3 = a3; localMatrix.m4 = a4; localMatrix.m5 = a5 
+		totalMatrix.m0 = b0; totalMatrix.m1 = b1; totalMatrix.m2 = b2; totalMatrix.m3 = b3; totalMatrix.m4 = b4; totalMatrix.m5 = b5 
+	
+	// Scales all subsequent operations by a given factor
+	scale: float factor // The factor to scale by
+		localMatrix.scale {factor, factor}
+		totalMatrix.scale {factor, factor}
+		
+	// Scales all operation in a block by a given factor
+	scale: float factor // The factor to scale by
+		   void() block // All operations within this block will be scaled
+		let a0 = localMatrix.m0, a1 = localMatrix.m1, a2 = localMatrix.m2, a3 = localMatrix.m3, a4 = localMatrix.m4, a5 = localMatrix.m5
+		let b0 = totalMatrix.m0, b1 = totalMatrix.m1, b2 = totalMatrix.m2, b3 = totalMatrix.m3, b4 = totalMatrix.m4, b5 = totalMatrix.m5
+		localMatrix.scale {factor, factor}
+		totalMatrix.scale {factor, factor}
+		block
+		localMatrix.m0 = a0; localMatrix.m1 = a1; localMatrix.m2 = a2; localMatrix.m3 = a3; localMatrix.m4 = a4; localMatrix.m5 = a5 
+		totalMatrix.m0 = b0; totalMatrix.m1 = b1; totalMatrix.m2 = b2; totalMatrix.m3 = b3; totalMatrix.m4 = b4; totalMatrix.m5 = b5 
+	
+	transform: Vector2 move = Vector2.none  // The distance to move
+		       float scale = 1              // The factor to scale by
+		       Angle rotate = 0             // The angle in turns (0: no rotation, 1: one full rotation)
+		       void() do                    // All operations within this block will be scaled
+		let a0 = localMatrix.m0, a1 = localMatrix.m1, a2 = localMatrix.m2, a3 = localMatrix.m3, a4 = localMatrix.m4, a5 = localMatrix.m5
+		let b0 = totalMatrix.m0, b1 = totalMatrix.m1, b2 = totalMatrix.m2, b3 = totalMatrix.m3, b4 = totalMatrix.m4, b5 = totalMatrix.m5
+		if move
+			localMatrix.move move
+			totalMatrix.move move
+		if scale != 1
+			localMatrix.scale {scale, scale}
+			totalMatrix.scale {scale, scale}
+		if rotate
+			localMatrix.rotate rotate
+			totalMatrix.rotate rotate
+		do
+		localMatrix.m0 = a0; localMatrix.m1 = a1; localMatrix.m2 = a2; localMatrix.m3 = a3; localMatrix.m4 = a4; localMatrix.m5 = a5 
+		totalMatrix.m0 = b0; totalMatrix.m1 = b1; totalMatrix.m2 = b2; totalMatrix.m3 = b3; totalMatrix.m4 = b4; totalMatrix.m5 = b5 
+	
+	// Apply a matrix to all subsequent operation
+	applyMatrix: Matrix2D matrix
+		localMatrix.multiplyRight matrix
+		matrix.multiplyRight matrix
+	
+	// Applies a matrix to all operations in a block
+	applyMatrix: Matrix2D matrix // The matrix to appy
+		         void() block    // All operations within this block will be scaled
+		let a0 = localMatrix.m0, a1 = localMatrix.m1, a2 = localMatrix.m2, a3 = localMatrix.m3, a4 = localMatrix.m4, a5 = localMatrix.m5
+		let b0 = totalMatrix.m0, b1 = totalMatrix.m1, b2 = totalMatrix.m2, b3 = totalMatrix.m3, b4 = totalMatrix.m4, b5 = totalMatrix.m5
+		this.localMatrix.multiplyLeft matrix
+		this.totalMatrix.multiplyLeft matrix
+		block
+		localMatrix.m0 = a0; localMatrix.m1 = a1; localMatrix.m2 = a2; localMatrix.m3 = a3; localMatrix.m4 = a4; localMatrix.m5 = a5 
+		totalMatrix.m0 = b0; totalMatrix.m1 = b1; totalMatrix.m2 = b2; totalMatrix.m3 = b3; totalMatrix.m4 = b4; totalMatrix.m5 = b5
+	
+	// ------------------------------------------------------- Color -------------------------------------------------------
+	
+	// The default background color
+	const Color backgroundColor = Black
+	
+	// Teh default player colors
+	const Color[] defaultColors = [{"398CA9", "Blue"}, {"C01352", "Red"}, {"16C66E", "Green"}, {"FFD166", "Yellow"}]
+
+	// The default color for all draw operations
+	color
+		return currentColor
+	color: Color color
+		currentColor = color
+		return currentColor
+	color: Color color
+		   void() code
+		let prev = currentColor
+		currentColor = color
+		code()
+		currentColor = prev
+		return currentColor
+	private Color currentColor = {"ffffff"}
+	
+	// ------------------------------------------------------- Font -------------------------------------------------------
+	
+	// The default font for all draw operations
+	font
+		return currentFont
+	font: Font font
+		currentFont = font
+		return currentFont
+	font: Font font
+		  void() code
+		let prev = currentFont
+		currentFont = font
+		code()
+		currentFont = prev
+		return currentFont
+	private Font currentFont = OpenSans
+	
+	// The default font size for all draw operations
+	fontSize
+		return currentFontSize
+	fontSize: int fontSize
+		currentFontSize = fontSize
+		return currentFontSize
+	fontSize: int fontSize
+		      void() code
+		let prev = currentFontSize
+		currentFontSize = fontSize
+		code()
+		currentFontSize = prev
+		return currentFontSize
+	private currentFontSize = 64
+	
+	// ------------------------------------------------------- Line Width -------------------------------------------------------
+	
+	// The default line width for all draw operations
+	lineWidth
+		return currentLineWidth
+	lineWidth: int lineWidth
+		currentLineWidth = lineWidth
+		return currentLineWidth
+	lineWidth: int lineWidth
+		      void() code
+		let prev = currentLineWidth
+		currentLineWidth = lineWidth
+		code()
+		currentLineWidth = prev
+		return currentLineWidth
+	private currentLineWidth = 8
+	
+	// ------------------------------------------------------- Clip -------------------------------------------------------
+	
+	// For all drawings in code block, only pixels inside the given polygon are drawn
+	clip: Vector2[] points      // A list of points that define the area to be clipped
+		  Vector2 position = {} // The position all points are relative to 
+		  bool show = false     // Visualizes the clipping area by shading it transparent red
+		if show: drawPolygon position, points, fillColor:TransparentRed
+				
+	// For all drawings in code block, only pixels inside the given polygon are drawn
+	clip: Vector2[] points      // A list of points that define the area to be clipped
+		  Vector2 position = {} // The position all points are relative to 
+		  bool show = false     // Visualizes the clipping area by shading it transparent red
+		  void() code           // All draw operation within this code block will be clipped
+		let prev = currentClippingPath
+		currentClippingPath = ClippingPath(show)
+		for points: currentClippingPath.points.add position + .
+		code()
+		currentClippingPath = prev
+		
+	private ClippingPath currentClippingPath
+		
+	// ------------------------------------------------------- Visibility -------------------------------------------------------
+	
+	// The default player for which all draw operations will be visible
+	visibleFor
+		return currentlyVisibleFor
+		
+	visibleFor: implicit Player[] visibleFor
+		        void() code
+		let prev = currentlyVisibleFor
+		currentlyVisibleFor = visibleFor
+		code()
+		currentlyVisibleFor = prev
+		return currentlyVisibleFor
+		
+	private Player[] currentlyVisibleFor = null
+		
+	// Returns the width of a string in pixels
+	global js int getTextWidth: string text                 // The string to get the width of
+		                         implicit Vector2 size = {} // The size of the text
+		                        Font font = null            // The font of the text
+		                        FontStyle style = Normal    // Whether the text should be bold or normal style
+		let effectiveFont = font || graphics_currentFont
+		let fontSize = size.y || size.x || graphics_currentFontSize
+		Platform_context.font =  (style ? "bold ":"")+fontSize+"px "+effectiveFont.name;
+		let textSize = Platform_context.measureText(text)
+		return textSize.width
+		
+	// ------------------------------------------------------- Position -------------------------------------------------------
+	
+	getAbsolutPosition: Vector2 position
+		return position.getTransformed(localMatrix)
+		
+	getPixelPosition: Vector2 position
+		return position.getTransformed(totalMatrix) / Platform.pixelRatio
+		
+	getPixelSize: Vector2 size
+		return size * {totalMatrix.m0, totalMatrix.m3} / Platform.pixelRatio
+		
+	private Vector2 getEffectiveSize: Vector2 imageSize, Vector2 size
+		let sizeX = size.x || imageSize.x
+		let sizeY = size.y || (sizeX/imageSize.x)*imageSize.y
+		return {sizeX, sizeY}
+		
+	// --------------------------------------------- Create and Manipulate Images ---------------------------------------------
+	
+	// Directly manipulate the pixels on the screen or an image
+	js int[] manipulate: void(int[] pixels) code // This code can manipulate the pixels
+		let imageData = Platform_context.getImageData(0,0,Platform_pixelSize.x, Platform_pixelSize.y)
+		code(imageData.data)
+		Platform_context.putImageData(imageData, 0, 0)
+		
+	// Creates an image to draw to
+	js void createImage: Vector2 size     // The size of the image
+		                 string file = "" // Save the image to a file with this filename
+		                 void() code      // This code will draw on the created image instead of drawing on the screen
+		// let prevCanvas = Platform_canvas
+		let prevContext = Platform_context
+		let prevPixelSizeX = Platform_pixelSize.x
+		let prevPixelSizeY = Platform_pixelSize.y
+		let prevItems = graphics_items
+		graphics_items = []
+		let canvas = document.createElement("canvas")
+		canvas.width = size.x
+		canvas.height = size.y
+		Platform_context = canvas.getContext("2d")
+		Platform_pixelSize.x = size.x
+		Platform_pixelSize.y = size.y
+		let a = graphics_localMatrix.matrix, b = graphics_totalMatrix.matrix
+		let a0 = graphics_localMatrix.m0, a1 = graphics_localMatrix.m1, a2 = graphics_localMatrix.m2, a3 = graphics_localMatrix.m3, a4 = graphics_localMatrix.m4, a5 = graphics_localMatrix.m5
+		let b0 = graphics_totalMatrix.m0, b1 = graphics_totalMatrix.m1, b2 = graphics_totalMatrix.m2, b3 = graphics_totalMatrix.m3, b4 = graphics_totalMatrix.m4, b5 = graphics_totalMatrix.m5
+		graphics_localMatrix.set(1, 0, 0, 1, -size.x/2, -size.y/2)
+		graphics_totalMatrix.set(1, 0, 0, 1, size.x/2, size.y/2)
+		code()
+		graphics_drawItems()
+		var dataUrl = canvas.toDataURL('image/png');
+		if(file) Platform_saveImage(dataUrl, file);
+		graphics_localMatrix.m0 = a0; graphics_localMatrix.m1 = a1; graphics_localMatrix.m2 = a2; graphics_localMatrix.m3 = a3; graphics_localMatrix.m4 = a4; graphics_localMatrix.m5 = a5
+		graphics_totalMatrix.m0 = b0; graphics_totalMatrix.m1 = b1; graphics_totalMatrix.m2 = b2; graphics_totalMatrix.m3 = b3; graphics_totalMatrix.m4 = b4; graphics_totalMatrix.m5 = b5
+		Platform_context = prevContext
+		// canvas = prevCanvas
+		Platform_pixelSize.x = prevPixelSizeX
+		Platform_pixelSize.y = prevPixelSizeY
+		graphics_items = prevItems
+		return dataUrl
 		
 
 struct GizomInfluence
