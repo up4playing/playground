@@ -418,7 +418,7 @@ transient global unit graphics
 	// Draw a rectangle on the screen
 	global js void drawRectangle: position = Vector2()                // The center of the rectangle
 		                          implicit size = Vector2(256,256)    // The size of the rectangle, use a float to draw a square, use a vector to draw a rectangle
-		                          Color fillColor = null              // The color of the area within the rectangle
+		                          Color color = null                  // The color of the area within the rectangle
 		                          Color outlineColor = null           // The color of the outline around the rectangle
 		                          outlineWidth = 0                    // The width of the outline around the rectangle
 		                          implicit Player[] visibleFor = null // Only this player or list of players will see the rectangle
@@ -437,7 +437,7 @@ transient global unit graphics
 				sizeX, sizeY,
 				layer, alpha, graphics_currentClippingPath, "Rectangle", 
 				location, position.location, size.location,
-				fillColor || !outlineColor ? (fillColor || graphics_currentColor).hex : null,
+				color || !outlineColor ? (color || graphics_currentColor).hex : null,
 				outlineColor ? outlineColor.hex : null,
 				outlineWidth || graphics_currentLineWidth
 			))
@@ -447,7 +447,7 @@ transient global unit graphics
 	global js void drawRoundedRectangle: position = Vector2()                // The center of the rectangle
 		                                 implicit size = Vector2(256,256)    // The size of the rectangle, use a float to draw a square, use a vector to draw a rectangle
 		                                 radius = 32                         // The radius of the rounded corners
-		                                 Color fillColor = null              // The color of the area within the rectangle
+		                                 Color color = null                  // The color of the area within the rectangle
 		                                 Color outlineColor = null           // The color of the outline around the rectangle
 		                                 outlineWidth = 0                    // The width of the outline around the rectangle
 		                                 implicit Player[] visibleFor = null // Only this player or list of players will see the rectangle
@@ -466,7 +466,7 @@ transient global unit graphics
 				layer, alpha, graphics_currentClippingPath, "RoundedRectangle", 
 				location, position.location, size.location,
 				radius,
-				fillColor || !outlineColor ? (fillColor || graphics_currentColor).hex : null,
+				color || !outlineColor ? (color || graphics_currentColor).hex : null,
 				outlineColor ? outlineColor.hex : null,
 				outlineWidth || graphics_currentLineWidth
 			))
@@ -477,7 +477,7 @@ transient global unit graphics
 	// Draw a circle on the screen
 	global js void drawCircle: position = Vector2()                    // The center of the circle
 		                       implicit Vector2 size = {256,256}       // The size of the circle, use a float to draw a circle, use a vector draw an ellipse
-		                       Color fillColor = null                  // The color of the area within the circle
+		                       Color color = null                      // The color of the area within the circle
 		                       Color outlineColor = null               // The color of the outline around the circle
 		                       outlineWidth = 0                        // The width of the outline around the circle
 		                       Angle startAngle = -.25                 // Draw an arc with this start angle in turns, measured from the positive x-axis
@@ -498,7 +498,7 @@ transient global unit graphics
 				location, position.location, size.location,
 				startAngle, angle,
 				direction == 1,
-				fillColor || !outlineColor ? (fillColor || graphics_currentColor).hex : null,
+				color || !outlineColor ? (color || graphics_currentColor).hex : null,
 				outlineColor ? outlineColor.hex : null,
 				outlineWidth || graphics_currentLineWidth
 			))
@@ -557,7 +557,7 @@ transient global unit graphics
 	// Draw a polygon on the screen
 	global js void drawPolygon: Vector2[] points                    // A list of points for the polygon
 		                        Vector2 position = {0,0}            // The position all points are relative to 
-		                        Color fillColor = null              // The color of the area within the polygon
+		                        Color color = null                  // The color of the area within the polygon
 		                        Color outlineColor = null           // The color of the outline around the polygon
 		                        outlineWidth = 0                    // The width of the outline around the polygon
 		                        smooth = false                      // Smooth the corners of the polygon
@@ -572,7 +572,7 @@ transient global unit graphics
 				layer, alpha, graphics_currentClippingPath, "Polygon", 
 				location, position.location, null,
 				points,
-				fillColor || !outlineColor ? (fillColor || graphics_currentColor).hex : null,
+				color || !outlineColor ? (color || graphics_currentColor).hex : null,
 				outlineColor ? outlineColor.hex : null,
 				outlineWidth || graphics_currentLineWidth,
 				smooth, /*close*/true
@@ -861,7 +861,7 @@ transient global unit graphics
 	clip: Vector2[] points      // A list of points that define the area to be clipped
 		  Vector2 position = {} // The position all points are relative to 
 		  bool show = false     // Visualizes the clipping area by shading it transparent red
-		if show: drawPolygon position, points, fillColor:TransparentRed
+		if show: drawPolygon position, points, color:TransparentRed
 				
 	// For all drawings in code block, only pixels inside the given polygon are drawn
 	clip: Vector2[] points      // A list of points that define the area to be clipped
@@ -1265,7 +1265,7 @@ transient DisplayItem DisplayText
 		if(this.clippingPath) this.endClipping()
 		
 transient DisplayItem DisplayRectangle
-	string fillColor, outlineColor
+	string color, outlineColor
 	float outlineWidth
 	js void draw
 		if(this.alpha == 0) return
@@ -1273,12 +1273,12 @@ transient DisplayItem DisplayRectangle
 		Platform_context.globalAlpha = this.alpha
 		if(this.clippingPath) this.startClipping()
 			
-		if(this.fillColor == "clear") {
+		if(this.color == "clear") {
 			Platform_context.clearRect(this.x, this.y, this.w, this.h)
 		}
 		else
-		if(this.fillColor) {
-			Platform_context.fillStyle = this.fillColor
+		if(this.color) {
+			Platform_context.fillStyle = this.color
 			Platform_context.fillRect(this.x, this.y, this.w, this.h)
 		}
 		if(this.outlineColor) {
@@ -1290,7 +1290,7 @@ transient DisplayItem DisplayRectangle
 		
 transient DisplayItem DisplayRoundedRectangle
 	float radius
-	string fillColor, outlineColor
+	string color, outlineColor
 	float outlineWidth
 	js void draw
 		if(this.alpha == 0) return
@@ -1325,8 +1325,8 @@ transient DisplayItem DisplayRoundedRectangle
 		// Platform_context.quadraticCurveTo(x, y, x + radius, y);
 		// Platform_context.closePath();
 		
-		if(this.fillColor) {
-			Platform_context.fillStyle = this.fillColor
+		if(this.color) {
+			Platform_context.fillStyle = this.color
 			Platform_context.fill()
 		}
 		if(this.outlineColor) {
@@ -1338,7 +1338,7 @@ transient DisplayItem DisplayRoundedRectangle
 		
 transient DisplayItem DisplayPolygon
 	Vector2[] points
-	string fillColor, outlineColor
+	string color, outlineColor
 	float outlineWidth
 	bool smooth, close
 	js void draw
@@ -1366,12 +1366,12 @@ transient DisplayItem DisplayPolygon
 			let p1 = points[i], p2 = points[i + 1]
 			Platform_context.quadraticCurveTo(p1.x, p1.y, p2.x,p2.y);
 		}
-		if(this.close || this.fillColor) {
+		if(this.close || this.color) {
 			Platform_context.closePath()
 		}
-		if(this.fillColor) {
+		if(this.color) {
 			// Close the polygon and fill it
-			Platform_context.fillStyle = this.fillColor
+			Platform_context.fillStyle = this.color
 			Platform_context.fill()
 		}
 		if(this.outlineColor) {
@@ -1387,7 +1387,7 @@ enum RotationDirection: Clockwise, CounterClockwise
 transient DisplayItem DisplayCircle
 	float startAngle, angle
 	RotationDirection direction
-	string fillColor, outlineColor
+	string color, outlineColor
 	float outlineWidth
 	js void draw
 		if(this.alpha == 0) return
@@ -1406,10 +1406,10 @@ transient DisplayItem DisplayCircle
 		} else {
 			let radiusX = this.w/2
 			let radiusY = this.h/2
-			Platform_context.ellipse(this.x+radiusX, this.y+radiusY, radiusX, radiusY, this.startAngle*math_TwoPI, (this.startAngle+this.angle)*math_TwoPI, this.direction);
+			Platform_context.ellipse(this.x+radiusX, this.y+radiusY, radiusX, radiusY, 0, math_TwoPI, this.direction);
 		}
-		if(this.fillColor) {
-			Platform_context.fillStyle = this.fillColor
+		if(this.color) {
+			Platform_context.fillStyle = this.color
 			Platform_context.fill()
 		}
 		if(this.outlineColor) {

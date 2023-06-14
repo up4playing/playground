@@ -141,7 +141,7 @@ ExampleItem
 		drawText word, position, size:40, font:OpenSans, color:{"ff0000"}
 		
 		// Draw blue circle with a radius of 200 with a red outline
-		drawCircle position, size:400, fillColor:{"0000ff"}, outlineColor:{"ff0000"}, outlineWidth:5
+		drawCircle position, size:400, color:{"0000ff"}, outlineColor:{"ff0000"}, outlineWidth:5
 
 enum ExamplePhase: EnterClue, Guess, Score, Reveal
 		
@@ -150,7 +150,7 @@ ExampleBox
 	ExampleItem itemInBox
 	void tick()
 		// Draw blue box with white outline
-		drawRectangle rect.position, rect.size, fillColor:{"0000ff"}, outlineColor:{"ffffff"}, outlineWidth:5
+		drawRectangle rect.position, rect.size, color:{"0000ff"}, outlineColor:{"ffffff"}, outlineWidth:5
 		
 ExamplePlayer
 	int id, index
@@ -246,13 +246,14 @@ class List<T>
 	int countNot(bool(T a) predicate)
 	void rotate()
 	T[] intersectWith(T[] other)
-
+	
+// Draw graphics on the screen
 unit graphics
 	void drawImage(Image image, Vector2 position, frame = 0, Vector2 size = {}, touchMargin = Vector2(16,16), visibleFor = -1, clickableBy = -1, hotkey = Key.None, layer = 0, alpha = 1.0, void(Touch touch) onClick)
 	void drawText(string text, Vector2 position = {}, implicit Vector2 size = {}, Color color = null, HorizontalAlignment align = , VerticalAlignment valign = Middle, FontStyle style = Normal, Font font = null, Color outlineColor = null, outlineWidth = 0, visibleFor = -1, implicit layer = 0, alpha = 1.0)
 	void drawButton(Image image = null, text = "", Vector2 position = {}, Color textColor = null, frame = 0, implicit Vector2 size = {}, fontSize = 18, touchMargin = Vector2(16,16), textOffset = Vector2(0,0), showTouchArea = false, visibleFor = -1, implicit layer = 0, alpha = 1.0, void(Touch touch) onClic)
-	void drawRectangle(position = Vector2(), implicit size = Vector2(256,256), Color fillColor = null, Color outlineColor = null, outlineWidth = 0, visibleFor = -1, implicit layer = 0, alpha = 1.0, HorizontalAlignment align = Center, VerticalAlignment valign = Middle)
-	void drawCircle(position = Vector2(), implicit Vector2 size = {256,256}, Color fillColor = null, Color outlineColor = null, outlineWidth = 0, Angle startAngle = 0.0, Angle endAngle = 1.0, RotationDirection direction = Clockwise, visibleFor = -1, implicit layer = 0, alpha = 1.0)
-	void drawPolygon(Vector2[] points, Vector2 position = {0,0}, Color fillColor = null, Color outlineColor = null, outlineWidth = 0, smooth = false, visibleFor = -1, implicit int layer = 0, alpha = 1.0)
+	void drawRectangle(position = Vector2(), implicit size = Vector2(256,256), Color color = null, Color outlineColor = null, outlineWidth = 0, visibleFor = -1, implicit layer = 0, alpha = 1.0, HorizontalAlignment align = Center, VerticalAlignment valign = Middle)
+	void drawCircle(position = Vector2(), implicit Vector2 size = {256,256}, Color color = null, Color outlineColor = null, outlineWidth = 0, Angle startAngle = 0.0, Angle endAngle = 1.0, RotationDirection direction = Clockwise, visibleFor = -1, implicit layer = 0, alpha = 1.0)
+	void drawPolygon(Vector2[] points, Vector2 position = {0,0}, Color color = null, Color outlineColor = null, outlineWidth = 0, smooth = false, visibleFor = -1, implicit int layer = 0, alpha = 1.0)
 
 [Context]
