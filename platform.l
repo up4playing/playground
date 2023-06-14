@@ -2,7 +2,7 @@ enum PlatformMode: Pause, Manipulator, Slide, Play, Record
 enum ScaleMode: Auto, FixedWidth, FixedHeight, None
 enum AnchorMode: TopLeft, TopCenter, Center
 enum OperatingSystem: Windows, Mac, Linux, Android, iOS
-enum TickMode: Interval, AnimationFrame
+enum IntervalMode: JavaScriptInterval, AnimationFrame
 
 // Basic platform functionality
 // Screen space
@@ -19,12 +19,12 @@ enum TickMode: Interval, AnimationFrame
 transient skipInit unit Platform
 	
 	// Configuration
-	public userCount = 2
+	public userCount = 4
 	public supportedUserCount = Range 2..4
 	public bool showSafeArea = true
 	public bool showDebugInfo = false
 	public bool isLocal = false
-	public TickMode tickMode = Interval
+	public IntervalMode intervalMode = JavaScriptInterval
 	public Vector2 referenceSize = {1920, 1080}
 	public ScaleMode scaleMode = Auto, effectiveScaleMode
 	public AnchorMode anchor = Center
@@ -71,12 +71,12 @@ transient skipInit unit Platform
 	private js void initPlatform
 		statistics_init();
 		Platform_init();
-		Math_init();
-		Network_init();
-		Input_init();
+		math_init();
+		core_init();
+		input_init();
 		gizmo_init();
 		Loca_init();
-		Network_log("Loading...")
+		core_log("Loading...")
 		Platform_isMobile = false;
 		Platform_isBrowser = !window.require;
 		let platform = navigator.platform
@@ -88,7 +88,7 @@ transient skipInit unit Platform
 		if(!Platform_isMobile) 
 			window.onresize = e => { 
 				Platform_onResize();
-				if(Platform_mode < 3/*Pause,Manipulator,Slide*/ && Platform_engineStarted) Network_tick(/*draw*/true);
+				if(Platform_mode < 3/*Pause,Manipulator,Slide*/ && Platform_engineStarted) core_tick(/*draw*/true);
 			}
 		if(window.app_init) app_init();
 		
@@ -141,13 +141,15 @@ transient skipInit unit Platform
 		baseMatrix = {scale,0,0,scale,offsetX-(statisticsMargin.x/2)*scale,offsetY-(statisticsMargin.y/2)*scale}
 	
 	// This is called when the application starts for the first time	
-	private start: bool isDebug
+	private start: bool isDebug, int userCount, bool simulateConnection, bool showSafeArea
 		initMedia
 		initPlatform
 		statistics.startTime = Time.preciseTime
 		this.engineStarted = false
 		this.isDebug = isDebug
-		if !isDebug: showSafeArea = false; Network.simulateConnection = false
+		this.userCount = userCount
+		core.simulateConnection = simulateConnection
+		this.showSafeArea = showSafeArea
 		showDebugInfo = getLocalStorageObject("showDebugInfo") == "true"
 		
 		onResize
@@ -173,8 +175,8 @@ transient skipInit unit Platform
 			this.engineStarted = true
 			statistics.loadTime = Time.preciseTime
 			startInterval
-			if isDebug || isLocal || roomId == "local" || url.startsWith("file"): Network.startLocal userCount:userCount
-			else                                                                  Network.join gameId, roomId, userId
+			if isDebug || isLocal || roomId == "local" || url.startsWith("file"): core.startLocal
+			else                                                                  core.join gameId, roomId, userId
 			sendEvaluateFinished
 			
 			// When the texture is loaded, we start the app in record mode. This starts processing inputs and ticks.
@@ -184,15 +186,15 @@ transient skipInit unit Platform
 	private replay() 
 		initMedia
 		openMedia
-			Network.goToFrame Network.frame-1, replayFromStart:true
+			core.goToFrame core.frame-1, replayFromStart:true
 			
 	object interval
 	private js void startInterval
 		if(Platform_interval) clearInterval(Platform_interval)
 		if(window.tick) return
 			
-		if(Platform_tickMode == 0) {
-			Platform_interval = setInterval(() => Platform_tick(), 1000/Network_targetFps)
+		if(Platform_intervalMode == 0) {
+			Platform_interval = setInterval(() => Platform_tick(), 1000/core_targetFps)
 		} else {
 			window.tick = function() {
 				Platform_tick();
@@ -202,16 +204,16 @@ transient skipInit unit Platform
 		}
 	
 	// This is called every animation frame
-	private tick()   if mode == Play or mode == Record or waitingForInitialData: Network.animationFrame
+	private tick()   if mode == Play or mode == Record or waitingForInitialData: core.animationFrame
 	
 	private enterSlideMode(PlatformMode mode) this.mode = mode; sendMode
 	
-	internal stop()    mode = Pause; Network.stop; gizmo.clear; sendMode
+	internal stop()    mode = Pause; core.stop; gizmo.clear; sendMode
 	internal pause()   mode = Pause; audio.stop(); gizmo.clear; sendMode
-	internal record()  Network.adjustStartTimeIfNeeded; mode = Record; gizmo.clear; sendMode
-	internal play()    Network.adjustStartTimeIfNeeded; mode = Play;   gizmo.clear; sendMode
+	internal record()  core.adjustStartTimeIfNeeded; mode = Record; gizmo.clear; sendMode
+	internal play()    core.adjustStartTimeIfNeeded; mode = Play;   gizmo.clear; sendMode
 	
-	private goToFrame(int targetFrame) pause(); Network.goToFrame(targetFrame)
+	private goToFrame(int targetFrame) pause(); core.goToFrame(targetFrame)
 		
 	internal js void sendSelectToEditor: string cursorFile, int cursorPos
 		_sendToEditor({type:"select", cursorFile, cursorPos})
@@ -235,7 +237,7 @@ transient skipInit unit Platform
 		_sendToEditor({type:"clearTimeline"})
 	
 	private js void sendMode
-		if(Platform_isDebug) _sendToEditor({type:"setPlatformMode", mode:Platform_mode, frame:Network_frame})
+		if(Platform_isDebug) _sendToEditor({type:"setPlatformMode", mode:Platform_mode, frame:core_frame})
 
 	private inline js void sendEvaluateFinished
 		if(Platform_isDebug) _sendToEditor({type:"evaluateFinished"})
@@ -253,8 +255,9 @@ transient skipInit unit Platform
 		print isSmallScreen
 		setLocalStorageObject("smallScreen", isSmallScreen ? "true" : "false")
 		
-	inline js void setFullscreen: value = true, forUser = -1
-		if(!Platform_isStaging && !Platform_isDebug && (forUser == -1 || Input_localUser?.id == forUser)) {
+	inline js void setFullscreen: value = true
+		                          Player forPlayer = null
+		if(!Platform_isStaging && !Platform_isDebug && (forPlayer == null || input_localUser?.id == forPlayer.id)) {
 			try {
 				if(value) {
 					document.body.requestFullscreen()
@@ -335,7 +338,7 @@ transient skipInit unit Platform
 	js string generateObjectId
 		var result = (Date.now() / 1000 | 0).toString(16)
 		for(let i=0; i<16; i++)
-			result += (Math.random() * 16 | 0).toString(16)
+			result += (math.random() * 16 | 0).toString(16)
 		return result.toLowerCase()
 		
 	inline js void vibrate: int duration = 100
@@ -378,7 +381,7 @@ transient skipInit unit Platform
 		setTimeout(then, time)
 		
 	inline js void copyToClipboard(string text)
-		if(Network_isPremiere && Input_isCertain) {
+		if(core_isPremiere && input_isCertain) {
 			navigator.clipboard.writeText(text)
 		}
 		
@@ -420,7 +423,7 @@ transient skipInit unit Platform
 			remote.globalShortcut.register(shortcut, () => do())
 		}
 		
-	js void setInterval: int interval
+	js void setInterval: Time interval
 		                 void() code
 		setInterval(code, interval)
 		
@@ -435,25 +438,17 @@ transient skipInit unit Platform
 	
 	inline js void pushState: string url
 		                      object state = null
-		if(Network_isPremiere) history.pushState(state, "", url);
+		if(core_isPremiere) history.pushState(state, "", url);
 		
 	inline js void replaceState: string url
 		                         object state = null
-		if(Network_isPremiere) history.replaceState(state, "", url);
+		if(core_isPremiere) history.replaceState(state, "", url);
 		
 	inline js void back
-		if(Network_isPremiere) history.back();
+		if(core_isPremiere) history.back();
 		
 	inline js void reload
 		if(!Platform_isDebug) location.reload();
-			
-skipInit transient float Time
-	// The number of milliseconds elapsed since January 1, 1970
-	static Time now
-	
-js(Date) transient struct Date
-	inline js Date() new Date(Time_now)
-	static inline js Date now := new Date(Time_now)
 	
 unit File
 	js string readPartial: string filename, int offset=0, int length, void(string result) callback
@@ -472,7 +467,7 @@ unit File
 		})		
 		
 	js string write: string filename, string data, void() then = null
-		if(Network_isPremiere && Input_isCertain) {
+		if(core_isPremiere && input_isCertain) {
 			require("fs").writeFile(filename, data, "utf8", (err, data) => {
 				then?.()
 			})
@@ -493,26 +488,26 @@ transient unit IndexedDB
 	
 	js void start: string databaseName, string storeName, int version = 1
 		try {
-			Network_log("IndexedDB: start");
+			core_log("IndexedDB: start");
 			IndexedDB_storeName = storeName;
 			var request = indexedDB.open(databaseName, version)
 			request.onupgradeneeded = e => {
-				Network_log("IndexedDB: upgradeneeded");
+				core_log("IndexedDB: upgradeneeded");
 				IndexedDB_db = e.target.result;
 				if(!IndexedDB_db.objectStoreNames.contains(storeName))
 					IndexedDB_db.createObjectStore(storeName, { keyPath: "id" });
-				Network_log("IndexedDB successfully upgraded to version "+version)
+				core_log("IndexedDB successfully upgraded to version "+version)
 			}
 			request.onsuccess = e => {
 				IndexedDB_db = e.target.result;
-				Network_log("IndexedDB: success");
+				core_log("IndexedDB: success");
 			}
 			request.onerror = e => {
-				Network_log("IndexedDB: error "+request.error);
+				core_log("IndexedDB: error "+request.error);
 			}
-			Network_log("IndexedDB: finished");
+			core_log("IndexedDB: finished");
 		} catch(e) {
-			Network_log("IndexedDB: exception "+e.message)
+			core_log("IndexedDB: exception "+e.message)
 		}
 		
 	js void open: string storeName, string id, void(object data) then, void() else = null
@@ -528,11 +523,11 @@ transient unit IndexedDB
 				}
 			}
 			req.onerror = e => {
-				Network_log("Error in IndexedDB.open: "+req.error)
+				core_log("Error in IndexedDB.open: "+req.error)
 				else?.()
 			}
 		} catch(e) {
-			Network_log("Error in IndexedDB.open: "+e.message)
+			core_log("Error in IndexedDB.open: "+e.message)
 			else?.()
 		}
 				
@@ -551,11 +546,11 @@ transient unit IndexedDB
 				}
 			}
 			req.onerror = e => {
-				Network_log("Error in IndexedDB.open: "+req.error)
+				core_log("Error in IndexedDB.open: "+req.error)
 				else?.()
 			}
 		} catch(e) {
-			Network_log("Error in IndexedDB.open: "+e.message)
+			core_log("Error in IndexedDB.open: "+e.message)
 			else?.()
 		}
 				
@@ -563,14 +558,14 @@ transient unit IndexedDB
 		try {
 			let trans = IndexedDB_db.transaction(storeName, "readwrite")
 			trans.onerror = e => {
-				Network_log("Error in IndexedDB.save: "+trans.error)
+				core_log("Error in IndexedDB.save: "+trans.error)
 				else?.()
 			}
 			trans.objectStore(IndexedDB_storeName).put(data).onsuccess = e => {
 				then?.()
 			}
 		} catch(e) {
-			Network_log("Error in IndexedDB.save: "+e.message)
+			core_log("Error in IndexedDB.save: "+e.message)
 			else?.()
 		}
 		
@@ -578,7 +573,7 @@ transient unit IndexedDB
 		try {
 			let trans = IndexedDB_db.transaction(storeName, "readwrite")
 			trans.onerror = e => {
-				Network_log("Error in IndexedDB.save: "+trans.error)
+				core_log("Error in IndexedDB.save: "+trans.error)
 				else?.()
 			}
 			let dataView = new DataView(buffer.buffer, 0, buffer.writePos)
@@ -587,7 +582,7 @@ transient unit IndexedDB
 				then?.()
 			}
 		} catch(e) {
-			Network_log("Error in IndexedDB.save: "+e.message)
+			core_log("Error in IndexedDB.save: "+e.message)
 			else?.()
 		}
 

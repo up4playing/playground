@@ -23,21 +23,21 @@ unit Framework
 	tick
 		fx.tick
 		objects.eachChangable.tick
-		Input.onTouchUp:  deselect touch.userId
+		onTouchUp: deselect touch.by
 		
 		if toBeRemoved
 			toBeRemoved.each.siblings.remove .
 			toBeRemoved.clear
 		
-	isVisibleFor: Vector2 pos, int userId
-		let board = getBoardAt pos, userId
-		return !board or board.isVisibleFor userId
+	isVisibleFor: Vector2 pos, Player player
+		let board = getBoardAt pos, player
+		return !board or board.isVisibleFor player
 			
-	getBoardAt: Vector2 pos, int userId
+	getBoardAt: Vector2 pos, Player player
 		for Framework.objects -> object
 			if object is Board
 				Board b = cast object
-				if (b.visibleFor == null or b.visibleFor contains userId)
+				if (b.visibleFor == null or b.visibleFor.any.id == player.id)
 				and pos >= b.position - b.size/2 and pos < b.position + b.size/2
 					return b
 		return null
@@ -49,8 +49,8 @@ unit Framework
 				Piece piece = cast .
 				piece.finishTouch
 		
-	deselect: int userId
-		selectedObjects[userId] = null
+	deselect: Player player
+		selectedObjects[player.id] = null
 		
 	debugString
 		let result = ""
@@ -69,10 +69,10 @@ unit Framework
 		return result
 			
 transient global unit graphics
-	setUserVideo: int userId = 0
-		          Vector2 pos = {}
-		          implicit Vector2 size = {440}
-		          VideoShape shape = Rectangle
+	setPlayerVideo: Player player
+		            Vector2 pos = {}
+		            implicit Vector2 size = {440}
+		            VideoShape shape = Rectangle
 		
 		// Use the following when multiline selectors are supported
 		// VideoObject videoObject = cast Framework.objects.find
@@ -80,20 +80,20 @@ transient global unit graphics
 		// 		VideoObject v = cast .
 		// 		return v.userId == userId
 		// 	return false
-		let videoObject = getVideoObject userId:userId
+		let videoObject = getVideoObject player
 			
 		// if !videoObject or Framework.toBeRemoved.contains(videoObject): videoObject = VideoObject(userId)
-		if !videoObject: videoObject = VideoObject(userId)
+		if !videoObject: videoObject = VideoObject(player.id)
 		videoObject.position = pos
 		videoObject.size = size
 		videoObject.shape = shape
 		videoObject.locked = true
 		
-	private VideoObject getVideoObject: int userId
+	private VideoObject getVideoObject: Player player
 		for Framework.objects
 			if .type == VideoObject
 				VideoObject v = cast .
-				if v.userId == userId
+				if v.player.id == player.id
 					return v
 		return null
 		
@@ -103,7 +103,7 @@ class Object
 	Vector2 position
 	implicit Vector2 size
 	float alpha = 1
-	int[] visibleFor = null
+	Player[] visibleFor = null
 	int layer = 0
 	bool locked
 	SourceCodeLocation location
@@ -160,7 +160,7 @@ class Object
 		    float speed = 1
 		    Time delay = 0
 		let delta = pos - position
-		let duration = Math.floor(delta.length / speed)
+		let duration = math.floor(delta.length / speed)
 		fx.add MoveEffect startTime:fx.endOfPrevEffect(this)+delay, duration, this, startValue:position, delta
 		return this
 		
@@ -173,7 +173,17 @@ class Object
 	fadeOut: Time duration = 100
 		     Time delay = -100
 		     bool removeWhenDone = true
-		fx.add FadeEffect startTime:fx.endOfPrevEffect(this)+delay, duration, this, startValue:1, delta:-1, removeWhenDone
+		float startValue = alpha
+		
+		// When chaining serveral fade effects together, continue where the last one left off
+		// If the last fade effect is already a fade out, don't do anything
+		FadeEffect lastFadeEffect = cast fx.effects.findLast.type == FadeEffect and .object == this
+			if lastFadeEffect.startValue + lastFadeEffect.delta <= 0: 
+				watch "ignoring"
+				return
+			startValue = lastFadeEffect.startValue
+				
+		fx.add FadeEffect startTime:fx.endOfPrevEffect(this)+delay, duration, this, startValue, delta:-startValue, removeWhenDone
 		return this
 		
 	scaleTo: implicit Vector2 size
@@ -235,11 +245,11 @@ Object ImageObject
 		drawImage image, position, size, angle, alpha, visibleFor, layer
 		
 Object VideoObject
-	int userId
+	Player player
 	VideoShape shape
-	internal checksum := position.x + position.y + userId + size.x + size.y + size.x + size.y
+	internal checksum := position.x + position.y + player.id + size.x + size.y + size.x + size.y
 	override tick
-		drawVideo userId, position, size, shape
+		drawVideo player, position, size, shape
 			
 Object Button
 	Image image                  // The image of the button
@@ -252,15 +262,17 @@ Object Button
     touchMargin = {16,16}        // The margin around the button within which it is touchable
     textOffset = {}              // Draw the text at this offset
     showTouchArea = false        // Show the area within which the button is touchable
-    int[] clickableBy = null     // Only this user can click the button
+    implicit Player[] clickableBy = null // Only this user can click the button
     implicit layer = 0           // Higher layers are drawn in front of lower layers
     alpha = 1.0                  // The opacity of the button 0: fully transpart, 1: fully visible)
+	enabled = true               // When not enabled, the button can't be clicked and is drawn transparently (50% by default)
+	alphaWhenDisabled = .5       // The opacity of the button will be multiplied with this factor when its disabled
 	Key hotkey                   // This keyboard shortcut will execute the onClick handler
     void(Touch touch) onClick    // Execute this code when the user clicks the button
+	
 	override tick
-		drawButton image, text, position, textColor, frame, size, fontSize, touchMargin, textOffset, showTouchArea, visibleFor, clickableBy, hotkey, layer, alpha, onClick(touch)
+		drawButton image, text, position, textColor, frame, size, fontSize, touchMargin, textOffset, showTouchArea, visibleFor, clickableBy, hotkey, layer, alpha, enabled, alphaWhenDisabled, onClick(touch)
 
-		
 Object Piece
 	const Vector2 stackOffset = {8,8}
 	// const minSize = 75 // EVAL
@@ -293,7 +305,7 @@ Object Piece
 	Vector2 touchMargin = {50,50}
 	
 	public Board board
-	private int interactingUserId
+	private Player interactingPlayer
 	
 	private siblings := board ? board.objects : Framework.objects
 	onBoardChanged
@@ -330,40 +342,40 @@ Object Piece
 		// Rotate	
 		Vector2 iconPos = this.iconPos ? this.iconPos : (rotatable ? {(size.x+size.y)*.29, (size.x+size.y)*.29}*{1,-1} : size/2*{1,-1})
 		if rotatable and Framework.selectedObjects.contains(this)
-			Input.onTouchDownWithin position:position+iconPos, size:Image.rotateIcon.size+touchMargin, userId:visibleFor
+			onTouchDownWithin position:position+iconPos, size:Image.rotateIcon.size+touchMargin, by:visibleFor
 				rotateTouch = touch
-				rotateOffset = angle - Math.getAngleForVector(touch.position - position)
+				rotateOffset = angle - math.getAngleForVector(touch.position - position)
 				rotatedOverThreshold = false
 				
-			Input.onTouchMove rotateTouch
-				Network.smooth touch.userId
-					angle = targetAngle = Math.getAngleForVector(touch.position - position) + rotateOffset
+			onTouchMove rotateTouch
+				core.smooth touch.by
+					angle = targetAngle = math.getAngleForVector(touch.position - position) + rotateOffset
 				if (touch.position - touch.startPosition).length > 16: rotatedOverThreshold = true
 				
-			Input.onTouchUp rotateTouch
-				targetAngle = Math.round(angle / .25) * .25
+			onTouchUp rotateTouch
+				targetAngle = math.round(angle / .25) * .25
 				rotateTouch = null
 				if !rotatedOverThreshold: targetAngle += .25
-				interactingUserId = touch.userId
+				interactingPlayer = touch.by
 				if angle == targetAngle: onRotate
 		
 		// Move
-		Input.onTouchDownWithin position, size, angle, visibleFor
+		onTouchDownWithin position, size, angle, by:visibleFor
 			if movable
 				moveTouch = touch
 				touchOffset = position - touch.position
 				siblings.moveToFront this
 				isBeingMoved = false
 			
-		Input.onTouchMove moveTouch
-			Network.smooth moveTouch.userId
+		onTouchMove moveTouch
+			core.smooth moveTouch.by
 				position = touch.position + touchOffset
 				if touch.position - touch.startPosition > 8: isBeingMoved = true
 				if board: board.snap this, touch.position
 				checkBoardsWhileMoving touch
 							
-		Input.onTouchUp moveTouch
-			Framework.selectedObjects[touch.userId] = this
+		onTouchUp moveTouch
+			Framework.selectedObjects[touch.by.id] = this
 			moveTouch = null
 			onDrop
 		
@@ -374,8 +386,8 @@ Object Piece
 		
 		// Animate rotation
 		if angle != targetAngle
-			Network.smooth interactingUserId
-				angle = Math.moveTowards(angle, targetAngle, .03)
+			core.smooth interactingPlayer
+				angle = math.moveTowards(angle, targetAngle, .03)
 				if angle == targetAngle: onRotate
 		
 		// Draw rotation icon
@@ -392,7 +404,7 @@ Object Piece
 	private checkBoardsWhileMoving: Touch touch
 		Vector2 pos = position
 		if board: pos = position * board.matrix
-		let nextBoard = Framework.getBoardAt pos, touch.userId
+		let nextBoard = Framework.getBoardAt pos, touch.by
 		if nextBoard != board
 			delay
 				if board: board.objects.remove this; position = position * board.matrix; touchOffset = touchOffset * board.matrix.scaleVector
@@ -437,7 +449,7 @@ Piece Stack
 		
 	private updatePositions
 		if objects.length == 0: return
-		shownObjectCount = Math.min(3, objects.length)
+		shownObjectCount = math.min(3, objects.length)
 		position = basePosition + (shownObjectCount-1)/2 * stackOffset
 		for shownObjectCount: objects[objects.length-shownObjectCount+i].position = basePosition + i * stackOffset
 			
@@ -446,14 +458,14 @@ Piece Stack
 		size = (b.position+{b.size.x/2, b.image.size.y/2}) - (a.position-{a.size.x/2, a.size.y/2})
 	
 	override tick
-		for Math.limit(objects.length-shownObjectCount, min:0) to objects.length <- i
+		for math.limit(objects.length-shownObjectCount, min:0) to objects.length <- i
 			let obj = objects[i]
 			let image = obj.backImage || obj.image
 			drawImage image, obj.position, frame:obj.frame%image.frames.length, size:obj.size
 			
 		// We pop after drawing, because the newly created card won't be drawn until the next frame
 		// and we don't want to draw the new, smaller stack without drawing the popped card as well
-		Input.onTouchDownWithin position, size
+		onTouchDownWithin position, size
 			let obj = pop
 			obj.moveTouch = touch
 			obj.touchOffset = obj.position - touch.position
@@ -469,7 +481,7 @@ Piece Board
 	Matrix2D matrix
 	Color color
 	BoardVisiblity contentVisibleForOthers = Always
-	int owner
+	Player owner
 	bool panable
 	bool zoomable
 	
@@ -504,36 +516,36 @@ Piece Board
 		object.board = this
 		Framework.objects.remove object
 		
-	isVisibleFor: int userId
-		return contentVisibleForOthers == Always or contentVisibleForOthers == On or owner == userId
+	isVisibleFor: Player player
+		return contentVisibleForOthers == Always or contentVisibleForOthers == On or owner.id == player.id
 		
 	override tick
 		// Children
-		graphics.visibleFor contentVisibleForOthers == Never or contentVisibleForOthers == Off ? owner : -1
+		graphics.visibleFor contentVisibleForOthers == Never or contentVisibleForOthers == Off ? owner : null
 			graphics.applyMatrix matrix
 				objects.eachChangable.tick
 		
 		// Pan
 		if panable	
-			Input.onTouchDownWithin position, size, visibleFor
+			onTouchDownWithin position, size, by:visibleFor
 				panTouch = touch
 				downMatrix = matrix
-			Input.onTouchMove panTouch
+			onTouchMove panTouch
 				matrix = downMatrix
 				matrix.move touch.position - touch.startPosition
-			Input.onTouchUp panTouch
+			onTouchUp panTouch
 				panTouch = null
-				Framework.deselect touch.userId
+				Framework.deselect touch.by
 				
 		// Zoom
 		if zoomable	
-			Input.onWheelWithin position, size, visibleFor
-				float factor = zoomLookupTable[Math.limit Math.round(event.delta.y)+40, min:0, max:zoomLookupTable.length-1]
-				if Network.logging: Network.touchLog += "[{Network.frame}] zoom value:{event.delta} factor:{factor} matrix:{matrix}"
+			onWheelWithin position, size, by:visibleFor
+				float factor = zoomLookupTable[math.limit math.round(event.delta.y)+40, min:0, max:zoomLookupTable.length-1]
+				if core.logging: core.touchLog += "[{core.frame}] zoom value:{event.delta} factor:{factor} matrix:{matrix}"
 				matrix.move event.position
 				matrix.scale {factor, factor}
 				matrix.move event.position*{-1,-1}
-				if Network.logging: Network.touchLog += " -> {matrix}"
+				if core.logging: core.touchLog += " -> {matrix}"
 			
 		// Visiblity icon
 		if contentVisibleForOthers == On or contentVisibleForOthers == Off
@@ -618,9 +630,11 @@ Spot SpotHexGrid
 		
 struct Particle
 	Vector2 pos, speed
+	Angle angle, rotationSpeed
 	int frame
-	Angle angle     // The rotation of the particle in turns (one full rotation is 1)
 
+enum ParticleMode: Burst, Break
+	
 Object ParticleSystem
 	private Particle[] particles
 	Image particleImage = starParticle
@@ -630,21 +644,34 @@ Object ParticleSystem
 	burstInterval = 500
 	Time nextBurst = -1
 	bursts = 10
+	mode = ParticleMode.Burst
 	
 	private int burst
 	debugString := "(ParticleSystem {position.x} {position.y} {particles.length})"
 	
 	override tick
 		if Time.now > nextBurst
-			for particlesPerBurst
-				let r = -Math.randomFloat
-				let speedFactor = Math.randomFloat*(maxSpeed-minSpeed) + minSpeed
-				particles.add Particle
-					pos: position
-					speed: {Math.cos(r), Math.sin(r)} * speedFactor
-					frame: Math.randomInteger(particleImage.frames.length)
-					angle: Math.randomFloat
-			nextBurst = ++burst < bursts ? Time.now + burstInterval : Time.maxValue
+			if mode == Break
+				for particleImage.frames.length
+					let r = -math.randomFloat .5
+					let speedFactor = math.randomFloat 10..15
+					particles.add Particle
+						pos: position
+						speed: {math.cos(r), math.sin(r)} * speedFactor
+						angle: randomFloat*.05
+						rotationSpeed: math.randomFloat -.01 to .01
+						frame: .
+				nextBurst = Time.maxValue
+			else
+				for particlesPerBurst
+					let r = -math.randomFloat
+					let speedFactor = math.randomFloat*(maxSpeed-minSpeed) + minSpeed
+					particles.add Particle
+						pos: position
+						speed: {math.cos(r), math.sin(r)} * speedFactor
+						angle: math.randomFloat
+						frame: math.randomInteger(particleImage.frames.length)
+				nextBurst = ++burst < bursts ? Time.now + burstInterval : Time.maxValue
 
 		for particles <-
 			graphics.move .pos
@@ -652,7 +679,7 @@ Object ParticleSystem
 					drawImage particleImage, frame:.frame
 			.pos += .speed
 			.speed.y += 1
-			.angle += .05
+			.angle += .rotationSpeed
 			if .pos.y > Platform.size.y/2
 				particles.removeAt i
 		
@@ -667,8 +694,8 @@ Piece Coin
 	int value
 	bool isInfinate
 	bool allowZero
-	int valueVisibleFor = -1
-	int userId = -1
+	Player valueVisibleFor
+	Player owner
 	Vector2 transferNeighborOffset = {45,58}
 	image = Coin
 	
@@ -681,27 +708,27 @@ Piece Coin
 	
 	override tick
 		if movable
-			Input.onTouchDownWithin position, radius:40, userId
+			onTouchDownWithin position, radius:40, by:owner
 				moveTouch = touch
 				touchOffset = position - touch.position
 				siblings.moveToFront this
 				isBeingMoved = false
 			
-			Input.onTouchMove moveTouch
-				Network.smooth touch.userId
+			onTouchMove moveTouch
+				core.smooth touch.by
 					position = touch.position + touchOffset
 				if touch.position - touch.startPosition > 8: isBeingMoved = true
 				updateNeighbors siblings, isBeingMoved
 				checkBoardsWhileMoving touch
 			
-			Input.onTouchUp moveTouch
-				Framework.selectedObjects[touch.userId] = this
+			onTouchUp moveTouch
+				Framework.selectedObjects[touch.by.id] = this
 				moveTouch = null
 				
 				if closestCoinType == Over: mergeWith closestCoin; else
 				if !isBeingMoved:           transferToNeighbor closestCoin
 		else
-			Input.onTouchUpWithin position, radius:64, userId
+			onTouchUpWithin position, radius:64, by:owner
 				transferToNeighbor closestCoin
 			
 		if isInfinate or value or allowZero
@@ -792,8 +819,8 @@ Object Menu
 	Menu
 		if includeDefaultItems
 			items.insert {New,  "New Game",        onClick:startGame}, 0
-			items.add    {Save, "Save Game"        onClick:Network.saveEventStreamAndLogs}
-			items.add    {Quit, "Exit Fullscreen", onClick:Platform.setFullscreen false, forUser:touch.userId}
+			items.add    {Save, "Save Game"        onClick:core.saveEventStreamAndLogs}
+			items.add    {Quit, "Exit Fullscreen", onClick:Platform.setFullscreen false, forPlayer:touch.by}
 		
 	private inline js void startGame
 		if(window.app_start) window.app_startGame(false);
@@ -805,11 +832,11 @@ Object Menu
 				drawText .label, pos+{-60}, size:30, align:Left, layer:int.maxValue
 				if item.type == Button
 					if .image: drawImage .image, pos+{-120}, layer:int.maxValue
-					Input.onTouchDownWithin pos, size:{500,60}, do:item.onClick(true, touch)
+					onTouchDownWithin pos, size:{500,60}, do:item.onClick(true, touch)
 				else
 				if item.type == Check
 					if .image: drawImage Checkbox, pos+{-120}, layer:int.maxValue, frame:item.value ? 1 : 0
-					Input.onTouchDownWithin pos, size:{500,60}
+					onTouchDownWithin pos, size:{500,60}
 						item.value = !item.value
 						item.onClick(item.value, touch)
 						doNotClose = true
@@ -818,7 +845,7 @@ Object Menu
 			drawRectangle size:{1920,1080}, fillColor:overlayColor, layer:int.maxValue
 			
 			if not doNotClose
-				Input.onTouchDownAny
+				onTouchDownAny
 					active = false
 				
 		drawImage Menu, position, location

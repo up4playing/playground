@@ -1,14 +1,17 @@
 // A color comprised of a red, green, blue and alpha component
 class Color
-	global const Color White   = {"ffffff"}
-	global const Color Black   = {"000000"}
-	global const Color Red     = {"ef476f"}
-	global const Color Yellow  = {"ffd166"}
-	global const Color Green   = {"06d6a0"}
-	global const Color Blue    = {"118ab2"}
-	global const Color Gray    = {"3d3d3d"}
-	global const Color TransparentRed   = {"ff000080"}
+	global const Color White   = {"ffffff", "White"}
+	global const Color Black   = {"000000", "Black"}
+	global const Color Red     = {"ef476f", "Red"}
+	global const Color Yellow  = {"ffd166", "Yellow"}
+	global const Color Green   = {"06d6a0", "Green"}
+	global const Color Blue    = {"118ab2", "Blue"}
+	global const Color Gray    = {"3d3d3d", "Gray"}
+	global const Color TransparentRed   = {"ff000080", "Transparent Red"}
 	string hex
+	string name
+	
+	string toString := name or hex
 	
 	Color: string hex = ""
 		   int red = 0
@@ -139,6 +142,8 @@ transient global unit graphics
 	internal Matrix2D totalMatrix, localMatrix
 	internal DisplayItem[] items
 		
+	private const alignmentFactor = [0, .5, 1]
+		
 	internal js void startFrame
 		graphics_reset()
 		if(!Platform_fastForward && !Platform_waitingForInitialData)
@@ -159,18 +164,18 @@ transient global unit graphics
 
 	internal finishFrame
 		if(Platform.fastForward) return
-		for Input.internalUsers if .
+		for input.internalUsers if .
 			.videoElementIndex = 0
 		drawItems
 		drawSafeArea
-		for Input.internalUsers -> user if .
+		for input.internalUsers -> user if .
 			for user.videoElementIndex to user.videoElements.length
 				PeerNetwork.removeVideoElement user.videoElements[.]
 			user.videoElements.setLength user.videoElementIndex
-			PeerNetwork.setAudioMuted user.audioElement, muted:Network.muteInvisibleUsers and user.videoElementIndex == 0
+			PeerNetwork.setAudioMuted user.audioElement, muted:core.muteInvisibleUsers and user.videoElementIndex == 0
 		
 	private drawItems
-		Network.displayItems = items.length
+		core.displayItems = items.length
 		gizmo.tick
 		items.sort b.layer - a.layer
 		items.each <- .draw
@@ -180,24 +185,13 @@ transient global unit graphics
 		Platform_context.resetTransform()
 		Platform_context.globalAlpha = 1
 				
-	private isVisibleFor: int visibleFor
-		if(Platform.fastForward) return false
-		if visibleFor != -1: return visibleFor == Input.localUser.id
-		else                 return currentlyVisibleFor == null or currentlyVisibleFor.contains(Input.localUser.id)
-			
-	private isVisibleFor: int[] visibleFor
+	private isVisibleFor: Player[] visibleFor
 		if(Platform.fastForward) return false
 		let effectiveVisibleFor = visibleFor or currentlyVisibleFor
-		return effectiveVisibleFor == null or effectiveVisibleFor.contains(Input.localUser.id)
+		return effectiveVisibleFor == null or effectiveVisibleFor.any.id == input.localUser.id
 		
-	private int[] getClickableBy: int visibleFor, int clickableBy
-		int[] effectiveVisibleBy = visibleFor != -1 ? [visibleFor] : currentlyVisibleFor
-		return (effectiveVisibleBy and clickableBy != -1)
-		     ? (effectiveVisibleBy.contains(clickableBy) ? [clickableBy] : [])
-		     : (effectiveVisibleBy or (clickableBy != -1 ? [clickableBy] : null))
-			
-	private int[] getClickableBy: int[] visibleFor, int[] clickableBy
-		int[] effectiveVisibleBy = visibleFor or currentlyVisibleFor
+	private Player[] getClickableBy: Player[] visibleFor, Player[] clickableBy
+		Player[] effectiveVisibleBy = visibleFor or currentlyVisibleFor
 		return effectiveVisibleBy and clickableBy
 		     ? effectiveVisibleBy intersectWith clickableBy 
 		     : effectiveVisibleBy or clickableBy
@@ -221,6 +215,8 @@ transient global unit graphics
 			}
 		}
 		
+	// ------------------------------------------------------- Transform -------------------------------------------------------
+	
 	// Moves all subsequent operations by a given vector						
 	move: Vector2 distance // The distance to move
 		localMatrix.move distance
@@ -270,10 +266,10 @@ transient global unit graphics
 		localMatrix.m0 = a0; localMatrix.m1 = a1; localMatrix.m2 = a2; localMatrix.m3 = a3; localMatrix.m4 = a4; localMatrix.m5 = a5 
 		totalMatrix.m0 = b0; totalMatrix.m1 = b1; totalMatrix.m2 = b2; totalMatrix.m3 = b3; totalMatrix.m4 = b4; totalMatrix.m5 = b5 
 	
-	global transform: Vector2 move = Vector2.none  // The distance to move
-		              float scale = 1              // The factor to scale by
-		              Angle rotate = 0             // The angle in turns (0: no rotation, 1: one full rotation)
-		              void() do                    // All operations within this block will be scaled
+	transform: Vector2 move = Vector2.none  // The distance to move
+		       float scale = 1              // The factor to scale by
+		       Angle rotate = 0             // The angle in turns (0: no rotation, 1: one full rotation)
+		       void() do                    // All operations within this block will be scaled
 		let a0 = localMatrix.m0, a1 = localMatrix.m1, a2 = localMatrix.m2, a3 = localMatrix.m3, a4 = localMatrix.m4, a5 = localMatrix.m5
 		let b0 = totalMatrix.m0, b1 = totalMatrix.m1, b2 = totalMatrix.m2, b3 = totalMatrix.m3, b4 = totalMatrix.m4, b5 = totalMatrix.m5
 		if move
@@ -305,6 +301,8 @@ transient global unit graphics
 		localMatrix.m0 = a0; localMatrix.m1 = a1; localMatrix.m2 = a2; localMatrix.m3 = a3; localMatrix.m4 = a4; localMatrix.m5 = a5 
 		totalMatrix.m0 = b0; totalMatrix.m1 = b1; totalMatrix.m2 = b2; totalMatrix.m3 = b3; totalMatrix.m4 = b4; totalMatrix.m5 = b5
 	
+	// --------------------------------------------- Create and Manipulate Images ---------------------------------------------
+	
 	// Directly manipulate the pixels on the screen or an image
 	js int[] manipulate: void(int[] pixels) code // This code can manipulate the pixels
 		let imageData = Platform_context.getImageData(0,0,Platform_pixelSize.x, Platform_pixelSize.y)
@@ -312,7 +310,7 @@ transient global unit graphics
 		Platform_context.putImageData(imageData, 0, 0)
 		
 	// Creates an image to draw to
-	js void createImage: Vector2 size      // The size of the image
+	js void createImage: Vector2 size     // The size of the image
 		                 string file = "" // Save the image to a file with this filename
 		                 void() code      // This code will draw on the created image instead of drawing on the screen
 		// let prevCanvas = Platform_canvas
@@ -345,8 +343,13 @@ transient global unit graphics
 		graphics_items = prevItems
 		return dataUrl
 		
+	// ------------------------------------------------------- Color -------------------------------------------------------
+	
 	// The default background color
-	Color backgroundColor = Black
+	const Color backgroundColor = Black
+	
+	// Teh default player colors
+	const Color[] defaultColors = [{"398CA9", "Blue"}, {"C01352", "Red"}, {"16C66E", "Green"}, {"FFD166", "Yellow"}]
 
 	// The default color for all draw operations
 	color
@@ -362,6 +365,8 @@ transient global unit graphics
 		currentColor = prev
 		return currentColor
 	private Color currentColor = {"ffffff"}
+	
+	// ------------------------------------------------------- Font -------------------------------------------------------
 	
 	// The default font for all draw operations
 	font
@@ -393,6 +398,8 @@ transient global unit graphics
 		return currentFontSize
 	private currentFontSize = 64
 	
+	// ------------------------------------------------------- Line Width -------------------------------------------------------
+	
 	// The default line width for all draw operations
 	lineWidth
 		return currentLineWidth
@@ -408,17 +415,19 @@ transient global unit graphics
 		return currentLineWidth
 	private currentLineWidth = 8
 	
+	// ------------------------------------------------------- Clip -------------------------------------------------------
+	
 	// For all drawings in code block, only pixels inside the given polygon are drawn
 	clip: Vector2[] points      // A list of points that define the area to be clipped
 		  Vector2 position = {} // The position all points are relative to 
-		  bool show = false    // Visualizes the clipping area by shading it transparent red
+		  bool show = false     // Visualizes the clipping area by shading it transparent red
 		if show: drawPolygon position, points, fillColor:TransparentRed
 				
 	// For all drawings in code block, only pixels inside the given polygon are drawn
 	clip: Vector2[] points      // A list of points that define the area to be clipped
 		  Vector2 position = {} // The position all points are relative to 
-		  bool show = false    // Visualizes the clipping area by shading it transparent red
-		  void() code          // All draw operation within this code block will be clipped
+		  bool show = false     // Visualizes the clipping area by shading it transparent red
+		  void() code           // All draw operation within this code block will be clipped
 		let prev = currentClippingPath
 		currentClippingPath = ClippingPath(show)
 		for points: currentClippingPath.points.add position + .
@@ -427,19 +436,13 @@ transient global unit graphics
 		
 	private ClippingPath currentClippingPath
 		
-	// The default user for which all draw operations will be visible
+	// ------------------------------------------------------- Visibility -------------------------------------------------------
+	
+	// The default player for which all draw operations will be visible
 	visibleFor
 		return currentlyVisibleFor
 		
-	visibleFor: int visibleFor
-		        void() code
-		let prev = currentlyVisibleFor
-		currentlyVisibleFor = visibleFor != -1 ? [visibleFor] : null
-		code()
-		currentlyVisibleFor = prev
-		return currentlyVisibleFor
-		
-	visibleFor: int[] visibleFor
+	visibleFor: implicit Player[] visibleFor
 		        void() code
 		let prev = currentlyVisibleFor
 		currentlyVisibleFor = visibleFor
@@ -447,7 +450,7 @@ transient global unit graphics
 		currentlyVisibleFor = prev
 		return currentlyVisibleFor
 		
-	private int[] currentlyVisibleFor = null
+	private Player[] currentlyVisibleFor = null
 		
 	// Returns the width of a string in pixels
 	global js int getTextWidth: string text                 // The string to get the width of
@@ -460,6 +463,8 @@ transient global unit graphics
 		let textSize = Platform_context.measureText(text)
 		return textSize.width
 		
+	// ------------------------------------------------------- Position -------------------------------------------------------
+	
 	getAbsolutPosition: Vector2 position
 		return position.getTransformed(localMatrix)
 		
@@ -474,218 +479,144 @@ transient global unit graphics
 		let sizeY = size.y || (sizeX/imageSize.x)*imageSize.y
 		return {sizeX, sizeY}
 		
-	// Draws an image on the screen
-	global void drawImage: Image image                // The image to draw
-		                   Vector2 position = {}      // The position to draw to
-		                   framesPerSecond = 0        // Animate the image with this speed
-		                   implicit Vector2 size = {} // The size of the image, use a float to keep the aspect ratio, use a vector to strech the image
-		                   visibleFor = -1            // Only this user will see the image
-		                   implicit int layer = 0     // Higher layers are drawn in front of lower layers
-		                   alpha = 1.0                // The opacity of the image (0: fully transparent, 1: fully visible)
-		                   Color color = White        // Tint the image with this color (white for no tint)
+	// ------------------------------------------------------- Image -------------------------------------------------------
+	
+	// Draw an image on the screen
+	global js void drawImage: Image image                         // The image to draw
+		                      Vector2 position = {}               // The position to draw to
+		                      frame = 0                           // The frame of the image to draw
+		                      implicit Vector2 size = {}          // The size of the image, use a float to keep the aspect ratio, use a vector to strech the image
+		                      implicit Player[] visibleFor = null // Only this player or list of players will see the image
+		                      implicit layer = 0                  // Higher layers are drawn in front of lower layers
+		                      alpha = 1.0                         // The opacity of the image (0: fully transparent, 1: fully visible)
+		                      Color color = White                 // Tint the image with this color (white for no tint)
+		                      HorizontalAlignment align = Center  // The horizontal alignment of the image
+		                      VerticalAlignment valign = Middle   // The vertical alignment of the image
+		                      SourceCodeLocation location
+		if(!image.texture?.ensureIsAvailable()) return
+		if(graphics_isVisibleFor(visibleFor)) {
+			let f = image.frames[frame % image.frames.length]
+			let sizeX = size.x || f.w
+			let sizeY = size.y || (sizeX/f.w)*f.h
+			graphics_items.push(new DisplayImage(
+				graphics_totalMatrix,
+				align == 0  ? position.x : align  == 1 ? position.x-sizeX*.5 : position.x-sizeX,
+				valign == 0 ? position.y : valign == 1 ? position.y-sizeY*.5 : position.y-sizeY,
+				sizeX, sizeY,
+				layer, alpha, graphics_currentClippingPath, image.file,
+				location, position.location, size.location,
+				image.texture._htmlImage,
+				f.x1, f.y1, f.w, f.h,
+				color
+			))
+		}
+	
+	// Draw an image on the screen (with angle, flipX, flipY)
+	global js void drawImage: Image image                         // The image to draw
+		                      Vector2 position = {}               // The position to draw to
+		                      frame = 0                           // The frame of the image to draw
+		                      implicit Vector2 size = {}          // The size of the image, use a float to keep the aspect ratio, use a vector to strech the image
+		                      Angle angle = 0.0                   // Rotate the image by this angle in turns (0: no rotation, 1: one full rotation)
+		                      flipX = false                       // Mirror the image horizontally
+		                      flipY = false                       // Mirror the image vertically
+		                      implicit Player[] visibleFor = null // Only this player or list of players will see the image
+		                      implicit layer = 0                  // Higher layers are drawn in front of lower layers
+		                      alpha = 1.0                         // The opacity of the image (0: fully transparent, 1: fully visible)
+		                      Color color = White                 // Tint the image with this color (white for no tint)
+		                      SourceCodeLocation location
+		if(!image.texture?.ensureIsAvailable()) return
+		if(graphics_isVisibleFor(visibleFor)) {
+			let f = image.frames[frame % image.frames.length]
+			let sizeX = size.x || f.w
+			let sizeY = size.y || (sizeX/f.w)*f.h
+			let matrix = graphics_totalMatrix.clone()
+			matrix.move(position)
+			matrix.rotate(angle)
+			if(flipX || flipY) matrix.scale(new Vector2(flipX ? -1:1, flipY ? -1:1	))
+			graphics_items.push(new DisplayImage(
+				matrix,
+				-sizeX/2,
+				-sizeY/2,
+				sizeX, sizeY,
+				layer, alpha, graphics_currentClippingPath, image.file, 
+				location, position.location, size.location,
+				image.texture._htmlImage,
+				f.x1, f.y1, f.w, f.h,
+				color
+			))
+		}
+
+	// Draw an image on the screen (with framesPerSecond)
+	global void drawImage: Image image                         // The image to draw
+		                   Vector2 position = {}               // The position to draw to
+		                   framesPerSecond = 0                 // Animate the image with this speed
+		                   implicit Vector2 size = {}          // The size of the image, use a float to keep the aspect ratio, use a vector to strech the image
+		                   implicit Player[] visibleFor = null // Only this player or list of players will see the image
+		                   implicit int layer = 0              // Higher layers are drawn in front of lower layers
+		                   alpha = 1.0                         // The opacity of the image (0: fully transparent, 1: fully visible)
+		                   Color color = White                 // Tint the image with this color (white for no tint)
 		                   SourceCodeLocation location
-		var frame = Math.floor(Network.frame * Math.max(framesPerSecond, 0) / Network.targetFps) % image.frames.length;
+		var frame = math.floor(core.frame * math.max(framesPerSecond, 0) / core.targetFps) % image.frames.length;
 		drawImage image, position, frame, size, visibleFor, layer, alpha, color, location
 	
-	// Draws an image on the screen
-	global void drawImage: Image image                // The image to draw
-		                   Vector2 position = {}      // The position to draw to
-		                   framesPerSecond = 0        // Animate the image with this speed
-		                   implicit Vector2 size = {} // The size of the image, use a float to keep the aspect ratio, use a vector to strech the image
-		                   int[] visibleFor           // Only this user will see the image
-		                   implicit int layer = 0     // Higher layers are drawn in front of lower layers
-		                   alpha = 1.0                // The opacity of the image (0: fully transparent, 1: fully visible)
-		                   Color color = White        // Tint the image with this color (white for no tint)
+	// Draw an image on the screen (with framesPerSecond, flipX, flipY)
+	global void drawImage: Image image                          // The image to draw
+		                   Vector2 position = {}                // The position to draw to
+		                   framesPerSecond = 0                  // Animate the image with this speed
+		                   implicit Vector2 size = {}           // The size of the image, use a float to keep the aspect ratio, use a vector to strech the image
+		                   Angle angle = 0.0                    // Rotate the image by this angle in turns (0: no rotation, 1: one full rotation)
+		                   flipX = false                        // Mirror the image horizontally
+		                   flipY = false                        // Mirror the image vertically
+		                   implicit Player[] visibleFor = null  // Only this player or list of players will see the image
+		                   implicit int layer = 0               // Higher layers are drawn in front of lower layers
+		                   alpha = 1.0                          // The opacity of the image (0: fully transparent, 1: fully visible)
+		                   Color color = White                  // Tint the image with this color (white for no tint)
 		                   SourceCodeLocation location
-		var frame = Math.floor(Network.frame * Math.max(framesPerSecond, 0) / Network.targetFps) % image.frames.length;
-		drawImage image, position, frame, size, visibleFor, layer, alpha, color, location
-	
-	// Draws an image on the screen
-	global void drawImage: Image image                // The image to draw
-		                   Vector2 position = {}      // The position to draw to
-		                   framesPerSecond = 0        // Animate the image with this speed
-		                   implicit Vector2 size = {} // The size of the image, use a float to keep the aspect ratio, use a vector to strech the image
-		                   Angle angle = 0.0          // Rotate the image by this angle in turns (0: no rotation, 1: one full rotation)
-		                   flipX = false              // Mirror the image horizontally
-		                   flipY = false              // Mirror the image vertically
-		                   visibleFor = -1            // Only this user will see the image
-		                   implicit int layer = 0     // Higher layers are drawn in front of lower layers
-		                   alpha = 1.0                // The opacity of the image (0: fully transparent, 1: fully visible)
-		                   Color color = White        // Tint the image with this color (white for no tint)
-		                   SourceCodeLocation location
-		var frame = Math.floor(Network.frame * Math.max(framesPerSecond, 0) / Network.targetFps) % image.frames.length;
+		var frame = math.floor(core.frame * math.max(framesPerSecond, 0) / core.targetFps) % image.frames.length;
 		drawImage image, position, frame, size, angle, flipX, flipY, visibleFor, layer, alpha, color, location
 	
-	// Draws an image on the screen
-	global void drawImage: Image image                  // The image to draw
-		                   Vector2 position = {}        // The position to draw to
-		                   frame = 0                    // The frame of the image to draw
-		                   implicit Vector2 size = {}   // The size of the image, use a float to keep the aspect ratio, use a vector to strech the image
-		                   Angle angle = 0.0            // Rotate the image by this angle in turns (0: no rotation, 1: one full rotation)
-		                   touchMargin = Vector2(16,16) // The margin around the button within which it is touchable
-		                   showTouchArea = false        // Show the area within which the button is touchable
-		                   visibleFor = -1              // Only this user will see the button
-		                   clickableBy = -1             // Only this user can click the button
-		                   hotkey = Key.None            // This keyboard shortcut will execute the onClick handler
-		                   implicit layer = 0           // Higher layers are drawn in front of lower layers
-		                   alpha = 1.0                  // The opacity of the button 0: fully transparent, 1: fully visible)
-		                   Color color = White          // Tint the image with this color (white for no tint)
-		                   void(Touch touch) onClick    // Execute this code when the user clicks on the image or presses the hotkey
+	// Draw an image on the screen (clickable)                 
+	global void drawImage: Image image                          // The image to draw
+		                   Vector2 position = {}                // The position to draw to
+		                   frame = 0                            // The frame of the image to draw
+		                   implicit Vector2 size = {}           // The size of the image, use a float to keep the aspect ratio, use a vector to strech the image
+		                   Angle angle = 0.0                    // Rotate the image by this angle in turns (0: no rotation, 1: one full rotation)
+		                   touchMargin = Vector2(16,16)         // The margin around the button within which it is touchable
+		                   showTouchArea = false                // Show the area within which the button is touchable
+		                   implicit Player[] visibleFor = null  // Only this player or list of players will see the button
+		                   implicit Player[] clickableBy = null // Only this player or list of players can click the button
+		                   hotkey = Key.None                    // This keyboard shortcut will execute the onClick handler
+		                   implicit layer = 0                   // Higher layers are drawn in front of lower layers
+		                   alpha = 1.0                          // The opacity of the button 0: fully transparent, 1: fully visible)
+		                   Color color = White                  // Tint the image with this color (white for no tint)
+		                   void(Touch touch) onClick            // Execute this code when the user clicks on the image or presses the hotkey
 		                   SourceCodeLocation location
 		drawImage image, position, frame, size, angle, visibleFor, layer, alpha, color, location
 			
 		// Handle click (only visible buttons are clickable)
-		int[] effectiveClickableBy = getClickableBy(visibleFor, clickableBy)
+		let effectiveClickableBy = getClickableBy(visibleFor, clickableBy)
 		if size.x == 0 and size.y == 0: size = image.size
-		Input.onTouchDownWithin position, size + touchMargin, userId:effectiveClickableBy, showTouchArea, do:onClick
+		input.onTouchDownWithin position, size + touchMargin, by:effectiveClickableBy, showTouchArea, do:onClick
 		if hotkey
-			Input.onKeyDown hotkey, userId:effectiveClickableBy
+			input.onKeyDown hotkey, by:effectiveClickableBy
 				onClick null
 		
-	// Draws an image on the screen
-	global js void drawImage: Image image                // The image to draw
-		                      Vector2 position = {}      // The position to draw to
-		                      frame = 0                  // The frame of the image to draw
-		                      implicit Vector2 size = {} // The size of the image, use a float to keep the aspect ratio, use a vector to strech the image
-		                      visibleFor = -1            // Only this user will see the image
-		                      implicit layer = 0         // Higher layers are drawn in front of lower layers
-		                      alpha = 1.0                // The opacity of the image (0: fully transparent, 1: fully visible)
-		                      Color color = White        // Tint the image with this color (white for no tint)
-		                      HorizontalAlignment align = Center // The horizontal alignment of the image
-		                      VerticalAlignment valign = Middle  // The vertical alignment of the image
-		                      SourceCodeLocation location
-		if(!image.texture?.ensureIsAvailable()) return
-		if(graphics_isVisibleFor(visibleFor)) {
-			let f = image.frames[frame % image.frames.length]
-			let sizeX = size.x || f.w
-			let sizeY = size.y || (sizeX/f.w)*f.h
-			graphics_items.push(new DisplayImage(
-				graphics_totalMatrix,
-				align == 0  ? position.x : align  == 1 ? position.x-sizeX*.5 : position.x-sizeX,
-				valign == 0 ? position.y : valign == 1 ? position.y-sizeY*.5 : position.y-sizeY,
-				sizeX, sizeY,
-				layer, alpha, graphics_currentClippingPath, image.file,
-				location, position.location, size.location,
-				image.texture._htmlImage,
-				f.x1, f.y1, f.w, f.h,
-				color
-			))
-		}
+	// ------------------------------------------------------- Text -------------------------------------------------------
 	
-	global js void drawImage: Image image                // The image to draw
-		                      Vector2 position = {}      // The position to draw to
-		                      frame = 0                  // The frame of the image to draw
-		                      implicit Vector2 size = {} // The size of the image, use a float to keep the aspect ratio, use a vector to strech the image
-		                      int[] visibleFor           // Only this user will see the image
-		                      implicit layer = 0         // Higher layers are drawn in front of lower layers
-		                      alpha = 1.0                // The opacity of the image (0: fully transparent, 1: fully visible)
-		                      Color color = White        // Tint the image with this color (white for no tint)
-		                      HorizontalAlignment align = Center // The horizontal alignment of the image
-		                      VerticalAlignment valign = Middle  // The vertical alignment of the image
-		                      SourceCodeLocation location
-		if(!image.texture?.ensureIsAvailable()) return
-		if(graphics_isVisibleFor2(visibleFor)) {
-			let f = image.frames[frame % image.frames.length]
-			let sizeX = size.x || f.w
-			let sizeY = size.y || (sizeX/f.w)*f.h
-			graphics_items.push(new DisplayImage(
-				graphics_totalMatrix,
-				align == 0  ? position.x : align  == 1 ? position.x-sizeX*.5 : position.x-sizeX,
-				valign == 0 ? position.y : valign == 1 ? position.y-sizeY*.5 : position.y-sizeY,
-				sizeX, sizeY,
-				layer, alpha, graphics_currentClippingPath, image.file,
-				location, position.location, size.location,
-				image.texture._htmlImage,
-				f.x1, f.y1, f.w, f.h,
-				color
-			))
-		}
-	
-	// Draws an image on the screen
-	global js void drawImage: Image image                // The image to draw
-		                      Vector2 position = {}      // The position to draw to
-		                      frame = 0                  // The frame of the image to draw
-		                      implicit Vector2 size = {} // The size of the image, use a float to keep the aspect ratio, use a vector to strech the image
-		                      Angle angle = 0.0          // Rotate the image by this angle in turns (0: no rotation, 1: one full rotation)
-		                      flipX = false              // Mirror the image horizontally
-		                      flipY = false              // Mirror the image vertically
-		                      visibleFor = -1            // Only this user will see the image
-		                      implicit layer = 0         // Higher layers are drawn in front of lower layers
-		                      alpha = 1.0                // The opacity of the image (0: fully transparent, 1: fully visible)
-		                      Color color = White        // Tint the image with this color (white for no tint)
-		                      SourceCodeLocation location
-		if(!image.texture?.ensureIsAvailable()) return
-		if(graphics_isVisibleFor(visibleFor)) {
-			let f = image.frames[frame % image.frames.length]
-			let sizeX = size.x || f.w
-			let sizeY = size.y || (sizeX/f.w)*f.h
-			let matrix = graphics_totalMatrix.clone()
-			matrix.move(position)
-			matrix.rotate(angle)
-			if(flipX || flipY) matrix.scale(new Vector2(flipX ? -1:1, flipY ? -1:1	))
-			graphics_items.push(new DisplayImage(
-				matrix,
-				-sizeX/2,
-				-sizeY/2,
-				sizeX, sizeY,
-				layer, alpha, graphics_currentClippingPath, image.file, 
-				location, position.location, size.location,
-				image.texture._htmlImage,
-				f.x1, f.y1, f.w, f.h,
-				color
-			))
-		}
-	
-	global js void drawImage: Image image                // The image to draw
-		                      Vector2 position = {}      // The position to draw to
-		                      frame = 0                  // The frame of the image to draw
-		                      implicit Vector2 size = {} // The size of the image, use a float to keep the aspect ratio, use a vector to strech the image
-		                      Angle angle = 0.0          // Rotate the image by this angle in turns (0: no rotation, 1: one full rotation)
-		                      flipX = false              // Mirror the image horizontally
-		                      flipY = false              // Mirror the image vertically
-		                      int[] visibleFor           // Only this user will see the image
-		                      implicit layer = 0         // Higher layers are drawn in front of lower layers
-		                      alpha = 1.0                // The opacity of the image (0: fully transparent, 1: fully visible)
-		                      Color color = White        // Tint the image with this color (white for no tint)
-		                      SourceCodeLocation location
-		if(!image.texture?.ensureIsAvailable()) return
-		if(graphics_isVisibleFor2(visibleFor)) {
-			let f = image.frames[frame % image.frames.length]
-			let sizeX = size.x || f.w
-			let sizeY = size.y || (sizeX/f.w)*f.h
-			let matrix = graphics_totalMatrix.clone()
-			matrix.move(position)
-			matrix.rotate(angle)
-			if(flipX || flipY) matrix.scale(new Vector2(flipX ? -1:1, flipY ? -1:1	))
-			graphics_items.push(new DisplayImage(
-				matrix,
-				-sizeX/2,
-				-sizeY/2,
-				sizeX, sizeY,
-				layer, alpha, graphics_currentClippingPath, image.file, 
-				location, position.location, size.location,
-				image.texture._htmlImage,
-				f.x1, f.y1, f.w, f.h,
-				color
-			))
-		}
-	
-	const alignmentFactor = [0, .5, 1]
-	
-	// Draws text on the screen
-	global js void drawText: string text                        // The text to draw
-		                     Vector2 position = {}              // The position to draw to
-		                     implicit Vector2 size = {}         // The size of the text
-		                     Color color = null                 // The color of the text
-		                     HorizontalAlignment align = Center // The horizontal alignment of the text
-		                     VerticalAlignment valign = Middle  // The vertical alignment of the text
-		                     FontStyle style = Normal           // Whether the text should be bold or normal style
-		                     Font font = null                   // The font of the text
-		                     Color outlineColor = null          // The color of the outline around the text
-		                     outlineWidth = 0                   // The width of the outline around the text
-		                     visibleFor = -1                    // Only this user will see the image
-		                     implicit layer = 0                 // Higher layers are drawn in front of lower layers
-		                     alpha = 1.0                        // The opacity of the text (0: fully transparent, 1: fully visible)
+	// Draw text on the screen
+	global js void drawText: implicit string text                // The text to draw
+		                     Vector2 position = {}               // The position to draw to
+		                     implicit Vector2 size = {}          // The size of the text
+		                     Color color = null                  // The color of the text
+		                     HorizontalAlignment align = Center  // The horizontal alignment of the text
+		                     VerticalAlignment valign = Middle   // The vertical alignment of the text
+		                     FontStyle style = Normal            // Whether the text should be bold or normal style
+		                     Font font = null                    // The font of the text
+		                     Color outlineColor = null           // The color of the outline around the text
+		                     outlineWidth = 0                    // The width of the outline around the text
+		                     implicit Player[] visibleFor = null // Only this player or list of players will see the text
+		                     implicit layer = 0                  // Higher layers are drawn in front of lower layers
+		                     alpha = 1.0                         // The opacity of the text (0: fully transparent, 1: fully visible)
 		                     SourceCodeLocation location
 		if(graphics_isVisibleFor(visibleFor)) {
 			let effectiveFont = font || graphics_currentFont
@@ -710,243 +641,258 @@ transient global unit graphics
 			))
 		}
 		
-	global js void drawText: string text                        // The text to draw
-		                     Vector2 position = {}              // The position to draw to
-		                     implicit Vector2 size = {}         // The size of the text
-		                     Color color = null                 // The color of the text
-		                     HorizontalAlignment align = Center // The horizontal alignment of the text
-		                     VerticalAlignment valign = Middle  // The vertical alignment of the text
-		                     FontStyle style = Normal           // Whether the text should be bold or normal style
-		                     Font font = null                   // The font of the text
-		                     Color outlineColor = null          // The color of the outline around the text
-		                     outlineWidth = 0                   // The width of the outline around the text
-		                     int[] visibleFor                   // Only this user will see the image
-		                     implicit layer = 0                 // Higher layers are drawn in front of lower layers
-		                     alpha = 1.0                        // The opacity of the text (0: fully transparent, 1: fully visible)
-		                     SourceCodeLocation location
-		if(graphics_isVisibleFor2(visibleFor)) {
-			let effectiveFont = font || graphics_currentFont
-			let fontSize = size.y || size.x || graphics_currentFontSize
-			let contextFont = (style ? "bold ":"")+fontSize+"px "+effectiveFont.name;
-			Platform_context.font = contextFont
-			let textSize = Platform_context.measureText(text)
-			let sizeX = textSize.width
-			let sizeY = fontSize*effectiveFont.actualHeightFactor
-			graphics_items.push(new DisplayText(
-				graphics_totalMatrix, 
-				position.x - graphics_alignmentFactor[ align]*sizeX,
-				position.y - graphics_alignmentFactor[valign]*sizeY,
-				sizeX, sizeY, 
-				layer, alpha, graphics_currentClippingPath, text, 
+	// ------------------------------------------------------- Button -------------------------------------------------------
+	
+	// Draw a button made up of an image and a text on the screen
+	global void drawButton: Image image = null                   // The image of the button
+		                    text = ""                            // The text of the button
+		                    Vector2 position = {}                // The position to draw to
+		                    Color textColor = null               // The color of the text
+		                    frame = 0                            // The frame of the image
+		                    implicit Vector2 size = {}           // The size of the image, use a float to keep the aspect ratio, use a vector to strech the image
+		                    fontSize = 18                        // The font size in pixels   
+		                    textOffset = Vector2(0,0)            // Draw the text at this offset
+		                    touchMargin = Vector2(16,16)         // The margin around the button within which it is touchable
+		                    showTouchArea = false                // Show the area within which the button is touchable
+		                    implicit Player[] visibleFor = null  // Only this player or list of players will see the button
+		                    implicit Player[] clickableBy = null // Only this player or list of players can click the button
+		                    hotkey = Key.None                    // This keyboard shortcut will execute the onClick handler
+		                    implicit layer = 0                   // Higher layers are drawn in front of lower layers
+		                    alpha = 1.0                          // The opacity of the button (0: fully transparent, 1: fully visible)
+		                    enabled = true                       // When not enabled, the button can't be clicked and is drawn transparently (50% by default)
+		                    alphaWhenDisabled = .5               // The opacity of the button will be multiplied with this factor when its disabled
+		                    void(Touch touch) onClick = null     // Execute this code when the user clicks the button or presses the hotkey
+	                        SourceCodeLocation location
+		if isVisibleFor(visibleFor)
+			let effectiveAlpha = enabled ? alpha : alpha * alphaWhenDisabled
+			if text:  drawText text, position+textOffset, fontSize, textColor, visibleFor, layer, effectiveAlpha, location
+			if image: drawImage image, position, frame, size, visibleFor, layer, effectiveAlpha, location
+			
+		if enabled and onClick != null
+			// Handle click (only visible buttons are clickable)
+			let effectiveClickableBy = getClickableBy(visibleFor, clickableBy)
+			Vector2 effectiveSize = image ? getEffectiveSize(image.size, size) : {getTextWidth(text), fontSize}
+			input.onTouchDownWithin position, effectiveSize + touchMargin, by:effectiveClickableBy, showTouchArea, do:onClick
+			if hotkey
+				input.onKeyDown hotkey, by:effectiveClickableBy
+					onClick null
+			
+	// ------------------------------------------------------- Rectangle -------------------------------------------------------
+	
+	// Draw a rectangle on the screen
+	global js void drawRectangle: position = Vector2()                // The center of the rectangle
+		                          implicit size = Vector2(256,256)    // The size of the rectangle, use a float to draw a square, use a vector to draw a rectangle
+		                          Color fillColor = null              // The color of the area within the rectangle
+		                          Color outlineColor = null           // The color of the outline around the rectangle
+		                          outlineWidth = 0                    // The width of the outline around the rectangle
+		                          implicit Player[] visibleFor = null // Only this player or list of players will see the rectangle
+		                          implicit layer = 0                  // Higher layers are drawn in front of lower layers
+		                          alpha = 1.0                         // The opacity of the rectange 0: fully transparent, 1: fully visible)
+		                          HorizontalAlignment align = Center  // The horizontal alignment of the rectangle
+		                          VerticalAlignment valign = Middle   // The vertical alignment of the rectangle
+		                          SourceCodeLocation location
+		if(graphics_isVisibleFor(visibleFor)) {
+			let sizeX = size.x
+			let sizeY = size.y || size.x
+			graphics_items.push(new DisplayRectangle(
+				graphics_totalMatrix,
+				align == 0  ? position.x : align  == 1 ? position.x-sizeX*.5 : position.x-sizeX,
+				valign == 0 ? position.y : valign == 1 ? position.y-sizeY*.5 : position.y-sizeY,
+				sizeX, sizeY,
+				layer, alpha, graphics_currentClippingPath, "Rectangle", 
 				location, position.location, size.location,
-				(color || graphics_currentColor).hex, 
+				fillColor || !outlineColor ? (fillColor || graphics_currentColor).hex : null,
+				outlineColor ? outlineColor.hex : null,
+				outlineWidth || graphics_currentLineWidth
+			))
+		}
+		
+	// Draw a rectangle with rounded corners on the screen
+	global js void drawRoundedRectangle: position = Vector2()                // The center of the rectangle
+		                                 implicit size = Vector2(256,256)    // The size of the rectangle, use a float to draw a square, use a vector to draw a rectangle
+		                                 radius = 32                         // The radius of the rounded corners
+		                                 Color fillColor = null              // The color of the area within the rectangle
+		                                 Color outlineColor = null           // The color of the outline around the rectangle
+		                                 outlineWidth = 0                    // The width of the outline around the rectangle
+		                                 implicit Player[] visibleFor = null // Only this player or list of players will see the rectangle
+		                                 implicit int layer = 0              // Higher layers are drawn in front of lower layers
+		                                 alpha = 1.0                         // The opacity of the rectangle (0: fully transparent, 1: fully visible)
+		                                 HorizontalAlignment align = Center  // The horizontal alignment of the rectangle
+		                                 VerticalAlignment valign = Middle   // The vertical alignment of the rectangle
+		if(graphics_isVisibleFor(visibleFor)) {
+			let sizeX = size.x
+			let sizeY = size.y || size.x
+			graphics_items.push(new DisplayRoundedRectangle(
+				graphics_totalMatrix,
+				align == 0  ? position.x : align  == 1 ? position.x-sizeX*.5 : position.x-sizeX,
+				valign == 0 ? position.y : valign == 1 ? position.y-sizeY*.5 : position.y-sizeY,
+				sizeX, sizeY,
+				layer, alpha, graphics_currentClippingPath, "RoundedRectangle", 
+				location, position.location, size.location,
+				radius,
+				fillColor || !outlineColor ? (fillColor || graphics_currentColor).hex : null,
+				outlineColor ? outlineColor.hex : null,
+				outlineWidth || graphics_currentLineWidth
+			))
+		}
+		
+	// ------------------------------------------------------- Circle -------------------------------------------------------
+	
+	// Draw a circle on the screen
+	global js void drawCircle: position = Vector2()                    // The center of the circle
+		                       implicit Vector2 size = {256,256}       // The size of the circle, use a float to draw a circle, use a vector draw an ellipse
+		                       Color fillColor = null                  // The color of the area within the circle
+		                       Color outlineColor = null               // The color of the outline around the circle
+		                       outlineWidth = 0                        // The width of the outline around the circle
+		                       Angle startAngle = -.25                 // Draw an arc with this start angle in turns, measured from the positive x-axis
+		                       Angle angle = 1.0                       // Draw an arc with this angle in turns (0.25: quarter circle, 0.5: half circle, 1: full circle)
+		                       RotationDirection direction = Clockwise // The circle is drawn in this direction
+		                       implicit Player[] visibleFor = null     // Only this player or list of players will see the circle
+		                       implicit layer = 0                      // Higher layers are drawn in front of lower layers
+		                       alpha = 1.0                             // The opacity of the circle (0: fully transparent, 1: fully visible)
+		                       SourceCodeLocation location
+		if(graphics_isVisibleFor(visibleFor)) {
+			let sizeX = size.x, sizeY = size.y || size.x
+			graphics_items.push(new DisplayCircle(
+				graphics_totalMatrix, 
+				position.x - sizeX/2, 
+				position.y - sizeY/2, 
+				sizeX, sizeY,
+				layer, alpha, graphics_currentClippingPath, "Circle", 
+				location, position.location, size.location,
+				startAngle, angle,
+				direction == 1,
+				fillColor || !outlineColor ? (fillColor || graphics_currentColor).hex : null,
+				outlineColor ? outlineColor.hex : null,
+				outlineWidth || graphics_currentLineWidth
+			))
+		}
+		
+	// ------------------------------------------------------- Line -------------------------------------------------------
+	
+	// Draw a line on the screen
+	global js void drawLine: Vector2 from                        // The point to start the line from
+		                     nocolon Vector2 to                  // The point to draw the line to
+		                     Color color = null                  // The color of the outline around the line
+		                     width = 0                           // The width of the outline around the line
+		                     implicit Player[] visibleFor = null // Only this player or list of players will see the line
+		                     implicit int layer = 0              // Higher layers are drawn in front of lower layers
+		                     alpha = 1.0                         // The opacity of the line (0: fully transparent, 1: fully visible)
+		if(graphics_isVisibleFor(visibleFor)) {
+			graphics_items.push(new DisplayLine(
+				graphics_totalMatrix,
+				from.x, from.y,
+				to.x - from.x, to.y - from.y,
+				layer, alpha, graphics_currentClippingPath, "Line", 
+				location, from.location, null,
+				to,
+				(color || graphics_currentColor).hex,
+				width || graphics_currentLineWidth
+			))
+		}
+		
+	// Draw a continuous stroke of lines on the screen
+	global js void drawLines: Vector2[] points                    // A list of points for the line
+		                      Vector2 position = {}               // The position all points are relative to 
+		                      Color color = null                  // The color of the line
+		                      width = 0                           // The width of the line
+		                      smooth = false                      // Smooth the corners of the line
+		                      implicit Player[] visibleFor = null // Only this player or list of players will see the line
+		                      implicit int layer = 0              // Higher layers are drawn in front of lower layers
+		                      alpha = 1.0                         // The opacity of the lines (0: fully transparent, 1: fully visible)
+		if(graphics_isVisibleFor(visibleFor)) {
+			graphics_items.push(new DisplayPolygon(
+				graphics_totalMatrix,
+				position.x, position.y,
+				0, 0,
+				layer, alpha, graphics_currentClippingPath, "Line", 
+				location, position.location, null,
+				points,
+				null, // no fill color, because we want to draw a line instead of a polygon
+				(color || graphics_currentColor).hex,
+				width || graphics_currentLineWidth,
+				smooth, /*close*/false
+			))
+		}
+		
+		
+	// ------------------------------------------------------- Polygon -------------------------------------------------------
+	
+	// Draw a polygon on the screen
+	global js void drawPolygon: Vector2[] points                    // A list of points for the polygon
+		                        Vector2 position = {0,0}            // The position all points are relative to 
+		                        Color fillColor = null              // The color of the area within the polygon
+		                        Color outlineColor = null           // The color of the outline around the polygon
+		                        outlineWidth = 0                    // The width of the outline around the polygon
+		                        smooth = false                      // Smooth the corners of the polygon
+		                        implicit Player[] visibleFor = null // Only this player or list of players will see the polygon
+		                        implicit int layer = 0              // Higher layers are drawn in front of lower layers
+		                        alpha = 1.0                         // The opacity of the polygon (0: fully transparent, 1: fully visible)
+		if(graphics_isVisibleFor(visibleFor)) {
+			graphics_items.push(new DisplayPolygon(
+				graphics_totalMatrix,
+				position.x, position.y,
+				0, 0,
+				layer, alpha, graphics_currentClippingPath, "Polygon", 
+				location, position.location, null,
+				points,
+				fillColor || !outlineColor ? (fillColor || graphics_currentColor).hex : null,
 				outlineColor ? outlineColor.hex : null,
 				outlineWidth || graphics_currentLineWidth,
-				effectiveFont.offset.y*sizeY,
-				contextFont
+				smooth, /*close*/true
 			))
 		}
 		
-	// Draws an image on the screen
-	global void drawButton: Image image = null           // The image to draw
-		                    text = ""                    // The text to draw
-		                    Vector2 position = {}        // The position to draw to
-		                    Color textColor = null       // The color of the text
-		                    frame = 0                    // The frame of the image of the image to draw
-		                    implicit Vector2 size = {}   // The size of the image, use a float to keep the aspect ratio, use a vector to strech the image
-		                    fontSize = 18                // The font size in pixels
-		                    touchMargin = Vector2(16,16) // The margin around the button within which it is touchable
-		                    textOffset = Vector2(0,0)    // Draw the text at this offset
-		                    showTouchArea = false        // Show the area within which the button is touchable
-		                    visibleFor = -1              // Only this user will see the button
-		                    implicit layer = 0           // Higher layers are drawn in front of lower layers
-		                    alpha = 1.0                  // The opacity of the button (0: fully transparent, 1: fully visible)
-	                        SourceCodeLocation location
+	// ------------------------------------------------------- Video -------------------------------------------------------
+	
+	// Draw the video feed showing the given player on the screen
+	global drawVideo: Player player                       // Draw the video showing this player
+		              Vector2 position = {}               // The position of the video
+		              implicit Vector2 size = {440}       // The size of the video
+		              VideoShape shape = Rectangle        // Choose whether the video should be drawn as a rectangle, a square or a circle
+		              implicit Player[] visibleFor = null // Only this player or list of players will see the video
+		              SourceCodeLocation location
 		if isVisibleFor(visibleFor)
-			if text:  drawText text, position+textOffset, fontSize, textColor, visibleFor, layer, alpha, location
-			if image: drawImage image, position, frame, size, visibleFor, layer, alpha, location
-			
-	// Draws a button that consists of an image and a text
-	global void drawButton: Image image = null            // The image of the button
-		                    text = ""                     // The text of the button
-		                    Vector2 position = {}         // The position to draw to
-		                    Color textColor = null        // The color of the text
-		                    frame = 0                     // The frame of the image
-		                    implicit Vector2 size = {}    // The size of the image, use a float to keep the aspect ratio, use a vector to strech the image
-		                    fontSize = 18                 // The font size in pixels   
-		                    touchMargin = Vector2(16,16)  // The margin around the button within which it is touchable
-		                    textOffset = Vector2(0,0)     // Draw the text at this offset
-		                    showTouchArea = false         // Show the area within which the button is touchable
-		                    visibleFor = -1               // Only this user will see the button
-		                    clickableBy = -1              // Only this user can click the button
-		                    hotkey = Key.None             // This keyboard shortcut will execute the onClick handler
-		                    implicit layer = 0            // Higher layers are drawn in front of lower layers
-		                    alpha = 1.0                   // The opacity of the button 0: fully transparent, 1: fully visible)
-		                    void(Touch touch) onClick     // Execute this code when the user clicks the button or presses the hotkey
-	                        SourceCodeLocation location
-		if isVisibleFor(visibleFor)
-			if text:  drawText text, position+textOffset, fontSize, textColor, visibleFor, layer, alpha, location
-			if image: drawImage image, position, frame, size, visibleFor, layer, alpha, location
-			
-		// Handle click (only visible buttons are clickable)
-		int[] effectiveClickableBy = getClickableBy(visibleFor, clickableBy)
-		Vector2 effectiveSize = image ? getEffectiveSize(image.size, size) : {getTextWidth(text), fontSize}
-		Input.onTouchDownWithin position, effectiveSize + touchMargin, userId:effectiveClickableBy, showTouchArea, do:onClick
-		if hotkey
-			Input.onKeyDown hotkey, userId:effectiveClickableBy
-				onClick null
-			
-	global void drawButton: Image image = null            // The image of the button
-		                    text = ""                     // The text of the button
-		                    Vector2 position = {}         // The position to draw to
-		                    Color textColor = null        // The color of the text
-		                    frame = 0                     // The frame of the image
-		                    implicit Vector2 size = {}    // The size of the image, use a float to keep the aspect ratio, use a vector to strech the image
-		                    fontSize = 18                 // The font size in pixels   
-		                    textOffset = Vector2(0,0)     // Draw the text at this offset
-		                    touchMargin = Vector2(16,16)  // The margin around the button within which it is touchable
-		                    showTouchArea = false         // Show the area within which the button is touchable
-		                    int[] visibleFor = null       // Only this user will see the button
-		                    int[] clickableBy = null      // Only this user can click the button
-		                    hotkey = Key.None             // This keyboard shortcut will execute the onClick handler
-		                    implicit layer = 0            // Higher layers are drawn in front of lower layers
-		                    alpha = 1.0                   // The opacity of the button 0: fully transparent, 1: fully visible)
-		                    void(Touch touch) onClick     // Execute this code when the user clicks the button or presses the hotkey
-	                        SourceCodeLocation location
-		if isVisibleFor(visibleFor)
-			if text:  drawText text, position+textOffset, fontSize, textColor, visibleFor, layer, alpha, location
-			if image: drawImage image, position, frame, size, visibleFor, layer, alpha, location
-			
-		// Handle click (only visible buttons are clickable)
-		int[] effectiveClickableBy = getClickableBy(visibleFor, clickableBy)
-		Vector2 effectiveSize = image ? getEffectiveSize(image.size, size) : {getTextWidth(text), fontSize}
-		Input.onTouchDownWithin position, effectiveSize + touchMargin, userId:effectiveClickableBy, showTouchArea, do:onClick
-		if hotkey
-			Input.onKeyDown hotkey, userId:effectiveClickableBy
-				onClick null
-			
-	// Draws a rectangle on the screen
-	global js void drawRectangle: position = Vector2()               // The center of the rectangle
-		                          implicit size = Vector2(256,256)   // The size of the rectangle, use a float to draw a square, use a vector to draw a rectangle
-		                          Color fillColor = null             // The color of the area within the rectangle
-		                          Color outlineColor = null          // The color of the outline around the rectangle
-		                          outlineWidth = 0                   // The width of the outline around the rectangle
-		                          visibleFor = -1                    // Only this user will see the rectangle
-		                          implicit layer = 0                 // Higher layers are drawn in front of lower layers
-		                          alpha = 1.0                        // The opacity of the rectange 0: fully transparent, 1: fully visible)
-		                          HorizontalAlignment align = Center // The horizontal alignment of the rectangle
-		                          VerticalAlignment valign = Middle  // The vertical alignment of the rectangle
-		                          SourceCodeLocation location
-		if(graphics_isVisibleFor(visibleFor)) {
-			let sizeX = size.x
-			let sizeY = size.y || size.x
-			graphics_items.push(new DisplayRectangle(
-				graphics_totalMatrix,
-				align == 0  ? position.x : align  == 1 ? position.x-sizeX*.5 : position.x-sizeX,
-				valign == 0 ? position.y : valign == 1 ? position.y-sizeY*.5 : position.y-sizeY,
-				sizeX, sizeY,
-				layer, alpha, graphics_currentClippingPath, "Rectangle", 
-				location, position.location, size.location,
-				fillColor || !outlineColor ? (fillColor || graphics_currentColor).hex : null,
-				outlineColor ? outlineColor.hex : null,
-				outlineWidth || graphics_currentLineWidth
-			))
-		}
-		
-	global js void drawRectangle: position = Vector2()               // The center of the rectangle
-		                          implicit size = Vector2(256,256)   // The size of the rectangle, use a float to draw a square, use a vector to draw a rectangle
-		                          Color fillColor = null             // The color of the area within the rectangle
-		                          Color outlineColor = null          // The color of the outline around the rectangle
-		                          outlineWidth = 0                   // The width of the outline around the rectangle
-		                          int[] visibleFor                   // Only this user will see the rectangle
-		                          implicit layer = 0                 // Higher layers are drawn in front of lower layers
-		                          alpha = 1.0                        // The opacity of the rectange 0: fully transparent, 1: fully visible)
-		                          HorizontalAlignment align = Center // The horizontal alignment of the rectangle
-		                          VerticalAlignment valign = Middle  // The vertical alignment of the rectangle
-		                          SourceCodeLocation location
-		if(graphics_isVisibleFor2(visibleFor)) {
-			let sizeX = size.x
-			let sizeY = size.y || size.x
-			graphics_items.push(new DisplayRectangle(
-				graphics_totalMatrix,
-				align == 0  ? position.x : align  == 1 ? position.x-sizeX*.5 : position.x-sizeX,
-				valign == 0 ? position.y : valign == 1 ? position.y-sizeY*.5 : position.y-sizeY,
-				sizeX, sizeY,
-				layer, alpha, graphics_currentClippingPath, "Rectangle", 
-				location, position.location, size.location,
-				fillColor || !outlineColor ? (fillColor || graphics_currentColor).hex : null,
-				outlineColor ? outlineColor.hex : null,
-				outlineWidth || graphics_currentLineWidth
-			))
-		}
-		
-	// Draws a circle on the screen
-	global js void drawCircle: position = Vector2()       // The center of the circle
-		                       implicit Vector2 size = {256,256} // The size of the circle, use a float to draw a circle, use a vector draw an ellipse
-		                       Color fillColor = null     // The color of the area within the circle
-		                       Color outlineColor = null  // The color of the outline around the circle
-		                       outlineWidth = 0           // The width of the outline around the circle
-		                       Angle startAngle = -.25    // Draws an arc with this start angle in turns, measured from the positive x-axis
-		                       Angle angle = 1.0          // Draws an arc with this angle in turns (0.25: quarter circle, 0.5: half circle, 1: full circle)
-		                       RotationDirection direction = Clockwise // The circle is drawn in this direction
-		                       visibleFor = -1            // Only this user will see the circle
-		                       implicit layer = 0         // Higher layers are drawn in front of lower layers
-		                       alpha = 1.0                // The opacity of the circle (0: fully transparent, 1: fully visible)
-		                       SourceCodeLocation location
-		if(graphics_isVisibleFor(visibleFor)) {
-			let sizeX = size.x, sizeY = size.y || size.x
-			graphics_items.push(new DisplayCircle(
-				graphics_totalMatrix, 
-				position.x - sizeX/2, 
-				position.y - sizeY/2, 
-				sizeX, sizeY,
-				layer, alpha, graphics_currentClippingPath, "Circle", 
-				location, position.location, size.location,
-				startAngle, angle,
-				direction == 1,
-				fillColor || !outlineColor ? (fillColor || graphics_currentColor).hex : null,
-				outlineColor ? outlineColor.hex : null,
-				outlineWidth || graphics_currentLineWidth
-			))
-		}
-		
-	global js void drawCircle: position = Vector2()      // The center of the circle
-		                       implicit Vector2 size = {256,256} // The size of the circle, use a float to draw a circle, use a vector draw an ellipse
-		                       Color fillColor = null    // The color of the area within the circle
-		                       Color outlineColor = null // The color of the outline around the circle
-		                       outlineWidth = 0          // The width of the outline around the circle
-		                       Angle startAngle = -.25   // Draws an arc with this start angle in turns, measured from the positive x-axis
-		                       Angle angle = 1.0         // Draws an arc with this angle in turns (0.25: quarter circle, 0.5: half circle, 1: full circle)
-		                       RotationDirection direction = Clockwise // The circle is drawn in this direction
-		                       int[] visibleFor          // Only this user will see the circle
-		                       implicit layer = 0        // Higher layers are drawn in front of lower layers
-		                       alpha = 1.0               // The opacity of the circle (0: fully transparent, 1: fully visible)
-		                       SourceCodeLocation location
-		if(graphics_isVisibleFor2(visibleFor)) {
-			let sizeX = size.x, sizeY = size.y || size.x
-			graphics_items.push(new DisplayCircle(
-				graphics_totalMatrix, 
-				position.x - sizeX/2, 
-				position.y - sizeY/2, 
-				sizeX, sizeY,
-				layer, alpha, graphics_currentClippingPath, "Circle", 
-				location, position.location, size.location,
-				startAngle, angle,
-				direction == 1,
-				fillColor || !outlineColor ? (fillColor || graphics_currentColor).hex : null,
-				outlineColor ? outlineColor.hex : null,
-				outlineWidth || graphics_currentLineWidth
-			))
-		}
-		
-	// Draws a texture on the screen
-	global js void drawTexture: Texture texture              // The texture to draw
-		                        Vector2 position = {}        // The position to draw to
-		                        implicit Vector2 size = {}   // The size of the image, use a float to keep the aspect ratio, use a vector to strech the image
-		                        visibleFor = -1              // Only this user will see the texture
-		                        implicit int layer = 0       // Higher layers are drawn in front of lower layers
-		                        alpha = 1.0                  // The opacity of the texture (0: fully transparent, 1: fully visible)
-		                        Color color = White          // Tint the image with this color (white for no tint)
+			if not size.y: size.y = shape == Rectangle ? size.x * 3/4 : size.x
+			if core.mode == Local or !PeerNetwork.enableVideo
+				drawImage VideoScreen, position, size, frame:shape == Circle ? 1:0, layer:1000000, location
+			else
+				items.add DisplayVideo(
+					m: totalMatrix,
+					x: position.x, y: position.y,
+					w: size.x,     h: size.y,
+					1000000, alpha:1.0, currentClippingPath, "Video",
+					player.id, shape
+				)
+				
+	// ------------------------------------------------------- Pointer -------------------------------------------------------
+	
+	// Draw a pointer to indicate the mouse position of the given player on the screen
+	global drawPointer: Player player                    // Show the mouse position of this player
+		                Color color = null               // The color of pointer. If this is left out, the player color is used
+		                showPointer = input.showPointers // Choose whether you want to draw the pointers for local player, remote players or both
+		if showPointer == All
+		or (player == input.localPlayer and showPointer == Local)
+		or (player != input.localPlayer and showPointer == Remote)
+			if !color: color = player.color
+			for player.touches
+				drawImage finger, .smoothPosition+{11,32}, frame:.isDown ? 1 : 0, layer:int.maxValue
+				if color
+					if color == Black
+						drawRectangle .smoothPosition+{16,80}, size:{26,10}, color, layer:int.maxValue, outlineColor:{"a0a0a0"}, outlineWidth:2
+					else
+						drawRectangle .smoothPosition+{16,78}, size:{26,10}, color, layer:int.maxValue
+
+	// ------------------------------------------------------- Texture -------------------------------------------------------
+	
+	// Draw a texture or part of a texture on the screen
+	global js void drawTexture: Texture texture                     // The texture to draw
+		                        Vector2 position = {}               // The position to draw to
+		                        implicit Vector2 size = {}          // The size of the image, use a float to keep the aspect ratio, use a vector to strech the image
+		                        implicit Player[] visibleFor = null // Only this player or list of players will see the texture
+		                        implicit int layer = 0              // Higher layers are drawn in front of lower layers
+		                        alpha = 1.0                         // The opacity of the texture (0: fully transparent, 1: fully visible)
+		                        Color color = White                 // Tint the image with this color (white for no tint)
 		if(!texture?.ensureIsAvailable()) return
 		if(graphics_isVisibleFor(visibleFor)) {
 			let sizeX = size.x || texture.size.x
@@ -964,16 +910,16 @@ transient global unit graphics
 			))
 		}
 
-	// Draws a texture on the screen
-	global js void drawTexture: Texture texture             // The texture to draw
-		                        Vector2 position = {}       // The target position to draw to
-		                        Vector2 size = {}           // The target size of the area to draw
-		                        Vector2 sourcePosition = {} // The center of the area of the source texture
-		                        Vector2 sourceSize = {}     // The size of the area of the source texture
-		                        visibleFor = -1             // Only this user will see the texture
-		                        implicit int layer = 0      // Higher layers are drawn in front of lower layers
-		                        alpha = 1.0                 // The opacity of the texture (0: fully transparent, 1: fully visible)
-		                        Color color = White         // Tint the image with this color (white for no tint)
+	// Draw a texture on the screen (with sourcePosition, sourceSize)
+	global js void drawTexture: Texture texture                     // The texture to draw
+		                        Vector2 position = {}               // The target position to draw to
+		                        Vector2 size = {}                   // The target size of the area to draw
+		                        Vector2 sourcePosition = {}         // The center of the area of the source texture
+		                        Vector2 sourceSize = {}             // The size of the area of the source texture
+		                        implicit Player[] visibleFor = null // Only this player or list of players will see the texture
+		                        implicit int layer = 0              // Higher layers are drawn in front of lower layers
+		                        alpha = 1.0                         // The opacity of the texture (0: fully transparent, 1: fully visible)
+		                        Color color = White                 // Tint the image with this color (white for no tint)
 		if(!image.texture?.ensureIsAvailable()) return
 		if(graphics_isVisibleFor(visibleFor)) {
 			let sizeX = size.x || texture.size.x
@@ -994,111 +940,13 @@ transient global unit graphics
 			))
 		}
 		
-	// Draws a polygon on the screen
-	global js void drawPolygon: Vector2[] points           // A list of points for the polygon
-		                        Vector2 position = {0,0}   // The position all points are relative to 
-		                        Color fillColor = null     // The color of the area within the polygon
-		                        Color outlineColor = null  // The color of the outline around the polygon
-		                        outlineWidth = 0           // The width of the outline around the polygon
-		                        smooth = false             // Smooth the corners of the polygon
-		                        visibleFor = -1            // Only this user will see the polygon
-		                        implicit int layer = 0     // Higher layers are drawn in front of lower layers
-		                        alpha = 1.0                // The opacity of the polygon (0: fully transparent, 1: fully visible)
-		if(graphics_isVisibleFor(visibleFor)) {
-			graphics_items.push(new DisplayPolygon(
-				graphics_totalMatrix,
-				position.x, position.y,
-				0, 0,
-				layer, alpha, graphics_currentClippingPath, "Polygon", 
-				location, position.location, null,
-				points,
-				fillColor || !outlineColor ? (fillColor || graphics_currentColor).hex : null,
-				outlineColor ? outlineColor.hex : null,
-				outlineWidth || graphics_currentLineWidth,
-				smooth, /*close*/true
-			))
-		}
-		
-	// Draws a rectangle with rounded corners on the screen
-	global js void drawRoundedRectangle: position = Vector2()               // The center of the rectangle
-		                                 implicit size = Vector2(256,256)   // The size of the rectangle, use a float to draw a square, use a vector to draw a rectangle
-		                                 radius = 32                        // The radius of the rounded corners
-		                                 Color fillColor = null             // The color of the area within the rectangle
-		                                 Color outlineColor = null          // The color of the outline around the rectangle
-		                                 outlineWidth = 0                   // The width of the outline around the rectangle
-		                                 visibleFor = -1                    // Only this user will see the rectangle
-		                                 implicit int layer = 0             // Higher layers are drawn in front of lower layers
-		                                 alpha = 1.0                        // The opacity of the rectangle (0: fully transparent, 1: fully visible)
-		                                 HorizontalAlignment align = Center // The horizontal alignment of the rectangle
-		                                 VerticalAlignment valign = Middle  // The vertical alignment of the rectangle
-		if(graphics_isVisibleFor(visibleFor)) {
-			let sizeX = size.x
-			let sizeY = size.y || size.x
-			graphics_items.push(new DisplayRoundedRectangle(
-				graphics_totalMatrix,
-				align == 0  ? position.x : align  == 1 ? position.x-sizeX*.5 : position.x-sizeX,
-				valign == 0 ? position.y : valign == 1 ? position.y-sizeY*.5 : position.y-sizeY,
-				sizeX, sizeY,
-				layer, alpha, graphics_currentClippingPath, "RoundedRectangle", 
-				location, position.location, size.location,
-				radius,
-				fillColor || !outlineColor ? (fillColor || graphics_currentColor).hex : null,
-				outlineColor ? outlineColor.hex : null,
-				outlineWidth || graphics_currentLineWidth
-			))
-		}
-		
-	// Draws a line on the screen
-	global js void drawLine: Vector2 from           // The point to start the line from
-		                     nocolon Vector2 to     // The point to draw the line to
-		                     Color color = null     // The color of the outline around the line
-		                     width = 0              // The width of the outline around the line
-		                     visibleFor = -1        // Only this user will see the line
-		                     implicit int layer = 0 // Higher layers are drawn in front of lower layers
-		                     alpha = 1.0            // The opacity of the line (0: fully transparent, 1: fully visible)
-		if(graphics_isVisibleFor(visibleFor)) {
-			graphics_items.push(new DisplayLine(
-				graphics_totalMatrix,
-				from.x, from.y,
-				to.x - from.x, to.y - from.y,
-				layer, alpha, graphics_currentClippingPath, "Line", 
-				location, from.location, null,
-				to,
-				(color || graphics_currentColor).hex,
-				width || graphics_currentLineWidth
-			))
-		}
-		
-	// Draws a continuous stroke of lines
-	global js void drawLines: Vector2[] points       // A list of points for the line
-		                      Vector2 position = {}  // The position all points are relative to 
-		                      Color color = null     // The color of the line
-		                      width = 0              // The width of the line
-		                      smooth = false         // Smooth the corners of the line
-		                      visibleFor = -1        // Only this user will see the line
-		                      implicit int layer = 0 // Higher layers are drawn in front of lower layers
-		                      alpha = 1.0            // The opacity of the lines (0: fully transparent, 1: fully visible)
-		if(graphics_isVisibleFor(visibleFor)) {
-			graphics_items.push(new DisplayPolygon(
-				graphics_totalMatrix,
-				position.x, position.y,
-				0, 0,
-				layer, alpha, graphics_currentClippingPath, "Line", 
-				location, position.location, null,
-				points,
-				null, // no fill color, because we want to draw a line instead of a polygon
-				(color || graphics_currentColor).hex,
-				width || graphics_currentLineWidth,
-				smooth, /*close*/false
-			))
-		}
-		
-		
-	// Clears all pixels within a rectangle
-	global js void clearRectangle: position = Vector2()             // The position of the rectangle to clear
-		                           implicit size = Vector2(256,256) // The size of the rectangle, use a float to clear a square, use a vector to clear a rectangle
-		                           visibleFor = -1                  // Only clear the rectangle for this user
-		                           implicit layer = 0               // Higher layers are process after lower layers
+	// ------------------------------------------------------- Clear -------------------------------------------------------
+	
+	// Clear all pixels within a rectangle
+	global js void clearRectangle: position = Vector2()                // The position of the rectangle to clear
+		                           implicit size = Vector2(256,256)    // The size of the rectangle, use a float to clear a square, use a vector to clear a rectangle
+		                           implicit Player[] visibleFor = null // Only clear the rectangle for this player or list of players
+		                           implicit layer = 0                  // Higher layers are drawn in front of lower layers
 		if(graphics_isVisibleFor(visibleFor)) {
 			let sizeX = size.x
 			let sizeY = size.y || size.x
@@ -1113,66 +961,6 @@ transient global unit graphics
 			))
 		}
 		
-	const Color[] defaultColors = [{"398CA9"},{"C01352"},{"16C66E"},{"FFD166"}]
-	setUserColor: int userId
-		          Color color = null
-		let user = Input.usersById[userId]
-			user.color = color || defaultColors[user.index]
-		
-	global drawPointer: int userId
-		                Color color = null
-		                bool showLocalPointer = Input.showLocalPointer
-		if userId != Input.localUser.id or showLocalPointer
-			let user = Input.usersById[userId]
-				if !color: color = user.color
-				for user.touches
-					drawImage finger, .smoothPosition+{11,32}, frame:.isDown ? 1 : 0, layer:int.maxValue
-					if color
-						if color == Black
-							drawRectangle .smoothPosition+{16,80}, size:{26,10}, color, layer:int.maxValue, outlineColor:{"a0a0a0"}, outlineWidth:2
-						else
-							drawRectangle .smoothPosition+{16,78}, size:{26,10}, color, layer:int.maxValue
-
-	global drawVideo: int userId
-		              Vector2 position = {}
-		              implicit Vector2 size = {440}
-		              VideoShape shape = Rectangle
-		              visibleFor = -1      // Only clear the rectangle for this user
-		              implicit layer = 0   // Higher layers are process after lower layers
-		              SourceCodeLocation location
-		if isVisibleFor(visibleFor)
-			if not size.y: size.y = shape == Rectangle ? size.x * 3/4 : size.x
-			if Network.mode == Local or !PeerNetwork.enableVideo
-				NetworkUser user = Input.usersById[userId]
-				drawImage VideoScreen, position, size, frame:shape == Circle ? 1:0, layer:1000000, location
-			else
-				items.add DisplayVideo(
-					m: totalMatrix,
-					x: position.x, y: position.y,
-					w: size.x,     h: size.y,
-					layer, alpha:1.0, currentClippingPath, "Video",
-					userId, shape
-				)
-				
-	global drawVideo: int userId
-		              Vector2 position = {}
-		              implicit Vector2 size = {440, 330}
-		              VideoShape shape = Rectangle
-		              int[] visibleFor          // Only clear the rectangle for this user
-		              implicit layer = 0        // Higher layers are process after lower layers
-		if isVisibleFor(visibleFor)
-			if not size.y: size.y = size.x * 3/4
-			if Network.mode == Local or !PeerNetwork.enableVideo
-				NetworkUser user = Input.usersById[userId]
-				drawImage VideoScreen, position, size, frame:0, layer:1000000
-			else
-				items.add DisplayVideo(
-					m: totalMatrix,
-					x: position.x, y: position.y,
-					w: size.x,     h: size.y,
-					layer, alpha:1.0, currentClippingPath, "Video",
-					userId, shape
-				)
 
 struct GizomInfluence
 	string file
@@ -1225,7 +1013,7 @@ skipInit unit gizmo
 					if .y < min.y: min.y = .y
 					if .x + .w > max.x: max.x = .x + .w
 					if .y + .h > max.y: max.y = .y + .h
-		handleSize = Math.map Math.min(max.x-min.x, max.y-min.y) 64..256 start:16 target:32
+		handleSize = math.map math.min(max.x-min.x, max.y-min.y) 64..256 start:16 target:32
 	
 	internal tick
 		findInfluencedItems
@@ -1259,12 +1047,12 @@ skipInit unit gizmo
 		min = Vector2.none
 		max = Vector2.none
 	
-	internal onTouch: InputType inputType, int id, Vector2 pixelPos, Vector2 referencePos, shift = false, alt = false, cmdOrCtrl = false	
+	internal onTouch: InputType InputType, int id, Vector2 pixelPos, Vector2 referencePos, shift = false, alt = false, cmdOrCtrl = false	
 		if Platform.mode != Manipulator: return
 		let movedSinceTouchDown = (referencePos manhattanDistanceTo touchDownPos) > 8
 		let insideGizmo = referencePos >= gizmo.min and referencePos <= gizmo.max
-		if inputType == TouchDown: touchDownPos = referencePos; touchDownInsideGizmo = insideGizmo; else
-		if inputType == TouchUp:   touchDownPos = Vector2.none; isManipulating = false
+		if InputType == TouchDown: touchDownPos = referencePos; touchDownInsideGizmo = insideGizmo; else
+		if InputType == TouchUp:   touchDownPos = Vector2.none; isManipulating = false
 			
 		// Which handle are we currently hovering over?
 		if items and not touchDownPos
@@ -1282,8 +1070,8 @@ skipInit unit gizmo
 		// If we touch down outside the selection, we select an item immediately, so we can directly move it
 		// If we touch up inside the selection without moving, we cycle through all items the pointer is over
 		if !overHandleDirection and codeId >= waitingForCodeId
-			if (inputType == TouchDown and !insideGizmo)
-			or (inputType == TouchUp and touchDownInsideGizmo and !movedSinceTouchDown)
+			if (InputType == TouchDown and !insideGizmo)
+			or (InputType == TouchUp and touchDownInsideGizmo and !movedSinceTouchDown)
 			
 				// Collect all items and locations the mouse pointer is over
 				GizmoOverItem[] overItems
@@ -1294,7 +1082,7 @@ skipInit unit gizmo
 									
 				if overItems.length
 					// Select next item cycling through all items the mouse pointer is over
-					if inputType == TouchDown: locationIndex = 0
+					if InputType == TouchDown: locationIndex = 0
 					let selectedStackItem = overItems[locationIndex++ % overItems.length]
 					cursorLocation = selectedStackItem.location
 					cursorItem = selectedStackItem.item
@@ -1352,7 +1140,7 @@ skipInit unit gizmo
 					influences.add {cursorLocation.file, cursorLocation.end, cursorLocation.end, deltas:[referencePos.x - touchDownPos.x, referencePos.y - touchDownPos.y], initialValues:[0,0], label:"position"}
 				
 			// Send manipulation to editor	
-			if inputType == TouchMove and touchDownPos and codeId >= waitingForCodeId
+			if InputType == TouchMove and touchDownPos and codeId >= waitingForCodeId
 				if not isManipulating and movedSinceTouchDown
 					// Start manipulation as soon as we dragged more than a certain threshold
 					isManipulating = true
@@ -1611,14 +1399,14 @@ transient DisplayItem DisplayCircle
 		if(this.w == this.h) {
 			let radius = this.w/2
 			if(this.angle == 1) {
-				Platform_context.arc(this.x+radius, this.y+radius, radius, 0, Math_TwoPI, this.direction);
+				Platform_context.arc(this.x+radius, this.y+radius, radius, 0, math_TwoPI, this.direction);
 			} else {
-				Platform_context.arc(this.x+radius, this.y+radius, radius, this.startAngle*Math_TwoPI, (this.startAngle+this.angle)*Math_TwoPI, this.direction);
+				Platform_context.arc(this.x+radius, this.y+radius, radius, this.startAngle*math_TwoPI, (this.startAngle+this.angle)*math_TwoPI, this.direction);
 			}
 		} else {
 			let radiusX = this.w/2
 			let radiusY = this.h/2
-			Platform_context.ellipse(this.x+radiusX, this.y+radiusY, radiusX, radiusY, this.startAngle*Math_TwoPI, (this.startAngle+this.angle)*Math_TwoPI, this.direction);
+			Platform_context.ellipse(this.x+radiusX, this.y+radiusY, radiusX, radiusY, this.startAngle*math_TwoPI, (this.startAngle+this.angle)*math_TwoPI, this.direction);
 		}
 		if(this.fillColor) {
 			Platform_context.fillStyle = this.fillColor
@@ -1654,7 +1442,7 @@ transient DisplayItem DisplayVideo
 	int userId
 	VideoShape shape
 	draw
-		InternalUser user = Input.internalUsers[userId]
+		InternalUser user = input.internalUsers[userId]
 			let videoElement = user.videoElements[user.videoElementIndex]
 			               or (user.videoElements[user.videoElementIndex] = PeerNetwork.createVideoElement(user.mediaStream, user.local))
 			

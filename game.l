@@ -242,7 +242,7 @@ unit game
 		              float radius
 		              float slideThreshold = 5
 		let threshold = radius + slideThreshold
-		let primarilyX = Math.abs(targetPosition.x - sourcePosition.x) > Math.abs(targetPosition.y - sourcePosition.y)
+		let primarilyX = math.abs(targetPosition.x - sourcePosition.x) > math.abs(targetPosition.y - sourcePosition.y)
 		Line movement = {sourcePosition, targetPosition, Segment}
 		bool hasCollided
 		for colliders -> c
@@ -263,12 +263,12 @@ unit game
 						//                 o
 						//                       o     ⬆
 						//                             ┌─
-						if primarilyX: targetPosition.y = Math.min(targetPosition.y, line.start.y-1)
+						if primarilyX: targetPosition.y = math.min(targetPosition.y, line.start.y-1)
 						//                          o
 						//                           o
 						//                            o
 						//                         ⬅  ┌─
-						else           targetPosition.x = Math.min(targetPosition.x, line.start.x-1)
+						else           targetPosition.x = math.min(targetPosition.x, line.start.x-1)
 					else
 					if c.bottomLeft and (line.end.y - p.y) <= threshold
 						if log: watch "Move Right, Hit BottomLeft Corner"
@@ -276,18 +276,18 @@ unit game
 						//                       o     ⬇
 						//                 o
 						//           o
-						if primarilyX: targetPosition.y = Math.max(targetPosition.y, line.end.y+1)
+						if primarilyX: targetPosition.y = math.max(targetPosition.y, line.end.y+1)
 						//                         ⬅  └─    
 						//                            o
 						//                           o
 						//                          o
-						else           targetPosition.x = Math.min(targetPosition.x, line.end.x-1)
+						else           targetPosition.x = math.min(targetPosition.x, line.end.x-1)
 					else
 						if log: watch "Move Right, Hit Left Side"
 						//                              │
 						//            o     o     o     │ ⬅
 						//                              │
-						targetPosition.x = Math.min(targetPosition.x, line.end.x-1)
+						targetPosition.x = math.min(targetPosition.x, line.end.x-1)
 			else
 			if c.rightLine and movement.end.x < movement.start.x
 				// We are moving left -> check right side
@@ -300,12 +300,12 @@ unit game
 						//                                           o     
 						//                               ⬆    o
 						//                              ─┐
-						if primarilyX: targetPosition.y = Math.min(targetPosition.y, line.start.y-1)
+						if primarilyX: targetPosition.y = math.min(targetPosition.y, line.start.y-1)
 						//                                  o
 						//                                 o     
 						//                                o
 						//                              ─┐  ⮕
-						else           targetPosition.x = Math.max(targetPosition.x, line.start.x+1)
+						else           targetPosition.x = math.max(targetPosition.x, line.start.x+1)
 					else
 					if c.bottomRight and (line.end.y - p.y) <= threshold
 						if log: watch "Move Left, Hit BottomRight Corner"
@@ -313,18 +313,18 @@ unit game
 						//                               ⬇    o
 						//                                           o     
 						//                                                 o
-						if primarilyX: targetPosition.y = Math.max(targetPosition.y, line.end.y+1)
+						if primarilyX: targetPosition.y = math.max(targetPosition.y, line.end.y+1)
 						//                              ─┘  ⮕
 						//                                o
 						//                                 o     
 						//                                  o
-						else           targetPosition.x = Math.max(targetPosition.x, line.end.x+1)
+						else           targetPosition.x = math.max(targetPosition.x, line.end.x+1)
 					else
 						if log: watch "Move Left, Hit Right Side"
 						//                              │
 						//                              │ ⮕   o      o      o
 						//                              │
-						targetPosition.x = Math.max(targetPosition.x, line.end.x+1)
+						targetPosition.x = math.max(targetPosition.x, line.end.x+1)
 				
 			if c.topLine and movement.end.y > movement.start.y
 				// We are moving down -> check top side
@@ -337,12 +337,12 @@ unit game
 						//                 o
 						//                       o     ⬆
 						//                             ┌─
-						if primarilyX: targetPosition.y = Math.min(targetPosition.y, line.start.y-1)
+						if primarilyX: targetPosition.y = math.min(targetPosition.y, line.start.y-1)
 						//                          o
 						//                           o
 						//                            o
 						//                         ⬅  ┌─
-						else           targetPosition.x = Math.min(targetPosition.x, line.start.x-1)
+						else           targetPosition.x = math.min(targetPosition.x, line.start.x-1)
 					else
 					if c.topRight and (line.end.x - p.x) <= threshold
 						if log: watch "Move Down, Hit TopRight Corner"
@@ -350,19 +350,19 @@ unit game
 						//                                           o     
 						//                               ⬆    o
 						//                              ─┐
-						if primarilyX: targetPosition.y = Math.min(targetPosition.y, line.end.y-1)
+						if primarilyX: targetPosition.y = math.min(targetPosition.y, line.end.y-1)
 						//                                  o
 						//                                 o     
 						//                                o
 						//                              ─┐  ⮕
-						else           targetPosition.x = Math.max(targetPosition.x, line.end.x+1)
+						else           targetPosition.x = math.max(targetPosition.x, line.end.x+1)
 					else
 						if log: watch "Move Down, Hit Top Side"
 						//                              o
 						//                              o
 						//                              o
 						//                           ───────
-						targetPosition.y = Math.min(targetPosition.y, line.end.y-1)
+						targetPosition.y = math.min(targetPosition.y, line.end.y-1)
 			else
 			if c.bottomLine and movement.end.y < movement.start.y
 				// We are moving up -> check bottom side
@@ -376,12 +376,12 @@ unit game
 						//                       o     ⬇
 						//                 o
 						//           o
-						if primarilyX: targetPosition.y = Math.max(targetPosition.y, line.start.y+1)
+						if primarilyX: targetPosition.y = math.max(targetPosition.y, line.start.y+1)
 						//                         ⬅  └─    
 						//                            o
 						//                           o
 						//                          o
-						else           targetPosition.x = Math.min(targetPosition.x, line.start.x-1)
+						else           targetPosition.x = math.min(targetPosition.x, line.start.x-1)
 					else
 					if c.bottomRight and (line.end.x - p.x) <= threshold
 						if log: watch "Move Up, Hit BottomRight Corner"
@@ -389,27 +389,27 @@ unit game
 						//                               ⬇    o
 						//                                           o     
 						//                                                 o
-						if primarilyX: targetPosition.y = Math.max(targetPosition.y, line.end.y+1)
+						if primarilyX: targetPosition.y = math.max(targetPosition.y, line.end.y+1)
 						//                              ─┘  ⮕
 						//                                o
 						//                                 o     
 						//                                  o
-						else           targetPosition.x = Math.max(targetPosition.x, line.end.x+1)
+						else           targetPosition.x = math.max(targetPosition.x, line.end.x+1)
 					else
 						if log: watch "Move Up, Hit Bottom Side"
 						//                           ───────
 						//                              o
 						//                              o
 						//                              o
-						targetPosition.y = Math.max(targetPosition.y, line.end.y+1)
+						targetPosition.y = math.max(targetPosition.y, line.end.y+1)
 				
 		int iterations
 		while hasCollided
 			// If we collided, we check if we weren't pushed into another collider,
 			// until there are no more collision. This time, we only check the sides (not the corners).
 			// This prevents beeing pushed through a collider by being pushed around two corners.
-			let primarilyX = Math.abs(targetPosition.x - sourcePosition.x) > Math.abs(targetPosition.y - sourcePosition.y)
-			Line movement = {sourcePosition, targetPosition, Segment}
+			primarilyX = math.abs(targetPosition.x - sourcePosition.x) > math.abs(targetPosition.y - sourcePosition.y)
+			movement = {sourcePosition, targetPosition, Segment}
 			hasCollided = false
 			
 			// Prevent endless loops: If we are still colliding after 3 iteration, we don't move at all
@@ -425,7 +425,7 @@ unit game
 						//                              │
 						//            o     o     o     │ ⬅
 						//                              │
-						targetPosition.x = Math.min(targetPosition.x, line.end.x-1)
+						targetPosition.x = math.min(targetPosition.x, line.end.x-1)
 				else
 				if c.rightLine and movement.end.x < movement.start.x
 					// We are moving left -> check right side
@@ -436,7 +436,7 @@ unit game
 						//                              │
 						//                              │ ⮕   o      o      o
 						//                              │
-						targetPosition.x = Math.max(targetPosition.x, line.end.x+1)
+						targetPosition.x = math.max(targetPosition.x, line.end.x+1)
 					
 				if c.topLine and movement.end.y > movement.start.y
 					// We are moving down -> check top side
@@ -448,7 +448,7 @@ unit game
 						//                              o
 						//                              o
 						//                           ───────
-						targetPosition.y = Math.min(targetPosition.y, line.end.y-1)
+						targetPosition.y = math.min(targetPosition.y, line.end.y-1)
 				else
 				if c.bottomLine and movement.end.y < movement.start.y
 					// We are moving up -> check bottom side
@@ -460,7 +460,7 @@ unit game
 						//                              o
 						//                              o
 						//                              o
-						targetPosition.y = Math.max(targetPosition.y, line.end.y+1)
+						targetPosition.y = math.max(targetPosition.y, line.end.y+1)
 			
 		return targetPosition
 				

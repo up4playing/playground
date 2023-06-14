@@ -49,6 +49,12 @@ transient unit PeerNetwork
 			// 	username: 'play-user-x8env28gx41odbxzwjyut2oq871987syq8ovyuqp-alwyzon',
 			// 	credential: 'qoy91n981vlplabb1873jdcgsouz2qm87qmmakqpc-alwyzon'
 			// });
+			// --- Strato-v30 ---
+			// options.iceServers.push({
+			// 	urls: 'turn:85.214.133.53:39571',
+			// 	username: 'play-user-9q2gy75kmlp4qn7tb86pogsmtyp7qqo0n5-strato-v30',
+			// 	credential: '8q76nby32odjamuzbexi6eb2f1k9gc3my99o-strato-v30'
+			// });
 			// --- Strato ---
 			// options.iceServers.push({
 			// 	urls: 'turn:81.169.197.127',
@@ -64,11 +70,11 @@ transient unit PeerNetwork
 		});
 		let peerConnection = new RTCPeerConnection(options);
 		let connectionId = user.connectionId
-		Network_log("<"+user.id+"> setupPeerConnection connectionId:"+connectionId+" relayMode:"+PeerNetwork_relayMode)
+		core_log("<"+user.id+"> setupPeerConnection connectionId:"+connectionId+" relayMode:"+PeerCore_relayMode)
 		
 		// Event handlers
 		peerConnection.oniceconnectionstatechange = e => {
-			Network_log("<"+user.id+"> oniceconnectionstatechange " + peerConnection.iceConnectionState)
+			core_log("<"+user.id+"> oniceconnectionstatechange " + peerConnection.iceConnectionState)
 			if(peerConnection.iceConnectionState == "disconnected") {
 				// Send logfiles to server
 				setTimeout(() => statistics_manuallyTriggerSend(-5, /*clear*/false), 7000);
@@ -78,7 +84,7 @@ transient unit PeerNetwork
 			if (event.candidate)
 				ServerNetwork_sendIce(user.id, JSON.stringify(event.candidate))
 			else
-				Network_log("<"+user.id+"> Final ice candidate");
+				core_log("<"+user.id+"> Final ice candidate");
 		}
 		user.peerConnection = peerConnection
 		user.offerByMe = offerByMe
@@ -86,7 +92,7 @@ transient unit PeerNetwork
 	
 	js void stopRecreatingDataChannel: InternalUser user
 		if(user.recreateDataChannelInterval) {
-			Network_log("<"+user.id+"> stopRecreatingDataChannel connectionId:"+user.connectionId)
+			core_log("<"+user.id+"> stopRecreatingDataChannel connectionId:"+user.connectionId)
 			clearInterval(user.recreateDataChannelInterval)
 			user.recreateDataChannelInterval = null
 		}
@@ -94,12 +100,12 @@ transient unit PeerNetwork
 	js void setupDataChannel: InternalUser user
 		// Create reliable data channel
 		// These options would create an unreliable one: {ordered:false, maxRetransmits:0}
-		Network_log("<"+user.id+"> setupDataChannel: Creating data channel")
+		core_log("<"+user.id+"> setupDataChannel: Creating data channel")
 		let dataChannel = user.peerConnection.createDataChannel("channel")
 		dataChannel.binaryType = "arraybuffer"
 		dataChannel.onopen = e => {
 			user.dataChannel = dataChannel
-			Network_log("<"+user.id+"> setupDataChannel: Open data channel")
+			core_log("<"+user.id+"> setupDataChannel: Open data channel")
 			PeerNetwork_stopRecreatingDataChannel(user)
 			PeerNetwork_logConnectionType(user)
 			if(!PeerNetwork_requestedState) {
@@ -107,18 +113,18 @@ transient unit PeerNetwork
 				PeerNetwork_requestedState = true
 			}
 		}
-		dataChannel.onclosing = e => Network_log("<"+user.id+"> Data channel closing")
+		dataChannel.onclosing = e => core_log("<"+user.id+"> Data channel closing")
 		dataChannel.onclose = e => {
-			Network_log("<"+user.id+"> setupDataChannel: Close data channel, recreateInterval:"+user.recreateDataChannelInterval)
+			core_log("<"+user.id+"> setupDataChannel: Close data channel, recreateInterval:"+user.recreateDataChannelInterval)
 			user.dataChannel = null
 			if(!user.recreateDataChannelInterval) {
-				Network_log("<"+user.id+"> setupDataChannel: Start recreating interval")
+				core_log("<"+user.id+"> setupDataChannel: Start recreating interval")
 				user.recreateDataChannelInterval = setInterval(() => PeerNetwork_setupDataChannel(user), 2000)
 			}
 			// Send logfiles to server
 			setTimeout(() => statistics_manuallyTriggerSend(-4, /*clear*/false), 7000);
 		}
-		dataChannel.onerror = e => Network_log("<"+user.id+"> DataChannel "+user.id+"error "+e)
+		dataChannel.onerror = e => core_log("<"+user.id+"> DataChannel "+user.id+"error "+e)
 		dataChannel.onmessage = e => PeerNetwork_onMessage(user, new Buffer(e.data, 0, 0, 0))
 	
 	js void createOffer: InternalUser user
@@ -134,11 +140,11 @@ transient unit PeerNetwork
 			await peerConnection.setLocalDescription(offer);
 			ServerNetwork_sendSignal(user.id, "offer", peerConnection.localDescription.sdp)
 			user.receivedAnswer = false
-			Network_log("<"+user.id+"> Sent offer to "+user.id+", waiting for answer.");
+			core_log("<"+user.id+"> Sent offer to "+user.id+", waiting for answer.");
 		}
 		catch(e) {
 			console.error(e);
-			Network_log(e.stack);
+			core_log(e.stack);
 		}
 		
 	js void setBitrate: InternalUser user, float scaleResolutionDownBy = 1, float maxBitrate
@@ -157,7 +163,7 @@ transient unit PeerNetwork
 		
 	js void onReceivedOffer: InternalUser user, string sdp
 		try {
-			Network_log("<"+user.id+"> Received offer, senting answer");
+			core_log("<"+user.id+"> Received offer, senting answer");
 			PeerNetwork_setupPeerConnection(user, /*offerByMe*/false)
 			PeerNetwork_setupRemoteMedia(user)
 			
@@ -167,21 +173,21 @@ transient unit PeerNetwork
 			
 			// Data channel
 			user.peerConnection.addEventListener('datachannel', e => {
-				Network_log("<"+user.id+"> Data channel received")
+				core_log("<"+user.id+"> Data channel received")
 				let dataChannel = e.channel
 				dataChannel.binaryType = "arraybuffer"
 				user.dataChannel = dataChannel
 				dataChannel.onopen = e => {
-					Network_log("<"+user.id+"> Data channel opened")
+					core_log("<"+user.id+"> Data channel opened")
 					user.dataChannel = dataChannel
 					PeerNetwork_logConnectionType(user)
 				}
 				dataChannel.onclosing = e => {
-					Network_log("<"+user.id+"> Data channel closing")
+					core_log("<"+user.id+"> Data channel closing")
 					user.dataChannel = null
 				}
-				dataChannel.onclose = e => Network_log("<"+user.id+"> Data channel close "+e)
-				dataChannel.onerror = e => Network_log("<"+user.id+"> Data channel error "+e)
+				dataChannel.onclose = e => core_log("<"+user.id+"> Data channel close "+e)
+				dataChannel.onerror = e => core_log("<"+user.id+"> Data channel error "+e)
 				dataChannel.onmessage = e => PeerNetwork_onMessage(user, new Buffer(e.data, 0, 0, 0))
 			})
 						
@@ -194,27 +200,27 @@ transient unit PeerNetwork
 		}
 		catch(e) {
 			console.error(e)
-			Network_log(e.stack);
+			core_log(e.stack);
 		}
 		
 	Buffer sendBuffer = {}
 	
 	sendInputs: int inputFrame
-		for Input.internalUsers -> user
+		for input.internalUsers -> user
 			if user?.dataChannel
-				let inputs = Input.localUser.inputs
+				let inputs = input.localUser.inputs
 				let length = inputs.writePos - user.inputsSentPos
 				sendBuffer.reset
 				sendBuffer.writeInt8 cast NetworkMessageType.Tick
 				sendBuffer.writeInt inputFrame // You got all inputs up to and including this frame
 				sendBuffer.writeInt user.inputsSentPos
 				sendBuffer.writeBuffer inputs, user.inputsSentPos, length
-				sendBuffer.writeInt Network.lastChecksumFrame                              // The last certain frame with inputs from everybody
-				sendBuffer.writeFloat64 Network.checksums[Network.lastChecksumFrame] || 0  // The checksum of the last certain frame
+				sendBuffer.writeInt core.lastChecksumFrame                           // The last certain frame with inputs from everybody
+				sendBuffer.writeFloat64 core.checksums[core.lastChecksumFrame] || 0  // The checksum of the last certain frame
 				
-				Network.tickMessageSize = send ., sendBuffer
+				core.tickMessageSize = send ., sendBuffer
 				user.inputsSentPos = inputs.writePos
-				if Network.logging: Network.sentLog += " <{user.id}> #{inputFrame} {user.inputsSentPos}->{inputs.writePos} {inputs.toRangeString(user.inputsSentPos, inputs.writePos)} ({Network.tickMessageSize} bytes)"
+				if core.logging: core.sentLog += " <{user.id}> #{inputFrame} {user.inputsSentPos}->{inputs.writePos} {inputs.toRangeString(user.inputsSentPos, inputs.writePos)} ({core.tickMessageSize} bytes)"
 			
 	private js int send: InternalUser user, Buffer buffer
 		try {
@@ -223,7 +229,7 @@ transient unit PeerNetwork
 			return data.byteLength
 		} catch(e) {
 			console.error(e)
-			Network_log(e.stack)
+			core_log(e.stack)
 			return 0
 		}
 		
@@ -247,27 +253,27 @@ transient unit PeerNetwork
 			// Checksum
 			int checksumFor = buffer.readInt
 			float checksum = buffer.readFloat64
-			if Network.logging: Network.checksumLog += " <{sender.id}> #{checksumFor} {checksum}"
+			if core.logging: core.checksumLog += " <{sender.id}> #{checksumFor} {checksum}"
 			
-			let myChecksum = Network.checksums[checksumFor]
-			if !myChecksum                           Network.checksums[checksumFor] = checksum; else
-			if !myChecksum.isApproximately(checksum) Network.onWrongChecksum mine:myChecksum theirs:checksum
+			let myChecksum = core.checksums[checksumFor]
+			if !myChecksum                           core.checksums[checksumFor] = checksum; else
+			if !myChecksum.isApproximately(checksum) core.onWrongChecksum mine:myChecksum theirs:checksum
 			
-			if Network.logging: Network.receivedLog += " [{Network.currentTime}] <{sender.id}> #{inputFrame} {prevWritePos}->{sender.inputs.writePos} {sender.inputs.toRangeString(prevWritePos, sender.inputs.writePos)}"
+			if core.logging: core.receivedLog += " [{core.currentTime}] <{sender.id}> #{inputFrame} {prevWritePos}->{sender.inputs.writePos} {sender.inputs.toRangeString(prevWritePos, sender.inputs.writePos)}"
 		else
-			if Network.logging: Network.receivedLog += " [{Network.currentTime}] <{sender.id}> (ignoring #{inputFrame})"
+			if core.logging: core.receivedLog += " [{core.currentTime}] <{sender.id}> (ignoring #{inputFrame})"
 		
 	js void onReceivedAnswer: InternalUser user, string sdp
 		await user.peerConnection.setRemoteDescription(new RTCSessionDescription({type: "answer", sdp}));
 		user.receivedAnswer = true
-		Network_log("<"+user.id+"> Received answer from "+user.id+".");
+		core_log("<"+user.id+"> Received answer from "+user.id+".");
 		
 	js void onIce: InternalUser user, string candidate
 		try {
 			await user.peerConnection.addIceCandidate(new RTCIceCandidate(JSON.parse(candidate)));
 		} catch(e) {
-			Network_log("<"+user.id+"> onIce failed " + e.message)
-			Network_log(e.stack);
+			core_log("<"+user.id+"> onIce failed " + e.message)
+			core_log(e.stack);
 		}
 		
 	private js void logConnectionType: InternalUser user
@@ -279,12 +285,12 @@ transient unit PeerNetwork
 				let candidate = stats.get(candidatePair.localCandidateId);
 				let ip = candidate.ip || candidate.address
 				user.connectionType = candidate.candidateType + " " + ip
-				Network_log("<"+user.id+"> ####################connection to "+user.id+": "+user.connectionType)
+				core_log("<"+user.id+"> ####################connection to "+user.id+": "+user.connectionType)
 			} else {
-				Network_log("<"+user.id+"> ####################connection: no candidate pair for "+user.id)
+				core_log("<"+user.id+"> ####################connection: no candidate pair for "+user.id)
 				window.stats = [...stats.values()]
 				console.log(window.stats)
-				try  { Network_log(JSON.stringify(window.stats)) }
+				try  { core_log(JSON.stringify(window.stats)) }
 				catch{ }
 			}
 		}, 10000)
@@ -297,21 +303,21 @@ transient unit PeerNetwork
 		sendBuffer.writeInt checksumFor
 		sendBuffer.writeFloat64 checksum
 		
-		for Input.internalUsers -> user
+		for input.internalUsers -> user
 			if user?.dataChannel		
 				send ., sendBuffer
 
 	onChecksum: InternalUser user, Buffer buffer
 		int checksumFor = buffer.readInt
 		float checksum = buffer.readFloat64
-		if Network.logging: Network.checksumLog += " <{user.id}> #{checksumFor} {checksum}"
+		if core.logging: core.checksumLog += " <{user.id}> #{checksumFor} {checksum}"
 		
-		let myChecksum = Network.checksums[checksumFor]
+		let myChecksum = core.checksums[checksumFor]
 		if !myChecksum
-			Network.checksums[checksumFor] = checksum
+			core.checksums[checksumFor] = checksum
 		else
 		if !myChecksum.isApproximately(checksum)
-			Network.onWrongChecksum mine:myChecksum theirs:checksum
+			core.onWrongChecksum mine:myChecksum theirs:checksum
 				
 	// --------------------------------------------- Media Setup ---------------------------------------------
 	
@@ -319,22 +325,22 @@ transient unit PeerNetwork
 	string videoInputId, audioInputId, audioOutputId	
 	
 	private js void setupLocalMedia: bool enableVideo, bool enableAudio
-		Network_log("setupLocalMedia: start")
+		core_log("setupLocalMedia: start")
 		PeerNetwork_enableVideo = enableVideo
 		PeerNetwork_enableAudio = enableAudio
 		if(!enableVideo && !enableAudio) return
 			
 		try {
 			// Create local media stream
-			Input_localUser.mediaStream = await navigator.mediaDevices.getUserMedia({
+			input_localUser.mediaStream = await navigator.mediaDevices.getUserMedia({
 				video: {width: 500, height: 375},
 				audio: enableAudio
 			});
-			Network_log("setupLocalMedia: getUserMedia done")
+			core_log("setupLocalMedia: getUserMedia done")
 			
 			// Enummerate local devices
 			let devices = await navigator.mediaDevices.enumerateDevices();
-			Network_log("setupLocalMedia: enumerateDevices done")
+			core_log("setupLocalMedia: enumerateDevices done")
 			
 			for(let device of devices) {
 				switch(device.kind) {
@@ -343,19 +349,19 @@ transient unit PeerNetwork
 					case "audiooutput": PeerNetwork_devices.audioOutput.push(device); break;
 				}
 			}
-			PeerNetwork_videoInputId = Input_localUser.mediaStream.getVideoTracks()[0]?.getSettings().deviceId || PeerNetwork_devices.videoInput[0]?.deviceId
-			PeerNetwork_audioInputId = Input_localUser.mediaStream.getAudioTracks()[0]?.getSettings().deviceId || PeerNetwork_devices.audioInput[0]?.deviceId
+			PeerNetwork_videoInputId = input_localUser.mediaStream.getVideoTracks()[0]?.getSettings().deviceId || PeerNetwork_devices.videoInput[0]?.deviceId
+			PeerNetwork_audioInputId = input_localUser.mediaStream.getAudioTracks()[0]?.getSettings().deviceId || PeerNetwork_devices.audioInput[0]?.deviceId
 			PeerNetwork_audioOutputId = PeerNetwork_devices.audioInput[0]?.deviceId
-			Network_log("setupLocalMedia: success")
+			core_log("setupLocalMedia: success")
 			
 		} catch(error) {
-			Network_log(error.message)
+			core_log(error.message)
 			if(error.name == "NotAllowedError") {
 				PeerNetwork_error = "To play with friends over a video call, you need to allow access to your webcam."
 			} else {
 				PeerNetwork_error = "Can't access webcam. Please make sure it's not used by another application."
 			}
-			Network_errorMessage = error.message
+			core_errorMessage = error.message
 			throw error
 		}
 	
@@ -364,17 +370,17 @@ transient unit PeerNetwork
 		PeerNetwork_videoInputId = videoInputId;
 		
 		// Create local media stream
-		Input_localUser.mediaStream = await navigator.mediaDevices.getUserMedia({
+		input_localUser.mediaStream = await navigator.mediaDevices.getUserMedia({
 			audio: {deviceId: PeerNetwork_audioInputId},
 			video: {deviceId: PeerNetwork_videoInputId},
 		});
 		
 		// Update video elements and tracks
-		for(let el of Input_localUser.videoElements) {
-			el.srcObject = Input_localUser.mediaStream;
+		for(let el of input_localUser.videoElements) {
+			el.srcObject = input_localUser.mediaStream;
 		}
-		const [videoTrack] = Input_localUser.mediaStream.getVideoTracks();
-		for(let user of Input_internalUsers) {
+		const [videoTrack] = input_localUser.mediaStream.getVideoTracks();
+		for(let user of input_internalUsers) {
 			if(user?.peerConnection) {
 				const sender = user.peerConnection.getSenders().find((s) => s.track.kind === videoTrack.kind);
 				sender.replaceTrack(videoTrack);
@@ -386,14 +392,14 @@ transient unit PeerNetwork
 		PeerNetwork_audioInputId = audioInputId;
 		
 		// Create local media stream
-		Input_localUser.mediaStream = await navigator.mediaDevices.getUserMedia({
+		input_localUser.mediaStream = await navigator.mediaDevices.getUserMedia({
 			audio: {deviceId: PeerNetwork_audioInputId},
 			video: {deviceId: PeerNetwork_videoInputId},
 		});
 		
 		// Update tracks
-		const [audioTrack] = Input_localUser.mediaStream.getAudioTracks();
-		for(let user of Input_internalUsers) {
+		const [audioTrack] = input_localUser.mediaStream.getAudioTracks();
+		for(let user of input_internalUsers) {
 			if(user?.peerConnection) {
 				const sender = user.peerConnection.getSenders().find((s) => s.track.kind === audioTrack.kind);
 				log('Found sender:', sender);
@@ -405,7 +411,7 @@ transient unit PeerNetwork
 		PeerNetwork_audioOutputId = audioOutputId;
 		
 		// Update audio elements
-		for(let user of Input_internalUsers) {
+		for(let user of input_internalUsers) {
 			if(user?.audioElement && user.audioElement.setSinkId) {
 				user.audioElement.setSinkId(PeerNetwork_audioOutputId);
 			}
@@ -421,8 +427,8 @@ transient unit PeerNetwork
 		if(!PeerNetwork_enableVideo && !PeerNetwork_enableAudio) return
 			
 		// Add local tracks to peer connection
-		for(let track of Input_localUser.mediaStream.getTracks())
-			user.peerConnection.addTrack(track, Input_localUser.mediaStream);
+		for(let track of input_localUser.mediaStream.getTracks())
+			user.peerConnection.addTrack(track, input_localUser.mediaStream);
 		
 		// Create media stream for remote player
 		user.mediaStream = new MediaStream();
@@ -477,16 +483,16 @@ transient unit PeerNetwork
 	makePrimiaryUserIfStateIsNotReceived
 		requestedState = false
 		stateTimeout = Platform.setTimeout 25 seconds
-			if Input.internalUsers.any.receivedAnswer
-				Network.log "No state after 25s, but we received answers -> Alert the user to make sure WebRTC connections aren't blocked."
+			if input.internalUsers.any.receivedAnswer
+				core.log "No state after 25s, but we received answers -> Alert the user to make sure WebRTC connections aren't blocked."
 				alert "Could not connect. Please make sure WebRTC connections aren't block by your router, firewall or a browser extension. If you have a VPN browser extension installed, please check your settings and make sure WebRTC connections aren't blocked."
 			else
-				Network.log "No state after 25s -> Make primary user"
+				core.log "No state after 25s -> Make primary user"
 				makePrimaryUser
 	
 	makePrimaryUser
-		let frame = Math.floor((Network.currentTime - Network.startTime)/Network.targetFrameTime)+3
-		Network.startConnected frame
+		let frame = math.floor((core.currentTime - core.startTime)/core.targetFrameTime)+3
+		core.startConnected frame
 	
 	private requestState: InternalUser from
 		sendBuffer.reset
@@ -494,288 +500,60 @@ transient unit PeerNetwork
 		send from, sendBuffer
 		
 	private onRequestState: InternalUser sender, Buffer buffer
-		Network.log "Received state request from {sender.id}"
+		core.log "Received state request from {sender.id}"
 		sendStateQueue.add sender.id
-		if Network.mode == Connected: processSendStateQueue
+		if core.mode == Connected: processSendStateQueue
 	
 	processSendStateQueue
 		if sendStateQueue.length > 0
 			snapshotBuffer.reset
 			Snapshot.serialize snapshotBuffer
 			for sendStateQueue <-
-				let user = Input.internalUsers[.]
+				let user = input.internalUsers[.]
 				if user?.dataChannel
 					sendState user, snapshotBuffer
 					sendStateQueue.removeAt i
 		
 	private sendState: InternalUser to, Buffer buffer
-		Network.log "Sending state to {to.id}"
-		let localPlayer = Input.localUser
+		core.log "Sending state to {to.id}"
+		let localUser = input.localUser
 		sendBuffer.reset
 		sendBuffer.writeInt8 cast NetworkMessageType.State
-		sendBuffer.writeInt32 Network.frame-1
-		let userCount = Input.internalUsers.count . != null
+		sendBuffer.writeInt32 core.frame-1
+		let userCount = input.internalUsers.count . != null
 		sendBuffer.writeInt32 userCount
-		for Input.internalUsers if .
+		for input.internalUsers if .
 			sendBuffer.writeInt32 .id
 			sendBuffer.writeInt32 .inputs.readPos
 			sendBuffer.writeBool .active
-		to.inputsSentPos = localPlayer.inputs.readPos
+		to.inputsSentPos = localUser.inputs.readPos
 		sendBuffer.writeBuffer buffer
 		send to, sendBuffer
 		
 	private onState: InternalUser c, Buffer buffer
 		Platform.clearTimeout stateTimeout
-		if Network.mode == Connected:
-			Network.log "Ignoring received state from {c.id} because we are already connected"
+		if core.mode == Connected:
+			core.log "Ignoring received state from {c.id} because we are already connected"
 			return
 			
-		Network.log "Received state from {c.id}"
+		core.log "Received state from {c.id}"
 		let frame = buffer.readInt32
 		let userCount = buffer.readInt32
 		for userCount
 			let id = buffer.readInt32
 			let readPos = buffer.readInt32
 			let active = buffer.readBool
-			let user = Input.internalUsers[id]
+			let user = input.internalUsers[id]
 				user.inputFrame = frame
 				user.inputs.readPos = user.inputs.writePos = readPos
 				user.active = active
 				
-		for Input.internalUsers if .
-			.inputsSentPos = Input.localUser.inputs.writePos
+		for input.internalUsers if .
+			.inputsSentPos = input.localUser.inputs.writePos
 			
 		snapshotBuffer.reset
 		buffer.readBuffer snapshotBuffer
 		Snapshot.deserialize snapshotBuffer
-		Math.recreateRandomValues
-		Network.startConnected frame+1
+		math.recreateRandomValues
+		core.startConnected frame+1
 		
-					
-	// private float nextPingTime
-	// private int pongCount
-	
-	// private onConnectedToPeer: Connection connection
-	// 	                       bool isNewUser // Did this user just join the already exiting users (and make the offer)
-		
-	// 	let user = Input.internalUsers[connection.userId]
-	// 	// if mode == Reconnecting && user && user.acknowledgedPos > 0
-	// 	// 	mode = Connected
-	// 	// 	connection.state = user.state = Connected
-	// 	// 	log "Both users were already connected before", connection.userId, userId, mode, connection.state
-	// 	// else
-	// 	if isNewUser
-	// 		// New users will send out ping messages to sync the startTime (and this way also the current frame)
-	// 		mode = Ping
-	// 		nextPingTime = currentTime + 100
-	// 		pongCount = 0
-	// 		connection.state = user.state = PingPong
-	// 		log "New user, starting to ping", connection.userId, userId, mode, connection.state
-	// 	else
-	// 		// Existing users will wait for the new user to finish pinging
-	// 		// to prevent sending the large initial message several times
-	// 		if mode == Reconnecting: mode = Connected
-	// 		connection.state = user.state = PingPong
-	// 		log "Answering user, waiting for ping", connection.userId, userId, mode, connection.state
-		
-	// 	log connection.userId, isNewUser, mode, connection.state
-
-	// // Calculate the frame we received all remote inputs for.
-	// // The lowest of all user frames. Called in onTickMessage.
-	// private getReceivedInputFrames
-	// 	int minFrames = -1
-	// 	for user -> Input.internalUsers
-	// 		if user && user.state == Connected && !user.local && (minFrames == -1 || user.inputFrame < minFrames)
-	// 			minFrames = user.inputFrame
-	// 	return minFrames
-		
-	// // Send inputs to other user. This is called in animationFrame.
-	// private sendInputs: int inputFrame, float aheadAverage
-	// 	let localPlayer = Input.internalUsers[userId]
-	// 	let inputs = localPlayer.inputs
-	// 	for c -> connections
-	// 		if c.state == Connected
-	// 			let receiver = Input.internalUsers[c.userId]
-	// 			receiver.sendInterval = receiver.lagFrom < 15 and receiver.lagTo < 15 ? 1 : 60
-				
-	// 			if (inputFrame % receiver.sendInterval) == 0
-	// 				sendBuffer.reset
-	// 				sendBuffer.writeInt8 cast NetworkMessageType.Tick
-	// 				sendBuffer.writeInt32 inputFrame        // You got all inputs up to and including this frame
-	// 				sendBuffer.writeInt32 receiver.lagFrom  // TEMP for testing
-	// 				sendBuffer.writeBuffer inputs, receiver.inputsSentPos, inputs.writePos - receiver.inputsSentPos
-	// 				send c, sendBuffer
-					
-	// 				sentLog += " #{inputFrame} to:{c.userId} lag:{receiver.lagFrom} {receiver.inputsSentPos}->{inputs.writePos} {inputs.toRangeString(receiver.inputsSentPos, inputs.writePos)}"
-	// 				receiver.inputsSentPos = inputs.writePos
-	// 				tickMessageSize = sendBuffer.writePos
-
-	// private onTickMessage: Connection c, Buffer buffer
-	// 	let sender = Input.internalUsers[c.userId]
-	// 	if c.state != Connected: c.state = sender.state = Connected
-	// 	let prevWritePos = sender.inputs.writePos
-		
-	// 	sender.inputFrame = buffer.readInt32
-	// 	sender.lagTo = buffer.readInt32
-	// 	buffer.readBuffer sender.inputs, prevWritePos
-		
-	// 	receivedFrames = getReceivedInputFrames
-	// 	sender.lagFrom = frame - sender.inputFrame
-		
-	// 	receivedLog += " [{currentTime}] <{c.userId}> #{sender.inputFrame} lag:{sender.lagTo} {prevWritePos}->{sender.inputs.writePos} {sender.inputs.toRangeString(prevWritePos, sender.inputs.writePos)}"
-
-	// private onSignal: SignalMessage message
-	// 	log "on signal: "+message.signal.type+" "+message.senderId+" -> "+message.signal.receiverId
-	// 	if message.signal.type == "offer":  onReceivedOffer message.senderId, message.signal; else
-	// 	if message.signal.type == "answer": onReceivedAnswer message.senderId, message.signal
-			
-	// private ping
-	// 	if (mode == Ping or mode == Connected) and currentTime >= nextPingTime
-	// 		master = Input.internalUsers.withMin.connectionId where . and (.state == Connected or .state == PingPong or .local)
-	// 		if master and (master.state == Connected or master.state == PingPong)
-	// 			let c = connections.find.userId == master.id
-	// 			sendPingMessage c, currentTime
-	// 			nextPingTime = currentTime + 2000
-		
-	// private void sendPingMessage: Connection c, float pingTime
-	// 	sendBuffer.reset
-	// 	sendBuffer.writeInt8 cast NetworkMessageType.Ping
-	// 	sendBuffer.writeFloat64 pingTime
-	// 	sendBuffer.writeInt32 certainFrame                    // The last certain frame with inputs from everybody
-	// 	sendBuffer.writeFloat64 checksums[certainFrame] || 0  // The checksum of the last certain frame
-		
-	// 	send c, sendBuffer
-			
-	// private onPingMessage: Connection c, Buffer buffer
-	// 	if c.state != Disconnected
-	// 		let pingTime = buffer.readFloat64
-			
-	// 		// Checksum
-	// 		let checksumFor = buffer.readInt32
-	// 		let checksum = buffer.readFloat64
-	// 		checksumLog += " <{c.userId}> #{checksumFor} {checksum}"
-	// 		if checksum
-	// 			let myChecksum = checksums[checksumFor]
-	// 			if !myChecksum
-	// 				checksums[checksumFor] = checksum
-	// 			else
-	// 			if !myChecksum.isApproximately(checksum)
-	// 				onWrongChecksum mine:myChecksum theirs:checksum
-			
-	// 		sendPongMessage c, currentTime-startTime, pingTime
-		
-	// private void sendPongMessage: Connection c, float timeSinceStart, float pingTime
-	// 	log c.userId, c.state, timeSinceStart, pingTime, startTime
-	// 	sendBuffer.reset
-	// 	sendBuffer.writeInt8 cast NetworkMessageType.Pong
-	// 	sendBuffer.writeFloat64 timeSinceStart		
-	// 	sendBuffer.writeFloat64 pingTime
-	// 	send c, sendBuffer
-
-	// private onPongMessage: Connection c, Buffer buffer
-	// 	float now = currentTime
-	// 	float timeSinceStart = buffer.readFloat64
-	// 	float pingTime = buffer.readFloat64
-	// 	float pingPongTime = now - pingTime
-	// 	if pingPongTime < c.fastestPingPongTime
-	// 		// Use the fastest ping-pong-time we have ever seen to calculate the start time
-	// 		c.fastestPingPongTime = pingPongTime
-	// 		startTime = Math.round(now - pingPongTime/2 - timeSinceStart)
-	// 		log "New fastest pingPongTime", c.userId, pongCount, pingPongTime, startTime
-	// 	else
-	// 		log c.userId, pongCount, pingPongTime, c.fastestPingPongTime, startTime
-			
-	// 	pongCount++
-	// 	lastPingPongTime = pingPongTime
-		
-	// 	// Finish pinging after the 20th pong
-	// 	if mode == Ping and pongCount >= 20 and c.fastestPingPongTime < 1000
-	// 		// Request the state from the user who has been here the longest (has the lowest connectionId)
-	// 		log "Ping-Pong complete", pongCount, c.fastestPingPongTime
-	// 		master = Input.internalUsers.withMin.connectionId where . and (.state == Connected or .state == PingPong or .local)
-	// 		let connection = connections.find.userId == master.id
-	// 			sendRequestState connection
-
-	// 	nextPingTime = now + (c.state == PingPong ? 100 : 3000)
-		
-	// private sendRequestState: Connection to
-	// 	sendBuffer.reset
-	// 	sendBuffer.writeInt8 cast NetworkMessageType.RequestState
-	// 	send to, sendBuffer
-	// 	log "requesting state from {to.userId}"	
-		
-	// private onRequestState: Connection c, Buffer buffer
-	// 	snapshotBuffer.reset
-	// 	Snapshot.serialize snapshotBuffer
-	// 	sendState c, snapshotBuffer
-		
-	// private sendState: Connection to, Buffer buffer
-	// 	let localPlayer = Input.internalUsers[userId]
-	// 	sendBuffer.reset
-	// 	sendBuffer.writeInt8 cast NetworkMessageType.State
-	// 	sendBuffer.writeInt32 frame-1
-	// 	let userCount = Input.internalUsers.count . != null
-	// 	sendBuffer.writeInt32 userCount
-	// 	for Input.internalUsers
-	// 		if .
-	// 			sendBuffer.writeInt32 .id
-	// 			sendBuffer.writeInt32 .inputs.readPos
-	// 	sendBuffer.writeBuffer buffer
-	// 	send to, sendBuffer	
-	// 	log "sending state to {to.userId} frame:{frame-1} readPos:{localPlayer.inputs.readPos} size:{buffer.writePos}"	
-		
-	// private onState: Connection c, Buffer buffer
-	// 	snapshotBuffer.reset
-	// 	let frame = buffer.readInt32
-	// 	let userCount = buffer.readInt32
-	// 	for userCount
-	// 		let id = buffer.readInt32
-	// 		let readPos = buffer.readInt32
-	// 		let user = Input.internalUsers[id]
-	// 			user.inputFrame = frame
-	// 			user.inputs.readPos = user.inputs.writePos = readPos
-	// 			log user.id, user.inputFrame, user.inputs.readPos
-	// 	buffer.readBuffer snapshotBuffer
-	// 	Snapshot.deserialize Network.snapshotBuffer
-	// 	Math.recreateRandomValues
-	// 	// int startFrame = Math.floor((currentTime - this.startTime)/targetFrameTime)+1
-	// 	// startConnected startFrame
-	// 	startConnected
-	// 	log "received state",c.userId, frame, snapshotBuffer.writePos, userCount
-			
-	// private js void send: Connection connection, Buffer buffer
-	// 	connection.dataChannel.send(buffer.buffer)
-
-	// private js void closeConnection: Connection connection
-	// 	Network_removeVideoElement(connection.userId)
-		
-	// 	if(connection.dataChannel) {
-	// 		Network_log("closeConnection: dataChannel")
-	// 		connection.dataChannel.close();
-	// 		connection.dataChannel = null;
-	// 	}
-	// 	if(connection.peerConnection) {
-	// 		Network_log("closeConnection: peerConnection")
-	// 		connection.peerConnection.close();
-	// 		connection.peerConnection = null;
-	// 	}
-		
-	// private reconnect
-	// 	if currentTime >= nextReconnect
-	// 		if(socket)
-	// 			log "Existing socket -> resending offers"
-	// 			resendOffers
-	// 		else
-	// 			log "No existing socket -> reconnecting to server"
-	// 			join gameId, roomId, userId
-	// 		nextReconnect = currentTime + 6000
-	
-	// private resendOffers
-	// 	Partner[] partners
-	// 	for c -> connections
-	// 		if c: log "Connection "+c.userId+" state:"+c.state+" offerByMe:"+c.offerByMe
-	// 		else  log "Connection null"
-	// 		if c && (c.state == Disconnected || c.state == Reconnecting) && c.offerByMe
-	// 			partners.add {c.userId, Input.internalUsers[c.userId]?.connectionId}
-	// 	log "Resending offers", userId, partners
-	// 	createOffers partners		

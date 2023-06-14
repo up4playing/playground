@@ -39,7 +39,7 @@ exampleApp
 		Menu()
 		statistics.setup {0, 460}, {850,150}
 		// Create players
-		for Input.users
+		for input.users
 			players.add {id:.id, index:.index}
 		startGame
 		
@@ -93,7 +93,7 @@ exampleApp
 		// Find player with highest score from all alive players
 		let winner = players.withMax.score where .alive
 		
-		let maxScore = Math.max players[0].score, players[1].score
+		let maxScore = math.max players[0].score, players[1].score
 		
 		let firstThreePlayers = players[..3]
 		
@@ -111,7 +111,7 @@ ExampleItem
 	void tick()
 		if moveable
 			// Drag items
-			Input.onTouchDownWithin position, size, userId:exampleApp.currentPlayer.id
+			onTouchDownWithin position, size, userId:exampleApp.currentPlayer.id
 				// Start dragging item
 				let idOfUserWhoClicked = touch.userId
 				moveTouch = .
@@ -121,11 +121,11 @@ ExampleItem
 					droppedInBox.itemInBox = null
 					droppedInBox = null
 					
-			Input.onTouchMove moveTouch
+			onTouchMove moveTouch
 				// Drag item
 				position = .position + touchOffset
 				
-			Input.onTouchUp moveTouch
+			onTouchUp moveTouch
 				// Drop item
 				let droppedInBox = exampleApp.boxes.find.rect.contains position
 				if droppedInBox and droppedInBox.itemInBox == null
@@ -174,14 +174,14 @@ class Touch
 	Vector2 referencePosition
 	Vector2 referenceStartPosition
 	
-unit Input
+unit input
 	void onTouchDownWithin(Vector2 position = {}, Vector2 size, int userId = -1, string cursor = "", bool showTouchArea = false, bool markAsHandled = true, HorizontalAlignment align = Center, VerticalAlignment valign = Middle, void(Touch touch) do)
 	onTouchMove(Touch touch, triggeredOnTouchDown = true, void(Touch touch) do)
 	onTouchMove(int userId = -1, void(Touch touch) do)
 	onTouchUp(Touch touch, markAsHandled = true, void(Touch touch) do)
 	onTouchUp(int userId = -1, bool markAsHandled = true, void(Touch touch) do)
 		
-unit Math
+unit math
 	int randomInteger(int min, int max)
 	float randomFloat()
 	float min(float a, float b)
