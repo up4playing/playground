@@ -697,6 +697,78 @@ transient global unit graphics
 			))
 		}
 		
+	// ------------------------------------------------------- Color -------------------------------------------------------
+	
+	// The default background color
+	const Color backgroundColor = Black
+	
+	// Teh default player colors
+	const Color[] defaultColors = [{"398CA9", "Blue"}, {"C01352", "Red"}, {"16C66E", "Green"}, {"FFD166", "Yellow"}]
+
+	// The default color for all draw operations
+	color
+		return currentColor
+	color: Color color
+		currentColor = color
+		return currentColor
+	color: Color color
+		   void() code
+		let prev = currentColor
+		currentColor = color
+		code()
+		currentColor = prev
+		return currentColor
+	private Color currentColor = {"ffffff"}
+	
+	// ------------------------------------------------------- Font -------------------------------------------------------
+	
+	// The default font for all draw operations
+	font
+		return currentFont
+	font: Font font
+		currentFont = font
+		return currentFont
+	font: Font font
+		  void() code
+		let prev = currentFont
+		currentFont = font
+		code()
+		currentFont = prev
+		return currentFont
+	private Font currentFont = OpenSans
+	
+	// The default font size for all draw operations
+	fontSize
+		return currentFontSize
+	fontSize: int fontSize
+		currentFontSize = fontSize
+		return currentFontSize
+	fontSize: int fontSize
+		      void() code
+		let prev = currentFontSize
+		currentFontSize = fontSize
+		code()
+		currentFontSize = prev
+		return currentFontSize
+	private currentFontSize = 64
+	
+	// ------------------------------------------------------- Line Width -------------------------------------------------------
+	
+	// The default line width for all draw operations
+	lineWidth
+		return currentLineWidth
+	lineWidth: int lineWidth
+		currentLineWidth = lineWidth
+		return currentLineWidth
+	lineWidth: int lineWidth
+		      void() code
+		let prev = currentLineWidth
+		currentLineWidth = lineWidth
+		code()
+		currentLineWidth = prev
+		return currentLineWidth
+	private currentLineWidth = 8
+	
 	// ------------------------------------------------------- Transform -------------------------------------------------------
 	
 	// Moves all subsequent operations by a given vector						
@@ -783,78 +855,6 @@ transient global unit graphics
 		localMatrix.m0 = a0; localMatrix.m1 = a1; localMatrix.m2 = a2; localMatrix.m3 = a3; localMatrix.m4 = a4; localMatrix.m5 = a5 
 		totalMatrix.m0 = b0; totalMatrix.m1 = b1; totalMatrix.m2 = b2; totalMatrix.m3 = b3; totalMatrix.m4 = b4; totalMatrix.m5 = b5
 	
-	// ------------------------------------------------------- Color -------------------------------------------------------
-	
-	// The default background color
-	const Color backgroundColor = Black
-	
-	// Teh default player colors
-	const Color[] defaultColors = [{"398CA9", "Blue"}, {"C01352", "Red"}, {"16C66E", "Green"}, {"FFD166", "Yellow"}]
-
-	// The default color for all draw operations
-	color
-		return currentColor
-	color: Color color
-		currentColor = color
-		return currentColor
-	color: Color color
-		   void() code
-		let prev = currentColor
-		currentColor = color
-		code()
-		currentColor = prev
-		return currentColor
-	private Color currentColor = {"ffffff"}
-	
-	// ------------------------------------------------------- Font -------------------------------------------------------
-	
-	// The default font for all draw operations
-	font
-		return currentFont
-	font: Font font
-		currentFont = font
-		return currentFont
-	font: Font font
-		  void() code
-		let prev = currentFont
-		currentFont = font
-		code()
-		currentFont = prev
-		return currentFont
-	private Font currentFont = OpenSans
-	
-	// The default font size for all draw operations
-	fontSize
-		return currentFontSize
-	fontSize: int fontSize
-		currentFontSize = fontSize
-		return currentFontSize
-	fontSize: int fontSize
-		      void() code
-		let prev = currentFontSize
-		currentFontSize = fontSize
-		code()
-		currentFontSize = prev
-		return currentFontSize
-	private currentFontSize = 64
-	
-	// ------------------------------------------------------- Line Width -------------------------------------------------------
-	
-	// The default line width for all draw operations
-	lineWidth
-		return currentLineWidth
-	lineWidth: int lineWidth
-		currentLineWidth = lineWidth
-		return currentLineWidth
-	lineWidth: int lineWidth
-		      void() code
-		let prev = currentLineWidth
-		currentLineWidth = lineWidth
-		code()
-		currentLineWidth = prev
-		return currentLineWidth
-	private currentLineWidth = 8
-	
 	// ------------------------------------------------------- Clip -------------------------------------------------------
 	
 	// For all drawings in code block, only pixels inside the given polygon are drawn
@@ -921,12 +921,6 @@ transient global unit graphics
 		
 	// --------------------------------------------- Create and Manipulate Images ---------------------------------------------
 	
-	// Directly manipulate the pixels on the screen or an image
-	js int[] manipulate: void(int[] pixels) code // This code can manipulate the pixels
-		let imageData = Platform_context.getImageData(0,0,Platform_pixelSize.x, Platform_pixelSize.y)
-		code(imageData.data)
-		Platform_context.putImageData(imageData, 0, 0)
-		
 	// Creates an image to draw to
 	js void createImage: Vector2 size     // The size of the image
 		                 string file = "" // Save the image to a file with this filename
@@ -960,8 +954,13 @@ transient global unit graphics
 		Platform_pixelSize.y = prevPixelSizeY
 		graphics_items = prevItems
 		return dataUrl
+	
+	// Directly manipulate the pixels on the screen or an image
+	js int[] manipulate: void(int[] pixels) code // This code can manipulate the pixels
+		let imageData = Platform_context.getImageData(0,0,Platform_pixelSize.x, Platform_pixelSize.y)
+		code(imageData.data)
+		Platform_context.putImageData(imageData, 0, 0)
 		
-
 struct GizomInfluence
 	string file
 	int start

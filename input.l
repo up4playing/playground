@@ -958,16 +958,6 @@ skipInit global unit input
 			controllerButtonMap[W] = {userId:localUser.id, buttonIndex:3}
 			
 		
-	// Returns true if given key is currently held down
-	isKeyDown: Key key          // The key to check
-		       Player by = null // Only consider key presses by this player 
-		if (core.mode == Connected || core.simulateConnection) && by
-			let player = playersById[by.id]
-				return player.keysCurrentlyDown.contains key
-		else
-			return players.any.keysCurrentlyDown.contains key
-		return false
-		
 	private log: string text, Vector2 pos
 		if core.logging: core.touchLog += " #{core.frame}{isCertain ? " c" : ""} {text} {pos}"
 
@@ -976,6 +966,15 @@ skipInit global unit input
 		
 	// ---------------------------------------------- Touch Down ----------------------------------------------
 	
+	// Do something when the player touches or clicks anywhere on the screen
+	global onTouchDown: implicit nocolon Player[] by = null // Only consider touches or clicks by this player or list of players
+		                void(Touch touch) do                // Do this for each touch or click
+		for getTargetedPlayers(by) -> player
+			for internalUsers[player.id].downTouches -> touch
+				if !touch.handled and (player.enableTouch or touch.type != Touch)
+					log "down", touch.referencePosition
+					do touch
+
 	// Do something when the player touches or clicks within a given area
 	global onTouchDownWithin: Vector2 position                    // The center of the touch area
 		                      Vector2 size                        // The size of a rectangular touch area
@@ -1100,15 +1099,6 @@ skipInit global unit input
 				
 		if showTouchArea: drawPolygon position, points, fillColor:{"ff0000b0"}
 			
-	// Do something when the player touches or clicks
-	global onTouchDown: implicit nocolon Player[] by = null // Only consider touches or clicks by this player of list of players
-		         void(Touch touch) do                // Do this for each touch or click
-		for getTargetedPlayers(by) -> player
-			for internalUsers[player.id].downTouches -> touch
-				if !touch.handled and (player.enableTouch or touch.type != Touch)
-					log "down", touch.referencePosition
-					do touch
-
 	// Do something when the player touches or clicks, even if the event is already handled
 	global onTouchDownAny: implicit nocolon Player[] by = null // Only consider touches or clicks by this player of list of players
 		            void(Touch touch) do                // Do this for each touch or click
@@ -1177,6 +1167,31 @@ skipInit global unit input
 					
 	// ---------------------------------------------- Touch Up ----------------------------------------------
 	
+	// Do something when a touch or click ends
+	global onTouchUp: Touch touch          // Only do this if this particular touch or click ended
+		              markAsHandled = true // Mark the touch as handled so it won't trigger more touch events
+		              void(Touch touch) do // Do this for each touch or click
+		if !touch: return
+		let touchId = touch.id
+		let user = internalUsers[touch.by.id]
+			for user.upTouches
+				if .id == touchId
+					log "up", .referencePosition
+					do .
+					Snapshot.autoSave
+					if markAsHandled: .handled = true
+				
+	// Do something when a given player ends a touch or click
+	global onTouchUp: implicit nocolon Player[] by = null // Only consider touches or clicks by this player or list of players
+		              bool markAsHandled = true           // Mark the touch as handled so it won't trigger more touch events
+		              void(Touch touch) do                // Do this for each touch or click
+		for getTargetedPlayers(by)
+			for internalUsers[.id].upTouches
+				if !.handled
+					log "up", .referencePosition
+					do .
+					Snapshot.autoSave
+					
 	// Do something when the player ends a touch or click within a given area
 	global onTouchUpWithin: Vector2 position                    // The center of the touch area
 		                    Vector2 size                        // The size of a rectangular touch area
@@ -1223,32 +1238,7 @@ skipInit global unit input
 					if !touch.handled && (touch.referencePosition distanceTo position) <= radius
 						this.cursor = cursor
 				
-		if showTouchArea: drawCircle position, radius*2, fillColor:{"ff000080"}
-
-	// Do something when a touch or click ends
-	global onTouchUp: Touch touch          // Only do this if this particular touch or click ended
-		              markAsHandled = true // Mark the touch as handled so it won't trigger more touch events
-		              void(Touch touch) do // Do this for each touch or click
-		if !touch: return
-		let touchId = touch.id
-		let user = internalUsers[touch.by.id]
-			for user.upTouches
-				if .id == touchId
-					log "up", .referencePosition
-					do .
-					Snapshot.autoSave
-					if markAsHandled: .handled = true
-				
-	// Do something when a touch or click ends
-	global onTouchUp: implicit nocolon Player[] by = null // Only consider touches or clicks by this player of list of players
-		              bool markAsHandled = true           // Mark the touch as handled so it won't trigger more touch events
-		              void(Touch touch) do                // Do this for each touch or click
-		for getTargetedPlayers(by)
-			for internalUsers[.id].upTouches
-				if !.handled
-					log "up", .referencePosition
-					do .
-					Snapshot.autoSave
+		if showTouchArea: drawCircle position, radius*2, color:{"ff000080"}
 						
 	// ---------------------------------------------- Mouse Wheel ----------------------------------------------
 	
@@ -1370,6 +1360,16 @@ skipInit global unit input
 			for internalUsers[.id].pressedKeys -> character
 				do character, player
 			
+	// Returns true if given key is currently held down
+	isKeyDown: Key key          // The key to check
+		       Player by = null // Only consider key presses by this player 
+		if (core.mode == Connected || core.simulateConnection) && by
+			let player = playersById[by.id]
+				return player.keysCurrentlyDown.contains key
+		else
+			return players.any.keysCurrentlyDown.contains key
+		return false
+		
 	// ---------------------------------------------- Navigate ----------------------------------------------
 	
 	// Do something when the user navigates back or forward in the browser	
