@@ -349,8 +349,14 @@ transient skipInit unit Platform
 		});
 		
 	js string[] showOpenDialog: FileFilter[] filters = null
+		if(!Network_isPremiere || !Input_isCertain) return
 		const { remote } = require("electron")
 		return remote.dialog.showOpenDialogSync({ filters, properties: ['openFile'] })
+		
+	js string showSaveDialog: FileFilter[] filters = null
+		if(!Network_isPremiere || !Input_isCertain) return
+		const { remote } = require("electron")
+		return remote.dialog.showSaveDialogSync({ filters, properties: ['createDirectory'] })
 		
 	inline js void debugger
 		debugger
