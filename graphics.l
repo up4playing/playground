@@ -137,7 +137,7 @@ enum VerticalAlignment: Top, Middle, Bottom
 enum FontStyle: Normal, Bold
 class ClippingPath: Vector2[] points; bool show
 		
-// A collection of functions for drawing on the screen
+// Draw graphics on the screen
 transient global unit graphics
 	internal Matrix2D totalMatrix, localMatrix
 	internal DisplayItem[] items
@@ -217,11 +217,16 @@ transient global unit graphics
 		
 	// ------------------------------------------------------- Image -------------------------------------------------------
 	
-	// Draw an image on the screen
-	global js void drawImage: Image image                         // The image to draw
+	// Draw an image. Place a PNG file in the "media" folder and it will automatically be imported
+	// Example: We place an image called "Idle.png" in the "media" folder. Then, we draw this image at the position {0,0}, scale it to a width of 32 pixels and make it visible for the current player instance.
+	//     Player
+	//         tick
+	//             drawImage Idle, position:{0,0}, size:32, frame:0, visibleFor:me
+	// Image: drawImage0.png
+	global js void drawImage: Image image                         // The image to draw. PNG images in the "media" folder will automatically show up here.
 		                      Vector2 position = {}               // The position to draw to
-		                      frame = 0                           // The frame of the image to draw
 		                      implicit Vector2 size = {}          // The size of the image, use a float to keep the aspect ratio, use a vector to strech the image
+		                      frame = 0                           // The frame of the image to draw
 		                      implicit Player[] visibleFor = null // Only this player or list of players will see the image
 		                      implicit layer = 0                  // Higher layers are drawn in front of lower layers
 		                      alpha = 1.0                         // The opacity of the image (0: fully transparent, 1: fully visible)
@@ -247,7 +252,12 @@ transient global unit graphics
 			))
 		}
 	
-	// Draw an image on the screen (with angle, flipX, flipY)
+	// Draw image and rotate it or flip it vertially or horizontally
+	// Example: Draw the image "Idle" at the position {0,0} and rotate it by 45.
+	//     Player
+	//         tick
+	//             drawImage Idle, position:{0,0}, angle:45°
+	// Image: drawImage1.png
 	global js void drawImage: Image image                         // The image to draw
 		                      Vector2 position = {}               // The position to draw to
 		                      frame = 0                           // The frame of the image to draw
@@ -282,7 +292,12 @@ transient global unit graphics
 			))
 		}
 
-	// Draw an image on the screen (with framesPerSecond)
+	// Play an animation with a given number of frames per second
+	// Example: We place a sequence of images called "Walk0.png", "Walk1.png", "Walk2.png", ... in the "media" folder. Then, we play this sequence with 10 frames per second.
+	//     Player
+	//         tick
+	//             drawImage Walk, position:{0,0}, framesPerSecond:10
+	// Image: drawImage2.gif
 	global void drawImage: Image image                         // The image to draw
 		                   Vector2 position = {}               // The position to draw to
 		                   framesPerSecond = 0                 // Animate the image with this speed
@@ -295,7 +310,12 @@ transient global unit graphics
 		var frame = math.floor(core.frame * math.max(framesPerSecond, 0) / core.targetFps) % image.frames.length;
 		drawImage image, position, frame, size, visibleFor, layer, alpha, color, location
 	
-	// Draw an image on the screen (with framesPerSecond, flipX, flipY)
+	// Draw an image, animate it and flip it horizontally or vertically
+	// Example: Play the animation "Walk" with 10 frames per second and flip each frame horizontally.
+	//     Player
+	//         tick
+	//             drawImage Walk, position:{0,0}, framesPerSecond:10, flipX:true
+	// Image: drawImage3.gif
 	global void drawImage: Image image                          // The image to draw
 		                   Vector2 position = {}                // The position to draw to
 		                   framesPerSecond = 0                  // Animate the image with this speed
@@ -311,7 +331,13 @@ transient global unit graphics
 		var frame = math.floor(core.frame * math.max(framesPerSecond, 0) / core.targetFps) % image.frames.length;
 		drawImage image, position, frame, size, angle, flipX, flipY, visibleFor, layer, alpha, color, location
 	
-	// Draw an image on the screen (clickable)                 
+	// Draw an image and execute code when the player touches or clicks the image
+	// Example: If the current player instance clicks the image or 16 pixels around it, we print the exact position that was clicked. If other players will click the image, nothing will happen.
+	//     Player
+	//         tick
+	//             drawImage Idle, position:{0,0}, touchMargin:{16,16}, clickableBy:me
+	//                 print "The image was clicked at {touch.position}"
+	// Image: drawImage0.png
 	global void drawImage: Image image                          // The image to draw
 		                   Vector2 position = {}                // The position to draw to
 		                   frame = 0                            // The frame of the image to draw
@@ -340,6 +366,12 @@ transient global unit graphics
 	// ------------------------------------------------------- Text -------------------------------------------------------
 	
 	// Draw text on the screen
+	// Example: If the current player instance clicks the image or 16 pixels around it, we print the exact position that was clicked. If other players will click the image, nothing will happen. To use a custom font, just copy a TTF, WOFF or WOFF2 file to the media folder and it will automatically be imported.
+	//     Player
+	//         tick
+	//             if winner == me
+	//                 drawText "You've won!", size:100, color:Black, font:OpenSans, visibleFor:me
+	// Image: drawText.png
 	global js void drawText: implicit string text                // The text to draw
 		                     Vector2 position = {}               // The position to draw to
 		                     implicit Vector2 size = {}          // The size of the text
@@ -347,7 +379,7 @@ transient global unit graphics
 		                     HorizontalAlignment align = Center  // The horizontal alignment of the text
 		                     VerticalAlignment valign = Middle   // The vertical alignment of the text
 		                     FontStyle style = Normal            // Whether the text should be bold or normal style
-		                     Font font = null                    // The font of the text
+		                     Font font = null                    // To use a custom font, just copy a TTF, WOFF or WOFF2 file to the media folder
 		                     Color outlineColor = null           // The color of the outline around the text
 		                     outlineWidth = 0                    // The width of the outline around the text
 		                     implicit Player[] visibleFor = null // Only this player or list of players will see the text
@@ -379,7 +411,15 @@ transient global unit graphics
 		
 	// ------------------------------------------------------- Button -------------------------------------------------------
 	
-	// Draw a button made up of an image and a text on the screen
+	// Draw a button made up of an image and a text and execute the given code when its clicked
+	// Example: If the current player instance clicks the image or 16 pixels around it, we print the exact position that was clicked. If other players will click the image, nothing will happen.
+	//     Player
+	//         bool done
+	//         tick
+	//             if not done
+	//                 drawButton "I'm done", image:Button, visibleFor:me
+	//                     done = true
+	// Image: drawButton.png
 	global void drawButton: Image image = null                   // The image of the button
 		                    text = ""                            // The text of the button
 		                    Vector2 position = {}                // The position to draw to
@@ -416,6 +456,11 @@ transient global unit graphics
 	// ------------------------------------------------------- Rectangle -------------------------------------------------------
 	
 	// Draw a rectangle on the screen
+	// Example: Draw a white rectangle with a black outline that's 8 pixel wide.
+	//     app
+	//         tick
+	//             drawRectangle size:{500,100}, color:White, outlineColor:Black, outlineWidth:8
+	// Image: drawRectangle.png
 	global js void drawRectangle: position = Vector2()                // The center of the rectangle
 		                          implicit size = Vector2(256,256)    // The size of the rectangle, use a float to draw a square, use a vector to draw a rectangle
 		                          Color color = null                  // The color of the area within the rectangle
@@ -444,6 +489,11 @@ transient global unit graphics
 		}
 		
 	// Draw a rectangle with rounded corners on the screen
+	// Example: Draw a rounded rectangle with a black outline that's 8 pixel wide and a corner radius of 20 pixels.
+	//     app
+	//         tick
+	//             drawRoundedRectangle size:{500,100}, outlineColor:Black, outlineWidth:8, radius:20
+	// Image: drawRoundedRectangle.png
 	global js void drawRoundedRectangle: position = Vector2()                // The center of the rectangle
 		                                 implicit size = Vector2(256,256)    // The size of the rectangle, use a float to draw a square, use a vector to draw a rectangle
 		                                 radius = 32                         // The radius of the rounded corners
@@ -475,6 +525,21 @@ transient global unit graphics
 	// ------------------------------------------------------- Circle -------------------------------------------------------
 	
 	// Draw a circle on the screen
+	// Example: Draw a white circle with a blue outline and a diameter of 150 pixels
+	//     app
+	//         tick
+	//             drawCircle color:White, outlineColor:#118ab2, outlineWidth:12, size:150
+	// Image: drawCircle0.png
+	// Example: Draw a white circle with a blue outline and a width of 150 pixels and a height of 100 pixels
+	//     app
+	//         tick
+	//             drawCircle color:White, outlineColor:#118ab2, outlineWidth:12, size:{200, 100}
+	// Image: drawCircle1.png
+	// Example: Draw an arc of 180° (half a circle) starting a angle 0°
+	//     app
+	//         tick
+	//             drawCircle outlineColor:#118ab2, outlineWidth:24, size:100, startAngle:0°, angle:180°
+	// Image: drawCircle2.png
 	global js void drawCircle: position = Vector2()                    // The center of the circle
 		                       implicit Vector2 size = {256,256}       // The size of the circle, use a float to draw a circle, use a vector draw an ellipse
 		                       Color color = null                      // The color of the area within the circle
@@ -507,6 +572,11 @@ transient global unit graphics
 	// ------------------------------------------------------- Line -------------------------------------------------------
 	
 	// Draw a line on the screen
+	// Example: Draw a blue line from {-100,0} to {100,0}
+	//     app
+	//         tick
+	//             drawLine {-100,0} to {100,0} color:Blue
+	// Image: drawLine.png
 	global js void drawLine: Vector2 from                        // The point to start the line from
 		                     nocolon Vector2 to                  // The point to draw the line to
 		                     Color color = null                  // The color of the outline around the line
@@ -528,6 +598,11 @@ transient global unit graphics
 		}
 		
 	// Draw a continuous stroke of lines on the screen
+	// Example: Draw a blue stroke of lines through {-50,0}, {0,50} and {100,-50} with a width of 32 pixels
+	//     app
+	//         tick
+	//             drawLines [{-50,0}, {0,50}, {100,-50}] color:Blue width:32
+	// Image: drawLines.png
 	global js void drawLines: Vector2[] points                    // A list of points for the line
 		                      Vector2 position = {}               // The position all points are relative to 
 		                      Color color = null                  // The color of the line
@@ -551,10 +626,14 @@ transient global unit graphics
 			))
 		}
 		
-		
 	// ------------------------------------------------------- Polygon -------------------------------------------------------
 	
 	// Draw a polygon on the screen
+	// Example: Draw a white polygon with the corners {-50,50}, {0,-50} and {50,50} with a blue outline
+	//     app
+	//         tick
+	//             drawPolygon [{-50,50}, {0,-50}, {50,50}] color:White outlineColor:Blue
+	// Image: drawPolygon.png
 	global js void drawPolygon: Vector2[] points                    // A list of points for the polygon
 		                        Vector2 position = {0,0}            // The position all points are relative to 
 		                        Color color = null                  // The color of the area within the polygon
@@ -582,6 +661,11 @@ transient global unit graphics
 	// ------------------------------------------------------- Video -------------------------------------------------------
 	
 	// Draw the video feed showing the given player on the screen
+	// Example: Draw the video feed for the current player instance with a width of 200 pixels
+	//     Player
+	//         tick
+	//             drawVideo me, size:200
+	// Image: drawVideo.png
 	global drawVideo: Player player                       // Draw the video showing this player
 		              Vector2 position = {}               // The position of the video
 		              implicit Vector2 size = {440}       // The size of the video
@@ -603,7 +687,13 @@ transient global unit graphics
 				
 	// ------------------------------------------------------- Pointer -------------------------------------------------------
 	
-	// Draw a pointer to indicate the mouse position of the given player on the screen
+	// Draw a pointer at the mouse position of the given player on the screen
+	// Draw the video feed showing the given player on the screen
+	// Example: Draw a pointer at the mouce position of the current player instance
+	//     Player
+	//         tick
+	//             drawPointer me
+	// Image: drawPointer.png
 	global drawPointer: Player player                    // Show the mouse position of this player
 		                Color color = null               // The color of pointer. If this is left out, the player color is used
 		                showPointer = input.showPointers // Choose whether you want to draw the pointers for local player, remote players or both
@@ -621,7 +711,13 @@ transient global unit graphics
 
 	// ------------------------------------------------------- Texture -------------------------------------------------------
 	
-	// Draw a texture or part of a texture on the screen
+	// Draw a texture which you can dynamically load from a file from anywhere
+	// Example: Dynamically load the file "Character.png" from the assets folder and draw it on the screen with a width of 100 pixels.
+	//     app
+	//         Texture character = {"Character.png"}
+	//         tick
+	//             drawTexture character, size:100
+	// Image: drawTexture0.png
 	global js void drawTexture: Texture texture                     // The texture to draw
 		                        Vector2 position = {}               // The position to draw to
 		                        implicit Vector2 size = {}          // The size of the image, use a float to keep the aspect ratio, use a vector to strech the image
@@ -646,7 +742,13 @@ transient global unit graphics
 			))
 		}
 
-	// Draw a texture on the screen (with sourcePosition, sourceSize)
+	// Draw part of a texture
+	// Example: Dynamically load the file "Character.png" from the assets folder, take a part of this texture with a size of {16,32} centered around {8,0} and draw it on the screen with a size of {100,200}. 
+	//     app
+	//         Texture character = {"Character.png"}
+	//         tick
+	//             drawTexture character, sourcePosition:{8,0}, sourceSize:{16,32}, size:{100,200}
+	// Image: drawTexture1.png
 	global js void drawTexture: Texture texture                     // The texture to draw
 		                        Vector2 position = {}               // The target position to draw to
 		                        Vector2 size = {}                   // The target size of the area to draw
@@ -656,7 +758,7 @@ transient global unit graphics
 		                        implicit int layer = 0              // Higher layers are drawn in front of lower layers
 		                        alpha = 1.0                         // The opacity of the texture (0: fully transparent, 1: fully visible)
 		                        Color color = White                 // Tint the image with this color (white for no tint)
-		if(!image.texture?.ensureIsAvailable()) return
+		if(!texture?.ensureIsAvailable()) return
 		if(graphics_isVisibleFor(visibleFor)) {
 			let sizeX = size.x || texture.size.x
 			let sizeY = size.y || (sizeX/texture.size.x)*texture.size.y
@@ -679,10 +781,17 @@ transient global unit graphics
 	// ------------------------------------------------------- Clear -------------------------------------------------------
 	
 	// Clear all pixels within a rectangle
+	// Example: Clear all pixel within a rectangle with a width of 100 pixels and a height of 100 pixels
+	//     app
+	//         tick
+	//             clearRectangle position:{0,0} size:{100,100}
+	// Image: clearRectangle.png
 	global js void clearRectangle: position = Vector2()                // The position of the rectangle to clear
 		                           implicit size = Vector2(256,256)    // The size of the rectangle, use a float to clear a square, use a vector to clear a rectangle
 		                           implicit Player[] visibleFor = null // Only clear the rectangle for this player or list of players
 		                           implicit layer = 0                  // Higher layers are drawn in front of lower layers
+                                   HorizontalAlignment align = Center  // The horizontal alignment of the rectangle
+                                   VerticalAlignment valign = Middle   // The vertical alignment of the rectangle
 		if(graphics_isVisibleFor(visibleFor)) {
 			let sizeX = size.x
 			let sizeY = size.y || size.x
@@ -691,7 +800,7 @@ transient global unit graphics
 				align == 0  ? position.x : align  == 1 ? position.x-sizeX*.5 : position.x-sizeX,
 				valign == 0 ? position.y : valign == 1 ? position.y-sizeY*.5 : position.y-sizeY,
 				sizeX, sizeY,
-				layer, alpha, graphics_currentClippingPath, "Clear", 
+				layer, 1, graphics_currentClippingPath, "Clear", 
 				location, position.location, size.location,
 				"clear", null, 0
 			))
