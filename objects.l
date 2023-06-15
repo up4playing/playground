@@ -634,7 +634,7 @@ struct Particle
 	Angle angle, rotationSpeed
 	int frame
 
-enum ParticleMode: Burst, Break
+enum ParticleMode: Burst, Single
 	
 Object ParticleSystem
 	private Particle[] particles
@@ -652,7 +652,7 @@ Object ParticleSystem
 	
 	override tick
 		if Time.now > nextBurst
-			if mode == Break
+			if mode == Single
 				for particleImage.frames.length
 					let r = -math.randomFloat .5
 					let speedFactor = math.randomFloat 10..15
