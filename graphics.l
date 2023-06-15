@@ -879,19 +879,7 @@ transient global unit graphics
 	private currentLineWidth = 8
 	
 	// ------------------------------------------------------- Transform -------------------------------------------------------
-	
-	// Moves all subsequent draw operations by a given vector						
-	// Example: Move all sebsequent draw operation by {500,0}
-	//     app
-	//         tick
-	//             graphics.move {500,0}
-	//             drawText "OK"
-	//             drawImage Button
-	// Image: graphicsMove.png
-	move: Vector2 distance // The distance to move
-		localMatrix.move distance
-		totalMatrix.move distance
-							
+
 	// Moves all operations in a block of code by a given vector
 	// Example: Draw both an image and a text at {500,0}
 	//     app
@@ -910,18 +898,6 @@ transient global unit graphics
 		localMatrix.m0 = a0; localMatrix.m1 = a1; localMatrix.m2 = a2; localMatrix.m3 = a3; localMatrix.m4 = a4; localMatrix.m5 = a5 
 		totalMatrix.m0 = b0; totalMatrix.m1 = b1; totalMatrix.m2 = b2; totalMatrix.m3 = b3; totalMatrix.m4 = b4; totalMatrix.m5 = b5 
 							
-	// Rotates all subsequent operations by a given angle	
-	// Example: Rotate all sebsequent draw operation by 20°
-	//     app
-	//         tick
-	//             graphics.rotate 20°
-	//             drawText "OK"
-	//             drawImage Button
-	// Image: graphicsRotate.png
-	rotate: Angle angle // The angle in turns (one full rotation is 1)
-		localMatrix.rotate angle
-		totalMatrix.rotate angle
-		
 	// Rotates all operation in a block of code by a given angle				
 	// Example: Rotate both an image and a text by 20°
 	//     app
@@ -941,18 +917,6 @@ transient global unit graphics
 		localMatrix.m0 = a0; localMatrix.m1 = a1; localMatrix.m2 = a2; localMatrix.m3 = a3; localMatrix.m4 = a4; localMatrix.m5 = a5 
 		totalMatrix.m0 = b0; totalMatrix.m1 = b1; totalMatrix.m2 = b2; totalMatrix.m3 = b3; totalMatrix.m4 = b4; totalMatrix.m5 = b5 
 	
-	// Scales all subsequent operations by a given factor
-	// Example: Scale all sebsequent draw operation by a factor of 2
-	//     app
-	//         tick
-	//             graphics.scale 2
-	//             drawText "OK"
-	//             drawImage Button
-	// Image: graphicsScale.png
-	scale: float factor // The factor to scale by
-		localMatrix.scale {factor, factor}
-		totalMatrix.scale {factor, factor}
-		
 	// Scales all operation in a block of code by a given factor
 	// Example: Scale both an image and a text by a factor of 2
 	//     app
@@ -991,11 +955,6 @@ transient global unit graphics
 		localMatrix.m0 = a0; localMatrix.m1 = a1; localMatrix.m2 = a2; localMatrix.m3 = a3; localMatrix.m4 = a4; localMatrix.m5 = a5 
 		totalMatrix.m0 = b0; totalMatrix.m1 = b1; totalMatrix.m2 = b2; totalMatrix.m3 = b3; totalMatrix.m4 = b4; totalMatrix.m5 = b5 
 	
-	// Apply a matrix to all subsequent operation
-	applyMatrix: Matrix2D matrix
-		localMatrix.multiplyRight matrix
-		matrix.multiplyRight matrix
-	
 	// Applies a matrix to all operations in a block of code
 	// Example: Apply the matrix {1 .3 .7 1 0 0} to a text and an image
 	//     app
@@ -1016,12 +975,6 @@ transient global unit graphics
 	
 	// ------------------------------------------------------- Clip -------------------------------------------------------
 	
-	// For all drawings in code block, only pixels inside the given polygon are drawn
-	clip: Vector2[] points      // A list of points that define the area to be clipped
-		  Vector2 position = {} // The position all points are relative to 
-		  bool show = false     // Visualizes the clipping area by shading it transparent red
-		if show: drawPolygon position, points, color:TransparentRed
-				
 	// For all drawings in code block, only pixels inside the given polygon are drawn
 	// Example: Draw three circles and clip all of them within the polygon with the corner {0,-80}, {-100,80}, {100,80}
 	//     app
@@ -1053,9 +1006,6 @@ transient global unit graphics
 		
 	// ------------------------------------------------------- Visibility -------------------------------------------------------
 	
-	visibleFor
-		return currentlyVisibleFor
-		
 	// All draw operations in a block of code will only be visible to the given player
 	// Example: Draw a button that is only visible to the current player instance
 	//     Player
