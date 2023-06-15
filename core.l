@@ -780,7 +780,7 @@ skipInit transient unit statistics
 		for series -> s, seriesIndex
 			if .set != currentSet: continue
 			string text = cast .lastValue
-			drawRectangle labelPos, {8,8}, fillColor:.color, align:Left
+			drawRectangle labelPos, {8,8}, color:.color, align:Left
 			drawText text, labelPos+{11, -2}, align:Left, size:12
 			labelPos.x += graphics.getTextWidth(text, size:12) + 20
 			
@@ -789,7 +789,7 @@ skipInit transient unit statistics
 			for len
 				let value = s.values[-1-i]
 				Vector2 pos = {startPos.x - i, startPos.y - (value/maxValue).max(1)*height + seriesIndex*3}
-				if i: drawRectangle pos, size:{4, prevY-pos.y+4}, fillColor:s.color, valign:Top
+				if i: drawRectangle pos, size:{4, prevY-pos.y+4}, color:s.color, valign:Top
 				prevY = pos.y
 				
 		// Draw infos
@@ -800,7 +800,7 @@ skipInit transient unit statistics
 				
 		if core.errorMessage: drawText core.errorMessage, position, align:Left, size:12, color:{"ffff00"}
 		drawText "#{core.frame} {maxValue}", {position.x+size.x-8, labelPos.y}, align:Right, size:12
-		drawRectangle position, size, fillColor:backgroundColor, align:Left, valign:Top
+		drawRectangle position, size, color:backgroundColor, align:Left, valign:Top
 
 unit networkVisualizer		
 	private int[] posForPlayer = [0,-10000,-10000,-10000,-10000,-10000]
@@ -822,7 +822,7 @@ unit networkVisualizer
 						// core.log "[{core.frame}] <{player.id}> networkVisualizer input.onKeyDown", posForPlayer[player.index]
 				
 			for players -> player
-				drawCircle {1110+player.index*20, -540+posForPlayer[player.index]}, size:20, fillColor:.color
+				drawCircle {1110+player.index*20, -540+posForPlayer[player.index]}, size:20, color:.color
 		
 		// // AheadMin
 		// let minY = 510 - getHeightForFrame(core.frame-core.aheadMin+1)
@@ -837,7 +837,7 @@ unit networkVisualizer
 				drawLine {960,bufferY} to {1100,bufferY} width:3, color:.color
 				drawText cast internaluser.bufferFrames, {1110, bufferY}, size:20, color:.color, align:Left
 		
-				drawRectangle {984+player.index*32, 510} size:{24, getHeightForFrame(internaluser.inputFrame)}, valign:Bottom, fillColor:.color
+				drawRectangle {984+player.index*32, 510} size:{24, getHeightForFrame(internaluser.inputFrame)}, valign:Bottom, color:.color
 		
 		// Replay from
 		if core.replayFrom != -1
