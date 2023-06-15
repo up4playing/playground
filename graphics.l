@@ -806,78 +806,6 @@ transient global unit graphics
 			))
 		}
 		
-	// ------------------------------------------------------- Color -------------------------------------------------------
-	
-	// The default background color
-	const Color backgroundColor = Black
-	
-	// Teh default player colors
-	const Color[] defaultColors = [{"398CA9", "Blue"}, {"C01352", "Red"}, {"16C66E", "Green"}, {"FFD166", "Yellow"}]
-
-	// The default color for all draw operations
-	color
-		return currentColor
-	color: Color color
-		currentColor = color
-		return currentColor
-	color: Color color
-		   void() code
-		let prev = currentColor
-		currentColor = color
-		code()
-		currentColor = prev
-		return currentColor
-	private Color currentColor = {"ffffff"}
-	
-	// ------------------------------------------------------- Font -------------------------------------------------------
-	
-	// The default font for all draw operations
-	font
-		return currentFont
-	font: Font font
-		currentFont = font
-		return currentFont
-	font: Font font
-		  void() code
-		let prev = currentFont
-		currentFont = font
-		code()
-		currentFont = prev
-		return currentFont
-	private Font currentFont = OpenSans
-	
-	// The default font size for all draw operations
-	fontSize
-		return currentFontSize
-	fontSize: int fontSize
-		currentFontSize = fontSize
-		return currentFontSize
-	fontSize: int fontSize
-		      void() code
-		let prev = currentFontSize
-		currentFontSize = fontSize
-		code()
-		currentFontSize = prev
-		return currentFontSize
-	private currentFontSize = 64
-	
-	// ------------------------------------------------------- Line Width -------------------------------------------------------
-	
-	// The default line width for all draw operations
-	lineWidth
-		return currentLineWidth
-	lineWidth: int lineWidth
-		currentLineWidth = lineWidth
-		return currentLineWidth
-	lineWidth: int lineWidth
-		      void() code
-		let prev = currentLineWidth
-		currentLineWidth = lineWidth
-		code()
-		currentLineWidth = prev
-		return currentLineWidth
-	private currentLineWidth = 8
-	
 	// ------------------------------------------------------- Transform -------------------------------------------------------
 
 	// Moves all operations in a block of code by a given vector
@@ -1024,6 +952,78 @@ transient global unit graphics
 		
 	private Player[] currentlyVisibleFor = null
 		
+	// ------------------------------------------------------- Color -------------------------------------------------------
+	
+	// The default background color
+	const Color backgroundColor = Black
+	
+	// Teh default player colors
+	const Color[] defaultColors = [{"398CA9", "Blue"}, {"C01352", "Red"}, {"16C66E", "Green"}, {"FFD166", "Yellow"}]
+
+	// The default color for all draw operations
+	color
+		return currentColor
+	color: Color color
+		currentColor = color
+		return currentColor
+	color: Color color
+		   void() code
+		let prev = currentColor
+		currentColor = color
+		code()
+		currentColor = prev
+		return currentColor
+	private Color currentColor = {"ffffff"}
+	
+	// ------------------------------------------------------- Font -------------------------------------------------------
+	
+	// The default font for all draw operations
+	font
+		return currentFont
+	font: Font font
+		currentFont = font
+		return currentFont
+	font: Font font
+		  void() code
+		let prev = currentFont
+		currentFont = font
+		code()
+		currentFont = prev
+		return currentFont
+	private Font currentFont = OpenSans
+	
+	// The default font size for all draw operations
+	fontSize
+		return currentFontSize
+	fontSize: int fontSize
+		currentFontSize = fontSize
+		return currentFontSize
+	fontSize: int fontSize
+		      void() code
+		let prev = currentFontSize
+		currentFontSize = fontSize
+		code()
+		currentFontSize = prev
+		return currentFontSize
+	private currentFontSize = 64
+	
+	// ------------------------------------------------------- Line Width -------------------------------------------------------
+	
+	// The default line width for all draw operations
+	lineWidth
+		return currentLineWidth
+	lineWidth: int lineWidth
+		currentLineWidth = lineWidth
+		return currentLineWidth
+	lineWidth: int lineWidth
+		      void() code
+		let prev = currentLineWidth
+		currentLineWidth = lineWidth
+		code()
+		currentLineWidth = prev
+		return currentLineWidth
+	private currentLineWidth = 8
+	
 	// ------------------------------------------------------- Measure text -------------------------------------------------------
 	
 	// Returns the width of a string in pixels
