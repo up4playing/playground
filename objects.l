@@ -68,7 +68,7 @@ unit Framework
 		if result == 0: return 1.0
 		return result
 		
-// Draw graphics on the screen
+// Draw on the screen
 transient global unit graphics
 	setPlayerVideo: Player player
 		            Vector2 pos = {}

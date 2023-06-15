@@ -137,7 +137,7 @@ enum VerticalAlignment: Top, Middle, Bottom
 enum FontStyle: Normal, Bold
 class ClippingPath: Vector2[] points; bool show
 		
-// Draw graphics on the screen
+// Draw on the screen
 transient global unit graphics
 	internal Matrix2D totalMatrix, localMatrix
 	internal DisplayItem[] items
@@ -880,59 +880,102 @@ transient global unit graphics
 	
 	// ------------------------------------------------------- Transform -------------------------------------------------------
 	
-	// Moves all subsequent operations by a given vector						
+	// Moves all subsequent draw operations by a given vector						
+	// Example: Move all sebsequent draw operation by {500,0}
+	//     app
+	//         tick
+	//             graphics.move {500,0}
+	//             drawText "OK"
+	//             drawImage Button
+	// Image: graphicsMove.png
 	move: Vector2 distance // The distance to move
 		localMatrix.move distance
 		totalMatrix.move distance
 							
-	// Moves all operations in a block by a given vector						
+	// Moves all operations in a block of code by a given vector
+	// Example: Draw both an image and a text at {500,0}
+	//     app
+	//         tick
+	//             graphics.move {500,0}
+	//                 drawText "OK"
+	//                 drawImage Button
+	// Image: graphicsMove.png
 	move: Vector2 distance // The distance to move
-		  void() block     // All operations within this block will be moved
+		  void() code      // All operations within this block will be moved
 		let a0 = localMatrix.m0, a1 = localMatrix.m1, a2 = localMatrix.m2, a3 = localMatrix.m3, a4 = localMatrix.m4, a5 = localMatrix.m5
 		let b0 = totalMatrix.m0, b1 = totalMatrix.m1, b2 = totalMatrix.m2, b3 = totalMatrix.m3, b4 = totalMatrix.m4, b5 = totalMatrix.m5
 		localMatrix.move distance
 		totalMatrix.move distance
-		block
+		code
 		localMatrix.m0 = a0; localMatrix.m1 = a1; localMatrix.m2 = a2; localMatrix.m3 = a3; localMatrix.m4 = a4; localMatrix.m5 = a5 
 		totalMatrix.m0 = b0; totalMatrix.m1 = b1; totalMatrix.m2 = b2; totalMatrix.m3 = b3; totalMatrix.m4 = b4; totalMatrix.m5 = b5 
 							
 	// Rotates all subsequent operations by a given angle	
+	// Example: Rotate all sebsequent draw operation by 20°
+	//     app
+	//         tick
+	//             graphics.rotate 20°
+	//             drawText "OK"
+	//             drawImage Button
+	// Image: graphicsRotate.png
 	rotate: Angle angle // The angle in turns (one full rotation is 1)
 		localMatrix.rotate angle
 		totalMatrix.rotate angle
 		
-	// Rotates all operation in a block by a given angle				
+	// Rotates all operation in a block of code by a given angle				
+	// Example: Rotate both an image and a text by 20°
+	//     app
+	//         tick
+	//             graphics.rotate 20°
+	//                 drawText "OK"
+	//                 drawImage Button
+	// Image: graphicsRotate.png
 	rotate: Angle angle  // The angle in turns (one full rotation is 1)
-		    void() block // All operations within this block will be rotated
-		if angle == 0: block; return
+		    void() code  // All operations within this block will be rotated
+		if angle == 0: code; return
 		let a0 = localMatrix.m0, a1 = localMatrix.m1, a2 = localMatrix.m2, a3 = localMatrix.m3, a4 = localMatrix.m4, a5 = localMatrix.m5
 		let b0 = totalMatrix.m0, b1 = totalMatrix.m1, b2 = totalMatrix.m2, b3 = totalMatrix.m3, b4 = totalMatrix.m4, b5 = totalMatrix.m5
 		localMatrix.rotate angle
 		totalMatrix.rotate angle
-		block
+		code
 		localMatrix.m0 = a0; localMatrix.m1 = a1; localMatrix.m2 = a2; localMatrix.m3 = a3; localMatrix.m4 = a4; localMatrix.m5 = a5 
 		totalMatrix.m0 = b0; totalMatrix.m1 = b1; totalMatrix.m2 = b2; totalMatrix.m3 = b3; totalMatrix.m4 = b4; totalMatrix.m5 = b5 
 	
 	// Scales all subsequent operations by a given factor
+	// Example: Scale all sebsequent draw operation by a factor of 2
+	//     app
+	//         tick
+	//             graphics.scale 2
+	//             drawText "OK"
+	//             drawImage Button
+	// Image: graphicsScale.png
 	scale: float factor // The factor to scale by
 		localMatrix.scale {factor, factor}
 		totalMatrix.scale {factor, factor}
 		
-	// Scales all operation in a block by a given factor
+	// Scales all operation in a block of code by a given factor
+	// Example: Scale both an image and a text by a factor of 2
+	//     app
+	//         tick
+	//             graphics.scale 2
+	//                 drawText "OK"
+	//                 drawImage Button
+	// Image: graphicsScale.png
 	scale: float factor // The factor to scale by
-		   void() block // All operations within this block will be scaled
+		   void() code  // All operations within this block will be scaled
+		if factor == 1: code; return
 		let a0 = localMatrix.m0, a1 = localMatrix.m1, a2 = localMatrix.m2, a3 = localMatrix.m3, a4 = localMatrix.m4, a5 = localMatrix.m5
 		let b0 = totalMatrix.m0, b1 = totalMatrix.m1, b2 = totalMatrix.m2, b3 = totalMatrix.m3, b4 = totalMatrix.m4, b5 = totalMatrix.m5
 		localMatrix.scale {factor, factor}
 		totalMatrix.scale {factor, factor}
-		block
+		code
 		localMatrix.m0 = a0; localMatrix.m1 = a1; localMatrix.m2 = a2; localMatrix.m3 = a3; localMatrix.m4 = a4; localMatrix.m5 = a5 
 		totalMatrix.m0 = b0; totalMatrix.m1 = b1; totalMatrix.m2 = b2; totalMatrix.m3 = b3; totalMatrix.m4 = b4; totalMatrix.m5 = b5 
 	
 	transform: Vector2 move = Vector2.none  // The distance to move
 		       float scale = 1              // The factor to scale by
 		       Angle rotate = 0             // The angle in turns (0: no rotation, 1: one full rotation)
-		       void() do                    // All operations within this block will be scaled
+		       void() code                  // All operations within this block will be scaled
 		let a0 = localMatrix.m0, a1 = localMatrix.m1, a2 = localMatrix.m2, a3 = localMatrix.m3, a4 = localMatrix.m4, a5 = localMatrix.m5
 		let b0 = totalMatrix.m0, b1 = totalMatrix.m1, b2 = totalMatrix.m2, b3 = totalMatrix.m3, b4 = totalMatrix.m4, b5 = totalMatrix.m5
 		if move
@@ -944,7 +987,7 @@ transient global unit graphics
 		if rotate
 			localMatrix.rotate rotate
 			totalMatrix.rotate rotate
-		do
+		code
 		localMatrix.m0 = a0; localMatrix.m1 = a1; localMatrix.m2 = a2; localMatrix.m3 = a3; localMatrix.m4 = a4; localMatrix.m5 = a5 
 		totalMatrix.m0 = b0; totalMatrix.m1 = b1; totalMatrix.m2 = b2; totalMatrix.m3 = b3; totalMatrix.m4 = b4; totalMatrix.m5 = b5 
 	
@@ -953,14 +996,21 @@ transient global unit graphics
 		localMatrix.multiplyRight matrix
 		matrix.multiplyRight matrix
 	
-	// Applies a matrix to all operations in a block
+	// Applies a matrix to all operations in a block of code
+	// Example: Apply the matrix {1 .3 .7 1 0 0} to a text and an image
+	//     app
+	//         tick
+	//             graphics.applyMatrix {1 .3 .7 1 0 0}
+	//                 drawText "OK"
+	//                 drawImage Button
+	// Image: graphicsApplyMatrix.png
 	applyMatrix: Matrix2D matrix // The matrix to appy
-		         void() block    // All operations within this block will be scaled
+		         void() code     // All operations within this block will be scaled
 		let a0 = localMatrix.m0, a1 = localMatrix.m1, a2 = localMatrix.m2, a3 = localMatrix.m3, a4 = localMatrix.m4, a5 = localMatrix.m5
 		let b0 = totalMatrix.m0, b1 = totalMatrix.m1, b2 = totalMatrix.m2, b3 = totalMatrix.m3, b4 = totalMatrix.m4, b5 = totalMatrix.m5
 		this.localMatrix.multiplyLeft matrix
 		this.totalMatrix.multiplyLeft matrix
-		block
+		code
 		localMatrix.m0 = a0; localMatrix.m1 = a1; localMatrix.m2 = a2; localMatrix.m3 = a3; localMatrix.m4 = a4; localMatrix.m5 = a5 
 		totalMatrix.m0 = b0; totalMatrix.m1 = b1; totalMatrix.m2 = b2; totalMatrix.m3 = b3; totalMatrix.m4 = b4; totalMatrix.m5 = b5
 	
@@ -973,6 +1023,22 @@ transient global unit graphics
 		if show: drawPolygon position, points, color:TransparentRed
 				
 	// For all drawings in code block, only pixels inside the given polygon are drawn
+	// Example: Draw three circles and clip all of them within the polygon with the corner {0,-80}, {-100,80}, {100,80}
+	//     app
+	//         tick
+	//             graphics.clip points:[{0,-80}, {-100,80}, {100,80}]
+	//                 drawCircle {   0, -80}, size:150, color:Blue
+	//                 drawCircle {-100,  80}, size:150, color:Blue
+	//                 drawCircle { 100,  80}, size:150, color:Blue
+	// Image: graphicsClip0.png
+	// Example: Draw three circles and clip two of them within the polygon with the corner {0,-80}, {-100,80}, {100,80}
+	//     app
+	//         tick
+	//             graphics.clip points:[{0,-80}, {-100,80}, {100,80}]
+	//                 drawCircle {   0, -80}, size:150, color:Blue
+	//                 drawCircle {-100,  80}, size:150, color:Blue
+	//             drawCircle { 100,  80}, size:150, color:Blue
+	// Image: graphicsClip1.png
 	clip: Vector2[] points      // A list of points that define the area to be clipped
 		  Vector2 position = {} // The position all points are relative to 
 		  bool show = false     // Visualizes the clipping area by shading it transparent red
@@ -987,20 +1053,29 @@ transient global unit graphics
 		
 	// ------------------------------------------------------- Visibility -------------------------------------------------------
 	
-	// The default player for which all draw operations will be visible
 	visibleFor
 		return currentlyVisibleFor
 		
-	visibleFor: implicit Player[] visibleFor
+	// All draw operations in a block of code will only be visible to the given player
+	// Example: Draw a button that is only visible to the current player instance
+	//     Player
+	//         tick
+	//             visibleFor me
+	//                 drawText "OK"
+	//                 drawImage Button
+	// Image: graphicsVisibleFor.png
+	visibleFor: implicit Player[] player
 		        void() code
 		let prev = currentlyVisibleFor
-		currentlyVisibleFor = visibleFor
+		currentlyVisibleFor = player
 		code()
 		currentlyVisibleFor = prev
 		return currentlyVisibleFor
 		
 	private Player[] currentlyVisibleFor = null
 		
+	// ------------------------------------------------------- Measure text -------------------------------------------------------
+	
 	// Returns the width of a string in pixels
 	global js int getTextWidth: string text                 // The string to get the width of
 		                         implicit Vector2 size = {} // The size of the text
@@ -1065,7 +1140,7 @@ transient global unit graphics
 		return dataUrl
 	
 	// Directly manipulate the pixels on the screen or an image
-	js int[] manipulate: void(int[] pixels) code // This code can manipulate the pixels
+	js int[] accessPixel: void(int[] pixels) code // This code can manipulate the pixels
 		let imageData = Platform_context.getImageData(0,0,Platform_pixelSize.x, Platform_pixelSize.y)
 		code(imageData.data)
 		Platform_context.putImageData(imageData, 0, 0)
