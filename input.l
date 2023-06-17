@@ -246,6 +246,47 @@ enum Key
 	CloseBraket  = 221
 	SingleQuote  = 222
 	
+enum Cursor
+	Pointer = "pointer" // The cursor is a pointer that indicates a link, typically an image of a pointing hand
+	Default = "default" // The platform-dependent default cursor, typically an arrow
+	Grab = "grab" // Something can be grabbed (dragged to be moved)
+	Grabbing = "grabbing" // Something is being grabbed (dragged to be moved)
+	NoDrop = "no-drop" // An item may not be dropped at the current location
+	NotAllowed = "not-allowed" // The requested action will not be carried out
+	Move = "move" // Something is to be moved
+	Copy = "copy" // Something is to be copied
+	ContextMenu = "context-menu" // A context menu is available
+	Help = "help" // Help information is available
+	Progress = "progress" // The program is busy in the background, but the user can still interact with the interface
+	Wait = "wait" // The program is busy, and the user can't interact with the interface
+	Cell = "cell" // The table cell or set of cells can be selected
+	Crosshair = "crosshair" // Cross cursor, often used to indicate selection in a bitmap
+	Text = "text" // The text can be selected Typically the shape of an I-beam
+	VerticalText = "vertical-text" // The vertical text can be selected, typically the shape of a sideways I-beam
+	Alias = "alias" // An alias or shortcut is to be created
+	AllScroll = "all-scroll" // Something can be scrolled in any direction (on Windows, all-scroll is the same as move)
+		
+	ResizeCol = "col-resize" // The column can be resized horizontally, typically an left-right arrow with a vertial line
+	ResizeRow = "row-resize" // The row can be resized vertically, typically an up-down arrow with a horizontal line
+	ResizeN = "n-resize" // The top of of box can be moved
+	ResizeE = "e-resize" // The right of of box can be moved
+	ResizeS = "s-resize" // The bottom of of box can be moved
+	ResizeW = "w-resize" // The left of of box can be moved
+	ResizeNE = "ne-resize" // The top right corner of a box can be moved
+	ResizeNW = "nw-resize" // The top left corner of a box can be moved
+	ResizeSE = "se-resize" // The bottom right corner of a box can be moved
+	ResizeSW = "sw-resize" // The bottom left corner of a box can be moved
+	ResizeEW = "ew-resize" // Something can be moved left and right
+	ResizeNS = "ns-resize" // Something can be moved up and down
+	ResizeNESW = "nesw-resize" // Something can be moved diagonally from the bottom left to the top right
+	ResizeNWSE = "nwse-resize" // Something can be moved diagonally from the top left to the bottom right
+	
+	ZoomIn = "zoom-in" // Something can be zoomed in
+	ZoomOut = "zoom-out" // Something can be zoomed out	
+	
+	Auto = "auto" // The cursor will be based on the current context, for example "text" when hovering text
+	None = "none" // No cursor is rendered
+	
 struct DigitalButton
 	string name
 	Key key
@@ -324,7 +365,7 @@ skipInit global unit input
 
 	global Player[] players
 	internal Player[] playersById
-	string cursor
+	Cursor cursor
 	
 	ShowPointersMode showPointers = Remote
 	bool ignoreFirstClick
@@ -731,7 +772,7 @@ skipInit global unit input
 							if core.logging: core.parseLog += " move(new) {id} {referencePos} {type}"
 
 						internalUser.movingTouches.add touch
-						cursor = "auto"
+						cursor = Auto
 					else
 					if inputType == TouchUp
 						let touch = player.touches.find.id == id
@@ -994,8 +1035,8 @@ skipInit global unit input
 	global onTouchDownWithin: Vector2 position                    // The center of the touch area
 		                      Vector2 size                        // The size of a rectangular touch area
 		                      implicit nocolon Player[] by = null // Only consider touches or clicks by this player or list of players  
-		                      string cursor = ""                  // Change the mouse cursor image when hovering over this area
 		                      bool showTouchArea = false          // Draw a red rectangle to visualize that area to touch
+		                      Cursor cursor = Auto                // Change the mouse cursor image when hovering over this area
 		                      bool markAsHandled = true           // Mark the touch as handled so it won't trigger more touch events
 		                      HorizontalAlignment align = Center  // The horizontal alignment of the touch area
 		                      VerticalAlignment valign = Middle   // The vertical alignment of the touch area
@@ -1018,7 +1059,7 @@ skipInit global unit input
 					do touch
 					if markAsHandled: touch.handled = true
 						
-		if cursor
+		if cursor != Auto
 			for localUser.movingTouches -> touch
 				if !touch.handled && touch.referencePosition.isInsidePoygon(poly)
 					this.cursor = cursor
@@ -1042,8 +1083,8 @@ skipInit global unit input
 		                      Vector2 size                        // The size of a rectangular touch area
 		                      Angle angle                         // Rotate the touch area by this angle
 		                      implicit nocolon Player[] by = null // Only consider touches or clicks by this player or list of players
-		                      string cursor = ""                  // Change the mouse cursor image when hovering over this area
 		                      bool showTouchArea = false          // Draw a red rectangle to visualize that area to touch
+		                      Cursor cursor = Auto                // Change the mouse cursor image when hovering over this area
 		                      bool markAsHandled = true           // Mark the touch as handled so it won't trigger more touch events
 		                      HorizontalAlignment align = Center  // The horizontal alignment of the touch area
 		                      VerticalAlignment valign = Middle   // The vertical alignment of the touch area
@@ -1067,7 +1108,7 @@ skipInit global unit input
 					do touch
 					if markAsHandled: touch.handled = true
 						
-			if cursor
+			if cursor != Auto
 				for localUser.movingTouches -> touch
 					if !touch.handled && touch.referencePosition.isInsidePoygon(poly)
 						this.cursor = cursor
@@ -1087,7 +1128,7 @@ skipInit global unit input
 	global onTouchDownWithin: Vector2 position                    // The center of the circle
 		                      float radius                        // The radius of the circle
 		                      implicit nocolon Player[] by = null // Only consider touches or clicks by this player or list of players  
-		                      string cursor = ""                  // Change the mouse cursor image when hovering over this circle
+		                      Cursor cursor = Auto                // Change the mouse cursor image when hovering over this circle
 		                      bool showTouchArea = false          // Draw a red circle to visualize that area to touch
 		                      bool markAsHandled = true           // Mark the touch as handled so it won't trigger more touch events
 		                      void(Touch touch) do                // Do this for each touch or click
@@ -1101,7 +1142,7 @@ skipInit global unit input
 					do touch
 					if markAsHandled: touch.handled = true
 						
-			if cursor
+			if cursor != Auto
 				for localUser.movingTouches -> touch
 					if !touch.handled && (touch.referencePosition distanceTo position) <= radius
 						this.cursor = cursor
@@ -1123,7 +1164,7 @@ skipInit global unit input
 	global onTouchDownWithin: Vector2 position = {0,0}            // The position of the polygon
 		                      Vector2[] points                    // The points that define the touch area
 		                      implicit nocolon Player[] by = null // Only consider touches or clicks by this player or list of players  
-		                      string cursor = ""                  // Change the mouse cursor image when hovering over this polygon
+		                      Cursor cursor = Auto                // Change the mouse cursor image when hovering over this polygon
 		                      bool showTouchArea = false          // Draw a red polygon to visualize that area to touch
 		                      bool markAsHandled = true           // Mark the touch as handled so it won't trigger more touch events
 		                      void(Touch touch) do                // Do this for each touch or click
@@ -1138,7 +1179,7 @@ skipInit global unit input
 					do touch
 					if markAsHandled: touch.handled = true
 						
-			if cursor
+			if cursor != Auto
 				for localUser.movingTouches -> touch
 					if !touch.handled && touch.referencePosition.isInsidePoygon(poly)
 						this.cursor = cursor
@@ -1170,8 +1211,8 @@ skipInit global unit input
 	global onTouchOver: Vector2 position                    // The center of the touch area
 		                Vector2 size                        // The size of a rectangular touch area
 		                implicit nocolon Player[] by = null // Only consider the mouse from this player  
-		                string cursor = ""                  // Change the mouse cursor image when hovering over this area
 		                bool showTouchArea = false          // Draw a red rectangle to visualize that area to touch
+		                Cursor cursor = Auto                // Change the mouse cursor image when hovering over this area
 		                bool markAsHandled = true           // Mark the touch as handled so it won't trigger more touch events
 		                void(Touch touch) do                // Do this for each touch or click
 		Vector2[] poly = [
@@ -1186,7 +1227,7 @@ skipInit global unit input
 					log "over", touch.referencePosition
 					do touch
 					
-			if cursor
+			if cursor != Auto
 				for localUser.movingTouches -> touch
 					if !touch.handled && touch.referencePosition.isInsidePoygon(poly)
 						this.cursor = cursor
@@ -1334,7 +1375,7 @@ skipInit global unit input
 	global onTouchUpWithin: Vector2 position                    // The center of the circle
 		                    float radius                        // The radius of the circle
 		                    implicit nocolon Player[] by = null // Only consider touches or clicks by this player or list of players  
-		                    string cursor = ""                  // Change the mouse cursor image when hovering over this area
+		                    Cursor cursor = Auto                // Change the mouse cursor image when hovering over this area
 		                    bool showTouchArea = false          // Draw a red circle to visualize that area to touch
 		                    bool markAsHandled = true           // Mark the touch as handled so it won't trigger more touch events
 		                    void(Touch touch) do                // Do this for each touch or click
@@ -1348,7 +1389,7 @@ skipInit global unit input
 					if markAsHandled: touch.handled = true
 					Snapshot.autoSave
 					
-			if cursor
+			if cursor != Auto
 				for localUser.movingTouches -> touch
 					if !touch.handled && (touch.referencePosition distanceTo position) <= radius
 						this.cursor = cursor
