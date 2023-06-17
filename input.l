@@ -15,7 +15,7 @@ transient class InternalUser
 	
 	// List of inputs filled by parseInput and used by onTouchDown, onWheel, onKeyDown, ...
 	visible Touch[] downTouches, movingTouches, upTouches
-	visible WheelEvent[] wheelEvents
+	visible ScrollEvent[] wheelEvents
 	visible Key[] downKeys, upKeys
 	visible string[] pressedKeys, textInputs, textCompositions
 	visible string[] navigations
@@ -105,7 +105,7 @@ class Player
 			if (.phase == Up and .type >= Touch) or (hasTouch and .type != Touch)
 				touches.remove .
 	
-enum InputType: None, TouchDown, TouchMove, TouchUp, Wheel, KeyDown, KeyUp, TextInput, Stick, Trigger, Grip, ButtonDown, ButtonUp, ControllerTransform, HeadTransform, DeviceRotation, Join, Lost, StillConnected, SetState, Navigate, GameController, String, Json, Object
+enum InputType: None, TouchDown, TouchMove, TouchUp, Scroll, KeyDown, KeyUp, TextInput, Stick, Trigger, Grip, ButtonDown, ButtonUp, ControllerTransform, HeadTransform, DeviceRotation, Join, Lost, StillConnected, SetState, Navigate, GameController, String, Json, Object
 		
 // Phase of a touch or a click
 enum TouchPhase: Still, Down, Move, Up
@@ -132,7 +132,7 @@ class Touch
 	
 	markAsHandled() handled = true
 	
-transient class WheelEvent
+transient class ScrollEvent
 	int userId
 	Vector2 delta
 	Vector2 referencePosition
@@ -569,7 +569,7 @@ skipInit global unit input
 		
 		Vector2 referencePos = {x*Platform.pixelRatio, y*Platform.pixelRatio}.getRelativeTo(Platform.baseMatrix)
 		inputs.writeInt32 localUser.inputFrame
-		inputs.writeUnsignedInt16 cast InputType.Wheel
+		inputs.writeUnsignedInt16 cast InputType.Scroll
 		inputs.writeInt16 math.round(referencePos.x)
 		inputs.writeInt16 math.round(referencePos.y)
 		inputs.writeInt16 math.round(deltaX)
@@ -727,7 +727,7 @@ skipInit global unit input
 				let value = inputs.readUnsignedInt16
 				InputType inputType = cast(value % 32)
 				
-				if inputType >= TouchDown && inputType <= Wheel
+				if inputType >= TouchDown && inputType <= Scroll
 					if !player: core.log " ERROR: userId {userId} not in playersById"
 					TouchType type = cast((value shiftRight 5) % 8)
 					int id = (value shiftRight 8) % 128
@@ -791,7 +791,7 @@ skipInit global unit input
 							
 						internalUser.upTouches.add touch
 					else
-					if inputType == Wheel
+					if inputType == Scroll
 						Vector2 delta = {inputs.readInt16, inputs.readInt16}
 						internalUser.wheelEvents.add {player.id, delta, referencePosition:referencePos}
 				else
@@ -1396,22 +1396,22 @@ skipInit global unit input
 				
 		if showTouchArea: drawCircle position, radius*2, color:{"ff000080"}
 						
-	// ---------------------------------------------- Mouse Wheel ----------------------------------------------
+	// ---------------------------------------------- Scroll ----------------------------------------------
 	
-	// Do something when a player moves the mouse wheel
-	global onWheel: implicit nocolon Player[] by = null // Only consider touches or clicks by this player or list of players
-		            void(WheelEvent event) do           // Do this for each mouse wheel movement
+	// Do something when a player scrolls with the touch pad or mouse wheel
+	global onScroll: implicit nocolon Player[] by = null // Only consider events by this player or list of players
+		             void(ScrollEvent event) do          // Do this for each event
 		for getTargetedPlayers(by)
 			for internalUsers[.id].wheelEvents
 				do .
 	
-	// Do something when a player moves the mouse wheel within a given rectangle
-	global onWheelWithin: Vector2 position                    // The center of the rectangle
-		                  Vector2 size                        // The size of the rectangle
-		                  implicit nocolon Player[] by = null // Only consider wheel movments from this player or list of players
-		                  bool showTouchArea = false          // Draw a red rectangle to visualize that area to touch
-		                  bool markAsHandled = true           // Mark the touch as handled so it won't trigger more touch events
-		                  void(WheelEvent event) do           // Do this for each mouse wheel movement
+	// Do something when a player scrolls with the touch pad or mouse wheel over a rectangle
+	global onScrolllWithin: Vector2 position                    // The center of the rectangle
+		                    Vector2 size                        // The size of the rectangle
+		                    implicit nocolon Player[] by = null // Only consider events by this player or list of players
+		                    bool showTouchArea = false          // Highlight the rectangle for debugging
+		                    bool markAsHandled = true           // Mark the touch as handled so it won't trigger more events
+		                    void(ScrollEvent event) do          // Do this for each event
 		Vector2[] poly = [
 			{ position.x-size.x/2, position.y-size.y/2 }.transform(graphics.localMatrix),
 			{ position.x+size.x/2, position.y-size.y/2 }.transform(graphics.localMatrix),
