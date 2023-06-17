@@ -103,7 +103,7 @@ transient skipInit unit core
 			for input.internalUsers.length to Platform.userCount
 				input.internalUsers.add {id:i, local:true, collectInputs:true}
 			if input.internalUsers.length > Platform.userCount
-				input.internalUsers.removeRange Platform.userCount, count: input.internalUsers.length - Platform.userCount
+				input.internalUsers.removeRange Platform.userCount..input.internalUsers.length
 			
 			// We always recreating players, because developers might have added fields to Player or Touch
 			// By the time we call startApp, all players need to exist

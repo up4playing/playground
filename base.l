@@ -435,10 +435,10 @@ class List<T>
 	inline js void removeAt: int index // The index of the item to remove
 		this.splice(index, 1)
 			
-	// Removes the item at the given index from the list
-	inline js void removeRange: int start = 0 // The index of the first item to remove
-		                        int count     // The number of items to remove
-		this.splice(start, count)
+	// Removes a range of items from the list
+	inline js void removeRange: int from = 0   // Remove items starting from this index
+		                        nocolon int to // Remove items up to (but not including) this index
+		this.splice(from, to-from)
 			
 	// Remove all item the meet a specific condition	
 	removeWhere: bool(T a) condition // The condition to check
