@@ -67,7 +67,8 @@ unit Framework
 		// because a checksum of 0 is used to indicate that we don't have a checksum for this frame yet
 		if result == 0: return 1.0
 		return result
-			
+		
+// Draw on the screen
 transient global unit graphics
 	setPlayerVideo: Player player
 		            Vector2 pos = {}
@@ -222,7 +223,7 @@ Object CircleObject
 	Color color = White
 	internal checksum := position.x + position.y + alpha + size.x + size.x
 	override tick
-		drawCircle position, size, fillColor:color, visibleFor, layer
+		drawCircle position, size, color:color, visibleFor, layer
 
 Object TextObject
 	string text
@@ -539,7 +540,7 @@ Piece Board
 				
 		// Zoom
 		if zoomable	
-			onWheelWithin position, size, by:visibleFor
+			onScrolllWithin position, size, by:visibleFor
 				float factor = zoomLookupTable[math.limit math.round(event.delta.y)+40, min:0, max:zoomLookupTable.length-1]
 				if core.logging: core.touchLog += "[{core.frame}] zoom value:{event.delta} factor:{factor} matrix:{matrix}"
 				matrix.move event.position
@@ -550,10 +551,10 @@ Piece Board
 		// Visiblity icon
 		if contentVisibleForOthers == On or contentVisibleForOthers == Off
 			Image icon =  contentVisibleForOthers == On ? visibleIcon : hiddenIcon
-			drawButton icon, position:position+{size.x/2-32, -size.y/2+32}, clickableBy:owner
+			drawButton icon, position:position+{size.x/2-32, -size.y/2+32}, touchableBy:owner
 				contentVisibleForOthers = contentVisibleForOthers == On ? Off : On
 				
-		if color: drawRectangle position, size, fillColor:color, layer:-1, visibleFor
+		if color: drawRectangle position, size, color:color, layer:-1, visibleFor
 		if image: drawImage image, position, size
 		
 	snap: Piece currentObject, Vector2 position
@@ -633,7 +634,7 @@ struct Particle
 	Angle angle, rotationSpeed
 	int frame
 
-enum ParticleMode: Burst, Break
+enum ParticleMode: Burst, Single
 	
 Object ParticleSystem
 	private Particle[] particles
@@ -651,7 +652,7 @@ Object ParticleSystem
 	
 	override tick
 		if Time.now > nextBurst
-			if mode == Break
+			if mode == Single
 				for particleImage.frames.length
 					let r = -math.randomFloat .5
 					let speedFactor = math.randomFloat 10..15
@@ -733,7 +734,7 @@ Piece Coin
 			
 		if isInfinate or value or allowZero
 			if closestCoinType == Neighbor 
-				drawCircle (position + closestCoin.position)/2, size:12, fillColor:darkColor, outlineColor:lightColor, outlineWidth:5
+				drawCircle (position + closestCoin.position)/2, size:12, color:darkColor, outlineColor:lightColor, outlineWidth:5
 			if !isInfinate
 				if value < 10:  drawText cast value, position+{0, -4}, color:darkColor, size:42, style:Bold, font:ShadowedSerif, visibleFor:valueVisibleFor; else
 				if value < 100: drawText cast value, position+{0, -4}, color:darkColor, size:30, style:Bold, font:ShadowedSerif, visibleFor:valueVisibleFor; else
@@ -841,8 +842,8 @@ Object Menu
 						item.onClick(item.value, touch)
 						doNotClose = true
 					
-			drawRectangle popupPosition, outlineColor:White, fillColor:Black, size:{500,60+items.length*60}, outlineWidth:3, layer:int.maxValue
-			drawRectangle size:{1920,1080}, fillColor:overlayColor, layer:int.maxValue
+			drawRectangle popupPosition, outlineColor:White, color:Black, size:{500,60+items.length*60}, outlineWidth:3, layer:int.maxValue
+			drawRectangle size:{1920,1080}, color:overlayColor, layer:int.maxValue
 			
 			if not doNotClose
 				onTouchDownAny

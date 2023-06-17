@@ -58,7 +58,7 @@ unit lobby
 	
 	tickSettings
 		if not input.localUser: return
-		drawImage settingsIcon, {-920,-500}, clickableBy:input.localPlayer, size:32
+		drawImage settingsIcon, {-920,-500}, touchableBy:input.localPlayer, size:32
 			showSettings = !showSettings
 			
 		if showSettings
