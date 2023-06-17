@@ -540,7 +540,7 @@ Piece Board
 				
 		// Zoom
 		if zoomable	
-			onWheelWithin position, size, by:visibleFor
+			onScrolllWithin position, size, by:visibleFor
 				float factor = zoomLookupTable[math.limit math.round(event.delta.y)+40, min:0, max:zoomLookupTable.length-1]
 				if core.logging: core.touchLog += "[{core.frame}] zoom value:{event.delta} factor:{factor} matrix:{matrix}"
 				matrix.move event.position
@@ -551,7 +551,7 @@ Piece Board
 		// Visiblity icon
 		if contentVisibleForOthers == On or contentVisibleForOthers == Off
 			Image icon =  contentVisibleForOthers == On ? visibleIcon : hiddenIcon
-			drawButton icon, position:position+{size.x/2-32, -size.y/2+32}, clickableBy:owner
+			drawButton icon, position:position+{size.x/2-32, -size.y/2+32}, touchableBy:owner
 				contentVisibleForOthers = contentVisibleForOthers == On ? Off : On
 				
 		if color: drawRectangle position, size, color:color, layer:-1, visibleFor
