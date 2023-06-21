@@ -502,7 +502,7 @@ class List<T>
 	
 	// Add an item to the list if it isn't already in there
 	js void ensure: T item // The item to add
-		if(!this.includes(it))
+		if(!this.includes(item))
 			this.push(item)
 		
 	// Add each item from a list if it isn't already in there
