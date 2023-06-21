@@ -545,10 +545,10 @@ transient float Angle
 		(unit==1 ? this*math_TwoPI : unit==2 ? this*360 : unit==3 ? this*400 : this)
 		
 enum AngleUnit
-	turns // Turn (one full rotation is 1)
-	rad   // Radians (one full rotation is 2π)
-	deg   // Degrees (one full rotation is 360)
-	grad  // Gradiants (one full rotation is 400)
+	turns    // One full rotation is 1
+	radians  // One full rotation is 2π (about 6.2832)
+	degrees  // One full rotation is 360
+	gradians // One full rotation is 400
 
 unit math
 	// Returns the arctangent of the quotient of the given values

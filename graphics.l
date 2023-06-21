@@ -1154,6 +1154,7 @@ skipInit unit gizmo
 		handleSize = math.map math.min(max.x-min.x, max.y-min.y) 64..256 start:16 target:32
 	
 	internal tick
+		if Platform.mode != Manipulator: return
 		findInfluencedItems
 		
 		if items

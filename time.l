@@ -122,11 +122,11 @@ skipInit transient float Time
 	static inline js float preciseTime := performance.now()
 		
 enum TimeUnit
-	ms   // Milliseconds
-	s    // Seconds
-	min  // Minutes
-	h    // Hours
-	days // Days
+	milliseconds // Milliseconds
+	sesconds     // Seconds
+	minutes      // Minutes
+	hours        // Hours
+	days         // Days
 		
 js(Date) transient struct Date
 	inline js Date() new Date(Time_now)

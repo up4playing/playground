@@ -13,7 +13,7 @@ struct int
 		return ((a % b) + b) % b
 		
 	// The remainer after a division by the given value. The sign stays the same.
-	inline js int remainder: int value
+	inline js int remainder: int value // The value to divide by
 		(this % value)
 		
 	// Returns true if the integer is not zero
@@ -26,41 +26,65 @@ struct int
 	inline js string format: int minIntegerDigits = 1, bool grouping = false
 		this.toLocaleString('en-US', {minimumIntegerDigits:minIntegerDigits, useGrouping:grouping})
 		
-	// Returns the absolute value
+	// Returns the absolute value of the integer
 	inline js int abs
 		Math.abs(this)
 		
-	inline js int shiftLeft: int count
+	// Shift the bits of the int to the left. Excess bits shifted off to the left are discarded
+	inline js int shiftLeft: int count // The amount of bits to shift 
 		(this << count)
 	
-	inline js int shiftRight: int count
+	// Shift the bits of the int to the right. Excess bits shifted off to the right are discarded
+	inline js int shiftRight: int count // The amount of bits to shift 
 		(this >> count)
 		
-	inline js int bitwiseOr: implicit int value
+	// Perform a bitwise "or" operation
+	inline js int bitwiseOr: implicit int value // The value to perform the bitwise "or" with
 		(this | value)
 	
-	inline js int bitwiseAnd: implicit int value
+	// Perform a bitwise "and" operation
+	inline js int bitwiseAnd: implicit int value // The value to perform the bitwise "and" with
 		(this & value)
 	
-	inline js int setBit: implicit int value
-		(this |= value)
+	// Set a specific bit of the integer
+	inline js int setBit: implicit int bitIndex // The index of the bit to set
+		(this |= (1 << bitIndex))
 	
-	inline js int unsetBit: implicit int value
-		(this &= ~value)
+	// Clear a specific bit of the integer
+	inline js int clearBit: implicit int bitIndex // The index of the bit to clear
+		(this &= ~(1 << bitIndex))
 	
-	inline js int limit: int from
-		                 int to
+	// Limit the value to a specific range
+	// Example: Limit the player's to be between 0 and 100
+	//     Player
+	//         int health
+	//         changeHealth: int delta
+	//             health = (health + delta) limit 0..100
+	inline js int limit: int from // The inclusive minimum value
+		                 int to   // The inclusive maximum value
 		(this < from ? from : this > to ? to : this)
 		
+	// Make sure the value never exceets a maximum value
+	// Example: Make sure the card count never exceets a maximum value of 5
+	//     cardCount = cardCount limit ..5
 	inline js int limit: int to
 		(this > to ? to : this)
 	
+	// Make sure the value never falls below a minimum value
+	// Example: Make sure the score never fall below 0
+	//     score = score limit 0..
 	inline js int limit: int from
 		(this < from ? from : this)
 	
+	// Make sure the value never exceets a maximum value
+	// Example: Make sure the card count never exceets a maximum value of 5
+	//     cardCount = cardCount max 5
 	inline js int max: int value
 		(this > value ? value : this)
 	
+	// Make sure the value never falls below a minimum value
+	// Example: Make sure the score never fall below 0
+	//     score = score min 0
 	inline js int min: int value
 		(this < value ? value : this)
 	
@@ -232,17 +256,17 @@ struct float
 	
 	inline js Angle operator °(float angle) (angle/360)
 	
-	// Turns (one full rotation is 1)
-	inline js Angle turns() this
+	// One full rotation is 1
+	inline js Angle turns := this
 	
-	// Radians (one full rotation is 1π) 
-	inline js Angle rad() (this/math_TwoPI)
+	// One full rotation is 2π (about 6.2832)
+	inline js Angle radians := (this/math_TwoPI)
 		
-	// Degrees (one full rotation is 360)
-	inline js Angle deg() (this/360)
+	// One full rotation is 360
+	inline js Angle degrees := (this/360)
 		
-	// Gradians (one full rotation is 360)
-	inline js Angle grad() (this/400)
+	// One full rotation is 400
+	inline js Angle gradians := (this/400)
 		
 class EaseFunction
 	float(float value) function
@@ -386,7 +410,7 @@ class List<T>
 			}
 		}
 			
-	// Adds an item to the end of the list
+	// Add an item to the end of the list
 	inline js void add: T item // The item to add
 		this.push(item)
 		
@@ -412,12 +436,13 @@ class List<T>
 		                T item5 // The fifth item to add
 		this.push(item, item2, item3, item4, item5)
 		
-	inline js void add: T item // The item to add
-		      int maxLength    // If the list gets longer than this maximum length, remove an item from the beginning
+	// Add an item and remove a item from the beginning if the length exceeds a maximum value
+	inline js void add: T item        // The item to add
+		                int maxLength // If the list gets longer than this maximum length, remove an item from the beginning
 		this.push(item)
 		if(this.length > maxLength) this.splice(0, 1)
 			
-	// Adds an list of item to the end of the list
+	// Add an list of item to the end of the list
 	inline js void add: T[] items // The list of items to add
 		this.push(...items)
 			
@@ -426,21 +451,34 @@ class List<T>
 		                   index = 0 // Insert the item at this index
 		this.splice(index, 0, item)
 		
-	// Removes an item from the list
+	// Remove an item from the list
+	// Example: Remove the current player instrance from the list of playeres when they died
+	//     Player
+    //         die
+    //             players.remove me
 	js void remove: T item // The item to remove
 		var index = this.indexOf(item);
 		if(index > -1) this.splice(index, 1);
 			
-	// Removes the item at the given index from the list
+	// Remove the item at the given index from the list
 	inline js void removeAt: int index // The index of the item to remove
 		this.splice(index, 1)
 			
-	// Removes a range of items from the list
+	// Remove a range of items from the list
+	// Example: Remove the first 3 players from the list
+	//     players.removeRange 0 to 3
 	inline js void removeRange: int from = 0   // Remove items starting from this index
 		                        nocolon int to // Remove items up to (but not including) this index
 		this.splice(from, to-from)
 			
-	// Remove all item the meet a specific condition	
+	// Remove all item the meet a specific condition
+	// Example: Remove all players that have died.
+	//     Player
+    //         bool hasDied
+	//
+	//      app
+    //          gameOver
+    //              players.removeWhere.hasDied
 	removeWhere: bool(T a) condition // The condition to check
 		for this <-
 			if condition(.)
@@ -448,6 +486,13 @@ class List<T>
 		return null
 		
 	// Remove the first item the meet a specific condition
+	// Example: Remove the first player with a health smaller than 10.
+	//     Player
+    //         int health
+	//
+	//     app
+    //         gameOver
+    //             players.removeFirstWhere.health < 10
 	T removeFirstWhere: bool(T a) condition // The condition to check
 		for this
 			if condition(.)
@@ -455,21 +500,23 @@ class List<T>
 				return .
 		return null
 	
-	// Adds an item to the list if it isn't already in there
+	// Add an item to the list if it isn't already in there
 	js void ensure: T item // The item to add
-		if(this.indexOf(item) == -1)
+		if(!this.includes(it))
 			this.push(item)
 		
-	// Adds each item from a list if it isn't already in there
+	// Add each item from a list if it isn't already in there
 	js void ensure: T[] items // The list of items to add
 		for(let it of items)
-			if(this.indexOf(it) == -1)
+			if(!this.includes(it))
 				this.push(it)
 		
-	inline js bool contains: T item
-		(this.indexOf(item) != -1)
+	// Returns whether the list contains the given item
+	inline js bool contains: T item // Check if the list contains this item
+		this.includes(item)
 		
-	inline js int indexOf: T item
+	// The index of an item in the list
+	inline js int indexOf: T item // Get the index of this item
 		this.indexOf(item)
 		
 	inline js void setList: T[] list
@@ -490,16 +537,31 @@ class List<T>
 				add .
 				if ++count >= maxCount: break
 		
+	// Remove the last item from the list and return it
+	// Example: Print and remove "Orange" from the list
+	//     let fruits = ["Apple", "Lemon", "Orange"]
+	//     print fruits.pop
 	inline js T pop := this.pop()
 		
+	// Remove an item at a specific index from the list and return it
+	// Example: Print and remove "Lemon" from the list
+	//     let fruits = ["Apple", "Lemon", "Orange"]
+	//     print fruits.popAt 1
 	inline js T popAt: int index
 		this.splice(index, 1)[0]
 		
-	inline js T[] popRange: int index
-		                    int count
-		this.splice(index, count)
+	// Remove a range of items from the list and return a new list containing the removed items
+	// Example: Remote "Lemon" and "Orange" from the list of fruits a create a new list with those fruits 
+	//     let fruits = ["Apple", "Pear", "Lemon", "Orange"]
+	//     let citrusFruit  = fruits.popRange 2 to 4
+	inline js T[] popRange: int from
+		                    nocolon int to
+		this.splice(from, to-from)
 		
-	T popWhere: bool(T a) condition
+	// Remove the first item that meet a given condition and return it
+	// Exmaple: Remove the first player with a health below 10
+	//     let firstActivePlayer = players.popWhere.health < 10
+	T popWhere: bool(T a) condition // The condition for the item to meet
 		for length()
 			let item = get(i)
 			if condition(item)
@@ -507,7 +569,11 @@ class List<T>
 				return item
 		return null
 	
-	js T popFront
+	// Remove the first item from the list and return it
+	// Example: Print and remove "Apple" from the list
+	//     let fruits = ["Apple", "Lemon", "Orange"]
+	//     print fruits.popFirst
+	js T popFirst
 		if(this.length == 0) return null
 		let firstItem = this[0]
 		this.splice(0, 1)
@@ -516,14 +582,17 @@ class List<T>
 	// Gets the number of items in the list
 	inline js int length() this.length
 	
-	js int setLength: int value
-		this.length = value
+	// Truncated or expands the list the given number of items
+	js int setLength: int length // The new length of the list
+		this.length = length
 	
 	// Removes all items from the list
 	inline js void clear := this.length = 0
 	
+	// Create a shallow clone of the list
 	inline js T[] clone() [...this]
 	
+	// Create a string representation of the list
 	js string toString()
 		let result = "";
 		for(let item of this) {
@@ -535,15 +604,14 @@ class List<T>
 	// Gets a random item from the list
 	T random()
 		let randomInteger = math.randomInteger(length)
-		// print randomInteger, length
 		return get(randomInteger)
-		
+	
+	// Remove a random item from the list and return it
 	T popRandom()
 		int index = math.randomInteger(length)
 		T item = get(index)
 		this.removeAt(index)
 		return item
-		
 		
 	T next: T currentItem
 		int index = indexOf(currentItem)
@@ -667,9 +735,19 @@ class List<T>
 	inline js TValue[] flatten: TValue[](T it) selector
 		this.flatMap(selector)
 		
+	// Find an item the meets the given condition
+	// Example: Find a player with a specific id
+	//     app
+	//         getPlayerById: int id
+	//             return players.find.id == id
 	inline js T find: bool(T a) condition // The condition to check
 		this.find(condition)
 		
+	// Find the last item in the list the meets the given condition
+	// Example: Find a player with a specific id
+	//     app
+	//         getLastActivePlayer
+	//             return players.findLast.active
 	T findLast: bool(T a) condition // The condition to check
 		for this <-
 			if condition(.)
@@ -693,9 +771,6 @@ class List<T>
 		
 	inline js T[] take: int count
 		this.slice(0, count)
-		
-	inline js T[] subList: int start, int count
-		this.slice(start, count)
 		
 	int total: int(T it) selector
 		let sum = 0
@@ -1798,8 +1873,8 @@ unit Loca
 		for(let placeholderNumber of entry.p) {
 			if(placeholderNumber >= 0) {
 				// Placeholder
-				//     "Step {currentStep}"          {s:["Step "],p:[0]}
-				//            ^                          ^           ^
+				//     "Step {currentStep}"                           {s:["Step "],p:[0]}
+				//            ^                                           ^           ^
 				let placeholderValue = arguments[placeholderNumber+1]
 				result += placeholderValue
 				if(stringIndex < strings.length) {
