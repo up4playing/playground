@@ -205,7 +205,7 @@ struct float
 		
 	inline js bool isAngleApproximately: float value
 		                                 float epsilon = 0.0175
-		(Math.abs((((this % Math_TwoPI) + Math_TwoPI) % Math_TwoPI) - (((value % Math_TwoPI) + Math_TwoPI) % Math_TwoPI)) < epsilon)
+		(Math.abs((((this % math_TwoPI) + math_TwoPI) % math_TwoPI) - (((value % math_TwoPI) + math_TwoPI) % math_TwoPI)) < epsilon)
 		
 	inline js float moveTowards: float value
 		                         float speed
@@ -344,6 +344,10 @@ class string
 		
 	inline js string replace: string source
 		                      string target
+		(this = this.replace(new RegExp(source, "g"), target))
+		
+	inline js string replaced: string source
+		                       string target
 		this.replace(new RegExp(source, "g"), target)
 		
 	js string get: int index
