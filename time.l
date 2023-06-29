@@ -46,10 +46,10 @@ skipInit transient float Time
 	inline js string format: int minIntegerDigits = 1, bool grouping = false
 		this.toLocaleString('en-US', {minimumIntegerDigits:minIntegerDigits, useGrouping:grouping})
 	
-	inline js int milliseconds := math.floor((this %    1000)          ) 
-	inline js int seconds      := math.floor((this %   60000) /    1000) 
-	inline js int minutes      := math.floor((this % 3600000) /   60000) 
-	inline js int hours        := math.floor((this          ) / 3600000)
+	inline js int milliseconds := Math.floor((this %    1000)          ) 
+	inline js int seconds      := Math.floor((this %   60000) /    1000) 
+	inline js int minutes      := Math.floor((this % 3600000) /   60000) 
+	inline js int hours        := Math.floor((this          ) / 3600000)
 		
 	// (31.12.)
 	inline js string dayMonthString(language = Loca.language) new Date(this).dayMonthString(language)
@@ -70,7 +70,7 @@ skipInit transient float Time
 	inline js string hourMinuteString(language = Loca.language) new Date(this).hourMinuteString(language)
 	
  	// (59:59)
-	inline js string minuteSecondString() (math.floor((this % 3600000) / 60000) + (this % 60000 < 10000 ? ":0":":") + math.floor((this % 60000) / 1000))
+	inline js string minuteSecondString() (Math.floor((this % 3600000) / 60000) + (this % 60000 < 10000 ? ":0":":") + Math.floor((this % 60000) / 1000))
 	
 	// (23:59:59)
 	inline js string hourMinuteSecondString(language = Loca.language) new Date(this).hourMinuteSecondString(language)
@@ -233,8 +233,8 @@ js(Date) transient struct Date
 			'T' + pad(this.getHours()) +
 			':' + pad(this.getMinutes()) +
 			':' + pad(this.getSeconds()) +
-			dif + pad(math.floor(math.abs(tzo) / 60)) +
-			':' + pad(math.abs(tzo) % 60);
+			dif + pad(Math.floor(Math.abs(tzo) / 60)) +
+			':' + pad(Math.abs(tzo) % 60);
 
 	static inline js Date fromTime(Time time) new Date(time)
 	static inline js Date fromValues(int year, int month=1, int day=1, int hour = 0, int minute = 0, int second = 0) new Date(year, month-1, day, hour, minute, second)
