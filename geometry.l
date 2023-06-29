@@ -887,6 +887,9 @@ class Grid<T>
 	// Returns true if the given condition is true for all items in the list
 	inline js bool all: bool(T a) predicate // The condition to check
 		this.items.every(predicate)
+		
+	bool isValid: IntVector2 pos
+		return {0,0} <= pos < size
 			
 global transient unit System
 	global inline js void for: IntVector2 subject  // The exclusive upper bound to iterate towards
