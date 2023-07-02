@@ -664,7 +664,7 @@ class List<T>
 	inline js T[] distinct() [...new Set(this)]
 	
 	// Moves an item to the end of the list
-	js T moveToBack: T item // The item to move to the end of the list
+	js void moveToBack: T item // The item to move to the end of the list
 		var index = this.indexOf(item);
 		if(index != -1) {
 			let endIndex = this.length-1;
@@ -675,7 +675,7 @@ class List<T>
 		}
 		
 	// Moves an item to the end of the list
-	js T moveToFront: T item // The item to move to the end of the list
+	js void moveToFront: T item // The item to move to the end of the list
 		var index = this.indexOf(item);
 		if(index != -1) {
 			for(let i=index; i>0; --i) {

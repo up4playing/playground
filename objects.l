@@ -123,8 +123,8 @@ class Object
 	removeAtEndOfFrame
 		Framework.toBeRemoved.add this
 		
-	moveToFront := siblings.moveToFront this
-	moveToBack  := siblings.moveToBack this
+	moveToFront() siblings.moveToFront this
+	moveToBack()  siblings.moveToBack this
 		
 	moveTo: Vector2 pos
 		    Time duration = 1000
