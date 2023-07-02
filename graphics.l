@@ -29,6 +29,9 @@ class Color
 	inline js bool operator ==(Color a, Color b) a.hex == b.hex
 	inline js bool operator !=(Color a, Color b) a.hex != b.hex
 	
+	Color withAlpha: float alpha
+		return {hex[1..7]+componentToHex(math.floor(alpha*255))}
+	
 // A texture that can be loaded into video memory
 class Texture
 	string file
