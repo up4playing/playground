@@ -229,7 +229,7 @@ transient global unit graphics
 	global js void drawImage: Image image                         // The image to draw. PNG images in the "media" folder will automatically show up here
 		                      Vector2 position = {}               // By default, {0,0} is the center, {-960,-540} is the top left, {960,540} is the bottom right
 		                      implicit Vector2 size = {}          // A float scales the image to that width keeping the aspect ratio, a vector stretches the image
-		                      frame = 0                           // The frame to draw from a sequence of images (for example "Walk0.png", "Walk1.png", ...)
+		                      implicit frame = 0                  // The frame to draw from a sequence of images (for example "Walk0.png", "Walk1.png", ...)
 		                      implicit Player[] visibleFor = null // Only this player or list of players will see the image
 		                      implicit layer = 0                  // Higher layers are drawn in front of lower layers
 		                      alpha = 1.0                         // The opacity of the image (0: fully transparent, 1: fully visible)
