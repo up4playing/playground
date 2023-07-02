@@ -191,7 +191,7 @@ transient global unit graphics
 	private isVisibleFor: Player[] visibleFor
 		if(Platform.fastForward) return false
 		let effectiveVisibleFor = visibleFor or currentlyVisibleFor
-		return effectiveVisibleFor == null or effectiveVisibleFor.any.id == input.localUser.id
+		return effectiveVisibleFor == null or effectiveVisibleFor.any . == null or .id == input.localUser.id
 		
 	private Player[] gettouchableBy: Player[] visibleFor, Player[] touchableBy
 		Player[] effectiveVisibleBy = visibleFor or currentlyVisibleFor
