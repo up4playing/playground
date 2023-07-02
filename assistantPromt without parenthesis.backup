@@ -1,7 +1,7 @@
-// EXAMPLE CODE: Start of an example of the LiveTime programming language.
+// EXAMPLE CODE: This is an example of the LiveTime programming language.
 enum Phase: DrawItems, Reveal, GameOver
 
-unit app
+app
 	int round
 	// List of words
 	const string[] words = ["", "Word"]
@@ -10,7 +10,7 @@ unit app
 	Box[] boxes
 	Item[] items
 	
-	int[] getNumbers(int start, int end)
+	int[] getNumbers: int start, int end
 		int[] list
 		// For loop for numbers syntax: for <start> to <end>
 		// Use . to access the current value
@@ -18,7 +18,7 @@ unit app
 			if . % 2 == 0: list.add .
 		return list
 		
-	int getSum(int[] list)
+	int getSum: int[] list
 		int sum
 		// For loop for lists syntax: for <list>
 		// Use . to access the current value
@@ -26,14 +26,14 @@ unit app
 			sum += .
 		return sum
 		
-	void getWinner()
+	getWinner
 		return players.withMax.score
 		
-	void start()
+	start
 		Menu()
 		startGame
 		
-	void startGame()
+	startGame
 		for Direction.diagonalDirections
 			boxes.add {rect:{position:{220,280}*.vector, size:{420,440}}}
 		nextRound
@@ -42,7 +42,7 @@ unit app
 		// Write "phase = DrawItems" instead of "phase = Phase.DrawItems"
 		phase = DragItems
 		
-	void nextRound()
+	nextRound
 		round++
 		boxes.each.itemInBox = null
 		words.shuffle
@@ -55,7 +55,7 @@ unit app
 		// Make the next player the current player
 		currentPlayer = players next currentPlayer
 			
-	void tick()
+	tick
 		items.each.tick
 		boxes.each.tick
 		players.each.tick
@@ -67,7 +67,7 @@ unit app
 				phase = Reveal
 				nextRound
 				
-	void gameOver()
+	gameOver
 		phase = GameOver
 
 		// Order players by score
@@ -96,7 +96,7 @@ unit app
 		
 		let top3Players = players.orderBy(.score).take 3
 		
-class Item
+Item
 	const Vector2 size = {300,60}
 	bool moveable = true
 	Vector2 position, originalPosition
@@ -105,7 +105,7 @@ class Item
 	Box droppedInBox
 	string word
 	
-	void tick()
+	tick
 		if moveable and app.phase == DragItems
 			// Drag items
 			onTouchDownWithin position, size, by:app.currentPlayer
@@ -140,14 +140,14 @@ class Item
 		// Draw blue circle with a radius of 200 with a red outline
 		drawCircle position, size:400, color:{"0000ff"}, outlineColor:{"ff0000"}, outlineWidth:5
 		
-class Box
+Box
 	Rect rect
 	Item itemInBox
-	void tick()
+	tick
 		// Draw blue box with white outline
 		drawRectangle rect.position, rect.size, color:{"0000ff"}, outlineColor:{"ffffff"}, outlineWidth:5
 		
-class Player
+Player
 	int score
 	bool alive
 	string name
@@ -156,65 +156,66 @@ class Player
 	visible Direction dir = Direction.diagonalDirections[index]
 	visible Vector2 videoPos = dir.vector * {700,270}
 	
-	void tick()
+	tick
 		// Draw round video of player with cirlce outline
 		const radius = 220
 		drawVideo me, videoPos, size:radius*2, shape:Circle
 		drawCircle videoPos, size:radius*2+50, outlineColor:playerColor, outlineWidth:12
 
-// Start of LiveTime API. ONLY call functions that are in the LiveTime API
-class Touch
+// The LiveTime API. ONLY call functions that are in the LiveTime API
+Touch
 	int userId
 	Vector2 referencePosition
 	Vector2 referenceStartPosition
 	
 unit input
-	global void onTouchDownWithin(Vector2 position, Vector2 size, Player[] by = null, Cursor cursor = Auto, bool showTouchArea = false, bool markAsHandled = true, HorizontalAlignment align = Center, VerticalAlignment valign = Middle, void(Touch touch) do)
-	global void onTouchMove(Touch touch, triggeredOnTouchDown = true, void(Touch touch) do))
-	global void onTouchMove(Player[] by = null, void(Touch touch) do))
-	global void onTouchUp(Touch touch, markAsHandled = true, void(Touch touch) do))
-	global void onTouchUp(Player[] by = null, bool markAsHandled = true, void(Touch touch) do))
+	global onTouchDownWithin: Vector2 position, Vector2 size, Player[] by = null, Cursor cursor = Auto, bool showTouchArea = false, bool markAsHandled = true, HorizontalAlignment align = Center, VerticalAlignment valign = Middle, void(Touch touch) do
+	global onTouchMove: Touch touch, triggeredOnTouchDown = true, void(Touch touch) do)
+	global onTouchMove: Player[] by = null, void(Touch touch) do)
+	global onTouchUp: Touch touch, markAsHandled = true, void(Touch touch) do)
+	global onTouchUp: Player[] by = null, bool markAsHandled = true, void(Touch touch) do)
 		
 unit math
-	int randomInteger(int min, int max)
-	float randomFloat()
-	float min(float a, float b)
-	float max(float a, float b)
+	int randomInteger: int min, int max
+	float randomFloat
+	float min: float a, float b
+	float max: float a, float b
 
-class List<T>
-	void each(inline void(T it, int i) do)
-	void add(T item)
-	void insert(T item, index = 0)
-	void remove(T item)
-	void removeAt(int index)
-	void removeWhere(bool(T a) condition)
-	void ensure(T item)
-	bool contains(T item)
-	T pop()
+List<T>
+	each: inline void(T it, int i) do
+	add: T item
+	insert: T item, index = 0
+	remove: T item
+	removeAt: int index
+	removeWhere: bool(T a) condition
+	ensure: T item
+	bool contains: T item
+	T pop
 	int length
-	void clear()
-	T random()
-	T popRandom()
-	T next(T currentItem)
-	void moveToBack(T item)
-	void moveToFront(T item)
-	T[] orderBy(float(T a) expression)
-	bool any(bool(T a) predicate)
-	bool none(bool(T a) predicate)
-	bool all(bool(T a) predicate)
-	TValue[] select(TValue(T it) selector)
-	T find(bool(T a) condition)
-	T[] where(bool(T a) condition)
-	int total(int(T it) selector)
-	void shuffle()
-	T min(float(T a) selector, float threshold = float.maxValue, float default = 0)
-	T max(float(T a) selector, float threshold = float.minValue, float default = 0)
+	clear
+	T random
+	T popRandom
+	T next: T currentItem
+	moveToBack: T item
+	moveToFront: T item
+	T[] orderBy: float(T a) expression
+	bool any: bool(T a) predicate
+	bool none: bool(T a) predicate
+	bool all: bool(T a) predicate
+	TValue[] select: TValue(T it) selector
+	T find: bool(T a) condition
+	T[] where: bool(T a) condition
+	int total: int(T it) selector
+	shuffle
+	min: float(T a) selector, float threshold = float.maxValue, float default = 0
+	max: float(T a) selector, float threshold = float.minValue, float default = 0
 
+// Draw graphics on the screen
 unit graphics
-	global void drawImage(Image image, Vector2 position = {}, frame = 0, implicit Vector2 size = {}, Angle angle = 0.0, touchMargin = Vector2(16,16), showTouchArea = false, implicit Player[] visibleFor = null, implicit Player[] touchableBy = null, hotkey = Key.None, implicit layer = 0, alpha = 1.0, Color color = White, void(Touch touch) onTouch)
-	global void drawText(implicit string text, Vector2 position = {}, implicit Vector2 size = {}, Color color = null, HorizontalAlignment align = Center, VerticalAlignment valign = Middle, FontStyle style = Normal, Font font = null, Color outlineColor = null, outlineWidth = 0, implicit Player[] visibleFor = null, implicit layer = 0, alpha = 1.0)
-	global void drawButton(Image image = null, text = "", Vector2 position = {}, implicit Vector2 size = {}, frame = 0, Color textColor = null, textSize = 18, textOffset = Vector2(0,0), touchMargin = Vector2(16,16), showTouchArea = false, implicit Player[] visibleFor = null, implicit Player[] touchableBy = null, hotkey = Key.None, implicit layer = 0, alpha = 1.0, enabled = true, alphaWhenDisabled = .5, void(Touch touch) onTouch = null)
-	global void drawRectangle(position = Vector2(), implicit size = Vector2(256,256), Color color = null, Color outlineColor = null, outlineWidth = 0, implicit Player[] visibleFor = null, implicit layer = 0, alpha = 1.0, HorizontalAlignment align = Center, VerticalAlignment valign = Middle)
-	global void drawCircle(position = Vector2(), implicit Vector2 size = {256,256}, Color color = null, Color outlineColor = null, outlineWidth = 0, Angle startAngle = -.25, Angle angle = 1.0, RotationDirection direction = Clockwise, implicit Player[] visibleFor = null, implicit layer = 0, alpha = 1.0)
+	global void drawImage: Image image, Vector2 position = {}, frame = 0, implicit Vector2 size = {}, Angle angle = 0.0, touchMargin = Vector2(16,16), showTouchArea = false, implicit Player[] visibleFor = null, implicit Player[] touchableBy = null, hotkey = Key.None, implicit layer = 0, alpha = 1.0, Color color = White, void(Touch touch) onTouch
+	global js void drawText: implicit string text, Vector2 position = {}, implicit Vector2 size = {}, Color color = null, HorizontalAlignment align = Center, VerticalAlignment valign = Middle, FontStyle style = Normal, Font font = null, Color outlineColor = null, outlineWidth = 0, implicit Player[] visibleFor = null, implicit layer = 0, alpha = 1.0
+	global void drawButton: Image image = null, text = "", Vector2 position = {}, implicit Vector2 size = {}, frame = 0, Color textColor = null, textSize = 18, textOffset = Vector2(0,0), touchMargin = Vector2(16,16), showTouchArea = false, implicit Player[] visibleFor = null, implicit Player[] touchableBy = null, hotkey = Key.None, implicit layer = 0, alpha = 1.0, enabled = true, alphaWhenDisabled = .5, void(Touch touch) onTouch = null
+	global js void drawRectangle: position = Vector2(), implicit size = Vector2(256,256), Color color = null, Color outlineColor = null, outlineWidth = 0, implicit Player[] visibleFor = null, implicit layer = 0, alpha = 1.0, HorizontalAlignment align = Center, VerticalAlignment valign = Middle
+	global js void drawCircle: position = Vector2(), implicit Vector2 size = {256,256}, Color color = null, Color outlineColor = null, outlineWidth = 0, Angle startAngle = -.25, Angle angle = 1.0, RotationDirection direction = Clockwise, implicit Player[] visibleFor = null, implicit layer = 0, alpha = 1.0
 
 // ACTUAL CODE: Start of actual code
