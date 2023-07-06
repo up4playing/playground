@@ -1,5 +1,5 @@
 // EXAMPLE CODE: Start of an example of the LiveTime programming language.
-enum Phase: DrawItems, Reveal, GameOver
+enum Phase: DragItems, Reveal, GameOver
 
 unit app
 	int round
@@ -60,16 +60,35 @@ unit app
 		boxes.each.tick
 		players.each.tick
 		
-		// If all items are dropped into boxes, show "Next Round button"
-		if phase == DragItems and items.all.droppedInBox != null
-			drawButton image:Button, text:"Next Round", position:{0,0}, visibleFor:currentPlayer
-				let playerWhoClickedTheButton = touch.by
-				phase = Reveal
-				nextRound
+		switch phase
+			DragItems
+				// If all items are dropped into boxes, show "Next Round button"
+				if items.all.droppedInBox != null
+					drawButton "Next Round", image:Button, position:{0,0}, visibleFor:currentPlayer
+						let playerWhoClickedTheButton = touch.by
+						phase = Reveal
+						nextRound
+			Reveal
+				// Draw yello text thats visible for everybody
+				drawText "Reveal", size:32, color:#ffff00, visibleFor:everybody
 				
-	void gameOver()
+			GameOver
+				tickGameOver
+		
+				
+	void tickGameOver()
 		phase = GameOver
-
+		
+		let offencePlayer = players.find.role == Offence
+			print "Found offence player: {offencePlayer}"
+		else
+			print "No offence player"
+		
+		let defencePlayer = players.find.role == Defence
+			print "Found defence player: {defencePlayer}"
+		else
+			print "No defence player"
+		
 		// Order players by score
 		players.orderBy.score order:Descending
 		
@@ -96,6 +115,9 @@ unit app
 		
 		let top3Players = players.orderBy(.score).take 3
 		
+		delay 1 seconds
+			print "1 second later"
+		
 class Item
 	const Vector2 size = {300,60}
 	bool moveable = true
@@ -106,39 +128,40 @@ class Item
 	string word
 	
 	void tick()
-		if moveable and app.phase == DragItems
-			// Drag items
-			onTouchDownWithin position, size, by:app.currentPlayer
-				// Start dragging item
-				let playerWhoClicked = touch.by
-				moveTouch = .
-				originalPosition = position
-				touchOffset = position - .position
-				if droppedInBox
-					droppedInBox.itemInBox = null
-					droppedInBox = null
+		switch app.phase
+			DragItems
+				// Drag items
+				onTouchDownWithin position, size, by:app.currentPlayer
+					// Start dragging item
+					let playerWhoClicked = touch.by
+					moveTouch = .
+					originalPosition = position
+					touchOffset = position - .position
+					if droppedInBox
+						droppedInBox.itemInBox = null
+						droppedInBox = null
+						
+				onTouchMove moveTouch
+					// Drag item
+					position = .position + touchOffset
 					
-			onTouchMove moveTouch
-				// Drag item
-				position = .position + touchOffset
+				onTouchUp moveTouch
+					// Drop item
+					let droppedInBox = app.boxes.find.rect.contains position
+					if droppedInBox and droppedInBox.itemInBox == null
+						this.droppedInBox = droppedInBox
+						droppedInBox.itemInBox = this
+						position = droppedInBox.rect.position
+					else
+						// Box is full, revert to original position
+						position = originalPosition
+					moveTouch = null
+			GameOver
+				// Draw red text
+				drawText "Game Over", position, size:40, font:OpenSans, color:#ff0000
 				
-			onTouchUp moveTouch
-				// Drop item
-				let droppedInBox = app.boxes.find.rect.contains position
-				if droppedInBox and droppedInBox.itemInBox == null
-					this.droppedInBox = droppedInBox
-					droppedInBox.itemInBox = this
-					position = droppedInBox.rect.position
-				else
-					// Box is full, revert to original position
-					position = originalPosition
-				moveTouch = null
-		
-		// Draw red text in the foreground
-		drawText word, position, size:40, font:OpenSans, color:{"ff0000"}
-		
-		// Draw blue circle with a radius of 200 with a red outline
-		drawCircle position, size:400, color:{"0000ff"}, outlineColor:{"ff0000"}, outlineWidth:5
+		// Draw blue circle with a radius of 200 with a green outline
+		drawCircle position, size:400, color:#0000ff, outlineColor:#00ff00, outlineWidth:5
 		
 class Box
 	Rect rect
@@ -147,10 +170,13 @@ class Box
 		// Draw blue box with white outline
 		drawRectangle rect.position, rect.size, color:{"0000ff"}, outlineColor:{"ffffff"}, outlineWidth:5
 		
+enum Role: Offence, Defence
+		
 class Player
 	int score
 	bool alive
 	string name
+	Role role
 	
 	visible Color playerColor = graphics.defaultColors[index]
 	visible Direction dir = Direction.diagonalDirections[index]
