@@ -69,11 +69,14 @@ unit app
 						phase = Reveal
 						nextRound
 			Reveal
-				// Draw yello text thats visible for everybody
+				// Draw yellow text thats visible for everybody
 				drawText "Reveal", size:32, color:#ffff00, visibleFor:everybody
 				
 			GameOver
 				tickGameOver
+				
+				// Draw green text thats visible for everybody
+				drawText "Game Over", size:32, color:#00ff00, visibleFor:everybody
 		
 				
 	void tickGameOver()
@@ -100,6 +103,9 @@ unit app
 		// Iterate players in reverse order and print player names
 		for players <-
 			print .name
+			
+		// Create a list of all number between 10 and 100
+		int[] numbers = for 10..100 .
 		
 		// Get players with even index and a score more than 3
 		Player[] evenPlayers = players.where.index % 2 == 0 and .score > 3
@@ -107,11 +113,13 @@ unit app
 		let totalScoreOfAlivePlayer = players.where(.alive).total.score
 		
 		// Find player with highest score from all alive players
-		let winner = players.withMax.score where .alive
+		let winner = players.withMax(.score) where .alive
 		
 		let maxScore = math.max players[0].score, players[1].score
 		
 		let firstThreePlayers = players[..3]
+		
+		let lastFourPlayers = players[-4..]
 		
 		let top3Players = players.orderBy(.score).take 3
 		
@@ -168,7 +176,7 @@ class Box
 	Item itemInBox
 	void tick()
 		// Draw blue box with white outline
-		drawRectangle rect.position, rect.size, color:{"0000ff"}, outlineColor:{"ffffff"}, outlineWidth:5
+		drawRectangle rect.position, rect.size, color:#0000ff, outlineColor:#ffffff, outlineWidth:5
 		
 enum Role: Offence, Defence
 		
@@ -178,7 +186,7 @@ class Player
 	string name
 	Role role
 	
-	visible Color playerColor = graphics.defaultColors[index]
+	visible Color color = #ffffff
 	visible Direction dir = Direction.diagonalDirections[index]
 	visible Vector2 videoPos = dir.vector * {700,270}
 	
@@ -186,7 +194,11 @@ class Player
 		// Draw round video of player with cirlce outline
 		const radius = 220
 		drawVideo me, videoPos, size:radius*2, shape:Circle
-		drawCircle videoPos, size:radius*2+50, outlineColor:playerColor, outlineWidth:12
+		drawCircle videoPos, size:radius*2+50, color:#000000, outlineColor:color, outlineWidth:12, visibleFor:me
+		
+		// Draw yellow player name that's visible the current player instance
+		drawText name, size:32, color:#ffff00, visibleFor:me
+
 
 // Start of LiveTime API. ONLY call functions that are in the LiveTime API
 class Touch
