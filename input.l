@@ -363,7 +363,28 @@ skipInit global unit input
 	transient bool isCertain
 	transient ControllerButtonPlayerAndIndex[Key] controllerButtonMap
 
+	// A list of all players
 	global Player[] players
+		
+	// Do something for every player
+	global inline js void everybody: void(Player it) do
+		for(let i=0, _len=input_players.length; i<_len; ++i) { let it = input_players[i]; do()}
+		
+	// Returns true if the given condition is true for every player
+	global inline js bool everybody: bool(Player it) predicate
+		input_players.every(predicate)
+		
+	// Returns true if the given condition is true for any player
+	global inline js bool anybody: bool(Player it) predicate
+		input_players.some(predicate)
+		
+	// Returns true if the given condition is true for no player
+	global inline js bool nobody: bool(Player it) predicate
+		!input_players.some(predicate)
+		
+	// All players
+	global inline js Player everybody() null
+		
 	internal Player[] playersById
 	Cursor cursor
 	
