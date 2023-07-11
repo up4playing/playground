@@ -11,6 +11,8 @@ unit app
 	Item[] items
 	
 	int[] getNumbers(int start, int end)
+	// Define a color with "#" followed by the hex color value
+	Color red = #ff0000
 		int[] list
 		// For loop for numbers syntax: for <start> to <end>
 		// Use . to access the current value
