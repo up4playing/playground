@@ -91,14 +91,14 @@ skipInit class Font
 	private js void calculateOffset
 		const fontsize = 64.0
 		const margin = 32.0
-		const canvas = document.createElement('canvas');
-		const context=canvas.getContext('2d');
+		const canvas = document.createElement("canvas");
+		const context=canvas.getContext("2d");
 		const w = fontsize*2+margin, h = fontsize*2+margin;
 		canvas.height = h;
 		canvas.width = w;
-		context.textBaseline='top';
-		context.font=fontsize+'px '+this.name;
-		context.fillStyle='red';
+		context.textBaseline="top";
+		context.font=fontsize+"px "+this.name;
+		context.fillStyle="red";
 		context.fillText("M", margin, margin);
 		let pixels = context.getImageData(0,0,w,h).data;
 		
@@ -1087,7 +1087,7 @@ transient global unit graphics
 		graphics_totalMatrix.set(1, 0, 0, 1, size.x/2, size.y/2)
 		code()
 		graphics_drawItems()
-		var dataUrl = canvas.toDataURL('image/png');
+		var dataUrl = canvas.toDataURL("image/png");
 		if(file) Platform_saveImage(dataUrl, file);
 		graphics_localMatrix.m0 = a0; graphics_localMatrix.m1 = a1; graphics_localMatrix.m2 = a2; graphics_localMatrix.m3 = a3; graphics_localMatrix.m4 = a4; graphics_localMatrix.m5 = a5
 		graphics_totalMatrix.m0 = b0; graphics_totalMatrix.m1 = b1; graphics_totalMatrix.m2 = b2; graphics_totalMatrix.m3 = b3; graphics_totalMatrix.m4 = b4; graphics_totalMatrix.m5 = b5
@@ -1360,22 +1360,22 @@ transient DisplayItem DisplayImage
 			catch(e) { log("DisplayImage: "+e.message) }
 		} else {
 			// Create offscreen buffer
-	        let offscreenCanvas = document.createElement('canvas');
+	        let offscreenCanvas = document.createElement("canvas");
 	        offscreenCanvas.width = this.sw;
 	        offscreenCanvas.height = this.sh;
-	        let offscreenContext = offscreenCanvas.getContext('2d');
+	        let offscreenContext = offscreenCanvas.getContext("2d");
 			
 			// Draw image
 			offscreenContext.drawImage(this.htmlImage, this.sx, this.sy, this.sw, this.sh, 0, 0, this.sw, this.sh)
 			
 			// Multiply tint color
 			offscreenContext.fillStyle = this.color.hex;
-			offscreenContext.globalCompositeOperation = 'multiply';
+			offscreenContext.globalCompositeOperation = "multiply";
 			offscreenContext.fillRect(0, 0, buffer.width, buffer.height);
 			
 			// Apply alpha
 			offscreenContext.globalAlpha = 1;
-			offscreenContext.globalCompositeOperation = 'destination-in';
+			offscreenContext.globalCompositeOperation = "destination-in";
 			offscreenContext.drawImage(this.htmlImage, this.sx, this.sy, this.sw, this.sh, 0, 0, this.sw, this.sh)
 				
 			// Draw tinted image

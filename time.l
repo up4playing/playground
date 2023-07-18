@@ -38,13 +38,13 @@ skipInit transient float Time
 	inline js bool toBool := this
 	
 	inline js string format: int fractionDigits, int minIntegerDigits = 1, bool grouping = false
-		this.toLocaleString('en-US', {maximumFractionDigits:fractionDigits, minimumFractionDigits:fractionDigits, minimumIntegerDigits:minIntegerDigits, useGrouping:grouping})
+		this.toLocaleString("en-US", {maximumFractionDigits:fractionDigits, minimumFractionDigits:fractionDigits, minimumIntegerDigits:minIntegerDigits, useGrouping:grouping})
 		
 	inline js string format: int fractionDigits, bool grouping = false
-		this.toLocaleString('en-US', {maximumFractionDigits:fractionDigits, minimumFractionDigits:fractionDigits, useGrouping:grouping})
+		this.toLocaleString("en-US", {maximumFractionDigits:fractionDigits, minimumFractionDigits:fractionDigits, useGrouping:grouping})
 		
 	inline js string format: int minIntegerDigits = 1, bool grouping = false
-		this.toLocaleString('en-US', {minimumIntegerDigits:minIntegerDigits, useGrouping:grouping})
+		this.toLocaleString("en-US", {minimumIntegerDigits:minIntegerDigits, useGrouping:grouping})
 	
 	inline js int milliseconds := Math.floor((this %    1000)          ) 
 	inline js int seconds      := Math.floor((this %   60000) /    1000) 
@@ -151,11 +151,11 @@ js(Date) transient struct Date
 	inline js int minute := this.getMinutes()
 	inline js int second := this.getSeconds()
 		
-	inline js string twoDigitMonth := (this.getMonth()+1).toLocaleString('en-US', {minimumIntegerDigits:2})
-	inline js string twoDigitDay := this.getDate().toLocaleString('en-US', {minimumIntegerDigits:2})
-	inline js string twoDigitHour := this.getHours().toLocaleString('en-US', {minimumIntegerDigits:2})
-	inline js string twoDigitMinute := this.getMinutes().toLocaleString('en-US', {minimumIntegerDigits:2})
-	inline js string twoDigitSecond := this.getSeconds().toLocaleString('en-US', {minimumIntegerDigits:2})
+	inline js string twoDigitMonth := (this.getMonth()+1).toLocaleString("en-US", {minimumIntegerDigits:2})
+	inline js string twoDigitDay := this.getDate().toLocaleString("en-US", {minimumIntegerDigits:2})
+	inline js string twoDigitHour := this.getHours().toLocaleString("en-US", {minimumIntegerDigits:2})
+	inline js string twoDigitMinute := this.getMinutes().toLocaleString("en-US", {minimumIntegerDigits:2})
+	inline js string twoDigitSecond := this.getSeconds().toLocaleString("en-US", {minimumIntegerDigits:2})
 		
 	inline js Time timeOfDay := this.getHours()*3600000 + this.getMinutes()*60000
 	
@@ -164,19 +164,19 @@ js(Date) transient struct Date
 	
 	// (31.12.)
 	js string dayMonthString: language = Loca.language
-		return this.getDate().toLocaleString('en-US', {minimumIntegerDigits:2})+"."+(this.getMonth()+1).toLocaleString('en-US', {minimumIntegerDigits:2})+"."
+		return this.getDate().toLocaleString("en-US", {minimumIntegerDigits:2})+"."+(this.getMonth()+1).toLocaleString("en-US", {minimumIntegerDigits:2})+"."
 	
 	// (31.12.2000)
 	js string dayMonthYearString: language = Loca.language
-		return this.getDate().toLocaleString('en-US', {minimumIntegerDigits:2})+"."+(this.getMonth()+1).toLocaleString('en-US', {minimumIntegerDigits:2})+"."+this.getFullYear()
+		return this.getDate().toLocaleString("en-US", {minimumIntegerDigits:2})+"."+(this.getMonth()+1).toLocaleString("en-US", {minimumIntegerDigits:2})+"."+this.getFullYear()
 	
 	// (31 December 2000)
 	js string dayLongMonthNameYearString: language = Loca.language
-		return this.getDate().toLocaleString('en-US', {minimumIntegerDigits:2})+" "+this.toLocaleString('en-US', {month: 'long'})+" "+this.getFullYear()
+		return this.getDate().toLocaleString("en-US", {minimumIntegerDigits:2})+" "+this.toLocaleString("en-US", {month: "long"})+" "+this.getFullYear()
 	
 	// (31 Dec 2000)
 	js string dayShortMonthNameYearString: language = Loca.language
-		return this.getDate()+" "+this.toLocaleString('en-US', {month: 'short'})+" "+this.getFullYear()
+		return this.getDate()+" "+this.toLocaleString("en-US", {month: "short"})+" "+this.getFullYear()
 	
 	// (Monday)
 	string weekdayString: language = Loca.language
@@ -204,16 +204,16 @@ js(Date) transient struct Date
 	
 	// (31.12.2000 23:59)
 	js string dayMonthYearHourMinuteString: language = Loca.language
-		if(language == 1000) return this.getDate().toLocaleString('en-US', {minimumIntegerDigits:2})+"-"+(this.getMonth()+1).toLocaleString('en-US', {minimumIntegerDigits:2})+"-"+this.getFullYear()+" "+this.getHours().toLocaleString('en-US', {minimumIntegerDigits:2})+"-"+this.getMinutes().toLocaleString('en-US', {minimumIntegerDigits:2})
-		else                 return this.getDate().toLocaleString('en-US', {minimumIntegerDigits:2})+"."+(this.getMonth()+1).toLocaleString('en-US', {minimumIntegerDigits:2})+"."+this.getFullYear()+" "+this.getHours().toLocaleString('en-US', {minimumIntegerDigits:2})+":"+this.getMinutes().toLocaleString('en-US', {minimumIntegerDigits:2})
+		if(language == 1000) return this.getDate().toLocaleString("en-US", {minimumIntegerDigits:2})+"-"+(this.getMonth()+1).toLocaleString("en-US", {minimumIntegerDigits:2})+"-"+this.getFullYear()+" "+this.getHours().toLocaleString("en-US", {minimumIntegerDigits:2})+"-"+this.getMinutes().toLocaleString("en-US", {minimumIntegerDigits:2})
+		else                 return this.getDate().toLocaleString("en-US", {minimumIntegerDigits:2})+"."+(this.getMonth()+1).toLocaleString("en-US", {minimumIntegerDigits:2})+"."+this.getFullYear()+" "+this.getHours().toLocaleString("en-US", {minimumIntegerDigits:2})+":"+this.getMinutes().toLocaleString("en-US", {minimumIntegerDigits:2})
 	
 	// (31.12.2000 23:59:59)
 	js string dayMonthYearHourMinuteSecondString: language = Loca.language
-		return this.getDate().toLocaleString('en-US', {minimumIntegerDigits:2})+"."+(this.getMonth()+1).toLocaleString('en-US', {minimumIntegerDigits:2})+"."+this.getFullYear()+" "+this.getHours().toLocaleString('en-US', {minimumIntegerDigits:2})+":"+this.getMinutes().toLocaleString('en-US', {minimumIntegerDigits:2})+":"+this.getSeconds().toLocaleString('en-US', {minimumIntegerDigits:2})
+		return this.getDate().toLocaleString("en-US", {minimumIntegerDigits:2})+"."+(this.getMonth()+1).toLocaleString("en-US", {minimumIntegerDigits:2})+"."+this.getFullYear()+" "+this.getHours().toLocaleString("en-US", {minimumIntegerDigits:2})+":"+this.getMinutes().toLocaleString("en-US", {minimumIntegerDigits:2})+":"+this.getSeconds().toLocaleString("en-US", {minimumIntegerDigits:2})
 	
 	// (31-12-2000 23-59-59)
 	js string invariantDayMonthYearHourMinuteSecondString: language = Loca.language
-		return this.getDate().toLocaleString('en-US', {minimumIntegerDigits:2})+"-"+(this.getMonth()+1).toLocaleString('en-US', {minimumIntegerDigits:2})+"-"+this.getFullYear()+" "+this.getHours().toLocaleString('en-US', {minimumIntegerDigits:2})+"-"+this.getMinutes().toLocaleString('en-US', {minimumIntegerDigits:2})+"-"+this.getSeconds().toLocaleString('en-US', {minimumIntegerDigits:2})
+		return this.getDate().toLocaleString("en-US", {minimumIntegerDigits:2})+"-"+(this.getMonth()+1).toLocaleString("en-US", {minimumIntegerDigits:2})+"-"+this.getFullYear()+" "+this.getHours().toLocaleString("en-US", {minimumIntegerDigits:2})+"-"+this.getMinutes().toLocaleString("en-US", {minimumIntegerDigits:2})+"-"+this.getSeconds().toLocaleString("en-US", {minimumIntegerDigits:2})
 	
 	// The number of milliseconds elapsed since January 1, 1970
 	inline js Time time := this.getTime()
@@ -221,20 +221,20 @@ js(Date) transient struct Date
 	// The data and time in ISO 8601 format, for example "2000-12-31T17:30:00.000Z"
 	js string isoString()
 		let tzo = -this.getTimezoneOffset()
-		let dif = tzo >= 0 ? '+' : '-'
+		let dif = tzo >= 0 ? "+" : "-"
 		
 		function pad (num) {
-			return (num < 10 ? '0' : '') + num;
+			return (num < 10 ? "0" : "") + num;
 		}
 		
 		return this.getFullYear() +
-			'-' + pad(this.getMonth() + 1) +
-			'-' + pad(this.getDate()) +
-			'T' + pad(this.getHours()) +
-			':' + pad(this.getMinutes()) +
-			':' + pad(this.getSeconds()) +
+			"-" + pad(this.getMonth() + 1) +
+			"-" + pad(this.getDate()) +
+			"T" + pad(this.getHours()) +
+			":" + pad(this.getMinutes()) +
+			":" + pad(this.getSeconds()) +
 			dif + pad(Math.floor(Math.abs(tzo) / 60)) +
-			':' + pad(Math.abs(tzo) % 60);
+			":" + pad(Math.abs(tzo) % 60);
 
 	static inline js Date fromTime(Time time) new Date(time)
 	static inline js Date fromValues(int year, int month=1, int day=1, int hour = 0, int minute = 0, int second = 0) new Date(year, month-1, day, hour, minute, second)
