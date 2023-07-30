@@ -1371,7 +1371,7 @@ transient DisplayItem DisplayImage
 			// Multiply tint color
 			offscreenContext.fillStyle = this.color.hex;
 			offscreenContext.globalCompositeOperation = 'multiply';
-			offscreenContext.fillRect(0, 0, buffer.width, buffer.height);
+			offscreenContext.fillRect(0, 0, offscreenCanvas.width, offscreenCanvas.height);
 			
 			// Apply alpha
 			offscreenContext.globalAlpha = 1;
@@ -1379,7 +1379,7 @@ transient DisplayItem DisplayImage
 			offscreenContext.drawImage(this.htmlImage, this.sx, this.sy, this.sw, this.sh, 0, 0, this.sw, this.sh)
 				
 			// Draw tinted image
-	        Platform_context.drawImage(buffer, this.x, this.y, this.w, this.h);		
+	        Platform_context.drawImage(offscreenCanvas, this.x, this.y, this.w, this.h);		
 		}
 		
 		if(this.clippingPath) this.endClipping()
