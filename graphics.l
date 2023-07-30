@@ -1370,7 +1370,7 @@ transient DisplayItem DisplayImage
 			
 			// Multiply tint color
 			offscreenContext.fillStyle = this.color.hex;
-			offscreenContext.globalCompositeOperation = 'multiply';
+			offscreenContext.globalCompositeOperation = "multiply";
 			offscreenContext.fillRect(0, 0, offscreenCanvas.width, offscreenCanvas.height);
 			
 			// Apply alpha
