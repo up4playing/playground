@@ -10,7 +10,7 @@ unit app
 	Box[] boxes
 	Item[] items
 	
-	int[] getNumbers(int start, int end)
+	def int[] getNumbers: int start, int end
 		int[] list
 		// For loop for numbers syntax: for <start> to <end>
 		// Use . to access the current value
@@ -18,7 +18,7 @@ unit app
 			if . % 2 == 0: list.add .
 		return list
 		
-	int getSum(int[] list)
+	def int getSum: int[] list
 		int sum
 		// For loop for lists syntax: for <list>
 		// Use . to access the current value
@@ -26,14 +26,14 @@ unit app
 			sum += .
 		return sum
 		
-	void getWinner()
+	def getWinner
 		return players.withMax.score
 		
-	void start()
+	def start
 		Menu()
 		startGame
 		
-	void startGame()
+	def startGame
 		for Direction.diagonalDirections
 			boxes.add {rect:{position:{220,280}*.vector, size:{420,440}}}
 		nextRound
@@ -42,7 +42,7 @@ unit app
 		// Write "phase = DrawItems" instead of "phase = Phase.DrawItems"
 		phase = DragItems
 		
-	void nextRound()
+	def nextRound
 		round++
 		boxes.each.itemInBox = null
 		words.shuffle
@@ -55,7 +55,7 @@ unit app
 		// Make the next player the current player
 		currentPlayer = players next currentPlayer
 			
-	void tick()
+	def tick
 		items.each.tick
 		boxes.each.tick
 		players.each.tick
@@ -70,16 +70,16 @@ unit app
 						nextRound
 			Reveal
 				// Draw yellow text thats visible for everybody
-				drawText "Reveal", size:32, color:#ffff00, visibleFor:everybody
+				drawText "Reveal", size:32, Color("ffff00"), visibleFor:everybody
 				
 			GameOver
 				tickGameOver
 				
 				// Draw green text thats visible for everybody
-				drawText "Game Over", size:32, color:#00ff00, visibleFor:everybody
+				drawText "Game Over", size:32, Color("00ff00"), visibleFor:everybody
 		
 				
-	void tickGameOver()
+	def tickGameOver
 		phase = GameOver
 		
 		let offencePlayer = players.find.role == Offence
@@ -135,7 +135,7 @@ class Item
 	Box droppedInBox
 	string word
 	
-	void tick()
+	def tick
 		switch app.phase
 			DragItems
 				// Drag items
@@ -166,17 +166,18 @@ class Item
 					moveTouch = null
 			GameOver
 				// Draw red text
-				drawText "Game Over", position, size:40, font:OpenSans, color:#ff0000
+				drawText "Game Over", position, size:40, Color("ff0000"), font:OpenSans
 				
 		// Draw blue circle with a radius of 200 with a green outline
-		drawCircle position, size:400, color:#0000ff, outlineColor:#00ff00, outlineWidth:5
+		drawCircle position, size:400, Color("0000ff"), outlineColor:Color("00ff00"), outlineWidth:5
 		
 class Box
 	Rect rect
 	Item itemInBox
-	void tick()
+	
+	def tick
 		// Draw blue box with white outline
-		drawRectangle rect.position, rect.size, color:#0000ff, outlineColor:#ffffff, outlineWidth:5
+		drawRectangle rect.position, rect.size, Color("0000ff"), outlineColor:Color("ffffff"), outlineWidth:5
 		
 enum Role: Offence, Defence
 		
@@ -186,18 +187,18 @@ class Player
 	string name
 	Role role
 	
-	visible Color color = #ffffff
+	visible color = Color("ffffff")
 	visible Direction dir = Direction.diagonalDirections[index]
 	visible Vector2 videoPos = dir.vector * {700,270}
 	
-	void tick()
+	def tick
 		// Draw round video of player with cirlce outline
 		const radius = 220
 		drawVideo me, videoPos, size:radius*2, shape:Circle
-		drawCircle videoPos, size:radius*2+50, color:#000000, outlineColor:color, outlineWidth:12, visibleFor:me
+		drawCircle videoPos, size:radius*2+50, Color("000000"), outlineColor:color, outlineWidth:12, visibleFor:me
 		
 		// Draw yellow player name that's visible the current player instance
-		drawText name, size:32, color:#ffff00, visibleFor:me
+		drawText name, size:32, Color("ffff00"), visibleFor:me
 
 
 // Start of LiveTime API. ONLY call functions that are in the LiveTime API
@@ -207,52 +208,53 @@ class Touch
 	Vector2 referenceStartPosition
 	
 unit input
-	global void onTouchDownWithin(Vector2 position, Vector2 size, Player[] by = null, Cursor cursor = Auto, bool showTouchArea = false, bool markAsHandled = true, HorizontalAlignment align = Center, VerticalAlignment valign = Middle, void(Touch touch) do)
-	global void onTouchMove(Touch touch, triggeredOnTouchDown = true, void(Touch touch) do))
-	global void onTouchMove(Player[] by = null, void(Touch touch) do))
-	global void onTouchUp(Touch touch, markAsHandled = true, void(Touch touch) do))
-	global void onTouchUp(Player[] by = null, bool markAsHandled = true, void(Touch touch) do))
+	def onTouchDownWithin: Vector2 position, Vector2 size, Player[] by = null, Cursor cursor = Auto, bool showTouchArea = false, bool markAsHandled = true, HorizontalAlignment align = Center, VerticalAlignment valign = Middle, def(Touch touch) do
+	def onTouchMove: Touch touch, triggeredOnTouchDown = true, def(Touch touch) do
+	def onTouchMove: Player[] by = null, def(Touch touch) do
+	def onTouchUp: Touch touch, markAsHandled = true, def(Touch touch) do
+	def onTouchUp: Player[] by = null, bool markAsHandled = true, def(Touch touch) do
 		
 unit math
-	int randomInteger(int min, int max)
-	float randomFloat()
-	float min(float a, float b)
-	float max(float a, float b)
+	def int randomInteger: int min, int max
+	def float randomFloat
+	def float min: float a, float b
+	def float max: float a, float b
 
 class List<T>
-	void each(inline void(T it, int i) do)
-	void add(T item)
-	void insert(T item, index = 0)
-	void remove(T item)
-	void removeAt(int index)
-	void removeWhere(bool(T a) condition)
-	void ensure(T item)
-	bool contains(T item)
-	T pop()
 	int length
-	void clear()
-	T random()
-	T popRandom()
-	T next(T currentItem)
-	void moveToBack(T item)
-	void moveToFront(T item)
-	T[] orderBy(float(T a) expression)
-	bool any(bool(T a) predicate)
-	bool none(bool(T a) predicate)
-	bool all(bool(T a) predicate)
-	TValue[] select(TValue(T it) selector)
-	T find(bool(T a) condition)
-	T[] where(bool(T a) condition)
-	int total(int(T it) selector)
-	void shuffle()
-	T min(float(T a) selector, float threshold = float.maxValue, float default = 0)
-	T max(float(T a) selector, float threshold = float.minValue, float default = 0)
+	
+	def each: inline def(T it, int i) do
+	def add: T item
+	def insert: T item, index = 0
+	def remove: T item
+	def removeAt: int index
+	def removeWhere: bool(T a) condition
+	def ensure: T item
+	def bool contains: T item
+	def T pop
+	def clear
+	def T random
+	def T popRandom
+	def T next: T currentItem
+	def moveToBack: T item
+	def moveToFront: T item
+	def T[] orderBy: float(T a) expression
+	def bool any: bool(T a) predicate
+	def bool none: bool(T a) predicate
+	def bool all: bool(T a) predicate
+	def TValue[] select: TValue(T it) selector
+	def T find: bool(T a) condition
+	def T[] where: bool(T a) condition
+	def int total: int(T it) selector
+	def shuffle
+	def T min: float(T a) selector, float threshold = float.maxValue, float default = 0
+	def T max: float(T a) selector, float threshold = float.minValue, float default = 0
 
 unit graphics
-	global void drawImage(Image image, Vector2 position = {}, frame = 0, implicit Vector2 size = {}, Angle angle = 0.0, touchMargin = Vector2(16,16), showTouchArea = false, implicit Player[] visibleFor = null, implicit Player[] touchableBy = null, hotkey = Key.None, implicit layer = 0, alpha = 1.0, Color color = White, void(Touch touch) onTouch)
-	global void drawText(implicit string text, Vector2 position = {}, implicit Vector2 size = {}, Color color = null, HorizontalAlignment align = Center, VerticalAlignment valign = Middle, FontStyle style = Normal, Font font = null, Color outlineColor = null, outlineWidth = 0, implicit Player[] visibleFor = null, implicit layer = 0, alpha = 1.0)
-	global void drawButton(Image image = null, text = "", Vector2 position = {}, implicit Vector2 size = {}, frame = 0, Color textColor = null, textSize = 18, textOffset = Vector2(0,0), touchMargin = Vector2(16,16), showTouchArea = false, implicit Player[] visibleFor = null, implicit Player[] touchableBy = null, hotkey = Key.None, implicit layer = 0, alpha = 1.0, enabled = true, alphaWhenDisabled = .5, void(Touch touch) onTouch = null)
-	global void drawRectangle(position = Vector2(), implicit size = Vector2(256,256), Color color = null, Color outlineColor = null, outlineWidth = 0, implicit Player[] visibleFor = null, implicit layer = 0, alpha = 1.0, HorizontalAlignment align = Center, VerticalAlignment valign = Middle)
-	global void drawCircle(position = Vector2(), implicit Vector2 size = {256,256}, Color color = null, Color outlineColor = null, outlineWidth = 0, Angle startAngle = -.25, Angle angle = 1.0, RotationDirection direction = Clockwise, implicit Player[] visibleFor = null, implicit layer = 0, alpha = 1.0)
+	def drawImage: Image image, Vector2 position = {}, frame = 0, implicit Vector2 size = {}, Angle angle = 0.0, touchMargin = Vector2(16,16), showTouchArea = false, implicit Player[] visibleFor = null, implicit Player[] touchableBy = null, hotkey = Key.None, implicit layer = 0, alpha = 1.0, Color color = White, def(Touch touch) onTouch
+	def drawText: implicit string text, Vector2 position = {}, implicit Vector2 size = {}, Color color = null, HorizontalAlignment align = Center, VerticalAlignment valign = Middle, FontStyle style = Normal, Font font = null, Color outlineColor = null, outlineWidth = 0, implicit Player[] visibleFor = null, implicit layer = 0, alpha = 1.0
+	def drawButton: Image image = null, text = "", Vector2 position = {}, implicit Vector2 size = {}, frame = 0, Color textColor = null, textSize = 18, textOffset = Vector2(0,0), touchMargin = Vector2(16,16), showTouchArea = false, implicit Player[] visibleFor = null, implicit Player[] touchableBy = null, hotkey = Key.None, implicit layer = 0, alpha = 1.0, enabled = true, alphaWhenDisabled = .5, def(Touch touch) onTouch = null
+	def drawRectangle: position = Vector2(), implicit size = Vector2(256,256), Color color = null, Color outlineColor = null, outlineWidth = 0, implicit Player[] visibleFor = null, implicit layer = 0, alpha = 1.0, HorizontalAlignment align = Center, VerticalAlignment valign = Middle
+	def drawCircle: position = Vector2(), implicit Vector2 size = {256,256}, Color color = null, Color outlineColor = null, outlineWidth = 0, Angle startAngle = -.25, Angle angle = 1.0, RotationDirection direction = Clockwise, implicit Player[] visibleFor = null, implicit layer = 0, alpha = 1.0
 
 // ACTUAL CODE: Start of actual code

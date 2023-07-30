@@ -39,33 +39,33 @@ transient unit PeerNetwork
 		if(PeerNetwork_relayMode > 0) {
 			// --- Alphahosting ---
 			options.iceServers.push({
-				urls: 'turn:89.22.121.145:39571',
-				username: 'play-user-x8env28gx41odbxzwjyut2oq871987syq8ovyuqp-alphahosting',
-				credential: 'qoy91n981vlplabb1873jdcgsouz2qm87qmmakqpc-alphahosting'
+				urls: "turn:89.22.121.145:39571",
+				username: "play-user-x8env28gx41odbxzwjyut2oq871987syq8ovyuqp-alphahosting",
+				credential: "qoy91n981vlplabb1873jdcgsouz2qm87qmmakqpc-alphahosting"
 			});			
 			// --- Alwyzon ---
 			// options.iceServers.push({
-			// 	urls: 'turn:94.177.8.204:39571',
-			// 	username: 'play-user-x8env28gx41odbxzwjyut2oq871987syq8ovyuqp-alwyzon',
-			// 	credential: 'qoy91n981vlplabb1873jdcgsouz2qm87qmmakqpc-alwyzon'
+			// 	urls: "turn:94.177.8.204:39571",
+			// 	username: "play-user-x8env28gx41odbxzwjyut2oq871987syq8ovyuqp-alwyzon",
+			// 	credential: "qoy91n981vlplabb1873jdcgsouz2qm87qmmakqpc-alwyzon"
 			// });
 			// --- Strato-v30 ---
 			// options.iceServers.push({
-			// 	urls: 'turn:85.214.133.53:39571',
-			// 	username: 'play-user-9q2gy75kmlp4qn7tb86pogsmtyp7qqo0n5-strato-v30',
-			// 	credential: '8q76nby32odjamuzbexi6eb2f1k9gc3my99o-strato-v30'
+			// 	urls: "turn:85.214.133.53:39571",
+			// 	username: "play-user-9q2gy75kmlp4qn7tb86pogsmtyp7qqo0n5-strato-v30",
+			// 	credential: "8q76nby32odjamuzbexi6eb2f1k9gc3my99o-strato-v30"
 			// });
 			// --- Strato ---
 			// options.iceServers.push({
-			// 	urls: 'turn:81.169.197.127',
-			// 	username: 'play-user-x8env28gx41odbxzwjyut2hx82jyzdk7qm6d-ok',
-			// 	credential: '9y4vm5vxj3uyqvc8wkyzrm26ygebxutkd52bymr8zsmy6qa8-ok'
+			// 	urls: "turn:81.169.197.127",
+			// 	username: "play-user-x8env28gx41odbxzwjyut2hx82jyzdk7qm6d-ok",
+			// 	credential: "9y4vm5vxj3uyqvc8wkyzrm26ygebxutkd52bymr8zsmy6qa8-ok"
 			// });
 		}
 		options.iceServers.push({
 			urls: [
-				'stun:stun1.l.google.com:19302',
-				'stun:stun2.l.google.com:19302',
+				"stun:stun1.l.google.com:19302",
+				"stun:stun2.l.google.com:19302",
 			],
 		});
 		let peerConnection = new RTCPeerConnection(options);
@@ -172,7 +172,7 @@ transient unit PeerNetwork
 			PeerNetwork_stopRecreatingDataChannel(user)
 			
 			// Data channel
-			user.peerConnection.addEventListener('datachannel', e => {
+			user.peerConnection.addEventListener("datachannel", e => {
 				core_log("<"+user.id+"> Data channel received")
 				let dataChannel = e.channel
 				dataChannel.binaryType = "arraybuffer"
@@ -402,7 +402,6 @@ transient unit PeerNetwork
 		for(let user of input_internalUsers) {
 			if(user?.peerConnection) {
 				const sender = user.peerConnection.getSenders().find((s) => s.track.kind === audioTrack.kind);
-				log('Found sender:', sender);
 				sender.replaceTrack(audioTrack);
 			}
 		}
@@ -434,13 +433,13 @@ transient unit PeerNetwork
 		user.mediaStream = new MediaStream();
 		
 		// Create audio element so we always hear the remote user, event if no video is shown
-		let audioElement = user.audioElement = document.createElement('audio')
+		let audioElement = user.audioElement = document.createElement("audio")
 		audioElement.srcObject = user.mediaStream
 		if(audioElement.setSinkId) audioElement.setSinkId(PeerNetwork_audioOutputId);
 		document.body.appendChild(audioElement);
 		
 		// Add incoming tracks to media stream for remote player
-		user.peerConnection.addEventListener('track', event => {
+		user.peerConnection.addEventListener("track", event => {
 			event.streams[0].getTracks().forEach(track => {
 				user.mediaStream.addTrack(track);
 			});
@@ -449,7 +448,7 @@ transient unit PeerNetwork
 	// --------------------------------------------- Media elements ---------------------------------------------
 	
 	js object createVideoElement: object stream, bool local
-		let el = document.createElement('video')
+		let el = document.createElement("video")
 		el.style = "border-radius: 500px; object-fit: cover; position:absolute; top:0px; left:0px; z-index:10000; visibility:hidden; "+(local ? "transform: scaleX(-1)" : "")
 		el.autoplay = true
 		el.playsinline = true

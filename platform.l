@@ -269,36 +269,36 @@ transient skipInit unit Platform
 		}	
 		
 	js void saveTextFile: string filename, string text
-		var element = document.createElement('a');
-		element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(text));
-		element.setAttribute('download', filename);
-		element.style.display = 'none';
+		var element = document.createElement("a");
+		element.setAttribute("href", "data:text/plain;charset=utf-8," + encodeURIComponent(text));
+		element.setAttribute("download", filename);
+		element.style.display = "none";
 		document.body.appendChild(element);
 		element.click();
 		document.body.removeChild(element);
 		
 	js void saveBinaryFile: string filename, Buffer buffer
-		var binary = '';
+		var binary = "";
 		var bytes = new Uint8Array(buffer.buffer);
 		var len = bytes.byteLength;
 		for (var i = 0; i < len; i++) {
 		    binary += String.fromCharCode(bytes[i]);
 		}
 		var base64 = window.btoa( binary );
-		var dataUrl = 'data:text/plain;base64,' + base64;
+		var dataUrl = "data:text/plain;base64," + base64;
 		
-		var element = document.createElement('a');
-		element.setAttribute('href', dataUrl);
-		element.setAttribute('download', filename);
-		element.style.display = 'none';
+		var element = document.createElement("a");
+		element.setAttribute("href", dataUrl);
+		element.setAttribute("download", filename);
+		element.style.display = "none";
 		document.body.appendChild(element);
 		element.click();
 		document.body.removeChild(element);
 		
 	js void openBinaryFile: void(Buffer buffer) then, void(string error) else = null
 		fileInput = document.createElement("input")
-		fileInput.type = 'file'
-		fileInput.style.display = 'none'
+		fileInput.type = "file"
+		fileInput.style.display = "none"
 		fileInput.onchange = e => {
 			var file = e.target.files[0];
 			if (!file) {
@@ -347,19 +347,19 @@ transient skipInit unit Platform
 	js void saveImage: string dataUrl, string file
 		var base64Data = dataUrl.replace(/data:image\/png;base64,/, "");
 		var fs = require("fs")
-		fs.writeFile(file, base64Data, 'base64', function (err) {
+		fs.writeFile(file, base64Data, "base64", function (err) {
 			if(err) log(err)
 		});
 		
 	js string[] showOpenDialog: FileFilter[] filters = null
 		if(!Network_isPremiere || !Input_isCertain) return
 		const { remote } = require("electron")
-		return remote.dialog.showOpenDialogSync({ filters, properties: ['openFile'] })
+		return remote.dialog.showOpenDialogSync({ filters, properties: ["openFile"] })
 		
 	js string showSaveDialog: FileFilter[] filters = null
 		if(!Network_isPremiere || !Input_isCertain) return
 		const { remote } = require("electron")
-		return remote.dialog.showSaveDialogSync({ filters, properties: ['createDirectory'] })
+		return remote.dialog.showSaveDialogSync({ filters, properties: ["createDirectory"] })
 		
 	inline js void debugger
 		debugger
@@ -393,32 +393,32 @@ transient skipInit unit Platform
 		
 	js void showIcon
 		if(!Platform_isDebug && window.require) {
-			const { remote } = require('electron')
+			const { remote } = require("electron")
 			remote.app.dock?.show()
 		}
 	
 	js void hideIcon
 		if(!Platform_isDebug && window.require) {
-			const { remote } = require('electron')
+			const { remote } = require("electron")
 			remote.app.dock?.hide()
 		}
 	
 	js void show
 		if(!Platform_isDebug && window.require) {
-			const { remote } = require('electron')
+			const { remote } = require("electron")
 			remote.getCurrentWindow().show()
 		}
 	
 	js void hide
 		if(!Platform_isDebug && window.require) {
-			const { remote } = require('electron')
+			const { remote } = require("electron")
 			remote.getCurrentWindow().hide()
 		}
 		
 	js void registerGlobalShotcut: string shortcut
 		                           void() do
 		if(!Platform_isDebug && window.require) {
-			const { remote } = require('electron')
+			const { remote } = require("electron")
 			remote.globalShortcut.unregister(shortcut)
 			remote.globalShortcut.register(shortcut, () => do())
 		}
