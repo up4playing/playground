@@ -450,6 +450,10 @@ class List<T>
 	inline js void add: T[] items // The list of items to add
 		this.push(...items)
 			
+	// Add an list of item to the end of the list
+	inline js void addRange: T[] items // The list of items to add
+		this.push(...items)
+			
 	// Insert an item at a given index
 	inline js void insert: T item    // The item to insert
 		                   index = 0 // Insert the item at this index
