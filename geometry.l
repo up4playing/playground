@@ -900,6 +900,9 @@ class Grid<T>
 		
 	bool isValid: IntVector2 pos
 		return {0,0} <= pos < size
+		
+	int count: bool(T a) predicate
+		return items.count(predicate)
 			
 global transient unit System
 	global inline js void for: IntVector2 subject  // The exclusive upper bound to iterate towards
