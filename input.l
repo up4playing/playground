@@ -1450,7 +1450,7 @@ skipInit global unit input
 			
 	// ---------------------------------------------- Text Input ----------------------------------------------
 	
-	private bool isTextInputActive = false
+	visible bool isTextInputActive = false
 	
 	private js object getOrCreateInputField
 		if(!window._input) {
