@@ -70,7 +70,6 @@ transient class InternalUser
 		bufferFrames = 5
 		smoothFrame = frame - bufferFrames		
 		
-// The public state of a player. This is the same accross all clients.
 class Player
 	int id
 	int index
