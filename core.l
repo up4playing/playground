@@ -492,7 +492,7 @@ transient skipInit unit core
 	internal saveLogs
 		// Ensure that current eventLog is added to the table even if we haven't processed a single frame
 		logTable += ",,,,,,,,,,,,,,,,,,,,,,,,\"{eventLog.trim}\""
-		Platform.saveTextFile "{input.localUser.id} {Platform.appName} {Date.now.invariantDayMonthYearHourMinuteSecondString} v{Platform.version}.csv", logTable
+		file.saveText "{input.localUser.id} {Platform.appName} {Date.now.invariantDayMonthYearHourMinuteSecondString} v{Platform.version}.csv", logTable
 			
 	saveEventStream
 		Buffer buffer = {}
@@ -509,11 +509,11 @@ transient skipInit unit core
 			buffer.writeBool .local
 			buffer.writeBuffer .inputs
 		let date = Date.now
-		Platform.saveBinaryFile "{Platform.appName} {date.dayShortMonthNameYearString} {date.hourMinuteSecondString} v{Platform.version}.state", buffer
+		file.saveBinary "{Platform.appName} {date.dayShortMonthNameYearString} {date.hourMinuteSecondString} v{Platform.version}.state", buffer
 		
 	openEventStream
 		Platform.pause
-		Platform.openBinaryFile
+		file.openBinary
 			// Read event stream
 			int version = buffer.readInt
 			int targetFrame = buffer.readInt
