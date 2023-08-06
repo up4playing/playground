@@ -1086,7 +1086,8 @@ skipInit global unit input
 				if !touch.handled && touch.referencePosition.isInsidePoygon(poly)
 					this.cursor = cursor
 				
-		if showTouchArea: drawRectangle position, size, color:{"ff000080"}, align, valign, layer:10000000
+		// Migrate to 3D
+		// if showTouchArea: drawRectangle position, size, color:{"ff000080"}, align, valign, layer:10000000
 
 	// Do something when the player touches or clicks within a given rotated rectangle
 	// Example: Draw a the image "Character" rotated by 45 degrees and print "Clicked character" when the player touches within its rotated rectangle.
@@ -1134,8 +1135,8 @@ skipInit global unit input
 					if !touch.handled && touch.referencePosition.isInsidePoygon(poly)
 						this.cursor = cursor
 				
-		// if showTouchArea: drawRectangle position, size, color:{"ff000080"}, align, valign, layer:10000000
-		if showTouchArea: drawPolygon poly, color:{"ff000080"}, layer:10000000
+		// Migrate to 3D
+		// if showTouchArea: drawPolygon poly, color:{"ff000080"}, layer:10000000
 
 	// Do something when the player touches or clicks within a given circle
 	// Example: Draw the image "Ball" and print "Clicked ball" when the player touches it.
@@ -1168,7 +1169,8 @@ skipInit global unit input
 					if !touch.handled && (touch.referencePosition distanceTo position) <= radius
 						this.cursor = cursor
 				
-		if showTouchArea: drawCircle position, radius*2, color:{"ff000080"}
+		// Migrate to 3D
+		// if showTouchArea: drawCircle position, radius*2, color:{"ff000080"}
 
 	// Do something when the player touches or clicks within a given polygon
 	// Example: Draw a polygon and print "Clicked OK" when the player touches it.
@@ -1205,7 +1207,8 @@ skipInit global unit input
 					if !touch.handled && touch.referencePosition.isInsidePoygon(poly)
 						this.cursor = cursor
 				
-		if showTouchArea: drawPolygon position, points, color:{"ff0000b0"}
+		// Migrate to 3D
+		// if showTouchArea: drawPolygon position, points, color:{"ff0000b0"}
 			
 	// Do something when the player touches or clicks, even if the event is already handled
 	global onTouchDownAny: implicit nocolon Player[] by = null // Only consider touches or clicks by this player or list of players
@@ -1253,7 +1256,8 @@ skipInit global unit input
 					if !touch.handled && touch.referencePosition.isInsidePoygon(poly)
 						this.cursor = cursor
 				
-		if showTouchArea: drawRectangle position, size, color:{"ff000080"}
+		// Migrate to 3D
+		// if showTouchArea: drawRectangle position, size, color:{"ff000080"}
 
 			
 	// ---------------------------------------------- Touch Move ----------------------------------------------
@@ -1382,7 +1386,8 @@ skipInit global unit input
 					if markAsHandled: touch.handled = true
 					Snapshot.autoSave
 						
-		if showTouchArea: drawRectangle position, size, color:{"ff000080"}
+		// Migrate to 3D
+		// if showTouchArea: drawRectangle position, size, color:{"ff000080"}
 
 	// Do something when the player ends a touch or click within a given circle
 	// Example: Draw the image "Ball" and print "Clicked ball" when the player ends a touch or releases the mouse button over this button
@@ -1415,7 +1420,8 @@ skipInit global unit input
 					if !touch.handled && (touch.referencePosition distanceTo position) <= radius
 						this.cursor = cursor
 				
-		if showTouchArea: drawCircle position, radius*2, color:{"ff000080"}
+		// Migrate to 3D
+		// if showTouchArea: drawCircle position, radius*2, color:{"ff000080"}
 						
 	// ---------------------------------------------- Scroll ----------------------------------------------
 	
@@ -1446,7 +1452,8 @@ skipInit global unit input
 					do .
 					if markAsHandled: .markAsHandled
 						
-		if showTouchArea: drawRectangle position, size, Red
+		// Migrate to 3D
+		// if showTouchArea: drawRectangle position, size, Red
 			
 	// ---------------------------------------------- Text Input ----------------------------------------------
 	

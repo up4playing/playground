@@ -60,10 +60,11 @@ skipInit class Sound
 		
 	isPlaying
 		return audio.playingSounds.any.sound == this and .frame < Time.frame
-		
+
 	fadeOut: Time duration = 3000
 		     Time delay = 0
-		fx.add FadeSoundEffect startTime:Time.now+delay, duration, sound:this, startValue:1, delta:-1
+		// Migrate to 3D
+		// fx.add FadeSoundEffect startTime:Time.now+delay, duration, sound:this, startValue:1, delta:-1
 		return this
 
 transient class PlayingSound
@@ -112,11 +113,13 @@ transient global skipInit unit audio
 		              Time delay = 0
 		              bool needsToBeCertain = false
 		if needsToBeCertain and not input.isCertain: return
-			
-		if Time.frame == 0
-			fx.add PlaySoundEffect startTime:math.ceil(Time.now+core.targetFrameTime)+delay, sound
-		else
-		if delay
-			fx.add PlaySoundEffect startTime:Time.now+delay, sound
-		else
-			sound.play
+		sound.play
+		
+		// Migrate to 3D
+		// if Time.frame == 0
+		// 	fx.add PlaySoundEffect startTime:math.ceil(Time.now+core.targetFrameTime)+delay, sound
+		// else
+		// if delay
+		// 	fx.add PlaySoundEffect startTime:Time.now+delay, sound
+		// else
+		// 	sound.play

@@ -1574,8 +1574,6 @@ transient DisplayItem DisplayPolygon
 		}
 		if(this.clippingPath) this.endClipping()
 		
-enum RotationDirection: Clockwise, CounterClockwise
-		
 transient DisplayItem DisplayCircle
 	float startAngle, angle
 	RotationDirection direction

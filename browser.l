@@ -202,16 +202,17 @@ HTMLElement HTMLInput
 	js void focus() this.element?.focus()
 		
 	internal tick
-		ensureElement
-		let pos = graphics.getPixelPosition(this.position)
-		let size = graphics.getPixelSize(this.size)
-		let fontSize = this.fontSize * graphics.totalMatrix.m0 / graphics.pixelRatio
-		this.element.style.font = "{fontSize/graphics.pixelRatio}px OpenSans"
-		this.element.style.left = "{pos.x-size.x/2}px"
-		this.element.style.top = "{pos.y-size.y/2}px"		
-		this.element.style.width = "{size.x}px"
-		this.element.style.height = "{size.y}px"
-		this.element.style.font = "{fontSize}px OpenSans"
+		// Migrate to 3D
+		// ensureElement
+		// let pos = graphics.getPixelPosition(this.position)
+		// let size = graphics.getPixelSize(this.size)
+		// let fontSize = this.fontSize * graphics.totalMatrix.m0 / graphics.pixelRatio
+		// this.element.style.font = "{fontSize/graphics.pixelRatio}px OpenSans"
+		// this.element.style.left = "{pos.x-size.x/2}px"
+		// this.element.style.top = "{pos.y-size.y/2}px"		
+		// this.element.style.width = "{size.x}px"
+		// this.element.style.height = "{size.y}px"
+		// this.element.style.font = "{fontSize}px OpenSans"
 		
 transient unit IndexedDB
 	private object db
