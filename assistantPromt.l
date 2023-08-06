@@ -1,7 +1,7 @@
 // EXAMPLE CODE: Start of an example of the LiveTime programming language.
 enum Phase: DragItems, Reveal, GameOver
 
-unit app
+class app
 	int round
 	// List of words
 	const string[] words = ["", "Word"]
@@ -207,14 +207,14 @@ class Touch
 	Vector2 referencePosition
 	Vector2 referenceStartPosition
 	
-unit input
+class input
 	def onTouchDownWithin: Vector2 position, Vector2 size, Player[] by = null, Cursor cursor = Auto, bool showTouchArea = false, bool markAsHandled = true, HorizontalAlignment align = Center, VerticalAlignment valign = Middle, def(Touch touch) do
 	def onTouchMove: Touch touch, triggeredOnTouchDown = true, def(Touch touch) do
 	def onTouchMove: Player[] by = null, def(Touch touch) do
 	def onTouchUp: Touch touch, markAsHandled = true, def(Touch touch) do
 	def onTouchUp: Player[] by = null, bool markAsHandled = true, def(Touch touch) do
 		
-unit math
+class math
 	def int randomInteger: int min, int max
 	def float randomFloat
 	def float min: float a, float b
@@ -250,7 +250,7 @@ class List<T>
 	def T min: float(T a) selector, float threshold = float.maxValue, float default = 0
 	def T max: float(T a) selector, float threshold = float.minValue, float default = 0
 
-unit graphics
+class graphics
 	def drawImage: Image image, Vector2 position = {}, frame = 0, implicit Vector2 size = {}, Angle angle = 0.0, touchMargin = Vector2(16,16), showTouchArea = false, implicit Player[] visibleFor = null, implicit Player[] touchableBy = null, hotkey = Key.None, implicit layer = 0, alpha = 1.0, Color color = White, def(Touch touch) onTouch
 	def drawText: implicit string text, Vector2 position = {}, implicit Vector2 size = {}, Color color = null, HorizontalAlignment align = Center, VerticalAlignment valign = Middle, FontStyle style = Normal, Font font = null, Color outlineColor = null, outlineWidth = 0, implicit Player[] visibleFor = null, implicit layer = 0, alpha = 1.0
 	def drawButton: Image image = null, text = "", Vector2 position = {}, implicit Vector2 size = {}, frame = 0, Color textColor = null, textSize = 18, textOffset = Vector2(0,0), touchMargin = Vector2(16,16), showTouchArea = false, implicit Player[] visibleFor = null, implicit Player[] touchableBy = null, hotkey = Key.None, implicit layer = 0, alpha = 1.0, enabled = true, alphaWhenDisabled = .5, def(Touch touch) onTouch = null
