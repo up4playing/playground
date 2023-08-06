@@ -70,7 +70,6 @@ transient class InternalUser
 		bufferFrames = 5
 		smoothFrame = frame - bufferFrames		
 		
-// The public state of a player. This is the same accross all clients.
 class Player
 	int id
 	int index
@@ -1451,7 +1450,7 @@ skipInit global unit input
 			
 	// ---------------------------------------------- Text Input ----------------------------------------------
 	
-	private bool isTextInputActive = false
+	visible bool isTextInputActive = false
 	
 	private js object getOrCreateInputField
 		if(!window._input) {

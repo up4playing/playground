@@ -880,6 +880,16 @@ class Grid<T>
 	inline js bool any: bool(T a) predicate // The condition to check
 		this.items.some(predicate)
 		
+	inline js T[] where: bool(T a) predicate // The condition to check
+		this.items.filter(predicate)
+		
+	int count: bool(T a) predicate // The condition to check
+		int count = 0
+		for items
+			if predicate(.)
+				count++
+		return count
+		
 	// Returns true if the given condition is true for all items in the list
 	inline js bool all
 		this.items.every(a => a)

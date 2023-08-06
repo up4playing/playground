@@ -40,7 +40,7 @@ unit snapshot
 			}
 			return String.fromCharCode(i);
 		}
-		if (input === null) return '';
+		if (input === null) return "";
 		let i = 0,
 			j = 0,
 			value = 0,
@@ -234,8 +234,8 @@ unit snapshot
 		data_val <<= 15 - data_position;
 		data.push(itou(data_val));
 
-		data.push(' ');
-		return data.join('');
+		data.push(" ");
+		return data.join("");
 
 	js dynamic decompress: string compressed
 		function utoi(i) {
@@ -350,7 +350,7 @@ unit snapshot
 		return null;
 
 	js void testCompression
-		console.log('Testing utoi/itou functions');
+		console.log("Testing utoi/itou functions");
 		let utoiMismatches = [];
 		for (let i = 0; i < 1 << 15; i++) {
 			let j = LZ.utoi(LZ.itou(i).charCodeAt(0));
@@ -362,7 +362,7 @@ unit snapshot
 		if (utoiMismatches.length) {
 			console.log("Errors in itou/utoi conversion detected:", utoiMismatches);
 		} else {
-			console.log('No errors in itou/utoi conversion detected');
+			console.log("No errors in itou/utoi conversion detected");
 		}
 	
 		let input = new Uint16Array(1 << 15);

@@ -1,15 +1,44 @@
 // EXAMPLE CODE: Start of an example of the LiveTime programming language.
-enum Phase: DragItems, Reveal, GameOver
-
-unit app
+class app
 	int round
-	// List of words
-	const string[] words = ["", "Word"]
-	Phase phase
 	Player currentPlayer
+	Phase phase
+	
+	def start
+		players.each.start
+		
+	def tick
+		players.each.tick
+		
+class Player
+	int score
+	bool alive
+	string name
+	Role role
+	
+	visible color = Color("ffffff")
+	visible Direction dir = Direction.diagonalDirections[index]
+	visible Vector2 videoPos = dir.vector * {700,270}
+	
+	def tick
+		// Draw round video of player with cirlce outline
+		const radius = 220
+		drawVideo me, videoPos, size:radius*2, shape:Circle
+		drawCircle videoPos, size:radius*2+50, Color("000000"), outlineColor:color, outlineWidth:12, visibleFor:me
+		
+		// Draw yellow player name that's visible the current player instance
+		drawText name, size:32, Color("ffff00"), visibleFor:me
+	
+enum Role: Offence, Defence
+		
+enum Phase: DragItems, Reveal, GameOver
+		
+class example
+	// List of words
+	const string[] words = ["Apple", "Banana", "Orange"]
 	Box[] boxes
 	Item[] items
-	
+		
 	def int[] getNumbers: int start, int end
 		int[] list
 		// For loop for numbers syntax: for <start> to <end>
@@ -25,13 +54,6 @@ unit app
 		for list
 			sum += .
 		return sum
-		
-	def getWinner
-		return players.withMax.score
-		
-	def start
-		Menu()
-		startGame
 		
 	def startGame
 		for Direction.diagonalDirections
@@ -77,7 +99,6 @@ unit app
 				
 				// Draw green text thats visible for everybody
 				drawText "Game Over", size:32, Color("00ff00"), visibleFor:everybody
-		
 				
 	def tickGameOver
 		phase = GameOver
@@ -111,6 +132,9 @@ unit app
 		Player[] evenPlayers = players.where.index % 2 == 0 and .score > 3
 		
 		let totalScoreOfAlivePlayer = players.where(.alive).total.score
+		
+		// Find player with highest score
+		let winner = players.withMax.score
 		
 		// Find player with highest score from all alive players
 		let winner = players.withMax(.score) where .alive
@@ -179,42 +203,20 @@ class Box
 		// Draw blue box with white outline
 		drawRectangle rect.position, rect.size, Color("0000ff"), outlineColor:Color("ffffff"), outlineWidth:5
 		
-enum Role: Offence, Defence
-		
-class Player
-	int score
-	bool alive
-	string name
-	Role role
-	
-	visible color = Color("ffffff")
-	visible Direction dir = Direction.diagonalDirections[index]
-	visible Vector2 videoPos = dir.vector * {700,270}
-	
-	def tick
-		// Draw round video of player with cirlce outline
-		const radius = 220
-		drawVideo me, videoPos, size:radius*2, shape:Circle
-		drawCircle videoPos, size:radius*2+50, Color("000000"), outlineColor:color, outlineWidth:12, visibleFor:me
-		
-		// Draw yellow player name that's visible the current player instance
-		drawText name, size:32, Color("ffff00"), visibleFor:me
-
-
 // Start of LiveTime API. ONLY call functions that are in the LiveTime API
 class Touch
 	int userId
 	Vector2 referencePosition
 	Vector2 referenceStartPosition
 	
-unit input
+class input
 	def onTouchDownWithin: Vector2 position, Vector2 size, Player[] by = null, Cursor cursor = Auto, bool showTouchArea = false, bool markAsHandled = true, HorizontalAlignment align = Center, VerticalAlignment valign = Middle, def(Touch touch) do
 	def onTouchMove: Touch touch, triggeredOnTouchDown = true, def(Touch touch) do
 	def onTouchMove: Player[] by = null, def(Touch touch) do
 	def onTouchUp: Touch touch, markAsHandled = true, def(Touch touch) do
 	def onTouchUp: Player[] by = null, bool markAsHandled = true, def(Touch touch) do
 		
-unit math
+class math
 	def int randomInteger: int min, int max
 	def float randomFloat
 	def float min: float a, float b
@@ -250,11 +252,10 @@ class List<T>
 	def T min: float(T a) selector, float threshold = float.maxValue, float default = 0
 	def T max: float(T a) selector, float threshold = float.minValue, float default = 0
 
-unit graphics
+class graphics
 	def drawImage: Image image, Vector2 position = {}, frame = 0, implicit Vector2 size = {}, Angle angle = 0.0, touchMargin = Vector2(16,16), showTouchArea = false, implicit Player[] visibleFor = null, implicit Player[] touchableBy = null, hotkey = Key.None, implicit layer = 0, alpha = 1.0, Color color = White, def(Touch touch) onTouch
 	def drawText: implicit string text, Vector2 position = {}, implicit Vector2 size = {}, Color color = null, HorizontalAlignment align = Center, VerticalAlignment valign = Middle, FontStyle style = Normal, Font font = null, Color outlineColor = null, outlineWidth = 0, implicit Player[] visibleFor = null, implicit layer = 0, alpha = 1.0
 	def drawButton: Image image = null, text = "", Vector2 position = {}, implicit Vector2 size = {}, frame = 0, Color textColor = null, textSize = 18, textOffset = Vector2(0,0), touchMargin = Vector2(16,16), showTouchArea = false, implicit Player[] visibleFor = null, implicit Player[] touchableBy = null, hotkey = Key.None, implicit layer = 0, alpha = 1.0, enabled = true, alphaWhenDisabled = .5, def(Touch touch) onTouch = null
 	def drawRectangle: position = Vector2(), implicit size = Vector2(256,256), Color color = null, Color outlineColor = null, outlineWidth = 0, implicit Player[] visibleFor = null, implicit layer = 0, alpha = 1.0, HorizontalAlignment align = Center, VerticalAlignment valign = Middle
 	def drawCircle: position = Vector2(), implicit Vector2 size = {256,256}, Color color = null, Color outlineColor = null, outlineWidth = 0, Angle startAngle = -.25, Angle angle = 1.0, RotationDirection direction = Clockwise, implicit Player[] visibleFor = null, implicit layer = 0, alpha = 1.0
 
-// ACTUAL CODE: Start of actual code
