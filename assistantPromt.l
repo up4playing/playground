@@ -1,15 +1,44 @@
 // EXAMPLE CODE: Start of an example of the LiveTime programming language.
-enum Phase: DragItems, Reveal, GameOver
-
 class app
 	int round
-	// List of words
-	const string[] words = ["", "Word"]
-	Phase phase
 	Player currentPlayer
+	Phase phase
+	
+	def start
+		players.each.start
+		
+	def tick
+		players.each.tick
+		
+class Player
+	int score
+	bool alive
+	string name
+	Role role
+	
+	visible color = Color("ffffff")
+	visible Direction dir = Direction.diagonalDirections[index]
+	visible Vector2 videoPos = dir.vector * {700,270}
+	
+	def tick
+		// Draw round video of player with cirlce outline
+		const radius = 220
+		drawVideo me, videoPos, size:radius*2, shape:Circle
+		drawCircle videoPos, size:radius*2+50, Color("000000"), outlineColor:color, outlineWidth:12, visibleFor:me
+		
+		// Draw yellow player name that's visible the current player instance
+		drawText name, size:32, Color("ffff00"), visibleFor:me
+	
+enum Role: Offence, Defence
+		
+enum Phase: DragItems, Reveal, GameOver
+		
+class example
+	// List of words
+	const string[] words = ["Apple", "Banana", "Orange"]
 	Box[] boxes
 	Item[] items
-	
+		
 	def int[] getNumbers: int start, int end
 		int[] list
 		// For loop for numbers syntax: for <start> to <end>
@@ -25,13 +54,6 @@ class app
 		for list
 			sum += .
 		return sum
-		
-	def getWinner
-		return players.withMax.score
-		
-	def start
-		Menu()
-		startGame
 		
 	def startGame
 		for Direction.diagonalDirections
@@ -77,7 +99,6 @@ class app
 				
 				// Draw green text thats visible for everybody
 				drawText "Game Over", size:32, Color("00ff00"), visibleFor:everybody
-		
 				
 	def tickGameOver
 		phase = GameOver
@@ -111,6 +132,9 @@ class app
 		Player[] evenPlayers = players.where.index % 2 == 0 and .score > 3
 		
 		let totalScoreOfAlivePlayer = players.where(.alive).total.score
+		
+		// Find player with highest score
+		let winner = players.withMax.score
 		
 		// Find player with highest score from all alive players
 		let winner = players.withMax(.score) where .alive
@@ -179,28 +203,6 @@ class Box
 		// Draw blue box with white outline
 		drawRectangle rect.position, rect.size, Color("0000ff"), outlineColor:Color("ffffff"), outlineWidth:5
 		
-enum Role: Offence, Defence
-		
-class Player
-	int score
-	bool alive
-	string name
-	Role role
-	
-	visible color = Color("ffffff")
-	visible Direction dir = Direction.diagonalDirections[index]
-	visible Vector2 videoPos = dir.vector * {700,270}
-	
-	def tick
-		// Draw round video of player with cirlce outline
-		const radius = 220
-		drawVideo me, videoPos, size:radius*2, shape:Circle
-		drawCircle videoPos, size:radius*2+50, Color("000000"), outlineColor:color, outlineWidth:12, visibleFor:me
-		
-		// Draw yellow player name that's visible the current player instance
-		drawText name, size:32, Color("ffff00"), visibleFor:me
-
-
 // Start of LiveTime API. ONLY call functions that are in the LiveTime API
 class Touch
 	int userId
@@ -257,4 +259,3 @@ class graphics
 	def drawRectangle: position = Vector2(), implicit size = Vector2(256,256), Color color = null, Color outlineColor = null, outlineWidth = 0, implicit Player[] visibleFor = null, implicit layer = 0, alpha = 1.0, HorizontalAlignment align = Center, VerticalAlignment valign = Middle
 	def drawCircle: position = Vector2(), implicit Vector2 size = {256,256}, Color color = null, Color outlineColor = null, outlineWidth = 0, Angle startAngle = -.25, Angle angle = 1.0, RotationDirection direction = Clockwise, implicit Player[] visibleFor = null, implicit layer = 0, alpha = 1.0
 
-// ACTUAL CODE: Start of actual code

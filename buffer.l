@@ -1,7 +1,7 @@
 transient class Buffer
 	js void writeInt: int value
 		if(value <= -2147483647 || value >= 2147483647)
-			throw new Error("Value out of integer range: {value}")
+			throw new Error("Value out of integer range: "+value)
 		let n, lastByte
 		if(value > 0) {
 			n = value
@@ -87,7 +87,7 @@ transient class Buffer
 		
 	js void writeUnsignedInt: int value
 		if(value < 0 || value >= 2147483648)
-			throw new Error("Value out of integer range: {value}")
+			throw new Error("Value out of integer range: "+value)
 			
 		var n = value
 		if (n < (1 << 14)) {
