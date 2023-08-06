@@ -545,8 +545,8 @@ skipInit global unit input
 		if pointerType == "touch": touchType = 3; id = pointerId; else
 			                       touchType = 4
 		
-		Vector2 pixelPos = {x*Platform.pixelRatio, y*Platform.pixelRatio}
-		Vector2 referencePos = pixelPos.getRelativeTo(Platform.baseMatrix)
+		Vector2 pixelPos = {x*graphics.pixelRatio, y*graphics.pixelRatio}
+		Vector2 referencePos = pixelPos.getRelativeTo(graphics.baseMatrix)
 		gizmo.onTouch inputType, id, pixelPos, referencePos, shift, alt, cmdOrCtrl
 		
 		if core.mode == None || Platform.mode != Record || !localUser || !localUser.collectInputs: return
@@ -587,7 +587,7 @@ skipInit global unit input
 		if core.mode == None || Platform.mode != Record || !localUser || !localUser.collectInputs: return
 		let inputs = localUser.inputs
 		
-		Vector2 referencePos = {x*Platform.pixelRatio, y*Platform.pixelRatio}.getRelativeTo(Platform.baseMatrix)
+		Vector2 referencePos = {x*graphics.pixelRatio, y*graphics.pixelRatio}.getRelativeTo(graphics.baseMatrix)
 		inputs.writeInt32 localUser.inputFrame
 		inputs.writeUnsignedInt16 cast InputType.Scroll
 		inputs.writeInt16 math.round(referencePos.x)

@@ -21,6 +21,9 @@ transient skipInit unit Platform
 			}
 		}	
 		
+	inline js void preventScrolling
+		window.scrollTo(0,0)
+		
 	inline js void setLocalStorageObject: string key, any value
 		localStorage.setItem(key, JSON.stringify(value))
 		
@@ -202,8 +205,8 @@ HTMLElement HTMLInput
 		ensureElement
 		let pos = graphics.getPixelPosition(this.position)
 		let size = graphics.getPixelSize(this.size)
-		let fontSize = this.fontSize * graphics.totalMatrix.m0 / Platform.pixelRatio
-		this.element.style.font = "{fontSize/Platform.pixelRatio}px OpenSans"
+		let fontSize = this.fontSize * graphics.totalMatrix.m0 / graphics.pixelRatio
+		this.element.style.font = "{fontSize/graphics.pixelRatio}px OpenSans"
 		this.element.style.left = "{pos.x-size.x/2}px"
 		this.element.style.top = "{pos.y-size.y/2}px"		
 		this.element.style.width = "{size.x}px"

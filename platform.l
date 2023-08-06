@@ -1,6 +1,4 @@
 enum PlatformMode: Pause, Manipulator, Slide, Play, Record
-enum ScaleMode: Auto, FixedWidth, FixedHeight, None
-enum AnchorMode: TopLeft, TopCenter, Center
 enum OperatingSystem: Windows, Mac, Linux, Android, iOS
 enum IntervalMode: JavaScriptInterval, AnimationFrame
 
@@ -24,9 +22,6 @@ transient skipInit unit Platform
 	public bool showDebugInfo = false
 	public bool isLocal = false
 	public IntervalMode intervalMode = JavaScriptInterval
-	public Vector2 referenceSize = {1920, 1080}
-	public ScaleMode scaleMode = Auto, effectiveScaleMode
-	public AnchorMode anchor = Center
 	
 	// Info
 	public inline js int appName := appName
@@ -39,21 +34,11 @@ transient skipInit unit Platform
 	visible bool isSmallScreen
 	public bool isStaging
 	
-	visible Vector2 pixelSize
-	visible Vector2 size
-	visible float pixelRatio
-	
 	// Internal
-	private object canvas
-	internal object context
-	internal Matrix2D baseMatrix
 	internal bool engineStarted
 	internal PlatformMode mode
 	internal bool fastForward
 	internal int waitingForInitialData
-	
-	inline js void preventScrolling
-		window.scrollTo(0,0)
 	
 	private inline js void initMedia
 		audio_init();
@@ -64,6 +49,7 @@ transient skipInit unit Platform
 	private js void initPlatform
 		statistics_init();
 		Platform_init();
+		graphics_init();
 		math_init();
 		core_init();
 		input_init();
@@ -80,59 +66,11 @@ transient skipInit unit Platform
 		}
 		if(!Platform_isMobile) 
 			window.onresize = e => { 
-				Platform_onResize();
+				graphics_onResize();
 				if(Platform_mode < 3/*Pause,Manipulator,Slide*/ && Platform_engineStarted) core_tick(/*draw*/true);
 			}
 		if(window.app_init) app_init();
 		
-	private js void onResize
-		Platform_canvas = document.getElementById("canvas");
-		Platform_context = Platform_canvas.getContext("2d");
-		Platform_pixelRatio = window.devicePixelRatio;
-		Platform_pixelSize = new Vector2(window.innerWidth*Platform_pixelRatio, window.innerHeight*Platform_pixelRatio, null);
-		Platform_isSmallScreen = screen.width < 600 || (localStorage.getItem("smallScreen") == "true")
-		Platform_canvas.style.width = window.innerWidth + "px";
-		Platform_canvas.style.height = window.innerHeight + "px";
-		Platform_canvas.width = Platform_pixelSize.x;
-		Platform_canvas.height = Platform_pixelSize.y;
-		Platform_canvas.imageSmoothingEnabled = true;
-		Platform_canvas.imageSmoothingQuality = "high";
-		Platform_updateBaseMatrix();
-		
-	private js void drawLoading
-		let text = "Loading..."
-		Platform_context.font = "24px Arial"
-		Platform_context.fillStyle = "#ffffff"
-		Platform_context.textBaseline = "middle"
-		let textSize = Platform_context.measureText(text)
-		Platform_context.fillText(text, (Platform_pixelSize.x-textSize.width)/2, Platform_pixelSize.y/2)
-		
-	// Update the base matrix
-	// Called when resizing and after calling init() because we could change the scaleMode and anchor in App.init
-	private updateBaseMatrix
-		let statisticsMargin = showDebugInfo ? statistics.margin : {}
-		let referenceSizeWithMargin = referenceSize + statisticsMargin
-		Vector2 ratio = {pixelSize.x / referenceSizeWithMargin.x, pixelSize.y / referenceSizeWithMargin.y}
-		float scale
-		if scaleMode == Auto
-			if ratio.x < ratio.y: effectiveScaleMode = FixedWidth;  scale = ratio.x
-			else                  effectiveScaleMode = FixedHeight; scale = ratio.y
-			size = referenceSize
-		else
-		if scaleMode == FixedWidth
-			effectiveScaleMode = scaleMode
-			scale = ratio.x
-			size = {referenceSize.x, pixelSize.y/scale}
-		else
-		if scaleMode == FixedHeight
-			effectiveScaleMode = scaleMode
-			scale = ratio.y; 
-			size = {pixelSize.x/scale, referenceSize.y}
-			
-		let offsetX = anchor > 0 ? pixelSize.x/2 : 0
-		let offsetY = anchor > 1 ? pixelSize.y/2 : 0
-		baseMatrix = {scale,0,0,scale,offsetX-(statisticsMargin.x/2)*scale,offsetY-(statisticsMargin.y/2)*scale}
-	
 	// This is called when the application starts for the first time	
 	private start: bool isDebug, int userCount, bool simulateConnection, bool showSafeArea
 		initMedia
@@ -145,7 +83,7 @@ transient skipInit unit Platform
 		this.showSafeArea = showSafeArea
 		showDebugInfo = getLocalStorageObject("showDebugInfo") == "true"
 		
-		onResize
+		graphics.onResize
 		// drawLoading
 		if mode >= Play: mode = Pause
 		let path = url.getUntil("?").split("/")
@@ -242,7 +180,7 @@ transient skipInit unit Platform
 	private void toggleDebugInfo
 		showDebugInfo = !showDebugInfo;
 		setLocalStorageObject("showDebugInfo", showDebugInfo ? "true" : "false")
-		updateBaseMatrix
+		graphics.updateBaseMatrix
 		
 	private void toggleSmallScreen
 		isSmallScreen = !isSmallScreen;

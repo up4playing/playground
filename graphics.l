@@ -135,32 +135,82 @@ skipInit class Image
 	Vector2 size
 	ImageFrame[] frames
 	
+enum ScaleMode: Auto, FixedWidth, FixedHeight, None
+enum AnchorMode: TopLeft, TopCenter, Center
 enum HorizontalAlignment: Left, Center, Right
 enum VerticalAlignment: Top, Middle, Bottom
 enum FontStyle: Normal, Bold
 class ClippingPath: Vector2[] points; bool show
 		
 // Draw on the screen
-transient global unit graphics
-	internal Matrix2D totalMatrix, localMatrix
-	internal DisplayItem[] items
-		
+transient skipInit global unit graphics
+	private object canvas
+	internal object context
+	internal Matrix2D baseMatrix, totalMatrix, localMatrix
+	internal DisplayItem[] items		
 	private const alignmentFactor = [0, .5, 1]
+	
+	public Vector2 referenceSize = {1920, 1080}
+	public ScaleMode scaleMode = Auto, effectiveScaleMode
+	public AnchorMode anchor = Center
+	visible Vector2 pixelSize
+	visible Vector2 size
+	visible float pixelRatio
+	
+	internal js void onResize
+		graphics_canvas = document.getElementById("canvas");
+		graphics_pixelRatio = window.devicePixelRatio;
+		graphics_pixelSize = new Vector2(window.innerWidth*graphics_pixelRatio, window.innerHeight*graphics_pixelRatio, null);
+		graphics_isSmallScreen = screen.width < 600 || (localStorage.getItem("smallScreen") == "true")
+		graphics_canvas.style.width = window.innerWidth + "px";
+		graphics_canvas.style.height = window.innerHeight + "px";
+		graphics_canvas.width = graphics_pixelSize.x;
+		graphics_canvas.height = graphics_pixelSize.y;
+		graphics_canvas.imageSmoothingEnabled = true;
+		graphics_canvas.imageSmoothingQuality = "high";
+		
+		graphics_context = graphics_canvas.getContext("2d");
+		graphics_updateBaseMatrix()
+
+	// Update the base matrix
+	// Called when resizing and after calling init() because we could change the scaleMode and anchor in App.init
+	internal updateBaseMatrix
+		let statisticsMargin = Platform.showDebugInfo ? statistics.margin : {}
+		let referenceSizeWithMargin = referenceSize + statisticsMargin
+		Vector2 ratio = {pixelSize.x / referenceSizeWithMargin.x, pixelSize.y / referenceSizeWithMargin.y}
+		float scale
+		if scaleMode == Auto
+			if ratio.x < ratio.y: effectiveScaleMode = FixedWidth;  scale = ratio.x
+			else                  effectiveScaleMode = FixedHeight; scale = ratio.y
+			size = referenceSize
+		else
+		if scaleMode == FixedWidth
+			effectiveScaleMode = scaleMode
+			scale = ratio.x
+			size = {referenceSize.x, pixelSize.y/scale}
+		else
+		if scaleMode == FixedHeight
+			effectiveScaleMode = scaleMode
+			scale = ratio.y; 
+			size = {pixelSize.x/scale, referenceSize.y}
+			
+		let offsetX = anchor > 0 ? pixelSize.x/2 : 0
+		let offsetY = anchor > 1 ? pixelSize.y/2 : 0
+		baseMatrix = {scale,0,0,scale,offsetX-(statisticsMargin.x/2)*scale,offsetY-(statisticsMargin.y/2)*scale}
 		
 	internal js void startFrame
 		graphics_reset()
 		if(!Platform_fastForward && !Platform_waitingForInitialData)
 			if(!graphics_backgroundColor || graphics_backgroundColor.hex == "#000000") {
-				Platform_context.clearRect(0, 0, Platform_pixelSize.x, Platform_pixelSize.y)
+				graphics_context.clearRect(0, 0, graphics_pixelSize.x, graphics_pixelSize.y)
 			} else {
-				Platform_context.fillStyle = graphics_backgroundColor.hex
-				Platform_context.fillRect(0, 0, Platform_pixelSize.x, Platform_pixelSize.y)
+				graphics_context.fillStyle = graphics_backgroundColor.hex
+				graphics_context.fillRect(0, 0, graphics_pixelSize.x, graphics_pixelSize.y)
 			}
-			Platform_context.textBaseline = "top"
-
-
+			graphics_context.textBaseline = "top"
+			
 	internal reset
-		totalMatrix = Platform.baseMatrix
+		totalMatrix = baseMatrix
 		localMatrix.clear
 		currentlyVisibleFor = null
 		items.clear
@@ -185,8 +235,8 @@ transient global unit graphics
 		resetTransform
 		
 	private js void resetTransform
-		Platform_context.resetTransform()
-		Platform_context.globalAlpha = 1
+		graphics_context.resetTransform()
+		graphics_context.globalAlpha = 1
 				
 	private isVisibleFor: Player[] visibleFor
 		if(Platform.fastForward) return false
@@ -201,20 +251,20 @@ transient global unit graphics
 			
 	internal js void drawSafeArea
 		graphics_resetTransform()
-		Platform_context.fillStyle = "#404040"
+		graphics_context.fillStyle = "#404040"
 		if(Platform_showSafeArea) {
-			if(Platform_effectiveScaleMode == 1) {
+			if(graphics_effectiveScaleMode == 1) {
 				// Fixed width
-				let ratio = Platform_pixelSize.x / Platform_referenceSize.x
-				let margin = (Platform_pixelSize.y-Platform_referenceSize.y*ratio)/2
-				Platform_context.fillRect(0,0,Platform_pixelSize.x, margin)
-				Platform_context.fillRect(0,Platform_pixelSize.y-margin,Platform_pixelSize.x, margin)
-			} else if(Platform_effectiveScaleMode == 2) {
+				let ratio = graphics_pixelSize.x / graphics_referenceSize.x
+				let margin = (graphics_pixelSize.y-graphics_referenceSize.y*ratio)/2
+				graphics_context.fillRect(0,0,graphics_pixelSize.x, margin)
+				graphics_context.fillRect(0,graphics_pixelSize.y-margin,graphics_pixelSize.x, margin)
+			} else if(graphics_effectiveScaleMode == 2) {
 				// Fixed height
-				let ratio = Platform_pixelSize.y / Platform_referenceSize.y
-				let margin = (Platform_pixelSize.x-Platform_referenceSize.x*ratio)/2
-				Platform_context.fillRect(0, 0, margin, Platform_pixelSize.y)
-				Platform_context.fillRect(Platform_pixelSize.x-margin, 0, margin, Platform_pixelSize.y)
+				let ratio = graphics_pixelSize.y / graphics_referenceSize.y
+				let margin = (graphics_pixelSize.x-graphics_referenceSize.x*ratio)/2
+				graphics_context.fillRect(0, 0, margin, graphics_pixelSize.y)
+				graphics_context.fillRect(graphics_pixelSize.x-margin, 0, margin, graphics_pixelSize.y)
 			}
 		}
 		
@@ -393,8 +443,8 @@ transient global unit graphics
 			let effectiveFont = font || graphics_currentFont
 			let fontSize = size.y || size.x || graphics_currentFontSize
 			let contextFont = (style ? "bold ":"")+fontSize+"px "+effectiveFont.name;
-			Platform_context.font = contextFont
-			let textSize = Platform_context.measureText(text)
+			graphics_context.font = contextFont
+			let textSize = graphics_context.measureText(text)
 			let sizeX = textSize.width
 			let sizeY = fontSize*effectiveFont.actualHeightFactor
 			graphics_items.push(new DisplayText(
@@ -1043,8 +1093,8 @@ transient global unit graphics
 		                        FontStyle style = Normal    // Whether the text should be bold or normal style
 		let effectiveFont = font || graphics_currentFont
 		let fontSize = size.y || size.x || graphics_currentFontSize
-		Platform_context.font =  (style ? "bold ":"")+fontSize+"px "+effectiveFont.name;
-		let textSize = Platform_context.measureText(text)
+		graphics_context.font =  (style ? "bold ":"")+fontSize+"px "+effectiveFont.name;
+		let textSize = graphics_context.measureText(text)
 		return textSize.width
 		
 	// ------------------------------------------------------- Position -------------------------------------------------------
@@ -1053,10 +1103,10 @@ transient global unit graphics
 		return position.getTransformed(localMatrix)
 		
 	getPixelPosition: Vector2 position
-		return position.getTransformed(totalMatrix) / Platform.pixelRatio
+		return position.getTransformed(totalMatrix) / pixelRatio
 		
 	getPixelSize: Vector2 size
-		return size * {totalMatrix.m0, totalMatrix.m3} / Platform.pixelRatio
+		return size * {totalMatrix.m0, totalMatrix.m3} / pixelRatio
 		
 	private Vector2 getEffectiveSize: Vector2 imageSize, Vector2 size
 		let sizeX = size.x || imageSize.x
@@ -1069,17 +1119,17 @@ transient global unit graphics
 	js void createImage: Vector2 size     // The size of the image
 		                 string file = "" // Save the image to a file with this filename
 		                 void() code      // This block of code will draw on the created image instead of drawing on the screen
-		let prevContext = Platform_context
-		let prevPixelSizeX = Platform_pixelSize.x
-		let prevPixelSizeY = Platform_pixelSize.y
+		let prevContext = graphics_context
+		let prevPixelSizeX = graphics_pixelSize.x
+		let prevPixelSizeY = graphics_pixelSize.y
 		let prevItems = graphics_items
 		graphics_items = []
 		let canvas = document.createElement("canvas")
 		canvas.width = size.x
 		canvas.height = size.y
-		Platform_context = canvas.getContext("2d")
-		Platform_pixelSize.x = size.x
-		Platform_pixelSize.y = size.y
+		graphics_context = canvas.getContext("2d")
+		graphics_pixelSize.x = size.x
+		graphics_pixelSize.y = size.y
 		let a = graphics_localMatrix.matrix, b = graphics_totalMatrix.matrix
 		let a0 = graphics_localMatrix.m0, a1 = graphics_localMatrix.m1, a2 = graphics_localMatrix.m2, a3 = graphics_localMatrix.m3, a4 = graphics_localMatrix.m4, a5 = graphics_localMatrix.m5
 		let b0 = graphics_totalMatrix.m0, b1 = graphics_totalMatrix.m1, b2 = graphics_totalMatrix.m2, b3 = graphics_totalMatrix.m3, b4 = graphics_totalMatrix.m4, b5 = graphics_totalMatrix.m5
@@ -1088,20 +1138,20 @@ transient global unit graphics
 		code()
 		graphics_drawItems()
 		var dataUrl = canvas.toDataURL("image/png");
-		if(file) Platform_saveImage(dataUrl, file);
+		if(file) file_saveImage(dataUrl, file);
 		graphics_localMatrix.m0 = a0; graphics_localMatrix.m1 = a1; graphics_localMatrix.m2 = a2; graphics_localMatrix.m3 = a3; graphics_localMatrix.m4 = a4; graphics_localMatrix.m5 = a5
 		graphics_totalMatrix.m0 = b0; graphics_totalMatrix.m1 = b1; graphics_totalMatrix.m2 = b2; graphics_totalMatrix.m3 = b3; graphics_totalMatrix.m4 = b4; graphics_totalMatrix.m5 = b5
-		Platform_context = prevContext
-		Platform_pixelSize.x = prevPixelSizeX
-		Platform_pixelSize.y = prevPixelSizeY
+		graphics_context = prevContext
+		graphics_pixelSize.x = prevPixelSizeX
+		graphics_pixelSize.y = prevPixelSizeY
 		graphics_items = prevItems
 		return dataUrl
 	
 	// Directly manipulate the pixels on the screen or an image
 	js int[] accessPixel: void(int[] pixels) code // This code can manipulate the pixels
-		let imageData = Platform_context.getImageData(0,0,Platform_pixelSize.x, Platform_pixelSize.y)
+		let imageData = graphics_context.getImageData(0,0,graphics_pixelSize.x, graphics_pixelSize.y)
 		code(imageData.data)
-		Platform_context.putImageData(imageData, 0, 0)
+		graphics_context.putImageData(imageData, 0, 0)
 		
 struct GizomInfluence
 	string file
@@ -1330,20 +1380,20 @@ transient class DisplayItem
 		if(points.length >= 2) {
 			let x = this.x, y = this.y
 			let firstPos = points[points.length-1]
-			Platform_context.beginPath();
-			Platform_context.moveTo(firstPos.x, firstPos.y)
-			for(let p of points) Platform_context.lineTo(p.x, p.y)
+			graphics_context.beginPath();
+			graphics_context.moveTo(firstPos.x, firstPos.y)
+			for(let p of points) graphics_context.lineTo(p.x, p.y)
 			if(this.clippingPath.show) {
-				Platform_context.fillStyle = "#ff000080"
-				Platform_context.fill()
+				graphics_context.fillStyle = "#ff000080"
+				graphics_context.fill()
 			}
-			Platform_context.save()
-			Platform_context.clip()
+			graphics_context.save()
+			graphics_context.clip()
 		}
 		
 	js void endClipping
 		if(this.clippingPath.points.length >= 2)
-			Platform_context.restore()
+			graphics_context.restore()
 			
 transient DisplayItem DisplayImage
 	object htmlImage
@@ -1351,12 +1401,12 @@ transient DisplayItem DisplayImage
 	Color color
 	js void draw
 		if(this.alpha == 0) return
-		Platform_context.setTransform(this.m0, this.m1, this.m2, this.m3, this.m4, this.m5)
-		Platform_context.globalAlpha = this.alpha
+		graphics_context.setTransform(this.m0, this.m1, this.m2, this.m3, this.m4, this.m5)
+		graphics_context.globalAlpha = this.alpha
 		if(this.clippingPath) this.startClipping()
 			
 		if(this.color.hex == "#ffffff") {
-			try{ Platform_context.drawImage(this.htmlImage, this.sx, this.sy, this.sw, this.sh, this.x, this.y, this.w, this.h) }
+			try{ graphics_context.drawImage(this.htmlImage, this.sx, this.sy, this.sw, this.sh, this.x, this.y, this.w, this.h) }
 			catch(e) { log("DisplayImage: "+e.message) }
 		} else {
 			// Create offscreen buffer
@@ -1379,7 +1429,7 @@ transient DisplayItem DisplayImage
 			offscreenContext.drawImage(this.htmlImage, this.sx, this.sy, this.sw, this.sh, 0, 0, this.sw, this.sh)
 				
 			// Draw tinted image
-	        Platform_context.drawImage(offscreenCanvas, this.x, this.y, this.w, this.h);		
+	        graphics_context.drawImage(offscreenCanvas, this.x, this.y, this.w, this.h);		
 		}
 		
 		if(this.clippingPath) this.endClipping()
@@ -1391,18 +1441,18 @@ transient DisplayItem DisplayText
 	string font
 	js void draw
 		if(this.alpha == 0) return
-		Platform_context.setTransform(this.m0, this.m1, this.m2, this.m3, this.m4, this.m5)
-		Platform_context.globalAlpha = this.alpha
+		graphics_context.setTransform(this.m0, this.m1, this.m2, this.m3, this.m4, this.m5)
+		graphics_context.globalAlpha = this.alpha
 		if(this.clippingPath) this.startClipping()
 			
-		Platform_context.font = this.font
+		graphics_context.font = this.font
 		if(this.outlineColor) {
-			Platform_context.lineWidth = this.outlineWidth
-			Platform_context.strokeStyle = this.outlineColor
-			Platform_context.strokeText(this.name, this.x, this.y)
+			graphics_context.lineWidth = this.outlineWidth
+			graphics_context.strokeStyle = this.outlineColor
+			graphics_context.strokeText(this.name, this.x, this.y)
 		}
-		Platform_context.fillStyle = this.fillStyle
-		Platform_context.fillText(this.name, this.x, this.y - this.offsetY)
+		graphics_context.fillStyle = this.fillStyle
+		graphics_context.fillText(this.name, this.x, this.y - this.offsetY)
 		
 		if(this.clippingPath) this.endClipping()
 		
@@ -1411,22 +1461,22 @@ transient DisplayItem DisplayRectangle
 	float outlineWidth
 	js void draw
 		if(this.alpha == 0) return
-		Platform_context.setTransform(this.m0, this.m1, this.m2, this.m3, this.m4, this.m5)
-		Platform_context.globalAlpha = this.alpha
+		graphics_context.setTransform(this.m0, this.m1, this.m2, this.m3, this.m4, this.m5)
+		graphics_context.globalAlpha = this.alpha
 		if(this.clippingPath) this.startClipping()
 			
 		if(this.color == "clear") {
-			Platform_context.clearRect(this.x, this.y, this.w, this.h)
+			graphics_context.clearRect(this.x, this.y, this.w, this.h)
 		}
 		else
 		if(this.color) {
-			Platform_context.fillStyle = this.color
-			Platform_context.fillRect(this.x, this.y, this.w, this.h)
+			graphics_context.fillStyle = this.color
+			graphics_context.fillRect(this.x, this.y, this.w, this.h)
 		}
 		if(this.outlineColor) {
-			Platform_context.lineWidth = this.outlineWidth
-			Platform_context.strokeStyle = this.outlineColor
-			Platform_context.strokeRect(this.x, this.y, this.w, this.h)
+			graphics_context.lineWidth = this.outlineWidth
+			graphics_context.strokeStyle = this.outlineColor
+			graphics_context.strokeRect(this.x, this.y, this.w, this.h)
 		}
 		if(this.clippingPath) this.endClipping()
 		
@@ -1436,45 +1486,45 @@ transient DisplayItem DisplayRoundedRectangle
 	float outlineWidth
 	js void draw
 		if(this.alpha == 0) return
-		Platform_context.setTransform(this.m0, this.m1, this.m2, this.m3, this.m4, this.m5)
-		Platform_context.globalAlpha = this.alpha
+		graphics_context.setTransform(this.m0, this.m1, this.m2, this.m3, this.m4, this.m5)
+		graphics_context.globalAlpha = this.alpha
 		if(this.clippingPath) this.startClipping()
 		let sizeX = this.w, sizeY = this.h, x = this.x, y = this.y, radius = this.radius
 		
 		// Arcs
-		Platform_context.beginPath();
-		Platform_context.moveTo(x + radius, y);
-		Platform_context.lineTo(x + sizeX - radius, y);
-		Platform_context.arcTo(x + sizeX, y, x + sizeX, y + radius, radius);
-		Platform_context.lineTo(x + sizeX, y + sizeY - radius);
-		Platform_context.arcTo(x + sizeX, y + sizeY, x + sizeX - radius, y + sizeY, radius);
-		Platform_context.lineTo(x + radius, y + sizeY);
-		Platform_context.arcTo(x, y + sizeY, x, y + sizeY - radius, radius);
-		Platform_context.lineTo(x, y + radius);
-		Platform_context.arcTo(x, y, x + radius, y, radius);
-		Platform_context.closePath();
+		graphics_context.beginPath();
+		graphics_context.moveTo(x + radius, y);
+		graphics_context.lineTo(x + sizeX - radius, y);
+		graphics_context.arcTo(x + sizeX, y, x + sizeX, y + radius, radius);
+		graphics_context.lineTo(x + sizeX, y + sizeY - radius);
+		graphics_context.arcTo(x + sizeX, y + sizeY, x + sizeX - radius, y + sizeY, radius);
+		graphics_context.lineTo(x + radius, y + sizeY);
+		graphics_context.arcTo(x, y + sizeY, x, y + sizeY - radius, radius);
+		graphics_context.lineTo(x, y + radius);
+		graphics_context.arcTo(x, y, x + radius, y, radius);
+		graphics_context.closePath();
 		
 		// Quadratic Curves
-		// Platform_context.beginPath();
-		// Platform_context.moveTo(x + radius, y);
-		// Platform_context.lineTo(x + sizeX - radius, y);
-		// Platform_context.quadraticCurveTo(x + sizeX, y, x + sizeX, y + radius);
-		// Platform_context.lineTo(x + sizeX, y + sizeY - radius);
-		// Platform_context.quadraticCurveTo(x + sizeX, y + sizeY, x + sizeX - radius, y + sizeY);
-		// Platform_context.lineTo(x + radius, y + sizeY);
-		// Platform_context.quadraticCurveTo(x, y + sizeY, x, y + sizeY - radius);
-		// Platform_context.lineTo(x, y + radius);
-		// Platform_context.quadraticCurveTo(x, y, x + radius, y);
-		// Platform_context.closePath();
+		// graphics_context.beginPath();
+		// graphics_context.moveTo(x + radius, y);
+		// graphics_context.lineTo(x + sizeX - radius, y);
+		// graphics_context.quadraticCurveTo(x + sizeX, y, x + sizeX, y + radius);
+		// graphics_context.lineTo(x + sizeX, y + sizeY - radius);
+		// graphics_context.quadraticCurveTo(x + sizeX, y + sizeY, x + sizeX - radius, y + sizeY);
+		// graphics_context.lineTo(x + radius, y + sizeY);
+		// graphics_context.quadraticCurveTo(x, y + sizeY, x, y + sizeY - radius);
+		// graphics_context.lineTo(x, y + radius);
+		// graphics_context.quadraticCurveTo(x, y, x + radius, y);
+		// graphics_context.closePath();
 		
 		if(this.color) {
-			Platform_context.fillStyle = this.color
-			Platform_context.fill()
+			graphics_context.fillStyle = this.color
+			graphics_context.fill()
 		}
 		if(this.outlineColor) {
-			Platform_context.lineWidth = this.outlineWidth
-			Platform_context.strokeStyle = this.outlineColor
-			Platform_context.stroke()
+			graphics_context.lineWidth = this.outlineWidth
+			graphics_context.strokeStyle = this.outlineColor
+			graphics_context.stroke()
 		}
 		if(this.clippingPath) this.endClipping()
 		
@@ -1485,42 +1535,42 @@ transient DisplayItem DisplayPolygon
 	bool smooth, close
 	js void draw
 		if(this.points.length < 2 || this.alpha == 0) return
-		Platform_context.setTransform(this.m0, this.m1, this.m2, this.m3, this.m4, this.m5)
-		Platform_context.globalAlpha = this.alpha
+		graphics_context.setTransform(this.m0, this.m1, this.m2, this.m3, this.m4, this.m5)
+		graphics_context.globalAlpha = this.alpha
 		if(this.clippingPath) this.startClipping()
 		let x = this.x, y = this.y
 		let points = this.points, startPoint = points[0]
 		
-		Platform_context.beginPath();
-		Platform_context.moveTo(x + startPoint.x, y + startPoint.y)
+		graphics_context.beginPath();
+		graphics_context.moveTo(x + startPoint.x, y + startPoint.y)
 		
 		if(!this.smooth || points.length < 3) {
 			for(let i=1, len = points.length; i<len; ++i) {
 				let p = points[i]
-				Platform_context.lineTo(x + p.x, y + p.y)
+				graphics_context.lineTo(x + p.x, y + p.y)
 			}
 		} else {
 			for(var i = 1, len = points.length - 2; i<len; i++)
 			{
 				let p1 = points[i], p2 = points[i + 1]
-				Platform_context.quadraticCurveTo(p1.x, p1.y, (p1.x + p2.x) / 2, (p1.y + p2.y) / 2);
+				graphics_context.quadraticCurveTo(p1.x, p1.y, (p1.x + p2.x) / 2, (p1.y + p2.y) / 2);
 			}
 			let p1 = points[i], p2 = points[i + 1]
-			Platform_context.quadraticCurveTo(p1.x, p1.y, p2.x,p2.y);
+			graphics_context.quadraticCurveTo(p1.x, p1.y, p2.x,p2.y);
 		}
 		if(this.close || this.color) {
-			Platform_context.closePath()
+			graphics_context.closePath()
 		}
 		if(this.color) {
 			// Close the polygon and fill it
-			Platform_context.fillStyle = this.color
-			Platform_context.fill()
+			graphics_context.fillStyle = this.color
+			graphics_context.fill()
 		}
 		if(this.outlineColor) {
 			// Draw outline
-			Platform_context.lineWidth = this.outlineWidth
-			Platform_context.strokeStyle = this.outlineColor
-			Platform_context.stroke()
+			graphics_context.lineWidth = this.outlineWidth
+			graphics_context.strokeStyle = this.outlineColor
+			graphics_context.stroke()
 		}
 		if(this.clippingPath) this.endClipping()
 		
@@ -1533,31 +1583,31 @@ transient DisplayItem DisplayCircle
 	float outlineWidth
 	js void draw
 		if(this.alpha == 0) return
-		Platform_context.setTransform(this.m0, this.m1, this.m2, this.m3, this.m4, this.m5)
-		Platform_context.globalAlpha = this.alpha
+		graphics_context.setTransform(this.m0, this.m1, this.m2, this.m3, this.m4, this.m5)
+		graphics_context.globalAlpha = this.alpha
 		if(this.clippingPath) this.startClipping()
 			
-		Platform_context.beginPath();
+		graphics_context.beginPath();
 		if(this.w == this.h) {
 			let radius = this.w/2
 			if(this.angle == 1) {
-				Platform_context.arc(this.x+radius, this.y+radius, radius, 0, math_TwoPI, this.direction);
+				graphics_context.arc(this.x+radius, this.y+radius, radius, 0, math_TwoPI, this.direction);
 			} else {
-				Platform_context.arc(this.x+radius, this.y+radius, radius, this.startAngle*math_TwoPI, (this.startAngle+this.angle)*math_TwoPI, this.direction);
+				graphics_context.arc(this.x+radius, this.y+radius, radius, this.startAngle*math_TwoPI, (this.startAngle+this.angle)*math_TwoPI, this.direction);
 			}
 		} else {
 			let radiusX = this.w/2
 			let radiusY = this.h/2
-			Platform_context.ellipse(this.x+radiusX, this.y+radiusY, radiusX, radiusY, 0, math_TwoPI, this.direction);
+			graphics_context.ellipse(this.x+radiusX, this.y+radiusY, radiusX, radiusY, 0, math_TwoPI, this.direction);
 		}
 		if(this.color) {
-			Platform_context.fillStyle = this.color
-			Platform_context.fill()
+			graphics_context.fillStyle = this.color
+			graphics_context.fill()
 		}
 		if(this.outlineColor) {
-			Platform_context.lineWidth = this.outlineWidth
-			Platform_context.strokeStyle = this.outlineColor
-			Platform_context.stroke()
+			graphics_context.lineWidth = this.outlineWidth
+			graphics_context.strokeStyle = this.outlineColor
+			graphics_context.stroke()
 		}
 		if(this.clippingPath) this.endClipping()
 		
@@ -1567,16 +1617,16 @@ transient DisplayItem DisplayLine
 	float outlineWidth
 	js void draw
 		if(this.alpha == 0) return
-		Platform_context.setTransform(this.m0, this.m1, this.m2, this.m3, this.m4, this.m5)
-		Platform_context.globalAlpha = this.alpha
+		graphics_context.setTransform(this.m0, this.m1, this.m2, this.m3, this.m4, this.m5)
+		graphics_context.globalAlpha = this.alpha
 		if(this.clippingPath) this.startClipping()
 		
-		Platform_context.beginPath();
-		Platform_context.moveTo(this.x,this.y)
-		Platform_context.lineTo(this.end.x, this.end.y)
-		Platform_context.lineWidth = this.outlineWidth
-		Platform_context.strokeStyle = this.outlineColor
-		Platform_context.stroke()
+		graphics_context.beginPath();
+		graphics_context.moveTo(this.x,this.y)
+		graphics_context.lineTo(this.end.x, this.end.y)
+		graphics_context.lineWidth = this.outlineWidth
+		graphics_context.strokeStyle = this.outlineColor
+		graphics_context.stroke()
 		
 		if(this.clippingPath) this.endClipping()
 			
@@ -1588,10 +1638,10 @@ transient DisplayItem DisplayVideo
 			let videoElement = user.videoElements[user.videoElementIndex]
 			               or (user.videoElements[user.videoElementIndex] = PeerNetwork.createVideoElement(user.mediaStream, user.local))
 			
-			let px = (m0 * x + m2 * y + m4) / Platform.pixelRatio
-			let py = (m1 * x + m3 * y + m5) / Platform.pixelRatio
-			let sizeX = w*m0 / Platform.pixelRatio
-			let sizeY = h*m3 / Platform.pixelRatio
+			let px = (m0 * x + m2 * y + m4) / graphics.pixelRatio
+			let py = (m1 * x + m3 * y + m5) / graphics.pixelRatio
+			let sizeX = w*m0 / graphics.pixelRatio
+			let sizeY = h*m3 / graphics.pixelRatio
 			PeerNetwork.updateVideoElement videoElement, px, py, sizeX, sizeY, radius:shape == Circle ? 10000 : 0
 			user.videoElementIndex++
 

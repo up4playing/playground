@@ -569,7 +569,7 @@ transient skipInit unit core
 		
 	private js void initAll
 		init()
-		Platform_updateBaseMatrix();
+		graphics_updateBaseMatrix();
 		
 	private js void setupVideoAndNetwork 
 		await PeerNetwork_setupLocalMedia(/*enableVideo*/!Platform_isStaging || core_showVideoForStaging, /*enableAudio*/!Platform_isStaging)
