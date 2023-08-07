@@ -1,6 +1,4 @@
 enum PlatformMode: Pause, Manipulator, Slide, Play, Record
-enum ScaleMode: Auto, FixedWidth, FixedHeight, None
-enum AnchorMode: TopLeft, TopCenter, Center
 enum OperatingSystem: Windows, Mac, Linux, Android, iOS
 enum IntervalMode: JavaScriptInterval, AnimationFrame
 
@@ -17,7 +15,6 @@ enum IntervalMode: JavaScriptInterval, AnimationFrame
 // - the size in the screen size in pixels of the target platform
 // - the origin in the top left corner
 transient skipInit unit Platform
-	
 	// Configuration
 	public userCount = 4
 	public supportedUserCount = Range 2..4
@@ -25,19 +22,10 @@ transient skipInit unit Platform
 	public bool showDebugInfo = false
 	public bool isLocal = false
 	public IntervalMode intervalMode = JavaScriptInterval
-	public Vector2 referenceSize = {1920, 1080}
-	public ScaleMode scaleMode = Auto, effectiveScaleMode
-	public AnchorMode anchor = Center
 	
 	// Info
-	public inline js string url := location.href
-	public inline js string host := location.host
-	public protocolAndHost := host ? "https://"+host : "http://localhost"
-	
 	public inline js int appName := appName
 	public inline js int version := version
-	public inline js int userAgent := navigator.userAgent.replace(/,/g," ")
-	public inline js float usedMemory := performance.memory.usedJSHeapSize
 	
 	visible OperatingSystem os
 	visible bool isMobile
@@ -46,21 +34,11 @@ transient skipInit unit Platform
 	visible bool isSmallScreen
 	public bool isStaging
 	
-	visible Vector2 pixelSize
-	visible Vector2 size
-	visible float pixelRatio
-	
 	// Internal
-	private object canvas
-	internal object context
-	internal Matrix2D baseMatrix
 	internal bool engineStarted
 	internal PlatformMode mode
 	internal bool fastForward
 	internal int waitingForInitialData
-	
-	inline js void preventScrolling
-		window.scrollTo(0,0)
 	
 	private inline js void initMedia
 		audio_init();
@@ -71,6 +49,7 @@ transient skipInit unit Platform
 	private js void initPlatform
 		statistics_init();
 		Platform_init();
+		graphics_init();
 		math_init();
 		core_init();
 		input_init();
@@ -87,59 +66,11 @@ transient skipInit unit Platform
 		}
 		if(!Platform_isMobile) 
 			window.onresize = e => { 
-				Platform_onResize();
+				graphics_onResize();
 				if(Platform_mode < 3/*Pause,Manipulator,Slide*/ && Platform_engineStarted) core_tick(/*draw*/true);
 			}
 		if(window.app_init) app_init();
 		
-	private js void onResize
-		Platform_canvas = document.getElementById("canvas");
-		Platform_context = Platform_canvas.getContext("2d");
-		Platform_pixelRatio = window.devicePixelRatio;
-		Platform_pixelSize = new Vector2(window.innerWidth*Platform_pixelRatio, window.innerHeight*Platform_pixelRatio, null);
-		Platform_isSmallScreen = screen.width < 600 || (localStorage.getItem("smallScreen") == "true")
-		Platform_canvas.style.width = window.innerWidth + "px";
-		Platform_canvas.style.height = window.innerHeight + "px";
-		Platform_canvas.width = Platform_pixelSize.x;
-		Platform_canvas.height = Platform_pixelSize.y;
-		Platform_canvas.imageSmoothingEnabled = true;
-		Platform_canvas.imageSmoothingQuality = "high";
-		Platform_updateBaseMatrix();
-		
-	private js void drawLoading
-		let text = "Loading..."
-		Platform_context.font = "24px Arial"
-		Platform_context.fillStyle = "#ffffff"
-		Platform_context.textBaseline = "middle"
-		let textSize = Platform_context.measureText(text)
-		Platform_context.fillText(text, (Platform_pixelSize.x-textSize.width)/2, Platform_pixelSize.y/2)
-		
-	// Update the base matrix
-	// Called when resizing and after calling init() because we could change the scaleMode and anchor in App.init
-	private updateBaseMatrix
-		let statisticsMargin = showDebugInfo ? statistics.margin : {}
-		let referenceSizeWithMargin = referenceSize + statisticsMargin
-		Vector2 ratio = {pixelSize.x / referenceSizeWithMargin.x, pixelSize.y / referenceSizeWithMargin.y}
-		float scale
-		if scaleMode == Auto
-			if ratio.x < ratio.y: effectiveScaleMode = FixedWidth;  scale = ratio.x
-			else                  effectiveScaleMode = FixedHeight; scale = ratio.y
-			size = referenceSize
-		else
-		if scaleMode == FixedWidth
-			effectiveScaleMode = scaleMode
-			scale = ratio.x
-			size = {referenceSize.x, pixelSize.y/scale}
-		else
-		if scaleMode == FixedHeight
-			effectiveScaleMode = scaleMode
-			scale = ratio.y; 
-			size = {pixelSize.x/scale, referenceSize.y}
-			
-		let offsetX = anchor > 0 ? pixelSize.x/2 : 0
-		let offsetY = anchor > 1 ? pixelSize.y/2 : 0
-		baseMatrix = {scale,0,0,scale,offsetX-(statisticsMargin.x/2)*scale,offsetY-(statisticsMargin.y/2)*scale}
-	
 	// This is called when the application starts for the first time	
 	private start: bool isDebug, int userCount, bool simulateConnection, bool showSafeArea
 		initMedia
@@ -152,7 +83,7 @@ transient skipInit unit Platform
 		this.showSafeArea = showSafeArea
 		showDebugInfo = getLocalStorageObject("showDebugInfo") == "true"
 		
-		onResize
+		graphics.onResize
 		// drawLoading
 		if mode >= Play: mode = Pause
 		let path = url.getUntil("?").split("/")
@@ -242,98 +173,19 @@ transient skipInit unit Platform
 	private inline js void sendEvaluateFinished
 		if(Platform_isDebug) _sendToEditor({type:"evaluateFinished"})
 
-	js void setTitle: string title
-		document.title = title
+	internal inline js void sendErrorToEditor: Error error
+		if(window.sendErrorToEditor) sendErrorToEditor(error)
+		else                         console.error(error)
 		
-	void toggleDebugInfo
+	private void toggleDebugInfo
 		showDebugInfo = !showDebugInfo;
 		setLocalStorageObject("showDebugInfo", showDebugInfo ? "true" : "false")
-		updateBaseMatrix
+		graphics.updateBaseMatrix
 		
-	void toggleSmallScreen
+	private void toggleSmallScreen
 		isSmallScreen = !isSmallScreen;
 		print isSmallScreen
 		setLocalStorageObject("smallScreen", isSmallScreen ? "true" : "false")
-		
-	inline js void setFullscreen: value = true
-		                          Player forPlayer = null
-		if(!Platform_isStaging && !Platform_isDebug && (forPlayer == null || input_localUser?.id == forPlayer.id)) {
-			try {
-				if(value) {
-					document.body.requestFullscreen()
-				} else {
-					document.exitFullscreen()
-				}
-			} catch {
-			}
-		}	
-		
-	js void saveTextFile: string filename, string text
-		var element = document.createElement("a");
-		element.setAttribute("href", "data:text/plain;charset=utf-8," + encodeURIComponent(text));
-		element.setAttribute("download", filename);
-		element.style.display = "none";
-		document.body.appendChild(element);
-		element.click();
-		document.body.removeChild(element);
-		
-	js void saveBinaryFile: string filename, Buffer buffer
-		var binary = "";
-		var bytes = new Uint8Array(buffer.buffer);
-		var len = bytes.byteLength;
-		for (var i = 0; i < len; i++) {
-		    binary += String.fromCharCode(bytes[i]);
-		}
-		var base64 = window.btoa( binary );
-		var dataUrl = "data:text/plain;base64," + base64;
-		
-		var element = document.createElement("a");
-		element.setAttribute("href", dataUrl);
-		element.setAttribute("download", filename);
-		element.style.display = "none";
-		document.body.appendChild(element);
-		element.click();
-		document.body.removeChild(element);
-		
-	js void openBinaryFile: void(Buffer buffer) then, void(string error) else = null
-		fileInput = document.createElement("input")
-		fileInput.type = "file"
-		fileInput.style.display = "none"
-		fileInput.onchange = e => {
-			var file = e.target.files[0];
-			if (!file) {
-				else?.("")
-				return
-			}
-			var reader = new FileReader();
-			reader.onload = function(e) {
-				let buffer = new Buffer(e.target.result, 0, 0, 0);
-				document.body.removeChild(fileInput);
-				then(buffer);
-			}
-			reader.onabort = e => {
-				else?.(reader.error)
-			}
-			reader.onerror = e => {
-				else?.(reader.error)
-			}
-			reader.readAsArrayBuffer(file)
-		}
-		document.body.appendChild(fileInput)
-		fileInput.click()
-		
-	inline js void setLocalStorageObject: string key, any value
-		localStorage.setItem(key, JSON.stringify(value))
-		
-	js any getLocalStorageObject: string key
-		let str = localStorage.getItem(key)
-		return str ? JSON.parse(str) : null 
-		
-	inline js void setLocalStorageString: string key, string value
-		localStorage.setItem(key, value)
-		
-	inline js string getLocalStorageString: string key
-		(localStorage.getItem(key) || "")
 		
 	js string generateObjectId
 		var result = (Date.now() / 1000 | 0).toString(16)
@@ -341,248 +193,10 @@ transient skipInit unit Platform
 			result += (Math.random() * 16 | 0).toString(16)
 		return result.toLowerCase()
 		
-	inline js void vibrate: int duration = 100
-		if(navigator.vibrate) navigator.vibrate(duration)
-		
-	js void saveImage: string dataUrl, string file
-		var base64Data = dataUrl.replace(/data:image\/png;base64,/, "");
-		var fs = require("fs")
-		fs.writeFile(file, base64Data, "base64", function (err) {
-			if(err) log(err)
-		});
-		
-	js string[] showOpenDialog: FileFilter[] filters = null
-		if(!Network_isPremiere || !Input_isCertain) return
-		const { remote } = require("electron")
-		return remote.dialog.showOpenDialogSync({ filters, properties: ["openFile"] })
-		
-	js string showSaveDialog: FileFilter[] filters = null
-		if(!Network_isPremiere || !Input_isCertain) return
-		const { remote } = require("electron")
-		return remote.dialog.showSaveDialogSync({ filters, properties: ["createDirectory"] })
-		
-	inline js void debugger
-		debugger
-		
 	js object stack
 		try      { _ }
 		catch(e) { return e.stack }
 		
-	inline js void alert: string message
-		alert(message)
-		log(message)
+	inline js void debugger
+		debugger
 		
-	inline js void sendErrorToEditor: Error error
-		if(window.sendErrorToEditor) sendErrorToEditor(error)
-		else                         console.error(error)
-		
-	inline js void delay: Time time
-		                  void() then
-		setTimeout(then, time)
-		
-	inline js void copyToClipboard(string text)
-		if(core_isPremiere && input_isCertain) {
-			navigator.clipboard.writeText(text)
-		}
-		
-	inline js void setLocation: string url
-		location.href = url
-		
-	inline js void openLink: string url
-		window.open(url)
-		
-	js void showIcon
-		if(!Platform_isDebug && window.require) {
-			const { remote } = require("electron")
-			remote.app.dock?.show()
-		}
-	
-	js void hideIcon
-		if(!Platform_isDebug && window.require) {
-			const { remote } = require("electron")
-			remote.app.dock?.hide()
-		}
-	
-	js void show
-		if(!Platform_isDebug && window.require) {
-			const { remote } = require("electron")
-			remote.getCurrentWindow().show()
-		}
-	
-	js void hide
-		if(!Platform_isDebug && window.require) {
-			const { remote } = require("electron")
-			remote.getCurrentWindow().hide()
-		}
-		
-	js void registerGlobalShotcut: string shortcut
-		                           void() do
-		if(!Platform_isDebug && window.require) {
-			const { remote } = require("electron")
-			remote.globalShortcut.unregister(shortcut)
-			remote.globalShortcut.register(shortcut, () => do())
-		}
-		
-	js void setInterval: Time interval
-		                 void() code
-		setInterval(code, interval)
-		
-	inline js int setTimeout: Time time
-		                      void() code
-		setTimeout(code, time)
-		
-	inline js void clearTimeout: int id
-		clearTimeout(id)
-		
-	inline js string resourcesPath := process.resourcesPath
-	
-	inline js void pushState: string url
-		                      object state = null
-		if(core_isPremiere) history.pushState(state, "", url);
-		
-	inline js void replaceState: string url
-		                         object state = null
-		if(core_isPremiere) history.replaceState(state, "", url);
-		
-	inline js void back
-		if(core_isPremiere) history.back();
-		
-	inline js void reload
-		if(!Platform_isDebug) location.reload();
-	
-unit File
-	js string readPartial: string filename, int offset=0, int length, void(string result) callback
-		let fs = require("fs")
-		let file = fs.open(filename, "r", (err, file) => {
-			fs.read(file, {offset, length}, (err, bytesRead, buffer) => {
-				callback(buffer.toString())
-				fs.closeSync(file)
-			})
-		})
-		
-	js string read: string filename, void(string data) then
-		let fs = require("fs")
-		fs.readFile(filename, "utf8", (err, data) => {
-			then(data)
-		})		
-		
-	js string write: string filename, string data, void() then = null
-		if(core_isPremiere && input_isCertain) {
-			require("fs").writeFile(filename, data, "utf8", (err, data) => {
-				then?.()
-			})
-		}
-		
-	inline js bool exists: string filename
-		require("fs").existsSync(filename)
-		
-	inline js void createDirectory: string path
-		require("fs").mkdirSync(path)
-		
-struct FileFilter
-	string name
-	string[] extensions
-
-transient unit IndexedDB
-	private object db
-	
-	js void start: string databaseName, string storeName, int version = 1
-		try {
-			core_log("IndexedDB: start");
-			IndexedDB_storeName = storeName;
-			var request = indexedDB.open(databaseName, version)
-			request.onupgradeneeded = e => {
-				core_log("IndexedDB: upgradeneeded");
-				IndexedDB_db = e.target.result;
-				if(!IndexedDB_db.objectStoreNames.contains(storeName))
-					IndexedDB_db.createObjectStore(storeName, { keyPath: "id" });
-				core_log("IndexedDB successfully upgraded to version "+version)
-			}
-			request.onsuccess = e => {
-				IndexedDB_db = e.target.result;
-				core_log("IndexedDB: success");
-			}
-			request.onerror = e => {
-				core_log("IndexedDB: error "+request.error);
-			}
-			core_log("IndexedDB: finished");
-		} catch(e) {
-			core_log("IndexedDB: exception "+e.message)
-		}
-		
-	js void open: string storeName, string id, void(object data) then, void() else = null
-		try {
-			let trans = IndexedDB_db.transaction(storeName, "readonly")
-			let req = trans.objectStore(IndexedDB_storeName).get(id)
-			req.onsuccess = async e => {
-				let result = req.result
-				if(result) {
-					then(result)
-				} @else {
-					else?.()
-				}
-			}
-			req.onerror = e => {
-				core_log("Error in IndexedDB.open: "+req.error)
-				else?.()
-			}
-		} catch(e) {
-			core_log("Error in IndexedDB.open: "+e.message)
-			else?.()
-		}
-				
-	js void openBuffer: string storeName, string id, void(Buffer buffer) then, void() else = null
-		try {
-			let trans = IndexedDB_db.transaction(storeName, "readonly")
-			let req = trans.objectStore(IndexedDB_storeName).get(id)
-			req.onsuccess = async e => {
-				let result = req.result
-				if(result) {
-					let arrayBuffer = await result.data.arrayBuffer()
-					let buffer = new Buffer(arrayBuffer, 0, 0, 0)
-					then(buffer)
-				} @else {
-					else?.()
-				}
-			}
-			req.onerror = e => {
-				core_log("Error in IndexedDB.open: "+req.error)
-				else?.()
-			}
-		} catch(e) {
-			core_log("Error in IndexedDB.open: "+e.message)
-			else?.()
-		}
-				
-	js void save: string storeName, object data, void() then = null, void() else = null
-		try {
-			let trans = IndexedDB_db.transaction(storeName, "readwrite")
-			trans.onerror = e => {
-				core_log("Error in IndexedDB.save: "+trans.error)
-				else?.()
-			}
-			trans.objectStore(IndexedDB_storeName).put(data).onsuccess = e => {
-				then?.()
-			}
-		} catch(e) {
-			core_log("Error in IndexedDB.save: "+e.message)
-			else?.()
-		}
-		
-	js void saveBuffer: string storeName, string id, Buffer buffer, void() then = null, void() else = null
-		try {
-			let trans = IndexedDB_db.transaction(storeName, "readwrite")
-			trans.onerror = e => {
-				core_log("Error in IndexedDB.save: "+trans.error)
-				else?.()
-			}
-			let dataView = new DataView(buffer.buffer, 0, buffer.writePos)
-			let data = new Blob([dataView])
-			trans.objectStore(IndexedDB_storeName).put({id, data}).onsuccess = e => {
-				then?.()
-			}
-		} catch(e) {
-			core_log("Error in IndexedDB.save: "+e.message)
-			else?.()
-		}
-

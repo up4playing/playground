@@ -681,7 +681,7 @@ Object ParticleSystem
 			.pos += .speed
 			.speed.y += 1
 			.angle += .rotationSpeed
-			if .pos.y > Platform.size.y/2
+			if .pos.y > graphics.size.y/2
 				particles.removeAt i
 		
 		if particles.length == 0	
@@ -819,13 +819,10 @@ Object Menu
 		
 	Menu
 		if includeDefaultItems
-			items.insert {New,  "New Game",        onClick:startGame}, 0
+			items.insert {New,  "New Game",        onClick:core.restart}, 0
 			items.add    {Save, "Save Game"        onClick:core.saveEventStreamAndLogs}
 			items.add    {Quit, "Exit Fullscreen", onClick:Platform.setFullscreen false, forPlayer:touch.by}
 		
-	private inline js void startGame
-		if(window.app_start) window.app_startGame(false);
-	
 	override tick
 		bool doNotClose
 		if active
