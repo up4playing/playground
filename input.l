@@ -341,10 +341,10 @@ class GameController
 		y.startFrame
 	
 enum ShowPointersMode
-	None   // Never show the mouse pointer
-	Remote // Show the mouse pointer only for remote players
-	Local  // Show the mouse pointer only for the local player
-	All    // Show the mouse pointers of all players
+	None           // Don't show the mouse pointers or draw them manually
+	Local          // Show the mouse pointer only for the local player
+	Remote         // Show the mouse pointer only for remote players
+	LocalAndRemote // Show the mouse pointers of all players
 	
 class InternetGamePadButton
 	bool pressed, touched
