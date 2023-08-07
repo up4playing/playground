@@ -7,7 +7,10 @@ class Color
 	global const Color Green   = {"06d6a0", "Green"}
 	global const Color Blue    = {"118ab2", "Blue"}
 	global const Color Gray    = {"3d3d3d", "Gray"}
-	global const Color TransparentRed   = {"ff000080", "Transparent Red"}
+	global const Color Transparent = {"00000000", "Transparent"}
+		
+	const Color TransparentRed   = {"ff000080", "Transparent Red"}
+	
 	string hex
 	string name
 	
