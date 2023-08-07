@@ -753,10 +753,10 @@ transient skipInit global unit graphics
 	//         tick
 	//             drawPointer me
 	// Image: drawPointer.png
-	global drawPointer: Player player                    // Show the mouse position of this player
-		                Color color = null               // The color of the pointer. If this is left out, the player color is used
-		                showPointer = input.showPointers // Choose whether you want to draw the pointers for local players, remote players or both
-		if showPointer == All
+	global drawPointer: Player player                         // Show the mouse position of this player
+		                ShowPointersMode showPointer = Remote // Choose whether you want to draw the pointers for local players, remote players or both
+		                Color color = null                    // The color of the pointer. If this is left out, the player color is used
+		if showPointer == LocalAndRemote
 		or (player == input.localPlayer and showPointer == Local)
 		or (player != input.localPlayer and showPointer == Remote)
 			if !color: color = player.color
