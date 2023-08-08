@@ -660,6 +660,8 @@ Object ParticleSystem
 	burstInterval = 500
 	Time nextBurst = -1
 	bursts = 10
+	gravity = 1.0
+	maxRotationSpeed  = .05
 	mode = ParticleMode.Burst
 	
 	private int burst
@@ -669,24 +671,25 @@ Object ParticleSystem
 		if Time.now > nextBurst
 			if mode == Single
 				for particleImage.frames.length
-					let r = -math.randomFloat .5
-					let speedFactor = math.randomFloat 10..15
+					let angle = -math.randomFloat .5
+					let speedFactor = math.randomFloat(minSpeed to maxSpeed)
 					particles.add Particle
 						pos: position
-						speed: {math.cos(r), math.sin(r)} * speedFactor
-						angle: randomFloat*.05
-						rotationSpeed: math.randomFloat -.01 to .01
+						speed: math.getVectorForAngle(angle, speedFactor)
+						angle
+						rotationSpeed: math.randomFloat(-maxRotationSpeed to maxRotationSpeed)
 						frame: .
 				nextBurst = Time.maxValue
 			else
 				for particlesPerBurst
-					let r = -math.randomFloat
-					let speedFactor = math.randomFloat*(maxSpeed-minSpeed) + minSpeed
+					let angle = -math.randomFloat
+					let speedFactor = math.randomFloat(minSpeed to maxSpeed)
 					particles.add Particle
 						pos: position
-						speed: {math.cos(r), math.sin(r)} * speedFactor
-						angle: math.randomFloat
+						speed: math.getVectorForAngle(angle, speedFactor)
+						angle
 						frame: math.randomInteger(particleImage.frames.length)
+						rotationSpeed: math.randomFloat(-maxRotationSpeed to maxRotationSpeed)
 				nextBurst = ++burst < bursts ? Time.now + burstInterval : Time.maxValue
 
 		for particles <-
@@ -694,7 +697,7 @@ Object ParticleSystem
 				graphics.rotate .angle
 					drawImage particleImage, frame:.frame
 			.pos += .speed
-			.speed.y += 1
+			.speed.y += gravity
 			.angle += .rotationSpeed
 			if .pos.y > graphics.size.y/2
 				particles.removeAt i
