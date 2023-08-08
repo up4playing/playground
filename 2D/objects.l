@@ -649,11 +649,11 @@ struct Particle
 	Angle angle, rotationSpeed
 	int frame
 
-enum ParticleMode: Burst, Single
+enum ParticleMode: Burst, OneParticlePerImageFrame
 	
 Object ParticleSystem
 	private Particle[] particles
-	Image particleImage = starParticle
+	Image image = starParticle
 	minSpeed = 10.0
 	maxSpeed = 25.0
 	particlesPerBurst = 30
@@ -669,14 +669,14 @@ Object ParticleSystem
 	
 	override tick
 		if Time.now > nextBurst
-			if mode == Single
-				for particleImage.frames.length
+			if mode == OneParticlePerImageFrame
+				for image.frames.length
 					let angle = -math.randomFloat .5
 					let speedFactor = math.randomFloat(minSpeed to maxSpeed)
 					particles.add Particle
 						pos: position
 						speed: math.getVectorForAngle(angle, speedFactor)
-						angle
+						angle: 0
 						rotationSpeed: math.randomFloat(-maxRotationSpeed to maxRotationSpeed)
 						frame: .
 				nextBurst = Time.maxValue
@@ -688,14 +688,14 @@ Object ParticleSystem
 						pos: position
 						speed: math.getVectorForAngle(angle, speedFactor)
 						angle
-						frame: math.randomInteger(particleImage.frames.length)
+						frame: math.randomInteger(image.frames.length)
 						rotationSpeed: math.randomFloat(-maxRotationSpeed to maxRotationSpeed)
 				nextBurst = ++burst < bursts ? Time.now + burstInterval : Time.maxValue
 
 		for particles <-
 			graphics.move .pos
 				graphics.rotate .angle
-					drawImage particleImage, frame:.frame
+					drawImage image, frame:.frame
 			.pos += .speed
 			.speed.y += gravity
 			.angle += .rotationSpeed
