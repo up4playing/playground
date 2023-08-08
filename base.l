@@ -1243,14 +1243,18 @@ interface object
 		{
 			case "object":
 				if(subject === null) return "null"
-				let result = "\{_type:" + subject.constructor.name
-				if(depth > 0)
-					for(let name in subject)
-					{
+				let result = ""
+				if(subject.constructor) result += "_type: " + subject.constructor.name
+				if(depth > 0) {
+					for(let name in subject) {
 						let item = object_stringify(subject[name], depth-1)
-						if(item != "") result += "," + name + ":" + item
+						if(item != "") {
+							if(result) result += ", "
+							result += name + ": " + item
+						}
 					}
-				return result + "\}"
+				}
+				return "\{" + result + "\}"
 				
 			case "string":
 				return "\"" + subject + "\""
