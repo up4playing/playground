@@ -131,12 +131,12 @@ class Object
 		    Time delay = 0
 		Vector2 startPosition = position
 		
-		// When chaining serveral move effects together, continue where the last one left off
-		MoveEffect moveEffect = cast fx.effects.findLast.type == MoveEffect and .object == this
-			startPosition = moveEffect.startValue + moveEffect.delta
+		// When chaining serveral move animations together, continue where the last one left off
+		MoveAnimation moveAnimation = cast fx.animations.findLast.type == MoveAnimation and .object == this
+			startPosition = moveAnimation.startValue + moveAnimation.delta
 
 		let delta = pos - startPosition
-		fx.add MoveEffect startTime:fx.endOfPrevEffect(this)+delay, duration, this, startPosition, delta
+		fx.add MoveAnimation startTime:fx.endOfPrevAnimation(this)+delay, duration, this, startPosition, delta
 		return this
 		
 	moveAndScaleTo: Vector2 position
@@ -147,13 +147,13 @@ class Object
 		Vector2 startSize = this.size
 		Vector2 endSize = size.y ? size : {size.x, size.x * startSize.y/startSize.x}
 		
-		// When chaining serveral move effects together, continue where the last one left off
-		MoveEffect moveEffect = cast fx.effects.findLast.type == MoveEffect and .object == this
-			startPosition = moveEffect.startValue + moveEffect.delta
+		// When chaining serveral move animations together, continue where the last one left off
+		MoveAnimation moveAnimation = cast fx.animations.findLast.type == MoveAnimation and .object == this
+			startPosition = moveAnimation.startValue + moveAnimation.delta
 
-		let startTime = fx.endOfPrevEffect(this)+delay
-		fx.add MoveEffect startTime, duration, this, startPosition, delta:position - startPosition
-		fx.add ScaleEffect startTime, duration, this, startSize, delta:endSize - startSize
+		let startTime = fx.endOfPrevAnimation(this)+delay
+		fx.add MoveAnimation startTime, duration, this, startPosition, delta:position - startPosition
+		fx.add ScaleAnimation startTime, duration, this, startSize, delta:endSize - startSize
 		watch startSize, endSize
 		return this
 		
@@ -162,13 +162,13 @@ class Object
 		    Time delay = 0
 		let delta = pos - position
 		let duration = math.floor(delta.length / speed)
-		fx.add MoveEffect startTime:fx.endOfPrevEffect(this)+delay, duration, this, startValue:position, delta
+		fx.add MoveAnimation startTime:fx.endOfPrevAnimation(this)+delay, duration, this, startValue:position, delta
 		return this
 		
 	fadeIn: Time duration = 100
 		    Time delay = 0
 		alpha = 0
-		fx.add FadeEffect startTime:fx.endOfPrevEffect(this)+delay, duration, this, startValue:0, delta:1
+		fx.add FadeAnimation startTime:fx.endOfPrevAnimation(this)+delay, duration, this, startValue:0, delta:1
 		return this
 		
 	fadeOut: Time duration = 100
@@ -176,41 +176,41 @@ class Object
 		     bool removeWhenDone = true
 		float startValue = alpha
 		
-		// When chaining serveral fade effects together, continue where the last one left off
-		// If the last fade effect is already a fade out, don't do anything
-		FadeEffect lastFadeEffect = cast fx.effects.findLast.type == FadeEffect and .object == this
-			if lastFadeEffect.startValue + lastFadeEffect.delta <= 0: 
+		// When chaining serveral fade animations together, continue where the last one left off
+		// If the last fade animation is already a fade out, don't do anything
+		FadeAnimation lastFadeAnimation = cast fx.animations.findLast.type == FadeAnimation and .object == this
+			if lastFadeAnimation.startValue + lastFadeAnimation.delta <= 0: 
 				watch "ignoring"
 				return
-			startValue = lastFadeEffect.startValue
+			startValue = lastFadeAnimation.startValue
 				
-		fx.add FadeEffect startTime:fx.endOfPrevEffect(this)+delay, duration, this, startValue, delta:-startValue, removeWhenDone
+		fx.add FadeAnimation startTime:fx.endOfPrevAnimation(this)+delay, duration, this, startValue, delta:-startValue, removeWhenDone
 		return this
 		
 	scaleTo: implicit Vector2 size
 		     Time duration = 1000
 		     Time delay = 0
-		fx.add ScaleEffect startTime:fx.endOfPrevEffect(this)+delay, duration, this, startValue:this.size, delta:size-this.size
+		fx.add ScaleAnimation startTime:fx.endOfPrevAnimation(this)+delay, duration, this, startValue:this.size, delta:size-this.size
 		return this
 		
 	do:   stored void() do
 		  Time delay = 0
-		fx.add DelayEffect startTime:fx.endOfPrevEffect(this)+delay, duration:0, this, do
+		fx.add DelayAnimation startTime:fx.endOfPrevAnimation(this)+delay, duration:0, this, do
 		
 	playSound: Sound sound
 		       Time delay = 0
-		fx.add PlaySoundEffect startTime:fx.endOfPrevEffect(this)+delay, duration:0, this, sound
+		fx.add PlaySoundAnimation startTime:fx.endOfPrevAnimation(this)+delay, duration:0, this, sound
 
 	fadeAndScaleIn: float startScale = 3
 		            Time duration = 200
 		            Time delay = 0
 		alpha = 0
-		let startTime = fx.endOfPrevEffect(this)+delay
-		fx.add ScaleEffect startTime, duration, this, startValue:startScale*size, delta:(1-startScale)*size
-		fx.add FadeEffect  startTime, duration, this, startValue:0, delta:1
+		let startTime = fx.endOfPrevAnimation(this)+delay
+		fx.add ScaleAnimation startTime, duration, this, startValue:startScale*size, delta:(1-startScale)*size
+		fx.add FadeAnimation  startTime, duration, this, startValue:0, delta:1
 		return this
 		
-	removeEffects
+	removeAnimations
 		fx.removeForObject this
 		
 Object RectangleObject
