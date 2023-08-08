@@ -74,6 +74,7 @@ class Player
 	int id
 	int index
 	Color color = null
+	Vector2 pointerPosition
 	
 	toString := color ? color.name : ""
 	
@@ -774,7 +775,8 @@ skipInit global unit input
 							touch = {id, player, cast inputType, type, referencePos, referencePos, referencePos, isDown:true}
 							player.touches.add touch
 							if core.logging: core.parseLog += " down(new) {id} {referencePos} {type}"
-							
+								
+						player.pointerPosition = referencePos
 						internalUser.downTouches.add touch
 					else
 					if inputType == TouchMove
@@ -790,7 +792,8 @@ skipInit global unit input
 							touch = {id, player, cast inputType, type, referencePos, referenceStartPosition:Vector2.none, referencePos, isDown:false}
 							player.touches.add touch
 							if core.logging: core.parseLog += " move(new) {id} {referencePos} {type}"
-
+								
+						player.pointerPosition = referencePos
 						internalUser.movingTouches.add touch
 						cursor = Auto
 					else
@@ -808,7 +811,8 @@ skipInit global unit input
 							touch = {id, player, cast inputType, type, referencePos, referenceStartPosition:Vector2.none, referencePos, isDown:false}
 							player.touches.add touch
 							if core.logging: core.parseLog += " up(new) {id} {referencePos} {type}"
-							
+								
+						player.pointerPosition = referencePos
 						internalUser.upTouches.add touch
 					else
 					if inputType == Scroll
