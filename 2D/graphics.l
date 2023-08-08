@@ -295,6 +295,8 @@ transient skipInit global unit graphics
 			let f = image.frames[frame % image.frames.length]
 			let sizeX = size.x || f.w
 			let sizeY = size.y || (sizeX/f.w)*f.h
+			let factor = graphics_getScaleImagesAsPointerGetsCloserFactor(position)
+			if(factor > 1) { sizeX *= factor; sizeY *= factor }
 			graphics_items.push(new DisplayImage(
 				graphics_totalMatrix,
 				align == 0  ? position.x : align  == 1 ? position.x-sizeX*.5 : position.x-sizeX,
@@ -334,6 +336,8 @@ transient skipInit global unit graphics
 				let f = image.frames[frame % image.frames.length]
 				let sizeX = size.x || f.w
 				let sizeY = size.y || (sizeX/f.w)*f.h
+				let factor = graphics_getScaleImagesAsPointerGetsCloserFactor(position)
+				if(factor > 1) { sizeX *= factor; sizeY *= factor }
 				let matrix = graphics_totalMatrix.clone()
 				matrix.move(position)
 				matrix.rotate(angle)
@@ -417,7 +421,8 @@ transient skipInit global unit graphics
 			
 		// Handle click (only visible buttons are clickable)
 		let effectivetouchableBy = gettouchableBy(visibleFor, touchableBy)
-		if size.x == 0 and size.y == 0: size = image.size
+		if size.x == 0 and size.y == 0: size = image.size; else
+		if size.y == 0: size.y = size.x * image.size.y / image.size.x
 		input.onTouchDownWithin position, size + touchMargin, by:effectivetouchableBy, showTouchArea, do:onTouch
 		if hotkey
 			input.onKeyDown hotkey, by:effectivetouchableBy
@@ -1119,6 +1124,33 @@ transient skipInit global unit graphics
 		let sizeX = size.x || imageSize.x
 		let sizeY = size.y || (sizeX/imageSize.x)*imageSize.y
 		return {sizeX, sizeY}
+		
+	
+	// -------------------------------------------- Scale Image as Pointer Get Closer  -------------------------------------------------------
+	
+	private Player scaleAsPointerGetsCloserBy = null
+	private float scaleAsPointerGetsCloserFactor = 1
+	private float scaleAsPointerGetsCloserRadius = 0
+	
+	scaleImagesAsPointerGetsCloser: Player by = null
+		                            factor = 2.0
+		                            radius = 200.0
+		                            void() do
+		let prevBy = scaleAsPointerGetsCloserBy
+		let prevFactor = scaleAsPointerGetsCloserFactor
+		let prevRadius = scaleAsPointerGetsCloserRadius
+		scaleAsPointerGetsCloserBy = by
+		scaleAsPointerGetsCloserFactor = factor
+		scaleAsPointerGetsCloserRadius = radius
+		do
+		scaleAsPointerGetsCloserBy = prevBy
+		scaleAsPointerGetsCloserFactor = prevFactor
+		scaleAsPointerGetsCloserRadius = prevRadius
+		
+	private getScaleImagesAsPointerGetsCloserFactor: Vector2 position
+		if not scaleAsPointerGetsCloserRadius: return 1.0
+		let distance = scaleAsPointerGetsCloserBy ? scaleAsPointerGetsCloserBy.pointerPosition.distanceTo(position) : players.min.pointerPosition.distanceTo(position)
+		return math.map distance, 0, scaleAsPointerGetsCloserRadius, scaleAsPointerGetsCloserFactor, 1
 		
 	// --------------------------------------------- Create and Manipulate Images ---------------------------------------------
 	
