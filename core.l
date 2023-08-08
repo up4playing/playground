@@ -11,7 +11,7 @@ transient skipInit unit core
 	bool simulateInputsForTesting = false
 	bool simulateRollback = false
 	bool drawPointsForTesting = false
-	Time sendLogfileEvery = 0
+	Time sendStatisticsEvery = 5 minutes
 	bool showVideoForStaging = true
 	bool muteInvisibleUsers = false
 	int checksumInterval = 30
@@ -548,10 +548,9 @@ transient skipInit unit core
 	string gameId
 	
 	join: string gameId, string roomString, int userId
-		// Send statistics after 25 seconds
-		Platform.setTimeout 25 seconds: statistics.manuallyTriggerSend -1, clear:false
-		if sendLogfileEvery
-			Platform.setInterval sendLogfileEvery: statistics.manuallyTriggerSend -2, clear:true
+		// Send statistics
+		Platform.setTimeout 30 seconds: statistics.send
+		if sendStatisticsEvery: Platform.setInterval sendStatisticsEvery: statistics.send
 		
 		isPremiere = true
 		initAll
@@ -675,6 +674,8 @@ skipInit transient unit statistics
 	
 	float[] serverPings
 	private StatisticsGraphSeries[] series
+	private dynamic[] data
+	
 	string log
 	Time startTime, loadTime, connectTime
 	internal float maxValue
@@ -691,11 +692,16 @@ skipInit transient unit statistics
 		
 	int lastSendFrame = -1
 	
-	send: any data = null, int game = 0, int round = 0, int step = 0, bool clear = true
-		print "sending statistics", round, Time.frame, lastSendFrame
-		if Time.frame <= lastSendFrame or Platform.isDebug: return
+	finishedRound: dynamic data
+		data.frame = Time.frame
+		this.data.add data
+	
+	send
+		print "sending statistics"
+		// if Time.frame <= lastSendFrame or Platform.isDebug: return
+		
 		lastSendFrame = Time.frame
-		let userName = localStorage.getStringDirectly("play-userId")
+		let userName = localStorage.getStringDirectly("userId")
 		let server = Platform.host.getUntil(".")
 		StatisticsGraphSeries[] series
 		string[] connections
@@ -703,6 +709,9 @@ skipInit transient unit statistics
 			let internalUser = input.internalUsers[.id]
 			connections.add internalUser.connectionType
 			series.add this.series.find.userIndex == i
+			
+		let prevIsCertain = input.isCertain
+		input.isCertain = true
 		http.post "{Platform.protocolAndHost}:3114/stats", body:{
 			time: Date.now.isoString
 			gameId: core.gameId
@@ -710,9 +719,6 @@ skipInit transient unit statistics
 			userId: input.localUser.id
 			userIndex: input.localUser.index
 			userName
-			game
-			round
-			step
 			staging: Platform.isStaging
 			server
 			minServerPing: serverPings.min .
@@ -731,13 +737,8 @@ skipInit transient unit statistics
 			log
 			data
 		}
-		if clear: this.clear
-			
-	internal manuallyTriggerSend: int value, bool clear
-		let prevIsCertain = input.isCertain
-		input.isCertain = true
-		statistics.send round:value game:value clear
 		input.isCertain = prevIsCertain
+		clear
 			
 	add: string name, float value, Color color = White, int set = 0
 		var s = series.find.name == name and .set == set
@@ -775,8 +776,6 @@ skipInit transient unit statistics
 				if value > maxValue: maxValue = value
 					
 		draw
-			
-
 
 unit networkVisualizer		
 	private int[] posForPlayer = [0,-10000,-10000,-10000,-10000,-10000]

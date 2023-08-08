@@ -285,9 +285,9 @@ transient unit PeerNetwork
 				let candidate = stats.get(candidatePair.localCandidateId);
 				let ip = candidate.ip || candidate.address
 				user.connectionType = candidate.candidateType + " " + ip
-				core_log("<"+user.id+"> ####################connection to "+user.id+": "+user.connectionType)
+				core_log("<"+user.id+"> #################### connection to "+user.id+": "+user.connectionType)
 			} else {
-				core_log("<"+user.id+"> ####################connection: no candidate pair for "+user.id)
+				core_log("<"+user.id+"> #################### connection: no candidate pair for "+user.id)
 				window.stats = [...stats.values()]
 				console.log(window.stats)
 				try  { core_log(JSON.stringify(window.stats)) }
