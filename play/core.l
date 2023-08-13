@@ -674,7 +674,7 @@ skipInit transient unit statistics
 	
 	float[] serverPings
 	private StatisticsGraphSeries[] series
-	private dynamic[] data
+	private dynamic[] gameLogs
 	
 	string log
 	Time startTime, loadTime, connectTime
@@ -692,9 +692,9 @@ skipInit transient unit statistics
 		
 	int lastSendFrame = -1
 	
-	finishedRound: dynamic data
-		data.frame = Time.frame
-		this.data.add data
+	gameLog: dynamic gameLog
+		gameLog.frame = Time.frame
+		this.gameLogs.add gameLog
 	
 	send
 		print "sending statistics"
@@ -703,12 +703,12 @@ skipInit transient unit statistics
 		lastSendFrame = Time.frame
 		let userName = localStorage.getStringDirectly("userId")
 		let server = Platform.host.getUntil(".")
-		StatisticsGraphSeries[] series
+		float[][] series = [[],[],[],[]]
 		string[] connections
 		for players
 			let internalUser = input.internalUsers[.id]
 			connections.add internalUser.connectionType
-			series.add this.series.find.userIndex == i
+			series[i] = this.series.find(.userIndex == i).values
 			
 		let prevIsCertain = input.isCertain
 		input.isCertain = true
@@ -725,17 +725,18 @@ skipInit transient unit statistics
 			maxServerPing: serverPings.max .
 			averageServerPing: serverPings.average
 			ping:series.select {
-				average:it?.values.average
-				max:it?.values.max(.)
-				peeks:it?.values.count . > 30
+				average:it?.average
+				max:it?.max(.)
+				peeks:it?.count . > 30
 			}
 			connections
-			serverPings
-			peerPings: series
 			loadTime: loadTime - startTime
 			connectTime: connectTime - startTime
+			
+			serverPings
+			peerPings: series
 			log
-			data
+			gameLogs
 		}
 		input.isCertain = prevIsCertain
 		clear
