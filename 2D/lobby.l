@@ -11,10 +11,6 @@ unit lobby
 			// The delta value has to be the same for all users, we use it to check if everybody is in sync
 			drawText "delta:{ticks-Time.frame} ticks:{ticks}", size:20, position:{-940, 520}, align:Left
 			ticks++
-			
-			drawButton Button, "Send Statistics", {864,498}
-				input.isCertain = true
-				statistics.send round:-2 game:-2
 		
 		if PeerNetwork.error or core.errorMessage
 			drawText PeerNetwork.error, size:40

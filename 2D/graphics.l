@@ -7,7 +7,10 @@ class Color
 	global const Color Green   = {"06d6a0", "Green"}
 	global const Color Blue    = {"118ab2", "Blue"}
 	global const Color Gray    = {"3d3d3d", "Gray"}
-	global const Color TransparentRed   = {"ff000080", "Transparent Red"}
+	global const Color Transparent = {"00000000", "Transparent"}
+		
+	const Color TransparentRed   = {"ff000080", "Transparent Red"}
+	
 	string hex
 	string name
 	
@@ -279,8 +282,8 @@ transient skipInit global unit graphics
 	global js void drawImage: Image image                         // The image to draw. PNG images in the "media" folder will automatically show up here
 		                      Vector2 position = {}               // By default, {0,0} is the center, {-960,-540} is the top left, {960,540} is the bottom right
 		                      implicit Vector2 size = {}          // A float scales the image to that width keeping the aspect ratio, a vector stretches the image
-		                      implicit frame = 0                  // The frame to draw from a sequence of images (for example "Walk0.png", "Walk1.png", ...)
 		                      implicit Player[] visibleFor = null // Only this player or list of players will see the image
+		                      implicit frame = 0                  // The frame to draw from a sequence of images (for example "Walk0.png", "Walk1.png", ...)
 		                      implicit layer = 0                  // Higher layers are drawn in front of lower layers
 		                      alpha = 1.0                         // The opacity of the image (0: fully transparent, 1: fully visible)
 		                      Color color = White                 // Tint the image with this color
@@ -292,6 +295,8 @@ transient skipInit global unit graphics
 			let f = image.frames[frame % image.frames.length]
 			let sizeX = size.x || f.w
 			let sizeY = size.y || (sizeX/f.w)*f.h
+			let factor = graphics_getScaleImagesAsPointerGetsCloserFactor(position)
+			if(factor > 1) { sizeX *= factor; sizeY *= factor }
 			graphics_items.push(new DisplayImage(
 				graphics_totalMatrix,
 				align == 0  ? position.x : align  == 1 ? position.x-sizeX*.5 : position.x-sizeX,
@@ -313,36 +318,42 @@ transient skipInit global unit graphics
 	// Image: drawImage1.png
 	global js void drawImage: Image image                         // The image to draw. PNG images in the "media" folder will automatically show up here
 		                      Vector2 position = {}               // By default, {0,0} is the center, {-960,-540} is the top left, {960,540} is the bottom right
-		                      frame = 0                           // The frame to draw from a sequence of images (for example "Walk0.png", "Walk1.png", ...)
 		                      implicit Vector2 size = {}          // A float scales the image to that width keeping the aspect ratio, a vector stretches the image
-		                      Angle angle = 0.0                   // Rotate the image by this angle in turns (0: no rotation, 1: one full rotation)
-		                      flipX = false                       // Mirror the image horizontally
-		                      flipY = false                       // Mirror the image vertically
 		                      implicit Player[] visibleFor = null // Only this player or list of players will see the image
+		                      implicit frame = 0                  // The frame to draw from a sequence of images (for example "Walk0.png", "Walk1.png", ...)
 		                      implicit layer = 0                  // Higher layers are drawn in front of lower layers
 		                      alpha = 1.0                         // The opacity of the image (0: fully transparent, 1: fully visible)
 		                      Color color = White                 // Tint the image with this color
+		                      Angle angle = 0.0                   // Rotate the image by this angle in turns (0: no rotation, 1: one full rotation)
+		                      flipX = false                       // Mirror the image horizontally
+		                      flipY = false                       // Mirror the image vertically
 		                      SourceCodeLocation location
-		if(!image.texture?.ensureIsAvailable()) return
-		if(graphics_isVisibleFor(visibleFor)) {
-			let f = image.frames[frame % image.frames.length]
-			let sizeX = size.x || f.w
-			let sizeY = size.y || (sizeX/f.w)*f.h
-			let matrix = graphics_totalMatrix.clone()
-			matrix.move(position)
-			matrix.rotate(angle)
-			if(flipX || flipY) matrix.scale(new Vector2(flipX ? -1:1, flipY ? -1:1	))
-			graphics_items.push(new DisplayImage(
-				matrix,
-				-sizeX/2,
-				-sizeY/2,
-				sizeX, sizeY,
-				layer, alpha, graphics_currentClippingPath, image.file, 
-				location, position.location, size.location,
-				image.texture._htmlImage,
-				f.x1, f.y1, f.w, f.h,
-				color
-			))
+		if(angle == 0) {
+			graphics_drawImage(image, position, size, visibleFor, frame, layer, alpha, color, 1, 1, location)
+		} else {
+			if(!image.texture?.ensureIsAvailable()) return
+			if(graphics_isVisibleFor(visibleFor)) {
+				let f = image.frames[frame % image.frames.length]
+				let sizeX = size.x || f.w
+				let sizeY = size.y || (sizeX/f.w)*f.h
+				let factor = graphics_getScaleImagesAsPointerGetsCloserFactor(position)
+				if(factor > 1) { sizeX *= factor; sizeY *= factor }
+				let matrix = graphics_totalMatrix.clone()
+				matrix.move(position)
+				matrix.rotate(angle)
+				if(flipX || flipY) matrix.scale(new Vector2(flipX ? -1:1, flipY ? -1:1	))
+				graphics_items.push(new DisplayImage(
+					matrix,
+					-sizeX/2,
+					-sizeY/2,
+					sizeX, sizeY,
+					layer, alpha, graphics_currentClippingPath, image.file, 
+					location, position.location, size.location,
+					image.texture._htmlImage,
+					f.x1, f.y1, f.w, f.h,
+					color
+				))
+			}
 		}
 
 	// Animate of sequence of images with a given number of frames per second
@@ -353,9 +364,9 @@ transient skipInit global unit graphics
 	// Image: drawImage2.gif
 	global void drawImage: Image image                         // The image to draw. PNG images in the "media" folder will automatically show up here
 		                   Vector2 position = {}               // By default, {0,0} is the center, {-960,-540} is the top left, {960,540} is the bottom right
-		                   framesPerSecond = 0                 // Animate a sequence of images (for example "Walk0.png", "Walk1.png", ...)
 		                   implicit Vector2 size = {}          // A float scales the image to that width keeping the aspect ratio, a vector stretches the image
 		                   implicit Player[] visibleFor = null // Only this player or list of players will see the image
+		                   framesPerSecond = 0                 // Animate a sequence of images (for example "Walk0.png", "Walk1.png", ...)
 		                   implicit int layer = 0              // Higher layers are drawn in front of lower layers
 		                   alpha = 1.0                         // The opacity of the image (0: fully transparent, 1: fully visible)
 		                   Color color = White                 // Tint the image with this color
@@ -371,15 +382,15 @@ transient skipInit global unit graphics
 	// Image: drawImage3.gif
 	global void drawImage: Image image                          // The image to draw. PNG images in the "media" folder will automatically show up here
 		                   Vector2 position = {}                // By default, {0,0} is the center, {-960,-540} is the top left, {960,540} is the bottom right
-		                   framesPerSecond = 0                  // Animate a sequence of images (for example "Walk0.png", "Walk1.png", ...)
 		                   implicit Vector2 size = {}           // A float scales the image to that width keeping the aspect ratio, a vector stretches the image
-		                   Angle angle = 0.0                    // Rotate the image by this angle in turns (0: no rotation, 1: one full rotation)
-		                   flipX = false                        // Mirror the image horizontally
-		                   flipY = false                        // Mirror the image vertically
 		                   implicit Player[] visibleFor = null  // Only this player or list of players will see the image
+		                   framesPerSecond = 0                 // Animate a sequence of images (for example "Walk0.png", "Walk1.png", ...)
 		                   implicit int layer = 0               // Higher layers are drawn in front of lower layers
 		                   alpha = 1.0                          // The opacity of the image (0: fully transparent, 1: fully visible)
 		                   Color color = White                  // Tint the image with this color
+		                   Angle angle = 0.0                    // Rotate the image by this angle in turns (0: no rotation, 1: one full rotation)
+		                   flipX = false                        // Mirror the image horizontally
+		                   flipY = false                        // Mirror the image vertically
 		                   SourceCodeLocation location
 		var frame = math.floor(core.frame * math.max(framesPerSecond, 0) / core.targetFps) % image.frames.length;
 		drawImage image, position, frame, size, angle, flipX, flipY, visibleFor, layer, alpha, color, location
@@ -393,24 +404,25 @@ transient skipInit global unit graphics
 	// Image: drawImage0.png
 	global void drawImage: Image image                          // The image to draw. PNG images in the "media" folder will automatically show up here
 		                   Vector2 position = {}                // By default, {0,0} is the center, {-960,-540} is the top left, {960,540} is the bottom right
-		                   frame = 0                            // The frame to draw from a sequence of images (for example "Walk0.png", "Walk1.png", ...)
 		                   implicit Vector2 size = {}           // A float scales the image to that width keeping the aspect ratio, a vector stretches the image
-		                   Angle angle = 0.0                    // Rotate the image by this angle in turns (0: no rotation, 1: one full rotation)
-		                   touchMargin = Vector2(16,16)         // The margin around the image within which it is touchable
-		                   showTouchArea = false                // Highlight the touchable area for debugging
 		                   implicit Player[] visibleFor = null  // Only this player or list of players will see the image
 		                   implicit Player[] touchableBy = null // Only this player or list of players can touch or click the image
-		                   hotkey = Key.None                    // This keyboard shortcut will execute the onTouch handler
+		                   implicit frame = 0                   // The frame to draw from a sequence of images (for example "Walk0.png", "Walk1.png", ...)
 		                   implicit layer = 0                   // Higher layers are drawn in front of lower layers
 		                   alpha = 1.0                          // The opacity of the image (0: fully transparent, 1: fully visible)
 		                   Color color = White                  // Tint the image with this color
+		                   Angle angle = 0.0                    // Rotate the image by this angle in turns (0: no rotation, 1: one full rotation)
+		                   touchMargin = Vector2(16,16)         // The margin around the image within which it is touchable
+		                   showTouchArea = false                // Highlight the touchable area for debugging
+		                   hotkey = Key.None                    // This keyboard shortcut will execute the onTouch handler
 		                   void(Touch touch) onTouch            // Execute this code when the user touches or clicks the image or presses the hotkey
 		                   SourceCodeLocation location
 		drawImage image, position, frame, size, angle, visibleFor, layer, alpha, color, location
 			
 		// Handle click (only visible buttons are clickable)
 		let effectivetouchableBy = gettouchableBy(visibleFor, touchableBy)
-		if size.x == 0 and size.y == 0: size = image.size
+		if size.x == 0 and size.y == 0: size = image.size; else
+		if size.y == 0: size.y = size.x * image.size.y / image.size.x
 		input.onTouchDownWithin position, size + touchMargin, by:effectivetouchableBy, showTouchArea, do:onTouch
 		if hotkey
 			input.onKeyDown hotkey, by:effectivetouchableBy
@@ -746,10 +758,10 @@ transient skipInit global unit graphics
 	//         tick
 	//             drawPointer me
 	// Image: drawPointer.png
-	global drawPointer: Player player                    // Show the mouse position of this player
-		                Color color = null               // The color of the pointer. If this is left out, the player color is used
-		                showPointer = input.showPointers // Choose whether you want to draw the pointers for local players, remote players or both
-		if showPointer == All
+	global drawPointer: Player player                         // Show the mouse position of this player
+		                ShowPointersMode showPointer = Remote // Choose whether you want to draw the pointers for local players, remote players or both
+		                Color color = null                    // The color of the pointer. If this is left out, the player color is used
+		if showPointer == LocalAndRemote
 		or (player == input.localPlayer and showPointer == Local)
 		or (player != input.localPlayer and showPointer == Remote)
 			if !color: color = player.color
@@ -1112,6 +1124,33 @@ transient skipInit global unit graphics
 		let sizeX = size.x || imageSize.x
 		let sizeY = size.y || (sizeX/imageSize.x)*imageSize.y
 		return {sizeX, sizeY}
+		
+	
+	// -------------------------------------------- Scale Image as Pointer Get Closer  -------------------------------------------------------
+	
+	private Player scaleAsPointerGetsCloserBy = null
+	private float scaleAsPointerGetsCloserFactor = 1
+	private float scaleAsPointerGetsCloserRadius = 0
+	
+	scaleImagesAsPointerGetsCloser: Player by = null
+		                            factor = 2.0
+		                            radius = 200.0
+		                            void() do
+		let prevBy = scaleAsPointerGetsCloserBy
+		let prevFactor = scaleAsPointerGetsCloserFactor
+		let prevRadius = scaleAsPointerGetsCloserRadius
+		scaleAsPointerGetsCloserBy = by
+		scaleAsPointerGetsCloserFactor = factor
+		scaleAsPointerGetsCloserRadius = radius
+		do
+		scaleAsPointerGetsCloserBy = prevBy
+		scaleAsPointerGetsCloserFactor = prevFactor
+		scaleAsPointerGetsCloserRadius = prevRadius
+		
+	private getScaleImagesAsPointerGetsCloserFactor: Vector2 position
+		if not scaleAsPointerGetsCloserRadius: return 1.0
+		let distance = scaleAsPointerGetsCloserBy ? scaleAsPointerGetsCloserBy.pointerPosition.distanceTo(position) : players.min.pointerPosition.distanceTo(position)
+		return math.map distance, 0, scaleAsPointerGetsCloserRadius, scaleAsPointerGetsCloserFactor, 1
 		
 	// --------------------------------------------- Create and Manipulate Images ---------------------------------------------
 	

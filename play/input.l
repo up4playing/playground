@@ -74,6 +74,7 @@ class Player
 	int id
 	int index
 	Color color = null
+	Vector2 pointerPosition
 	
 	toString := color ? color.name : ""
 	
@@ -340,10 +341,10 @@ class GameController
 		y.startFrame
 	
 enum ShowPointersMode
-	None   // Never show the mouse pointer
-	Remote // Show the mouse pointer only for remote players
-	Local  // Show the mouse pointer only for the local player
-	All    // Show the mouse pointers of all players
+	None           // Don't show the mouse pointers or draw them manually
+	Local          // Show the mouse pointer only for the local player
+	Remote         // Show the mouse pointer only for remote players
+	LocalAndRemote // Show the mouse pointers of all players
 	
 class InternetGamePadButton
 	bool pressed, touched
@@ -640,7 +641,7 @@ skipInit global unit input
 					internalUser.nextLostMessageAtFrame = core.frame + core.targetFps * 12
 					
 					// Send logfiles to server
-					Platform.setTimeout 7 seconds: statistics.manuallyTriggerSend -3, clear:false
+					Platform.setTimeout 7 seconds: statistics.send
 	
 	private handleStillConnected: int userId
 		let inputs = localUser.inputs
@@ -774,7 +775,8 @@ skipInit global unit input
 							touch = {id, player, cast inputType, type, referencePos, referencePos, referencePos, isDown:true}
 							player.touches.add touch
 							if core.logging: core.parseLog += " down(new) {id} {referencePos} {type}"
-							
+								
+						player.pointerPosition = referencePos
 						internalUser.downTouches.add touch
 					else
 					if inputType == TouchMove
@@ -790,7 +792,8 @@ skipInit global unit input
 							touch = {id, player, cast inputType, type, referencePos, referenceStartPosition:Vector2.none, referencePos, isDown:false}
 							player.touches.add touch
 							if core.logging: core.parseLog += " move(new) {id} {referencePos} {type}"
-
+								
+						player.pointerPosition = referencePos
 						internalUser.movingTouches.add touch
 						cursor = Auto
 					else
@@ -808,7 +811,8 @@ skipInit global unit input
 							touch = {id, player, cast inputType, type, referencePos, referenceStartPosition:Vector2.none, referencePos, isDown:false}
 							player.touches.add touch
 							if core.logging: core.parseLog += " up(new) {id} {referencePos} {type}"
-							
+								
+						player.pointerPosition = referencePos
 						internalUser.upTouches.add touch
 					else
 					if inputType == Scroll
