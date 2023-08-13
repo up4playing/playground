@@ -37,33 +37,33 @@ class Texture
 	string file
 	Vector2 size
 	
+	transient dynamic texture
+	
 	Texture
 		if Platform.engineStarted
 			open
 			
 	js bool ensureIsAvailable()
 		if(!this._htmlImage) {
-			this._htmlImage = _htmlImageCache[this.file]
+			this._htmlImage = _textureCache[this.file]
 		}
 		return this._htmlImage != null
 	
 	js void open
-		if(!window._htmlImageCache) _htmlImageCache = {}
-		let image = _htmlImageCache[this.file]
-		if(!image) {
+		if(!window._textureCache) _textureCache = {}
+		this.texture = _textureCache[this.file]
+		if(!this.texture) {
 			return new Promise((resolve, reject) => {
-				image = new Image()
-				image.onload = e => {
-					this._htmlImage = image
-					window._htmlImageCache[this.file] = image
-					this.size = new Vector2(image.width, image.height, null)
+				let path = this.file.startsWith("http") ? this.file : _basePath+this.file
+				this.texture = new THREE.TextureLoader().load(path, () => {
+					this.texture.colorSpace = THREE.SRGBColorSpace;
+					window._textureCache[this.file] = this.texture
+					this.size = new Vector2(this.texture.image.width, this.texture.image.height, null)
 					resolve(this);
-				}
-				image.src = this.file.startsWith("http") ? this.file : _basePath+this.file
+				});
 			})
 		} else {
-			this._htmlImage = image
-			this.size = new Vector2(image.width, image.height, null)
+			this.size = new Vector2(this.texture.image.width, this.texture.image.height, null)
 			return this
 		}
 		
@@ -160,21 +160,61 @@ enum VerticalAlignment: Top, Middle, Bottom
 enum FontStyle: Normal, Bold
 class ClippingPath: Vector2[] points; bool show
 		
+
+js THREE.Mesh	
+Mesh
+	Vector3 position
+	Quaternion quaternion
+	
+	bool drawnThisFrame
+	
+	inline js Mesh(dynamic geometry, dynamic material) new THREE.Mesh(geometry, material)
+	
+Bucket
+	int nextMeshIndex
+	Mesh[] meshes
+	
+js THREE.Quaternion
+Quaternion
+	inline js Quaternion(float x = 0.0, float y = 0.0, float z = 0.0) new THREE.Quaternion().setFromEuler(new THREE.Euler(x*math_TwoPI, y*math_TwoPI, z*math_TwoPI))
+		
+	js Quaternion operator = (Quaternion a, Quaternion b) a.x = b.x; a.y = b.y; a.z = b.z; a.w = b.w; return a
+		
 // Draw on the screen
 transient skipInit global unit graphics
-	private object canvas
-	internal object context
 	internal Matrix2D baseMatrix, totalMatrix, localMatrix
 	
+	public float fieldOfView = 70
 	public Vector2 referenceSize = {1920, 1080}
+	
 	public ScaleMode scaleMode = Auto, effectiveScaleMode
 	public AnchorMode anchor = Center
 	visible Vector2 pixelSize
 	visible Vector2 size
 	visible float pixelRatio
 	
-	internal js void onResize
+	private dynamic three
+	internal dynamic scene
+	private dynamic canvas
+	private dynamic renderer
+	private dynamic camera
+	
+	internal js async void setup
 		graphics_canvas = document.getElementById("canvas");
+		graphics_canvas.imageSmoothingEnabled = true;
+		graphics_canvas.imageSmoothingQuality = "high";
+		
+		window.THREE = await import('./lib/three.module.js');
+		graphics_scene = new THREE.Scene();
+		
+		let posZ = (graphics_referenceSize.y/2) / Math.tan(graphics_fieldOfView * Math.PI / 360)
+		let aspectRatio = graphics_referenceSize.x / graphics_referenceSize.y
+		graphics_camera = new THREE.PerspectiveCamera(graphics_fieldOfView, aspectRatio, 10, 10000)
+		graphics_camera.position.set(0, 0, posZ)
+		
+		graphics_renderer = new THREE.WebGLRenderer( { antialias: true, canvas:graphics_canvas } );
+	
+	internal js void onResize
 		graphics_pixelRatio = window.devicePixelRatio;
 		graphics_pixelSize = new Vector2(window.innerWidth*graphics_pixelRatio, window.innerHeight*graphics_pixelRatio, null);
 		graphics_isSmallScreen = screen.width < 600 || (localStorage.getItem("smallScreen") == "true")
@@ -182,12 +222,13 @@ transient skipInit global unit graphics
 		graphics_canvas.style.height = window.innerHeight + "px";
 		graphics_canvas.width = graphics_pixelSize.x;
 		graphics_canvas.height = graphics_pixelSize.y;
-		graphics_canvas.imageSmoothingEnabled = true;
-		graphics_canvas.imageSmoothingQuality = "high";
-		
-		graphics_context = graphics_canvas.getContext("2d");
 		graphics_updateBaseMatrix()
-
+		
+		graphics_camera.aspect = graphics_pixelSize.x / graphics_pixelSize.y;
+		graphics_camera.updateProjectionMatrix();
+		graphics_renderer.setPixelRatio(graphics_pixelRatio);
+		graphics_renderer.setSize(window.innerWidth, window.innerHeight);
+		
 	internal updateBaseMatrix
 		let statisticsMargin = Platform.showDebugInfo ? statistics.margin : {}
 		let referenceSizeWithMargin = referenceSize + statisticsMargin
@@ -218,8 +259,53 @@ transient skipInit global unit graphics
 	internal js void startFrame
 			
 	internal finishFrame
+		for buckets -> bucket
+			for bucket.meshes <-
+				if !.drawnThisFrame
+					bucket.meshes.removeAt i
+					scene.remove(.)
+				else
+					.drawnThisFrame = false
+			bucket.nextMeshIndex = 0
+				
+		renderer.render(scene, camera)
 			
 	internal js void drawSafeArea
+	
+	private js Mesh createPlane: Image image
+		const geometry = new THREE.PlaneGeometry(image.size.x, image.size.y)
+		const frame = image.frames[0]
+		const x1 = frame.x1 / image.texture.size.x
+		const x2 = frame.x2 / image.texture.size.x
+		const y1 = 1 - frame.y1 / image.texture.size.y
+		const y2 = 1 - frame.y2 / image.texture.size.y
+		geometry.setAttribute( 'uv', new THREE.Float32BufferAttribute( [
+			x1, y1,
+			x2, y1,
+			x1, y2,
+			x2, y2,
+		], 2 ))
+		const material = new THREE.MeshBasicMaterial( { map: image.texture.texture } )
+		const mesh = new THREE.Mesh(geometry, material)
+		mesh.drawnThisFrame = false
+		graphics_scene.add(mesh)
+		return mesh
+		
+	Bucket[string] buckets
+		
+	global drawImage: Image image
+		              Vector3 position = {}
+		              Quaternion rotation = {}
+		              SourceCodeLocation location = null
+		string key = "{location}.{image.file}"
+		let bucket = buckets[key] ?= {}
+		let mesh = bucket.meshes[bucket.nextMeshIndex] ?= createPlane(image)
+		mesh.drawnThisFrame = true
+		mesh.position = position
+		mesh.quaternion = rotation
+		// if animation: view.play animation, crossfade
+		bucket.nextMeshIndex++
+		return mesh
 
 	global drawPointer: Player player                    // Show the mouse position of this player
 	                	Color color = null               // The color of the pointer. If this is left out, the player color is used

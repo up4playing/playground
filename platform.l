@@ -83,6 +83,7 @@ transient skipInit unit Platform
 		this.showSafeArea = showSafeArea
 		showDebugInfo = getLocalStorageObject("showDebugInfo") == "true"
 		
+		await graphics.setup
 		graphics.onResize
 		// drawLoading
 		if mode >= Play: mode = Pause
