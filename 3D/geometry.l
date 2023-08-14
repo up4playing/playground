@@ -4,7 +4,9 @@ struct Vector3
 	float y // The y-coordinate of the vector
 	float z // The z-coordinate of the vector
 	
-	Vector3 operator = (Vector3 a, Vector3 b) a.x = b.x; a.y = b.y; return a
+	Vector3 operator = (Vector3 a, Vector3 b) a.x = b.x; a.y = b.y; a.z = b.z; return a
+	
+	inline js Vector3 operator *= (Vector3 a, Quaternion b) a.applyQuaternion(b)
 	
 // A 2D vector comprised of an x and y coordinate
 struct Vector2
@@ -29,6 +31,8 @@ struct Vector2
 	
 	// Returns true if the vector is not equal to Vector2.none
 	bool toBool := (x != float.infinity || y != float.infinity)
+		
+	implicit Vector3 toVector3 := {x, y, 0}
 	
 	// Creates a copy of the vector with the same values
 	Vector2 clone() := {x, y, location}
