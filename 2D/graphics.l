@@ -160,6 +160,8 @@ transient skipInit global unit graphics
 	visible Vector2 size
 	visible float pixelRatio
 	
+	async setup
+	
 	internal js void onResize
 		graphics_canvas = document.getElementById("canvas");
 		graphics_pixelRatio = window.devicePixelRatio;

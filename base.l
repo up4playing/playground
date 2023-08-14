@@ -1212,6 +1212,15 @@ class Map<TKey, TValue>
 		                TValue value // The item to add to the map
 		this.set(key, value)
 		
+	private js TValue setAndReturn: TKey key     // The key of the item to add to the map
+		                            TValue value // The item to add to the map
+		this.set(key, value);
+		return value;
+		
+	inline js TValue getOrSet: TKey key
+		                       TValue value
+		(this.get(key) || (this.setAndReturn(key, value)))
+		
 	// Remove the item assosiated with the given key
 	inline js void delete: TKey key  // The key of the item to remove from the map
 		this.delete(key)
@@ -1219,7 +1228,7 @@ class Map<TKey, TValue>
 	// Remove all items from the map
 	inline js void clear
 		this.clear()
-	
+		
 
 // Specifies that a function doesn't return a value
 struct void
@@ -1243,14 +1252,18 @@ interface object
 		{
 			case "object":
 				if(subject === null) return "null"
-				let result = "\{_type:" + subject.constructor.name
-				if(depth > 0)
-					for(let name in subject)
-					{
+				let result = ""
+				if(subject.constructor) result += "_type: " + subject.constructor.name
+				if(depth > 0) {
+					for(let name in subject) {
 						let item = object_stringify(subject[name], depth-1)
-						if(item != "") result += "," + name + ":" + item
+						if(item != "") {
+							if(result) result += ", "
+							result += name + ": " + item
+						}
 					}
-				return result + "\}"
+				}
+				return "\{" + result + "\}"
 				
 			case "string":
 				return "\"" + subject + "\""
@@ -1356,6 +1369,14 @@ global transient unit System
 		                           int i      // The index of the current item of the list we are iterating over with the for-loop
 		                       ) do           // Do this for each item in a list
 		for(let _subject=subject, i=_subject.length-1; i>=0; --i) { let it = _subject[i]; do()}
+		
+	// Do something a given number of times or for each item in a list
+	global inline js void for: TValue[TKey] subject // The list to iterate over
+		                       -> inline void(
+		                           TValue it,  // The current item of the map we are iterating over with the for-loop
+		                           TKey key    // The current key of the map we are iterating over with the for-loop
+		                       ) do           // Do this for each item in a list
+		for(let _pair of subject) { let key = _pair[0]; let it = _pair[1]; do()}
 		
 	// Creates a new list populated with the results of calling a function on every element of the list
 	global inline js TResult[] for: T[] subject // The list to iterate over
@@ -1569,8 +1590,8 @@ global transient unit System
 	// Do something a given number of times or for each item in a list
 	global inline js void for: dynamic subject // The list to iterate over
 		                       -> inline void(
-		                           dynamic it,       // The current item of the list we are iterating over with the for-loop
-		                           string key   // The index of the current item of the list we are iterating over with the for-loop
+		                           dynamic it,  // The current item of the dynamic we are iterating over with the for-loop
+		                           string key   // The current key of the dynamic we are iterating over with the for-loop
 		                       ) do             // Do this for each item in a list
 		{let _subject=subject; for(let key in _subject) { let it = _subject[key]; do()}}
 		
