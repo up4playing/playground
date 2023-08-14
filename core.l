@@ -79,7 +79,17 @@ transient skipInit unit core
 		startTime = serverStartTime = currentTime
 		reset
 		animationFrame
-				
+		
+	// Start recording (from the beginning or the middle of an existing event stream)
+	// We remove all future inputs
+	// This is called when the user clicks first clicks inside the app
+	record
+		frames = frameWithNewWatches = frame
+		for input.internalUsers if .
+			.inputs.writePos = .inputs.readPos
+			.startInputFrame frame
+		Platform.sendFrame frame, frames
+		
 	// Keep inputs, call init functions, create the local players, reset read positions and start app
 	// This is called on startup, after every code change and when going backwards in the timeline
 	reset
@@ -480,7 +490,7 @@ transient skipInit unit core
 		
 	adjustStartTimeIfNeeded
 		if Platform.mode < Play: adjustStartTime
-		
+			
 	Buffer snapshotBuffer = {}
 		
 	saveEventStreamAndLogs
