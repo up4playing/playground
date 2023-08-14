@@ -473,7 +473,7 @@ transient skipInit unit core
 				
 	js void log: logstring text
 		let str = new Date().hourMinuteSecondString() + " " + text
-		statistics_log += str + "\n"
+		statistics_systemLog += str + "\n"
 		if(core_logging) {
 			core_eventLog += str + "\n"
 			console.log(str)
@@ -594,7 +594,7 @@ transient skipInit unit core
 	onError: Error error
 		errorMessage = error.stack
 		if logging: eventLog += errorMessage + "\n" 
-		statistics.log += errorMessage + "\n" 
+		statistics.systemLog += errorMessage + "\n" 
 		Platform.sendErrorToEditor error
 		
 transient unit Snapshot
@@ -684,9 +684,10 @@ skipInit transient unit statistics
 	
 	float[] serverPings
 	private StatisticsGraphSeries[] series
-	private dynamic[] gameLogs
 	
-	string log
+	string systemLog
+	private dynamic[] gameLog
+	
 	Time startTime, loadTime, connectTime
 	internal float maxValue
 	int currentSet
@@ -698,13 +699,13 @@ skipInit transient unit statistics
 	clear
 		series.each.values.clear
 		serverPings.clear
-		log = ""
+		systemLog = ""
 		
 	int lastSendFrame = -1
 	
-	gameLog: dynamic gameLog
-		gameLog.frame = Time.frame
-		this.gameLogs.add gameLog
+	log: dynamic value
+		value.frame = Time.frame
+		this.gameLog.add value
 	
 	send
 		print "sending statistics"
@@ -745,8 +746,9 @@ skipInit transient unit statistics
 			
 			serverPings
 			peerPings: series
-			log
-			gameLogs
+			
+			systemLog
+			gameLog
 		}
 		input.isCertain = prevIsCertain
 		clear
