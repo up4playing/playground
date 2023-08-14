@@ -79,7 +79,17 @@ transient skipInit unit core
 		startTime = serverStartTime = currentTime
 		reset
 		animationFrame
-				
+		
+	// Start recording (from the beginning or the middle of an existing event stream)
+	// We remove all future inputs
+	// This is called when the user clicks first clicks inside the app
+	record
+		frames = frameWithNewWatches = frame
+		for input.internalUsers if .
+			.inputs.writePos = .inputs.readPos
+			.startInputFrame frame
+		Platform.sendFrame frame, frames
+		
 	// Keep inputs, call init functions, create the local players, reset read positions and start app
 	// This is called on startup, after every code change and when going backwards in the timeline
 	reset
@@ -463,7 +473,7 @@ transient skipInit unit core
 				
 	js void log: logstring text
 		let str = new Date().hourMinuteSecondString() + " " + text
-		statistics_log += str + "\n"
+		statistics_systemLog += str + "\n"
 		if(core_logging) {
 			core_eventLog += str + "\n"
 			console.log(str)
@@ -480,7 +490,7 @@ transient skipInit unit core
 		
 	adjustStartTimeIfNeeded
 		if Platform.mode < Play: adjustStartTime
-		
+			
 	Buffer snapshotBuffer = {}
 		
 	saveEventStreamAndLogs
@@ -584,7 +594,7 @@ transient skipInit unit core
 	onError: Error error
 		errorMessage = error.stack
 		if logging: eventLog += errorMessage + "\n" 
-		statistics.log += errorMessage + "\n" 
+		statistics.systemLog += errorMessage + "\n" 
 		Platform.sendErrorToEditor error
 		
 transient unit Snapshot
@@ -674,9 +684,10 @@ skipInit transient unit statistics
 	
 	float[] serverPings
 	private StatisticsGraphSeries[] series
-	private dynamic[] gameLogs
 	
-	string log
+	string systemLog
+	private dynamic[] gameLog
+	
 	Time startTime, loadTime, connectTime
 	internal float maxValue
 	int currentSet
@@ -688,13 +699,13 @@ skipInit transient unit statistics
 	clear
 		series.each.values.clear
 		serverPings.clear
-		log = ""
+		systemLog = ""
 		
 	int lastSendFrame = -1
 	
-	gameLog: dynamic gameLog
-		gameLog.frame = Time.frame
-		this.gameLogs.add gameLog
+	log: dynamic value
+		value.frame = Time.frame
+		this.gameLog.add value
 	
 	send
 		print "sending statistics"
@@ -735,8 +746,9 @@ skipInit transient unit statistics
 			
 			serverPings
 			peerPings: series
-			log
-			gameLogs
+			
+			systemLog
+			gameLog
 		}
 		input.isCertain = prevIsCertain
 		clear
