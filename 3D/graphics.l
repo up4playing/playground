@@ -101,6 +101,7 @@ Mesh
 	
 	inline js Mesh(dynamic geometry, dynamic material) new THREE.Mesh(geometry, material)
 	inline js void setText(dynamic value) this.childrenTexts[0].set(value)
+	inline js void setLayer(int layer) this.frame.layers.set(layer);
 	inline js void set(dynamic value) this.set(value)
 	
 Bucket
@@ -187,9 +188,6 @@ transient skipInit global unit graphics
 		let offsetY = anchor > 1 ? pixelSize.y/2 : 0
 		baseMatrix = {scale,0,0,-scale,offsetX-(statisticsMargin.x/2)*scale,offsetY-(statisticsMargin.y/2)*scale}
 		
-	// The default player colors
-	const Color[] defaultColors = [{"#398CA9", "Blue"}, {"#C01352", "Red"}, {"#16C66E", "Green"}, {"#FFD166", "Yellow"}]
-
 	internal js void startFrame
 			
 	internal finishFrame
@@ -232,9 +230,33 @@ transient skipInit global unit graphics
 	private Player[] currentlyVisibleFor = null
 	
 	private isVisibleFor: Player[] visibleFor
-		if(Platform.fastForward) return false
+		if(Platform.fastForward or !Platform.isDrawing) return false
 		let effectiveVisibleFor = visibleFor or currentlyVisibleFor
 		return effectiveVisibleFor == null or effectiveVisibleFor.any . == null or .id == input.localUser.id
+	
+	// ------------------------------------------------------- Color -------------------------------------------------------
+	
+	// The default background color for all drawing operations
+	const Color backgroundColor = Black
+	
+	// Teh default player colors
+	const Color[] defaultColors = [{"#398CA9", "Blue"}, {"#C01352", "Red"}, {"#16C66E", "Green"}, {"#FFD166", "Yellow"}]
+
+	// The default color for all drawing operations
+	color
+		return currentColor
+	color: Color color
+		currentColor = color
+		return currentColor
+	color: Color color
+		   void() code
+		let prev = currentColor
+		currentColor = color
+		code()
+		currentColor = prev
+		return currentColor
+		
+	private Color currentColor = White
 	
 	// ------------------------------------------------------- Font -------------------------------------------------------
 	
@@ -327,11 +349,12 @@ transient skipInit global unit graphics
 	//                 drawText "You've won!", size:100, color:Black, font:Roboto, visibleFor:me
 	// Image: drawText.png
 	global drawText: implicit string text                         // A string or anything that can be converted into a string (for example, an interger or a float)
-		             Vector2 position = {}                        // By default, {0,0} is the center, {-960,-540} is the bottom left, {960,540} is the top right
+		             Vector3 position = {}                        // By default, {0,0} is the center, {-960,-540} is the bottom left, {960,540} is the top right
 		             Quaternion rotation = {}                     // The rotation of the text
 		             float size = 0                               // The size of the text
 		             implicit Vector2 containerSize = {1920,1080} // The size of the container
 		             Color color = null                           // The color of the text
+		             float backgroundOpacity = 0                  // The opacity of the background (0: fully invisible, 1: fully opaque)
 		             Color backgroundColor = null                 // The background color of the text
 		             HorizontalAlignment align = Center           // The horizontal alignment of the text
 		             VerticalAlignment valign = Middle            // The vertical alignment of the text
@@ -339,16 +362,17 @@ transient skipInit global unit graphics
 		             implicit Player[] visibleFor = null          // Only this player or list of players will see the text
 		             SourceCodeLocation location = null
 		if !isVisibleFor(visibleFor): return null
-			
-		string key = "{location}.{font.name}"
+		let effectiveFont = font or currentFont
+		string key = "{location}.{effectiveFont.name}"
 		let bucket = buckets[key] ?= {}
-		let mesh = bucket.meshes[bucket.nextMeshIndex] ?= createText(font or currentFont)
+		let mesh = bucket.meshes[bucket.nextMeshIndex] ?= createText(effectiveFont)
 		if(!containerSize.y) containerSize.y = 1080
 		mesh.drawnThisFrame = true
 		mesh.position = position
 		mesh.quaternion = rotation
-		mesh.set({ textAlign: align, justifyContent: valign, width: containerSize.x, height: containerSize.y, backgroundColor })
-		mesh.setText({content:text, fontSize:size or currentFontSize, fontColor:color})
+		mesh.set({ textAlign: align, justifyContent: valign, width: containerSize.x, height: containerSize.y, backgroundOpacity, backgroundColor })
+		mesh.setText({content:text, fontSize:size or currentFontSize, fontColor:color or currentColor})
+		mesh.setLayer(backgroundOpacity ? 0 : 1)
 		bucket.nextMeshIndex++
 		return mesh
 

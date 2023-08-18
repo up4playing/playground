@@ -38,6 +38,7 @@ transient skipInit unit Platform
 	internal bool engineStarted
 	internal PlatformMode mode
 	internal bool fastForward
+	internal bool isDrawing
 	internal int waitingForInitialData
 	
 	private inline js void initMedia
