@@ -679,7 +679,6 @@ skipInit transient unit statistics
 	const Vector2 position = {-960, 540}
 	const Vector2 size = {1920+margin.x, margin.y}
 	const Vector2 labelPos = {970, 528}
-	const Color backgroundColor = {"#202020"}
 	const framesPerValue = 15
 	
 	float[] serverPings

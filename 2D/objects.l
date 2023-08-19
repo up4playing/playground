@@ -707,8 +707,8 @@ Object ParticleSystem
 			
 enum closestCoinType: None, Neighbor, Over
 Piece Coin
-	const Color darkColor = {"642C00"}
-	const Color lightColor = {"F7C947"}
+	const Color darkColor = {"#642C00"}
+	const Color lightColor = {"#F7C947"}
 	
 	int value
 	bool isInfinate
