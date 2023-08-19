@@ -514,6 +514,13 @@ class List<T>
 		var index = this.indexOf(item5);
 		if(index > -1) this.splice(index, 1);
 			
+	// Remove a list of items from the list
+	js void remove: T[] items // The items to remove
+		for(let item of items) {
+			var index = this.indexOf(item);
+			if(index > -1) this.splice(index, 1);
+		}
+		
 	// Remove the item at the given index from the list
 	inline js void removeAt: int index // The index of the item to remove
 		this.splice(index, 1)
