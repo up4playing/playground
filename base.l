@@ -468,6 +468,52 @@ class List<T>
 		var index = this.indexOf(item);
 		if(index > -1) this.splice(index, 1);
 			
+	js void remove: T item  // The first item to remove
+		            T item2 // The second item to remove
+		var index = this.indexOf(item);
+		if(index > -1) this.splice(index, 1);
+		var index = this.indexOf(item2);
+		if(index > -1) this.splice(index, 1);
+			
+	js void remove: T item  // The first item to remove
+		            T item2 // The second item to remove
+		            T item3 // The third item to remove
+		var index = this.indexOf(item);
+		if(index > -1) this.splice(index, 1);
+		var index = this.indexOf(item2);
+		if(index > -1) this.splice(index, 1);
+		var index = this.indexOf(item3);
+		if(index > -1) this.splice(index, 1);
+			
+	js void remove: T item  // The first item to remove
+		            T item2 // The second item to remove
+		            T item3 // The third item to remove
+		            T item4 // The forth item to remove
+		var index = this.indexOf(item);
+		if(index > -1) this.splice(index, 1);
+		var index = this.indexOf(item2);
+		if(index > -1) this.splice(index, 1);
+		var index = this.indexOf(item3);
+		if(index > -1) this.splice(index, 1);
+		var index = this.indexOf(item4);
+		if(index > -1) this.splice(index, 1);
+			
+	js void remove: T item  // The first item to remove
+		            T item2 // The second item to remove
+		            T item3 // The third item to remove
+		            T item4 // The forth item to remove
+		            T item5 // The fifth item to remove
+		var index = this.indexOf(item);
+		if(index > -1) this.splice(index, 1);
+		var index = this.indexOf(item2);
+		if(index > -1) this.splice(index, 1);
+		var index = this.indexOf(item3);
+		if(index > -1) this.splice(index, 1);
+		var index = this.indexOf(item4);
+		if(index > -1) this.splice(index, 1);
+		var index = this.indexOf(item5);
+		if(index > -1) this.splice(index, 1);
+			
 	// Remove the item at the given index from the list
 	inline js void removeAt: int index // The index of the item to remove
 		this.splice(index, 1)
