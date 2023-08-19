@@ -903,6 +903,15 @@ class List<T>
 			if value < resultValue: resultValue = value
 		return resultValue != threshold ? resultValue : default
 		
+	min: Time(T a) selector 
+		 Time threshold = Time.maxValue
+		 Time default = 0
+		Time resultValue = threshold
+		for this
+			let value = selector(.)
+			if value < resultValue: resultValue = value
+		return resultValue != threshold ? resultValue : default
+		
 	min: int(T a) selector 
 		 int threshold = int.maxValue
 		 int default = 0
