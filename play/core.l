@@ -11,10 +11,9 @@ transient skipInit unit core
 	bool simulateInputsForTesting = false
 	bool simulateRollback = false
 	bool drawPointsForTesting = false
-	Time sendStatisticsEvery = 5 minutes
+	Time sendStatisticsEvery = 3 minutes
 	bool showVideoForStaging = true
 	bool muteInvisibleUsers = false
-	int checksumInterval = 30
 	
 	SendInputsMode sendInputsMode = Peer
 	internal const targetFps = 30
@@ -88,7 +87,7 @@ transient skipInit unit core
 		for input.internalUsers if .
 			.inputs.writePos = .inputs.readPos
 			.startInputFrame frame
-		Platform.sendFrame frame, frames
+		if Platform.isDebug: Platform.sendFrame frame, frames
 		
 	// Keep inputs, call init functions, create the local players, reset read positions and start app
 	// This is called on startup, after every code change and when going backwards in the timeline
@@ -207,6 +206,11 @@ transient skipInit unit core
 			log "Paused {prevTargetFrame-frame} frames, adjusting startTime. prevTargetTime:{prevTargetFrame} frame:{frame} targetFrame:{math.floor((now - startTime)/targetFrameTime)}"
 		
 		if frame < targetFrame
+			// Create artificial inputs to test the smoothness
+			if simulateInputsForTesting and input.localUser and input.localUser.collectInputs
+				for frame to targetFrame
+					input.handleKeyEvent KeyDown, cast Key.F24, ""
+				
 			animationStartFrame = frame
 			
 			try
@@ -220,10 +224,6 @@ transient skipInit unit core
 					
 			// Ensure that step is called every targetFrameTime milliseconds
 			while frame < targetFrame
-				// Create artificial inputs to test the smoothness
-				if simulateInputsForTesting and input.localUser and input.localUser.collectInputs
-					input.handleKeyEvent KeyDown, cast Key.F24, ""
-
 				for input.internalUsers -> user
 					if user?.local: user.startInputFrame frame+1
 				step fastForward:false, draw:frame == targetFrame-1
@@ -444,7 +444,7 @@ transient skipInit unit core
 			snapshotFrame = frame
 			saveState snapshot
 			replayLog += ")"
-
+			
 	private saveState: Buffer snapshot
 		snapshot.reset
 		saveTime = Time.measure
@@ -459,11 +459,11 @@ transient skipInit unit core
 												
 		// Checksum
 		if players.length >= 2 and frame > 200
-			float myChecksum = Framework.checksum + snapshot.writePos
+			float myChecksum = snapshot.checksum
 			float theirChecksum = checksums[frame]
-			if logging: checksumLog += " <{input.localUser.id}*> #{frame} {myChecksum}"
+			if logging: checksumLog += " <{input.localUser.id}*> #{frame} {myChecksum} writePos:{snapshot.writePos}"
 			if !theirChecksum                             checksums[frame] = myChecksum; else
-			if !theirChecksum.isApproximately(myChecksum) onWrongChecksum mine:myChecksum theirs:theirChecksum
+			if !theirChecksum.isApproximately(myChecksum) onWrongChecksum frame, mine:myChecksum theirs:theirChecksum
 			lastChecksumFrame = frame
 			
 		snapshot.writeInt input.internalUsers.length
@@ -588,9 +588,10 @@ transient skipInit unit core
 	internal storeUserId
 		Platform.setLocalStorageObject "room"+roomId, RoomInfo(currentTime, input.localUser.id)
 		
-	onWrongChecksum: float mine, float theirs
-		if logging: checksumLog += " MISMATCH mine:{mine} theirs:{theirs}"
-		onError {"Out of sync"}
+	onWrongChecksum: int frame, float mine, float theirs
+		string message = "Out of sync. frame:{frame} mine:{mine} theirs:{theirs}"
+		if logging: checksumLog += message
+		onError {message}
 		
 	onError: Error error
 		errorMessage = error.stack
@@ -813,7 +814,7 @@ skipInit transient unit statistics
 		draw
 
 unit networkVisualizer		
-	private int[] posForPlayer = [0,-10000,-10000,-10000,-10000,-10000]
+	visible int[] posForPlayer = [0,-10000,-10000,-10000,-10000,-10000]
 		
 	internal tick
 		if core.simulateInputsForTesting
@@ -829,7 +830,7 @@ unit networkVisualizer
 						if player.id == 1: core.replayLog += "D"
 						if (posForPlayer[player.index] += 2) > 1080
 							posForPlayer[player.index] -= 1080
-						// core.log "[{core.frame}] <{player.id}> networkVisualizer input.onKeyDown", posForPlayer[player.index]
+						// core.log "[{core.frame}] <{player.id}> pos:", posForPlayer[player.index]
 				
 		draw
 				
@@ -851,7 +852,7 @@ global skipInit unit math
 			return out.toString();
 		}
 		
-	internal string randomSeed
+	transient internal string randomSeed
 	internal int randomValueIndex
 	transient internal float[] randomValues
 	

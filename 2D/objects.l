@@ -104,7 +104,7 @@ class Object
 	Vector2 position
 	implicit Vector2 size
 	float alpha = 1
-	Player[] visibleFor = null
+	implicit Player[] visibleFor = null
 	int layer = 0
 	bool locked
 	SourceCodeLocation location
