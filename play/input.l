@@ -449,7 +449,7 @@ skipInit global unit input
 			else
 			if(ctrlOrCmd && key == "l") {
 				// Save logs
-				statistics_manuallyTriggerSend(-2, /*clear*/false);
+				statistics_saveStatistics()
 				core_saveLogs();
 				e.preventDefault();
 			}
@@ -641,7 +641,7 @@ skipInit global unit input
 					internalUser.nextLostMessageAtFrame = core.frame + core.targetFps * 12
 					
 					// Send logfiles to server
-					Platform.setTimeout 7 seconds: statistics.send
+					Platform.setTimeout 7 seconds: statistics.saveStatistics
 	
 	private handleStillConnected: int userId
 		let inputs = localUser.inputs

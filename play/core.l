@@ -473,7 +473,7 @@ transient skipInit unit core
 				
 	js void log: logstring text
 		let str = new Date().hourMinuteSecondString() + " " + text
-		statistics_systemLog += str + "\n"
+		statistics_systemLogs.push(str)
 		if(core_logging) {
 			core_eventLog += str + "\n"
 			console.log(str)
@@ -559,8 +559,9 @@ transient skipInit unit core
 	
 	join: string gameId, string roomString, int userId
 		// Send statistics
-		Platform.setTimeout 30 seconds: statistics.send
-		if sendStatisticsEvery: Platform.setInterval sendStatisticsEvery: statistics.send
+		Platform.setTimeout 30 seconds
+			statistics.startSession
+			if sendStatisticsEvery: Platform.setInterval sendStatisticsEvery: statistics.saveStatistics
 		
 		isPremiere = true
 		initAll
@@ -594,7 +595,7 @@ transient skipInit unit core
 	onError: Error error
 		errorMessage = error.stack
 		if logging: eventLog += errorMessage + "\n" 
-		statistics.systemLog += errorMessage + "\n" 
+		statistics.systemLogs.add errorMessage
 		Platform.sendErrorToEditor error
 		
 transient unit Snapshot
@@ -660,6 +661,7 @@ class StatisticsGraphSeries
 	float[] values
 	float[] recentValues
 	Color color
+	int successfullySent
 	
 	float lastValue := values.length > 0 ? values[values.length-1] : 0
 	
@@ -682,76 +684,97 @@ skipInit transient unit statistics
 	const framesPerValue = 15
 	
 	float[] serverPings
+	int successfullySentServerPings
+	
 	private StatisticsGraphSeries[] series
 	
-	string systemLog
-	private dynamic[] gameLog
+	string[] systemLogs
+	private dynamic[] gameLogs
+	int successfullySentGameLogs
+	int successfullySentSystemLogs
 	
 	Time startTime, loadTime, connectTime
 	internal float maxValue
 	int currentSet
 	int sets = 1
+	int id
 	
 	private StatisticsInfo[] infos
 	private string[] infoNames
+	private bool currentlySendingStatistics
 	
-	clear
-		series.each.values.clear
-		serverPings.clear
-		systemLog = ""
-		
-	int lastSendFrame = -1
-	
+	// Log game events (like scores, playtimes, etc)
 	log: dynamic value
 		value.frame = Time.frame
-		this.gameLog.add value
+		this.gameLogs.add value
 	
-	send
-		print "sending statistics"
-		// if Time.frame <= lastSendFrame or Platform.isDebug: return
-		
-		lastSendFrame = Time.frame
-		let userName = localStorage.getStringDirectly("userId")
+	startSession
+		let user = localStorage.getObjectDirectly("user")
 		let server = Platform.host.getUntil(".")
-		float[][] series = [[],[],[],[]]
-		string[] connections
-		for players
-			let internalUser = input.internalUsers[.id]
-			connections.add internalUser.connectionType
-			series[i] = this.series.find(.userIndex == i).values
-			
-		let prevIsCertain = input.isCertain
-		input.isCertain = true
-		http.post "{Platform.protocolAndHost}:3114/stats", body:{
-			time: Date.now.isoString
+		let userId = input.localUser.id
+		id = core.roomId*100 + userId
+		int sendingSystemLogsUntil = systemLogs.length
+		currentlySendingStatistics = true
+
+		http.postDirectly "{Platform.protocolAndHost}:3114/startSession", body:{
+			id
 			gameId: core.gameId
 			roomId: core.roomId
-			userId: input.localUser.id
+			userId
 			userIndex: input.localUser.index
-			userName
+			userEmail: user.email
 			staging: Platform.isStaging
 			server
-			minServerPing: serverPings.min .
-			maxServerPing: serverPings.max .
-			averageServerPing: serverPings.average
-			ping:series.select {
-				average:it?.average
-				max:it?.max(.)
-				peeks:it?.count . > 30
-			}
-			connections
 			loadTime: loadTime - startTime
 			connectTime: connectTime - startTime
-			
-			serverPings
-			peerPings: series
-			
-			systemLog
-			gameLog
+			systemLogs: systemLogs[successfullySentSystemLogs..]
 		}
-		input.isCertain = prevIsCertain
-		clear
+			successfullySentSystemLogs = sendingSystemLogsUntil
+			currentlySendingStatistics = false
+	
+	saveStatistics
+		if currentlySendingStatistics: return
+		currentlySendingStatistics = true
+		
+		// Compile server and peer pings to send
+		string[] connections
+		float[][] peerPingsToSend = [[],[],[],[],[],[],[],[]]
+		int[] sendingPeerLogsUntil = [0,0,0,0,0,0,0,0]
+		for players -> p
+			let internalUser = input.internalUsers[.id]
+			connections.add internalUser.connectionType
 			
+			let inputFrameSeries = this.series.find.userIndex == p.index and .set == 0
+				peerPingsToSend[i*2] = inputFrameSeries.values[inputFrameSeries.successfullySent..]
+				sendingPeerLogsUntil[i*2] = inputFrameSeries.values.length
+				
+			let bufferFrameSeries = this.series.find.userIndex == p.index and .set == 1
+				peerPingsToSend[i*2 + 1] = bufferFrameSeries.values[bufferFrameSeries.successfullySent..]
+				sendingPeerLogsUntil[i*2 + 1] = bufferFrameSeries.values.length
+		
+		int sendingServerPingsUntil = serverPings.length
+		int sendingSystemLogsUntil = systemLogs.length
+		int sendingGameLogsUntil = gameLogs.length
+			
+		// Send statistics to server
+		http.postDirectly "{Platform.protocolAndHost}:3114/saveStatistics", body:{
+			id
+			connections
+			peerPings: peerPingsToSend
+			serverPings: serverPings[successfullySentServerPings..]
+			systemLogs: systemLogs[successfullySentSystemLogs..]
+			gameLogs: gameLogs[successfullySentGameLogs..]
+		}
+			for players -> p
+				let inputFrameSeries = this.series.find.userIndex == p.index and .set == 0
+					inputFrameSeries.successfullySent = sendingPeerLogsUntil[i*2]
+				let bufferFrameSeries = this.series.find.userIndex == p.index and .set == 1
+					bufferFrameSeries.successfullySent = sendingPeerLogsUntil[i*2 + 1]
+			successfullySentServerPings = sendingServerPingsUntil
+			successfullySentSystemLogs = sendingSystemLogsUntil
+			successfullySentGameLogs = sendingGameLogsUntil
+			currentlySendingStatistics = false
+						
 	add: string name, float value, Color color = White, int set = 0
 		var s = series.find.name == name and .set == set
 		if !s
