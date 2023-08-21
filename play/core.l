@@ -173,6 +173,8 @@ transient skipInit unit core
 		    void() do
 		let user = input.internalUsers[player.id]
 		if user and (user.local or frame <= user.smoothFrame): do
+			
+	Time lastPingTime
 
 	// animationFrame --> step --> tick
 
@@ -232,6 +234,11 @@ transient skipInit unit core
 				
 		lastAnimationFrame = now
 		if Platform.mode == Play and frame >= frames: Platform.record()
+			
+		// Ping
+		if currentTime - lastPingTime > 1000
+			lastPingTime = currentTime
+			PeerNetwork.ping
 			
 	private int animationStartFrame // The frame at the beginning of animationFrame, used to calculate iteration
 	private float now               // The time at the beginning of animationFrame

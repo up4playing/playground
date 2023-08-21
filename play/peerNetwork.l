@@ -241,7 +241,9 @@ transient unit PeerNetwork
 		if type == Tick:         onTick user, buffer; else
 		if type == Checksum:     onChecksum user, buffer; else
 		if type == RequestState: onRequestState user, buffer; else
-		if type == State:        onState user, buffer
+		if type == State:        onState user, buffer;  else
+		if type == Ping:         onPing user, buffer;  else
+		if type == Pong:         onPong user, buffer;
 			
 	private onTick: InternalUser sender, Buffer buffer
 		let inputFrame = buffer.readInt
@@ -295,6 +297,30 @@ transient unit PeerNetwork
 			}
 		}, 10000)
 		
+	// --------------------------------------------- Ping/Pong ---------------------------------------------
+	
+	ping
+		for input.internalUsers -> user
+			if user?.dataChannel
+				sendBuffer.reset
+				sendBuffer.writeInt8 cast NetworkMessageType.Ping
+				sendBuffer.writeFloat64 core.currentTime
+				send ., sendBuffer
+				
+	private onPing: InternalUser user, Buffer buffer
+		float pingTime = buffer.readFloat64
+		sendBuffer.reset
+		sendBuffer.writeInt8 cast NetworkMessageType.Pong
+		sendBuffer.writeFloat64 pingTime
+		send user, sendBuffer
+		
+	private onPong: InternalUser user, Buffer buffer
+		float now = core.currentTime
+		float pingTime = buffer.readFloat64
+		float pingPongTime = now - pingTime
+		let player = input.players.find.id == user.id
+			statistics.add userIndex:player.index, color:player.color, value:pingPongTime, set:2
+				
 	// --------------------------------------------- Checksum ---------------------------------------------
 	
 	sendChecksum: int checksumFor, float checksum

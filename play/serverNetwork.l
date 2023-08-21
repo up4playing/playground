@@ -148,7 +148,7 @@ transient unit ServerNetwork
 		float calculatedStartTime = now - pingPongTime/2 - timeSinceStart
 		
 		int deltaFromAverage = math.round(calculatedStartTime - core.startTime)
-		int deltaFromReference = math.round(calculatedStartTime - referenceStartTime)
+		// int deltaFromReference = math.round(calculatedStartTime - referenceStartTime)
 		statistics.serverPings.add pingPongTime
 		// core.log "<<< Pong ({pongCount})", pingPongTime, calculatedStartTime
 		// core.log "average", core.startTime, deltaFromAverage 
@@ -164,10 +164,10 @@ transient unit ServerNetwork
 			return
 			
 		statistics.addInfo "from average", deltaFromAverage
-		statistics.addInfo "from reference", deltaFromReference
+		// statistics.addInfo "from reference", deltaFromReference
 		
-		calculatedStartTimes.add calculatedStartTime maxLength:20
-		core.startTime = calculatedStartTimes.average
+		// calculatedStartTimes.add calculatedStartTime maxLength:20
+		// core.startTime = calculatedStartTimes.average
 			
 		// Use the fastest ping-pong-time we have ever seen to calculate the reference start time
 		if pingPongTime < fastestPingPongTime
