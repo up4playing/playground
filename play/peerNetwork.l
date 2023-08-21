@@ -239,7 +239,6 @@ transient unit PeerNetwork
 	private onMessage: InternalUser user, Buffer buffer
 		NetworkMessageType type = cast buffer.readInt8
 		if type == Tick:         onTick user, buffer; else
-		if type == Checksum:     onChecksum user, buffer; else
 		if type == RequestState: onRequestState user, buffer; else
 		if type == State:        onState user, buffer;  else
 		if type == Ping:         onPing user, buffer;  else
@@ -259,7 +258,7 @@ transient unit PeerNetwork
 			
 			let myChecksum = core.checksums[checksumFor]
 			if !myChecksum                           core.checksums[checksumFor] = checksum; else
-			if !myChecksum.isApproximately(checksum) core.onWrongChecksum mine:myChecksum theirs:checksum
+			if !myChecksum.isApproximately(checksum) core.onWrongChecksum checksumFor, mine:myChecksum theirs:checksum
 			
 			if core.logging: core.receivedLog += " [{core.currentTime}] <{sender.id}> #{inputFrame} {prevWritePos}->{sender.inputs.writePos} {sender.inputs.toRangeString(prevWritePos, sender.inputs.writePos)}"
 		else
@@ -343,7 +342,7 @@ transient unit PeerNetwork
 			core.checksums[checksumFor] = checksum
 		else
 		if !myChecksum.isApproximately(checksum)
-			core.onWrongChecksum mine:myChecksum theirs:checksum
+			core.onWrongChecksum checksumFor, mine:myChecksum theirs:checksum
 				
 	// --------------------------------------------- Media Setup ---------------------------------------------
 	
