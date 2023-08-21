@@ -57,17 +57,6 @@ unit Framework
 		for objects: result+= .debugString
 		return result
 		
-	private js float appChecksum()
-		return window.app_checksum ? window.app_checksum() : 0.0
-		
-	checksum
-		float result = appChecksum
-		for objects: result += .checksum
-		// We ensure that we never return 0
-		// because a checksum of 0 is used to indicate that we don't have a checksum for this frame yet
-		if result == 0: return 1.0
-		return result
-		
 // Draw on the screen
 transient global unit graphics
 	setPlayerVideo: Player player
@@ -110,7 +99,6 @@ class Object
 	SourceCodeLocation location
 	
 	visible siblings := Framework.objects
-	internal checksum := position.x + position.y + size.x + size.y + alpha
 	internal debugString := "(Object pos:{position.x} {position.y})"
 	internal tick
 	
@@ -215,13 +203,11 @@ class Object
 		
 Object RectangleObject
 	Color color = White
-	internal checksum := position.x + position.y + alpha + size.x + size.y
 	override tick
 		drawRectangle position, size, color, visibleFor, layer, alpha
 
 Object CircleObject
 	Color color = White
-	internal checksum := position.x + position.y + alpha + size.x + size.x
 	override tick
 		drawCircle position, size, color:color, visibleFor, layer
 
@@ -231,7 +217,6 @@ Object TextObject
 	Color color = White
 	HorizontalAlignment align = Center // The horizontal alignment of the text
 	VerticalAlignment valign = Middle  // The vertical alignment of the text
-	internal checksum := position.x + position.y + text.length + size.x + size.y
 	override tick
 		drawText text, position, size, color, align, valign, font, visibleFor, alpha, layer
 		
@@ -263,7 +248,6 @@ Object Effect
 Object VideoObject
 	Player player
 	VideoShape shape
-	internal checksum := position.x + position.y + player.id + size.x + size.y + size.x + size.y
 	override tick
 		drawVideo player, position, size, shape
 			
@@ -343,8 +327,6 @@ Object Piece
 		
 	debugString := "(Piece pos:{position.x} {position.y} frame:{frame} side:{side} image:{image?.file} board:{board.toBool})"
 	
-	checksum := position.x + position.y + size.x + size.y + frame + angle + cast side
-		
 	finishTouch
 		rotateTouch = null
 		if moveTouch: moveTouch = null; onDrop
@@ -515,11 +497,6 @@ Piece Board
 		string children
 		for objects: children += .debugString
 		return "(Board pos:{position.x} {position.y} children:{children})"
-		
-	checksum
-		let result = position.x + position.y + cast(contentVisibleForOthers) + matrix.m0 + matrix.m1 + matrix.m2 + matrix.m3 + matrix.m4 + matrix.m5
-		for objects: result += .checksum
-		return result
 		
 	finishTouch
 		for objects
@@ -723,7 +700,6 @@ Piece Coin
 	private float distanceToClosest
 	
 	debugString := "(Coin {value} pos:{position.x} {position.y} dis:{distanceToClosest})"
-	checksum := position.x + position.y + frame + value
 	
 	override tick
 		if movable
