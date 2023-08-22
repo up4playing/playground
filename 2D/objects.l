@@ -168,9 +168,8 @@ class Object
 		// If the last fade animation is already a fade out, don't do anything
 		FadeAnimation lastFadeAnimation = cast fx.animations.findLast.type == FadeAnimation and .object == this
 			if lastFadeAnimation.startValue + lastFadeAnimation.delta <= 0: 
-				watch "ignoring"
 				return
-			startValue = lastFadeAnimation.startValue
+			startValue = lastFadeAnimation.startValue + lastFadeAnimation.delta
 				
 		fx.add FadeAnimation startTime:fx.endOfPrevAnimation(this)+delay, duration, this, startValue, delta:-startValue, removeWhenDone
 		return this
