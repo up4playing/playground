@@ -142,7 +142,6 @@ class Object
 		let startTime = fx.endOfPrevAnimation(this)+delay
 		fx.add MoveAnimation startTime, duration, this, startPosition, delta:position - startPosition
 		fx.add ScaleAnimation startTime, duration, this, startSize, delta:endSize - startSize
-		watch startSize, endSize
 		return this
 		
 	moveTo: Vector2 pos
