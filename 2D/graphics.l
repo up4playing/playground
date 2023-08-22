@@ -330,7 +330,7 @@ transient skipInit global unit graphics
 		                      flipX = false                       // Mirror the image horizontally
 		                      flipY = false                       // Mirror the image vertically
 		                      SourceCodeLocation location
-		if(angle == 0) {
+		if(angle == 0 && !flipX && !flipY) {
 			graphics_drawImage(image, position, size, visibleFor, frame, layer, alpha, color, 1, 1, location)
 		} else {
 			if(!image.texture?.ensureIsAvailable()) return
