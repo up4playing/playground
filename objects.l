@@ -84,7 +84,7 @@ transient global unit graphics
 		let videoObject = getVideoObject player
 			
 		// if !videoObject or Framework.toBeRemoved.contains(videoObject): videoObject = VideoObject(userId)
-		if !videoObject: videoObject = VideoObject(player.id)
+		if !videoObject: videoObject = VideoObject(player)
 		videoObject.position = pos
 		videoObject.size = size
 		videoObject.shape = shape
@@ -104,7 +104,7 @@ class Object
 	Vector2 position
 	implicit Vector2 size
 	float alpha = 1
-	Player[] visibleFor = null
+	implicit Player[] visibleFor = null
 	int layer = 0
 	bool locked
 	SourceCodeLocation location
