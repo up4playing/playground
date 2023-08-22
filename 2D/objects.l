@@ -73,7 +73,7 @@ transient global unit graphics
 		let videoObject = getVideoObject player
 			
 		// if !videoObject or Framework.toBeRemoved.contains(videoObject): videoObject = VideoObject(userId)
-		if !videoObject: videoObject = VideoObject(player.id)
+		if !videoObject: videoObject = VideoObject(player)
 		videoObject.position = pos
 		videoObject.size = size
 		videoObject.shape = shape
@@ -806,7 +806,7 @@ Object Menu
 	Vector2 popupPosition
 	MenuItem[] items
 	includeDefaultItems = true
-	overlayColor = Color("000000b0")
+	overlayColor = #000000b0
 	locked = true
 	
 	visible bool active
@@ -827,7 +827,7 @@ Object Menu
 					onTouchDownWithin pos, size:{500,60}, do:item.onClick(true, touch)
 				else
 				if item.type == Check
-					if .image: drawImage Checkbox, pos+{-120}, layer:int.maxValue, frame:item.value ? 1 : 0
+					drawImage .image or Checkbox, pos+{-120}, layer:int.maxValue, frame:item.value ? 1 : 0
 					onTouchDownWithin pos, size:{500,60}
 						item.value = !item.value
 						item.onClick(item.value, touch)

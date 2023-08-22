@@ -1391,7 +1391,7 @@ class Error
 	implicit inline js string toString := this.stack
 	
 // A collection of basic system functions
-global transient unit System
+global transient priority unit System
 	// Executes code depending on whether a given condition is true or false
 	global inline js void if: implicit bool condition // The condition to check
 		                      inline void() then      // Do this if the condition is true
@@ -1944,7 +1944,6 @@ unit Loca
 	
 	visible Language language = English
 	visible string locale = defaultLocaleForLanguage[language]
-	private dynamic localStrings
 	
 	init
 		setLanguage English
@@ -1953,10 +1952,9 @@ unit Loca
 		                 string locale = null
 		Loca_language = language
 		Loca_locale = locale || Loca_defaultLocaleForLanguage[language]
-		if(window._strings) Loca_localStrings = _strings[language]
 		
 	js void format: int id
-		let entry = Loca_localStrings[id]
+		let entry = _strings[Loca_language][id]
 		if(!entry || entry.s.length == 0) return "##########"
 		let strings = entry.s
 		let result = strings[0]
