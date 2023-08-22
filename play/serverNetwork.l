@@ -173,6 +173,10 @@ transient unit ServerNetwork
 		if pingPongTime < fastestPingPongTime
 			fastestPingPongTime = pingPongTime
 			referenceStartTime = calculatedStartTime
+			
+			// For testing
+			core.startTime = referenceStartTime
+			
 			core.log "New fastest pingPongTime", pongCount, now, pingPongTime, timeSinceStart, core.startTime, referenceStartTime
 			
 	sendSignal:	int receiverId, string type, string sdp
