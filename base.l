@@ -468,6 +468,59 @@ class List<T>
 		var index = this.indexOf(item);
 		if(index > -1) this.splice(index, 1);
 			
+	js void remove: T item  // The first item to remove
+		            T item2 // The second item to remove
+		var index = this.indexOf(item);
+		if(index > -1) this.splice(index, 1);
+		var index = this.indexOf(item2);
+		if(index > -1) this.splice(index, 1);
+			
+	js void remove: T item  // The first item to remove
+		            T item2 // The second item to remove
+		            T item3 // The third item to remove
+		var index = this.indexOf(item);
+		if(index > -1) this.splice(index, 1);
+		var index = this.indexOf(item2);
+		if(index > -1) this.splice(index, 1);
+		var index = this.indexOf(item3);
+		if(index > -1) this.splice(index, 1);
+			
+	js void remove: T item  // The first item to remove
+		            T item2 // The second item to remove
+		            T item3 // The third item to remove
+		            T item4 // The forth item to remove
+		var index = this.indexOf(item);
+		if(index > -1) this.splice(index, 1);
+		var index = this.indexOf(item2);
+		if(index > -1) this.splice(index, 1);
+		var index = this.indexOf(item3);
+		if(index > -1) this.splice(index, 1);
+		var index = this.indexOf(item4);
+		if(index > -1) this.splice(index, 1);
+			
+	js void remove: T item  // The first item to remove
+		            T item2 // The second item to remove
+		            T item3 // The third item to remove
+		            T item4 // The forth item to remove
+		            T item5 // The fifth item to remove
+		var index = this.indexOf(item);
+		if(index > -1) this.splice(index, 1);
+		var index = this.indexOf(item2);
+		if(index > -1) this.splice(index, 1);
+		var index = this.indexOf(item3);
+		if(index > -1) this.splice(index, 1);
+		var index = this.indexOf(item4);
+		if(index > -1) this.splice(index, 1);
+		var index = this.indexOf(item5);
+		if(index > -1) this.splice(index, 1);
+			
+	// Remove a list of items from the list
+	js void remove: T[] items // The items to remove
+		for(let item of items) {
+			var index = this.indexOf(item);
+			if(index > -1) this.splice(index, 1);
+		}
+		
 	// Remove the item at the given index from the list
 	inline js void removeAt: int index // The index of the item to remove
 		this.splice(index, 1)
@@ -850,6 +903,15 @@ class List<T>
 			if value < resultValue: resultValue = value
 		return resultValue != threshold ? resultValue : default
 		
+	min: Time(T a) selector 
+		 Time threshold = Time.maxValue
+		 Time default = 0
+		Time resultValue = threshold
+		for this
+			let value = selector(.)
+			if value < resultValue: resultValue = value
+		return resultValue != threshold ? resultValue : default
+		
 	min: int(T a) selector 
 		 int threshold = int.maxValue
 		 int default = 0
@@ -1155,11 +1217,11 @@ class List<T>
 	js T get: implicit int index // The index of the item to get
 		return index >= 0 ? this[index] : this[this.length+index]
 		
-	js T get: int from = 0 // Return a new list starting from this index
-		      int to       // Return a new list up to (but not including) this index
+	js T[] get: int from = 0 // Return a new list starting from this index
+		        int to       // Return a new list up to (but not including) this index
 		return this.slice(from, to)
 	
-	js T get: int from // Return a new list starting from this index
+	js T[] get: int from // Return a new list starting from this index
 		return this.slice(from)
 	
 	js T set: int index // The index of the item to set
@@ -1212,6 +1274,15 @@ class Map<TKey, TValue>
 		                TValue value // The item to add to the map
 		this.set(key, value)
 		
+	private js TValue setAndReturn: TKey key     // The key of the item to add to the map
+		                            TValue value // The item to add to the map
+		this.set(key, value);
+		return value;
+		
+	inline js TValue getOrSet: TKey key
+		                       TValue value
+		(this.get(key) || (this.setAndReturn(key, value)))
+		
 	// Remove the item assosiated with the given key
 	inline js void delete: TKey key  // The key of the item to remove from the map
 		this.delete(key)
@@ -1219,7 +1290,7 @@ class Map<TKey, TValue>
 	// Remove all items from the map
 	inline js void clear
 		this.clear()
-	
+		
 
 // Specifies that a function doesn't return a value
 struct void
@@ -1360,6 +1431,14 @@ global transient unit System
 		                           int i      // The index of the current item of the list we are iterating over with the for-loop
 		                       ) do           // Do this for each item in a list
 		for(let _subject=subject, i=_subject.length-1; i>=0; --i) { let it = _subject[i]; do()}
+		
+	// Do something a given number of times or for each item in a list
+	global inline js void for: TValue[TKey] subject // The list to iterate over
+		                       -> inline void(
+		                           TValue it,  // The current item of the map we are iterating over with the for-loop
+		                           TKey key    // The current key of the map we are iterating over with the for-loop
+		                       ) do           // Do this for each item in a list
+		for(let _pair of subject) { let key = _pair[0]; let it = _pair[1]; do()}
 		
 	// Creates a new list populated with the results of calling a function on every element of the list
 	global inline js TResult[] for: T[] subject // The list to iterate over
@@ -1573,8 +1652,8 @@ global transient unit System
 	// Do something a given number of times or for each item in a list
 	global inline js void for: dynamic subject // The list to iterate over
 		                       -> inline void(
-		                           dynamic it,       // The current item of the list we are iterating over with the for-loop
-		                           string key   // The index of the current item of the list we are iterating over with the for-loop
+		                           dynamic it,  // The current item of the dynamic we are iterating over with the for-loop
+		                           string key   // The current key of the dynamic we are iterating over with the for-loop
 		                       ) do             // Do this for each item in a list
 		{let _subject=subject; for(let key in _subject) { let it = _subject[key]; do()}}
 		

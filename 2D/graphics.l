@@ -1,15 +1,15 @@
 // A color comprised of a red, green, blue and alpha component
 class Color
-	global const Color White   = {"ffffff", "White"}
-	global const Color Black   = {"000000", "Black"}
-	global const Color Red     = {"ef476f", "Red"}
-	global const Color Yellow  = {"ffd166", "Yellow"}
-	global const Color Green   = {"06d6a0", "Green"}
-	global const Color Blue    = {"118ab2", "Blue"}
-	global const Color Gray    = {"3d3d3d", "Gray"}
-	global const Color Transparent = {"00000000", "Transparent"}
+	global const Color White       = {"#ffffff", "White"}
+	global const Color Black       = {"#000000", "Black"}
+	global const Color Red         = {"#ef476f", "Red"}
+	global const Color Yellow      = {"#ffd166", "Yellow"}
+	global const Color Green       = {"#06d6a0", "Green"}
+	global const Color Blue        = {"#118ab2", "Blue"}
+	global const Color Gray        = {"#3d3d3d", "Gray"}
+	global const Color Transparent = {"#00000000", "Transparent"}
 		
-	const Color TransparentRed   = {"ff000080", "Transparent Red"}
+	const Color TransparentRed     = {"#ff000080", "Transparent Red"}
 	
 	string hex
 	string name
@@ -17,13 +17,13 @@ class Color
 	string toString := name or hex
 	
 	Color: string hex = ""
-		   int red = 0
+		this.hex = hex
+
+	Color: int red = 0
 		   int green = 0
 		   int blue = 0
 		   int alpha = 255
-		if hex: this.hex = "#" + hex
-		else    this.hex = "#" + componentToHex(red) + componentToHex(green) 
-		                       + componentToHex(blue) + componentToHex(alpha)
+		this.hex = "#" + componentToHex(red) + componentToHex(green) + componentToHex(blue) + componentToHex(alpha)
 			
 	static js string componentToHex: int c
 		var hex = c.toString(16);
@@ -159,6 +159,8 @@ transient skipInit global unit graphics
 	visible Vector2 pixelSize
 	visible Vector2 size
 	visible float pixelRatio
+	
+	async setup
 	
 	internal js void onResize
 		graphics_canvas = document.getElementById("canvas");
@@ -769,7 +771,7 @@ transient skipInit global unit graphics
 				drawImage finger, .smoothPosition+{11,32}, frame:.isDown ? 1 : 0, layer:int.maxValue
 				if color
 					if color == Black
-						drawRectangle .smoothPosition+{16,80}, size:{26,10}, color, layer:int.maxValue, outlineColor:{"a0a0a0"}, outlineWidth:2
+						drawRectangle .smoothPosition+{16,80}, size:{26,10}, color, layer:int.maxValue, outlineColor:{"#a0a0a0"}, outlineWidth:2
 					else
 						drawRectangle .smoothPosition+{16,78}, size:{26,10}, color, layer:int.maxValue
 
@@ -1030,7 +1032,7 @@ transient skipInit global unit graphics
 	const Color backgroundColor = Black
 	
 	// Teh default player colors
-	const Color[] defaultColors = [{"398CA9", "Blue"}, {"C01352", "Red"}, {"16C66E", "Green"}, {"FFD166", "Yellow"}]
+	const Color[] defaultColors = [{"#398CA9", "Blue"}, {"#C01352", "Red"}, {"#16C66E", "Green"}, {"#FFD166", "Yellow"}]
 
 	// The default color for all drawing operations
 	color
@@ -1045,7 +1047,7 @@ transient skipInit global unit graphics
 		code()
 		currentColor = prev
 		return currentColor
-	private Color currentColor = {"ffffff"}
+	private Color currentColor = {"#ffffff"}
 	
 	// ------------------------------------------------------- Font -------------------------------------------------------
 	
@@ -1257,7 +1259,7 @@ skipInit unit gizmo
 				drawImage ResizeHandle, center + size/2*.vector, size:handleSize, location:null, layer:int.maxValue
 				
 			// Draw selection
-			drawRectangle center, size:max-min, outlineColor:{"437FDF"}, outlineWidth:4, location:null, layer:int.maxValue
+			drawRectangle center, size:max-min, outlineColor:{"#437FDF"}, outlineWidth:4, location:null, layer:int.maxValue
 			
 	private Direction overHandleDirection
 	private Vector2 touchDownPos = {float.infinity, float.infinity}

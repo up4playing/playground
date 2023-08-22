@@ -41,6 +41,14 @@ global skipInit unit math
 	global inline js int randomFloat
 		math.random()
 		
+	js string generateRandomSeed:
+		let crypto = !window.crypto && typeof(require) != "undefined" ? require("crypto") : window.crypto
+		if(crypto) {
+			let out = new Uint8Array(256);
+			crypto.getRandomValues(out);
+			return out.toString();
+		}
+
 	js string generateUUID
 		return 'xxxx-xxxx-xxx-xxxx'.replace(/[x]/g, (c) => {  
 			return math.floor(math.random() * 16).toString(16);  
@@ -242,16 +250,23 @@ unit websocket
 		});
 		
 class WebsocketHttpResponse
+	inline js void writeHeader(string key, string value)
+		this.writeHeader(key, value); 
 	inline js void send(string result, int code = 200, filename = "") 
-		this.writeHeader("Content-Type", http_contentTypeMap[filename.getExtension()] || "text/plain; charset=utf-8"); 
+		this.writeHeader("Content-Type", http_contentTypeMap[filename.getExtension()] || "text/plain"); 
 		this.end(result);
 	inline js void onAborted(void() code)
 		this.onAborted(code)
+	inline js void redirect(string location)
+		this.writeStatus('302')
+		this.writeHeader('location', location)
+		this.end()
 		
 class Connection
 	inline js bool send(Buffer buffer) this.send(buffer.toByteArray(), /*isBinary*/true, /*compress*/false)
 	inline js int bufferedAmount() this.getBufferedAmount()
 	inline js object data := this.data
 	inline js void data(object value) this.data = value
+	inline js void close() this.close()
 
 

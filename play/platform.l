@@ -83,6 +83,7 @@ transient skipInit unit Platform
 		this.showSafeArea = showSafeArea
 		showDebugInfo = getLocalStorageObject("showDebugInfo") == "true"
 		
+		await graphics.setup
 		graphics.onResize
 		// drawLoading
 		if mode >= Play: mode = Pause
@@ -141,7 +142,7 @@ transient skipInit unit Platform
 	
 	internal stop()    mode = Pause; gizmo.clear; core.stop; sendMode
 	internal pause()   mode = Pause; gizmo.clear; audio.stop; core.tick(draw:true); sendMode
-	internal record()  core.adjustStartTimeIfNeeded; mode = Record; gizmo.clear;  sendMode
+	internal record()  core.adjustStartTimeIfNeeded; mode = Record; core.record;  gizmo.clear;  sendMode
 	internal play()    core.adjustStartTimeIfNeeded; mode = Play;   gizmo.clear;  sendMode
 	
 	private goToFrame(int targetFrame) pause(); core.goToFrame(targetFrame)
