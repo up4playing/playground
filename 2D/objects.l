@@ -827,7 +827,7 @@ Object Menu
 					onTouchDownWithin pos, size:{500,60}, do:item.onClick(true, touch)
 				else
 				if item.type == Check
-					if .image: drawImage Checkbox, pos+{-120}, layer:int.maxValue, frame:item.value ? 1 : 0
+					drawImage .image or Checkbox, pos+{-120}, layer:int.maxValue, frame:item.value ? 1 : 0
 					onTouchDownWithin pos, size:{500,60}
 						item.value = !item.value
 						item.onClick(item.value, touch)
