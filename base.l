@@ -1391,7 +1391,7 @@ class Error
 	implicit inline js string toString := this.stack
 	
 // A collection of basic system functions
-global transient unit System
+global transient priority unit System
 	// Executes code depending on whether a given condition is true or false
 	global inline js void if: implicit bool condition // The condition to check
 		                      inline void() then      // Do this if the condition is true
