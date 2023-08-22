@@ -712,7 +712,7 @@ skipInit transient unit statistics
 	private bool currentlySendingStatistics
 	
 	// Log game events (like scores, playtimes, etc)
-	log: dynamic value
+	log: any value
 		value.frame = Time.frame
 		this.gameLogs.add value
 	
