@@ -257,7 +257,7 @@ global unit Html
 			body.style.font = "32px OpenSans"
 		}
 	
-	private js void setAttributes: Node node, dynamic attributes
+	private js void setDataAttributes: Node node, dynamic attributes
 		if(attributes)
 			for(let key in attributes)
 				node.setAttribute(key, attributes[key])
@@ -319,16 +319,20 @@ global unit Html
 	global img: Image image                       // The image to display
 		        expand Attributes attributes = {} // The attributes of the HTML element
 		        expand Style style = null         // The css style of the HTML element
+		        dynamic data = null               // The data attributes of the element
 		        SourceCodeLocation location
-		attributes.src = image.src
-		return div tag:"img", attributes, style, location
+		let node = div tag:"img", attributes, style, data, location
+		node.src = image.src
+		return node
 
 	global img: string src                        // The file of the image to display
 		        expand Attributes attributes = {} // The attributes of the HTML element
 		        expand Style style = null         // The css style of the HTML element
+		        dynamic data = null               // The data attributes of the element
 		        SourceCodeLocation location
-		attributes.src = src
-		return div tag:"img", attributes, style, location
+		let node = div tag:"img", attributes, style, data, location
+		node.src = src
+		return node
 
 	global input: string value = ""                 // The initial value of the input
 		          bool focused = false
@@ -336,9 +340,9 @@ global unit Html
 		          expand Attributes attributes = {} // The attributes of the HTML element
 		          expand Style style = null         // The css style of the HTML element
 		          SourceCodeLocation location
-		attributes.onkeydown = if(onenter != null) if(ev.key == "Enter") onenter()
 		let node = div tag:"input", attributes, style, location
 		if focused: node.focus
+		if(onenter != null) node.onkeydown = if(ev.key == "Enter") onenter()
 		return node
 		
 	global link: string text = null
@@ -361,9 +365,9 @@ global unit Html
 //       src="http://dotlottieio.s3-website-us-east-1.amazonaws.com/sample_files/animation-external-image.lottie"
 //       style="width: 320px;height:320px;"></dotlottie-player>
 	
-	global video: string src // The file of the video to display 
+	global video: string src                        // The file of the video to display 
 		          expand Attributes attributes = {} // The attributes of the HTML element 
-		          expand Style style = {} // The css style of the HTML element 
+		          expand Style style = {}           // The css style of the HTML element 
 		          SourceCodeLocation location
 		attributes.src = src
 		attributes.autoplay = "autoplay"
@@ -376,6 +380,7 @@ global unit Html
 		        string tag = "div"                // The tag of element
 		        expand Attributes attributes = {} // The attributes of the element
 		        expand Style style = null         // Apply this css style to the element
+		        dynamic data = {}                 // The data attributes of the element
 		        Style onHover = null              // Apply this css style to the element when the user moves their mouse over the element
 		        void() children = null            // The children of the element
 		        SourceCodeLocation location
@@ -391,9 +396,15 @@ global unit Html
 			node = currentNode
 			nextNode = currentNode.nextSibling
 		
-		if attributes != null: attributes.className = attributes.class
 		setStyle node, style
-		setAttributes node, attributes
+		setDataAttributes node, data
+		
+		if attributes != null
+			if attributes.id != null:           node.id = attributes.id
+			if attributes.class != null:        node.class = attributes.class
+			if attributes.onClick != null:      node.onclick = attributes.onClick
+			if attributes.onRightClick != null: node.oncontextmenu = attributes.onRightClick
+				
 		node.sourceLocation = sourceLocation
 		if onHover != null
 			node.onmouseover = addStyle(node, onHover)

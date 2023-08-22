@@ -11,6 +11,7 @@ class Node
 	Style style
 	string innerHTML
 	string value
+	string src
 	Node firstChild
 	Node nextSibling
 	
@@ -29,7 +30,8 @@ class Node
 	native void(HtmlEvent ev) oncontextmenu
 	native void(HtmlEvent ev) onmouseover
 	native void(HtmlEvent ev) onmouseout
-
+	native void(dynamic ev) onkeydown
+	
 	inline js void set(string name, string value) this.setAttribute(name, value)
 	inline js void get(string name) this.getAttribute(name)
 	
@@ -554,8 +556,8 @@ dynamic Style
 dynamic Attributes
 	string id // A unique string to indentify a specic element, often used to style a single element
 	string class // A string to assign a class to one or more elements, often used to style several elements
-	native void(HtmlEvent ev) onclick = null       // Execute this code when the user clicks the HTML element
-	native void(HtmlEvent ev) oncontextmenu = null // Execute this code when the user clicks the HTML element with the right mouse button
-	native void(dynamic ev) onkeydown = null       // Execute this code when the user clicks the HTML element with the right mouse button
-	// bool passClickToParents = false             // Even if this elements handles a click, its parents will also receive the event
+	native void(HtmlEvent ev) onClick = null      // Execute this code when the user clicks the HTML element
+	native void(HtmlEvent ev) onRightClick = null // Execute this code when the user clicks the HTML element with the right mouse button
+	native void(dynamic ev) onKeyDown = null      // Execute this code when the user clicks the HTML element with the right mouse button
+	// bool passClickToParents = false            // Even if this elements handles a click, its parents will also receive the event
 		
