@@ -1,3 +1,13 @@
+js THREE.Vector3
+struct Vector3
+	float x // The x-coordinate of the vector
+	float y // The y-coordinate of the vector
+	float z // The z-coordinate of the vector
+	
+	Vector3 operator = (Vector3 a, Vector3 b) a.x = b.x; a.y = b.y; a.z = b.z; return a
+	
+	inline js Vector3 operator *= (Vector3 a, Quaternion b) a.applyQuaternion(b)
+	
 // A 2D vector comprised of an x and y coordinate
 struct Vector2
 	float x // The x-coordinate of the vector
@@ -21,6 +31,8 @@ struct Vector2
 	
 	// Returns true if the vector is not equal to Vector2.none
 	bool toBool := (x != float.infinity || y != float.infinity)
+		
+	implicit Vector3 toVector3 := {x, y, 0}
 	
 	// Creates a copy of the vector with the same values
 	Vector2 clone() := {x, y, location}
@@ -728,6 +740,8 @@ class IsometicGrid
 	getScreenVector: Vector2 worldVector
 		return xOffset*worldVector.x + yOffset*worldVector.y
 		
+enum RotationDirection: Clockwise, CounterClockwise
+		
 class Direction
 	global const Direction Right = {"Right", 0, { 1, 0, location:null},   0°, 330°} // positive x direction (1,0)
 	global const Direction Down  = {"Down",  1, { 0, 1, location:null},  90°,  30°} // positive y direction (0,1)
@@ -879,6 +893,16 @@ class Grid<T>
 	// Returns true if the given condition is true for any item in the list
 	inline js bool any: bool(T a) predicate // The condition to check
 		this.items.some(predicate)
+		
+	inline js T[] where: bool(T a) predicate // The condition to check
+		this.items.filter(predicate)
+		
+	int count: bool(T a) predicate // The condition to check
+		int count = 0
+		for items
+			if predicate(.)
+				count++
+		return count
 		
 	// Returns true if the given condition is true for all items in the list
 	inline js bool all

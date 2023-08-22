@@ -70,11 +70,11 @@ transient class InternalUser
 		bufferFrames = 5
 		smoothFrame = frame - bufferFrames		
 		
-// The public state of a player. This is the same accross all clients.
 class Player
 	int id
 	int index
 	Color color = null
+	Vector2 pointerPosition
 	
 	toString := color ? color.name : ""
 	
@@ -341,10 +341,10 @@ class GameController
 		y.startFrame
 	
 enum ShowPointersMode
-	None   // Never show the mouse pointer
-	Remote // Show the mouse pointer only for remote players
-	Local  // Show the mouse pointer only for the local player
-	All    // Show the mouse pointers of all players
+	None           // Don't show the mouse pointers or draw them manually
+	Local          // Show the mouse pointer only for the local player
+	Remote         // Show the mouse pointer only for remote players
+	LocalAndRemote // Show the mouse pointers of all players
 	
 class InternetGamePadButton
 	bool pressed, touched
@@ -449,7 +449,7 @@ skipInit global unit input
 			else
 			if(ctrlOrCmd && key == "l") {
 				// Save logs
-				statistics_manuallyTriggerSend(-2, /*clear*/false);
+				statistics_saveStatistics()
 				core_saveLogs();
 				e.preventDefault();
 			}
@@ -546,8 +546,8 @@ skipInit global unit input
 		if pointerType == "touch": touchType = 3; id = pointerId; else
 			                       touchType = 4
 		
-		Vector2 pixelPos = {x*Platform.pixelRatio, y*Platform.pixelRatio}
-		Vector2 referencePos = pixelPos.getRelativeTo(Platform.baseMatrix)
+		Vector2 pixelPos = {x*graphics.pixelRatio, y*graphics.pixelRatio}
+		Vector2 referencePos = pixelPos.getRelativeTo(graphics.baseMatrix)
 		gizmo.onTouch inputType, id, pixelPos, referencePos, shift, alt, cmdOrCtrl
 		
 		if core.mode == None || Platform.mode != Record || !localUser || !localUser.collectInputs: return
@@ -588,7 +588,7 @@ skipInit global unit input
 		if core.mode == None || Platform.mode != Record || !localUser || !localUser.collectInputs: return
 		let inputs = localUser.inputs
 		
-		Vector2 referencePos = {x*Platform.pixelRatio, y*Platform.pixelRatio}.getRelativeTo(Platform.baseMatrix)
+		Vector2 referencePos = {x*graphics.pixelRatio, y*graphics.pixelRatio}.getRelativeTo(graphics.baseMatrix)
 		inputs.writeInt32 localUser.inputFrame
 		inputs.writeUnsignedInt16 cast InputType.Scroll
 		inputs.writeInt16 math.round(referencePos.x)
@@ -641,7 +641,7 @@ skipInit global unit input
 					internalUser.nextLostMessageAtFrame = core.frame + core.targetFps * 12
 					
 					// Send logfiles to server
-					Platform.setTimeout 7 seconds: statistics.manuallyTriggerSend -3, clear:false
+					Platform.setTimeout 7 seconds: statistics.saveStatistics
 	
 	private handleStillConnected: int userId
 		let inputs = localUser.inputs
@@ -775,7 +775,8 @@ skipInit global unit input
 							touch = {id, player, cast inputType, type, referencePos, referencePos, referencePos, isDown:true}
 							player.touches.add touch
 							if core.logging: core.parseLog += " down(new) {id} {referencePos} {type}"
-							
+								
+						player.pointerPosition = referencePos
 						internalUser.downTouches.add touch
 					else
 					if inputType == TouchMove
@@ -791,7 +792,8 @@ skipInit global unit input
 							touch = {id, player, cast inputType, type, referencePos, referenceStartPosition:Vector2.none, referencePos, isDown:false}
 							player.touches.add touch
 							if core.logging: core.parseLog += " move(new) {id} {referencePos} {type}"
-
+								
+						player.pointerPosition = referencePos
 						internalUser.movingTouches.add touch
 						cursor = Auto
 					else
@@ -809,7 +811,8 @@ skipInit global unit input
 							touch = {id, player, cast inputType, type, referencePos, referenceStartPosition:Vector2.none, referencePos, isDown:false}
 							player.touches.add touch
 							if core.logging: core.parseLog += " up(new) {id} {referencePos} {type}"
-							
+								
+						player.pointerPosition = referencePos
 						internalUser.upTouches.add touch
 					else
 					if inputType == Scroll
@@ -1087,7 +1090,8 @@ skipInit global unit input
 				if !touch.handled && touch.referencePosition.isInsidePoygon(poly)
 					this.cursor = cursor
 				
-		if showTouchArea: drawRectangle position, size, color:{"ff000080"}, align, valign, layer:10000000
+		// Migrate to 3D
+		// if showTouchArea: drawRectangle position, size, color:{"#ff000080"}, align, valign, layer:10000000
 
 	// Do something when the player touches or clicks within a given rotated rectangle
 	// Example: Draw a the image "Character" rotated by 45 degrees and print "Clicked character" when the player touches within its rotated rectangle.
@@ -1135,8 +1139,8 @@ skipInit global unit input
 					if !touch.handled && touch.referencePosition.isInsidePoygon(poly)
 						this.cursor = cursor
 				
-		// if showTouchArea: drawRectangle position, size, color:{"ff000080"}, align, valign, layer:10000000
-		if showTouchArea: drawPolygon poly, color:{"ff000080"}, layer:10000000
+		// Migrate to 3D
+		// if showTouchArea: drawPolygon poly, color:{"#ff000080"}, layer:10000000
 
 	// Do something when the player touches or clicks within a given circle
 	// Example: Draw the image "Ball" and print "Clicked ball" when the player touches it.
@@ -1169,7 +1173,8 @@ skipInit global unit input
 					if !touch.handled && (touch.referencePosition distanceTo position) <= radius
 						this.cursor = cursor
 				
-		if showTouchArea: drawCircle position, radius*2, color:{"ff000080"}
+		// Migrate to 3D
+		// if showTouchArea: drawCircle position, radius*2, color:{"#ff000080"}
 
 	// Do something when the player touches or clicks within a given polygon
 	// Example: Draw a polygon and print "Clicked OK" when the player touches it.
@@ -1206,7 +1211,8 @@ skipInit global unit input
 					if !touch.handled && touch.referencePosition.isInsidePoygon(poly)
 						this.cursor = cursor
 				
-		if showTouchArea: drawPolygon position, points, color:{"ff0000b0"}
+		// Migrate to 3D
+		// if showTouchArea: drawPolygon position, points, color:{"#ff0000b0"}
 			
 	// Do something when the player touches or clicks, even if the event is already handled
 	global onTouchDownAny: implicit nocolon Player[] by = null // Only consider touches or clicks by this player or list of players
@@ -1254,7 +1260,8 @@ skipInit global unit input
 					if !touch.handled && touch.referencePosition.isInsidePoygon(poly)
 						this.cursor = cursor
 				
-		if showTouchArea: drawRectangle position, size, color:{"ff000080"}
+		// Migrate to 3D
+		// if showTouchArea: drawRectangle position, size, color:{"#ff000080"}
 
 			
 	// ---------------------------------------------- Touch Move ----------------------------------------------
@@ -1383,7 +1390,8 @@ skipInit global unit input
 					if markAsHandled: touch.handled = true
 					Snapshot.autoSave
 						
-		if showTouchArea: drawRectangle position, size, color:{"ff000080"}
+		// Migrate to 3D
+		// if showTouchArea: drawRectangle position, size, color:{"#ff000080"}
 
 	// Do something when the player ends a touch or click within a given circle
 	// Example: Draw the image "Ball" and print "Clicked ball" when the player ends a touch or releases the mouse button over this button
@@ -1416,7 +1424,8 @@ skipInit global unit input
 					if !touch.handled && (touch.referencePosition distanceTo position) <= radius
 						this.cursor = cursor
 				
-		if showTouchArea: drawCircle position, radius*2, color:{"ff000080"}
+		// Migrate to 3D
+		// if showTouchArea: drawCircle position, radius*2, color:{"#ff000080"}
 						
 	// ---------------------------------------------- Scroll ----------------------------------------------
 	
@@ -1447,11 +1456,12 @@ skipInit global unit input
 					do .
 					if markAsHandled: .markAsHandled
 						
-		if showTouchArea: drawRectangle position, size, Red
+		// Migrate to 3D
+		// if showTouchArea: drawRectangle position, size, Red
 			
 	// ---------------------------------------------- Text Input ----------------------------------------------
 	
-	private bool isTextInputActive = false
+	visible bool isTextInputActive = false
 	
 	private js object getOrCreateInputField
 		if(!window._input) {

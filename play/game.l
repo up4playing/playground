@@ -246,11 +246,12 @@ unit game
 		Line movement = {sourcePosition, targetPosition, Segment}
 		bool hasCollided
 		for colliders -> c
-			if showColliders
-				if c.leftLine: drawLine c.leftLine.start, c.leftLine.end, color:Red, width:5
-				if c.rightLine: drawLine c.rightLine.start, c.rightLine.end, color:Red, width:5
-				if c.topLine: drawLine c.topLine.start, c.topLine.end, color:Red, width:5
-				if c.bottomLine: drawLine c.bottomLine.start, c.bottomLine.end, color:Red, width:5
+			// Migrate to 3D
+			// if showColliders
+			// 	if c.leftLine: drawLine c.leftLine.start, c.leftLine.end, color:Red, width:5
+			// 	if c.rightLine: drawLine c.rightLine.start, c.rightLine.end, color:Red, width:5
+			// 	if c.topLine: drawLine c.topLine.start, c.topLine.end, color:Red, width:5
+			// 	if c.bottomLine: drawLine c.bottomLine.start, c.bottomLine.end, color:Red, width:5
 			
 			if c.leftLine and movement.end.x > movement.start.x
 				// We are moving right -> check left side
