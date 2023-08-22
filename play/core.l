@@ -137,6 +137,7 @@ transient skipInit unit core
 	// Keep event stream running, recreate players, call init function and start app
 	// Called manually with the global "restart" function	
 	restart
+		initAll
 		Player[] newPlayers
 		for input.players
 			Player user = {id:.id, index:i}
@@ -147,7 +148,6 @@ transient skipInit unit core
 		input.localUser = input.internalUsers[localUserId]
 		input.localPlayer = input.playersById[localUserId]
 		input.updatePlayers
-		initAll
 		startApp
 	
 	// Steps forward when going to a frame in the future
