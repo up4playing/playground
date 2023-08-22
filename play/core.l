@@ -374,8 +374,9 @@ transient skipInit unit core
 	internal tick: bool draw
 		graphics.startFrame
 		if draw and not Platform.waitingForInitialData
-			if input.showPointers >= Local
-			or (mode == Connected and input.showPointers == Remote) 
+			if (input.showPointers 
+			and ((input.showPointersMode == Local or input.showPointersMode == LocalAndRemote)
+			or (mode == Connected and input.showPointersMode == Remote)))
 			or Platform.mode == Play
 				players.each drawPointer .
 		audio.startFrame

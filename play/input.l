@@ -388,7 +388,8 @@ skipInit global unit input
 	internal Player[] playersById
 	Cursor cursor
 	
-	ShowPointersMode showPointers = Remote
+	ShowPointersMode showPointersMode = Remote
+	bool showPointers = true
 	bool ignoreFirstClick
 	
 	string textInput
