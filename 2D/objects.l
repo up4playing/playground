@@ -73,7 +73,7 @@ transient global unit graphics
 		let videoObject = getVideoObject player
 			
 		// if !videoObject or Framework.toBeRemoved.contains(videoObject): videoObject = VideoObject(userId)
-		if !videoObject: videoObject = VideoObject(player.id)
+		if !videoObject: videoObject = VideoObject(player)
 		videoObject.position = pos
 		videoObject.size = size
 		videoObject.shape = shape
