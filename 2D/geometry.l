@@ -728,6 +728,8 @@ class IsometicGrid
 	getScreenVector: Vector2 worldVector
 		return xOffset*worldVector.x + yOffset*worldVector.y
 		
+enum RotationDirection: Clockwise, CounterClockwise
+		
 class Direction
 	global const Direction Right = {"Right", 0, { 1, 0, location:null},   0°, 330°} // positive x direction (1,0)
 	global const Direction Down  = {"Down",  1, { 0, 1, location:null},  90°,  30°} // positive y direction (0,1)
@@ -882,6 +884,16 @@ class Grid<T>
 	// Returns true if the given condition is true for any item in the list
 	inline js bool any: bool(T a) predicate // The condition to check
 		this.items.some(predicate)
+		
+	inline js T[] where: bool(T a) predicate // The condition to check
+		this.items.filter(predicate)
+		
+	int count: bool(T a) predicate // The condition to check
+		int count = 0
+		for items
+			if predicate(.)
+				count++
+		return count
 		
 	// Returns true if the given condition is true for all items in the list
 	inline js bool all

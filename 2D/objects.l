@@ -57,17 +57,6 @@ unit Framework
 		for objects: result+= .debugString
 		return result
 		
-	private js float appChecksum()
-		return window.app_checksum ? window.app_checksum() : 0.0
-		
-	checksum
-		float result = appChecksum
-		for objects: result += .checksum
-		// We ensure that we never return 0
-		// because a checksum of 0 is used to indicate that we don't have a checksum for this frame yet
-		if result == 0: return 1.0
-		return result
-		
 // Draw on the screen
 transient global unit graphics
 	setPlayerVideo: Player player
@@ -84,7 +73,7 @@ transient global unit graphics
 		let videoObject = getVideoObject player
 			
 		// if !videoObject or Framework.toBeRemoved.contains(videoObject): videoObject = VideoObject(userId)
-		if !videoObject: videoObject = VideoObject(player.id)
+		if !videoObject: videoObject = VideoObject(player)
 		videoObject.position = pos
 		videoObject.size = size
 		videoObject.shape = shape
@@ -104,13 +93,12 @@ class Object
 	Vector2 position
 	implicit Vector2 size
 	float alpha = 1
-	Player[] visibleFor = null
+	implicit Player[] visibleFor = null
 	int layer = 0
 	bool locked
 	SourceCodeLocation location
 	
 	visible siblings := Framework.objects
-	internal checksum := position.x + position.y + size.x + size.y + alpha
 	internal debugString := "(Object pos:{position.x} {position.y})"
 	internal tick
 	
@@ -131,12 +119,12 @@ class Object
 		    Time delay = 0
 		Vector2 startPosition = position
 		
-		// When chaining serveral move effects together, continue where the last one left off
-		MoveEffect moveEffect = cast fx.effects.findLast.type == MoveEffect and .object == this
-			startPosition = moveEffect.startValue + moveEffect.delta
+		// When chaining serveral move animations together, continue where the last one left off
+		MoveAnimation moveAnimation = cast fx.animations.findLast.type == MoveAnimation and .object == this
+			startPosition = moveAnimation.startValue + moveAnimation.delta
 
 		let delta = pos - startPosition
-		fx.add MoveEffect startTime:fx.endOfPrevEffect(this)+delay, duration, this, startPosition, delta
+		fx.add MoveAnimation startTime:fx.endOfPrevAnimation(this)+delay, duration, this, startPosition, delta
 		return this
 		
 	moveAndScaleTo: Vector2 position
@@ -147,13 +135,13 @@ class Object
 		Vector2 startSize = this.size
 		Vector2 endSize = size.y ? size : {size.x, size.x * startSize.y/startSize.x}
 		
-		// When chaining serveral move effects together, continue where the last one left off
-		MoveEffect moveEffect = cast fx.effects.findLast.type == MoveEffect and .object == this
-			startPosition = moveEffect.startValue + moveEffect.delta
+		// When chaining serveral move animations together, continue where the last one left off
+		MoveAnimation moveAnimation = cast fx.animations.findLast.type == MoveAnimation and .object == this
+			startPosition = moveAnimation.startValue + moveAnimation.delta
 
-		let startTime = fx.endOfPrevEffect(this)+delay
-		fx.add MoveEffect startTime, duration, this, startPosition, delta:position - startPosition
-		fx.add ScaleEffect startTime, duration, this, startSize, delta:endSize - startSize
+		let startTime = fx.endOfPrevAnimation(this)+delay
+		fx.add MoveAnimation startTime, duration, this, startPosition, delta:position - startPosition
+		fx.add ScaleAnimation startTime, duration, this, startSize, delta:endSize - startSize
 		watch startSize, endSize
 		return this
 		
@@ -162,13 +150,13 @@ class Object
 		    Time delay = 0
 		let delta = pos - position
 		let duration = math.floor(delta.length / speed)
-		fx.add MoveEffect startTime:fx.endOfPrevEffect(this)+delay, duration, this, startValue:position, delta
+		fx.add MoveAnimation startTime:fx.endOfPrevAnimation(this)+delay, duration, this, startValue:position, delta
 		return this
 		
 	fadeIn: Time duration = 100
 		    Time delay = 0
 		alpha = 0
-		fx.add FadeEffect startTime:fx.endOfPrevEffect(this)+delay, duration, this, startValue:0, delta:1
+		fx.add FadeAnimation startTime:fx.endOfPrevAnimation(this)+delay, duration, this, startValue:0, delta:1
 		return this
 		
 	fadeOut: Time duration = 100
@@ -176,52 +164,50 @@ class Object
 		     bool removeWhenDone = true
 		float startValue = alpha
 		
-		// When chaining serveral fade effects together, continue where the last one left off
-		// If the last fade effect is already a fade out, don't do anything
-		FadeEffect lastFadeEffect = cast fx.effects.findLast.type == FadeEffect and .object == this
-			if lastFadeEffect.startValue + lastFadeEffect.delta <= 0: 
+		// When chaining serveral fade animations together, continue where the last one left off
+		// If the last fade animation is already a fade out, don't do anything
+		FadeAnimation lastFadeAnimation = cast fx.animations.findLast.type == FadeAnimation and .object == this
+			if lastFadeAnimation.startValue + lastFadeAnimation.delta <= 0: 
 				watch "ignoring"
 				return
-			startValue = lastFadeEffect.startValue
+			startValue = lastFadeAnimation.startValue
 				
-		fx.add FadeEffect startTime:fx.endOfPrevEffect(this)+delay, duration, this, startValue, delta:-startValue, removeWhenDone
+		fx.add FadeAnimation startTime:fx.endOfPrevAnimation(this)+delay, duration, this, startValue, delta:-startValue, removeWhenDone
 		return this
 		
 	scaleTo: implicit Vector2 size
 		     Time duration = 1000
 		     Time delay = 0
-		fx.add ScaleEffect startTime:fx.endOfPrevEffect(this)+delay, duration, this, startValue:this.size, delta:size-this.size
+		fx.add ScaleAnimation startTime:fx.endOfPrevAnimation(this)+delay, duration, this, startValue:this.size, delta:size-this.size
 		return this
 		
 	do:   stored void() do
 		  Time delay = 0
-		fx.add DelayEffect startTime:fx.endOfPrevEffect(this)+delay, duration:0, this, do
+		fx.add DelayAnimation startTime:fx.endOfPrevAnimation(this)+delay, duration:0, this, do
 		
 	playSound: Sound sound
 		       Time delay = 0
-		fx.add PlaySoundEffect startTime:fx.endOfPrevEffect(this)+delay, duration:0, this, sound
+		fx.add PlaySoundAnimation startTime:fx.endOfPrevAnimation(this)+delay, duration:0, this, sound
 
 	fadeAndScaleIn: float startScale = 3
 		            Time duration = 200
 		            Time delay = 0
 		alpha = 0
-		let startTime = fx.endOfPrevEffect(this)+delay
-		fx.add ScaleEffect startTime, duration, this, startValue:startScale*size, delta:(1-startScale)*size
-		fx.add FadeEffect  startTime, duration, this, startValue:0, delta:1
+		let startTime = fx.endOfPrevAnimation(this)+delay
+		fx.add ScaleAnimation startTime, duration, this, startValue:startScale*size, delta:(1-startScale)*size
+		fx.add FadeAnimation  startTime, duration, this, startValue:0, delta:1
 		return this
 		
-	removeEffects
+	removeAnimations
 		fx.removeForObject this
 		
 Object RectangleObject
 	Color color = White
-	internal checksum := position.x + position.y + alpha + size.x + size.y
 	override tick
 		drawRectangle position, size, color, visibleFor, layer, alpha
 
 Object CircleObject
 	Color color = White
-	internal checksum := position.x + position.y + alpha + size.x + size.x
 	override tick
 		drawCircle position, size, color:color, visibleFor, layer
 
@@ -231,7 +217,6 @@ Object TextObject
 	Color color = White
 	HorizontalAlignment align = Center // The horizontal alignment of the text
 	VerticalAlignment valign = Middle  // The vertical alignment of the text
-	internal checksum := position.x + position.y + text.length + size.x + size.y
 	override tick
 		drawText text, position, size, color, align, valign, font, visibleFor, alpha, layer
 		
@@ -245,10 +230,24 @@ Object ImageObject
 	override tick
 		drawImage image, position, size, angle, alpha, visibleFor, layer
 		
+Object Effect
+	Image image
+	int framesPerSecond = 15
+	private startFrame = Time.frame
+	
+	Effect
+		if size.x == 0 and size.y == 0: size = image.size
+	
+	override tick
+		var frame = math.floor((Time.frame - startFrame) * math.max(framesPerSecond, 0) / core.targetFps)
+		if frame < image.frames.length
+			drawImage image, position, size, alpha, visibleFor, layer, frame, location
+		else
+			Framework.objects.remove this
+		
 Object VideoObject
 	Player player
 	VideoShape shape
-	internal checksum := position.x + position.y + player.id + size.x + size.y + size.x + size.y
 	override tick
 		drawVideo player, position, size, shape
 			
@@ -328,8 +327,6 @@ Object Piece
 		
 	debugString := "(Piece pos:{position.x} {position.y} frame:{frame} side:{side} image:{image?.file} board:{board.toBool})"
 	
-	checksum := position.x + position.y + size.x + size.y + frame + angle + cast side
-		
 	finishTouch
 		rotateTouch = null
 		if moveTouch: moveTouch = null; onDrop
@@ -501,11 +498,6 @@ Piece Board
 		for objects: children += .debugString
 		return "(Board pos:{position.x} {position.y} children:{children})"
 		
-	checksum
-		let result = position.x + position.y + cast(contentVisibleForOthers) + matrix.m0 + matrix.m1 + matrix.m2 + matrix.m3 + matrix.m4 + matrix.m5
-		for objects: result += .checksum
-		return result
-		
 	finishTouch
 		for objects
 			if . is Piece
@@ -634,17 +626,19 @@ struct Particle
 	Angle angle, rotationSpeed
 	int frame
 
-enum ParticleMode: Burst, Single
+enum ParticleMode: Burst, OneParticlePerImageFrame
 	
 Object ParticleSystem
 	private Particle[] particles
-	Image particleImage = starParticle
+	Image image = starParticle
 	minSpeed = 10.0
 	maxSpeed = 25.0
 	particlesPerBurst = 30
 	burstInterval = 500
 	Time nextBurst = -1
 	bursts = 10
+	gravity = 1.0
+	maxRotationSpeed  = .05
 	mode = ParticleMode.Burst
 	
 	private int burst
@@ -652,36 +646,37 @@ Object ParticleSystem
 	
 	override tick
 		if Time.now > nextBurst
-			if mode == Single
-				for particleImage.frames.length
-					let r = -math.randomFloat .5
-					let speedFactor = math.randomFloat 10..15
+			if mode == OneParticlePerImageFrame
+				for image.frames.length
+					let angle = -math.randomFloat .5
+					let speedFactor = math.randomFloat(minSpeed to maxSpeed)
 					particles.add Particle
 						pos: position
-						speed: {math.cos(r), math.sin(r)} * speedFactor
-						angle: randomFloat*.05
-						rotationSpeed: math.randomFloat -.01 to .01
+						speed: math.getVectorForAngle(angle, speedFactor)
+						angle: 0
+						rotationSpeed: math.randomFloat(-maxRotationSpeed to maxRotationSpeed)
 						frame: .
 				nextBurst = Time.maxValue
 			else
 				for particlesPerBurst
-					let r = -math.randomFloat
-					let speedFactor = math.randomFloat*(maxSpeed-minSpeed) + minSpeed
+					let angle = -math.randomFloat
+					let speedFactor = math.randomFloat(minSpeed to maxSpeed)
 					particles.add Particle
 						pos: position
-						speed: {math.cos(r), math.sin(r)} * speedFactor
-						angle: math.randomFloat
-						frame: math.randomInteger(particleImage.frames.length)
+						speed: math.getVectorForAngle(angle, speedFactor)
+						angle
+						frame: math.randomInteger(image.frames.length)
+						rotationSpeed: math.randomFloat(-maxRotationSpeed to maxRotationSpeed)
 				nextBurst = ++burst < bursts ? Time.now + burstInterval : Time.maxValue
 
 		for particles <-
 			graphics.move .pos
 				graphics.rotate .angle
-					drawImage particleImage, frame:.frame
+					drawImage image, frame:.frame
 			.pos += .speed
-			.speed.y += 1
+			.speed.y += gravity
 			.angle += .rotationSpeed
-			if .pos.y > Platform.size.y/2
+			if .pos.y > graphics.size.y/2
 				particles.removeAt i
 		
 		if particles.length == 0	
@@ -689,8 +684,8 @@ Object ParticleSystem
 			
 enum closestCoinType: None, Neighbor, Over
 Piece Coin
-	const Color darkColor = {"642C00"}
-	const Color lightColor = {"F7C947"}
+	const Color darkColor = {"#642C00"}
+	const Color lightColor = {"#F7C947"}
 	
 	int value
 	bool isInfinate
@@ -705,7 +700,6 @@ Piece Coin
 	private float distanceToClosest
 	
 	debugString := "(Coin {value} pos:{position.x} {position.y} dis:{distanceToClosest})"
-	checksum := position.x + position.y + frame + value
 	
 	override tick
 		if movable
@@ -812,20 +806,17 @@ Object Menu
 	Vector2 popupPosition
 	MenuItem[] items
 	includeDefaultItems = true
-	overlayColor = Color("000000b0")
+	overlayColor = #000000b0
 	locked = true
 	
 	visible bool active
 		
 	Menu
 		if includeDefaultItems
-			items.insert {New,  "New Game",        onClick:startGame}, 0
+			items.insert {New,  "New Game",        onClick:core.restart}, 0
 			items.add    {Save, "Save Game"        onClick:core.saveEventStreamAndLogs}
 			items.add    {Quit, "Exit Fullscreen", onClick:Platform.setFullscreen false, forPlayer:touch.by}
 		
-	private inline js void startGame
-		if(window.app_start) window.app_startGame(false);
-	
 	override tick
 		bool doNotClose
 		if active
@@ -836,7 +827,7 @@ Object Menu
 					onTouchDownWithin pos, size:{500,60}, do:item.onClick(true, touch)
 				else
 				if item.type == Check
-					if .image: drawImage Checkbox, pos+{-120}, layer:int.maxValue, frame:item.value ? 1 : 0
+					drawImage .image or Checkbox, pos+{-120}, layer:int.maxValue, frame:item.value ? 1 : 0
 					onTouchDownWithin pos, size:{500,60}
 						item.value = !item.value
 						item.onClick(item.value, touch)

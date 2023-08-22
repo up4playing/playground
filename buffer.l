@@ -1,7 +1,7 @@
 transient class Buffer
 	js void writeInt: int value
 		if(value <= -2147483647 || value >= 2147483647)
-			throw new Error("Value out of integer range: {value}")
+			throw new Error("Value out of integer range: "+value)
 		let n, lastByte
 		if(value > 0) {
 			n = value
@@ -87,7 +87,7 @@ transient class Buffer
 		
 	js void writeUnsignedInt: int value
 		if(value < 0 || value >= 2147483648)
-			throw new Error("Value out of integer range: {value}")
+			throw new Error("Value out of integer range: "+value)
 			
 		var n = value
 		if (n < (1 << 14)) {
@@ -428,4 +428,27 @@ transient class Buffer
 				return true
 		return false
 			
+	js int checksum
+	    let hash = 0;
+	    for (let i = 0; i < this.writePos; i++) {
+	        let value = this.dataView.getUint8(i);
+	        hash = (hash << 5) - hash + value;
+	        hash |= 0; // Convert to 32bit integer
+	    }
+	    return hash;
+		
+	static js int listToChecksum: int[] list
+	    let hash = 0;
+	    for (let i = 0; i < list.length; i++) {
+	        let value = list[i];
+	        hash = (hash << 5) - hash + value;
+	        hash |= 0; // Convert to 32bit integer
+	    }
+	    return hash;
+		
+	js int[] toList
+		let result = []
+		for(let i=0; i<this.writePos; i++)
+			result.push(this.dataView.getUint8(i))
+		return result
 		
