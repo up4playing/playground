@@ -97,14 +97,14 @@ transient global skipInit unit audio
 		playingSounds.each.sound.stop
 		playingSounds.clear
 	
-	mute: int forUser = -1
-		if forUser == -1 or forUser == input.localUser?.id
+	mute: Player forPlayer = null
+		if !forPlayer or forPlayer.id == input.localUser.id
 			volumeLevel = 0
 			volume = volumeLevels[volumeLevel]
 			playingSounds.each.sound.updateVolume
 	
-	adjustVolume: int delta = 1, int forUser = -1
-		if forUser == -1 or forUser == input.localUser?.id
+	adjustVolume: int delta = 1, Player forPlayer = null
+		if !forPlayer or forPlayer.id == input.localUser.id
 			volumeLevel = math.limit(volumeLevel+delta, min:0, max:volumeLevels.length-1)
 			volume = volumeLevels[volumeLevel]
 			playingSounds.each.sound.updateVolume
