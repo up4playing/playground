@@ -24,6 +24,9 @@ global unit fx
 		          stored void() do
 		add DelayAnimation startTime:Time.now+time, do
 				
+	global defer: stored void() do
+		add DelayAnimation startTime:Time.now, do
+	
 transient global skipInit unit audio
 	global playSound: Sound sound
 		              Time delay = 0
