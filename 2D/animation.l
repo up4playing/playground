@@ -24,7 +24,21 @@ global unit fx
 		          stored void() do
 		add DelayAnimation startTime:Time.now+time, do
 				
-class Animation
+transient global skipInit unit audio
+	global playSound: Sound sound
+		              Time delay = 0
+		              bool needsToBeCertain = false
+		if needsToBeCertain and not input.isCertain: return
+		
+		if Time.frame == 0
+			fx.add PlaySoundAnimation startTime:math.ceil(Time.now+core.targetFrameTime)+delay, sound
+		else
+		if delay
+			fx.add PlaySoundAnimation startTime:Time.now+delay, sound
+		else
+			sound.play	
+				
+Animation
 	Time startTime
 	Time duration
 	Object object

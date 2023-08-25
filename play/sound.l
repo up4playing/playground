@@ -108,18 +108,3 @@ transient global skipInit unit audio
 			volumeLevel = math.limit(volumeLevel+delta, min:0, max:volumeLevels.length-1)
 			volume = volumeLevels[volumeLevel]
 			playingSounds.each.sound.updateVolume
-	
-	global playSound: Sound sound
-		              Time delay = 0
-		              bool needsToBeCertain = false
-		if needsToBeCertain and not input.isCertain: return
-		sound.play
-		
-		// Migrate to 3D
-		// if Time.frame == 0
-		// 	fx.add PlaySoundEffect startTime:math.ceil(Time.now+core.targetFrameTime)+delay, sound
-		// else
-		// if delay
-		// 	fx.add PlaySoundEffect startTime:Time.now+delay, sound
-		// else
-		// 	sound.play
