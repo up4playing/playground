@@ -62,7 +62,7 @@ class Texture
 					this.size = new Vector2(image.width, image.height, null)
 					resolve(this);
 				}
-				image.src = this.file.startsWith("http") ? this.file : _basePath+this.file
+				image.src = this.file.startsWith("http") || this.file.startsWith("data") ? this.file : _basePath+this.file
 			})
 		} else {
 			this._htmlImage = image
