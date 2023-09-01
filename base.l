@@ -1440,19 +1440,6 @@ global transient priority unit System
 		                       ) do           // Do this for each item in a list
 		for(let _pair of subject) { let key = _pair[0]; let it = _pair[1]; do()}
 		
-	// Creates a new list populated with the results of calling a function on every element of the list
-	global inline js TResult[] for: T[] subject // The list to iterate over
-		                       -> TResult(
-		                           T it         // The current item of the list we are iterating over with the for-loop
-		                       ) do             // Select the field or expression to be included in the result
-		subject.map(do)
-		
-	// Creates a new list populated with the results of calling a function on every element of the list
-	global inline js TResult[] for: T[] subject // The list to iterate over
-		                       <- TResult(
-		                           T it         // The current item of the list we are iterating over with the for-loop
-		                       ) do             // Select the field or expression to be included in the result
-		subject.map(do).reverse()
 		
 		for(let _subject=subject, i=_subject.length-1; i>=0; --i) { let it = _subject[i]; do()}
 	// Do something for each item in a list. You can add or remove items inside the loop.
@@ -1496,19 +1483,6 @@ global transient priority unit System
 		                           int i      // The iteration variable of the for-loop
 		                       ) do           // Do this the given number of times
 		for(let i=to-1; i>=0; --i) do()
-		
-	global inline js TResult[] for: int to,    // The exclusive upper bound to iterate towards
-		                            TResult(
-		                                int i  // The iteration variable of the for-loop
-		                            ) do       // Select the field or expression to be included in the result
-		int_enumerate(0, to, do)
-		
-	global inline js TResult[] for: int from,    // The integer to start iterating from
-		                            TResult(
-		                                int i    // The iteration variable of the for-loop
-		                            ) do         // Select the field or expression to be included in the result
-		                            label int to // The exclusive upper bound to iterate towards
-		int_enumerate(from, to, do)
 		
 	global inline js void for: string subject // Iterate over every character of this string
 		                       -> inline void(
@@ -1682,6 +1656,34 @@ global transient priority unit System
 	global inline js void try: inline void() code
 		                       inline nocolon void(Error error) catch
 		try code() @catch(error) catch()
+		
+global transient priority low unit System		
+	// Creates a new list populated with the results of calling a function on every element of the list
+	global inline js TResult[] for: T[] subject // The list to iterate over
+		                       -> TResult(
+		                           T it         // The current item of the list we are iterating over with the for-loop
+		                       ) do             // Select the field or expression to be included in the result
+		subject.map(do)
+		
+	// Creates a new list populated with the results of calling a function on every element of the list
+	global inline js TResult[] for: T[] subject // The list to iterate over
+		                       <- TResult(
+		                           T it         // The current item of the list we are iterating over with the for-loop
+		                       ) do             // Select the field or expression to be included in the result
+		subject.map(do).reverse()
+	
+	global inline js TResult[] for: int to,    // The exclusive upper bound to iterate towards
+		                            TResult(
+		                                int i  // The iteration variable of the for-loop
+		                            ) do       // Select the field or expression to be included in the result
+		int_enumerate(0, to, do)
+		
+	global inline js TResult[] for: int from,    // The integer to start iterating from
+		                            TResult(
+		                                int i    // The iteration variable of the for-loop
+		                            ) do         // Select the field or expression to be included in the result
+		                            label int to // The exclusive upper bound to iterate towards
+		int_enumerate(from, to, do)
 		
 		
 // A collection of mathematical functions and constants

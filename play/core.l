@@ -137,6 +137,7 @@ transient skipInit unit core
 	// Keep event stream running, recreate players, call init function and start app
 	// Called manually with the global "restart" function	
 	restart
+		initAll
 		Player[] newPlayers
 		for input.players
 			Player user = {id:.id, index:i}
@@ -147,7 +148,6 @@ transient skipInit unit core
 		input.localUser = input.internalUsers[localUserId]
 		input.localPlayer = input.playersById[localUserId]
 		input.updatePlayers
-		initAll
 		startApp
 	
 	// Steps forward when going to a frame in the future
@@ -296,8 +296,9 @@ transient skipInit unit core
 			lastSendFrame = frame
 			
 	switchUser: int userIndex
-		let prevPlayer = input.localPlayer 
-		input.localPlayer = players[userIndex]
+		let prevPlayer = input.localPlayer
+		if 0 <= userIndex < input.players.length
+			input.localPlayer = players[userIndex]
 			input.localUser = input.internalUsers.find.id == input.localPlayer.id
 			for prevPlayer.touches
 				input.handleUpdateTouchAfterSwitchingUser .id, .referencePosition
@@ -374,10 +375,8 @@ transient skipInit unit core
 	internal tick: bool draw
 		graphics.startFrame
 		if draw and not Platform.waitingForInitialData
-			if input.showPointers >= Local
-			or (mode == Connected and input.showPointers == Remote) 
-			or Platform.mode == Play
-				players.each drawPointer .
+			if input.showPointers or Platform.mode == Play
+				players.each drawPointer ., Platform.isDebug ? Local : input.showPointersMode
 		audio.startFrame
 		
 		if Platform.showDebugInfo
@@ -712,7 +711,7 @@ skipInit transient unit statistics
 	private bool currentlySendingStatistics
 	
 	// Log game events (like scores, playtimes, etc)
-	log: dynamic value
+	log: any value
 		value.frame = Time.frame
 		this.gameLogs.add value
 	

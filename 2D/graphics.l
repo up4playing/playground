@@ -62,7 +62,7 @@ class Texture
 					this.size = new Vector2(image.width, image.height, null)
 					resolve(this);
 				}
-				image.src = this.file.startsWith("http") ? this.file : _basePath+this.file
+				image.src = this.file.startsWith("http") || this.file.startsWith("data") ? this.file : _basePath+this.file
 			})
 		} else {
 			this._htmlImage = image
@@ -760,12 +760,12 @@ transient skipInit global unit graphics
 	//         tick
 	//             drawPointer me
 	// Image: drawPointer.png
-	global drawPointer: Player player                         // Show the mouse position of this player
-		                ShowPointersMode showPointer = Remote // Choose whether you want to draw the pointers for local players, remote players or both
-		                Color color = null                    // The color of the pointer. If this is left out, the player color is used
-		if showPointer == LocalAndRemote
-		or (player == input.localPlayer and showPointer == Local)
-		or (player != input.localPlayer and showPointer == Remote)
+	global drawPointer: Player player                  // Show the mouse position of this player
+		                ShowPointersMode mode = Remote // Choose whether you want to draw the pointers for local players, remote players or both
+		                Color color = null             // The color of the pointer. If this is left out, the player color is used
+		if mode == LocalAndRemote
+		or (player == input.localPlayer and mode == Local)
+		or (player != input.localPlayer and mode == Remote)
 			if !color: color = player.color
 			for player.touches
 				drawImage finger, .smoothPosition+{11,32}, frame:.isDown ? 1 : 0, layer:int.maxValue
