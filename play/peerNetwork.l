@@ -239,9 +239,10 @@ transient unit PeerNetwork
 	private onMessage: InternalUser user, Buffer buffer
 		NetworkMessageType type = cast buffer.readInt8
 		if type == Tick:         onTick user, buffer; else
-		if type == Checksum:     onChecksum user, buffer; else
 		if type == RequestState: onRequestState user, buffer; else
-		if type == State:        onState user, buffer
+		if type == State:        onState user, buffer;  else
+		if type == Ping:         onPing user, buffer;  else
+		if type == Pong:         onPong user, buffer;
 			
 	private onTick: InternalUser sender, Buffer buffer
 		let inputFrame = buffer.readInt
@@ -257,7 +258,7 @@ transient unit PeerNetwork
 			
 			let myChecksum = core.checksums[checksumFor]
 			if !myChecksum                           core.checksums[checksumFor] = checksum; else
-			if !myChecksum.isApproximately(checksum) core.onWrongChecksum mine:myChecksum theirs:checksum
+			if !myChecksum.isApproximately(checksum) core.onWrongChecksum checksumFor, mine:myChecksum theirs:checksum
 			
 			if core.logging: core.receivedLog += " [{core.currentTime}] <{sender.id}> #{inputFrame} {prevWritePos}->{sender.inputs.writePos} {sender.inputs.toRangeString(prevWritePos, sender.inputs.writePos)}"
 		else
@@ -285,9 +286,9 @@ transient unit PeerNetwork
 				let candidate = stats.get(candidatePair.localCandidateId);
 				let ip = candidate.ip || candidate.address
 				user.connectionType = candidate.candidateType + " " + ip
-				core_log("<"+user.id+"> ####################connection to "+user.id+": "+user.connectionType)
+				core_log("<"+user.id+"> #################### connection to "+user.id+": "+user.connectionType)
 			} else {
-				core_log("<"+user.id+"> ####################connection: no candidate pair for "+user.id)
+				core_log("<"+user.id+"> #################### connection: no candidate pair for "+user.id)
 				window.stats = [...stats.values()]
 				console.log(window.stats)
 				try  { core_log(JSON.stringify(window.stats)) }
@@ -295,6 +296,30 @@ transient unit PeerNetwork
 			}
 		}, 10000)
 		
+	// --------------------------------------------- Ping/Pong ---------------------------------------------
+	
+	ping
+		for input.internalUsers -> user
+			if user?.dataChannel
+				sendBuffer.reset
+				sendBuffer.writeInt8 cast NetworkMessageType.Ping
+				sendBuffer.writeFloat64 core.currentTime
+				send ., sendBuffer
+				
+	private onPing: InternalUser user, Buffer buffer
+		float pingTime = buffer.readFloat64
+		sendBuffer.reset
+		sendBuffer.writeInt8 cast NetworkMessageType.Pong
+		sendBuffer.writeFloat64 pingTime
+		send user, sendBuffer
+		
+	private onPong: InternalUser user, Buffer buffer
+		float now = core.currentTime
+		float pingTime = buffer.readFloat64
+		float pingPongTime = now - pingTime
+		let player = input.players.find.id == user.id
+			statistics.add userIndex:player.index, color:player.color, value:pingPongTime, set:2
+				
 	// --------------------------------------------- Checksum ---------------------------------------------
 	
 	sendChecksum: int checksumFor, float checksum
@@ -317,7 +342,7 @@ transient unit PeerNetwork
 			core.checksums[checksumFor] = checksum
 		else
 		if !myChecksum.isApproximately(checksum)
-			core.onWrongChecksum mine:myChecksum theirs:checksum
+			core.onWrongChecksum checksumFor, mine:myChecksum theirs:checksum
 				
 	// --------------------------------------------- Media Setup ---------------------------------------------
 	
