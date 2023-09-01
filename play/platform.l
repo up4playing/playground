@@ -73,52 +73,73 @@ transient skipInit unit Platform
 		
 	// This is called when the application starts for the first time	
 	private start: bool isDebug, int userCount, bool simulateConnection, bool showSafeArea
-		initMedia
-		initPlatform
-		statistics.startTime = Time.preciseTime
-		this.engineStarted = false
-		this.isDebug = isDebug
-		this.userCount = userCount
-		core.simulateConnection = simulateConnection
-		this.showSafeArea = showSafeArea
-		showDebugInfo = getLocalStorageObject("showDebugInfo") == "true"
-		
-		await graphics.setup
-		graphics.onResize
-		// drawLoading
-		if mode >= Play: mode = Pause
-		let path = url.getUntil("?").split("/")
-		let gameId = path[3]
-		let roomId = path[4]
+		try
+			heartbeat "start"
+			initMedia
+			initPlatform
+			statistics.startTime = Time.preciseTime
+			this.engineStarted = false
+			this.isDebug = isDebug
+			this.userCount = userCount
+			core.simulateConnection = simulateConnection
+			this.showSafeArea = showSafeArea
+			showDebugInfo = getLocalStorageObject("showDebugInfo") == "true"
 			
-		// For testing, support joining a room with a given userId using the format /gameId/{roomId}u{userId}
-		// because starting the app in two browser tabs overwrites the userId in the local storage
-		let userId = -1
-		if roomId
-			let dashIndex = roomId.indexOf("u")
-			if dashIndex != -1
-				userId = cast roomId.substring(dashIndex+1)
-				roomId = roomId.substring(0,dashIndex)
+			await graphics.setup
+			graphics.onResize
+			// drawLoading
+			if mode >= Play: mode = Pause
+			let path = url.getUntil("?").split("/")
+			let gameId = path[3]
+			let roomId = path[4]
+				
+			// For testing, support joining a room with a given userId using the format /gameId/{roomId}u{userId}
+			// because starting the app in two browser tabs overwrites the userId in the local storage
+			let userId = -1
+			if roomId
+				let dashIndex = roomId.indexOf("u")
+				if dashIndex != -1
+					userId = cast roomId.substring(dashIndex+1)
+					roomId = roomId.substring(0,dashIndex)
+				
+			// If the roomId "staging", "latest" or negative, switch to staging mode (no audio, no fullscreen)
+			isStaging = isDebug or roomId == "staging" or roomId == "latest" or roomId?.startsWith("-")
 			
-		// If the roomId "staging", "latest" or negative, switch to staging mode (no audio, no fullscreen)
-		isStaging = isDebug or roomId == "staging" or roomId == "latest" or roomId?.startsWith("-")
-		
-		openMedia
-			this.engineStarted = true
-			statistics.loadTime = Time.preciseTime
-			startInterval
-			if isDebug || isLocal || roomId == "local" || url.startsWith("file"): core.startLocal
-			else                                                                  core.join gameId, roomId, userId
-			sendEvaluateFinished
+			openMedia
+				try
+					this.engineStarted = true
+					statistics.loadTime = Time.preciseTime
+					startInterval
+					if isDebug || isLocal || roomId == "local" || url.startsWith("file"): core.startLocal
+					else                                                                  core.join gameId, roomId, userId
+					
+					// When the texture is loaded, we start the app in record mode. This starts processing inputs and ticks.
+					if !isDebug: record
+						
+				catch
+					sendErrorToEditor .
+				finally 
+					sendFinished
+		catch
+			sendErrorToEditor .
+			sendFinished
 			
-			// When the texture is loaded, we start the app in record mode. This starts processing inputs and ticks.
-			if !isDebug: record
 		
 	// This is called after every code change to replay all inputs with the new code
-	private replay() 
-		initMedia
-		openMedia
-			core.goToFrame core.frame-1, replayFromStart:true
+	private replay
+		try
+			heartbeat "replay"
+			initMedia
+			openMedia
+				try
+					core.goToFrame core.frame-1, replayFromStart:true
+				catch
+					sendErrorToEditor .
+				finally 
+					sendFinished
+		catch
+			sendErrorToEditor .
+			sendFinished
 			
 	object interval
 	private js void startInterval
