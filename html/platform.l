@@ -269,10 +269,16 @@ global unit Html
 				node.style[key] = style[key]
 				
 			// Temporary Backfill. Starting from Chrome 104, Safari 14.1 this is no longer needed.
-			let translate = style.translate
-			if(translate) node.style.transform += "translate("+translate+") "
-			let rotate = style.rotate
-			if(rotate) node.style.transform += "rotate("+rotate+"turn) "
+			// let translate = style.translate
+			// if(translate) node.style.transform += "translate("+translate+") "
+			// let rotate = style.rotate
+			// if(rotate) node.style.transform += "rotate("+rotate+"turn) "
+				
+			// if(style.targetTranslate || style.targetSize) {
+			// 	setTimeout(() => {
+			// 		node.style.transform = "translate("+style.targetTranslate+") "
+			// 	}, 1000)
+			// }
 		}
 		
 	private js void addStyle: Node node, dynamic style

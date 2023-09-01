@@ -37,6 +37,13 @@ class Node
 	
 	static inline js Node create(string tagName = "div") document.createElement(tagName);
 	
+	inline js void animate: Style from
+		                    Style to
+		                    Time duration = 1 seconds
+		                    AnimationFill fill = Forwards
+		                    easing = "linear"
+		this.animate([from, to], {@duration:duration, @fill:fill, @easing:easing})
+	
 class HtmlEvent
 	Node target        // The element that triggered the event
 	Node currentTarget // The element to the event handler is attached to
@@ -95,7 +102,13 @@ struct Vector2
 	float y // The y coordinate of the vector
 	Unit unit = Pixels // The unit of the vector (Pixels, Percent, Centimeters, Points, ViewportHeight, ...)
 	
-	toString := "{x}{unit}, {y}{unit}"
+	toString := "{x}{unit} {y}{unit}"
+	
+enum AnimationFill
+	None = "none"
+	Forwards = "forwards"
+	Backwards = "backwards"
+	Both = "both"
 	
 struct float
 	inline Dimension toDimension() Dimension(this, Html.defaultUnit)
@@ -352,8 +365,8 @@ class Border
 	
 class BoxShadow
 	Vector2 offset // How far should the shadow be away from the element?
-	implicit Dimension blur // How blurry should the shadow be?
-	implicit Dimension spread // Positive values will make the shadow bigger, negative values make it smaller
+	implicit Dimension blur = 8px // How blurry should the shadow be?
+	implicit Dimension spread = 8px // Positive values will make the shadow bigger, negative values make it smaller
 	Color color = Black // The color of the showow
 	bool inset // Changes the shadow to one inside the frame (as if the content was debossed inside the box)
 	
@@ -552,6 +565,10 @@ dynamic Style
 	
 	Vector2 translate // Move the element by this vector
 	implicit Angle rotate // Rotate the element by this angle
+	
+	Vector2 size
+	Vector2 targetSize
+	Vector2 targetTranslate
 	
 dynamic Attributes
 	string id // A unique string to indentify a specic element, often used to style a single element
