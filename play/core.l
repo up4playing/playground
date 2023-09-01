@@ -296,8 +296,9 @@ transient skipInit unit core
 			lastSendFrame = frame
 			
 	switchUser: int userIndex
-		let prevPlayer = input.localPlayer 
-		input.localPlayer = players[userIndex]
+		let prevPlayer = input.localPlayer
+		if 0 <= userIndex < input.players.length
+			input.localPlayer = players[userIndex]
 			input.localUser = input.internalUsers.find.id == input.localPlayer.id
 			for prevPlayer.touches
 				input.handleUpdateTouchAfterSwitchingUser .id, .referencePosition
