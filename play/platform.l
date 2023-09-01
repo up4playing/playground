@@ -135,9 +135,14 @@ transient skipInit unit Platform
 			window.tick();
 		}
 	
-	// This is called every animation frame
-	private tick()   if mode == Play or mode == Record or waitingForInitialData: core.animationFrame
+	private Time nextHeartbeatTime
 	
+	// This is called every animation frame
+	private tick
+		heartbeat "tick"
+		if mode == Play or mode == Record or waitingForInitialData
+			core.animationFrame
+				
 	private enterSlideMode(PlatformMode mode) this.mode = mode; sendMode
 	
 	internal stop()    mode = Pause; gizmo.clear; core.stop; sendMode
@@ -171,9 +176,20 @@ transient skipInit unit Platform
 	private js void sendMode
 		if(Platform_isDebug) _sendToEditor({type:"setPlatformMode", mode:Platform_mode, frame:core_frame})
 
-	private inline js void sendEvaluateFinished
-		if(Platform_isDebug) _sendToEditor({type:"evaluateFinished"})
-
+	private inline js void sendFinished
+		console.log("[app] ----- Finished -----")
+		if(Platform_isDebug) _sendToEditor({type:"finished"})
+			
+	_nextHeartbeatTime = 0
+	
+	private js void heartbeat: string context
+		let now = Date.now();
+		if(now > Platform_nextHeartbeatTime) {
+			console.log("[app]", (now%100000).toLocaleString("en-US", {minimumIntegerDigits:6, useGrouping:true})+" sending heartbeat from "+context);
+			Platform_nextHeartbeatTime = now + 3000;
+			_sendStringToEditor("~");
+		}
+		
 	internal inline js void sendErrorToEditor: Error error
 		if(window.sendErrorToEditor) sendErrorToEditor(error)
 		else                         console.error(error)
