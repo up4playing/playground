@@ -74,7 +74,9 @@ transient skipInit unit Platform
 	// This is called when the application starts for the first time	
 	private start: bool isDebug, int userCount, bool simulateConnection, bool showSafeArea
 		try
+			this.nextHeartbeatTime = 0
 			heartbeat "start"
+			
 			initMedia
 			initPlatform
 			statistics.startTime = Time.preciseTime
@@ -163,8 +165,6 @@ transient skipInit unit Platform
 			window.tick();
 		}
 	
-	private Time nextHeartbeatTime
-	
 	// This is called every animation frame
 	private tick
 		heartbeat "tick"
@@ -204,11 +204,15 @@ transient skipInit unit Platform
 	private js void sendMode
 		if(Platform_isDebug) _sendToEditor({type:"setPlatformMode", mode:Platform_mode, frame:core_frame})
 
+	internal inline js void sendErrorToEditor: Error error
+		if(window.sendErrorToEditor) _sendErrorToEditor(error)
+		else                         console.error(error)
+		
 	private inline js void sendFinished
 		console.log("[app] ----- Finished -----")
 		if(Platform_isDebug) _sendToEditor({type:"finished"})
-			
-	_nextHeartbeatTime = 0
+	
+	private Time nextHeartbeatTime
 	
 	private js void heartbeat: string context
 		let now = Date.now();
@@ -217,10 +221,6 @@ transient skipInit unit Platform
 			Platform_nextHeartbeatTime = now + 3000;
 			_sendStringToEditor("~");
 		}
-		
-	internal inline js void sendErrorToEditor: Error error
-		if(window.sendErrorToEditor) sendErrorToEditor(error)
-		else                         console.error(error)
 		
 	private void toggleDebugInfo
 		showDebugInfo = !showDebugInfo;
