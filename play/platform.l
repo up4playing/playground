@@ -126,20 +126,27 @@ transient skipInit unit Platform
 			
 		
 	// This is called after every code change to replay all inputs with the new code
-	private replay
+	private replay: bool updateMedia
 		try
 			heartbeat "replay"
-			initMedia
-			openMedia
-				try
-					core.goToFrame core.frame-1, replayFromStart:true
-				catch
-					sendErrorToEditor .
-				finally 
-					sendFinished
+			if updateMedia
+				initMedia
+				openMedia
+					goToCurrentFrame
+			else
+				goToCurrentFrame
 		catch
 			sendErrorToEditor .
 			sendFinished
+			
+	private goToCurrentFrame
+		try
+			core.goToFrame core.frame-1, replayFromStart:true
+		catch
+			sendErrorToEditor .
+		finally 
+			sendFinished
+		
 			
 	object interval
 	private js void startInterval
