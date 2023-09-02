@@ -205,8 +205,8 @@ transient skipInit unit Platform
 		if(Platform_isDebug) _sendToEditor({type:"setPlatformMode", mode:Platform_mode, frame:core_frame})
 
 	internal inline js void sendErrorToEditor: Error error
-		if(window.sendErrorToEditor) _sendErrorToEditor(error)
-		else                         console.error(error)
+		if(window._sendErrorToEditor) _sendErrorToEditor(error)
+		else                          console.error(error)
 		
 	private inline js void sendFinished
 		console.log("[app] ----- Finished -----")
