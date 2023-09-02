@@ -70,7 +70,7 @@ transient class InternalUser
 		bufferFrames = 5
 		smoothFrame = frame - bufferFrames		
 		
-class Player
+priority class Player
 	int id
 	int index
 	Color color = null
