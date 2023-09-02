@@ -69,6 +69,10 @@ class example
 		boxes.each.itemInBox = null
 		words.shuffle
 		items.clear
+		
+		let top3OpenBoxes = boxes.where.isOpen | orderBy.rect.position.y | take 3
+		
+		let namesOfAlivePlayers = players.where.alive | orderBy.score | select.name
 
 		// Create item for each word, center them at {0,10} with {400,0} pixels between them
 		forPositions words, center:{0,10}, delta:{400,0}
@@ -131,13 +135,10 @@ class example
 		// Get players with even index and a score more than 3
 		Player[] evenPlayers = players.where.index % 2 == 0 and .score > 3
 		
-		let totalScoreOfAlivePlayer = players.where(.alive).total.score
+		let totalScoreOfAlivePlayer = players.where.alive | total.score
 		
 		// Find player with highest score
 		let winner = players.withMax.score
-		
-		// Find player with highest score from all alive players
-		let winner = players.withMax(.score) where .alive
 		
 		let maxScore = math.max players[0].score, players[1].score
 		
@@ -145,7 +146,7 @@ class example
 		
 		let lastFourPlayers = players[-4..]
 		
-		let top3Players = players.orderBy(.score).take 3
+		let top3Players = players.orderBy.score | take 3
 		
 		delay 1 seconds
 			print "1 second later"
@@ -188,6 +189,7 @@ class Item
 						// Box is full, revert to original position
 						position = originalPosition
 					moveTouch = null
+					
 			GameOver
 				// Draw red text
 				drawText "Game Over", position, size:40, Color("ff0000"), font:OpenSans
@@ -198,6 +200,7 @@ class Item
 class Box
 	Rect rect
 	Item itemInBox
+	bool isOpen
 	
 	def tick
 		// Draw blue box with white outline

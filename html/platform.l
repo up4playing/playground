@@ -47,20 +47,31 @@ skipInit global unit Platform
 		}
 	
 	start: bool isDebug
-		this.isDebug = isDebug
-		this.referenceSizes = [
-			{1920}
-			{960 forWidthBelow:600 isMobile:true}
-		]
-		this.targetFps = 20
-		this.tickMode = Interval
-		
-		initMedia
-		initHandlers
-		openMedia
-			stop
-			startTickInterval
-			sendEvaluateFinished
+		try
+			this.nextHeartbeatTime = 0
+			heartbeat "start"
+			
+			this.isDebug = isDebug
+			this.referenceSizes = [
+				{1920}
+				{960 forWidthBelow:600 isMobile:true}
+			]
+			this.targetFps = 20
+			this.tickMode = Interval
+			
+			initMedia
+			initHandlers
+			openMedia
+				try
+					stop
+					startTickInterval
+				catch 
+					sendErrorToEditor .
+				finally
+					sendFinished
+		catch 
+			sendErrorToEditor .
+			sendFinished
 		
 	js void openMedia: void() success
 		let font = new FontFace('OpenSans', 'url(OpenSans.woff2)');
@@ -72,18 +83,25 @@ skipInit global unit Platform
 		init()
 		
 	replay
-		initMedia
-		initAll
-		Time.frame = 0
-		app.start
-		Html.updateScale
-		Html.render
+		try
+			heartbeat "replay"
+			initMedia
+			initAll
+			Time.frame = 0
+			app.start
+			Html.updateScale
+			Html.render
+		catch
+			sendErrorToEditor .
+		finally
+			sendFinished
 		
 	stop
 		Html.reset
 		replay
 		
 	js void tick
+		Platform_heartbeat("tick")
 		if(window.app_tick) app_tick()
 		Time_frame++
 		
@@ -101,15 +119,30 @@ skipInit global unit Platform
 			window.tick();
 		}
 		
+	internal inline js void sendErrorToEditor: Error error
+		if(window.sendErrorToEditor) _sendErrorToEditor(error)
+		else                         console.error(error)
+		
+	private inline js void sendFinished
+		console.log("[app] ----- Finished -----")
+		if(Platform_isDebug) _sendToEditor({type:"finished"})
+			
+	Time nextHeartbeatTime = 0
+	
+	private js void heartbeat: string context
+		let now = Date.now();
+		if(now > Platform_nextHeartbeatTime) {
+			console.log("[app]", (now%100000).toLocaleString("en-US", {minimumIntegerDigits:6, useGrouping:true})+" sending heartbeat from "+context);
+			Platform_nextHeartbeatTime = now + 3000;
+			_sendStringToEditor("~");
+		}
+		
 	toggleSmallScreen
 		isMobile = !isMobile;
 		setLocalStorageString("isMobile", isMobile ? "true" : "false")
 		Html.updateScale
 		Html.render
 
-	private inline js void sendEvaluateFinished
-		if(Platform_isDebug) _sendToEditor({type:"evaluateFinished"})
-			
 	inline js void setLocalStorageString: string key, string value
 		localStorage.setItem(key, value)
 		
@@ -269,10 +302,16 @@ global unit Html
 				node.style[key] = style[key]
 				
 			// Temporary Backfill. Starting from Chrome 104, Safari 14.1 this is no longer needed.
-			let translate = style.translate
-			if(translate) node.style.transform += "translate("+translate+") "
-			let rotate = style.rotate
-			if(rotate) node.style.transform += "rotate("+rotate+"turn) "
+			// let translate = style.translate
+			// if(translate) node.style.transform += "translate("+translate+") "
+			// let rotate = style.rotate
+			// if(rotate) node.style.transform += "rotate("+rotate+"turn) "
+				
+			// if(style.targetTranslate || style.targetSize) {
+			// 	setTimeout(() => {
+			// 		node.style.transform = "translate("+style.targetTranslate+") "
+			// 	}, 1000)
+			// }
 		}
 		
 	private js void addStyle: Node node, dynamic style

@@ -1657,6 +1657,15 @@ global transient priority unit System
 		                       inline nocolon void(Error error) catch
 		try code() @catch(error) catch()
 		
+	global inline js void try: inline void() code
+		                       inline nocolon void(Error error) catch
+		                       inline nocolon void() finally
+		try code() @catch(error) catch() @finally finally()
+		
+	global inline js void try: inline void() code
+		                       inline nocolon void() finally
+		try code() @finally finally()
+		
 global transient priority low unit System		
 	// Creates a new list populated with the results of calling a function on every element of the list
 	global inline js TResult[] for: T[] subject // The list to iterate over
