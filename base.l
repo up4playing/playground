@@ -225,8 +225,8 @@ struct float
 		(this + (target - this)*ease.function.invoke(value))
 		
 	inline js float incrementBy: float value
-		                         float max
-		(this+value < max ? (this += value) : max)
+		                         nocolon float to
+		(this+value < to ? (this += value) : to)
 		
 	// ------------------------------------------- Time -------------------------------------------
 	
