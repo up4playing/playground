@@ -30,6 +30,7 @@ transient skipInit unit Platform
 	visible OperatingSystem os
 	visible bool isMobile
 	visible bool isBrowser
+	visible bool isNode
 	visible bool isDebug
 	visible bool isSmallScreen
 	public bool isStaging
@@ -58,6 +59,7 @@ transient skipInit unit Platform
 		core_log("Loading...")
 		Platform_isMobile = false;
 		Platform_isBrowser = !window.require;
+		Platform_isNode = window.process && process.versions.node
 		let platform = navigator.platform
 		Platform_os = platform.startsWith("Win") ? 0 : platform.startsWith("Mac") ? 1 : 2
 		if(/(android|bb\d+|meego).+mobile|avantgo|bada\/|blackberry|blazer|compal|elaine|fennec|hiptop|iemobile|ip(hone|od)|ipad|iris|kindle|Android|Silk|lge |maemo|midp|mmp|netfront|opera m(ob|in)i|palm( os)?|phone|p(ixi|re)\/|plucker|pocket|psp|series(4|6)0|symbian|treo|up\.(browser|link)|vodafone|wap|windows (ce|phone)|xda|xiino/i.test(navigator.userAgent) 
