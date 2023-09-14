@@ -215,6 +215,7 @@ transient skipInit unit Platform
 	private Time nextHeartbeatTime
 	
 	private js void heartbeat: string context
+		if(!Platform_isDebug) return
 		let now = Date.now();
 		if(now > Platform_nextHeartbeatTime) {
 			console.log("[app]", (now%100000).toLocaleString("en-US", {minimumIntegerDigits:6, useGrouping:true})+" sending heartbeat from "+context);
