@@ -141,6 +141,8 @@ struct float
 	
 	const inline js float infinity := Number.POSITIVE_INFINITY
 	
+	const inline js float epsilon := Number.EPSILON
+	
 	inline js float operator ** (float a, float b) 
 		Math.pow(a,b)
 		
@@ -1728,6 +1730,12 @@ global skipInit unit math
 		
 	internal inline js float nativeTan: float angle // The angle in radians
 		Math.tan(angle)
+		
+	internal inline js float nativeAcos: float angle // The angle in radians
+		Math.acos(angle)
+		
+	internal inline js float nativeAtan2: float y, float x
+		Math.atan2(y,x)
 		
 	// Returns the sine of an angle in turns
 	sin: Angle angle // The angle in turns (one full rotation is 1)
