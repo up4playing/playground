@@ -227,8 +227,8 @@ struct float
 		(this + (target - this)*ease.function.invoke(value))
 		
 	inline js float incrementBy: float value
-		                         float max
-		(this+value < max ? (this += value) : max)
+		                         nocolon float to
+		(this+value < to ? (this += value) : to)
 		
 	// ------------------------------------------- Time -------------------------------------------
 	
@@ -325,6 +325,12 @@ class string
 		let index = this.indexOf(value)
 		if(index != -1) return this.substring(start, index)
 		else            return this
+		
+	js string getAfter: string value
+		                int start = 0
+		let index = this.indexOf(value)
+		if(index != -1) return this.substring(index+1)
+		else            return ""
 		
 	// Returns 0 for an exact match, 1 if first is larger, -1 if second is larger
 	inline js int compareTo: string value // The string to compare to
@@ -470,6 +476,59 @@ class List<T>
 		var index = this.indexOf(item);
 		if(index > -1) this.splice(index, 1);
 			
+	js void remove: T item  // The first item to remove
+		            T item2 // The second item to remove
+		var index = this.indexOf(item);
+		if(index > -1) this.splice(index, 1);
+		var index = this.indexOf(item2);
+		if(index > -1) this.splice(index, 1);
+			
+	js void remove: T item  // The first item to remove
+		            T item2 // The second item to remove
+		            T item3 // The third item to remove
+		var index = this.indexOf(item);
+		if(index > -1) this.splice(index, 1);
+		var index = this.indexOf(item2);
+		if(index > -1) this.splice(index, 1);
+		var index = this.indexOf(item3);
+		if(index > -1) this.splice(index, 1);
+			
+	js void remove: T item  // The first item to remove
+		            T item2 // The second item to remove
+		            T item3 // The third item to remove
+		            T item4 // The forth item to remove
+		var index = this.indexOf(item);
+		if(index > -1) this.splice(index, 1);
+		var index = this.indexOf(item2);
+		if(index > -1) this.splice(index, 1);
+		var index = this.indexOf(item3);
+		if(index > -1) this.splice(index, 1);
+		var index = this.indexOf(item4);
+		if(index > -1) this.splice(index, 1);
+			
+	js void remove: T item  // The first item to remove
+		            T item2 // The second item to remove
+		            T item3 // The third item to remove
+		            T item4 // The forth item to remove
+		            T item5 // The fifth item to remove
+		var index = this.indexOf(item);
+		if(index > -1) this.splice(index, 1);
+		var index = this.indexOf(item2);
+		if(index > -1) this.splice(index, 1);
+		var index = this.indexOf(item3);
+		if(index > -1) this.splice(index, 1);
+		var index = this.indexOf(item4);
+		if(index > -1) this.splice(index, 1);
+		var index = this.indexOf(item5);
+		if(index > -1) this.splice(index, 1);
+			
+	// Remove a list of items from the list
+	js void remove: T[] items // The items to remove
+		for(let item of items) {
+			var index = this.indexOf(item);
+			if(index > -1) this.splice(index, 1);
+		}
+		
 	// Remove the item at the given index from the list
 	inline js void removeAt: int index // The index of the item to remove
 		this.splice(index, 1)
@@ -852,6 +911,15 @@ class List<T>
 			if value < resultValue: resultValue = value
 		return resultValue != threshold ? resultValue : default
 		
+	min: Time(T a) selector 
+		 Time threshold = Time.maxValue
+		 Time default = 0
+		Time resultValue = threshold
+		for this
+			let value = selector(.)
+			if value < resultValue: resultValue = value
+		return resultValue != threshold ? resultValue : default
+		
 	min: int(T a) selector 
 		 int threshold = int.maxValue
 		 int default = 0
@@ -1157,11 +1225,11 @@ class List<T>
 	js T get: implicit int index // The index of the item to get
 		return index >= 0 ? this[index] : this[this.length+index]
 		
-	js T get: int from = 0 // Return a new list starting from this index
-		      int to       // Return a new list up to (but not including) this index
+	js T[] get: int from = 0 // Return a new list starting from this index
+		        int to       // Return a new list up to (but not including) this index
 		return this.slice(from, to)
 	
-	js T get: int from // Return a new list starting from this index
+	js T[] get: int from // Return a new list starting from this index
 		return this.slice(from)
 	
 	js T set: int index // The index of the item to set
@@ -1331,7 +1399,7 @@ class Error
 	implicit inline js string toString := this.stack
 	
 // A collection of basic system functions
-global transient unit System
+global transient priority unit System
 	// Executes code depending on whether a given condition is true or false
 	global inline js void if: implicit bool condition // The condition to check
 		                      inline void() then      // Do this if the condition is true
@@ -1380,19 +1448,6 @@ global transient unit System
 		                       ) do           // Do this for each item in a list
 		for(let _pair of subject) { let key = _pair[0]; let it = _pair[1]; do()}
 		
-	// Creates a new list populated with the results of calling a function on every element of the list
-	global inline js TResult[] for: T[] subject // The list to iterate over
-		                       -> TResult(
-		                           T it         // The current item of the list we are iterating over with the for-loop
-		                       ) do             // Select the field or expression to be included in the result
-		subject.map(do)
-		
-	// Creates a new list populated with the results of calling a function on every element of the list
-	global inline js TResult[] for: T[] subject // The list to iterate over
-		                       <- TResult(
-		                           T it         // The current item of the list we are iterating over with the for-loop
-		                       ) do             // Select the field or expression to be included in the result
-		subject.map(do).reverse()
 		
 		for(let _subject=subject, i=_subject.length-1; i>=0; --i) { let it = _subject[i]; do()}
 	// Do something for each item in a list. You can add or remove items inside the loop.
@@ -1436,19 +1491,6 @@ global transient unit System
 		                           int i      // The iteration variable of the for-loop
 		                       ) do           // Do this the given number of times
 		for(let i=to-1; i>=0; --i) do()
-		
-	global inline js TResult[] for: int to,    // The exclusive upper bound to iterate towards
-		                            TResult(
-		                                int i  // The iteration variable of the for-loop
-		                            ) do       // Select the field or expression to be included in the result
-		int_enumerate(0, to, do)
-		
-	global inline js TResult[] for: int from,    // The integer to start iterating from
-		                            TResult(
-		                                int i    // The iteration variable of the for-loop
-		                            ) do         // Select the field or expression to be included in the result
-		                            label int to // The exclusive upper bound to iterate towards
-		int_enumerate(from, to, do)
 		
 	global inline js void for: string subject // Iterate over every character of this string
 		                       -> inline void(
@@ -1622,6 +1664,43 @@ global transient unit System
 	global inline js void try: inline void() code
 		                       inline nocolon void(Error error) catch
 		try code() @catch(error) catch()
+		
+	global inline js void try: inline void() code
+		                       inline nocolon void(Error error) catch
+		                       inline nocolon void() finally
+		try code() @catch(error) catch() @finally finally()
+		
+	global inline js void try: inline void() code
+		                       inline nocolon void() finally
+		try code() @finally finally()
+		
+global transient priority low unit System		
+	// Creates a new list populated with the results of calling a function on every element of the list
+	global inline js TResult[] for: T[] subject // The list to iterate over
+		                       -> TResult(
+		                           T it         // The current item of the list we are iterating over with the for-loop
+		                       ) do             // Select the field or expression to be included in the result
+		subject.map(do)
+		
+	// Creates a new list populated with the results of calling a function on every element of the list
+	global inline js TResult[] for: T[] subject // The list to iterate over
+		                       <- TResult(
+		                           T it         // The current item of the list we are iterating over with the for-loop
+		                       ) do             // Select the field or expression to be included in the result
+		subject.map(do).reverse()
+	
+	global inline js TResult[] for: int to,    // The exclusive upper bound to iterate towards
+		                            TResult(
+		                                int i  // The iteration variable of the for-loop
+		                            ) do       // Select the field or expression to be included in the result
+		int_enumerate(0, to, do)
+		
+	global inline js TResult[] for: int from,    // The integer to start iterating from
+		                            TResult(
+		                                int i    // The iteration variable of the for-loop
+		                            ) do         // Select the field or expression to be included in the result
+		                            label int to // The exclusive upper bound to iterate towards
+		int_enumerate(from, to, do)
 		
 		
 // A collection of mathematical functions and constants
@@ -1890,7 +1969,6 @@ unit Loca
 	
 	visible Language language = English
 	visible string locale = defaultLocaleForLanguage[language]
-	private dynamic localStrings
 	
 	init
 		setLanguage English
@@ -1899,10 +1977,9 @@ unit Loca
 		                 string locale = null
 		Loca_language = language
 		Loca_locale = locale || Loca_defaultLocaleForLanguage[language]
-		if(window._strings) Loca_localStrings = _strings[language]
 		
 	js void format: int id
-		let entry = Loca_localStrings[id]
+		let entry = _strings[Loca_language][id]
 		if(!entry || entry.s.length == 0) return "##########"
 		let strings = entry.s
 		let result = strings[0]

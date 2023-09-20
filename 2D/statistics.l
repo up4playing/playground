@@ -1,4 +1,5 @@
 skipInit transient unit statistics
+	const Color backgroundColor = {"#202020"}
 	draw
 		Vector2 startPos = position + size
 		Vector2 labelPos = this.labelPos
@@ -24,7 +25,7 @@ skipInit transient unit statistics
 			if x > size.x: break
 			drawText cast .value, {position.x + size.x - x, position.y + 10*.index}, size:8, valign:Top
 				
-		if core.errorMessage: drawText core.errorMessage, position, align:Left, size:12, color:{"ffff00"}
+		if core.errorMessage: drawText core.errorMessage, position, align:Left, size:12, color:{"#ffff00"}
 		drawText "#{core.frame} {maxValue}", {position.x+size.x-8, labelPos.y}, align:Right, size:12
 		drawRectangle position, size, color:backgroundColor, align:Left, valign:Top
 		

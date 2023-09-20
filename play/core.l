@@ -11,10 +11,9 @@ transient skipInit unit core
 	bool simulateInputsForTesting = false
 	bool simulateRollback = false
 	bool drawPointsForTesting = false
-	Time sendStatisticsEvery = 5 minutes
+	Time sendStatisticsEvery = 3 minutes
 	bool showVideoForStaging = true
 	bool muteInvisibleUsers = false
-	int checksumInterval = 30
 	
 	SendInputsMode sendInputsMode = Peer
 	internal const targetFps = 30
@@ -88,7 +87,7 @@ transient skipInit unit core
 		for input.internalUsers if .
 			.inputs.writePos = .inputs.readPos
 			.startInputFrame frame
-		Platform.sendFrame frame, frames
+		if Platform.isDebug: Platform.sendFrame frame, frames
 		
 	// Keep inputs, call init functions, create the local players, reset read positions and start app
 	// This is called on startup, after every code change and when going backwards in the timeline
@@ -138,6 +137,7 @@ transient skipInit unit core
 	// Keep event stream running, recreate players, call init function and start app
 	// Called manually with the global "restart" function	
 	restart
+		initAll
 		Player[] newPlayers
 		for input.players
 			Player user = {id:.id, index:i}
@@ -148,7 +148,6 @@ transient skipInit unit core
 		input.localUser = input.internalUsers[localUserId]
 		input.localPlayer = input.playersById[localUserId]
 		input.updatePlayers
-		initAll
 		startApp
 	
 	// Steps forward when going to a frame in the future
@@ -173,6 +172,8 @@ transient skipInit unit core
 		    void() do
 		let user = input.internalUsers[player.id]
 		if user and (user.local or frame <= user.smoothFrame): do
+			
+	Time lastPingTime
 
 	// animationFrame --> step --> tick
 
@@ -207,6 +208,11 @@ transient skipInit unit core
 			log "Paused {prevTargetFrame-frame} frames, adjusting startTime. prevTargetTime:{prevTargetFrame} frame:{frame} targetFrame:{math.floor((now - startTime)/targetFrameTime)}"
 		
 		if frame < targetFrame
+			// Create artificial inputs to test the smoothness
+			if simulateInputsForTesting and input.localUser and input.localUser.collectInputs
+				for frame to targetFrame
+					input.handleKeyEvent KeyDown, cast Key.F24, ""
+				
 			animationStartFrame = frame
 			
 			try
@@ -220,10 +226,6 @@ transient skipInit unit core
 					
 			// Ensure that step is called every targetFrameTime milliseconds
 			while frame < targetFrame
-				// Create artificial inputs to test the smoothness
-				if simulateInputsForTesting and input.localUser and input.localUser.collectInputs
-					input.handleKeyEvent KeyDown, cast Key.F24, ""
-
 				for input.internalUsers -> user
 					if user?.local: user.startInputFrame frame+1
 				step fastForward:false, draw:frame == targetFrame-1
@@ -232,6 +234,11 @@ transient skipInit unit core
 				
 		lastAnimationFrame = now
 		if Platform.mode == Play and frame >= frames: Platform.record()
+			
+		// Ping
+		if currentTime - lastPingTime > 1000
+			lastPingTime = currentTime
+			PeerNetwork.ping
 			
 	private int animationStartFrame // The frame at the beginning of animationFrame, used to calculate iteration
 	private float now               // The time at the beginning of animationFrame
@@ -289,8 +296,9 @@ transient skipInit unit core
 			lastSendFrame = frame
 			
 	switchUser: int userIndex
-		let prevPlayer = input.localPlayer 
-		input.localPlayer = players[userIndex]
+		let prevPlayer = input.localPlayer
+		if 0 <= userIndex < input.players.length
+			input.localPlayer = players[userIndex]
 			input.localUser = input.internalUsers.find.id == input.localPlayer.id
 			for prevPlayer.touches
 				input.handleUpdateTouchAfterSwitchingUser .id, .referencePosition
@@ -368,10 +376,8 @@ transient skipInit unit core
 		Platform.isDrawing = draw
 		graphics.startFrame
 		if draw and not Platform.waitingForInitialData
-			if input.showPointers >= Local
-			or (mode == Connected and input.showPointers == Remote) 
-			or Platform.mode == Play
-				players.each drawPointer .
+			if input.showPointers or Platform.mode == Play
+				players.each drawPointer ., Platform.isDebug ? Local : input.showPointersMode
 		audio.startFrame
 		
 		if Platform.showDebugInfo
@@ -445,7 +451,7 @@ transient skipInit unit core
 			snapshotFrame = frame
 			saveState snapshot
 			replayLog += ")"
-
+			
 	private saveState: Buffer snapshot
 		snapshot.reset
 		saveTime = Time.measure
@@ -460,11 +466,11 @@ transient skipInit unit core
 												
 		// Checksum
 		if players.length >= 2 and frame > 200
-			float myChecksum = Framework.checksum + snapshot.writePos
+			float myChecksum = snapshot.checksum
 			float theirChecksum = checksums[frame]
-			if logging: checksumLog += " <{input.localUser.id}*> #{frame} {myChecksum}"
+			if logging: checksumLog += " <{input.localUser.id}*> #{frame} {myChecksum} writePos:{snapshot.writePos}"
 			if !theirChecksum                             checksums[frame] = myChecksum; else
-			if !theirChecksum.isApproximately(myChecksum) onWrongChecksum mine:myChecksum theirs:theirChecksum
+			if !theirChecksum.isApproximately(myChecksum) onWrongChecksum frame, mine:myChecksum theirs:theirChecksum
 			lastChecksumFrame = frame
 			
 		snapshot.writeInt input.internalUsers.length
@@ -474,7 +480,7 @@ transient skipInit unit core
 				
 	js void log: logstring text
 		let str = new Date().hourMinuteSecondString() + " " + text
-		statistics_systemLog += str + "\n"
+		statistics_systemLogs.push(str)
 		if(core_logging) {
 			core_eventLog += str + "\n"
 			console.log(str)
@@ -560,8 +566,9 @@ transient skipInit unit core
 	
 	join: string gameId, string roomString, int userId
 		// Send statistics
-		Platform.setTimeout 30 seconds: statistics.send
-		if sendStatisticsEvery: Platform.setInterval sendStatisticsEvery: statistics.send
+		Platform.setTimeout 30 seconds
+			statistics.startSession
+			if sendStatisticsEvery: Platform.setInterval sendStatisticsEvery: statistics.saveStatistics
 		
 		isPremiere = true
 		initAll
@@ -588,14 +595,15 @@ transient skipInit unit core
 	internal storeUserId
 		Platform.setLocalStorageObject "room"+roomId, RoomInfo(currentTime, input.localUser.id)
 		
-	onWrongChecksum: float mine, float theirs
-		if logging: checksumLog += " MISMATCH mine:{mine} theirs:{theirs}"
-		onError {"Out of sync"}
+	onWrongChecksum: int frame, float mine, float theirs
+		string message = "Out of sync. frame:{frame} mine:{mine} theirs:{theirs}"
+		if logging: checksumLog += message
+		onError {message}
 		
 	onError: Error error
 		errorMessage = error.stack
 		if logging: eventLog += errorMessage + "\n" 
-		statistics.systemLog += errorMessage + "\n" 
+		statistics.systemLogs.add errorMessage
 		Platform.sendErrorToEditor error
 		
 transient unit Snapshot
@@ -661,6 +669,7 @@ class StatisticsGraphSeries
 	float[] values
 	float[] recentValues
 	Color color
+	int successfullySent
 	
 	float lastValue := values.length > 0 ? values[values.length-1] : 0
 	
@@ -680,80 +689,100 @@ skipInit transient unit statistics
 	const Vector2 position = {-960, 540}
 	const Vector2 size = {1920+margin.x, margin.y}
 	const Vector2 labelPos = {970, 528}
-	const Color backgroundColor = {"#202020"}
 	const framesPerValue = 15
 	
 	float[] serverPings
+	int successfullySentServerPings
+	
 	private StatisticsGraphSeries[] series
 	
-	string systemLog
-	private dynamic[] gameLog
+	string[] systemLogs
+	private dynamic[] gameLogs
+	int successfullySentGameLogs
+	int successfullySentSystemLogs
 	
 	Time startTime, loadTime, connectTime
 	internal float maxValue
 	int currentSet
 	int sets = 1
+	int id
 	
 	private StatisticsInfo[] infos
 	private string[] infoNames
+	private bool currentlySendingStatistics
 	
-	clear
-		series.each.values.clear
-		serverPings.clear
-		systemLog = ""
-		
-	int lastSendFrame = -1
-	
-	log: dynamic value
+	// Log game events (like scores, playtimes, etc)
+	log: any value
 		value.frame = Time.frame
-		this.gameLog.add value
+		this.gameLogs.add value
 	
-	send
-		print "sending statistics"
-		// if Time.frame <= lastSendFrame or Platform.isDebug: return
-		
-		lastSendFrame = Time.frame
-		let userName = localStorage.getStringDirectly("userId")
+	startSession
+		let user = localStorage.getObjectDirectly("user")
 		let server = Platform.host.getUntil(".")
-		float[][] series = [[],[],[],[]]
-		string[] connections
-		for players
-			let internalUser = input.internalUsers[.id]
-			connections.add internalUser.connectionType
-			series[i] = this.series.find(.userIndex == i).values
-			
-		let prevIsCertain = input.isCertain
-		input.isCertain = true
-		http.post "{Platform.protocolAndHost}:3114/stats", body:{
-			time: Date.now.isoString
+		let userId = input.localUser.id
+		id = core.roomId*100 + userId
+		int sendingSystemLogsUntil = systemLogs.length
+		currentlySendingStatistics = true
+
+		http.postDirectly "{Platform.protocolAndHost}:3114/startSession", body:{
+			id
 			gameId: core.gameId
 			roomId: core.roomId
-			userId: input.localUser.id
+			userId
 			userIndex: input.localUser.index
-			userName
+			userEmail: user.email
 			staging: Platform.isStaging
 			server
-			minServerPing: serverPings.min .
-			maxServerPing: serverPings.max .
-			averageServerPing: serverPings.average
-			ping:series.select {
-				average:it?.average
-				max:it?.max(.)
-				peeks:it?.count . > 30
-			}
-			connections
 			loadTime: loadTime - startTime
 			connectTime: connectTime - startTime
-			
-			serverPings
-			peerPings: series
-			
-			systemLog
-			gameLog
+			systemLogs: systemLogs[successfullySentSystemLogs..]
 		}
-		input.isCertain = prevIsCertain
-		clear
+			successfullySentSystemLogs = sendingSystemLogsUntil
+			currentlySendingStatistics = false
+	
+	saveStatistics
+		if currentlySendingStatistics: return
+		currentlySendingStatistics = true
+		
+		// Compile server and peer pings to send
+		string[] connections
+		float[][] peerPingsToSend = [[],[],[],[],[],[],[],[]]
+		int[] sendingPeerLogsUntil = [0,0,0,0,0,0,0,0]
+		for players -> p
+			let internalUser = input.internalUsers[.id]
+			connections.add internalUser.connectionType
 			
+			let inputFrameSeries = this.series.find.userIndex == p.index and .set == 0
+				peerPingsToSend[i*2] = inputFrameSeries.values[inputFrameSeries.successfullySent..]
+				sendingPeerLogsUntil[i*2] = inputFrameSeries.values.length
+				
+			let bufferFrameSeries = this.series.find.userIndex == p.index and .set == 1
+				peerPingsToSend[i*2 + 1] = bufferFrameSeries.values[bufferFrameSeries.successfullySent..]
+				sendingPeerLogsUntil[i*2 + 1] = bufferFrameSeries.values.length
+		
+		int sendingServerPingsUntil = serverPings.length
+		int sendingSystemLogsUntil = systemLogs.length
+		int sendingGameLogsUntil = gameLogs.length
+			
+		// Send statistics to server
+		http.postDirectly "{Platform.protocolAndHost}:3114/saveStatistics", body:{
+			id
+			connections
+			peerPings: peerPingsToSend
+			serverPings: serverPings[successfullySentServerPings..]
+			systemLogs: systemLogs[successfullySentSystemLogs..]
+			gameLogs: gameLogs[successfullySentGameLogs..]
+		}
+			for players -> p
+				let inputFrameSeries = this.series.find.userIndex == p.index and .set == 0
+					inputFrameSeries.successfullySent = sendingPeerLogsUntil[i*2]
+				let bufferFrameSeries = this.series.find.userIndex == p.index and .set == 1
+					bufferFrameSeries.successfullySent = sendingPeerLogsUntil[i*2 + 1]
+			successfullySentServerPings = sendingServerPingsUntil
+			successfullySentSystemLogs = sendingSystemLogsUntil
+			successfullySentGameLogs = sendingGameLogsUntil
+			currentlySendingStatistics = false
+						
 	add: string name, float value, Color color = White, int set = 0
 		var s = series.find.name == name and .set == set
 		if !s
@@ -792,7 +821,7 @@ skipInit transient unit statistics
 		draw
 
 unit networkVisualizer		
-	private int[] posForPlayer = [0,-10000,-10000,-10000,-10000,-10000]
+	visible int[] posForPlayer = [0,-10000,-10000,-10000,-10000,-10000]
 		
 	internal tick
 		if core.simulateInputsForTesting
@@ -808,7 +837,7 @@ unit networkVisualizer
 						if player.id == 1: core.replayLog += "D"
 						if (posForPlayer[player.index] += 2) > 1080
 							posForPlayer[player.index] -= 1080
-						// core.log "[{core.frame}] <{player.id}> networkVisualizer input.onKeyDown", posForPlayer[player.index]
+						// core.log "[{core.frame}] <{player.id}> pos:", posForPlayer[player.index]
 				
 		draw
 				
@@ -830,7 +859,7 @@ global skipInit unit math
 			return out.toString();
 		}
 		
-	internal string randomSeed
+	transient internal string randomSeed
 	internal int randomValueIndex
 	transient internal float[] randomValues
 	

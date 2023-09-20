@@ -59,20 +59,14 @@ class Collection
 	inline js async dynamic set: dynamic query, dynamic value
 		this.updateOne(query,{$set:value})
 	
-	inline js async dynamic update: dynamic query, dynamic value
-		this.updateOne(query,value)
-	
 	inline js async dynamic setAll: dynamic query, dynamic value
 		this.updateMany(query,{$set:value})
-	
-	inline js async dynamic upsert: ObjectID id, dynamic value
-		this.updateOne({_id:id},{$set:value}, {upsert: true})
 		
-	// inline js async dynamic upsert: dynamic query, dynamic value
-	// 	this.updateOne(query,{$set:value}, {upsert: true})
+	inline js async dynamic update: dynamic query, dynamic value
+		this.updateOne(query,value)
 		
-	// inline js async dynamic save: any value
-	// 	this.save({_id:value._id}, value, {upsert: true})
+	inline js async dynamic upsert: dynamic query, dynamic value
+		this.updateOne(query,{$set:value}, {upsert: true})
 		
 	inline js async dynamic delete: dynamic query
 		this.deleteOne(query)

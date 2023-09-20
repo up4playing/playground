@@ -30,6 +30,7 @@ transient skipInit unit Platform
 	visible OperatingSystem os
 	visible bool isMobile
 	visible bool isBrowser
+	visible bool isNode
 	visible bool isDebug
 	visible bool isSmallScreen
 	public bool isStaging
@@ -59,6 +60,7 @@ transient skipInit unit Platform
 		core_log("Loading...")
 		Platform_isMobile = false;
 		Platform_isBrowser = !window.require;
+		Platform_isNode = window.process && process.versions.node
 		let platform = navigator.platform
 		Platform_os = platform.startsWith("Win") ? 0 : platform.startsWith("Mac") ? 1 : 2
 		if(/(android|bb\d+|meego).+mobile|avantgo|bada\/|blackberry|blazer|compal|elaine|fennec|hiptop|iemobile|ip(hone|od)|ipad|iris|kindle|Android|Silk|lge |maemo|midp|mmp|netfront|opera m(ob|in)i|palm( os)?|phone|p(ixi|re)\/|plucker|pocket|psp|series(4|6)0|symbian|treo|up\.(browser|link)|vodafone|wap|windows (ce|phone)|xda|xiino/i.test(navigator.userAgent) 
@@ -74,52 +76,82 @@ transient skipInit unit Platform
 		
 	// This is called when the application starts for the first time	
 	private start: bool isDebug, int userCount, bool simulateConnection, bool showSafeArea
-		initMedia
-		initPlatform
-		statistics.startTime = Time.preciseTime
-		this.engineStarted = false
-		this.isDebug = isDebug
-		this.userCount = userCount
-		core.simulateConnection = simulateConnection
-		this.showSafeArea = showSafeArea
-		showDebugInfo = getLocalStorageObject("showDebugInfo") == "true"
-		
-		await graphics.setup
-		graphics.onResize
-		// drawLoading
-		if mode >= Play: mode = Pause
-		let path = url.getUntil("?").split("/")
-		let gameId = path[3]
-		let roomId = path[4]
+		try
+			this.nextHeartbeatTime = 0
+			heartbeat "start"
 			
-		// For testing, support joining a room with a given userId using the format /gameId/{roomId}u{userId}
-		// because starting the app in two browser tabs overwrites the userId in the local storage
-		let userId = -1
-		if roomId
-			let dashIndex = roomId.indexOf("u")
-			if dashIndex != -1
-				userId = cast roomId.substring(dashIndex+1)
-				roomId = roomId.substring(0,dashIndex)
+			initMedia
+			initPlatform
+			statistics.startTime = Time.preciseTime
+			this.engineStarted = false
+			this.isDebug = isDebug
+			this.userCount = userCount
+			core.simulateConnection = simulateConnection
+			this.showSafeArea = showSafeArea
+			showDebugInfo = getLocalStorageObject("showDebugInfo") == "true"
 			
-		// If the roomId "staging", "latest" or negative, switch to staging mode (no audio, no fullscreen)
-		isStaging = isDebug or roomId == "staging" or roomId == "latest" or roomId?.startsWith("-")
-		
-		openMedia
-			this.engineStarted = true
-			statistics.loadTime = Time.preciseTime
-			startInterval
-			if isDebug || isLocal || roomId == "local" || url.startsWith("file"): core.startLocal
-			else                                                                  core.join gameId, roomId, userId
-			sendEvaluateFinished
+			await graphics.setup
+			graphics.onResize
+			// drawLoading
+			if mode >= Play: mode = Pause
+			let path = url.getUntil("?").split("/")
+			let gameId = path[3]
+			let roomId = path[4]
+				
+			// For testing, support joining a room with a given userId using the format /gameId/{roomId}u{userId}
+			// because starting the app in two browser tabs overwrites the userId in the local storage
+			let userId = -1
+			if roomId
+				let dashIndex = roomId.indexOf("u")
+				if dashIndex != -1
+					userId = cast roomId.substring(dashIndex+1)
+					roomId = roomId.substring(0,dashIndex)
+				
+			// If the roomId "staging", "latest" or negative, switch to staging mode (no audio, no fullscreen)
+			isStaging = isDebug or roomId == "staging" or roomId == "latest" or roomId?.startsWith("-")
 			
-			// When the texture is loaded, we start the app in record mode. This starts processing inputs and ticks.
-			if !isDebug: record
+			openMedia
+				try
+					this.engineStarted = true
+					statistics.loadTime = Time.preciseTime
+					startInterval
+					if isDebug || isLocal || roomId == "local" || url.startsWith("file"): core.startLocal
+					else                                                                  core.join gameId, roomId, userId
+					
+					// When the texture is loaded, we start the app in record mode. This starts processing inputs and ticks.
+					if !isDebug: record
+						
+				catch
+					sendErrorToEditor .
+				finally 
+					sendFinished
+		catch
+			sendErrorToEditor .
+			sendFinished
+			
 		
 	// This is called after every code change to replay all inputs with the new code
-	private replay() 
-		initMedia
-		openMedia
+	private replay: bool updateMedia
+		try
+			heartbeat "replay"
+			if updateMedia
+				initMedia
+				openMedia
+					goToCurrentFrame
+			else
+				goToCurrentFrame
+		catch
+			sendErrorToEditor .
+			sendFinished
+			
+	private goToCurrentFrame
+		try
 			core.goToFrame core.frame-1, replayFromStart:true
+		catch
+			sendErrorToEditor .
+		finally 
+			sendFinished
+		
 			
 	object interval
 	private js void startInterval
@@ -137,8 +169,11 @@ transient skipInit unit Platform
 		}
 	
 	// This is called every animation frame
-	private tick()   if mode == Play or mode == Record or waitingForInitialData: core.animationFrame
-	
+	private tick
+		heartbeat "tick"
+		if mode == Play or mode == Record or waitingForInitialData
+			core.animationFrame
+				
 	private enterSlideMode(PlatformMode mode) this.mode = mode; sendMode
 	
 	internal stop()    mode = Pause; gizmo.clear; core.stop; sendMode
@@ -172,12 +207,24 @@ transient skipInit unit Platform
 	private js void sendMode
 		if(Platform_isDebug) _sendToEditor({type:"setPlatformMode", mode:Platform_mode, frame:core_frame})
 
-	private inline js void sendEvaluateFinished
-		if(Platform_isDebug) _sendToEditor({type:"evaluateFinished"})
-
 	internal inline js void sendErrorToEditor: Error error
-		if(window.sendErrorToEditor) sendErrorToEditor(error)
-		else                         console.error(error)
+		if(window._sendErrorToEditor) _sendErrorToEditor(error)
+		else                          console.error(error)
+		
+	private inline js void sendFinished
+		console.log("[app] ----- Finished -----")
+		if(Platform_isDebug) _sendToEditor({type:"finished"})
+	
+	private Time nextHeartbeatTime
+	
+	private js void heartbeat: string context
+		if(!Platform_isDebug) return
+		let now = Date.now();
+		if(now > Platform_nextHeartbeatTime) {
+			console.log("[app]", (now%100000).toLocaleString("en-US", {minimumIntegerDigits:6, useGrouping:true})+" sending heartbeat from "+context);
+			Platform_nextHeartbeatTime = now + 3000;
+			_sendStringToEditor("~");
+		}
 		
 	private void toggleDebugInfo
 		showDebugInfo = !showDebugInfo;
