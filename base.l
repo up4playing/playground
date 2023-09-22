@@ -225,8 +225,8 @@ struct float
 		(this + (target - this)*ease.function.invoke(value))
 		
 	inline js float incrementBy: float value
-		                         float max
-		(this+value < max ? (this += value) : max)
+		                         nocolon float to
+		(this+value < to ? (this += value) : to)
 		
 	// ------------------------------------------- Time -------------------------------------------
 	
@@ -323,6 +323,12 @@ class string
 		let index = this.indexOf(value)
 		if(index != -1) return this.substring(start, index)
 		else            return this
+		
+	js string getAfter: string value
+		                int start = 0
+		let index = this.indexOf(value)
+		if(index != -1) return this.substring(index+1)
+		else            return ""
 		
 	// Returns 0 for an exact match, 1 if first is larger, -1 if second is larger
 	inline js int compareTo: string value // The string to compare to
