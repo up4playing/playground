@@ -203,10 +203,6 @@ immutable struct float
 		                            float epsilon = 0.00001
 		(Math.abs(this - value) < epsilon)
 		
-	inline js bool isAngleApproximately: float value
-		                                 float epsilon = 0.0175
-		(Math.abs((((this % math_TwoPI) + math_TwoPI) % math_TwoPI) - (((value % math_TwoPI) + math_TwoPI) % math_TwoPI)) < epsilon)
-		
 	inline js float moveTowards: float value
 		                         float speed
 		(this < value ? (this + speed < value ? (this += speed) : (this = value)) : (this - speed > value ? (this -= speed) : (this = value)))
@@ -250,25 +246,6 @@ immutable struct float
 	// Weeks	
 	inline js Time weeks := (this*604800000)
 		
-	// ------------------------------------------- Angle -------------------------------------------
-	
-	implicit inline js Angle toAngle() this
-	
-	inline js Angle operator °(float angle) (angle/360)
-	
-	// One full rotation is 1
-	inline js Angle turns := this
-	
-	// One full rotation is 2π (about 6.2832)
-	inline js Angle radians := (this/math_TwoPI)
-		
-	// One full rotation is 360
-	inline js Angle degrees := (this/360)
-		
-	// One full rotation is 400
-	inline js Angle gradians := (this/400)
-		
-class EaseFunction
 immutable EaseFunction
 	float(float value) function
 	
@@ -752,9 +729,6 @@ class List<T>
 	inline js T[] sort: Time(T a, T b) comparer // A function returning 1 if "a" is larger, -1 if "b" is larger, 0 if they are equal
 		this.sort(comparer)
 	
-	inline js T[] sort: Angle(T a, T b) comparer // A function returning 1 if "a" is larger, -1 if "b" is larger, 0 if they are equal
-		this.sort(comparer)
-	
 	// Sort the list by a given expression
 	T[] orderBy: float(T a) expression // First order by this expression
 		return this.sort(expression(a) - expression(b))
@@ -764,9 +738,6 @@ class List<T>
 		return this.sort(expression(a) - expression(b) || thenBy(a) - thenBy(b))
 		
 	T[] orderBy: Time(T a) expression // First order by this expression
-		return this.sort(expression(a) - expression(b))
-		
-	T[] orderBy: Angle(T a) expression // First order by this expression
 		return this.sort(expression(a) - expression(b))
 		
 	T[] orderBy: string(T a) expression // First order by this expression
@@ -1712,20 +1683,12 @@ global skipInit unit math
 	inline js float abs: float value // The value to return the absolute value of
 		Math.abs(value)
 		
-	// Returns the absolute value
-	inline js Angle abs: Angle value // The angle to return the absolute value of
-		Math.abs(value)
-		
 	// Returns the smallest integer greater than or equal to the given value 
 	inline js int ceil: float value // The value to round up
 		Math.ceil(value)
 		
 	// Returns the smallest integer greater than or equal to the given value 
 	inline js Time ceil: Time value // The value to round up
-		Math.ceil(value)
-		
-	// Returns the smallest integer greater than or equal to the given value 
-	inline js Angle ceil: Angle value // The angle to round up
 		Math.ceil(value)
 		
 	// Returns the largest integer less than or equal to the given value
@@ -1736,16 +1699,8 @@ global skipInit unit math
 	inline js Time floor: Time value // The value to round down
 		Math.floor(value)
 		
-	// Returns the largest integer less than or equal to the given value
-	inline js Angle floor: Angle value // The angle to round down
-		Math.floor(value)
-		
 	// Returns the given value rounded to the nearest integer
 	inline js int round: float value // The value to round
-		Math.round(value)
-		
-	// Returns the given value rounded to the nearest integer
-	inline js Angle round: Angle value // The angle to round
 		Math.round(value)
 		
 	// Returns the given value rounded to the nearest integer
@@ -1761,11 +1716,6 @@ global skipInit unit math
 		                 float b // The second value
 		Math.min(a, b)
 		
-	// Returns the smallest of the given values
-	inline js Angle min: Angle a // The first angle
-		                 Angle b // The second angle
-		Math.min(a, b)
-		
 	// Returns the largest of the given values
 	inline js int max: int a // The first value
 		               int b // The second value
@@ -1774,11 +1724,6 @@ global skipInit unit math
 	// Returns the largest of the given values
 	inline js float max: float a // The first value
 		                 float b // The second value
-		Math.max(a, b)
-		
-	// Returns the largest of the given values
-	inline js Angle max: Angle a // The first angle
-		                 Angle b // The second angle
 		Math.max(a, b)
 		
 	// Returns the largest of the given values
@@ -1794,53 +1739,6 @@ global skipInit unit math
 		                 float exponent
 		Math.pow(base, exponent)
 		
-	// The ratio of a circle's circumference to its diameter
-	float PI = 3.141592653589793
-	
-	// The ratio of a circle's radius to its diameter
-	float TwoPI = 6.283185307179586
-	
-	internal inline js float nativeSin: float angle // The angle in radians
-		Math.sin(angle)
-		
-	internal inline js float nativeCos: float angle // The angle in radians
-		Math.cos(angle)
-		
-	internal inline js float nativeTan: float angle // The angle in radians
-		Math.tan(angle)
-		
-	// Returns the sine of an angle in turns
-	sin: Angle angle // The angle in turns (one full rotation is 1)
-	    float result = cast(angle - .5 - math.floor(angle))
-	    result *= 16 * (math.abs(result) - .5)
-	    result += .225 * result * (math.abs(result) - 1)
-	    return result
-
-	// Returns the cosine of an angle in turns
-	cos: Angle angle // The angle in turns (one full rotation is 1)
-	    float result = cast(angle - .25 - math.floor(angle + .25))
-	    result *= 16 * (math.abs(result) - .5)
-	    result += .225 * result * (math.abs(result) - 1)
-	    return result
-	
-	// Returns the tangent of an angle in turns
-	tan: Angle angle
-		return sin(angle) / cos(angle)
-		
-	// Returns the inverse tangent in turns
-	Angle atan2: float y, float x
-		float r, angle;
-		float abs_y = math.abs(y) + .00000000001
-		if x < 0.0
-			r = (x + abs_y) / (abs_y - x);
-			angle = .375;
-		else
-			r = (x - abs_y) / (x + abs_y);
-			angle = .125;
-		angle += (.03124211533 * r * r - .1562424076) * r;
-		if y < 0.0: return cast -angle
-		else        return cast angle
-		
 	inline js int shiftLeft: int value
 		                     int count
 		(value << count)
@@ -1852,12 +1750,6 @@ global skipInit unit math
 	moveTowards: float value
 		         float targetValue
 		         float speed = 1
-		if targetValue > value: return math.min(value + speed, targetValue) else
-		if targetValue < value: return math.max(value - speed, targetValue)
-			
-	moveTowards: Angle value
-		         Angle targetValue
-		         Angle speed = 1
 		if targetValue > value: return math.min(value + speed, targetValue) else
 		if targetValue < value: return math.max(value - speed, targetValue)
 			

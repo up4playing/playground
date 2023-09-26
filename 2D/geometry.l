@@ -546,12 +546,121 @@ transient immutable float Angle
 	inline js float in: AngleUnit unit
 		(unit==1 ? this*math_TwoPI : unit==2 ? this*360 : unit==3 ? this*400 : this)
 		
+	inline js bool isApproximately: Angle value
+		                            float epsilon = 0.0175
+		(Math.abs((((this % math_TwoPI) + math_TwoPI) % math_TwoPI) - (((value % math_TwoPI) + math_TwoPI) % math_TwoPI)) < epsilon)
+		
 enum AngleUnit
 	turns    // One full rotation is 1
 	radians  // One full rotation is 2π (about 6.2832)
 	degrees  // One full rotation is 360
 	gradians // One full rotation is 400
+	
+	
+immutable priority low struct float
+	implicit inline js Angle toAngle() this
+	
+	inline js Angle operator °(float angle) (angle/360)
+	
+	// One full rotation is 1
+	inline js Angle turns := this
+	
+	// One full rotation is 2π (about 6.2832)
+	inline js Angle radians := (this/math_TwoPI)
+		
+	// One full rotation is 360
+	inline js Angle degrees := (this/360)
+		
+	// One full rotation is 400
+	inline js Angle gradians := (this/400)
 
+js Array
+priority low class List<T>
+	inline js T[] sort: Angle(T a, T b) comparer // A function returning 1 if "a" is larger, -1 if "b" is larger, 0 if they are equal
+		this.sort(comparer)
+		
+	T[] orderBy: Angle(T a) expression // First order by this expression
+		return this.sort(expression(a) - expression(b))
+
+global skipInit priority low unit math
+	// Returns the absolute value
+	inline js Angle abs: Angle value // The angle to return the absolute value of
+		Math.abs(value)
+		
+	// Returns the smallest integer greater than or equal to the given value 
+	inline js Angle ceil: Angle value // The angle to round up
+		Math.ceil(value)
+		
+	// Returns the largest integer less than or equal to the given value
+	inline js Angle floor: Angle value // The angle to round down
+		Math.floor(value)
+		
+	// Returns the given value rounded to the nearest integer
+	inline js Angle round: Angle value // The angle to round
+		Math.round(value)
+		
+	// Returns the smallest of the given values
+	inline js Angle min: Angle a // The first angle
+		                 Angle b // The second angle
+		Math.min(a, b)
+		
+	// Returns the largest of the given values
+	inline js Angle max: Angle a // The first angle
+		                 Angle b // The second angle
+		Math.max(a, b)
+	// The ratio of a circle's circumference to its diameter
+	const float PI = 3.141592653589793
+	
+	// The ratio of a circle's radius to its diameter
+	const float TwoPI = 6.283185307179586
+	
+	internal inline js float nativeSin: float angle // The angle in radians
+		Math.sin(angle)
+		
+	internal inline js float nativeCos: float angle // The angle in radians
+		Math.cos(angle)
+		
+	internal inline js float nativeTan: float angle // The angle in radians
+		Math.tan(angle)
+		
+	// Returns the sine of an angle in turns
+	sin: Angle angle // The angle in turns (one full rotation is 1)
+	    float result = cast(angle - .5 - math.floor(angle))
+	    result *= 16 * (math.abs(result) - .5)
+	    result += .225 * result * (math.abs(result) - 1)
+	    return result
+
+	// Returns the cosine of an angle in turns
+	cos: Angle angle // The angle in turns (one full rotation is 1)
+	    float result = cast(angle - .25 - math.floor(angle + .25))
+	    result *= 16 * (math.abs(result) - .5)
+	    result += .225 * result * (math.abs(result) - 1)
+	    return result
+	
+	// Returns the tangent of an angle in turns
+	tan: Angle angle
+		return sin(angle) / cos(angle)
+		
+	// Returns the inverse tangent in turns
+	Angle atan2: float y, float x
+		float r, angle;
+		float abs_y = math.abs(y) + .00000000001
+		if x < 0.0
+			r = (x + abs_y) / (abs_y - x);
+			angle = .375;
+		else
+			r = (x - abs_y) / (x + abs_y);
+			angle = .125;
+		angle += (.03124211533 * r * r - .1562424076) * r;
+		if y < 0.0: return cast -angle
+		else        return cast angle
+		
+	moveTowards: Angle value
+		         Angle targetValue
+		         Angle speed = 1
+		if targetValue > value: return math.min(value + speed, targetValue) else
+		if targetValue < value: return math.max(value - speed, targetValue)
+			
 unit math
 	// Returns the arctangent of the quotient of the given values
 	Angle getAngleForVector: Vector2 vector
