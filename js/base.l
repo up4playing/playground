@@ -1643,7 +1643,7 @@ global transient priority unit System
 		              SourceCodeLocation location
 		VisualizeObject(position, color, index:core.watchIndex, text)
 		if Platform.isDebug and core.frame >= core.frameWithNewWatches and location
-			Platform.sendWatch core.frame, text, location.start, location.file
+			Platform.sendWatch core.frame, text:text or position.toString, location.start, location.file
 		core.watchIndex++
 		
 	// Shows a dialog box with a given message
