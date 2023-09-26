@@ -661,14 +661,17 @@ global transient unit System
 	// Reset all variables to their initial value and restart the app
 	global inline restart() core.restart
 
-class StatisticsGraphSeries
+class StatisticsGraph
 	int userIndex = -1
 	int set
-	string name = null
+	string label = null
 	float[] values
-	float[] recentValues
 	Color color
-	int successfullySent
+	
+	float[] recentValues
+	float[] valuesToSend
+	int sendingUntil
+	int successfullySentUntil
 	
 	float lastValue := values.length > 0 ? values[values.length-1] : 0
 	
@@ -677,8 +680,11 @@ class StatisticsGraphSeries
 		if recentValues.length >= statistics.framesPerValue
 			values.add recentValues.max .
 			recentValues.clear
+
+	addDirectly: float value
+		values.add value
 			
-class StatisticsInfo
+immutable StatisticsInfo
 	float value
 	int index
 	int frame
@@ -687,13 +693,12 @@ skipInit transient unit statistics
 	const Vector2 margin = {224,126}
 	const Vector2 position = {-960, 540}
 	const Vector2 size = {1920+margin.x, margin.y}
-	const Vector2 labelPos = {970, 528}
 	const framesPerValue = 15
 	
 	float[] serverPings
 	int successfullySentServerPings
 	
-	private StatisticsGraphSeries[] series
+	private StatisticsGraph[] graphs
 	
 	string[] systemLogs
 	private dynamic[] gameLogs
@@ -730,6 +735,7 @@ skipInit transient unit statistics
 			userId
 			userIndex: input.localUser.index
 			userEmail: user.email
+			version: Platform.version
 			staging: Platform.isStaging
 			server
 			loadTime: loadTime - startTime
@@ -745,20 +751,14 @@ skipInit transient unit statistics
 		
 		// Compile server and peer pings to send
 		string[] connections
-		float[][] peerPingsToSend = [[],[],[],[],[],[],[],[]]
-		int[] sendingPeerLogsUntil = [0,0,0,0,0,0,0,0]
 		for players -> p
 			let internalUser = input.internalUsers[.id]
 			connections.add internalUser.connectionType
 			
-			let inputFrameSeries = this.series.find.userIndex == p.index and .set == 0
-				peerPingsToSend[i*2] = inputFrameSeries.values[inputFrameSeries.successfullySent..]
-				sendingPeerLogsUntil[i*2] = inputFrameSeries.values.length
-				
-			let bufferFrameSeries = this.series.find.userIndex == p.index and .set == 1
-				peerPingsToSend[i*2 + 1] = bufferFrameSeries.values[bufferFrameSeries.successfullySent..]
-				sendingPeerLogsUntil[i*2 + 1] = bufferFrameSeries.values.length
-		
+		for graphs
+			.valuesToSend = .values[.successfullySentUntil..]
+			.sendingUntil = .values.length
+
 		int sendingServerPingsUntil = serverPings.length
 		int sendingSystemLogsUntil = systemLogs.length
 		int sendingGameLogsUntil = gameLogs.length
@@ -767,39 +767,28 @@ skipInit transient unit statistics
 		http.postDirectly "{Platform.protocolAndHost}:3114/saveStatistics", body:{
 			id
 			connections
-			peerPings: peerPingsToSend
+			graphLabels: graphs.select.label
+			graphs: graphs.select.valuesToSend
 			serverPings: serverPings[successfullySentServerPings..]
 			systemLogs: systemLogs[successfullySentSystemLogs..]
 			gameLogs: gameLogs[successfullySentGameLogs..]
 		}
-			for players -> p
-				let inputFrameSeries = this.series.find.userIndex == p.index and .set == 0
-					inputFrameSeries.successfullySent = sendingPeerLogsUntil[i*2]
-				let bufferFrameSeries = this.series.find.userIndex == p.index and .set == 1
-					bufferFrameSeries.successfullySent = sendingPeerLogsUntil[i*2 + 1]
+			graphs.each.successfullySentUntil = .sendingUntil
 			successfullySentServerPings = sendingServerPingsUntil
 			successfullySentSystemLogs = sendingSystemLogsUntil
 			successfullySentGameLogs = sendingGameLogsUntil
 			currentlySendingStatistics = false
 						
-	add: string name, float value, Color color = White, int set = 0
-		var s = series.find.name == name and .set == set
+	add: string label, int userIndex = -1, float value, Color color = White, int set = 0, isPerFrame = true
+		if userIndex != -1: label += " #{userIndex}"
+		var s = graphs.find.label == label
 		if !s
-			series.add s = {name, color, set}
-			series.orderBy.name
+			graphs.add s = {label, userIndex, color, set}
 			sets assignIfGreater set+1
 		s.color = color
-		s.add value
-		
-	add: int userIndex, float value, Color color = White, int set = 0
-		var s = series.find.userIndex == userIndex and .set == set
-		if !s
-			series.add s = {userIndex, name:userIndex.toString, color, set}
-			series.orderBy.name
-			sets assignIfGreater set+1
-		s.color = color
-		s.add value
-		
+		if isPerFrame: s.add value
+		else           s.addDirectly value
+
 	addInfo: string name, float value
 		int index = infoNames.indexOf name
 		if index == -1: index = infoNames.length; infoNames.add name
@@ -810,7 +799,7 @@ skipInit transient unit statistics
 			currentSet incrementAndWrap sets
 	
 		maxValue = 12
-		for series -> s
+		for graphs -> s
 			if .set != currentSet: continue
 			int len = math.min(.values.length, 50)
 			for len: 
@@ -830,13 +819,11 @@ unit networkVisualizer
 			// Move circle with artificially created inputs to test the smoothness
 			for players -> player
 				core.smooth player
-					if player.id == 1: core.replayLog += "C"
-					// core.log "[{core.frame}] <{player.id}> networkVisualizer", core.isSmooth
+					if core.logging and player.id == 1: core.replayLog += "C"
 					input.onKeyDown by:player
-						if player.id == 1: core.replayLog += "D"
+						if core.logging and player.id == 1: core.replayLog += "D"
 						if (posForPlayer[player.index] += 2) > 1080
 							posForPlayer[player.index] -= 1080
-						// core.log "[{core.frame}] <{player.id}> pos:", posForPlayer[player.index]
 				
 		draw
 				
