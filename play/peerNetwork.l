@@ -38,11 +38,11 @@ transient unit PeerNetwork
 		}
 		if(PeerNetwork_relayMode > 0) {
 			// --- Alwyzon (www1) ---
-			// options.iceServers.push({
-			// 	urls: "turn:94.177.8.204:39571",
-			// 	username: "play-user-x8env28gx41odbxzwjyut2oq871987syq8ovyuqp-alwyzon",
-			// 	credential: "qoy91n981vlplabb1873jdcgsouz2qm87qmmakqpc-alwyzon"
-			// });
+			options.iceServers.push({
+				urls: "turn:94.177.8.204:39571",
+				username: "play-user-x8env28gx41odbxzwjyut2oq871987syq8ovyuqp-alwyzon",
+				credential: "qoy91n981vlplabb1873jdcgsouz2qm87qmmakqpc-alwyzon"
+			});
 			// --- Alphahosting (www2) ---
 			// options.iceServers.push({
 			// 	urls: 'turn:89.22.121.145:39571',
@@ -50,11 +50,11 @@ transient unit PeerNetwork
 			// 	credential: 'qoy91n981vlplabb1873jdcgsouz2qm87qmmakqpc-alphahosting'
 			// });			
 			// --- Strato-v30 (www3) ---
-			options.iceServers.push({
-				urls: 'turn:85.214.133.53:39571',
-				username: 'play-user-9q2gy75kmlp4qn7tb86pogsmtyp7qqo0n5-strato-v30',
-				credential: '8q76nby32odjamuzbexi6eb2f1k9gc3my99o-strato-v30'
-			});
+			// options.iceServers.push({
+			// 	urls: 'turn:85.214.133.53:39571',
+			// 	username: 'play-user-9q2gy75kmlp4qn7tb86pogsmtyp7qqo0n5-strato-v30',
+			// 	credential: '8q76nby32odjamuzbexi6eb2f1k9gc3my99o-strato-v30'
+			// });
 			// --- Strato ---
 			// options.iceServers.push({
 			// 	urls: "turn:81.169.197.127",
