@@ -842,17 +842,17 @@ class IsometicGrid
 enum RotationDirection: Clockwise, CounterClockwise
 		
 immutable Direction
-	global const Direction None = {"None", 0, { 0, 0, location:null},   0°, 0°} // positive x direction (1,0)
-	
 	global const Direction Right = {"Right", 0, { 1, 0, location:null},   0°, 330°} // positive x direction (1,0)
 	global const Direction Down  = {"Down",  1, { 0, 1, location:null},  90°,  30°} // positive y direction (0,1)
 	global const Direction Left  = {"Left",  2, {-1, 0, location:null}, 180°, 150°} // negative x direction (-1,0)
-	global const Direction Up    = {"Up",    3,  {0,-1, location:null}, 270°, 210°} // negative y direction (0,-1)
-	
+	global const Direction Up    = {"Up",    3, { 0,-1, location:null}, 270°, 210°} // negative y direction (0,-1)
+	global const Direction None  = {"None", -1, { 0, 0, location:null},   0°,   0°} // no direction (0,0)
+		
 	const Direction DownRight = {"DownRight", 0, { 1, 1, location:null},  45°} // positive x, positive y direction (1,1)
 	const Direction DownLeft  = {"DownLeft",  1, {-1, 1, location:null}, 135°} // negative x, positive y direction (-1,1)
 	const Direction UpLeft    = {"UpLeft",    2, {-1,-1, location:null}, 225°} // negative x, negative y direction (-1,-1)
 	const Direction UpRight   = {"UpRight",   3, { 1,-1, location:null}, 315°} // positive x, negative y direction (1,-1)
+		
 	
 	// List of the four primary direction: Right, Down, Left, Up
 	const Direction[] primaryDirections = [Right, Down, Left, Up]
