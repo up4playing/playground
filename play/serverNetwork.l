@@ -166,6 +166,7 @@ transient unit ServerNetwork
 		statistics.addInfo "from average", deltaFromAverage
 		// statistics.addInfo "from reference", deltaFromReference
 		
+		// Ajust start time (currently disabled)
 		// calculatedStartTimes.add calculatedStartTime maxLength:20
 		// core.startTime = calculatedStartTimes.average
 			

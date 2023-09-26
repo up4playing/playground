@@ -313,7 +313,7 @@ transient immutable struct ControllerButtonPlayerAndIndex
 	
 enum GameControllerType: Keyboard, Xbox, PlayStation
 class GameController
-	static deadZone = .1
+	const deadZone = .1
 	
 	visible Vector2 leftStick
 	visible Vector2 rightStick
