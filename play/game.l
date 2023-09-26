@@ -120,7 +120,7 @@ class BinaryHeap
 			else 
 				// Otherwise, we are done.
 				break
-class BoxCollider
+immutable BoxCollider
 	Vector2 position, size
 	Line rightLine, bottomLine, leftLine, topLine
 	bottomRight = true
