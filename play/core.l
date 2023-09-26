@@ -250,7 +250,7 @@ transient skipInit unit core
 	private int replayFrames
 	internal int displayItems
 	int tickMessageSize
-	bool logging = true
+	bool logging = false
 	int replayFrom = -1
 	
 	collectStatistics
@@ -413,12 +413,12 @@ transient skipInit unit core
 			
 		if mode == Local and simulateRollback: nextSnapshotFrame = frame - 5
 		else                                   nextSnapshotFrame = (input.internalUsers.min math.min(.smoothFrame, .inputFrame) where .active and not .local)+1
-		replayLog += "(next:{nextSnapshotFrame})"
+		if logging: replayLog += "(next:{nextSnapshotFrame})"
 		if snapshotFrame != -1: rewindAndReplayState snapshot, snapshotFrame
 
 	private rewindAndReplayState: Buffer snapshot, int snapshotFrame
 		// Rewind
-		replayLog += " rewind to {snapshotFrame}("
+		if logging: replayLog += " rewind to {snapshotFrame}("
 		restoreTime = Time.measure
 			snapshot.rewind
 			Snapshot.deserialize snapshot
@@ -427,7 +427,7 @@ transient skipInit unit core
 			for userCount
 				let user = input.internalUsers[.]
 				user.inputs.readPos = snapshot.readInt
-		replayLog += ")"
+		if logging: replayLog += ")"
 		
 		// Replay
 		let targetFrame = frame
@@ -435,21 +435,21 @@ transient skipInit unit core
 		replayFrames = targetFrame - frame
 		this.snapshotFrame = -1
 		
-		replayLog += "\{"
+		if logging: replayLog += "\{"
 		replayTime = Time.measure
 			while frame < targetFrame
 				step fastForward:true, draw:false			
-		replayLog += "\} "
+		if logging: replayLog += "\} "
 			
 	// This is called at the beginning of each step
 	private checkSaveState
 		if mode != Connected and !simulateRollback: return
 			
 		if snapshotFrame == -1 and frame >= nextSnapshotFrame
-			replayLog += " save{frame}("
+			if logging: replayLog += " save{frame}("
 			snapshotFrame = frame
 			saveState snapshot
-			replayLog += ")"
+			if logging: replayLog += ")"
 			
 	private saveState: Buffer snapshot
 		snapshot.reset
@@ -475,13 +475,13 @@ transient skipInit unit core
 		snapshot.writeInt input.internalUsers.length
 		for input.internalUsers
 			snapshot.writeInt .inputs.readPos
-		replayLog += "sn.writepos:{snapshot.writePos} "
+		if logging: replayLog += "sn.writepos:{snapshot.writePos} "
 				
 	js void log: logstring text
 		let str = new Date().hourMinuteSecondString() + " " + text
 		statistics_systemLogs.push(str)
 		if(core_logging) {
-			core_eventLog += str + "\n"
+			if(logging) core_eventLog += str + "\n"
 			console.log(str)
 		}
 		
