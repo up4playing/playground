@@ -25,7 +25,8 @@ transient skipInit unit core
 	public float serverStartTime
 	visible int frame               // Current frame, will increase by 1 at the end of every step (every targetFrameTime ms)
 	internal int frames             // Total number of frames we have inputs for
-	internal int frameWithNewWatches = 0 // First frame with new watches, do not send watches for frames below this
+	internal int frameWithNewWatches// First frame with new watches, do not send watches for frames below this
+	int watchIndex
 	internal bool startInLobby      // Connected sessions usually start in the lobby, local sessions start in the app
 	private int joinFrame           // The frame the local user joined
 	bool isPremiere
@@ -71,6 +72,7 @@ transient skipInit unit core
 		startTime = serverStartTime = currentTime
 		frames = 0
 		frameWithNewWatches = 0
+		watchIndex = 0
 		startInLobby = false
 		errorMessage = ""
 		audio.stop
@@ -98,6 +100,7 @@ transient skipInit unit core
 		HTMLElement.clear
 		math.randomValueIndex = 0
 		frame = 0
+		watchIndex = 0
 		input.isCertain = true
 		lobby.inLobby = startInLobby
 		Time.now = serverStartTime
