@@ -11,7 +11,7 @@ transient skipInit unit core
 	bool simulateInputsForTesting = false
 	bool simulateRollback = false
 	bool drawPointsForTesting = false
-	Time sendStatisticsEvery = 3 minutes
+	Time sendStatisticsEvery = 2 minutes
 	bool showVideoForStaging = true
 	bool muteInvisibleUsers = false
 	
@@ -259,12 +259,24 @@ transient skipInit unit core
 				let internalUser = input.internalUsers[.id]
 				if not internalUser.local
 					internalUser.collectStatistics frame
-					statistics.add .index, frame - internalUser.inputFrame, .color, set:0
-					statistics.add .index, frame - internalUser.smoothFrame, .color, set:1
-			if replayFrom != -1: statistics.add "replay", frame - replayFrom, Gray
+					statistics.add "input", userIndex:.index, value:frame - internalUser.inputFrame, .color, set:0
+					statistics.add "smooth", userIndex:.index, value:frame - internalUser.smoothFrame, .color, set:1
+			if replayFrom != -1: statistics.add "replay", value:frame - replayFrom, color:Gray
 		else
 		if mode == Local and simulateRollback
 			input.internalUsers.each.simulateRollback frame
+			
+		// Memory
+		statistics.add "memory", value:Platform.usedMemory, color:Yellow set:3
+		statistics.add "snapshotSize", value:snapshot.writePos, color:Red set:4
+		statistics.add "inputs", value:input.localUser?.inputs.writePos, color:Blue set:5
+		
+		// Times
+		statistics.add "drawTime", value:drawTime, color:Blue set:6
+		statistics.add "tickTime", value:tickTime, color:Red set:6
+		statistics.add "restoreTime", value:restoreTime, color:Green set:6
+		statistics.add "replayTime", value:replayTime, color:Yellow set:6
+		statistics.add "saveTime", value:saveTime, color:White set:6
 			
 		// Logs
 		if logging
@@ -325,7 +337,7 @@ transient skipInit unit core
 			// Flags
 			Platform.fastForward = fastForward
 			int certainFrame = input.internalUsers.min math.min(.inputFrame, .smoothFrame) where .active
-			bool isCertain = frame <= certainFrame
+			input.isCertain = frame <= certainFrame
 			
 			// Send current frame to editor	
 			if Platform.isDebug and !fastForward and (Platform.mode == Record or Platform.mode == Play or Platform.waitingForInitialData): Platform.sendFrame(frame, math.max(frame+1, frames))
@@ -337,8 +349,8 @@ transient skipInit unit core
 			if logging
 				replayLog += " #{frame} c:{certainFrame}"
 				parseLog += " #{frame}"
-				if fastForward: parseLog += "f"; replayLog += "f"
-				if isCertain:   parseLog += "c"; replayLog += "c"
+				if fastForward:     parseLog += "f"; replayLog += "f"
+				if input.isCertain: parseLog += "c"; replayLog += "c"
 				
 			// Update game controllers
 			input.updateGameControllers

@@ -318,7 +318,7 @@ transient unit PeerNetwork
 		float pingTime = buffer.readFloat64
 		float pingPongTime = now - pingTime
 		let player = input.players.find.id == user.id
-			statistics.add userIndex:player.index, color:player.color, value:pingPongTime, set:2
+			statistics.add "pingPongTime" userIndex:player.index, color:player.color, value:pingPongTime, set:2, isPerFrame:false
 				
 	// --------------------------------------------- Checksum ---------------------------------------------
 	
