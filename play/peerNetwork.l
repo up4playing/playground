@@ -1,22 +1,22 @@
-transient class Signal
+transient immutable Signal
 	int receiverId
 	string type
 	string sdp
 
-transient class IceMessage
+transient immutable IceMessage
 	int receiverId
 	object iceCandidate
 	
 enum VideoShape: Rectangle, Square, Circle
 enum RelayMode: Never, Auto, Always
 		
-class MediaDeviceInfo
+immutable MediaDeviceInfo
 	string deviceId
 	string groupId
 	string kind
 	string label
 
-class MediaDevices
+immutable MediaDevices
 	MediaDeviceInfo[] audioInput
 	MediaDeviceInfo[] audioOutput
 	MediaDeviceInfo[] videoInput

@@ -500,7 +500,9 @@ class List<T>
 		for this: sum += selector(.)
 		return sum	
 		
-transient float Angle
+// ------------------------------------------- Angle -------------------------------------------
+		
+transient immutable float Angle
 	inline js float toFloat() this
 	inline js string toString() this.toString()
 		
@@ -730,7 +732,7 @@ class IsometicGrid
 		
 enum RotationDirection: Clockwise, CounterClockwise
 		
-class Direction
+immutable Direction
 	global const Direction Right = {"Right", 0, { 1, 0, location:null},   0°, 330°} // positive x direction (1,0)
 	global const Direction Down  = {"Down",  1, { 0, 1, location:null},  90°,  30°} // positive y direction (0,1)
 	global const Direction Left  = {"Left",  2, {-1, 0, location:null}, 180°, 150°} // negative x direction (-1,0)
@@ -778,7 +780,7 @@ class Direction
 		
 enum LineType: Line, Ray, Segment
 	
-class Line
+immutable Line
 	Vector2 start, end
 	LineType type
 	
@@ -812,7 +814,7 @@ class Line
 		
 	toString := "{start.x.format(fractionDigits:2)} {start.y.format(fractionDigits:2)} -> {end.x.format(fractionDigits:2)} {end.y.format(fractionDigits:2)}"
 
-class Rect
+immutable Rect
 	Vector2 position, size
 	
 	float left := position.x - size.x/2

@@ -1,5 +1,5 @@
 // A number stored as a 32-bit integer
-struct int
+immutable struct int
 	// The largest possible integer value
 	const maxValue = 2147483647
 	
@@ -132,7 +132,7 @@ struct int
 		int_enumerate(0, this, selector)
 	
 // A number stored as a double precision 64-bit floating point value
-struct float
+immutable struct float
 	// The largest possible floating point value
 	const inline js float maxValue := Number.MAX_VALUE
 	
@@ -269,6 +269,7 @@ struct float
 	inline js Angle gradians := (this/400)
 		
 class EaseFunction
+immutable EaseFunction
 	float(float value) function
 	
 	global const EaseFunction None    = { . }
@@ -277,7 +278,7 @@ class EaseFunction
 	
 // A sequence of characters
 js String
-class string
+immutable class string
 	// Returns the number of characters in the string
 	inline js int length := this.length
 	
@@ -1262,6 +1263,12 @@ class List<T>
 	js T decrementItem: int index // The index of the item to change
 		return index >= 0 ? this[index]-- : this[this.length+index]--
 		
+immutable ImmutableList<T>
+	T[] list
+	
+	inline T get: implicit int index // The index of the item to get
+		list.get(index)
+		
 // A data container that stores key-value pairs
 js Map
 class Map<TKey, TValue>
@@ -1293,7 +1300,7 @@ class Map<TKey, TValue>
 		
 
 // Specifies that a function doesn't return a value
-struct void
+immutable struct void
 	
 // Denotes a type that can be null
 struct Nullable<T>
@@ -1342,7 +1349,7 @@ interface object
 
 		
 // This struct is automatically filled with the source code location
-transient class SourceCodeLocation
+transient immutable SourceCodeLocation
 	string file
 	int start
 	int end
@@ -1385,7 +1392,7 @@ transient class SourceCodeLocation
 		return null
 		
 js Error
-class Error
+immutable Error
 	string message
 	string stack
 	implicit inline js string toString := this.stack
@@ -1930,7 +1937,7 @@ struct Average
 		count++
 	average := total / count		
 
-class Range
+immutable Range
 	int from // The start of the range
 	int to   // The end of the range
 	

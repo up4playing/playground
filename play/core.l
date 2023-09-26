@@ -1,5 +1,5 @@
 enum NetworkMode: None, Ping, Local, Connected
-transient class RoomInfo: int time, userId
+transient immutable RoomInfo: int time, userId
 enum SendInputsMode: None, Peer, Server
 	
 transient skipInit unit core

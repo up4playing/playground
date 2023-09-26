@@ -79,7 +79,7 @@ unit file
 		const { remote } = require("electron")
 		return remote.dialog.showSaveDialogSync({ filters, properties: ["createDirectory"] })
 
-struct FileFilter
+immutable struct FileFilter
 	string name
 	string[] extensions
-		
+

@@ -41,7 +41,7 @@ transient global skipInit unit audio
 		else
 			sound.play	
 				
-Animation
+immutable Animation
 	Time startTime
 	Time duration
 	Object object

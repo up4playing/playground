@@ -133,9 +133,9 @@ class Touch
 	markAsHandled() handled = true
 	
 transient class ScrollEvent
-	int userId
-	Vector2 delta
-	Vector2 referencePosition
+	immutable int userId
+	immutable Vector2 delta
+	immutable Vector2 referencePosition
 	bool handled
 	
 	Vector2 position := referencePosition.getRelativeTo(graphics.localMatrix)
@@ -307,7 +307,7 @@ struct DigitalButton
 		prevState = state
 		state = false
 		
-transient struct ControllerButtonPlayerAndIndex
+transient immutable struct ControllerButtonPlayerAndIndex
 	int userId
 	int buttonIndex
 	
@@ -346,11 +346,11 @@ enum ShowPointersMode
 	Remote         // Show the mouse pointer only for remote players
 	LocalAndRemote // Show the mouse pointers of all players
 	
-class InternetGamePadButton
+immutable class InternetGamePadButton
 	bool pressed, touched
 	float value
 	
-class InternetGamePad
+immutable class InternetGamePad
 	float[] axes
 	InternetGamePadButton[] buttons
 	string id
