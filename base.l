@@ -674,6 +674,13 @@ class List<T>
 		this.removeAt(index)
 		return item
 		
+	T popRandomWhere: bool(T a) condition
+		let filteredList = this.where(condition)
+		int index = math.randomInteger(filteredList.length)
+		T item = filteredList[index]
+		this.remove(item)
+		return item
+		
 	T next: T currentItem
 		int index = indexOf(currentItem)
 		return this.get((index+1)%length)
