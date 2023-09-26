@@ -15,8 +15,14 @@ localStorage
 	internal inline js string getStringDirectly: string key
 		(localStorage.getItem(key) || "")
 		
-	internal inline js dynamic getObjectDirectly: string key
-		JSON.parse(localStorage.getItem(key) || {})
+	internal js dynamic getObjectDirectly: string key
+		try {
+			let data = localStorage.getItem(key)
+			if(!data) return {}
+			return JSON.parse(data)
+		} catch {
+			return {}
+		}
 		
 	get: string key, stored void(any data) do
 		let id = networkData.addCallback do

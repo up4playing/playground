@@ -366,9 +366,9 @@ Object Menu
 enum MenuItemType: Button, Check, Radio
 		
 class MenuItem
-	Image image
-	string label
+	immutable Image image
+	immutable string label
+	immutable MenuItemType type = Button
 	bool value
-	MenuItemType type = Button
-	void(bool value, Touch touch) onClick
+	immutable void(bool value, Touch touch) onClick
 

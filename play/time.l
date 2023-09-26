@@ -1,4 +1,4 @@
-skipInit transient float Time
+skipInit transient immutable float Time
 	// The number of milliseconds elapsed since January 1, 1970
 	static Time now
 	
@@ -128,7 +128,7 @@ enum TimeUnit
 	hours        // Hours
 	days         // Days
 		
-js(Date) transient struct Date
+js(Date) transient immutable struct Date
 	inline js Date() new Date(Time_now)
 	static inline js Date now := new Date(Time_now)
 		

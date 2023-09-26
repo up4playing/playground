@@ -1,3 +1,4 @@
+js HTMLElement
 class Node
 	string id // A unique string to indentify a specic element, often used to style a single element
 	
@@ -14,6 +15,7 @@ class Node
 	string src
 	Node firstChild
 	Node nextSibling
+	Node parentNode
 	
 	string sourceLocation
 		
@@ -42,9 +44,9 @@ class Node
 		                    Time duration = 1 seconds
 		                    AnimationFill fill = Forwards
 		                    easing = "linear"
-		this.animate([from, to], {@duration:duration, @fill:fill, @easing:easing})
+		this.animate([Html_expandStyle(from), Html_expandStyle(to)], {@duration:duration, @fill:fill, @easing:easing})
 	
-class HtmlEvent
+immutable HtmlEvent
 	Node target        // The element that triggered the event
 	Node currentTarget // The element to the event handler is attached to
 	int button         // The mouse button that was pressed to trigger the event
@@ -103,6 +105,11 @@ struct Vector2
 	Unit unit = Pixels // The unit of the vector (Pixels, Percent, Centimeters, Points, ViewportHeight, ...)
 	
 	toString := "{x}{unit} {y}{unit}"
+	
+	Vector2 operator + (Vector2 a, Vector2 b) return {a.x+b.x, a.y+b.y}
+	Vector2 operator - (Vector2 a, Vector2 b) return {a.x-b.x, a.y-b.y}
+	
+	Vector2 operator * (Vector2 a, float b)   return {a.x*b, a.y*b}
 	
 enum AnimationFill
 	None = "none"
@@ -567,8 +574,7 @@ dynamic Style
 	implicit Angle rotate // Rotate the element by this angle
 	
 	Vector2 size
-	Vector2 targetSize
-	Vector2 targetTranslate
+	bool overlay
 	
 dynamic Attributes
 	string id // A unique string to indentify a specic element, often used to style a single element
