@@ -9,8 +9,8 @@ immutable struct int
 // 	inline cpp int operator ** (int a, int b) 
 // 		Math.pow(a,b)
 		
-// 	cpp int operator % (int a, int b)
-// 		return ((a % b) + b) % b
+	cpp int operator % (int a, int b)
+		return ((a % b) + b) % b
 		
 // 	// The remainer after a division by the given value. The sign stays the same.
 // 	inline cpp int remainder: int value // The value to divide by
@@ -145,8 +145,8 @@ immutable struct float
 // 	inline cpp float operator ** (float a, float b) 
 // 		Math.pow(a,b)
 		
-// 	cpp float operator % (float a, float b)
-// 		return ((a % b) + b) % b
+	cpp float operator % (float a, float b)
+		return ((a % b) + b) % b
 		
 // 	// The remainer after a division by the given value. The sign stays the same.
 // 	inline cpp float remainder: float value
@@ -1197,9 +1197,9 @@ struct List<T>
 	// cpp T[] get: int from // Return a new list starting from this index
 	// 	return this.slice(from)
 	
-	// cpp T set: int index // The index of the item to set
-	// 	      T value   // The new value to set
-	// 	return index >= 0 ? this[index] = value : this[this.length+index] = value
+	cpp T set: int index // The index of the item to set
+		       T value   // The new value to set
+		return index >= 0 ? this[index] = value : this[this.size()+index] = value
 		
 	// // Tries to get an item from the list. If it doesn't exist, it sets it.
 	// // TODO: Support index with side effect (e.g. list[index++] ?= 0)
@@ -1341,7 +1341,7 @@ immutable Error
 global transient priority unit system
 	// Executes code depending on whether a given condition is true or false
 	global inline cpp void if: implicit bool condition // The condition to check
-		                      inline void() then      // Do this if the condition is true
+		                       inline void() then      // Do this if the condition is true
 		if(condition) then()
 			
 	// Executes code depending on whether a given condition is true or false
@@ -1705,45 +1705,45 @@ global skipInit unit math
 		                      int count
 		(value >> count)
 		
-	// moveTowards: float value
-	// 	         float targetValue
-	// 	         float speed = 1
-	// 	if targetValue > value: return math.min(value + speed, targetValue) else
-	// 	if targetValue < value: return math.max(value - speed, targetValue)
+	moveTowards: float value
+		         float targetValue
+		         float speed = 1
+		if targetValue > value: return math.min(value + speed, targetValue) else
+		if targetValue < value: return math.max(value - speed, targetValue)
 			
-	// limit: int value
-	// 	   int min
-	// 	   int max
-	// 	if value < min: return min
-	// 	if value > max: return max
-	// 		            return value
+	limit: int value
+		   int min
+		   int max
+		if value < min: return min
+		if value > max: return max
+			            return value
 	
-	// limit: int value
-	// 	   int max
-	// 	if value > max: return max
-	// 		            return value
+	limit: int value
+		   int max
+		if value > max: return max
+			            return value
 	
-	// limit: int value
-	// 	   int min
-	// 	if value < min: return min
-	// 		            return value
+	limit: int value
+		   int min
+		if value < min: return min
+			            return value
 	
-	// limit: float value
-	// 	   float min
-	// 	   float max
-	// 	if value < min: return min
-	// 	if value > max: return max
-	// 		            return value
+	limit: float value
+		   float min
+		   float max
+		if value < min: return min
+		if value > max: return max
+			            return value
 	
-	// limit: float value
-	// 	   float max
-	// 	if value > max: return max
-	// 		            return value
+	limit: float value
+		   float max
+		if value > max: return max
+			            return value
 			
-	// limit: float value
-	// 	   float min
-	// 	if value < min: return min
-	// 		            return value
+	limit: float value
+		   float min
+		if value < min: return min
+			            return value
 			
 	// // Maps a value from an input range to an output range
 	// map: Time value        // The input value 

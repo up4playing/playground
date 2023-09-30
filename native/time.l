@@ -30,11 +30,11 @@ skipInit transient float Time
 	// static inline cpp Time fromIsoString: string isoString
 	// 	new Date(isoString).getTime()
 		
-	// inline cpp float toFloat() this
-	// inline cpp string toString() this.toString()
+	inline cpp float toFloat() this
+	inline cpp string toString() this.toString()
 		
-	// // Returns true if the time is not zero
-	// inline cpp bool toBool := this
+	// Returns true if the time is not zero
+	inline cpp bool toBool := this
 	
 	// inline cpp string format: int fractionDigits, int minIntegerDigits = 1, bool grouping = false
 	// 	this.toLocaleString('en-US', {maximumFractionDigits:fractionDigits, minimumFractionDigits:fractionDigits, minimumIntegerDigits:minIntegerDigits, useGrouping:grouping})

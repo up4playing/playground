@@ -39,6 +39,7 @@ enum ScaleMode: Auto, FixedWidth, FixedHeight, None
 enum AnchorMode: TopLeft, TopCenter, Center
 enum HorizontalAlignment: Left, Center, Right
 enum VerticalAlignment: Top, Middle, Bottom
+enum FontStyle: Normal, Bold
 	
 global skipInit unit graphics
 	SDL_Renderer *renderer
@@ -114,7 +115,6 @@ global skipInit unit graphics
 		                      Color color = White                 // Tint the image with this color
 		                      HorizontalAlignment align = Center  // The horizontal alignment of the image
 		                      VerticalAlignment valign = Middle   // The vertical alignment of the image
-		                      SourceCodeLocation location
 		if(graphics::isVisibleFor(visibleFor)) {
 			auto f = image->frames[frame];
 			double unscaledSizeX = size.x ? size.x : f.w;
@@ -129,6 +129,20 @@ global skipInit unit graphics
 			// system::print("sizeX:"+std::to_string(sizeX));
 			SDL_RenderCopy(renderer, image->texture->texture, &sourceRect, &targetRect);
 		}
+		
+	global cpp void drawText: implicit string text                // A string or anything that can be converted into a string (for example, an interger or a float)
+		                      Vector2 position = {}               // By default, {0,0} is the center, {-960,-540} is the top left, {960,540} is the bottom right
+		                      implicit Vector2 size = {}          // The size of the text
+		                      Color color = null                  // The color of the text
+		                      HorizontalAlignment align = Center  // The horizontal alignment of the text
+		                      VerticalAlignment valign = Middle   // The vertical alignment of the text
+		                      FontStyle style = Normal            // Whether the text should be bold or normal style
+		                      Font font = null                    // To use a custom font, just copy a TTF, WOFF or WOFF2 file to the "media" folder
+		                      Color outlineColor = null           // The color of the outline around the text
+		                      outlineWidth = 0                    // The width of the outline around the text in pixels
+		                      implicit Player[] visibleFor = []   // Only this player or list of players will see the text
+		                      implicit layer = 0                  // Higher layers are drawn in front of lower layers
+		                      alpha = 1.0                         // The opacity of the text (0: fully transparent, 1: fully visible)
 
 	cpp void startFrame
 	    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
