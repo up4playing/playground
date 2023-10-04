@@ -496,7 +496,7 @@ transient skipInit unit core
 		let str = new Date().hourMinuteSecondString() + " " + text
 		statistics_systemLogs.push(str)
 		if(core_logging) {
-			if(logging) core_eventLog += str + "\n"
+			core_eventLog += str + "\n"
 			console.log(str)
 		}
 		
