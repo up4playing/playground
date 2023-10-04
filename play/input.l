@@ -287,7 +287,7 @@ enum Cursor
 	Auto = "auto" // The cursor will be based on the current context, for example "text" when hovering text
 	None = "none" // No cursor is rendered
 	
-struct DigitalButton
+class DigitalButton
 	string name
 	Key key
 	
@@ -317,14 +317,14 @@ class GameController
 	
 	visible Vector2 leftStick
 	visible Vector2 rightStick
-	visible DigitalButton right
-	visible DigitalButton down
-	visible DigitalButton left
-	visible DigitalButton up
-	visible DigitalButton a
-	visible DigitalButton b
-	visible DigitalButton x
-	visible DigitalButton y
+	visible DigitalButton right = {}
+	visible DigitalButton down = {}
+	visible DigitalButton left = {}
+	visible DigitalButton up = {}
+	visible DigitalButton a = {}
+	visible DigitalButton b = {}
+	visible DigitalButton x = {}
+	visible DigitalButton y = {}
 	visible DigitalButton[] buttons = [right, down, left, up, a, b, x, y]
 	
 	bool inMotion
