@@ -189,6 +189,16 @@ Object CircleObject
 	override tick
 		drawCircle position, size, color:color, visibleFor, layer
 
+global transient unit System
+	global visualize: Vector2 position = {}
+		              Color color = White
+		              logstring text = ""
+		              SourceCodeLocation location
+		VisualizeObject(position, color, index:core.watchIndex, text)
+		if Platform.isDebug and core.frame >= core.frameWithNewWatches and location
+			Platform.sendWatch core.frame, text:text or position.toString, location.start, location.file
+		core.watchIndex++
+
 Object VisualizeObject
 	Color color = White
 	int index
