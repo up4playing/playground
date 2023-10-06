@@ -133,6 +133,7 @@ skipInit global unit Platform
 	Time nextHeartbeatTime = 0
 	
 	private js void heartbeat: string context
+		if(!Platform_isDebug) return
 		let now = Date.now();
 		if(now > Platform_nextHeartbeatTime) {
 			console.log("[app]", (now%100000).toLocaleString("en-US", {minimumIntegerDigits:6, useGrouping:true})+" sending heartbeat from "+context);
@@ -440,12 +441,9 @@ global unit Html
 		          expand Attributes attributes = {} // The attributes of the HTML element 
 		          expand Style style = {}           // The css style of the HTML element 
 		          SourceCodeLocation location
-		attributes.src = src
-		attributes.autoplay = "autoplay"
-		attributes.muted = "muted"
 		style.position = Absolute
 		style.zIndex = -1000
-		return div tag:"video", attributes, style, location
+		div tag:"video", attributes, style, location, data:{src, autoplay:"autoplay", muted:"muted"}
 
 	global div: string text = null                // The text content of the element 
 		        string tag = "div"                // The tag of element
