@@ -88,7 +88,7 @@ skipInit global unit Platform
 			initMedia
 			initAll
 			Time.frame = 0
-			app.start
+			startApp
 			Html.updateScale
 			Html.render
 		catch
@@ -100,7 +100,10 @@ skipInit global unit Platform
 		Html.reset
 		replay
 		
-	js void tick
+	private js void startApp
+		if(window.app_start) app_start()
+		
+	private js void tick
 		Platform_heartbeat("tick")
 		if(window.app_tick) app_tick()
 		Time_frame++
