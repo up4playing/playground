@@ -46,7 +46,7 @@ class Node
 		                    easing = "linear"
 		this.animate([Html_expandStyle(from), Html_expandStyle(to)], {@duration:duration, @fill:fill, @easing:easing})
 	
-class HtmlEvent
+immutable HtmlEvent
 	Node target        // The element that triggered the event
 	Node currentTarget // The element to the event handler is attached to
 	int button         // The mouse button that was pressed to trigger the event

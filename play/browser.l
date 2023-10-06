@@ -3,7 +3,7 @@ transient skipInit unit Platform
 	public inline js string host := location.host
 	public protocolAndHost := host ? "https://"+host : "http://localhost"
 	public inline js int userAgent := navigator.userAgent.replace(/,/g," ")
-	public inline js float usedMemory := performance.memory.usedJSHeapSize
+	public inline js float usedMemory := (performance.memory ? performance.memory.usedJSHeapSize : 0)
 	
 	js void setTitle: string title
 		document.title = title

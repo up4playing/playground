@@ -1,5 +1,5 @@
 // A color comprised of a red, green, blue and alpha component
-class Color
+immutable Color
 	global const Color White       = {"#ffffff", "White"}
 	global const Color Black       = {"#000000", "Black"}
 	global const Color Red         = {"#ef476f", "Red"}
@@ -36,7 +36,7 @@ class Color
 		return {hex[1..7]+componentToHex(math.floor(alpha*255))}
 	
 // A texture that can be loaded into video memory
-class Texture
+immutable Texture
 	string file
 	Vector2 size
 	
@@ -71,7 +71,7 @@ class Texture
 		}
 		
 // A font that can be used to draw text
-skipInit class Font
+skipInit immutable Font
 	string name
 	string file
 	Vector2 offset
@@ -128,11 +128,11 @@ skipInit class Font
 		// log(this.name+" "+this.offset)
 
 // A single frame of an animated image
-struct ImageFrame
+immutable struct ImageFrame
 	float x1, y1, x2, y2, w, h
 
 // An image that can be drawn on the screen and can have several frames of animation
-skipInit class Image
+skipInit immutable Image
 	string file
 	Texture texture
 	Vector2 size
@@ -143,7 +143,7 @@ enum AnchorMode: TopLeft, TopCenter, Center
 enum HorizontalAlignment: Left, Center, Right
 enum VerticalAlignment: Top, Middle, Bottom
 enum FontStyle: Normal, Bold
-class ClippingPath: Vector2[] points; bool show
+immutable ClippingPath: Vector2[] points; bool show
 		
 // Draw on the screen
 transient skipInit global unit graphics
@@ -1195,7 +1195,7 @@ transient skipInit global unit graphics
 		code(imageData.data)
 		graphics_context.putImageData(imageData, 0, 0)
 		
-struct GizomInfluence
+immutable struct GizomInfluence
 	string file
 	int start
 	int end
@@ -1203,11 +1203,11 @@ struct GizomInfluence
 	float[] initialValues
 	string label
 
-struct GizmoOverItem
+immutable struct GizmoOverItem
 	DisplayItem item
 	SourceCodeLocation location
 	
-skipInit unit gizmo
+skipInit transient unit gizmo
 	private DisplayItem[] items
 	private Vector2 min, max
 	private SourceCodeLocation cursorLocation
@@ -1393,7 +1393,7 @@ skipInit unit gizmo
 		if location.right: flattenLocations stack, item, location.right
 		if location.left:  flattenLocations stack, item, location.left
 		
-transient class DisplayItem
+transient immutable DisplayItem
 	float x, y, w, h
 	int layer
 	float alpha

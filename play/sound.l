@@ -1,5 +1,5 @@
 // A sound
-skipInit class Sound
+skipInit immutable Sound
 	string file
 	float fadeVolume = 1
 	transient dynamic audioElement
@@ -64,12 +64,12 @@ skipInit class Sound
 	fadeOut: Time duration = 3000
 		     Time delay = 0
 		// Migrate to 3D
-		// fx.add FadeSoundEffect startTime:Time.now+delay, duration, sound:this, startValue:1, delta:-1
+		fx.add FadeSoundAnimation startTime:Time.now+delay, duration, sound:this, startValue:1, delta:-1
 		return this
 
-transient class PlayingSound
-	Sound sound
-	int frame
+transient PlayingSound
+	immutable Sound sound
+	immutable int frame
 	bool isConfirmed
 	
 // A collection of functions for playing audio

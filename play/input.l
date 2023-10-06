@@ -133,9 +133,9 @@ class Touch
 	markAsHandled() handled = true
 	
 transient class ScrollEvent
-	int userId
-	Vector2 delta
-	Vector2 referencePosition
+	immutable int userId
+	immutable Vector2 delta
+	immutable Vector2 referencePosition
 	bool handled
 	
 	Vector2 position := referencePosition.getRelativeTo(graphics.localMatrix)
@@ -287,7 +287,7 @@ enum Cursor
 	Auto = "auto" // The cursor will be based on the current context, for example "text" when hovering text
 	None = "none" // No cursor is rendered
 	
-struct DigitalButton
+class DigitalButton
 	string name
 	Key key
 	
@@ -307,24 +307,24 @@ struct DigitalButton
 		prevState = state
 		state = false
 		
-transient struct ControllerButtonPlayerAndIndex
+transient immutable struct ControllerButtonPlayerAndIndex
 	int userId
 	int buttonIndex
 	
 enum GameControllerType: Keyboard, Xbox, PlayStation
 class GameController
-	static deadZone = .1
+	const deadZone = .1
 	
 	visible Vector2 leftStick
 	visible Vector2 rightStick
-	visible DigitalButton right
-	visible DigitalButton down
-	visible DigitalButton left
-	visible DigitalButton up
-	visible DigitalButton a
-	visible DigitalButton b
-	visible DigitalButton x
-	visible DigitalButton y
+	visible DigitalButton right = {}
+	visible DigitalButton down = {}
+	visible DigitalButton left = {}
+	visible DigitalButton up = {}
+	visible DigitalButton a = {}
+	visible DigitalButton b = {}
+	visible DigitalButton x = {}
+	visible DigitalButton y = {}
 	visible DigitalButton[] buttons = [right, down, left, up, a, b, x, y]
 	
 	bool inMotion
@@ -346,11 +346,11 @@ enum ShowPointersMode
 	Remote         // Show the mouse pointer only for remote players
 	LocalAndRemote // Show the mouse pointers of all players
 	
-class InternetGamePadButton
+immutable class InternetGamePadButton
 	bool pressed, touched
 	float value
 	
-class InternetGamePad
+immutable class InternetGamePad
 	float[] axes
 	InternetGamePadButton[] buttons
 	string id

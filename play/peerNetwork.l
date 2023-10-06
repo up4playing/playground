@@ -1,22 +1,22 @@
-transient class Signal
+transient immutable Signal
 	int receiverId
 	string type
 	string sdp
 
-transient class IceMessage
+transient immutable IceMessage
 	int receiverId
 	object iceCandidate
 	
 enum VideoShape: Rectangle, Square, Circle
 enum RelayMode: Never, Auto, Always
 		
-class MediaDeviceInfo
+immutable MediaDeviceInfo
 	string deviceId
 	string groupId
 	string kind
 	string label
 
-class MediaDevices
+immutable MediaDevices
 	MediaDeviceInfo[] audioInput
 	MediaDeviceInfo[] audioOutput
 	MediaDeviceInfo[] videoInput
@@ -44,17 +44,17 @@ transient unit PeerNetwork
 			// 	credential: "qoy91n981vlplabb1873jdcgsouz2qm87qmmakqpc-alwyzon"
 			// });
 			// --- Alphahosting (www2) ---
-			// options.iceServers.push({
-			// 	urls: 'turn:89.22.121.145:39571',
-			// 	username: 'play-user-x8env28gx41odbxzwjyut2oq871987syq8ovyuqp-alphahosting',
-			// 	credential: 'qoy91n981vlplabb1873jdcgsouz2qm87qmmakqpc-alphahosting'
-			// });			
-			// --- Strato-v30 (www3) ---
 			options.iceServers.push({
-				urls: 'turn:85.214.133.53:39571',
-				username: 'play-user-9q2gy75kmlp4qn7tb86pogsmtyp7qqo0n5-strato-v30',
-				credential: '8q76nby32odjamuzbexi6eb2f1k9gc3my99o-strato-v30'
-			});
+				urls: 'turn:89.22.121.145:39571',
+				username: 'play-user-x8env28gx41odbxzwjyut2oq871987syq8ovyuqp-alphahosting',
+				credential: 'qoy91n981vlplabb1873jdcgsouz2qm87qmmakqpc-alphahosting'
+			});			
+			// --- Strato-v30 (www3) ---
+			// options.iceServers.push({
+			// 	urls: 'turn:85.214.133.53:39571',
+			// 	username: 'play-user-9q2gy75kmlp4qn7tb86pogsmtyp7qqo0n5-strato-v30',
+			// 	credential: '8q76nby32odjamuzbexi6eb2f1k9gc3my99o-strato-v30'
+			// });
 			// --- Strato ---
 			// options.iceServers.push({
 			// 	urls: "turn:81.169.197.127",
@@ -318,7 +318,7 @@ transient unit PeerNetwork
 		float pingTime = buffer.readFloat64
 		float pingPongTime = now - pingTime
 		let player = input.players.find.id == user.id
-			statistics.add userIndex:player.index, color:player.color, value:pingPongTime, set:2
+			statistics.add "pingPongTime" userIndex:player.index, color:player.color, value:pingPongTime, set:2, isPerFrame:false
 				
 	// --------------------------------------------- Checksum ---------------------------------------------
 	
