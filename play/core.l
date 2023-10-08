@@ -465,10 +465,13 @@ transient skipInit unit core
 			snapshotFrame = frame
 			saveState snapshot
 			if logging: replayLog += ")"
+				
+	// string[] snapshotLogs
 			
 	private saveState: Buffer snapshot
 		snapshot.reset
 		saveTime = Time.measure
+			// if logging: snapshotLogs[frame] = object.stringify players, depth:5
 			Snapshot.serialize snapshot
 				
 		// To check if serialization works consistently, deserialize, serialize a second snapshot and compare it with the first
@@ -496,7 +499,7 @@ transient skipInit unit core
 		let str = new Date().hourMinuteSecondString() + " " + text
 		statistics_systemLogs.push(str)
 		if(core_logging) {
-			if(logging) core_eventLog += str + "\n"
+			core_eventLog += str + "\n"
 			console.log(str)
 		}
 		
@@ -613,6 +616,7 @@ transient skipInit unit core
 		string message = "Out of sync. frame:{frame} mine:{mine} theirs:{theirs}"
 		if logging: checksumLog += message
 		onError {message}
+		// file.saveText "{input.localUser.id}-snapshot{frame}.json", snapshotLogs[frame] 
 		
 	onError: Error error
 		errorMessage = error.stack

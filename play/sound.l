@@ -64,7 +64,7 @@ skipInit immutable Sound
 	fadeOut: Time duration = 3000
 		     Time delay = 0
 		// Migrate to 3D
-		// fx.add FadeSoundEffect startTime:Time.now+delay, duration, sound:this, startValue:1, delta:-1
+		fx.add FadeSoundAnimation startTime:Time.now+delay, duration, sound:this, startValue:1, delta:-1
 		return this
 
 transient PlayingSound
