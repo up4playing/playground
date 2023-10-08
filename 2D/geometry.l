@@ -503,6 +503,8 @@ class List<T>
 // ------------------------------------------- Angle -------------------------------------------
 		
 transient immutable float Angle
+	inline js Angle += Angle value: this += value
+	
 	inline js float toFloat() this
 	inline js string toString() this.toString()
 		
