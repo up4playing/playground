@@ -1,5 +1,5 @@
 unit Platform
-	cpp(SDL2/SDL.h) void initMedia
+	cpp(SDL.h) void initMedia
 		SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO);
 		graphics::init();
 		Image::init();
@@ -7,12 +7,10 @@ unit Platform
 		audio::init();
 		
 	cpp void start
-		system::print("### initMedia");
 		Platform::initMedia();
-		system::print("### openMedia");
 		Platform::openMedia();
-		system::print("### init");
 		init();
+		app::start();
 		
 		// Sound
 		// Mix_Chunk *sfx = Mix_LoadWAV("sfx/hop.wav");
@@ -35,27 +33,29 @@ unit Platform
 		SDL_Event event;
 		bool done = false;
 		while (!done) {
-		    while (SDL_PollEvent(&event)) {
-		        if (event.type == SDL_QUIT) {
-		            done = true;
-		        } else if (event.type == SDL_KEYUP) {
-		            switch (event.key.keysym.scancode) {
-		                case SDL_SCANCODE_SPACE:
-		                    // Mix_PlayChannel(-1, sfx, 0);
-		                    break;
-		                case SDL_SCANCODE_ESCAPE:
-		                    done = true;
-		                    break;
-		            }
-		        }
-		    }
+			while (SDL_PollEvent(&event)) {
+				if (event.type == SDL_QUIT) {
+					done = true;
+				} else if (event.type == SDL_KEYUP) {
+					switch (event.key.keysym.scancode) {
+						case SDL_SCANCODE_SPACE:
+							// Mix_PlayChannel(-1, sfx, 0);
+							break;
+						case SDL_SCANCODE_ESCAPE:
+							done = true;
+							break;
+						default:
+							break;
+					}
+				}
+			}
 		
 			graphics::startFrame();
 			app::tick();
 			graphics::finishFrame();
 		
-		    // SDL_Rect textRect = {(width - textW) / 2, (height - textH) / 2, textW, textH};
-		    // SDL_RenderCopy(renderer, text, NULL, &textRect);
+			// SDL_Rect textRect = {(width - textW) / 2, (height - textH) / 2, textW, textH};
+			// SDL_RenderCopy(renderer, text, NULL, &textRect);
 		}
 		// Mix_HaltChannel(-1);
 		
@@ -76,16 +76,4 @@ unit Platform
 		IMG_Quit();
 		SDL_Quit();
 
-			
-cpp(string, std::string) immutable struct string
 
-cpp(vector, std::vector) struct List<T>
-global unit system
-	global inline cpp void print: logstring text
-		cout << text
-	global inline cpp void if(bool condition, inline void() then, inline void() else)
-		if(condition) then() @else else()
-	global inline cpp void if(bool condition, inline void() then)
-		if(condition) then()
-	global inline cpp void while(bool condition, inline void() block)
-		while(condition) block()

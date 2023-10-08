@@ -46,7 +46,7 @@ transient unit ServerNetwork
 			core.log roomInfo, input.localUser.id
 		
 		core.log "onConnectedToServer as {input.localUser.id} {core.roomId}"
-		sendJoinMessage core.roomString, input.localUser.id, version:Platform.version
+		sendJoinMessage core.roomString, input.localUser.id, version:Platform.buildVersion
 		
 	js int bufferedAmount
 		return ServerNetwork_socket.bufferedAmount 
@@ -100,7 +100,7 @@ transient unit ServerNetwork
 			Platform.pushState "/{core.gameId}/{roomId}"
 			core.roomId = roomId
 			
-		if version != Platform.version
+		if version != Platform.buildVersion
 			alert "You are using an old version of this application. Please refresh your browser."
 			
 		inputsSentPos = input.localUser.inputs.writePos

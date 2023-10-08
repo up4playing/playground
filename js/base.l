@@ -140,6 +140,9 @@ immutable struct float
 	const inline js float minValue := -Number.MAX_VALUE
 	
 	const inline js float infinity := Number.POSITIVE_INFINITY
+
+	inline js float += int value: this += value
+	inline js float += float value: this += value
 	
 	inline js float operator ** (float a, float b) 
 		Math.pow(a,b)
