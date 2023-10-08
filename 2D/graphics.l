@@ -160,7 +160,8 @@ transient skipInit global unit graphics
 	visible Vector2 size
 	visible float pixelRatio
 	
-	async setup
+	async setup: Vector2 referenceSize
+		this.referenceSize = referenceSize
 	
 	internal js void onResize
 		graphics_canvas = document.getElementById("canvas");
