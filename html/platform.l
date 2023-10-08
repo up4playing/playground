@@ -292,6 +292,7 @@ global unit Html
 			body.style.transform = 'none !important'
 			body.style.marginRight = '0 !important'
 			body.style.marginBottom = '0 !important'
+			body.style.width = Platform_size.x+"px"
 			const width = body.clientWidth
 			const height = body.clientHeight
 			body.style.transform = `scale(${Platform_scale})`
