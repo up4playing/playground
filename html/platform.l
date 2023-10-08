@@ -88,7 +88,7 @@ skipInit global unit Platform
 			initMedia
 			initAll
 			Time.frame = 0
-			app.start
+			startApp
 			Html.updateScale
 			Html.render
 		catch
@@ -100,7 +100,10 @@ skipInit global unit Platform
 		Html.reset
 		replay
 		
-	js void tick
+	private js void startApp
+		if(window.app_start) app_start()
+		
+	private js void tick
 		Platform_heartbeat("tick")
 		if(window.app_tick) app_tick()
 		Time_frame++
@@ -130,6 +133,7 @@ skipInit global unit Platform
 	Time nextHeartbeatTime = 0
 	
 	private js void heartbeat: string context
+		if(!Platform_isDebug) return
 		let now = Date.now();
 		if(now > Platform_nextHeartbeatTime) {
 			console.log("[app]", (now%100000).toLocaleString("en-US", {minimumIntegerDigits:6, useGrouping:true})+" sending heartbeat from "+context);
@@ -288,6 +292,7 @@ global unit Html
 			body.style.transform = 'none !important'
 			body.style.marginRight = '0 !important'
 			body.style.marginBottom = '0 !important'
+			body.style.width = Platform_size.x+"px"
 			const width = body.clientWidth
 			const height = body.clientHeight
 			body.style.transform = `scale(${Platform_scale})`
@@ -437,12 +442,9 @@ global unit Html
 		          expand Attributes attributes = {} // The attributes of the HTML element 
 		          expand Style style = {}           // The css style of the HTML element 
 		          SourceCodeLocation location
-		attributes.src = src
-		attributes.autoplay = "autoplay"
-		attributes.muted = "muted"
 		style.position = Absolute
 		style.zIndex = -1000
-		return div tag:"video", attributes, style, location
+		div tag:"video", attributes, style, location, data:{src, autoplay:"autoplay", muted:"muted"}
 
 	global div: string text = null                // The text content of the element 
 		        string tag = "div"                // The tag of element

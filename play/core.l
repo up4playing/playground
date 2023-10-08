@@ -465,10 +465,13 @@ transient skipInit unit core
 			snapshotFrame = frame
 			saveState snapshot
 			if logging: replayLog += ")"
+				
+	// string[] snapshotLogs
 			
 	private saveState: Buffer snapshot
 		snapshot.reset
 		saveTime = Time.measure
+			// if logging: snapshotLogs[frame] = object.stringify players, depth:5
 			Snapshot.serialize snapshot
 				
 		// To check if serialization works consistently, deserialize, serialize a second snapshot and compare it with the first
@@ -496,7 +499,7 @@ transient skipInit unit core
 		let str = new Date().hourMinuteSecondString() + " " + text
 		statistics_systemLogs.push(str)
 		if(core_logging) {
-			if(logging) core_eventLog += str + "\n"
+			core_eventLog += str + "\n"
 			console.log(str)
 		}
 		
@@ -523,7 +526,7 @@ transient skipInit unit core
 	internal saveLogs
 		// Ensure that current eventLog is added to the table even if we haven't processed a single frame
 		logTable += ",,,,,,,,,,,,,,,,,,,,,,,,\"{eventLog.trim}\""
-		file.saveText "{input.localUser.id} {Platform.appName} {Date.now.invariantDayMonthYearHourMinuteSecondString} v{Platform.version}.csv", logTable
+		file.saveText "{input.localUser.id} {Platform.appName} {Date.now.invariantDayMonthYearHourMinuteSecondString} v{Platform.buildVersion}.csv", logTable
 			
 	saveEventStream
 		Buffer buffer = {}
@@ -540,7 +543,7 @@ transient skipInit unit core
 			buffer.writeBool .local
 			buffer.writeBuffer .inputs
 		let date = Date.now
-		file.saveBinary "{Platform.appName} {date.dayShortMonthNameYearString} {date.hourMinuteSecondString} v{Platform.version}.state", buffer
+		file.saveBinary "{Platform.appName} {date.dayShortMonthNameYearString} {date.hourMinuteSecondString} v{Platform.buildVersion}.state", buffer
 		
 	openEventStream
 		Platform.pause
@@ -613,6 +616,7 @@ transient skipInit unit core
 		string message = "Out of sync. frame:{frame} mine:{mine} theirs:{theirs}"
 		if logging: checksumLog += message
 		onError {message}
+		// file.saveText "{input.localUser.id}-snapshot{frame}.json", snapshotLogs[frame] 
 		
 	onError: Error error
 		errorMessage = error.stack
@@ -750,7 +754,7 @@ skipInit transient unit statistics
 			userId
 			userIndex: input.localUser.index
 			userEmail: user.email
-			version: Platform.version
+			version: Platform.buildVersion
 			staging: Platform.isStaging
 			server
 			loadTime: loadTime - startTime

@@ -13,6 +13,8 @@ skipInit transient immutable float Time
 	// The current frame
 	static inline js int frame := core_frame
 	
+	inline js Time += float value: this += value
+	
 	static Time fromTimeString(string timeString)
 		Time value = 0
 		int colon1 = timeString.indexOf(":")

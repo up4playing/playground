@@ -65,14 +65,12 @@ Animation ScaleAnimation
 	
 Animation FadeSoundAnimation
 	float startValue, delta
-	private dynamic audioElement
+	Sound sound
 	
-	FadeSoundAnimation: Sound sound
-		this.audioElement = sound.audioElement
 	tick(float f)
-		if audioElement == null: return
-		audioElement.volume = (startValue + delta * f) * audio.volume
-		if f >= 1: audioElement.pause
+		if sound == null: return
+		sound.volume = startValue + delta * f
+		if f >= 1: sound.stop
 			
 Animation PlaySoundAnimation
 	Sound sound

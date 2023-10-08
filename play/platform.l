@@ -24,8 +24,8 @@ transient skipInit unit Platform
 	public IntervalMode intervalMode = JavaScriptInterval
 	
 	// Info
-	public inline js int appName := appName
-	public inline js int version := version
+	public inline js string appName := _appName
+	public inline js int buildVersion := _buildVersion
 	
 	visible OperatingSystem os
 	visible bool isMobile
@@ -74,7 +74,7 @@ transient skipInit unit Platform
 		if(window.app_init) app_init();
 		
 	// This is called when the application starts for the first time	
-	private start: bool isDebug, int userCount, bool simulateConnection, bool showSafeArea
+	private start: bool isDebug, float referenceSizeX, float referenceSizeY, int userCount, bool simulateConnection, bool showSafeArea
 		try
 			this.nextHeartbeatTime = 0
 			heartbeat "start"
@@ -89,7 +89,7 @@ transient skipInit unit Platform
 			this.showSafeArea = showSafeArea
 			showDebugInfo = getLocalStorageObject("showDebugInfo") == "true"
 			
-			await graphics.setup
+			await graphics.setup {referenceSizeX, referenceSizeY}
 			graphics.onResize
 			// drawLoading
 			if mode >= Play: mode = Pause

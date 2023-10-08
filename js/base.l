@@ -140,6 +140,9 @@ immutable struct float
 	const inline js float minValue := -Number.MAX_VALUE
 	
 	const inline js float infinity := Number.POSITIVE_INFINITY
+
+	inline js float += int value: this += value
+	inline js float += float value: this += value
 	
 	inline js float operator ** (float a, float b) 
 		Math.pow(a,b)
@@ -1636,15 +1639,6 @@ global transient priority unit System
 		if(Platform_isDebug && core_frame >= core_frameWithNewWatches && location) {
 			Platform_sendWatch(core_frame, text, location.start, location.file)
 		}
-		
-	global visualize: Vector2 position = {}
-		              Color color = White
-		              logstring text = ""
-		              SourceCodeLocation location
-		VisualizeObject(position, color, index:core.watchIndex, text)
-		if Platform.isDebug and core.frame >= core.frameWithNewWatches and location
-			Platform.sendWatch core.frame, text:text or position.toString, location.start, location.file
-		core.watchIndex++
 		
 	// Shows a dialog box with a given message
 	global inline js void alert: implicit string message // The message to show
