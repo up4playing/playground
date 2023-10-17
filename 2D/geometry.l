@@ -1066,5 +1066,5 @@ global transient unit System
 		                                IntVector2 it   // The current position of the vector we are iterating over with the for-loop
 		                            ) do                // Select the field or expression to be included in the result
 		                            label IntVector2 to // Iterator over both dimensions of the vector towards this exclusive upper bound
-		IntVector2_enumerate(new IntVector2(0,0), to, do)
+		IntVector2_enumerate(from, to, do)
 		

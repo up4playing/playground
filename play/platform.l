@@ -24,8 +24,8 @@ transient skipInit unit Platform
 	public IntervalMode intervalMode = JavaScriptInterval
 	
 	// Info
-	public inline js int appName := appName
-	public inline js int version := version
+	public inline js string appName := _appName
+	public inline js int buildVersion := _buildVersion
 	
 	visible OperatingSystem os
 	visible bool isMobile

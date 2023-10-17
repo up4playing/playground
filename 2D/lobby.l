@@ -9,7 +9,7 @@ unit lobby
 		tickSettings
 		if Platform.isStaging
 			// The delta value has to be the same for all users, we use it to check if everybody is in sync
-			drawText "Version:{Platform.version} delta:{ticks-Time.frame} ticks:{ticks}", size:20, position:{-940, 520}, align:Left
+			drawText "Version:{Platform.buildVersion} delta:{ticks-Time.frame} ticks:{ticks}", size:20, position:{-940, 520}, align:Left
 			ticks++
 		
 		if PeerNetwork.error or core.errorMessage
