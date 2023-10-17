@@ -70,7 +70,7 @@ global skipInit unit graphics
 		}
 		
 		// SDL_Window *window = SDL_CreateWindow("Application", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, pixelSize.x, pixelSize.y, 0);
-		SDL_Window *window = SDL_CreateWindow("Application", 1000, 100, pixelSize.x, pixelSize.y, 0);
+		SDL_Window *window = SDL_CreateWindow("Application", 100, 100, pixelSize.x, pixelSize.y, 0);
 		
 		if(isFullscreen) SDL_SetWindowFullscreen(window, SDL_WINDOW_FULLSCREEN);
 		renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
@@ -116,7 +116,7 @@ global skipInit unit graphics
 		                      HorizontalAlignment align = Center  // The horizontal alignment of the image
 		                      VerticalAlignment valign = Middle   // The vertical alignment of the image
 		if(graphics::isVisibleFor(visibleFor)) {
-			auto f = image->frames[frame];
+			auto f = image->frames[frame%image->frames.size()];
 			double unscaledSizeX = size.x ? size.x : f.w;
 			double sizeX = unscaledSizeX * scale;
 			double sizeY = (size.y ? size.y : (unscaledSizeX/f.w)*f.h) * scale;

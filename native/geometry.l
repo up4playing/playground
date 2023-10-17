@@ -21,16 +21,30 @@ struct Vector2
 	// Returns true if the vector is not equal to Vector2.none
 	bool toBool := (x != float.infinity || y != float.infinity)
 	
+	+ Vector2 value:  return {x + value.x, y + value.y}
+	- Vector2 value:  return {x - value.x, y - value.y}
+	
+	* Vector2 value:  return {x * value.x, y * value.y}
+	* float value:    return {x * value, y * value}
+		
+	/ Vector2 value:  return {x / value.x, y / value.y}
+	/ float value:    return {x / value, y / value}
+		
+	<= Vector2 value: return x <= value.x and y <= value.y
+	<  Vector2 value: return x < value.x and y < value.y
+		
+	+= Vector2 value: x += value.x; y += value.y; return this
+	-= Vector2 value: x -= value.x; y -= value.y; return this
 		
 	// Vector2 operator = (Vector2 a, Vector2 b) a.x = b.x; a.y = b.y; a.location = b.location; return a
 	
-	Vector2 operator + (Vector2 a, Vector2 b) return {a.x+b.x, a.y+b.y}
-	Vector2 operator - (Vector2 a, Vector2 b) return {a.x-b.x, a.y-b.y}
+	// Vector2 operator + (Vector2 a, Vector2 b) return {a.x+b.x, a.y+b.y}
+	// Vector2 operator - (Vector2 a, Vector2 b) return {a.x-b.x, a.y-b.y}
 	
-	Vector2 operator * (Vector2 a, Vector2 b) return {a.x*b.x, a.y*b.y}
-	Vector2 operator * (Vector2 a, float b)   return {a.x*b, a.y*b}
+	// Vector2 operator * (Vector2 a, Vector2 b) return {a.x*b.x, a.y*b.y}
+	// Vector2 operator * (Vector2 a, float b)   return {a.x*b, a.y*b}
 	// Vector2 operator * (Vector2 a, Time b)    return {cast a.x*b, cast a.y*b}
-	Vector2 operator * (float a, Vector2 b)   return {a*b.x, a*b.y}
+	// Vector2 operator * (float a, Vector2 b)   return {a*b.x, a*b.y}
 	// Vector2 operator * (Vector2 vector, Matrix2D matrix)
 	// 	return {
 	// 		matrix.m0 * vector.x + matrix.m2 * vector.y + matrix.m4,
@@ -38,8 +52,8 @@ struct Vector2
 	// 		vector.location
 	// 	}
 		
-	Vector2 operator / (Vector2 a, Vector2 b) return {a.x/b.x, a.y/b.y}
-	Vector2 operator / (Vector2 a, float b)   return {a.x/b, a.y/b}
+	// Vector2 operator / (Vector2 a, Vector2 b) return {a.x/b.x, a.y/b.y}
+	// Vector2 operator / (Vector2 a, float b)   return {a.x/b, a.y/b}
 	// Vector2 operator / (Vector2 vector, Matrix2D matrix)
 	// 	var aa = matrix.m0, ab = matrix.m1, ac = matrix.m2, ad = matrix.m3, atx = matrix.m4, aty = matrix.m5
 
@@ -53,34 +67,34 @@ struct Vector2
 	// 		vector.location
 	// 	}			
 	
-	Vector2 operator % (Vector2 a, Vector2 b) return {((a.x % b.x) + b.x) % b.x, ((a.y % b.y) + b.y) % b.y}
-	Vector2 operator % (Vector2 a, float b)   return {((a.x % b) + b) % b, ((a.y % b) + b) % b}
+	// Vector2 operator % (Vector2 a, Vector2 b) return {((a.x % b.x) + b.x) % b.x, ((a.y % b.y) + b.y) % b.y}
+	// Vector2 operator % (Vector2 a, float b)   return {((a.x % b) + b) % b, ((a.y % b) + b) % b}
 	
-	Vector2 operator += (Vector2 a, Vector2 b) a.x += b.x; a.y += b.y;
-	Vector2 operator -= (Vector2 a, Vector2 b) a.x -= b.x; a.y -= b.y;
-	Vector2 operator *= (Vector2 a, Vector2 b) a.x *= b.x; a.y *= b.y;
-	Vector2 operator /= (Vector2 a, Vector2 b) a.x /= b.x; a.y /= b.y;
+	// Vector2 operator += (Vector2 a, Vector2 b) a.x += b.x; a.y += b.y; return a
+	// Vector2 operator -= (Vector2 a, Vector2 b) a.x -= b.x; a.y -= b.y; return a
+	// Vector2 operator *= (Vector2 a, Vector2 b) a.x *= b.x; a.y *= b.y; return a
+	// Vector2 operator /= (Vector2 a, Vector2 b) a.x /= b.x; a.y /= b.y; return a
 	
-	bool operator == (Vector2 a, Vector2 b) return a.x == b.x && a.y == b.y
-	bool operator != (Vector2 a, Vector2 b) return a.x != b.x || a.y != b.y
+	// bool operator == (Vector2 a, Vector2 b) return a.x == b.x && a.y == b.y
+	// bool operator != (Vector2 a, Vector2 b) return a.x != b.x || a.y != b.y
 	
-	bool operator == (Vector2 a, IntVector2 b) return a.x == b.x && a.y == b.y
-	bool operator != (Vector2 a, IntVector2 b) return a.x != b.x || a.y != b.y
+	// bool operator == (Vector2 a, IntVector2 b) return a.x == b.x && a.y == b.y
+	// bool operator != (Vector2 a, IntVector2 b) return a.x != b.x || a.y != b.y
 	
-	bool operator == (IntVector2 a, Vector2 b) return b.x == a.x && b.y == a.y
-	bool operator != (IntVector2 a, Vector2 b) return b.x != a.x || b.y != a.y
+	// bool operator == (IntVector2 a, Vector2 b) return b.x == a.x && b.y == a.y
+	// bool operator != (IntVector2 a, Vector2 b) return b.x != a.x || b.y != a.y
 	
-	bool operator >  (Vector2 a, Vector2 b) return a.x >  b.x && a.y >  b.y
-	bool operator >= (Vector2 a, Vector2 b) return a.x >= b.x && a.y >= b.y
-	bool operator <  (Vector2 a, Vector2 b) return a.x <  b.x && a.y <  b.y
-	bool operator <= (Vector2 a, Vector2 b) return a.x <= b.x && a.y <= b.y
+	// bool operator >  (Vector2 a, Vector2 b) return a.x >  b.x && a.y >  b.y
+	// bool operator >= (Vector2 a, Vector2 b) return a.x >= b.x && a.y >= b.y
+	// bool operator <  (Vector2 a, Vector2 b) return a.x <  b.x && a.y <  b.y
+	// bool operator <= (Vector2 a, Vector2 b) return a.x <= b.x && a.y <= b.y
 	
-	bool operator == (Vector2 a, float length) let x = a.x, y = a.y; return math.sqrt(x*x + y*y) == length
-	bool operator != (Vector2 a, float length) let x = a.x, y = a.y; return math.sqrt(x*x + y*y) != length
-	bool operator >  (Vector2 a, float length) let x = a.x, y = a.y; return math.sqrt(x*x + y*y) >  length
-	bool operator >= (Vector2 a, float length) let x = a.x, y = a.y; return math.sqrt(x*x + y*y) >= length
-	bool operator <  (Vector2 a, float length) let x = a.x, y = a.y; return math.sqrt(x*x + y*y) <  length
-	bool operator <= (Vector2 a, float length) let x = a.x, y = a.y; return math.sqrt(x*x + y*y) <= length
+	// bool operator == (Vector2 a, float length) let x = a.x, y = a.y; return math.sqrt(x*x + y*y) == length
+	// bool operator != (Vector2 a, float length) let x = a.x, y = a.y; return math.sqrt(x*x + y*y) != length
+	// bool operator >  (Vector2 a, float length) let x = a.x, y = a.y; return math.sqrt(x*x + y*y) >  length
+	// bool operator >= (Vector2 a, float length) let x = a.x, y = a.y; return math.sqrt(x*x + y*y) >= length
+	// bool operator <  (Vector2 a, float length) let x = a.x, y = a.y; return math.sqrt(x*x + y*y) <  length
+	// bool operator <= (Vector2 a, float length) let x = a.x, y = a.y; return math.sqrt(x*x + y*y) <= length
 	
 	// The length of the vector
 	length := math.sqrt(x * x + y * y)
@@ -111,8 +125,8 @@ struct Vector2
 	
 	// Move the vector
 	move: Vector2 delta // The vector to move by
-		this.x += delta.x
-		this.y += delta.y
+		x += delta.x
+		y += delta.y
 		return this
 	
 	// Move the vector	
@@ -277,32 +291,51 @@ struct IntVector2
 	
 	implicit Vector2 toVector2 := {x, y}
 	
-	IntVector2 operator = (IntVector2 a, IntVector2 b) a.x = b.x; a.y = b.y;
-	
-	IntVector2 operator + (IntVector2 a, IntVector2 b) return {a.x+b.x, a.y+b.y}
-	IntVector2 operator - (IntVector2 a, IntVector2 b) return {a.x-b.x, a.y-b.y}
-	
-	IntVector2 operator * (IntVector2 a, IntVector2 b) return {a.x*b.x, a.y*b.y}
-	IntVector2 operator * (IntVector2 a, int b)   return {a.x*b, a.y*b}
-	IntVector2 operator * (int a, IntVector2 b)   return {a*b.x, a*b.y}
+	+ IntVector2 value:  return IntVector2(x + value.x, y + value.y)
+	+ Vector2 value:     return Vector2(x + value.x, y + value.y)
 		
-	Vector2 operator / (IntVector2 a, IntVector2 b) return {a.x/b.x, a.y/b.y}
-	Vector2 operator / (IntVector2 a, float b)   return {a.x/b, a.y/b}
+	- IntVector2 value:  return IntVector2(x - value.x, y - value.y)
+	- Vector2 value:     return Vector2(x - value.x, y - value.y)
 	
-	IntVector2 operator % (IntVector2 a, IntVector2 b) return {((a.x % b.x) + b.x) % b.x, ((a.y % b.y) + b.y) % b.y}
-	IntVector2 operator % (IntVector2 a, int b)   return {((a.x % b) + b) % b}
+	* IntVector2 value:  return IntVector2(x * value.x, y * value.y)
+	* float value:       return Vector2(x * value, y * value)
+	* int value:         return IntVector2(x * value, y * value)
+		
+	/ IntVector2 value:  return Vector2(x / value.x, y / value.y)
+	/ float value:       return Vector2(x / value, y / value)
+		
+	// == IntVector2 value: return x == value.x and y == value.y
+	<= IntVector2 value: return x <= value.x and y <= value.y
+	<  IntVector2 value: return x <  value.x and y <  value.y
+	>= IntVector2 value: return x >= value.x and y >= value.y
+	>  IntVector2 value: return x >  value.x and y >  value.y
+		
+	// IntVector2 operator = (IntVector2 a, IntVector2 b) a.x = b.x; a.y = b.y;
 	
-	IntVector2 operator += (IntVector2 a, IntVector2 b) a.x += b.x; a.y += b.y;
-	IntVector2 operator -= (IntVector2 a, IntVector2 b) a.x -= b.x; a.y -= b.y;
-	IntVector2 operator *= (IntVector2 a, IntVector2 b) a.x *= b.x; a.y *= b.y;
-	IntVector2 operator /= (IntVector2 a, IntVector2 b) a.x /= b.x; a.y /= b.y;
+	// IntVector2 operator + (IntVector2 a, IntVector2 b) return {a.x+b.x, a.y+b.y}
+	// IntVector2 operator - (IntVector2 a, IntVector2 b) return {a.x-b.x, a.y-b.y}
 	
-	bool operator == (IntVector2 a, IntVector2 b) return a.x == b.x && a.y == b.y
-	bool operator != (IntVector2 a, IntVector2 b) return a.x != b.x || a.y != b.y
-	bool operator >  (IntVector2 a, IntVector2 b) return a.x >  b.x && a.y >  b.y
-	bool operator >= (IntVector2 a, IntVector2 b) return a.x >= b.x && a.y >= b.y
-	bool operator <  (IntVector2 a, IntVector2 b) return a.x <  b.x && a.y <  b.y
-	bool operator <= (IntVector2 a, IntVector2 b) return a.x <= b.x && a.y <= b.y
+	// IntVector2 operator * (IntVector2 a, IntVector2 b) return {a.x*b.x, a.y*b.y}
+	// IntVector2 operator * (IntVector2 a, int b)   return {a.x*b, a.y*b}
+	// IntVector2 operator * (int a, IntVector2 b)   return {a*b.x, a*b.y}
+		
+	// Vector2 operator / (IntVector2 a, IntVector2 b) return {a.x/b.x, a.y/b.y}
+	// Vector2 operator / (IntVector2 a, float b)   return {a.x/b, a.y/b}
+	
+	// IntVector2 operator % (IntVector2 a, IntVector2 b) return {((a.x % b.x) + b.x) % b.x, ((a.y % b.y) + b.y) % b.y}
+	// IntVector2 operator % (IntVector2 a, int b)   return {((a.x % b) + b) % b}
+	
+	// IntVector2 operator += (IntVector2 a, IntVector2 b) a.x += b.x; a.y += b.y;
+	// IntVector2 operator -= (IntVector2 a, IntVector2 b) a.x -= b.x; a.y -= b.y;
+	// IntVector2 operator *= (IntVector2 a, IntVector2 b) a.x *= b.x; a.y *= b.y;
+	// IntVector2 operator /= (IntVector2 a, IntVector2 b) a.x /= b.x; a.y /= b.y;
+	
+	// bool operator == (IntVector2 a, IntVector2 b) return a.x == b.x && a.y == b.y
+	// bool operator != (IntVector2 a, IntVector2 b) return a.x != b.x || a.y != b.y
+	// bool operator >  (IntVector2 a, IntVector2 b) return a.x >  b.x && a.y >  b.y
+	// bool operator >= (IntVector2 a, IntVector2 b) return a.x >= b.x && a.y >= b.y
+	// bool operator <  (IntVector2 a, IntVector2 b) return a.x <  b.x && a.y <  b.y
+	// bool operator <= (IntVector2 a, IntVector2 b) return a.x <= b.x && a.y <= b.y
 	
 	// The length of the vector
 	length := math.sqrt(x * x + y * y)
@@ -372,17 +405,17 @@ struct IntVector2
 		let len = math.sqrt(x * x + y * y)
 		return len != 0 ? Vector2(x / len, y / len) : Vector2(0, 0)
 		
-	static cpp TResult[] enumerate: IntVector2 from
-	                               IntVector2 to
-	                               TResult(IntVector2 it) selector
-		let result = []
-		for(let y=from.y; y < to.y; ++y)
-			for(let x=from.x; x < to.x; ++x)
-				result.push(selector(new IntVector2(x,y)))
-		return result
+	// static cpp TResult[] enumerate: IntVector2 from
+	//                               IntVector2 to
+	//                               TResult(IntVector2 it) selector
+	// 	let result = []
+	// 	for(let y=from.y; y < to.y; ++y)
+	// 		for(let x=from.x; x < to.x; ++x)
+	// 			result.push(selector(new IntVector2(x,y)))
+	// 	return result
 		
-	inline cpp TResult[] times: TResult(IntVector2 it) selector
-		Vector2_enumerate(new IntVector2(0,0), this, selector)
+	// inline cpp TResult[] times: TResult(IntVector2 it) selector
+	// 	Vector2_enumerate(new IntVector2(0,0), this, selector)
 
 // A 3x2 matrix used to transform vectors in 2D space
 struct Matrix2D
@@ -415,17 +448,17 @@ struct Matrix2D
 	Matrix2D clone
 		return Matrix2D(m0, m1, m2, m3, m4, m5)
 
-	Matrix2D operator = (Matrix2D a, Matrix2D b)
-		a.m0 = b.m0
-		a.m1 = b.m1
-		a.m2 = b.m2
-		a.m3 = b.m3
-		a.m4 = b.m4
-		a.m5 = b.m5
+	Matrix2D = Matrix2D value
+		m0 = value.m0
+		m1 = value.m1
+		m2 = value.m2
+		m3 = value.m3
+		m4 = value.m4
+		m5 = value.m5
 		return this
 		
-	Matrix2D operator * (Matrix2D a, Matrix2D b) Matrix2D c; return multiply(a, b, c)
-	Matrix2D operator *= (Matrix2D a, Matrix2D b) return multiply(a, b, a)
+	* Matrix2D value: Matrix2D result; return multiply(this, value, result)
+	*= Matrix2D value: return multiply(this, value, this)
 		
 	// Returns the translation component of the matrix
 	Vector2 translationVector := {m4, m5}
@@ -578,29 +611,30 @@ priority low struct List<T>
 global skipInit priority low unit math
 	// Returns the absolute value
 	inline cpp Angle abs: Angle value // The angle to return the absolute value of
-		Math.abs(value)
+		std::abs(value)
 		
 	// Returns the smallest integer greater than or equal to the given value 
 	inline cpp Angle ceil: Angle value // The angle to round up
-		Math.ceil(value)
+		std::ceil(value)
 		
 	// Returns the largest integer less than or equal to the given value
 	inline cpp Angle floor: Angle value // The angle to round down
-		Math.floor(value)
+		std::floor(value)
 		
 	// Returns the given value rounded to the nearest integer
 	inline cpp Angle round: Angle value // The angle to round
-		Math.round(value)
+		std::round(value)
 		
 	// Returns the smallest of the given values
 	inline cpp Angle min: Angle a // The first angle
 		                 Angle b // The second angle
-		Math.min(a, b)
+		std::min(a, b)
 		
 	// Returns the largest of the given values
 	inline cpp Angle max: Angle a // The first angle
 		                 Angle b // The second angle
-		Math.max(a, b)
+		std::max(a, b)
+		
 	// The ratio of a circle's circumference to its diameter
 	const float PI = 3.141592653589793
 	
@@ -608,13 +642,13 @@ global skipInit priority low unit math
 	const float TwoPI = 6.283185307179586
 	
 	internal inline cpp float nativeSin: float angle // The angle in radians
-		Math.sin(angle)
+		std::sin(angle)
 		
 	internal inline cpp float nativeCos: float angle // The angle in radians
-		Math.cos(angle)
+		std::cos(angle)
 		
 	internal inline cpp float nativeTan: float angle // The angle in radians
-		Math.tan(angle)
+		std::tan(angle)
 		
 	// Returns the sine of an angle in turns
 	sin: Angle angle // The angle in turns (one full rotation is 1)
@@ -647,13 +681,7 @@ global skipInit priority low unit math
 		angle += (.03124211533 * r * r - .1562424076) * r;
 		if y < 0.0: return cast -angle
 		else        return cast angle
-		
-	moveTowards: Angle value
-		         Angle targetValue
-		         Angle speed = 1
-		if targetValue > value: return math.min(value + speed, targetValue) else
-		if targetValue < value: return math.max(value - speed, targetValue)
-			
+
 unit math
 	// Returns the arctangent of the quotient of the given values
 	Angle getAngleForVector: Vector2 vector
@@ -680,7 +708,7 @@ unit math
 
 		// compute line params
 		let denominator = (y4 - y3) * (x2 - x1) - (x4 - x3) * (y2 - y1)
-		if (denominator == 0) return Vector2.none // lines are parallel
+		if denominator == 0: return Vector2.none // lines are parallel
 		let ua = ((x4 - x3) * (y1 - y3) - (y4 - y3) * (x1 - x3)) / denominator
 		let ub = ((x2 - x1) * (y1 - y3) - (y2 - y1) * (x1 - x3)) / denominator
 
@@ -868,7 +896,7 @@ immutable Direction
 	Angle angle       // The angle in turns starting with "Right" and going around clockwise
 	Angle isoAngle    // The angle in turns within an isometric grid
 	
-	toString := name
+	toString() return name
 	
 	rotated: RotationDirection direction = Clockwise
 		return primaryDirections[(index+(direction == Clockwise ? 1:3))%4]
@@ -904,7 +932,7 @@ immutable Line
 
 		// compute line params
 		let denominator = (y4 - y3) * (x2 - x1) - (x4 - x3) * (y2 - y1)
-		if (denominator == 0) return Vector2.none // lines are parallel
+		if denominator == 0: return Vector2.none // lines are parallel
 		let ua = ((x4 - x3) * (y1 - y3) - (y4 - y3) * (x1 - x3)) / denominator
 		let ub = ((x2 - x1) * (y1 - y3) - (y2 - y1) * (x1 - x3)) / denominator
 
@@ -935,7 +963,7 @@ immutable Rect
 
 struct Grid<T>
 	IntVector2 size
-	T[] items
+	visible T[] items
 	
 	Grid
 		for size.x * size.y: items.add null
@@ -1019,7 +1047,7 @@ global transient unit system
 		                           int x,          // The x component of the current position we are iterating over with the for-loop
 		                           int y           // The y component of the current position we are iterating over with the for-loop
 		                       ) do                // Do this the given number of times
-		for(int _y=0; _y<subject.y; ++_y) for(int _x=0; _x<subject.x; ++_x) { IntVector2 _pos = new IntVector2(_x,_y); do(_pos, _x, _y)}
+		for(int _y=0; _y<subject.y; ++_y) for(int _x=0; _x<subject.x; ++_x) { IntVector2 _pos = IntVector2(_x,_y); do(_pos, _x, _y)}
 			
 	global inline cpp void for: ensureSingleExecution IntVector2 subject  // The exclusive upper bound to iterate towards
 		                       <- void(
@@ -1027,7 +1055,7 @@ global transient unit system
 		                           int x,          // The x component of the current position we are iterating over with the for-loop
 		                           int y           // The y component of the current position we are iterating over with the for-loop
 		                       ) do                // Do this the given number of times
-		for(int _y=subject.y-1; _y>=0; --_y) for(let _x=subject.x-1; _x>=0; --_x) { IntVector2 _pos = new IntVector2(_x,_y); do(_pos, _x, _y)}
+		for(int _y=subject.y-1; _y>=0; --_y) for(let _x=subject.x-1; _x>=0; --_x) { IntVector2 _pos = IntVector2(_x,_y); do(_pos, _x, _y)}
 			
 	global inline cpp void for: ensureSingleExecution Grid<T> subject    // The grid to iterate over
 		                       -> void(
@@ -1035,7 +1063,7 @@ global transient unit system
 		                           IntVector2 pos,
 		                           int i      // The index of the current item of the list we are iterating over with the for-loop
 		                       ) do           // Do this for each item in a list
-		for(int _i=0, _len=subject.size.x*subject.size.y; _i<_len; ++_i) { auto _it = subject.items[_i]; if(_it) { IntVector2 _pos = new IntVector2(_i%subject.size.x, std::floor(_i/subject.size.x)); do(_it, _pos, _i)}})}}
+		for(int _i=0, _len=subject.size.x*subject.size.y; _i<_len; ++_i) { auto _it = subject.items[_i]; if(_it) { IntVector2 _pos = IntVector2(_i%subject.size.x, std::floor(_i/subject.size.x)); do(_it, _pos, _i)}}
 			
 	global inline cpp void for: Grid<T> subject      // The grid to iterate over
 		                       includeEmpty = false // Include items that are null
@@ -1044,7 +1072,7 @@ global transient unit system
 		                           IntVector2 pos,
 		                           int i      // The index of the current item of the list we are iterating over with the for-loop
 		                       ) do           // Do this for each item in a list
-		for(int _size=subject.size, _y=0; _y<_size.y; ++_y) for(let _x=0; x<_size.x; ++x) { auto _it = subject.items[_y*_size.x + _x]; IntVector2 _pos = new IntVector2(_x,_y); do(_it, _pos, _i)}
+		for(int _size=subject.size, _y=0; _y<_size.y; ++_y) for(let _x=0; x<_size.x; ++x) { auto _it = subject.items[_y*_size.x + _x]; IntVector2 _pos = IntVector2(_x,_y); do(_it, _pos, _i)}
 
 	global inline cpp TResult[] for: IntVector2 to     // Iterator over both dimensions of the vector towards this exclusive upper bound
 		                            TResult(

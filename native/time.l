@@ -1,7 +1,6 @@
 skipInit transient float Time
 	// // The number of milliseconds elapsed since January 1, 1970
-	// static inline cpp Time now := Date.now()
-	// static int frame
+	static Time now = 0
 	
 	// // The largest possible time value
 	// const inline cpp Time maxValue := Number.MAX_VALUE
@@ -9,7 +8,11 @@ skipInit transient float Time
 	// // The smallest possible time value
 	// const inline cpp Time minValue := Number.MIN_VALUE
 	
-	// static internal inline cpp float realTime := Date.now()
+	static internal cpp(chrono) int realTime
+		return std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+	
+	// The current frame
+	static inline cpp int frame := core::frame
 
 	// static Time fromTimeString(string timeString)
 	// 	if !timeString: return 0 milliseconds
@@ -30,8 +33,9 @@ skipInit transient float Time
 	// static inline cpp Time fromIsoString: string isoString
 	// 	new Date(isoString).getTime()
 		
-	inline cpp float toFloat() this
-	inline cpp string toString() this.toString()
+	inline cpp float toFloat() ((doubel)this)
+	
+	inline cpp(string) string toString := std::to_string(this)
 		
 	// Returns true if the time is not zero
 	inline cpp bool toBool := this
@@ -83,30 +87,30 @@ skipInit transient float Time
 	// // (31-12-2000 23-59-59)
 	// inline cpp string invariantDayMonthYearHourMinuteSecondString() new Date(this).invariantDayMonthYearHourMinuteSecondString()
 			
-	// inline cpp Time  operator +  (Time a, Time b) a+b
-	// inline cpp Time  operator +  (Time a, int b) a+b
-	// inline cpp Time  operator +  (Time a, float b) a+b
+	inline cpp Time  operator +  (Time a, Time b) a+b
+	inline cpp Time  operator +  (Time a, int b) a+b
+	inline cpp Time  operator +  (Time a, float b) a+b
 	
-	// inline cpp Time  operator -  (Time a, Time b) a-b
-	// inline cpp Time  operator -  (Time a, int b) a-b
-	// inline cpp Time  operator -  (Time a, float b) a-b
+	inline cpp Time  operator -  (Time a, Time b) a-b
+	inline cpp Time  operator -  (Time a, int b) a-b
+	inline cpp Time  operator -  (Time a, float b) a-b
 	
-	// inline cpp float operator /  (Time a, Time b) a/b
-	// inline cpp Time  operator /  (Time a, int b) a/b
-	// inline cpp Time  operator /  (Time a, float b) a/b
+	inline cpp float operator /  (Time a, Time b) a/b
+	inline cpp Time  operator /  (Time a, int b) a/b
+	inline cpp Time  operator /  (Time a, float b) a/b
 	
-	// inline cpp Time  operator *  (Time a, int b) a*b
-	// inline cpp Time  operator *  (Time a, float b) a*b
-	// inline cpp Time  operator *  (int a, Time b) a*b
-	// inline cpp Time  operator *  (float a, Time b) a*b
+	inline cpp Time  operator *  (Time a, int b) a*b
+	inline cpp Time  operator *  (Time a, float b) a*b
+	inline cpp Time  operator *  (int a, Time b) a*b
+	inline cpp Time  operator *  (float a, Time b) a*b
 	
-	// inline cpp Time  operator %  (Time a, int b) a%b
-	// inline cpp Time  operator %  (Time a, Time b) a%b
+	inline cpp Time  operator %  (Time a, int b) a%b
+	inline cpp Time  operator %  (Time a, Time b) a%b
 	
-	// inline cpp bool  operator <  (Time a, Time b) a<b
-	// inline cpp bool  operator <= (Time a, Time b) a<=b
-	// inline cpp bool  operator >  (Time a, Time b) a>b
-	// inline cpp bool  operator >= (Time a, Time b) a>=b
+	inline cpp bool  operator <  (Time a, Time b) a<b
+	inline cpp bool  operator <= (Time a, Time b) a<=b
+	inline cpp bool  operator >  (Time a, Time b) a>b
+	inline cpp bool  operator >= (Time a, Time b) a>=b
 	
 	// static measure: void() do
 	// 	let startTime = preciseTime

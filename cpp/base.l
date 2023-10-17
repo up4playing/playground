@@ -1,135 +1,150 @@
 // A number stored as a 32-bit integer
+cpp ,int
 immutable struct int
 	// The largest possible integer value
 	static inline cpp int maxValue() 2147483647
 	
 	// The smallest possible integer value
-	static inline cpp int minValue() = -2147483648
+	static inline cpp int minValue() -2147483648
 	
-// 	inline cpp int operator ** (int a, int b) 
-// 		Math.pow(a,b)
+	inline cpp(cmath) int ** int value
+		std::pow(this,value)
 		
-	cpp int operator % (int a, int b)
-		return ((a % b) + b) % b
+	inline cpp int % int value
+		(((this % value) + value) % value)
 		
-// 	// The remainer after a division by the given value. The sign stays the same.
-// 	inline cpp int remainder: int value // The value to divide by
-// 		(this % value)
+	// The remainer after a division by the given value. The sign stays the same.
+	inline cpp int remainder: int value // The value to divide by
+		(this % value)
 		
-// 	// Returns true if the integer is not zero
-// 	inline cpp bool toBool := this
+	// Returns true if the integer is not zero
+	inline cpp bool toBool := this
 	
 	inline cpp(string) string toString := std::to_string(this)
 		
-// 	inline cpp string formatWithSpaces := this.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ")
+    cpp(string, iomanip) string formatWithSpaces
+		std::ostringstream ss;
+		ss.imbue(std::locale(""));
+		ss << std::fixed << this;
+		std::string s = ss.str();
+		for(size_t i = s.size() - 3; i > 0; i -= 3) {
+			s.insert(i, " ");
+		}
+		return s;
+
+    // format
+	cpp(string, iomanip) string format: int minIntegerDigits = 1
+	                     bool grouping = false
+		std::ostringstream ss;
+		if (grouping) ss.imbue(std::locale(""));
+		ss << std::setw(minIntegerDigits) << std::setfill('0') << std::fixed << this;
+		return ss.str();
+
+			
+	// Returns the absolute value of the integer
+	inline cpp(cmath) int abs
+		std::abs(this)
 		
-// 	inline cpp string format: int minIntegerDigits = 1, bool grouping = false
-// 		this.toLocaleString("en-US", {minimumIntegerDigits:minIntegerDigits, useGrouping:grouping})
-		
-// 	// Returns the absolute value of the integer
-// 	inline cpp int abs
-// 		Math.abs(this)
-		
-// 	// Shift the bits of the int to the left. Excess bits shifted off to the left are discarded
-// 	inline cpp int shiftLeft: int count // The amount of bits to shift 
-// 		(this << count)
+	// Shift the bits of the int to the left. Excess bits shifted off to the left are discarded
+	inline cpp int shiftLeft: int count // The amount of bits to shift
+		(this << count)
 	
-// 	// Shift the bits of the int to the right. Excess bits shifted off to the right are discarded
-// 	inline cpp int shiftRight: int count // The amount of bits to shift 
-// 		(this >> count)
+	// Shift the bits of the int to the right. Excess bits shifted off to the right are discarded
+	inline cpp int shiftRight: int count // The amount of bits to shift
+		(this >> count)
 		
-// 	// Perform a bitwise "or" operation
-// 	inline cpp int bitwiseOr: implicit int value // The value to perform the bitwise "or" with
-// 		(this | value)
+	// Perform a bitwise "or" operation
+	inline cpp int bitwiseOr: implicit int value // The value to perform the bitwise "or" with
+		(this | value)
 	
-// 	// Perform a bitwise "and" operation
-// 	inline cpp int bitwiseAnd: implicit int value // The value to perform the bitwise "and" with
-// 		(this & value)
+	// Perform a bitwise "and" operation
+	inline cpp int bitwiseAnd: implicit int value // The value to perform the bitwise "and" with
+		(this & value)
 	
-// 	// Set a specific bit of the integer
-// 	inline cpp int setBit: implicit int bitIndex // The index of the bit to set
-// 		(this |= (1 << bitIndex))
+	// Set a specific bit of the integer
+	inline cpp int setBit: implicit int bitIndex // The index of the bit to set
+		(this |= (1 << bitIndex))
 	
-// 	// Clear a specific bit of the integer
-// 	inline cpp int clearBit: implicit int bitIndex // The index of the bit to clear
-// 		(this &= ~(1 << bitIndex))
+	// Clear a specific bit of the integer
+	inline cpp int clearBit: implicit int bitIndex // The index of the bit to clear
+		(this &= ~(1 << bitIndex))
 	
-// 	// Limit the value to a specific range
-// 	// Example: Limit the player's to be between 0 and 100
-// 	//     Player
-// 	//         int health
-// 	//         changeHealth: int delta
-// 	//             health = (health + delta) limit 0..100
-// 	inline cpp int limit: int from // The inclusive minimum value
-// 		                 int to   // The inclusive maximum value
-// 		(this < from ? from : this > to ? to : this)
+	// Limit the value to a specific range
+	// Example: Limit the player's to be between 0 and 100
+	//     Player
+	//         int health
+	//         changeHealth: int delta
+	//             health = (health + delta) limit 0..100
+	inline cpp int limit: int from // The inclusive minimum value
+						int to   // The inclusive maximum value
+		(this < from ? from : this > to ? to : this)
 		
-// 	// Make sure the value never exceets a maximum value
-// 	// Example: Make sure the card count never exceets a maximum value of 5
-// 	//     cardCount = cardCount limit ..5
-// 	inline cpp int limit: int to
-// 		(this > to ? to : this)
+	// Make sure the value never exceets a maximum value
+	// Example: Make sure the card count never exceets a maximum value of 5
+	//     cardCount = cardCount limit ..5
+	inline cpp int limit: int to
+		(this > to ? to : this)
 	
-// 	// Make sure the value never falls below a minimum value
-// 	// Example: Make sure the score never fall below 0
-// 	//     score = score limit 0..
-// 	inline cpp int limit: int from
-// 		(this < from ? from : this)
+	// Make sure the value never falls below a minimum value
+	// Example: Make sure the score never fall below 0
+	//     score = score limit 0..
+	inline cpp int limit: int from
+		(this < from ? from : this)
 	
-// 	// Make sure the value never exceets a maximum value
-// 	// Example: Make sure the card count never exceets a maximum value of 5
-// 	//     cardCount = cardCount max 5
-// 	inline cpp int max: int value
-// 		(this > value ? value : this)
+	// Make sure the value never exceets a maximum value
+	// Example: Make sure the card count never exceets a maximum value of 5
+	//     cardCount = cardCount max 5
+	inline cpp int max: int value
+		(this > value ? value : this)
 	
-// 	// Make sure the value never falls below a minimum value
-// 	// Example: Make sure the score never fall below 0
-// 	//     score = score min 0
-// 	inline cpp int min: int value
-// 		(this < value ? value : this)
+	// Make sure the value never falls below a minimum value
+	// Example: Make sure the score never fall below 0
+	//     score = score min 0
+	inline cpp int min: int value
+		(this < value ? value : this)
 	
-// 	inline cpp int setIfLarger: int newValue
-// 		(this = Math.max(newValue, this))
+	inline cpp(cmath) int setIfLarger: int newValue
+		(this = std::max(newValue, this))
 		
-// 	inline cpp int incrementAndWrap: int max // When the integer reaches this value, it wraps around to zero
-// 		(this = (((this+1) % max) + max) % max)
+	inline cpp int incrementAndWrap: int max // When the integer reaches this value, it wraps around to zero
+		(this = (((this+1) % max) + max) % max)
 	
-// 	inline cpp int decrementAndWrap: int max // When the integer reaches this value, it wraps around to zero
-// 		(this = (((this-1) % max) + max) % max)
+	inline cpp int decrementAndWrap: int max // When the integer reaches this value, it wraps around to zero
+		(this = (((this-1) % max) + max) % max)
 	
-// 	inline cpp int incrementUpTo: int max
-// 		(this < max ? ++this : max)
+	inline cpp int incrementUpTo: int max
+		(this < max ? ++this : max)
 		
-// 	inline cpp int incrementUpToExclusive: int max
-// 		(this < max-1 ? ++this : max-1)
+	inline cpp int incrementUpToExclusive: int max
+		(this < max-1 ? ++this : max-1)
 		
-// 	inline cpp int incrementBy: int value
-// 		                       int upTo
-// 		(this+value < upTo ? (this += value) : upTo)
+	inline cpp int incrementBy: int value
+							int upTo
+		(this+value < upTo ? (this += value) : upTo)
 		
-// 	inline cpp int decrementDownTo: int min
-// 		(this > min ? --this : min)
+	inline cpp int decrementDownTo: int min
+		(this > min ? --this : min)
 		
-// 	inline cpp int decrementDownToExclusive: int min
-// 		(this > min+1 ? --this : min+1)
+	inline cpp int decrementDownToExclusive: int min
+		(this > min+1 ? --this : min+1)
 		
-// 	inline cpp bool within: Range range
-// 		(this >= range.from && this < range.to)
+	inline cpp bool within: Range range
+		(this >= range.from && this < range.to)
 		
-// 	inline cpp bool withinInclusively: Range range
-// 		(this >= range.from && this <= range.to)
+	inline cpp bool withinInclusively: Range range
+		(this >= range.from && this <= range.to)
 		
-// 	inline cpp int assignIfGreater: int value
-// 		(value > this ? this = value : this)
+	inline cpp int assignIfGreater: int value
+		(value > this ? this = value : this)
 		
-// 	static cpp TResult[] enumerate: int from, int to, TResult(int i) selector
-// 		let result = []
-// 		for(let i=from; i < to; ++i)
-// 			result.push(selector(i))
-// 		return result
+	static cpp TResult[] enumerate: int from, int to, TResult(int i) selector
+		std::vector<TResult> result;
+		for (int i = from; i < to; ++i)
+			result.push_back(selector(i));
+		return result;
 		
-// 	inline cpp TResult[] times: TResult(int i) selector
-// 		int_enumerate(0, this, selector)
+	inline cpp TResult[] times: TResult(int i) selector
+		int_extensions::enumerate(0, this, selector)
 	
 // // A number stored as a double precision 64-bit floating point value
 cpp(,double)
@@ -142,110 +157,135 @@ immutable struct float
 	
 	const inline cpp(cmath) float infinity := INFINITY
 	
-// 	inline cpp float operator ** (float a, float b) 
-// 		Math.pow(a,b)
+	inline cpp(cmath) float ** float value
+		std::pow(this,value)
 		
-	cpp float operator % (float a, float b)
-		return ((a % b) + b) % b
+	inline cpp float % float value
+		(((this % value) + value) % value)
 		
-// 	// The remainer after a division by the given value. The sign stays the same.
-// 	inline cpp float remainder: float value
-// 		(this % value)
+	// The remainer after a division by the given value. The sign stays the same.
+	inline cpp float remainder: float value
+		(this % value)
 		
-// 	inline cpp int toInt := Math.floor(this)
+	inline cpp(cmath) int toInt := std::floor(this)
 		
-// 	// Returns true if the floot is not zero
-// 	inline cpp bool toBool := this
+	// Returns true if the floot is not zero
+	inline cpp bool toBool := this
 	
 	inline cpp(string) string toString := std::to_string(this)
 		
-// 	inline cpp string format: int fractionDigits, int minIntegerDigits = 1, bool grouping = false
-// 		this.toLocaleString("en-US", {maximumFractionDigits:fractionDigits, minimumFractionDigits:fractionDigits, minimumIntegerDigits:minIntegerDigits, useGrouping:grouping})
-		
-// 	inline cpp string format: int fractionDigits, bool grouping = false
-// 		this.toLocaleString("en-US", {maximumFractionDigits:fractionDigits, minimumFractionDigits:fractionDigits, useGrouping:grouping})
-		
-// 	inline cpp string format: int minIntegerDigits = 1, bool grouping = false
-// 		this.toLocaleString("en-US", {minimumIntegerDigits:minIntegerDigits, useGrouping:grouping})
-		
-// 	// Returns the absolute value
-// 	inline cpp float abs
-// 		Math.abs(this)
-		
-// 	// Returns the smallest integer greater than or equal to the given value 
-// 	inline cpp int ceil
-// 		Math.ceil(this)
-		
-// 	// Returns the largest integer less than or equal to the given value
-// 	inline cpp int floor
-// 		Math.floor(this)
-		
-// 	// Returns the given value rounded to the nearest integer
-// 	inline cpp int round
-// 		Math.round(this)
-		
-// 	inline cpp float limit: float from
-// 		                   float to
-// 		(this < from ? from : this > to ? to : this)
-		
-// 	inline cpp float limit: float to
-// 		(this > to ? to : this)
+	// Formats the float as a string with fraction digits, minimum integer digits, and grouping
+	cpp(string, iomanip, iostream) string format: int fractionDigits, int minIntegerDigits = 1, bool grouping = false
+		std::ostringstream ss;
+		if (grouping) ss.imbue(std::locale(""));
+		ss << std::fixed << std::setprecision(fractionDigits) << std::setw(minIntegerDigits) << std::setfill('0') << this;
+		return ss.str();
 	
-// 	inline cpp float limit: float from
-// 		(this < from ? from : this)
-	
-// 	inline cpp float max: float value
-// 		(this > value ? value : this)
-	
-// 	inline cpp float min: float value
-// 		(this < value ? value : this)
-	
-// 	inline cpp bool isApproximately: float value
-// 		                            float epsilon = 0.00001
-// 		(Math.abs(this - value) < epsilon)
+		// std::ostringstream ss;
+		// ss.imbue(std::locale("en_US"));
+		// ss << std::fixed << std::setprecision(fractionDigits) << this;
+		// std::string s = ss.str();
+		// if (s.find('.') != std::string::npos) {
+		// 	s.erase(s.find_last_not_of('0') + 1, std::string::npos);
+		// 	if (s.back() == '.') {
+		// 		s.pop_back();
+		// 	}
+		// }
+		// if (grouping) {
+		// 	std::string::size_type pos = s.find('.');
+		// 	if (pos == std::string::npos) {
+		// 		pos = s.size();
+		// 	}
+		// 	for (std::string::size_type i = pos - 3; i > 0; i -= 3) {
+		// 		s.insert(i, ",");
+		// 	}
+		// }
+		// if (minIntegerDigits > 1) {
+		// 	std::string::size_type pos = s.find('.');
+		// 	if (pos == std::string::npos) {
+		// 		pos = s.size();
+		// 	}
+		// 	while (pos < minIntegerDigits) {
+		// 		s.insert(0, "0");
+		// 		pos++;
+		// 	}
+		// }
+		// return s;
 		
-// 	inline cpp float moveTowards: float value
-// 		                         float speed
-// 		(this < value ? (this + speed < value ? (this += speed) : (this = value)) : (this - speed > value ? (this -= speed) : (this = value)))
+	// Returns the smallest integer greater than or equal to the given value
+	inline cpp(cmath) int ceil
+		std::ceil(this)
 		
-// 	inline cpp float moveTowardsAndEaseOut: float value
-// 		                                   float speed
-// 		(this < value ? (this + speed * (value-this) < value ? (this += speed * (value-this)) : (this = value)) : (this - speed * (this-value) > value ? (this -= speed * (this-value)) : (this = value)))
+	// Returns the largest integer less than or equal to the given value
+	inline cpp(cmath) int floor
+		std::floor(this)
 		
-// 	inline cpp float interpolateTo: float target
-// 		                           float value
-// 		(this + (target - this)*value)
+	// Returns the given value rounded to the nearest integer
+	inline cpp(cmath) int round
+		std::round(this)
 		
-// 	inline cpp float interpolateTo: float target
-// 		                           float value
-// 		                           EaseFunction ease
-// 		(this + (target - this)*ease.function.invoke(value))
+	inline cpp float limit: float from
+						float to
+		(this < from ? from : this > to ? to : this)
 		
-// 	inline cpp float incrementBy: float value
-// 		                         nocolon float to
-// 		(this+value < to ? (this += value) : to)
-		
-// 	// ------------------------------------------- Time -------------------------------------------
+	inline cpp float limit: float to
+		(this > to ? to : this)
 	
-// 	implicit inline cpp Time toTime() this
+	inline cpp float limit: float from
+		(this < from ? from : this)
 	
-// 	// Milliseconds
-// 	inline cpp Time milliseconds := this
+	inline cpp float max: float value
+		(this > value ? value : this)
 	
-// 	// Seconds
-// 	inline cpp Time seconds := (this*1000)
+	inline cpp float min: float value
+		(this < value ? value : this)
+	
+	// Returns true if the difference to the given value is less than the given epsilon
+	inline cpp(cmath) bool isApproximately: float value, float epsilon = 0.00001
+		(std::abs(this - value) < epsilon)
 		
-// 	// Minutes
-// 	inline cpp Time minutes := (this*60000)
+	inline cpp float moveTowards: float value
+								float speed
+		(this < value ? (this + speed < value ? (this += speed) : (this = value)) : (this - speed > value ? (this -= speed) : (this = value)))
 		
-// 	// Hours
-// 	inline cpp Time hours := (this*3600000)
+	inline cpp float moveTowardsAndEaseOut: float value
+										float speed
+		(this < value ? (this + speed * (value-this) < value ? (this += speed * (value-this)) : (this = value)) : (this - speed * (this-value) > value ? (this -= speed * (this-value)) : (this = value)))
+		
+	inline cpp float interpolateTo: float target
+								float value
+		(this + (target - this)*value)
+		
+	inline cpp float interpolateTo: float target
+								float value
+								EaseFunction ease
+		(this + (target - this)*ease.function(value))
+		
+	inline cpp float incrementBy: float value
+								nocolon float to
+		(this+value < to ? (this += value) : to)
+		
+	// ------------------------------------------- Time -------------------------------------------
 	
-// 	// Days
-// 	inline cpp Time days := (this*86400000)
+	implicit inline cpp Time toTime() this
 	
-// 	// Weeks	
-// 	inline cpp Time weeks := (this*604800000)
+	// Milliseconds
+	inline cpp Time milliseconds := this
+	
+	// Seconds
+	inline cpp Time seconds := (this*1000)
+		
+	// Minutes
+	inline cpp Time minutes := (this*60000)
+		
+	// Hours
+	inline cpp Time hours := (this*3600000)
+	
+	// Days
+	inline cpp Time days := (this*86400000)
+	
+	// Weeks
+	inline cpp Time weeks := (this*604800000)
 		
 immutable EaseFunction
 	float(float value) function
@@ -258,87 +298,129 @@ immutable EaseFunction
 cpp string, std::string
 immutable struct string
 	// Returns the number of characters in the string
-	inline cpp int length := this.length
+	inline cpp int length() this.size()
 	
-	// // Returns a string with each character converted to uppercase
-	// inline cpp string toUpperCase := this.toUpperCase()
-		
-	// // Returns a string with each character converted to lowercase
-	// inline cpp string toLowerCase := this.toLowerCase()
+	// Returns a string with each character converted to uppercase
+	cpp(string) string toUpperCase
+		std::transform(this.begin(), this.end(), this.begin(), ::toupper);
+		return this;
 	
-	// // Returns true if the string is not null and not empty	
-	// inline cpp bool toBool := this
+	// Returns a string with each character converted to lowercase
+	cpp(string) string toLowerCase
+		std::transform(this.begin(), this.end(), this.begin(), ::tolower);
+		return this;
 	
-	// inline cpp string toString() this
+	// Returns true if the string is not null and not empty
+	inline cpp bool toBool() !this.empty()
 	
-	// inline cpp int toInt := parseInt(this)
-		
-	// inline cpp int toFloat := parseFloat(this)
+	inline cpp string toString() return this
 	
-	// inline cpp string[] split: string character = " "
-	// 	this.split(character)
-		
-	// inline cpp bool startsWith(string str) this.startsWith(str)
-	// inline cpp bool endsWith(string str) this.endsWith(str)
-		
-	// inline cpp int indexOf(string str) this.indexOf(str)
-	// inline cpp int indexOf(string str, int startPos) this.indexOf(str, startPos)
-		
-	// inline cpp bool contains(string str) (this.indexOf(str) != -1)
-		
-	// inline cpp int getCharCodeAt(int index) this.charCodeAt(index)
-		
-	// static inline cpp string fromCharCode(int charCode) String.fromCharCode(charCode)
-		
-	// inline cpp string substring: int start
-	// 	this.substring(start)
-		
-	// inline cpp string substring: int start = 0
-	// 	                        int end
-	// 	this.substring(start, end)
-		
-	// cpp string getUntil: string value
-	// 	                int start = 0
-	// 	let index = this.indexOf(value)
-	// 	if(index != -1) return this.substring(start, index)
-	// 	else            return this
-		
-	// // Returns 0 for an exact match, 1 if first is larger, -1 if second is larger
-	// inline cpp int compareTo: string value // The string to compare to
-	// 	this.localeCompare(value)
-		
-	// inline cpp string trim
-	// 	this.trim()
-		
-	// cpp string getExtension
-	// 	let dot = this.lastIndexOf(".")
-	// 	if(dot != -1) return this.substring(dot+1)
-	// 	else          return ""
-		
-	// inline cpp string capitalizeFirstCharacter
-	// 	(this.length > 0 ? this[0].toUpperCase() + this.substring(1) : this)
-		
-	// inline cpp string interleaveWith: int charCode
-	// 	this.split("").join(String.fromCharCode(charCode))
-		
-	// inline cpp string replace: string source
-	// 	                      string target
-	// 	(this = this.replace(new RegExp(source, "g"), target))
-		
-	// inline cpp string replaced: string source
-	// 	                       string target
-	// 	this.replace(new RegExp(source, "g"), target)
-		
-	// cpp string get: int index
-	// 	return index >= 0 ? this[index] : this[this.length+index]
+	inline cpp(sstream) int toInt() std::stoi(this)
 	
-	// cpp string get: int from = 0
-	// 	           int to
-	// 	return this.substring(from >= 0 ? from : this.length+from, to >= 0 ? to : this.length+to)
-		
-	// cpp string get: int from = 0
-	// 	return this.substring(from >= 0 ? from : this.length+from)	
+	inline cpp(sstream) float toFloat() std::stof(this)
 	
+	cpp(vector, sstream) string[] split: string character = " "
+		std::vector<std::string> result;
+		std::stringstream sstr(this);
+		std::string item;
+		while(std::getline(sstr, item, character[0]))
+			result.push_back(item);
+		return result;
+
+	inline cpp(bool, algorithm) bool startsWith(string str)
+		(this.substr(0, str.size()) == str)
+	
+	inline cpp(bool, algorithm) bool endsWith(string str)
+		(this.substr(this.size() - str.size()) == str)
+	
+	inline cpp(int, algorithm) int indexOf(string str) 
+		this.find(str)
+	
+	inline cpp(int, algorithm) int indexOf(string str, int startPos)
+		this.find(str, startPos)
+	
+	inline cpp(bool, algorithm) bool contains(string str)
+		(this.find(str) != std::string::npos)
+
+	inline cpp(int) int getCharCodeAt(int index)
+		static_cast<int>(this.at(index))
+	
+	static inline cpp(string) string fromCharCode(int charCode)
+		std::string(1, static_cast<char>(charCode))
+	
+	inline cpp(string) string substring: int start
+		this.substr(start)
+	
+	inline cpp(string) string substring: int start = 0
+										int end
+		this.substr(start, end - start)
+	
+	cpp(string) string getUntil: string value
+								 int start = 0
+		auto index = this.find(value, start);
+		if(index != std::string::npos) return this.substr(start, index - start);
+		else                           return this;
+	
+	cpp(string) string getAfter: string value
+								 int start = 0
+		auto index = this.find(value, start);
+		if(index != std::string::npos) return this.substr(index + 1);
+		else                           return "";
+
+	inline cpp(int) int compareTo: string value // The string to compare to
+		this.compare(value)
+	
+	cpp(string) string trim
+		this.erase(0, this.find_first_not_of(" \t\n\r\f\v"));
+		this.erase(this.find_last_not_of(" \t\n\r\f\v") + 1);
+		return this;
+	
+	cpp(string) string getExtension
+		auto dot = this.rfind(".");
+		if(dot != std::string::npos) return this.substr(dot + 1);
+		else                         return "";
+
+	cpp(string) string capitalizeFirstCharacter
+		if(!this.empty()) this[0] = std::toupper(this[0]);
+		return this;
+
+	cpp(string) string interleaveWith: int charCode
+		for(size_t i = this.size(); i > 1; i--)
+			this.insert(i - 1, 1, static_cast<char>(charCode));
+		return this;
+	
+	cpp(string) string replace: string source
+		                        string target
+		size_t pos = 0;
+		while((pos = this.find(source, pos)) != std::string::npos) {
+			this.replace(pos, source.size(), target);
+			pos += target.size();
+		}
+		return this;
+	
+	cpp(string) string replaced: string source
+		                                string target
+		std::string result = this;
+		size_t pos = 0;
+		while((pos = result.find(source, pos)) != std::string::npos) {
+			result.replace(pos, source.size(), target);
+			pos += target.size();
+		}
+		return result;
+	
+	cpp int get: int index
+		if(index < 0) index = this.size() + index;
+		return this.at(index);
+
+	cpp(string) string get: int from = 0
+		                    int to
+		if(from < 0) from = this.size() + from;
+		if(to < 0) to = this.size() + to;
+		return this.substr(from, to - from);
+	
+	cpp(string) string get: int from = 0
+		if(from < 0) from = this.size() + from;
+		return this.substr(from);
 		
 // A logical data type that can have the value true or false
 enum bool: false, true
@@ -348,18 +430,20 @@ enum SortingOrder: Ascending, Descending
 // A data container that grows in size as needed
 cpp vector, std::vector
 struct List<T>
-	// // Do something for each item in a list
-	// inline cpp void each -> inline void(
-	// 	                       T it,      // The current item of the list we are iterating over
-	// 	                       int i      // The index of the current item of the list we are iterating over
-	// 	                   ) do           // Do this for each item in a list
-	// 	for(let i=0, _subject=this, _len=_subject.length; i<_len; ++i) { let it = _subject[i]; do()}
+	// Do something a given number of times or for each item in a list
+	inline cpp void each: -> inline void(
+								T it,      // The current item of the list we are iterating over with the for-loop
+								int i      // The index of the current item of the list we are iterating over with the for-loop
+							) do           // Do this for each item in a list
+							//bool withIndex
+		for(int _i=0, _len=this.size(); _i<_len; ++_i) { auto _it = this[_i]; do(_it, _i)}
 		
-	// inline cpp void each <- inline void(
-	// 	                       T it,      // The current item of the list we are iterating over
-	// 	                       int i      // The index of the current item of the list we are iterating over
-	// 	                   ) do           // Do this for each item in a list
-	// 	for(let _subject=this, i=_subject.length-1; i>=0; --i) { let it = _subject[i]; do()}
+	// Do something a given number of times or for each item in a list
+	inline cpp void each: <- inline void(
+								T it,      // The current item of the list we are iterating over with the for-loop
+								int i      // The index of the current item of the list we are iterating over with the for-loop
+							) do           // Do this for each item in a list
+		for(int _i=this.size()-1; _i>=0; --_i) { auto _it = this[_i]; do(_it, _i)}
 		
 	// // Do something for each item in a list. You can add or remove items inside the loop.
 	// inline cpp void eachChangable -> inline void(
@@ -382,7 +466,7 @@ struct List<T>
 	// 	                         ) do
 	// 	if(this.length > 0) {
 	// 		let _subject = this.sort((a,b) => selector(a) - selector(b))
-	// 		for(let _nextIndex=1, it = selector(_subject[0]), i=0; _nextIndex<_subject.length; ++_nextIndex) { 
+	// 		for(let _nextIndex=1, it = selector(_subject[0]), i=0; _nextIndex<_subject.length; ++_nextIndex) {
 	// 			let _nextIt = selector(_subject[_nextIndex]);
 	// 			if(_nextIt != it) {
 	// 				let items = _subject.slice(i, _nextIndex);
@@ -441,8 +525,8 @@ struct List<T>
 	// // Remove an item from the list
 	// // Example: Remove the current player instrance from the list of playeres when they died
 	// //     Player
- //   //         die
- //   //             players.remove me
+	// //         die
+	// //             players.remove me
 	// cpp void remove: T item // The item to remove
 	// 	var index = this.indexOf(item);
 	// 	if(index > -1) this.splice(index, 1);
@@ -514,11 +598,11 @@ struct List<T>
 	// // Remove all item the meet a specific condition
 	// // Example: Remove all players that have died.
 	// //     Player
- //   //         bool hasDied
-	// //
+	// //         bool hasDied
+	
 	// //      app
- //   //          gameOver
- //   //              players.removeWhere.hasDied
+	// //          gameOver
+	// //              players.removeWhere.hasDied
 	// removeWhere: bool(T a) condition // The condition to check
 	// 	for this <-
 	// 		if condition(.)
@@ -528,11 +612,11 @@ struct List<T>
 	// // Remove the first item the meet a specific condition
 	// // Example: Remove the first player with a health smaller than 10.
 	// //     Player
- //   //         int health
+	// //         int health
 	// //
 	// //     app
- //   //         gameOver
- //   //             players.removeFirstWhere.health < 10
+	// //         gameOver
+	// //             players.removeFirstWhere.health < 10
 	// T removeFirstWhere: bool(T a) condition // The condition to check
 	// 	for this
 	// 		if condition(.)
@@ -591,7 +675,7 @@ struct List<T>
 	// 	this.splice(index, 1)[0]
 		
 	// // Remove a range of items from the list and return a new list containing the removed items
-	// // Example: Remote "Lemon" and "Orange" from the list of fruits a create a new list with those fruits 
+	// // Example: Remote "Lemon" and "Orange" from the list of fruits a create a new list with those fruits
 	// //     let fruits = ["Apple", "Pear", "Lemon", "Orange"]
 	// //     let citrusFruit  = fruits.popRange 2 to 4
 	// inline cpp T[] popRange: int from
@@ -626,8 +710,9 @@ struct List<T>
 	// cpp int setLength: int length // The new length of the list
 	// 	this.length = length
 	
-	// // Removes all items from the list
-	// inline cpp void clear := this.length = 0
+	// Removes all items from the list
+	inline cpp void clear
+		this.clear()
 	
 	// // Create a shallow clone of the list
 	// inline cpp T[] clone() [...this]
@@ -690,8 +775,8 @@ struct List<T>
 	// 	if(closestIndex != -1) this.removeAt(closestIndex)
 	// 	return closestItem
 			
-	// // Returns true if the list is not null and not empty	
-	// inline cpp bool toBool := (this != null && this.length != 0) 
+	// // Returns true if the list is not null and not empty
+	// inline cpp bool toBool := (this != null && this.length != 0)
 	
 	// // Reverses the order of the items of the list in place
 	// inline cpp T[] reverse() this.reverse()
@@ -761,21 +846,21 @@ struct List<T>
 	// inline cpp bool all: bool(T a) predicate // The condition to check
 	// 	this.every(predicate)
 		
-	// // Return a list that contains the selected field or expression for each item
-	// inline cpp TValue[] select: TValue(T it) selector
-	// 	this.map(selector)
+	// Return a list that contains the selected field or expression for each item
+	inline cpp TValue[] select: TValue(T it) selector
+		this.map(selector)
 		
 	// // Get the selected field or expression for each item and flattens the result
 	// inline cpp TValue[] flatten: TValue[](T it) selector
 	// 	this.flatMap(selector)
 		
-	// // Find an item the meets the given condition
-	// // Example: Find a player with a specific id
-	// //     app
-	// //         getPlayerById: int id
-	// //             return players.find.id == id
-	// inline cpp T find: bool(T a) condition // The condition to check
-	// 	this.find(condition)
+	// Find an item the meets the given condition
+	// Example: Find a player with a specific id
+	//     app
+	//         getPlayerById: int id
+	//             return players.find.id == id
+	inline cpp(algorithm) T find: bool(T it) selector
+		*std::find_if(this.begin(), this.end(), selector)
 		
 	// // Find the last item in the list the meets the given condition
 	// // Example: Find a player with a specific id
@@ -854,11 +939,11 @@ struct List<T>
 	// 	if(this.length == 1) return this[0]
 	// 	if(!List_temporaryCopy) List_temporaryCopy = []
 	// 	const len = List_temporaryCopy.length = this.length
-	// 	for(let i=0; i<len; ++i) List_temporaryCopy[i] = this[i] 
+	// 	for(let i=0; i<len; ++i) List_temporaryCopy[i] = this[i]
 	// 	List_temporaryCopy.sort((a,b) => a - b)
 	// 	return List_temporaryCopy[Math.round((List_temporaryCopy.length-1) * value / 100)]
 		
-	// min: int(T a) selector 
+	// min: int(T a) selector
 	// 	 int threshold = int.maxValue
 	// 	 int default = 0
 	// 	int resultValue = threshold
@@ -867,7 +952,7 @@ struct List<T>
 	// 		if value < resultValue: resultValue = value
 	// 	return resultValue != threshold ? resultValue : default
 		
-	// min: float(T a) selector 
+	// min: float(T a) selector
 	// 	 float threshold = float.maxValue
 	// 	 float default = 0
 	// 	float resultValue = threshold
@@ -876,7 +961,7 @@ struct List<T>
 	// 		if value < resultValue: resultValue = value
 	// 	return resultValue != threshold ? resultValue : default
 		
-	// min: Time(T a) selector 
+	// min: Time(T a) selector
 	// 	 Time threshold = Time.maxValue
 	// 	 Time default = 0
 	// 	Time resultValue = threshold
@@ -885,7 +970,7 @@ struct List<T>
 	// 		if value < resultValue: resultValue = value
 	// 	return resultValue != threshold ? resultValue : default
 		
-	// min: int(T a) selector 
+	// min: int(T a) selector
 	// 	 int threshold = int.maxValue
 	// 	 int default = 0
 	// 	 label bool(T a) where
@@ -896,7 +981,7 @@ struct List<T>
 	// 			if value < resultValue: resultValue = value
 	// 	return resultValue != threshold ? resultValue : default
 		
-	// min: float(T a) selector 
+	// min: float(T a) selector
 	// 	 float threshold = float.maxValue
 	// 	 float default = 0
 	// 	 label bool(T a) where
@@ -939,7 +1024,7 @@ struct List<T>
 	// 	 int default = 0
 	// 	 label bool(T a) where
 	// 	int resultValue = threshold
-	// 	for this 
+	// 	for this
 	// 		if where(.)
 	// 			let value = selector(.)
 	// 			if value > resultValue: resultValue = value
@@ -1188,7 +1273,7 @@ struct List<T>
 		
 	// Gets an item from the list
 	inline cpp T get: implicit int index // The index of the item to get
-		(index >= 0 ? this[index] : this[this.size()+index])
+		this[index]
 		
 	// cpp T[] get: int from = 0 // Return a new list starting from this index
 	// 	        int to       // Return a new list up to (but not including) this index
@@ -1197,9 +1282,9 @@ struct List<T>
 	// cpp T[] get: int from // Return a new list starting from this index
 	// 	return this.slice(from)
 	
-	cpp T set: int index // The index of the item to set
-		       T value   // The new value to set
-		return index >= 0 ? this[index] = value : this[this.size()+index] = value
+	inline cpp T set: int index // The index of the item to set
+			          T value   // The new value to set
+		(this[index] = value)
 		
 	// // Tries to get an item from the list. If it doesn't exist, it sets it.
 	// // TODO: Support index with side effect (e.g. list[index++] ?= 0)
@@ -1242,16 +1327,23 @@ immutable ImmutableList<T>
 	// 	list.get(index)
 		
 // A data container that stores key-value pairs
-cpp Map
-class Map<TKey, TValue>
-	// // Get the item assosiated with the given key
-	// inline cpp TValue get: TKey key  // The key of the item to get from the map
-	// 	this.get(key)
+cpp(map, std::map) struct Map<TKey, TValue>
+	// Get the item assosiated with the given key
+	cpp TValue get: TKey key  // The key of the item to get from the map
+		auto search = this.find(key);
+		return search != this.end() ? search->second : TValue();
+		// if(search != this.end()) {
+		// 	system::print(std::string("Found!"));
+		// 	return search->second;
+		// } else {
+		// 	system::print(std::string("NOT found"));
+		// 	return TValue();
+		// }
 	
-	// // Set the item for the given key
-	// inline cpp void set: TKey key     // The key of the item to add to the map
-	// 	                TValue value // The item to add to the map
-	// 	this.set(key, value)
+	// Set the item for the given key
+	inline cpp void set: TKey key     // The key of the item to add to the map
+		                TValue value // The item to add to the map
+		this[key] = value
 		
 	// private cpp TValue setAndReturn: TKey key     // The key of the item to add to the map
 	// 	                            TValue value // The item to add to the map
@@ -1266,9 +1358,9 @@ class Map<TKey, TValue>
 	// inline cpp void delete: TKey key  // The key of the item to remove from the map
 	// 	this.delete(key)
 		
-	// // Remove all items from the map
-	// inline cpp void clear
-	// 	this.clear()
+	// Remove all items from the map
+	inline cpp void clear
+		this.clear()
 		
 
 // Specifies that a function doesn't return a value
@@ -1285,10 +1377,10 @@ interface any
 	
 // The base class for all classes
 interface object
-	inline cpp bool toBool() (this != null)
-	inline cpp string toString() object_stringify(this, 3)
+	inline cpp bool toBool() (this != nullptr)
+	// inline cpp string toString() object_stringify(this, 3)
 		
-	// static internal cpp string stringify: object subject, int depth = 0 
+	// static internal cpp string stringify: object subject, int depth = 0
 	// 	switch(typeof subject)
 	// 	{
 	// 		case "object":
@@ -1341,239 +1433,242 @@ immutable Error
 global transient priority unit system
 	// Executes code depending on whether a given condition is true or false
 	global inline cpp void if: implicit bool condition // The condition to check
-		                       inline void() then      // Do this if the condition is true
+							   inline void() then      // Do this if the condition is true
 		if(condition) then()
 			
 	// Executes code depending on whether a given condition is true or false
 	global inline cpp void if: implicit bool condition          // The condition to check
-		                       inline void() then               // Do this if the condition is true
-		                       inline label nocolon void() else // Do this if the condition is false
+							   inline void() then               // Do this if the condition is true
+							   inline label nocolon void() else // Do this if the condition is false
 		if(condition) then() @else else()
 			
 	// Executes code as long as a given condition is true
 	global inline cpp void while: implicit bool condition // The condition to check
-		                         inline void() do        // Do this while to condition is true
+								  inline void() do        // Do this while to condition is true
 		while(condition) do()
 			
 	global inline cpp void loop: void() do
 		for(;;) do()
 	
 	global inline cpp void do: inline void() do            // Do this while to condition is true
-		                      nocolon implicit bool while // The condition to check
-		@do do() 
+							nocolon implicit bool while // The condition to check
+		@do do()
 		@while(while)
 	
 	// Do something a given number of times or for each item in a list
 	global inline cpp void for: ensureSingleExecution T[] subject    // The list to iterate over
-		                       -> void(
-		                           T it,      // The current item of the list we are iterating over with the for-loop
-		                           int i      // The index of the current item of the list we are iterating over with the for-loop
-		                       ) do           // Do this for each item in a list
-		                       //bool withIndex
+							-> void(
+								T it,      // The current item of the list we are iterating over with the for-loop
+								int i      // The index of the current item of the list we are iterating over with the for-loop
+							) do           // Do this for each item in a list
+							//bool withIndex
 		for(int _i=0, _len=subject.size(); _i<_len; ++_i) { auto _it = subject[_i]; do(_it, _i)}
 		
 	// Do something a given number of times or for each item in a list
 	global inline cpp void for: ensureSingleExecution T[] subject    // The list to iterate over
-		                       <- void(
-		                           T it,      // The current item of the list we are iterating over with the for-loop
-		                           int i      // The index of the current item of the list we are iterating over with the for-loop
-		                       ) do           // Do this for each item in a list
+							<- void(
+								T it,      // The current item of the list we are iterating over with the for-loop
+								int i      // The index of the current item of the list we are iterating over with the for-loop
+							) do           // Do this for each item in a list
 		for(int _i=subject.size()-1; _i>=0; --_i) { auto _it = subject[_i]; do(_it, _i)}
 		
 	global inline cpp void for: TValue[TKey] subject    // The map to iterate over
-		                       -> void(
-		                           TValue it, // The current value of the map we are iterating over with the for-loop
-		                           TKey key   // The current key of the map we are iterating over with the for-loop
-		                       ) do           // Do this for each item in a map
+							-> void(
+								TValue it, // The current value of the map we are iterating over with the for-loop
+								TKey key   // The current key of the map we are iterating over with the for-loop
+							) do           // Do this for each item in a map
 		foreach(auto _pair in subject) do(_pair.Value, _pair.Key)
 		
 	// Do something for each item in a list. You can add or remove items inside the loop.
 	global inline cpp void forChangeable: T[] subject    // The list to iterate over
-		                       -> void(
-		                           T it,      // The current item of the list we are iterating over with the for-loop
-		                           int i      // The index of the current item of the list we are iterating over with the for-loop
-		                       ) do           // Do this for each item in a list
+							-> void(
+								T it,      // The current item of the list we are iterating over with the for-loop
+								int i      // The index of the current item of the list we are iterating over with the for-loop
+							) do           // Do this for each item in a list
 		auto _subject=new List<T>(subject);
 		for(int _i=0, _len=_subject.size(); _i<_len; ++_i) { auto _it = _subject[_i]; do(_it, _i)}
 		
 	// Do something for each item in a list. You can add or remove items inside the loop.
 	global inline cpp void forChangeable: T[] subject    // The list to iterate over
-		                       <- void(
-		                           T it,      // The current item of the list we are iterating over with the for-loop
-		                           int i      // The index of the current item of the list we are iterating over with the for-loop
-		                       ) do           // Do this for each item in a list
+							<- void(
+								T it,      // The current item of the list we are iterating over with the for-loop
+								int i      // The index of the current item of the list we are iterating over with the for-loop
+							) do           // Do this for each item in a list
 		auto _subject=new List<T>(subject);
 		for(int _i=_subject.size()-1; _i>=0; --_i) { auto _it = _subject[_i]; do(_it, _i)}
 		
 	global inline cpp void for: int to // The exclusive upper bound to iterate towards
-		                       -> void(
-		                           int i      // The iteration variable of the for-loop
-		                       ) do           // Do this the given number of times
+							-> void(
+								int i      // The iteration variable of the for-loop
+							) do           // Do this the given number of times
 		for(int _i=0, _to=to; _i<_to; ++_i) do(_i)
 		
 	global inline cpp void for: int to // The exclusive upper bound to iterate towards
-		                       <- void(
-		                           int i      // The iteration variable of the for-loop
-		                       ) do           // Do this the given number of times
+							<- void(
+								int i      // The iteration variable of the for-loop
+							) do           // Do this the given number of times
 		for(int _i=to-1; _i>=0; --_i) do(_i)
 		
 	global inline cpp void for: int from
-		                       -> void(
-		                           int i      // The iteration variable of the for-loop
-		                       ) do           // Do this for each value in the given range
-		                       int to // The exclusive upper bound
+							-> void(
+								int i      // The iteration variable of the for-loop
+							) do           // Do this for each value in the given range
+							int to // The exclusive upper bound
 		for(int _i=from, _to=to; _i<_to; ++_i) do(_i)
 		
 	global inline cpp void for: int from
-		                       <- void(
-		                           int i      // The iteration variable of the for-loop
-		                       ) do           // Do this for each value in the given range
-		                       int to         // The exclusive upper bound
+							<- void(
+								int i      // The iteration variable of the for-loop
+							) do           // Do this for each value in the given range
+							int to         // The exclusive upper bound
 		for(int _i=to-1, _from=from; _i>=_from; --_i) do(_i)
 		
 	global inline cpp void for: string subject
-		                       -> void(
-		                           string it, // The current character of the string we are iterating over with the for-loop
-		                           int i      // The index of the current character of the string we are iterating over with the for-loop
-		                       ) do           // Do this for each character in the given string
+							-> void(
+								string it, // The current character of the string we are iterating over with the for-loop
+								int i      // The index of the current character of the string we are iterating over with the for-loop
+							) do           // Do this for each character in the given string
 		for(int _i=0, _len=subject.size(); _i<_len; ++_i) { auto _it = _subject[_i]; do(_it, _i)}
 	
 	global inline cpp void for: string subject
-		                       <- void(
-		                           string it, // The current character of the string we are iterating over with the for-loop
-		                           int i      // The index of the current character of the string we are iterating over with the for-loop
-		                       ) do           // Do this for each character in the given string
+							<- void(
+								string it, // The current character of the string we are iterating over with the for-loop
+								int i      // The index of the current character of the string we are iterating over with the for-loop
+							) do           // Do this for each character in the given string
 		for(int _i=_subject.size()-1; _i>=0; --_i) { auto _it = _subject[_i]; do(_it, _i)}
 				
 	// [a,b,c] -> (a, next:b), (b, next:c), (c, next:null)
 	global inline cpp void forLookAhead: T[] subject    // The list to iterate over
-		                                    -> void(
-		                                        T it,      // The current item of the list we are iterating over with forLookAhead
-		                                        T next,    // The next item of the list we are iterating over with forLookAhead
-		                                        int i      // The index of the current item of the list we are iterating over with forLookAhead
-		                                    ) do           // Do this for each consecutive pair in a list
+											-> void(
+												T it,      // The current item of the list we are iterating over with forLookAhead
+												T next,    // The next item of the list we are iterating over with forLookAhead
+												int i      // The index of the current item of the list we are iterating over with forLookAhead
+											) do           // Do this for each consecutive pair in a list
 		for(auto _subject=subject, _len=_subject.size(), i=0; i<_len; ++i) { auto it = _subject[i], next = i+1<_len ? _subject[i+1] : null; do()}
 		
 	global inline cpp void forLookAhead: T[] subject    // The list to iterate over
-		                                    <- void(
-		                                        T it,      // The current item of the list we are iterating over with forLookAhead
-		                                        T next,    // The next item of the list we are iterating over with forLookAhead
-		                                        int i      // The index of the current item of the list we are iterating over with forLookAhead
-		                                    ) do           // Do this for each consecutive pair in a list
+											<- void(
+												T it,      // The current item of the list we are iterating over with forLookAhead
+												T next,    // The next item of the list we are iterating over with forLookAhead
+												int i      // The index of the current item of the list we are iterating over with forLookAhead
+											) do           // Do this for each consecutive pair in a list
 		for(auto _subject=subject, i=_subject.size()-1; i>=0; --i) { auto it = _subject[i], next = i>0 ? _subject[i-1] : null; do()}
 		
 	// [a,b,c] -> (prev:null, a), (prev:a, b), (prev:b, c)
 	global inline cpp void forLookBack: T[] subject    // The list to iterate over
-		                                    -> void(
-		                                        T it,      // The current item of the list we are iterating over with forLookBack
-		                                        T prev,    // The previous item of the list we are iterating over with forLookBack
-		                                        int i      // The index of the current item of the list we are iterating over with forLookBack
-		                                    ) do           // Do this for each consecutive pair in a list
+											-> void(
+												T it,      // The current item of the list we are iterating over with forLookBack
+												T prev,    // The previous item of the list we are iterating over with forLookBack
+												int i      // The index of the current item of the list we are iterating over with forLookBack
+											) do           // Do this for each consecutive pair in a list
 		for(auto i=0, _len=subject.size(); i<_len; ++i) { auto it = subject[i], prev = i>0 ? subject[i-1] : null; do()}
 		
 	global inline cpp void forLookBack: T[] subject    // The list to iterate over
-		                                    <- void(
-		                                        T it,      // The current item of the list we are iterating over with forLookBack
-		                                        T prev,    // The previous item of the list we are iterating over with forLookBack
-		                                        int i      // The index of the current item of the list we are iterating over with forLookBack
-		                                    ) do           // Do this for each consecutive pair in a list
+											<- void(
+												T it,      // The current item of the list we are iterating over with forLookBack
+												T prev,    // The previous item of the list we are iterating over with forLookBack
+												int i      // The index of the current item of the list we are iterating over with forLookBack
+											) do           // Do this for each consecutive pair in a list
 		for(auto _subject=subject, _len=subject.size(), i=_len-1; i>=0; --i) { auto it = _subject[i], prev = i+1<_len ? _subject[i+1] : null; do()}
 		
 	// [a,b,c] -> (prev:null, a, next:b), (prev:a, b, next:c), (prev:b, c, next:null)
 	global inline cpp void forLookAheadAndBack: T[] subject  // The list to iterate over
-		                              -> void(
-		                                  T it,    // The current item of the list we are iterating over with forLookAheadAndBack
-		                                  T prev,  // The previous item of the list we are iterating over with forLookAheadAndBack
-		                                  T next,  // The next item of the list we are iterating over with forLookAheadAndBack
-		                                  int i    // The index of the current item of the list we are iterating over with forLookAheadAndBack
-		                              ) do         // Do this for each triple in a list
+									-> void(
+										T it,    // The current item of the list we are iterating over with forLookAheadAndBack
+										T prev,  // The previous item of the list we are iterating over with forLookAheadAndBack
+										T next,  // The next item of the list we are iterating over with forLookAheadAndBack
+										int i    // The index of the current item of the list we are iterating over with forLookAheadAndBack
+									) do         // Do this for each triple in a list
 		for(auto i=0, _subject=subject, _len=_subject.size(); i<_len; ++i) { auto it = _subject[i], next = i+1<_len ? _subject[i+1] : null, prev = i>0 ? _subject[i-1] : null; do()}
 		
 	global inline cpp void forLookAheadAndBack: T[] subject  // The list to iterate over
-		                              <- void(
-		                                  T it,    // The current item of the list we are iterating over with forLookAheadAndBack
-		                                  T prev,  // The previous item of the list we are iterating over with forLookAheadAndBack
-		                                  T next,  // The next item of the list we are iterating over with forLookAheadAndBack
-		                                  int i    // The index of the current item of the list we are iterating over with forLookAheadAndBack
-		                              ) do         // Do this for each triple in a list
+									<- void(
+										T it,    // The current item of the list we are iterating over with forLookAheadAndBack
+										T prev,  // The previous item of the list we are iterating over with forLookAheadAndBack
+										T next,  // The next item of the list we are iterating over with forLookAheadAndBack
+										int i    // The index of the current item of the list we are iterating over with forLookAheadAndBack
+									) do         // Do this for each triple in a list
 		for(auto _subject=subject, _len=_subject.size(), i=_len-1; i>=0; --i) { auto it = _subject[i], next = i>0 ? _subject[i-1] : null, prev = i+1<_len ? _subject[i+1] : null; do()}
 		
 	// [a,b,c] -> (a, next:b), (b, next:c)
 	global inline cpp void forPairs: T[] subject  // The list to iterate over
-		                            -> void(
-		                                T it,    // The current item of the list we are iterating over with forPairs
-		                                T next,  // The next item of the list we are iterating over with forPairs
-		                                int i    // The index of the current item of the list we are iterating over with forPairs
-		                            ) do         // Do this for each consecutive pair in a list
+									-> void(
+										T it,    // The current item of the list we are iterating over with forPairs
+										T next,  // The next item of the list we are iterating over with forPairs
+										int i    // The index of the current item of the list we are iterating over with forPairs
+									) do         // Do this for each consecutive pair in a list
 		for(auto i=0, _subject=subject, _len=_subject.size()-1; i<_len; ++i) { auto it = _subject[i], next = _subject[i+1]; do()}
 		
 	global inline cpp void forPairs: T[] subject  // The list to iterate over
-		                            <- void(
-		                                T it,    // The current item of the list we are iterating over with forPairs
-		                                T next,  // The next item of the list we are iterating over with forPairs
-		                                int i    // The index of the current item of the list we are iterating over with forPairs
-		                            ) do         // Do this for each consecutive pair in a list
+									<- void(
+										T it,    // The current item of the list we are iterating over with forPairs
+										T next,  // The next item of the list we are iterating over with forPairs
+										int i    // The index of the current item of the list we are iterating over with forPairs
+									) do         // Do this for each consecutive pair in a list
 		for(auto _subject=subject, i=_subject.size()-1; i>0; --i) { auto it = _subject[i], next = _subject[i-1]; do()}
 		
-	// [a,b,c] -> (a, next:b), (b, next:c), (c, next:a) 
+	// [a,b,c] -> (a, next:b), (b, next:c), (c, next:a)
 	global inline cpp void forWrappingPairs: T[] subject    // The list to iterate over
-		                                   -> void(
-		                                       T it,      // The current item of the list we are iterating over with forWrappingPairs
-		                                       T next,    // The next item of the list we are iterating over with forWrappingPairs
-		                                       int i      // The index of the current item of the list we are iterating over with forWrappingPairs
-		                                   ) do           // Do this for each consecutive pair in a list
+										-> void(
+											T it,      // The current item of the list we are iterating over with forWrappingPairs
+											T next,    // The next item of the list we are iterating over with forWrappingPairs
+											int i      // The index of the current item of the list we are iterating over with forWrappingPairs
+										) do           // Do this for each consecutive pair in a list
 		for(auto _subject=subject, i=0, _len=_subject.size(); i<_len; ++i) { auto it = _subject[i], next = _subject[(i+1)%_len]; do()}
 		
 	global inline cpp void forWrappingPairs: T[] subject    // The list to iterate over
-		                                   <- void(
-		                                       T it,      // The current item of the list we are iterating over with forWrappingPairs
-		                                       T next,    // The next item of the list we are iterating over with forWrappingPairs
-		                                       int i      // The index of the current item of the list we are iterating over with forWrappingPairs
-		                                   ) do           // Do this for each consecutive pair in a list
+										<- void(
+											T it,      // The current item of the list we are iterating over with forWrappingPairs
+											T next,    // The next item of the list we are iterating over with forWrappingPairs
+											int i      // The index of the current item of the list we are iterating over with forWrappingPairs
+										) do           // Do this for each consecutive pair in a list
 		for(auto _subject=subject, _len=_subject.size(), i=_len-1; i>=0; --i) { auto it = _subject[i], next = _subject[(((i-1)%_len)+_len)%_len]; do()}
 		
 	// [a,b,c] -> (prev:a, b, next:c)
 	global inline cpp void forTriples: T[] subject  // The list to iterate over
-		                              -> void(
-		                                  T it,    // The current item of the list we are iterating over with forTriple
-		                                  T prev,  // The previous item of the list we are iterating over with forTriple
-		                                  T next,  // The next item of the list we are iterating over with forTriple
-		                                  int i    // The index of the current item of the list we are iterating over with forTriple
-		                              ) do         // Do this for each triple in a list
+									-> void(
+										T it,    // The current item of the list we are iterating over with forTriple
+										T prev,  // The previous item of the list we are iterating over with forTriple
+										T next,  // The next item of the list we are iterating over with forTriple
+										int i    // The index of the current item of the list we are iterating over with forTriple
+									) do         // Do this for each triple in a list
 		for(auto i=1, _subject=subject, _len=_subject.size()-1; i<_len; ++i) { auto it = _subject[i], next = _subject[i+1], prev = _subject[i-1]; do()}
 		
 	global inline cpp void forTriples: T[] subject  // The list to iterate over
-		                              <- void(
-		                                  T it,    // The current item of the list we are iterating over with forTriple
-		                                  T prev,  // The previous item of the list we are iterating over with forTriple
-		                                  T next,  // The next item of the list we are iterating over with forTriple
-		                                  int i    // The index of the current item of the list we are iterating over with forTriple
-		                              ) do         // Do this for each triple in a list
+									<- void(
+										T it,    // The current item of the list we are iterating over with forTriple
+										T prev,  // The previous item of the list we are iterating over with forTriple
+										T next,  // The next item of the list we are iterating over with forTriple
+										int i    // The index of the current item of the list we are iterating over with forTriple
+									) do         // Do this for each triple in a list
 		for(auto _subject=subject, i=_subject.size()-2; i>=1; --i) { auto it = _subject[i], next = _subject[i-1], prev = _subject[i+1]; do()}
 		
 	// [a,b,c] -> (prev:c, a, next:b), (prev:a, b, next:c), (prev:b, c, next:a)
 	global inline cpp void forWrappingTriples: T[] subject  // The list to iterate over
-		                                     -> void(
-		                                         T it,    // The current item of the list we are iterating over with forWrappingTriples
-		                                         T prev,  // The previous item of the list we are iterating over with forWrappingTriples
-		                                         T next,  // The next item of the list we are iterating over with forWrappingTriples
-		                                         int i    // The index of the current item of the list we are iterating over with forWrappingTriples
-		                                     ) do         // Do this for each triple in a list
+											-> void(
+												T it,    // The current item of the list we are iterating over with forWrappingTriples
+												T prev,  // The previous item of the list we are iterating over with forWrappingTriples
+												T next,  // The next item of the list we are iterating over with forWrappingTriples
+												int i    // The index of the current item of the list we are iterating over with forWrappingTriples
+											) do         // Do this for each triple in a list
 		for(auto i=0, _subject=subject, _len=_subject.size(); i<_len; ++i) { auto it = _subject[i], next = _subject[(i+1)%_len], prev = _subject[(((i-1)%_len)+_len)%_len]; do()}
 		
 	global inline cpp void forWrappingTriples: T[] subject  // The list to iterate over
-		                                     <- void(
-		                                         T it,    // The current item of the list we are iterating over with forWrappingTriples
-		                                         T prev,  // The previous item of the list we are iterating over with forWrappingTriples
-		                                         T next,  // The next item of the list we are iterating over with forWrappingTriples
-		                                         int i    // The index of the current item of the list we are iterating over with forWrappingTriples
-		                                     ) do         // Do this for each triple in a list
+											<- void(
+												T it,    // The current item of the list we are iterating over with forWrappingTriples
+												T prev,  // The previous item of the list we are iterating over with forWrappingTriples
+												T next,  // The next item of the list we are iterating over with forWrappingTriples
+												int i    // The index of the current item of the list we are iterating over with forWrappingTriples
+											) do         // Do this for each triple in a list
 		for(auto _subject=subject, _len=_subject.size(), i=_len-1; i>=0; --i) { auto it = _subject[i], next = _subject[(((i-1)%_len)+_len)%_len], prev = _subject[(i+1)%_len]; do()}
 
 		
 	// Prints a message to the console
-	global cpp void print: logstring text // The text, variables or expressions to print
+	global cpp(fstream, iostream, string) void print: logstring text // The text, variables or expressions to print
 		std::cout << text << std::endl;
+		std::ofstream outfile("log.txt", std::ios_base::app);
+		outfile << text << std::endl;
+		outfile.close();
 		
 	cpp void log: any value
 		std::cout << value << std::endl;
@@ -1590,19 +1685,19 @@ global transient priority unit system
 	global inline cpp void continue() continue
 		
 	global inline cpp void try: inline void() code
-		                       inline nocolon void(Error error) catch
+							inline nocolon void(Error error) catch
 		try code() @catch(error) catch()
 		
 	global inline cpp void try: inline void() code
-		                       inline nocolon void(Error error) catch
-		                       inline nocolon void() finally
+							inline nocolon void(Error error) catch
+							inline nocolon void() finally
 		try code() @catch(error) catch() @finally finally()
 		
 	global inline cpp void try: inline void() code
-		                       inline nocolon void() finally
+							inline nocolon void() finally
 		try code() @finally finally()
 		
-global transient priority low unit system		
+global transient priority low unit system
 	// Creates a new list populated with the results of calling a function on every element of the list
 	// global inline cpp TResult[] for: T[] subject // The list to iterate over
 	// 	                       -> TResult(
@@ -1633,151 +1728,146 @@ global transient priority low unit system
 		
 // A collection of mathematical functions and constants
 global skipInit unit math
+unit math
 	// Returns the absolute value
-	inline cpp int abs: int value // The value to return the absolute value of
-		Math.abs(value)
+	inline cpp(cmath) int abs: int value // The value to return the absolute value of
+		std::abs(value)
 		
 	// Returns the absolute value
-	inline cpp float abs: float value // The value to return the absolute value of
-		Math.abs(value)
+	inline cpp(cmath) float abs: float value // The value to return the absolute value of
+		std::abs(value)
 		
-	// Returns the smallest integer greater than or equal to the given value 
-	inline cpp int ceil: float value // The value to round up
-		Math.ceil(value)
+	// Returns the smallest integer greater than or equal to the given value
+	inline cpp(cmath) int ceil: float value // The value to round up
+		std::ceil(value)
 		
-	// Returns the smallest integer greater than or equal to the given value 
-	inline cpp Time ceil: Time value // The value to round up
-		Math.ceil(value)
+	// Returns the smallest integer greater than or equal to the given value
+	inline cpp(cmath) Time ceil: Time value // The value to round up
+		std::ceil(value)
 		
 	// Returns the largest integer less than or equal to the given value
-	inline cpp int floor: float value // The value to round down
-		Math.floor(value)
+	inline cpp(cmath) int floor: float value // The value to round down
+		std::floor(value)
 		
 	// Returns the largest integer less than or equal to the given value
-	inline cpp Time floor: Time value // The value to round down
-		Math.floor(value)
+	inline cpp(cmath) Time floor: Time value // The value to round down
+		std::floor(value)
 		
 	// Returns the given value rounded to the nearest integer
-	inline cpp int round: float value // The value to round
-		Math.round(value)
+	inline cpp(cmath) int round: float value // The value to round
+		std::round(value)
 		
 	// Returns the given value rounded to the nearest integer
-	inline cpp Time round: Time value // The angle to round
-		Math.round(value)
+	inline cpp(cmath) Time round: Time value // The angle to round
+		std::round(value)
 		
-	inline cpp int min: int a // The first value
-		               int b // The second value
-		Math.min(a, b)
+	inline cpp(algorithm) int min: int a // The first value
+					int b // The second value
+		std::min(a, b)
 		
 	// Returns the smallest of the given values
-	inline cpp float min: float a // The first value
-		                 float b // The second value
-		Math.min(a, b)
+	inline cpp(cmath) float min: float a // The first value
+		                         float b // The second value
+		std::min(a, b)
 		
 	// Returns the largest of the given values
-	inline cpp int max: int a // The first value
-		               int b // The second value
-		Math.max(a, b)
+	inline cpp(algorithm) int max: int a // The first value
+		                           int b // The second value
+		std::max(a, b)
 		
 	// Returns the largest of the given values
-	inline cpp float max: float a // The first value
-		                 float b // The second value
-		Math.max(a, b)
+	inline cpp(cmath) float max: float a // The first value
+		                         float b // The second value
+		std::max(a, b)
 		
 	// Returns the largest of the given values
-	inline cpp Time max: Time a // The first time
-		                Time b // The second time
-		Math.max(a, b)
+	inline cpp(cmath) Time max: Time a // The first time
+		                        Time b // The second time
+		std::max(a, b)
 		
 	// Returns the positive square root of the given value
-	inline cpp float sqrt: float value // The value to return the square root of
-		Math.sqrt(value)
+	inline cpp(cmath) float sqrt: float value // The value to return the square root of
+		std::sqrt(value)
 		
-	inline cpp float pow: float base
-		                 float exponent
-		Math.pow(base, exponent)
+	inline cpp(cmath) float pow: float base
+						float exponent
+		std::pow(base, exponent)
 		
-	inline cpp int shiftLeft: int value
-		                     int count
+	inline cpp(cmath) int shiftLeft: int value
+							int count
 		(value << count)
 	
-	inline cpp int shiftRight: int value
-		                      int count
+	inline cpp(cmath) int shiftRight: int value
+							int count
 		(value >> count)
-		
-	moveTowards: float value
-		         float targetValue
-		         float speed = 1
-		if targetValue > value: return math.min(value + speed, targetValue) else
-		if targetValue < value: return math.max(value - speed, targetValue)
 			
 	limit: int value
 		   int min
 		   int max
 		if value < min: return min
 		if value > max: return max
-			            return value
+						return value
 	
 	limit: int value
-		   int max
+		int max
 		if value > max: return max
-			            return value
+						return value
 	
 	limit: int value
 		   int min
 		if value < min: return min
-			            return value
+						return value
 	
 	limit: float value
 		   float min
 		   float max
 		if value < min: return min
 		if value > max: return max
-			            return value
+						return value
 	
 	limit: float value
 		   float max
 		if value > max: return max
-			            return value
+						return value
 			
 	limit: float value
 		   float min
 		if value < min: return min
-			            return value
+						return value
 			
 	// // Maps a value from an input range to an output range
-	// map: Time value        // The input value 
-	// 	 Time from = 0     // The beginning of the input range
-	// 	 Time to = 1       // The end of the input range
-	// 	 float start = 0   // The lowest possible output value, will be returned for values smaller than "from".
-	// 	 float target = 1  // The highest possible output value, will be returned for values larger than "to".
-	// 	if value <= from: return start
-	// 	if value >= to:   return target
-	// 	let factor = (value-from) / (to-from)
-	// 	return start + (target-start) * factor
+	map: Time value        // The input value
+		Time from = 0     // The beginning of the input range
+		Time to = 1       // The end of the input range
+		float start = 0   // The lowest possible output value, will be returned for values smaller than "from".
+		float target = 1  // The highest possible output value, will be returned for values larger than "to".
+		if value <= from: return start
+		if value >= to:   return target
+		let factor = (value-from) / (to-from)
+		return start + (target-start) * factor
 			
-	// // Maps a value from an input range to an output range
-	// map: float value       // The input value 
-	// 	 float from = 0    // The beginning of the input range
-	// 	 float to = 1      // The end of the input range
-	// 	 float start = 0   // The lowest possible output value, will be returned for values smaller than "from".
-	// 	 float target = 1  // The highest possible output value, will be returned for values larger than "to".
-	// 	if value <= from: return start
-	// 	if value >= to:   return target
-	// 	let factor = (value-from) / (to-from)
-	// 	return start + (target-start) * factor
+	// Maps a value from an input range to an output range
+	map: float value       // The input value
+		float from = 0    // The beginning of the input range
+		float to = 1      // The end of the input range
+		float start = 0   // The lowest possible output value, will be returned for values smaller than "from".
+		float target = 1  // The highest possible output value, will be returned for values larger than "to".
+		if value <= from: return start
+		if value >= to:   return target
+		let factor = (value-from) / (to-from)
+		return start + (target-start) * factor
 			
-	// // Maps a value from an input range to an output range
-	// map: float value       // The input value 
-	// 	 float from = 0    // The beginning of the input range
-	// 	 float to = 1      // The end of the input range
-	// 	 float start = 0   // The lowest possible output value, will be returned for values smaller than "from".
-	// 	 float target = 1  // The highest possible output value, will be returned for values larger than "to".
-	// 	 EaseFunction ease // The easing function to apply
-	// 	if value <= from: return start
-	// 	if value >= to:   return target
-	// 	let factor = ease.function((value-from) / (to-from))
-	// 	return start + (target-start) * factor
+	// Maps a value from an input range to an output range
+	map: float value       // The input value
+		 float from = 0    // The beginning of the input range
+		 float to = 1      // The end of the input range
+		 float start = 0   // The lowest possible output value, will be returned for values smaller than "from".
+		 float target = 1  // The highest possible output value, will be returned for values larger than "to".
+		EaseFunction ease // The easing function to apply
+		if value <= from: return start
+		if value >= to:   return target
+		let factor = ease.function((value-from) / (to-from))
+		return start + (target-start) * factor
 		
 struct Average
 	float total
@@ -1785,7 +1875,7 @@ struct Average
 	// add: float value
 	// 	total += value
 	// 	count++
-	// average := total / count		
+	// average := total / count
 
 immutable Range
 	int from // The start of the range
@@ -1851,3 +1941,5 @@ unit Loca
 	// 		}
 	// 	}
 	// 	return result
+
+

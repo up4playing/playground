@@ -7,13 +7,12 @@ unit Platform
 		audio::init();
 		
 	cpp void start
-		system::print("### initMedia");
+		system::print(std::string("------------------------------------------ ")+std::string(_appName)+std::string(" Version ")+std::to_string(_buildVersion)+std::string(" ------------------------------------------"));
 		Platform::initMedia();
-		system::print("### openMedia");
 		Platform::openMedia();
-		system::print("### init");
 		init();
-		
+		app::start();
+				
 		// Sound
 		// Mix_Chunk *sfx = Mix_LoadWAV("sfx/hop.wav");
 		// Mix_Chunk *bgm = Mix_LoadWAV("bgm/Mars.wav");
@@ -35,27 +34,24 @@ unit Platform
 		SDL_Event event;
 		bool done = false;
 		while (!done) {
-		    while (SDL_PollEvent(&event)) {
-		        if (event.type == SDL_QUIT) {
-		            done = true;
-		        } else if (event.type == SDL_KEYUP) {
-		            switch (event.key.keysym.scancode) {
-		                case SDL_SCANCODE_SPACE:
-		                    // Mix_PlayChannel(-1, sfx, 0);
-		                    break;
-		                case SDL_SCANCODE_ESCAPE:
-		                    done = true;
-		                    break;
-		            }
-		        }
-		    }
+			while (SDL_PollEvent(&event)) {
+				if (event.type == SDL_QUIT) done = true;
+				if (event.type == SDL_KEYUP) {
+					system::print(std::string("KeyDown ")+std::to_string(event.key.keysym.sym));
+					switch (event.key.keysym.sym) {
+						case SDLK_ESCAPE:
+							done = true;
+							continue;
+					}
+				}
+			}
 		
 			graphics::startFrame();
 			app::tick();
 			graphics::finishFrame();
 		
-		    // SDL_Rect textRect = {(width - textW) / 2, (height - textH) / 2, textW, textH};
-		    // SDL_RenderCopy(renderer, text, NULL, &textRect);
+			// SDL_Rect textRect = {(width - textW) / 2, (height - textH) / 2, textW, textH};
+			// SDL_RenderCopy(renderer, text, NULL, &textRect);
 		}
 		// Mix_HaltChannel(-1);
 		
@@ -75,19 +71,7 @@ unit Platform
 		TTF_Quit();
 		IMG_Quit();
 		SDL_Quit();
-		
-cpp(string, std::string) immutable struct string
 
-cpp(vector, std::vector) struct List<T>
-global unit system
-	global cpp(android/log.h) void print(string value)
-		__android_log_print(ANDROID_LOG_VERBOSE, "LiveTime", "%s", value.c_str());
-		
-	global inline cpp void if(bool condition, inline void() then, inline void() else)
-		if(condition) then() @else else()
-	global inline cpp void if(bool condition, inline void() then)
-		if(condition) then()
-	global inline cpp void while(bool condition, inline void() block)
-		while(condition) block()
 			
 			
+
