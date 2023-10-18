@@ -602,11 +602,11 @@ immutable priority low struct float
 
 cpp vector, std::vector
 priority low struct List<T>
-	inline cpp T[] sort: Angle(T a, T b) comparer // A function returning 1 if "a" is larger, -1 if "b" is larger, 0 if they are equal
-		this.sort(comparer)
+	// inline cpp T[] sort: Angle(T a, T b) comparer // A function returning 1 if "a" is larger, -1 if "b" is larger, 0 if they are equal
+	// 	this.sort(comparer)
 		
-	T[] orderBy: Angle(T a) expression // First order by this expression
-		return this.sort(expression(a) - expression(b))
+	// T[] orderBy: Angle(T a) expression // First order by this expression
+	// 	return this.sort(expression(a) - expression(b))
 
 global skipInit priority low unit math
 	// Returns the absolute value

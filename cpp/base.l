@@ -809,15 +809,17 @@ struct List<T>
 	// inline cpp T[] sort
 	// 	this.sort((a,b) => a - b)
 	
-	// inline cpp T[] sort: float(T a, T b) comparer // A function returning 1 if "a" is larger, -1 if "b" is larger, 0 if they are equal
-	// 	this.sort(comparer)
+	inline cpp(algorithm) T[] sort: float(T a, T b) comparer // A function returning 1 if "a" is larger, -1 if "b" is larger, 0 if they are equal
+		std::sort(this.begin(), this.end(), comparer)
 	
 	// inline cpp T[] sort: Time(T a, T b) comparer // A function returning 1 if "a" is larger, -1 if "b" is larger, 0 if they are equal
 	// 	this.sort(comparer)
 	
-	// // Sort the list by a given expression
-	// T[] orderBy: float(T a) expression // First order by this expression
-	// 	return this.sort(expression(a) - expression(b))
+	// Sort the list by a given expression
+	cpp(algorithm) void orderBy: float(T a) expression // First order by this expression
+		std::sort(this.begin(), this.end(), [=](auto a, auto b) { return expression(a) - expression(b); });
+		// return this
+		//return this.sort(expression(a) - expression(b))
 		
 	// T[] orderBy: float(T it) expression           // First order by this expression
 	// 	         label nocolon float(T it) thenBy // Then order by this expression
