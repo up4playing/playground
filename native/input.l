@@ -668,11 +668,10 @@ skipInit global unit input
 		// int composite = cast inputType                                  // inputType:   0 - 31 (5 bit)
 		
 		let controllerButton = controllerButtonMap[keyCode]
-			print "Controller Button {controllerButton.buttonIndex}", scanCode, keyCode
 			let player = players.find.id == controllerButton.userId
 			player.controllerKeyDownFrame[controllerButton.buttonIndex-1] = inputType == KeyDown ? Time.frame : 0
-		else
-			print scanCode, keyCode
+			
+		// print scanCode, keyCode
 		// 	composite += (controllerButton.buttonIndex + 1) shiftLeft 5 // buttonIndex: 0 - 15 (4 bit)
 		// 	if core.mode == Local and not core.simulateConnection
 		// 		inputs = internalUsers[controllerButton.userId].inputs

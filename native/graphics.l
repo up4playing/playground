@@ -35,6 +35,34 @@ immutable Color
 	// Color withAlpha: float alpha
 	// 	return {hex[1..7]+componentToHex(math.floor(alpha*255))}
 
+immutable skipInit class Font
+	string name
+	string file
+	cpp void open
+
+cpp(SDL.h, SDL_Texture) immutable class SDL_Texture
+cpp(SDL.h, SDL_Renderer) immutable class SDL_Renderer
+
+immutable class Texture
+	string file
+	Vector2 size
+	SDL_Texture *texture
+	
+	cpp void open
+		SDL_Surface *bgSurface = IMG_Load(file.c_str());
+		texture = SDL_CreateTextureFromSurface(graphics::renderer, bgSurface);
+		
+// A single frame of an animated image
+immutable struct ImageFrame
+	float x1, y1, x2, y2, w, h
+
+// An image that can be drawn on the screen and can have several frames of animation
+skipInit immutable class Image
+	string file
+	Texture texture
+	Vector2 size
+	ImageFrame[] frames
+
 enum ScaleMode: Auto, FixedWidth, FixedHeight, None
 enum AnchorMode: TopLeft, TopCenter, Center
 enum HorizontalAlignment: Left, Center, Right
@@ -42,7 +70,9 @@ enum VerticalAlignment: Top, Middle, Bottom
 enum FontStyle: Normal, Bold
 	
 global skipInit unit graphics
+	internal DisplayItem[] items
 	SDL_Renderer *renderer
+	
 	public Vector2 referenceSize = {640, 480}
 	public ScaleMode scaleMode = Auto, effectiveScaleMode
 	public AnchorMode anchor = Center
@@ -105,7 +135,7 @@ global skipInit unit graphics
 	//         tick
 	//             drawImage Idle, position:{0,0}, size:32, frame:0, visibleFor:me
 	// Image: drawImage0.png
-	global cpp void drawImage: Image image                         // The image to draw. PNG images in the "media" folder will automatically show up here
+	global void drawImage: Image image                         // The image to draw. PNG images in the "media" folder will automatically show up here
 		                      Vector2 position = {}               // By default, {0,0} is the center, {-960,-540} is the top left, {960,540} is the bottom right
 		                      implicit Vector2 size = {}          // A float scales the image to that width keeping the aspect ratio, a vector stretches the image
 		                      implicit Player[] visibleFor = []   // Only this player or list of players will see the image
@@ -115,20 +145,19 @@ global skipInit unit graphics
 		                      Color color = White                 // Tint the image with this color
 		                      HorizontalAlignment align = Center  // The horizontal alignment of the image
 		                      VerticalAlignment valign = Middle   // The vertical alignment of the image
-		if(graphics::isVisibleFor(visibleFor)) {
-			auto f = image->frames[frame%image->frames.size()];
-			double unscaledSizeX = size.x ? size.x : f.w;
-			double sizeX = unscaledSizeX * scale;
-			double sizeY = (size.y ? size.y : (unscaledSizeX/f.w)*f.h) * scale;
-			double posX = (align == 0  ? position.x : align  == 1 ? position.x-sizeX*.5 : position.x-sizeX) + offset.x;
-			double posY = (valign == 0 ? position.y : valign == 1 ? position.y-sizeY*.5 : position.y-sizeY) + offset.y;
-			SDL_Rect sourceRect = { (int)f.x1, (int)f.y1, (int)f.w, (int)f.h };
-			SDL_Rect targetRect = { (int)posX, (int)posY, (int)sizeX, (int)sizeY };
-			// system::print("size.x:"+std::to_string(size.x));
-			// system::print("f.w:"+std::to_string(f.w));
-			// system::print("sizeX:"+std::to_string(sizeX));
-			SDL_RenderCopy(renderer, image->texture->texture, &sourceRect, &targetRect);
-		}
+		if(isVisibleFor(visibleFor))
+			let f = image.frames[frame % image.frames.length]
+			float unscaledSizeX = size.x ? size.x : f.w
+			float sizeX = unscaledSizeX * scale
+			float sizeY = (size.y ? size.y : (unscaledSizeX/f.w)*f.h) * scale
+			float posX = (align == Left ? position.x : align  == Center ? position.x-sizeX*.5 : position.x-sizeX) + offset.x
+			float posY = (valign == Top ? position.y : valign == Middle ? position.y-sizeY*.5 : position.y-sizeY) + offset.y
+			items.add DisplayImage(
+				cast posX, cast posY, cast sizeX, cast sizeY, 
+				layer, alpha,
+				image.texture, 
+				cast f.x1, cast f.y1, cast f.w, cast f.h
+			)
 		
 	global cpp void drawText: implicit string text                // A string or anything that can be converted into a string (for example, an interger or a float)
 		                      Vector2 position = {}               // By default, {0,0} is the center, {-960,-540} is the top left, {960,540} is the bottom right
@@ -144,39 +173,36 @@ global skipInit unit graphics
 		                      implicit layer = 0                  // Higher layers are drawn in front of lower layers
 		                      alpha = 1.0                         // The opacity of the text (0: fully transparent, 1: fully visible)
 
-	cpp void startFrame
+	startFrame
+		items.clear
+		
+	finishFrame
+		startRendering
+		items.sort a.layer - b.layer
+		// items.orderBy.layer
+		items.each <- .draw
+		finishRendering
+		
+	private cpp void startRendering
 	    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
 	    SDL_RenderClear(renderer);
 		
-	cpp void finishFrame
+	private cpp void finishRendering
 		SDL_RenderPresent(renderer);
 		
-immutable skipInit class Font
-	string name
-	string file
-	cpp void open
+transient immutable DisplayItem
+	int x, y, w, h
+	int layer
+	float alpha
+	draw
 
-cpp(SDL.h, SDL_Texture) immutable class SDL_Texture
-cpp(SDL.h, SDL_Renderer) immutable class SDL_Renderer
-
-immutable class Texture
-	string file
-	Vector2 size
-	SDL_Texture *texture
-	
-	cpp void open
-		SDL_Surface *bgSurface = IMG_Load(file.c_str());
-		texture = SDL_CreateTextureFromSurface(graphics::renderer, bgSurface);
-		
-// A single frame of an animated image
-immutable struct ImageFrame
-	float x1, y1, x2, y2, w, h
-
-// An image that can be drawn on the screen and can have several frames of animation
-skipInit immutable class Image
-	string file
+transient DisplayItem DisplayImage
 	Texture texture
-	Vector2 size
-	ImageFrame[] frames
+	int sx, sy, sw, sh
+	cpp void draw
+		SDL_Rect sourceRect = { sx, sy, sw, sh };
+		SDL_Rect targetRect = { x, y, w, h };
+		SDL_RenderCopy(graphics::renderer, texture->texture, &sourceRect, &targetRect);
+	
 
 		
