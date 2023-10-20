@@ -41,14 +41,20 @@ immutable skipInit class Font
 	cpp void open
 
 cpp(SDL.h, SDL_Texture) immutable class SDL_Texture
+cpp(SDL.h, SDL_Surface) immutable class SDL_Surface
 cpp(SDL.h, SDL_Renderer) immutable class SDL_Renderer
 
 immutable class Texture
 	string file
 	Vector2 size
-	SDL_Texture *texture
 	
-	cpp void open
+	internal #sdl1.2 SDL_Surface *surface
+	internal #sdl2 SDL_Texture *texture
+	
+	cpp #sdl1.2 void open
+		surface = IMG_Load(file.c_str());
+	
+	cpp #sdl2 void open
 		SDL_Surface *bgSurface = IMG_Load(file.c_str());
 		texture = SDL_CreateTextureFromSurface(graphics::renderer, bgSurface);
 		
@@ -71,7 +77,9 @@ enum FontStyle: Normal, Bold
 	
 global skipInit unit graphics
 	internal DisplayItem[] items
-	SDL_Renderer *renderer
+	internal #sdl1.2 SDL_Surface *video
+	internal #sdl1.2 SDL_Surface *screen
+	internal #sdl2 SDL_Renderer *renderer
 	
 	public Vector2 referenceSize = {640, 480}
 	public ScaleMode scaleMode = Auto, effectiveScaleMode
@@ -86,7 +94,31 @@ global skipInit unit graphics
 	private isVisibleFor: Player[] visibleFor
 		return true
 		
-	cpp(SDL_image.h, SDL_ttf.h) void init
+	cpp(SDL_image.h, SDL_ttf.h) #sdl1.2 void init
+		const int FONT_SIZE = 64;
+		IMG_Init(IMG_INIT_PNG);
+		TTF_Init();
+		
+		pixelSize = Vector2(referenceSize.x, referenceSize.y);
+		video = SDL_SetVideoMode(pixelSize.x, pixelSize.y, 32, SDL_HWSURFACE | SDL_DOUBLEBUF);
+		screen = SDL_CreateRGBSurface(SDL_HWSURFACE, pixelSize.x, pixelSize.y, 32, 0, 0, 0, 0);
+
+		// if(isFullscreen) {
+		// 	SDL_DisplayMode displayMode;
+		// 	SDL_GetCurrentDisplayMode(0, &displayMode);
+		// 	pixelSize = Vector2(displayMode.w, displayMode.h);
+		// } else {
+		// 	pixelSize = Vector2(referenceSize.x, referenceSize.y);
+		// }
+		
+		// SDL_Window *window = SDL_CreateWindow("Application", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, pixelSize.x, pixelSize.y, 0);
+		// SDL_Window *window = SDL_CreateWindow("Application", 1000, 100, pixelSize.x, pixelSize.y, 0);
+		
+		// if(isFullscreen) SDL_SetWindowFullscreen(window, SDL_WINDOW_FULLSCREEN);
+		// renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
+		graphics::updateBaseMatrix();
+		
+	cpp(SDL_image.h, SDL_ttf.h) #sdl2 void init
 		const int FONT_SIZE = 64;
 		IMG_Init(IMG_INIT_PNG);
 		TTF_Init();
@@ -126,8 +158,6 @@ global skipInit unit graphics
 		
 	global cpp void drawTexture: Texture texture
 		                         Vector2 position = {0,0}
-		SDL_Rect bgRect = {0, 0, (int)size.x, (int)size.y};
-		SDL_RenderCopy(renderer, texture->texture, NULL, &bgRect);
 		
 	// Draw an image. Place a PNG file in the "media" folder and it will automatically be imported
 	// Example: We place an image called "Idle.png" in the "media" folder. Then, we draw this image at the position {0,0}, scale it to a width of 32 pixels. Only the current player instance will see the image.
@@ -183,12 +213,19 @@ global skipInit unit graphics
 		items.each <- .draw
 		finishRendering
 		
-	private cpp void startRendering
+	private cpp #sdl2 void startRendering
 	    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
 	    SDL_RenderClear(renderer);
 		
-	private cpp void finishRendering
+	private cpp #sdl2 void finishRendering
 		SDL_RenderPresent(renderer);
+		
+	private cpp #sdl1.2 void startRendering
+		SDL_FillRect(screen, nullptr, SDL_MapRGB(screen->format, 255, 255, 255));
+		
+	private cpp #sdl1.2 void finishRendering
+		SDL_BlitSurface(screen, nullptr, video, nullptr);
+		SDL_Flip(video);
 		
 transient immutable DisplayItem
 	int x, y, w, h
@@ -199,10 +236,15 @@ transient immutable DisplayItem
 transient DisplayItem DisplayImage
 	Texture texture
 	int sx, sy, sw, sh
-	cpp void draw
+	
+	cpp #sdl1.2 void draw
+		SDL_Rect sourceRect = { (short)sx, (short)sy, (unsigned short)sw, (unsigned short)sh };
+		SDL_Rect targetRect = { (short)x,  (short)y,  (unsigned short)w,  (unsigned short)h };
+		SDL_BlitSurface(texture->surface, &sourceRect, graphics::screen, &targetRect);
+	
+	cpp #sdl2 void draw
 		SDL_Rect sourceRect = { sx, sy, sw, sh };
 		SDL_Rect targetRect = { x, y, w, h };
 		SDL_RenderCopy(graphics::renderer, texture->texture, &sourceRect, &targetRect);
-	
 
-		
+	

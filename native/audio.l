@@ -1,5 +1,5 @@
 global skipInit unit audio
-	cpp(SDL2/SDL_mixer.h) void init
+	cpp(SDL_mixer.h) void init
 		const int AUDIO_CHUNK_SIZE = 512;
 		Mix_Init(MIX_INIT_OGG);
 		Mix_OpenAudio(
