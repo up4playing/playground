@@ -445,12 +445,13 @@ struct List<T>
 							) do           // Do this for each item in a list
 		for(int _i=this.size()-1; _i>=0; --_i) { auto _it = this[_i]; do(_it, _i)}
 		
-	// // Do something for each item in a list. You can add or remove items inside the loop.
-	// inline cpp void eachChangable -> inline void(
-	// 	                       T it,      // The current item of the list we are iterating over
-	// 	                       int i      // The index of the current item of the list we are iterating over
-	// 	                   ) do           // Do this for each item in a list
-	// 	for(let i=0, _subject=[...this], _len=_subject.length; i<_len; ++i) { let it = _subject[i]; do()}
+	// Do something for each item in a list. You can add or remove items inside the loop.
+	inline cpp void eachChangable -> inline void(
+		                                 T it,      // The current item of the list we are iterating over
+		                                 int i      // The index of the current item of the list we are iterating over
+		                             ) do           // Do this for each item in a list
+		auto _subject = std::vector<T>(this);
+		for(int i=0, _len=_subject.size(); i<_len; ++i) { auto _it = _subject[i]; do(_it, i)}
 		
 	// inline cpp void eachChangable <- inline void(
 	// 	                       T it,      // The current item of the list we are iterating over
