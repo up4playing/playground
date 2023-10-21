@@ -834,9 +834,11 @@ struct List<T>
 	inline cpp TValue[] select: TValue(T it) selector
 		this.map(selector)
 		
-	// // Get the selected field or expression for each item and flattens the result
-	// inline cpp TValue[] flatten: TValue[](T it) selector
-	// 	this.flatMap(selector)
+	// Get the selected field or expression for each item and flattens the result
+	cpp TValue[] flatten: TValue(T it) selector
+		std::vector<TValue> result;
+		std::transform(this->begin(), this->end(), std::back_inserter(result), selector);
+		return result;
 		
 	// Find an item the meets the given condition
 	// Example: Find a player with a specific id
