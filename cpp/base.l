@@ -819,16 +819,16 @@ struct List<T>
 	// 	if order == Ascending: return this.sort(expression(a) - expression(b))
 	// 	else                   return this.sort(expression(b) - expression(a))
 		
-	// // Returns true if the given condition is true for any item in the list
-	// inline cpp bool any: bool(T a) predicate // The condition to check
-	// 	this.some(predicate)
+	// Returns true if the given condition is true for any item in the list
+	inline cpp bool any: bool(T a) predicate // The condition to check
+		std::any_of(this.begin(), this.end(), predicate)
 		
-	// inline cpp bool none: bool(T a) predicate // The condition to check
-	// 	!this.some(predicate)
+	inline cpp bool none: bool(T a) predicate // The condition to check
+		std::none_of(this.begin(), this.end(), predicate)
 		
-	// // Returns true if the given condition is true for all items in the list
-	// inline cpp bool all: bool(T a) predicate // The condition to check
-	// 	this.every(predicate)
+	// Returns true if the given condition is true for all items in the list
+	inline cpp bool all: bool(T a) predicate // The condition to check
+		std::all_of(this.begin(), this.end(), predicate)
 		
 	// Return a list that contains the selected field or expression for each item
 	inline cpp TValue[] select: TValue(T it) selector
