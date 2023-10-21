@@ -522,71 +522,55 @@ struct List<T>
 	// 	                   index = 0 // Insert the item at this index
 	// 	this.splice(index, 0, item)
 		
-	// // Remove an item from the list
-	// // Example: Remove the current player instrance from the list of playeres when they died
-	// //     Player
-	// //         die
-	// //             players.remove me
-	// cpp void remove: T item // The item to remove
-	// 	var index = this.indexOf(item);
-	// 	if(index > -1) this.splice(index, 1);
+	// Remove an item from the list
+	// Example: Remove the current player instrance from the list of playeres when they died
+	//     Player
+	//         die
+	//             players.remove me
+	cpp void remove: T item // The item to remove
+		auto it = std::find(this.begin(), this.end(), item);
+		if(it != this.end()) this.erase(it);
 			
-	// cpp void remove: T item  // The first item to remove
-	// 	            T item2 // The second item to remove
-	// 	var index = this.indexOf(item);
-	// 	if(index > -1) this.splice(index, 1);
-	// 	var index = this.indexOf(item2);
-	// 	if(index > -1) this.splice(index, 1);
-			
-	// cpp void remove: T item  // The first item to remove
-	// 	            T item2 // The second item to remove
-	// 	            T item3 // The third item to remove
-	// 	var index = this.indexOf(item);
-	// 	if(index > -1) this.splice(index, 1);
-	// 	var index = this.indexOf(item2);
-	// 	if(index > -1) this.splice(index, 1);
-	// 	var index = this.indexOf(item3);
-	// 	if(index > -1) this.splice(index, 1);
-			
-	// cpp void remove: T item  // The first item to remove
-	// 	            T item2 // The second item to remove
-	// 	            T item3 // The third item to remove
-	// 	            T item4 // The forth item to remove
-	// 	var index = this.indexOf(item);
-	// 	if(index > -1) this.splice(index, 1);
-	// 	var index = this.indexOf(item2);
-	// 	if(index > -1) this.splice(index, 1);
-	// 	var index = this.indexOf(item3);
-	// 	if(index > -1) this.splice(index, 1);
-	// 	var index = this.indexOf(item4);
-	// 	if(index > -1) this.splice(index, 1);
-			
-	// cpp void remove: T item  // The first item to remove
-	// 	            T item2 // The second item to remove
-	// 	            T item3 // The third item to remove
-	// 	            T item4 // The forth item to remove
-	// 	            T item5 // The fifth item to remove
-	// 	var index = this.indexOf(item);
-	// 	if(index > -1) this.splice(index, 1);
-	// 	var index = this.indexOf(item2);
-	// 	if(index > -1) this.splice(index, 1);
-	// 	var index = this.indexOf(item3);
-	// 	if(index > -1) this.splice(index, 1);
-	// 	var index = this.indexOf(item4);
-	// 	if(index > -1) this.splice(index, 1);
-	// 	var index = this.indexOf(item5);
-	// 	if(index > -1) this.splice(index, 1);
-			
-	// // Remove a list of items from the list
-	// cpp void remove: T[] items // The items to remove
-	// 	for(let item of items) {
-	// 		var index = this.indexOf(item);
-	// 		if(index > -1) this.splice(index, 1);
-	// 	}
+	void remove: T item  // The first item to remove
+		         T item2 // The second item to remove
+		remove(item:item)
+		remove(item:item2)
 		
-	// // Remove the item at the given index from the list
-	// inline cpp void removeAt: int index // The index of the item to remove
-	// 	this.splice(index, 1)
+	void remove: T item  // The first item to remove
+		         T item2 // The second item to remove
+		         T item3 // The third item to remove
+		remove(item:item)
+		remove(item:item2)
+		remove(item:item3)
+			
+	void remove: T item  // The first item to remove
+		         T item2 // The second item to remove
+		         T item3 // The third item to remove
+		         T item4 // The forth item to remove
+		remove(item:item)
+		remove(item:item2)
+		remove(item:item4)
+			
+	void remove: T item  // The first item to remove
+		         T item2 // The second item to remove
+		         T item3 // The third item to remove
+		         T item4 // The forth item to remove
+		         T item5 // The fifth item to remove
+		remove(item:item)
+		remove(item:item2)
+		remove(item:item4)
+		remove(item:item5)
+			
+	// Remove a list of items from the list
+	cpp void remove: T[] items // The list of items to remove
+		for(auto item : items) {
+			auto it = std::find(this.begin(), this.end(), item);
+			if (it != this.end()) this.erase(it);
+		}
+		
+	// Remove the item at the given index from the list
+	inline cpp void removeAt: int index // The index of the item to remove
+		this.erase(this.begin() + index)
 			
 	// // Remove a range of items from the list
 	// // Example: Remove the first 3 players from the list
