@@ -159,6 +159,8 @@ global skipInit unit graphics
 	global cpp void drawTexture: Texture texture
 		                         Vector2 position = {0,0}
 		
+	// ------------------------------------------------------- Image -------------------------------------------------------
+	
 	// Draw an image. Place a PNG file in the "media" folder and it will automatically be imported
 	// Example: We place an image called "Idle.png" in the "media" folder. Then, we draw this image at the position {0,0}, scale it to a width of 32 pixels. Only the current player instance will see the image.
 	//     Player
@@ -189,7 +191,16 @@ global skipInit unit graphics
 				cast f.x1, cast f.y1, cast f.w, cast f.h
 			)
 		
-	global cpp void drawText: implicit string text                // A string or anything that can be converted into a string (for example, an interger or a float)
+	// ------------------------------------------------------- Text -------------------------------------------------------
+	
+	// Draw text on the screen
+	// Example: If the current player instance is the winner, we show "You've won!" to the current player instance. To use a custom font, just copy a TTF, WOFF or WOFF2 file to the "media" folder and it will automatically be imported.
+	//     Player
+	//         tick
+	//             if winner == me
+	//                 drawText "You've won!", size:100, color:Black, font:OpenSans, visibleFor:me
+	// Image: drawText.png
+	global drawText: implicit string text                // A string or anything that can be converted into a string (for example, an interger or a float)
 		                      Vector2 position = {}               // By default, {0,0} is the center, {-960,-540} is the top left, {960,540} is the bottom right
 		                      implicit Vector2 size = {}          // The size of the text
 		                      Color color = null                  // The color of the text
@@ -202,13 +213,42 @@ global skipInit unit graphics
 		                      implicit Player[] visibleFor = []   // Only this player or list of players will see the text
 		                      implicit layer = 0                  // Higher layers are drawn in front of lower layers
 		                      alpha = 1.0                         // The opacity of the text (0: fully transparent, 1: fully visible)
+	
+	// ------------------------------------------------------- Rectangle -------------------------------------------------------
+	
+	// Draw a rectangle on the screen
+	// Example: Draw a white rectangle with a black outline that is 8 pixels wide.
+	//     app
+	//         tick
+	//             drawRectangle size:{500,100}, color:White, outlineColor:Black, outlineWidth:8
+	// Image: drawRectangle.png
+	global drawRectangle: position = Vector2()                // By default, {0,0} is the center, {-960,-540} is the top left, {960,540} is the bottom right
+		                  implicit size = Vector2(256,256)    // The size of the rectangle, use a float to draw a square, use a vector to draw a rectangle
+		                  Color color = null                  // The color of the area within the rectangle
+		                  Color outlineColor = null           // The color of the outline around the rectangle
+		                  outlineWidth = 0                    // The width of the outline around the rectangle in pixels
+		                  implicit Player[] visibleFor = []   // Only this player or list of players will see the rectangle
+		                  implicit layer = 0                  // Higher layers are drawn in front of lower layers
+		                  alpha = 1.0                         // The opacity of the rectangle (0: fully transparent, 1: fully visible)
+		                  HorizontalAlignment align = Center  // The horizontal alignment of the rectangle
+		                  VerticalAlignment valign = Middle   // The vertical alignment of the rectangle
+		
+		if(isVisibleFor(visibleFor))
+			float sizeX = size.x * scale
+			float sizeY = (size.y || size.x) * scale
+			float posX = (align == Left ? position.x : align  == Center ? position.x-sizeX*.5 : position.x-sizeX) + offset.x
+			float posY = (valign == Top ? position.y : valign == Middle ? position.y-sizeY*.5 : position.y-sizeY) + offset.y
+			items.add DisplayText(
+				cast posX, cast posY, cast sizeX, cast sizeY, 
+				layer, alpha
+			)
 
 	startFrame
 		items.clear
 		
 	finishFrame
 		startRendering
-		items.sort a.layer - b.layer
+		items.sort a.layer < b.layer
 		// items.orderBy.layer
 		items.each <- .draw
 		finishRendering
@@ -247,4 +287,5 @@ transient DisplayItem DisplayImage
 		SDL_Rect targetRect = { x, y, w, h };
 		SDL_RenderCopy(graphics::renderer, texture->texture, &sourceRect, &targetRect);
 
-	
+transient DisplayItem DisplayText
+	string text

@@ -380,9 +380,9 @@ enum Key
 	Eject           	= 1073742105
 	Sleep           	= 1073742106
 		
-// enum Cursor
-// 	Pointer = "pointer" // The cursor is a pointer that indicates a link, typically an image of a pointing hand
-// 	Default = "default" // The platform-dependent default cursor, typically an arrow
+enum Cursor
+	Pointer // The cursor is a pointer that indicates a link, typically an image of a pointing hand
+	Default // The platform-dependent default cursor, typically an arrow
 // 	Grab = "grab" // Something can be grabbed (dragged to be moved)
 // 	Grabbing = "grabbing" // Something is being grabbed (dragged to be moved)
 // 	NoDrop = "no-drop" // An item may not be dropped at the current location
@@ -418,8 +418,8 @@ enum Key
 // 	ZoomIn = "zoom-in" // Something can be zoomed in
 // 	ZoomOut = "zoom-out" // Something can be zoomed out	
 	
-// 	Auto = "auto" // The cursor will be based on the current context, for example "text" when hovering text
-// 	None = "none" // No cursor is rendered
+	Auto // The cursor will be based on the current context, for example "text" when hovering text
+	None // No cursor is rendered
 	
 class DigitalButton
 	string name
@@ -1190,25 +1190,25 @@ skipInit global unit input
 	// 				do touch
 	// 				if markAsHandled: touch.handled = true
 
-	// // Do something when the player touches or clicks within a given area
-	// // Example: Draw an OK button and print "Clicked OK" when the user touches it.
-	// //     app
-	// //         tick
-	// //             drawText "OK", position:{0,0}, size:40, color:White
-	// //             drawRoundedRectangle position:{0,0}, size:{300,100}, color:Blue
-	// //             
-	// //             onTouchDownWithin position:{0,0}, size:{300,100}
-	// //                 print "Clicked OK"
-	// // Image: onTouchDownWithin0.png
-	// global onTouchDownWithin: Vector2 position                    // The center of the touch area
-	// 	                      Vector2 size                        // The size of the rectangular touch area
-	// 	                      implicit nocolon Player[] by = null // Only consider touches or clicks by this player or list of players  
-	// 	                      Cursor cursor = Auto                // Change the mouse cursor image when hovering over this area
-	// 	                      bool showTouchArea = false          // Highlight the touchable area for debugging
-	// 	                      bool markAsHandled = true           // Mark the touch as handled so it won't trigger more touch events
-	// 	                      HorizontalAlignment align = Center  // The horizontal alignment of the touch area
-	// 	                      VerticalAlignment valign = Middle   // The vertical alignment of the touch area
-	// 	                      void(Touch touch) do                // Do this for each touch or click
+	// Do something when the player touches or clicks within a given area
+	// Example: Draw an OK button and print "Clicked OK" when the user touches it.
+	//     app
+	//         tick
+	//             drawText "OK", position:{0,0}, size:40, color:White
+	//             drawRoundedRectangle position:{0,0}, size:{300,100}, color:Blue
+	//             
+	//             onTouchDownWithin position:{0,0}, size:{300,100}
+	//                 print "Clicked OK"
+	// Image: onTouchDownWithin0.png
+	global onTouchDownWithin: Vector2 position                    // The center of the touch area
+		                      Vector2 size                        // The size of the rectangular touch area
+		                      implicit nocolon Player[] by = []   // Only consider touches or clicks by this player or list of players  
+		                      Cursor cursor = Auto                // Change the mouse cursor image when hovering over this area
+		                      bool showTouchArea = false          // Highlight the touchable area for debugging
+		                      bool markAsHandled = true           // Mark the touch as handled so it won't trigger more touch events
+		                      HorizontalAlignment align = Center  // The horizontal alignment of the touch area
+		                      VerticalAlignment valign = Middle   // The vertical alignment of the touch area
+		                      void(Touch touch) do                // Do this for each touch or click
 	// 	let sizeX = size.x
 	// 	let sizeY = size.y || size.x
 	// 	let x = align == Left ? position.x : align  == Center ? position.x-sizeX/2 : position.x-sizeX
