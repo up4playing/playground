@@ -573,143 +573,130 @@ struct List<T>
 	inline cpp void removeAt: int index // The index of the item to remove
 		this.erase(this.begin() + index)
 			
-	// // Remove a range of items from the list
-	// // Example: Remove the first 3 players from the list
-	// //     players.removeRange 0 to 3
-	// inline cpp void removeRange: int from = 0   // Remove items starting from this index
-	// 	                        nocolon int to // Remove items up to (but not including) this index
-	// 	this.splice(from, to-from)
-			
-	// // Remove all item the meet a specific condition
-	// // Example: Remove all players that have died.
-	// //     Player
-	// //         bool hasDied
-	
-	// //      app
-	// //          gameOver
-	// //              players.removeWhere.hasDied
-	// removeWhere: bool(T a) condition // The condition to check
-	// 	for this <-
-	// 		if condition(.)
-	// 			removeAt i
-	// 	return null
+	// Remove a range of items from the list
+	inline cpp void removeRange: int from = 0   // Remove items starting from this index
+		                         nocolon int to // Remove items up to (but not including) this index
+		this.erase(this.begin() + from, this.begin() + to)
 		
-	// // Remove the first item the meet a specific condition
-	// // Example: Remove the first player with a health smaller than 10.
-	// //     Player
-	// //         int health
-	// //
-	// //     app
-	// //         gameOver
-	// //             players.removeFirstWhere.health < 10
-	// T removeFirstWhere: bool(T a) condition // The condition to check
-	// 	for this
-	// 		if condition(.)
-	// 			removeAt i
-	// 			return .
-	// 	return null
-	
-	// // Add an item to the list if it isn't already in there
-	// cpp void ensure: T item // The item to add
-	// 	if(!this.includes(item))
-	// 		this.push(item)
+	// Remove all items that meet a specific condition
+	inline cpp void removeWhere: bool(T it) condition
+		this.erase(std::remove_if(this.begin(), this.end(), condition), this.end())
 		
-	// // Add each item from a list if it isn't already in there
-	// cpp void ensure: T[] items // The list of items to add
-	// 	for(let it of items)
-	// 		if(!this.includes(it))
-	// 			this.push(it)
+	// Remove the first item that meets a specific condition
+	cpp T removeFirstWhere: bool(T it) condition
+		auto iter = std::find_if(this.begin(), this.end(), condition);
+		if(iter != this.end())
+		{
+			T item = *iter;
+			this.erase(iter);
+			return item;
+		}
+		return T();
 		
-	// // Returns whether the list contains the given item
-	// inline cpp bool contains: T item // Check if the list contains this item
-	// 	this.includes(item)
+	// Add an item to the list if it isn't already in there
+	inline cpp void ensure: T item
+		if(std::find(this.begin(), this.end(), item) == this.end())
+			this.push_back(item)
 		
-	// // The index of an item in the list
-	// inline cpp int indexOf: T item // Get the index of this item
-	// 	this.indexOf(item)
+	// Add each item from a list if it isn't already in there
+	inline cpp void ensure: T[] items
+		for(const T& it : items)
+			if(std::find(this.begin(), this.end(), it) == this.end())
+				this.push_back(it)
 		
-	// inline cpp void setList: T[] list
-	// 	this.splice(0, this.length, ...list)
+	// Returns whether the list contains the given item
+	inline cpp bool contains: T item
+		return std::find(this.begin(), this.end(), item) != this.end();
 		
-	// void setFilteredList: T[] list
-	// 	                  bool(T a) condition
-	// 	clear
-	// 	for list: if condition(.): add .
+	// The index of an item in the list
+	inline cpp int indexOf: T item
+		auto it = std::find(this.begin(), this.end(), item);
+		return (it != this.end()) ? std::distance(this.begin(), it) : -1;
 		
-	// void setFilteredList: T[] list
-	// 	                  bool(T a) condition
-	// 	                  int maxCount
-	// 	clear
-	// 	int count = 0
-	// 	for list
-	// 		if condition .
-	// 			add .
-	// 			if ++count >= maxCount: break
+	inline cpp void setList: T[] list
+		*this = list
 		
-	// // Remove the last item from the list and return it
-	// // Example: Print and remove "Orange" from the list
-	// //     let fruits = ["Apple", "Lemon", "Orange"]
-	// //     print fruits.pop
-	// inline cpp T pop := this.pop()
+	inline cpp void setFilteredList: T[] list
+		                             bool(T it) condition
+		this.clear();
+		for(const T& item : list)
+			if(condition(item))
+				this.push_back(item)
+				
+	inline cpp void setFilteredList: T[] list
+		                              bool(T it) condition
+		                              int maxCount
+		this.clear();
+		int count = 0;
+		for(const T& item : list)
+		{
+			if(condition(item))
+			{
+				this.push_back(item);
+				if(++count >= maxCount) break;
+			}
+		}
 		
-	// // Remove an item at a specific index from the list and return it
-	// // Example: Print and remove "Lemon" from the list
-	// //     let fruits = ["Apple", "Lemon", "Orange"]
-	// //     print fruits.popAt 1
-	// inline cpp T popAt: int index
-	// 	this.splice(index, 1)[0]
+	// Remove the last item from the list and return it
+	inline cpp T pop
+		T item = this.back();
+		this.pop_back();
+		return item;
 		
-	// // Remove a range of items from the list and return a new list containing the removed items
-	// // Example: Remote "Lemon" and "Orange" from the list of fruits a create a new list with those fruits
-	// //     let fruits = ["Apple", "Pear", "Lemon", "Orange"]
-	// //     let citrusFruit  = fruits.popRange 2 to 4
-	// inline cpp T[] popRange: int from
-	// 	                    nocolon int to
-	// 	this.splice(from, to-from)
+	// Remove an item at a specific index from the list and return it
+	inline cpp T popAt: int index
+		auto iter = this.begin() + index;
+		T item = *iter;
+		this.erase(iter);
+		return item;
 		
-	// // Remove the first item that meet a given condition and return it
-	// // Exmaple: Remove the first player with a health below 10
-	// //     let firstActivePlayer = players.popWhere.health < 10
-	// T popWhere: bool(T a) condition // The condition for the item to meet
-	// 	for length()
-	// 		let item = get(i)
-	// 		if condition(item)
-	// 			removeAt i
-	// 			return item
-	// 	return null
-	
-	// // Remove the first item from the list and return it
-	// // Example: Print and remove "Apple" from the list
-	// //     let fruits = ["Apple", "Lemon", "Orange"]
-	// //     print fruits.popFirst
-	// cpp T popFirst
-	// 	if(this.length == 0) return null
-	// 	let firstItem = this[0]
-	// 	this.splice(0, 1)
-	// 	return firstItem
-	
+	// Remove a range of items from the list and return a new list containing the removed items
+	inline cpp T[] popRange: int from
+		                     nocolon int to
+		std::vector<T> range(this.begin() + from, this.begin() + to);
+		this.erase(this.begin() + from, this.begin() + to);
+		return range;
+		
+	// Remove the first item that meets a given condition and return it
+	inline cpp T popWhere: bool(T it) condition
+		auto iter = std::find_if(this.begin(), this.end(), condition);
+		if(iter != this.end())
+		{
+			T item = *iter;
+			this.erase(iter);
+			return item;
+		}
+		return T();
+		
+	// Remove the first item from the list and return it
+	inline cpp T popFirst
+		if(this.empty()) return T();
+		T firstItem = this.front();
+		this.erase(this.begin());
+		return firstItem;
+		
 	// Gets the number of items in the list
 	inline cpp int length() this.size()
 	
-	// // Truncated or expands the list the given number of items
-	// cpp int setLength: int length // The new length of the list
-	// 	this.length = length
+	// Truncate or expand the list to the given number of items
+	inline cpp void setLength: int length
+		this.resize(length)
 	
 	// Removes all items from the list
-	inline cpp void clear
-		this.clear()
+	inline cpp void clear() this.clear()
 	
-	// // Create a shallow clone of the list
-	// inline cpp T[] clone() [...this]
+	// Create a shallow clone of the list
+	inline cpp T[] clone() std::vector<T>(this)
 	
-	// // Create a string representation of the list
-	cpp string toString()
-		std::string result = "[";
-		for(int i=0; i<this.size(); i++) {
-			if(i > 0) result += ", ";
-			result += std::to_string(this[i]);
+	// Create a string representation of the list
+	cpp string toString
+		std::string result = "";
+		for(const T& item : this)
+		{
+			if(!result.empty()) result += ", ";
+			result += std::to_string(item);
 		}
-		return result+"]";
+		return "[" + result + "]";
 		
 	// // Gets a random item from the list
 	// T random()
