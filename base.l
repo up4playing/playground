@@ -1776,6 +1776,9 @@ global skipInit unit math
 		                 float exponent
 		Math.pow(base, exponent)
 		
+	inline js float log10: float value
+		Math.log10(value)
+		
 	// The ratio of a circle's circumference to its diameter
 	float PI = 3.141592653589793
 	
