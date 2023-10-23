@@ -10,11 +10,8 @@ skipInit transient float Time
 	const inline js Time minValue := Number.MIN_VALUE
 	
 	static internal inline js float realTime := Date.now()
-		
-	inline js Time += float value: this += value
 
 	static Time fromTimeString(string timeString)
-		if !timeString: return 0 milliseconds
 		Time value = 0
 		int colon1 = timeString.indexOf(":")
 		if(colon1 == -1)
@@ -118,14 +115,8 @@ skipInit transient float Time
 	inline js float in: TimeUnit unit // Convert the time to this unit
 		(unit==1 ? this/1000 : unit==2 ? this/60000 : unit==3 ? this/3600000 : unit==4 ? this/86400000 : this)
 		
-	js static void startTimer
-		window._timerStart = performance.now();
-		
-	js static void printTimer: string text
-		let now = performance.now();
-		log(text+": "+(now-window._timerStart));
-		window._timerStart = now;
-		
+	js static void startTimer() window._timerStart = performance.now()
+	js static void printTimer(string text) log(text+": "+(performance.now()-window._timerStart))
 	static inline js float preciseTime := performance.now()
 		
 enum TimeUnit
@@ -135,7 +126,7 @@ enum TimeUnit
 	h    // Hours
 	days // Days
 		
-js(Date) transient struct Date
+js(Date) transient class Date
 	inline js Date() new Date()
 	static inline js Date now := new Date()
 		

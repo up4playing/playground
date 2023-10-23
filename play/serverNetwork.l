@@ -46,7 +46,7 @@ transient unit ServerNetwork
 			core.log roomInfo, input.localUser.id
 		
 		core.log "onConnectedToServer as {input.localUser.id} {core.roomId}"
-		sendJoinMessage core.roomString, input.localUser.id, version:Platform.version
+		sendJoinMessage core.roomString, input.localUser.id, version:Platform.buildVersion
 		
 	js int bufferedAmount
 		return ServerNetwork_socket.bufferedAmount 
@@ -100,7 +100,7 @@ transient unit ServerNetwork
 			Platform.pushState "/{core.gameId}/{roomId}"
 			core.roomId = roomId
 			
-		if version != Platform.version
+		if version != Platform.buildVersion
 			alert "You are using an old version of this application. Please refresh your browser."
 			
 		inputsSentPos = input.localUser.inputs.writePos
@@ -121,7 +121,7 @@ transient unit ServerNetwork
 		core.log "Joining room {roomId} as user {userId}"
 		
 		// The first person in the room triggers sending an notification with the link to everybody
-		if userCount <= 1 and !Platform.isStaging: http.getInternal "{Platform.protocolAndHost}:3114/sendGamedayNotification/{core.gameId}/{core.roomId}/hasStarted"
+		if userCount <= 1 and !Platform.isStaging: http.getDirectly "{Platform.protocolAndHost}:3114/sendGamedayNotification/{core.gameId}/{core.roomId}/hasStarted"
 
 		
 	float nextPingTime, fastestPingPongTime = int.maxValue, lastPingPongTime
@@ -134,7 +134,7 @@ transient unit ServerNetwork
 			sendBuffer.writeInt8 cast NetworkMessageType.Ping
 			sendBuffer.writeFloat64 now
 			send sendBuffer
-			nextPingTime = now + (core.mode == Ping ? 200 : pongCount < 20 ? 1000 : 6000)
+			nextPingTime = now + (core.mode == Ping ? 200 : pongCount < 20 ? 1000 : 5000)
 			
 	float[] calculatedStartTimes
 	float referenceStartTime
@@ -148,7 +148,7 @@ transient unit ServerNetwork
 		float calculatedStartTime = now - pingPongTime/2 - timeSinceStart
 		
 		int deltaFromAverage = math.round(calculatedStartTime - core.startTime)
-		int deltaFromReference = math.round(calculatedStartTime - referenceStartTime)
+		// int deltaFromReference = math.round(calculatedStartTime - referenceStartTime)
 		statistics.serverPings.add pingPongTime
 		// core.log "<<< Pong ({pongCount})", pingPongTime, calculatedStartTime
 		// core.log "average", core.startTime, deltaFromAverage 
@@ -164,15 +164,20 @@ transient unit ServerNetwork
 			return
 			
 		statistics.addInfo "from average", deltaFromAverage
-		statistics.addInfo "from reference", deltaFromReference
+		// statistics.addInfo "from reference", deltaFromReference
 		
-		calculatedStartTimes.add calculatedStartTime maxLength:20
-		core.startTime = calculatedStartTimes.average
+		// Ajust start time (currently disabled)
+		// calculatedStartTimes.add calculatedStartTime maxLength:20
+		// core.startTime = calculatedStartTimes.average
 			
 		// Use the fastest ping-pong-time we have ever seen to calculate the reference start time
 		if pingPongTime < fastestPingPongTime
 			fastestPingPongTime = pingPongTime
 			referenceStartTime = calculatedStartTime
+			
+			// For testing
+			core.startTime = referenceStartTime
+			
 			core.log "New fastest pingPongTime", pongCount, now, pingPongTime, timeSinceStart, core.startTime, referenceStartTime
 			
 	sendSignal:	int receiverId, string type, string sdp

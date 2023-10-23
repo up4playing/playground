@@ -1,4 +1,4 @@
-skipInit transient float Time
+skipInit transient immutable float Time
 	// The number of milliseconds elapsed since January 1, 1970
 	static Time now
 	
@@ -12,6 +12,8 @@ skipInit transient float Time
 
 	// The current frame
 	static inline js int frame := core_frame
+	
+	inline js Time += float value: this += value
 	
 	static Time fromTimeString(string timeString)
 		Time value = 0
@@ -128,7 +130,7 @@ enum TimeUnit
 	hours        // Hours
 	days         // Days
 		
-js(Date) transient struct Date
+js(Date) transient immutable struct Date
 	inline js Date() new Date(Time_now)
 	static inline js Date now := new Date(Time_now)
 		

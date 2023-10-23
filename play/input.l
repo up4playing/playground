@@ -70,7 +70,7 @@ transient class InternalUser
 		bufferFrames = 5
 		smoothFrame = frame - bufferFrames		
 		
-class Player
+priority class Player
 	int id
 	int index
 	Color color = null
@@ -133,9 +133,9 @@ class Touch
 	markAsHandled() handled = true
 	
 transient class ScrollEvent
-	int userId
-	Vector2 delta
-	Vector2 referencePosition
+	immutable int userId
+	immutable Vector2 delta
+	immutable Vector2 referencePosition
 	bool handled
 	
 	Vector2 position := referencePosition.getRelativeTo(graphics.localMatrix)
@@ -287,7 +287,7 @@ enum Cursor
 	Auto = "auto" // The cursor will be based on the current context, for example "text" when hovering text
 	None = "none" // No cursor is rendered
 	
-struct DigitalButton
+class DigitalButton
 	string name
 	Key key
 	
@@ -307,24 +307,24 @@ struct DigitalButton
 		prevState = state
 		state = false
 		
-transient struct ControllerButtonPlayerAndIndex
+transient immutable struct ControllerButtonPlayerAndIndex
 	int userId
 	int buttonIndex
 	
 enum GameControllerType: Keyboard, Xbox, PlayStation
 class GameController
-	static deadZone = .1
+	const deadZone = .1
 	
 	visible Vector2 leftStick
 	visible Vector2 rightStick
-	visible DigitalButton right
-	visible DigitalButton down
-	visible DigitalButton left
-	visible DigitalButton up
-	visible DigitalButton a
-	visible DigitalButton b
-	visible DigitalButton x
-	visible DigitalButton y
+	visible DigitalButton right = {}
+	visible DigitalButton down = {}
+	visible DigitalButton left = {}
+	visible DigitalButton up = {}
+	visible DigitalButton a = {}
+	visible DigitalButton b = {}
+	visible DigitalButton x = {}
+	visible DigitalButton y = {}
 	visible DigitalButton[] buttons = [right, down, left, up, a, b, x, y]
 	
 	bool inMotion
@@ -346,11 +346,11 @@ enum ShowPointersMode
 	Remote         // Show the mouse pointer only for remote players
 	LocalAndRemote // Show the mouse pointers of all players
 	
-class InternetGamePadButton
+immutable class InternetGamePadButton
 	bool pressed, touched
 	float value
 	
-class InternetGamePad
+immutable class InternetGamePad
 	float[] axes
 	InternetGamePadButton[] buttons
 	string id
@@ -388,7 +388,8 @@ skipInit global unit input
 	internal Player[] playersById
 	Cursor cursor
 	
-	ShowPointersMode showPointers = Remote
+	ShowPointersMode showPointersMode = Remote
+	bool showPointers = true
 	bool ignoreFirstClick
 	
 	string textInput
@@ -449,7 +450,7 @@ skipInit global unit input
 			else
 			if(ctrlOrCmd && key == "l") {
 				// Save logs
-				statistics_manuallyTriggerSend(-2, /*clear*/false);
+				statistics_saveStatistics()
 				core_saveLogs();
 				e.preventDefault();
 			}
@@ -641,7 +642,7 @@ skipInit global unit input
 					internalUser.nextLostMessageAtFrame = core.frame + core.targetFps * 12
 					
 					// Send logfiles to server
-					Platform.setTimeout 7 seconds: statistics.send
+					Platform.setTimeout 7 seconds: statistics.saveStatistics
 	
 	private handleStillConnected: int userId
 		let inputs = localUser.inputs
@@ -1091,7 +1092,7 @@ skipInit global unit input
 					this.cursor = cursor
 				
 		// Migrate to 3D
-		// if showTouchArea: drawRectangle position, size, color:{"ff000080"}, align, valign, layer:10000000
+		// if showTouchArea: drawRectangle position, size, color:{"#ff000080"}, align, valign, layer:10000000
 
 	// Do something when the player touches or clicks within a given rotated rectangle
 	// Example: Draw a the image "Character" rotated by 45 degrees and print "Clicked character" when the player touches within its rotated rectangle.
@@ -1140,7 +1141,7 @@ skipInit global unit input
 						this.cursor = cursor
 				
 		// Migrate to 3D
-		// if showTouchArea: drawPolygon poly, color:{"ff000080"}, layer:10000000
+		// if showTouchArea: drawPolygon poly, color:{"#ff000080"}, layer:10000000
 
 	// Do something when the player touches or clicks within a given circle
 	// Example: Draw the image "Ball" and print "Clicked ball" when the player touches it.
@@ -1174,7 +1175,7 @@ skipInit global unit input
 						this.cursor = cursor
 				
 		// Migrate to 3D
-		// if showTouchArea: drawCircle position, radius*2, color:{"ff000080"}
+		// if showTouchArea: drawCircle position, radius*2, color:{"#ff000080"}
 
 	// Do something when the player touches or clicks within a given polygon
 	// Example: Draw a polygon and print "Clicked OK" when the player touches it.
@@ -1212,7 +1213,7 @@ skipInit global unit input
 						this.cursor = cursor
 				
 		// Migrate to 3D
-		// if showTouchArea: drawPolygon position, points, color:{"ff0000b0"}
+		// if showTouchArea: drawPolygon position, points, color:{"#ff0000b0"}
 			
 	// Do something when the player touches or clicks, even if the event is already handled
 	global onTouchDownAny: implicit nocolon Player[] by = null // Only consider touches or clicks by this player or list of players
@@ -1261,7 +1262,7 @@ skipInit global unit input
 						this.cursor = cursor
 				
 		// Migrate to 3D
-		// if showTouchArea: drawRectangle position, size, color:{"ff000080"}
+		// if showTouchArea: drawRectangle position, size, color:{"#ff000080"}
 
 			
 	// ---------------------------------------------- Touch Move ----------------------------------------------
@@ -1391,7 +1392,7 @@ skipInit global unit input
 					Snapshot.autoSave
 						
 		// Migrate to 3D
-		// if showTouchArea: drawRectangle position, size, color:{"ff000080"}
+		// if showTouchArea: drawRectangle position, size, color:{"#ff000080"}
 
 	// Do something when the player ends a touch or click within a given circle
 	// Example: Draw the image "Ball" and print "Clicked ball" when the player ends a touch or releases the mouse button over this button
@@ -1425,7 +1426,7 @@ skipInit global unit input
 						this.cursor = cursor
 				
 		// Migrate to 3D
-		// if showTouchArea: drawCircle position, radius*2, color:{"ff000080"}
+		// if showTouchArea: drawCircle position, radius*2, color:{"#ff000080"}
 						
 	// ---------------------------------------------- Scroll ----------------------------------------------
 	

@@ -1,5 +1,5 @@
 // A sound
-skipInit class Sound
+skipInit immutable Sound
 	string file
 	float fadeVolume = 1
 	transient dynamic audioElement
@@ -64,12 +64,12 @@ skipInit class Sound
 	fadeOut: Time duration = 3000
 		     Time delay = 0
 		// Migrate to 3D
-		// fx.add FadeSoundEffect startTime:Time.now+delay, duration, sound:this, startValue:1, delta:-1
+		fx.add FadeSoundAnimation startTime:Time.now+delay, duration, sound:this, startValue:1, delta:-1
 		return this
 
-transient class PlayingSound
-	Sound sound
-	int frame
+transient PlayingSound
+	immutable Sound sound
+	immutable int frame
 	bool isConfirmed
 	
 // A collection of functions for playing audio
@@ -97,29 +97,14 @@ transient global skipInit unit audio
 		playingSounds.each.sound.stop
 		playingSounds.clear
 	
-	mute: int forUser = -1
-		if forUser == -1 or forUser == input.localUser?.id
+	mute: Player forPlayer = null
+		if !forPlayer or forPlayer.id == input.localUser.id
 			volumeLevel = 0
 			volume = volumeLevels[volumeLevel]
 			playingSounds.each.sound.updateVolume
 	
-	adjustVolume: int delta = 1, int forUser = -1
-		if forUser == -1 or forUser == input.localUser?.id
+	adjustVolume: int delta = 1, Player forPlayer = null
+		if !forPlayer or forPlayer.id == input.localUser.id
 			volumeLevel = math.limit(volumeLevel+delta, min:0, max:volumeLevels.length-1)
 			volume = volumeLevels[volumeLevel]
 			playingSounds.each.sound.updateVolume
-	
-	global playSound: Sound sound
-		              Time delay = 0
-		              bool needsToBeCertain = false
-		if needsToBeCertain and not input.isCertain: return
-		sound.play
-		
-		// Migrate to 3D
-		// if Time.frame == 0
-		// 	fx.add PlaySoundEffect startTime:math.ceil(Time.now+core.targetFrameTime)+delay, sound
-		// else
-		// if delay
-		// 	fx.add PlaySoundEffect startTime:Time.now+delay, sound
-		// else
-		// 	sound.play

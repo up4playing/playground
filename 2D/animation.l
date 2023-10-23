@@ -24,7 +24,24 @@ global unit fx
 		          stored void() do
 		add DelayAnimation startTime:Time.now+time, do
 				
-class Animation
+	global defer: stored void() do
+		add DelayAnimation startTime:Time.now, do
+	
+transient global skipInit unit audio
+	global playSound: Sound sound
+		              Time delay = 0
+		              bool needsToBeCertain = false
+		if needsToBeCertain and not input.isCertain: return
+		
+		if Time.frame == 0
+			fx.add PlaySoundAnimation startTime:math.ceil(Time.now+core.targetFrameTime)+delay, sound
+		else
+		if delay
+			fx.add PlaySoundAnimation startTime:Time.now+delay, sound
+		else
+			sound.play	
+				
+immutable Animation
 	Time startTime
 	Time duration
 	Object object
@@ -48,14 +65,12 @@ Animation ScaleAnimation
 	
 Animation FadeSoundAnimation
 	float startValue, delta
-	private dynamic audioElement
+	Sound sound
 	
-	FadeSoundAnimation: Sound sound
-		this.audioElement = sound.audioElement
 	tick(float f)
-		if audioElement == null: return
-		audioElement.volume = (startValue + delta * f) * audio.volume
-		if f >= 1: audioElement.pause
+		if sound == null: return
+		sound.volume = startValue + delta * f
+		if f >= 1: sound.stop
 			
 Animation PlaySoundAnimation
 	Sound sound

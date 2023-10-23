@@ -1,22 +1,22 @@
-transient class Signal
+transient immutable Signal
 	int receiverId
 	string type
 	string sdp
 
-transient class IceMessage
+transient immutable IceMessage
 	int receiverId
 	object iceCandidate
 	
 enum VideoShape: Rectangle, Square, Circle
 enum RelayMode: Never, Auto, Always
 		
-class MediaDeviceInfo
+immutable MediaDeviceInfo
 	string deviceId
 	string groupId
 	string kind
 	string label
 
-class MediaDevices
+immutable MediaDevices
 	MediaDeviceInfo[] audioInput
 	MediaDeviceInfo[] audioOutput
 	MediaDeviceInfo[] videoInput
@@ -44,17 +44,17 @@ transient unit PeerNetwork
 			// 	credential: "qoy91n981vlplabb1873jdcgsouz2qm87qmmakqpc-alwyzon"
 			// });
 			// --- Alphahosting (www2) ---
-			// options.iceServers.push({
-			// 	urls: 'turn:89.22.121.145:39571',
-			// 	username: 'play-user-x8env28gx41odbxzwjyut2oq871987syq8ovyuqp-alphahosting',
-			// 	credential: 'qoy91n981vlplabb1873jdcgsouz2qm87qmmakqpc-alphahosting'
-			// });			
-			// --- Strato-v30 (www3) ---
 			options.iceServers.push({
-				urls: 'turn:85.214.133.53:39571',
-				username: 'play-user-9q2gy75kmlp4qn7tb86pogsmtyp7qqo0n5-strato-v30',
-				credential: '8q76nby32odjamuzbexi6eb2f1k9gc3my99o-strato-v30'
-			});
+				urls: 'turn:89.22.121.145:39571',
+				username: 'play-user-x8env28gx41odbxzwjyut2oq871987syq8ovyuqp-alphahosting',
+				credential: 'qoy91n981vlplabb1873jdcgsouz2qm87qmmakqpc-alphahosting'
+			});			
+			// --- Strato-v30 (www3) ---
+			// options.iceServers.push({
+			// 	urls: 'turn:85.214.133.53:39571',
+			// 	username: 'play-user-9q2gy75kmlp4qn7tb86pogsmtyp7qqo0n5-strato-v30',
+			// 	credential: '8q76nby32odjamuzbexi6eb2f1k9gc3my99o-strato-v30'
+			// });
 			// --- Strato ---
 			// options.iceServers.push({
 			// 	urls: "turn:81.169.197.127",
@@ -239,9 +239,10 @@ transient unit PeerNetwork
 	private onMessage: InternalUser user, Buffer buffer
 		NetworkMessageType type = cast buffer.readInt8
 		if type == Tick:         onTick user, buffer; else
-		if type == Checksum:     onChecksum user, buffer; else
 		if type == RequestState: onRequestState user, buffer; else
-		if type == State:        onState user, buffer
+		if type == State:        onState user, buffer;  else
+		if type == Ping:         onPing user, buffer;  else
+		if type == Pong:         onPong user, buffer;
 			
 	private onTick: InternalUser sender, Buffer buffer
 		let inputFrame = buffer.readInt
@@ -257,7 +258,7 @@ transient unit PeerNetwork
 			
 			let myChecksum = core.checksums[checksumFor]
 			if !myChecksum                           core.checksums[checksumFor] = checksum; else
-			if !myChecksum.isApproximately(checksum) core.onWrongChecksum mine:myChecksum theirs:checksum
+			if !myChecksum.isApproximately(checksum) core.onWrongChecksum checksumFor, mine:myChecksum theirs:checksum
 			
 			if core.logging: core.receivedLog += " [{core.currentTime}] <{sender.id}> #{inputFrame} {prevWritePos}->{sender.inputs.writePos} {sender.inputs.toRangeString(prevWritePos, sender.inputs.writePos)}"
 		else
@@ -295,6 +296,30 @@ transient unit PeerNetwork
 			}
 		}, 10000)
 		
+	// --------------------------------------------- Ping/Pong ---------------------------------------------
+	
+	ping
+		for input.internalUsers -> user
+			if user?.dataChannel
+				sendBuffer.reset
+				sendBuffer.writeInt8 cast NetworkMessageType.Ping
+				sendBuffer.writeFloat64 core.currentTime
+				send ., sendBuffer
+				
+	private onPing: InternalUser user, Buffer buffer
+		float pingTime = buffer.readFloat64
+		sendBuffer.reset
+		sendBuffer.writeInt8 cast NetworkMessageType.Pong
+		sendBuffer.writeFloat64 pingTime
+		send user, sendBuffer
+		
+	private onPong: InternalUser user, Buffer buffer
+		float now = core.currentTime
+		float pingTime = buffer.readFloat64
+		float pingPongTime = now - pingTime
+		let player = input.players.find.id == user.id
+			statistics.add "pingPongTime" userIndex:player.index, color:player.color, value:pingPongTime, set:2, isPerFrame:false
+				
 	// --------------------------------------------- Checksum ---------------------------------------------
 	
 	sendChecksum: int checksumFor, float checksum
@@ -317,7 +342,7 @@ transient unit PeerNetwork
 			core.checksums[checksumFor] = checksum
 		else
 		if !myChecksum.isApproximately(checksum)
-			core.onWrongChecksum mine:myChecksum theirs:checksum
+			core.onWrongChecksum checksumFor, mine:myChecksum theirs:checksum
 				
 	// --------------------------------------------- Media Setup ---------------------------------------------
 	

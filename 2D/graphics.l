@@ -1,15 +1,15 @@
 // A color comprised of a red, green, blue and alpha component
-class Color
-	global const Color White   = {"ffffff", "White"}
-	global const Color Black   = {"000000", "Black"}
-	global const Color Red     = {"ef476f", "Red"}
-	global const Color Yellow  = {"ffd166", "Yellow"}
-	global const Color Green   = {"06d6a0", "Green"}
-	global const Color Blue    = {"118ab2", "Blue"}
-	global const Color Gray    = {"3d3d3d", "Gray"}
-	global const Color Transparent = {"00000000", "Transparent"}
+immutable Color
+	global const Color White       = {"#ffffff", "White"}
+	global const Color Black       = {"#000000", "Black"}
+	global const Color Red         = {"#ef476f", "Red"}
+	global const Color Yellow      = {"#ffd166", "Yellow"}
+	global const Color Green       = {"#06d6a0", "Green"}
+	global const Color Blue        = {"#118ab2", "Blue"}
+	global const Color Gray        = {"#3d3d3d", "Gray"}
+	global const Color Transparent = {"#00000000", "Transparent"}
 		
-	const Color TransparentRed   = {"ff000080", "Transparent Red"}
+	const Color TransparentRed     = {"#ff000080", "Transparent Red"}
 	
 	string hex
 	string name
@@ -17,13 +17,13 @@ class Color
 	string toString := name or hex
 	
 	Color: string hex = ""
-		   int red = 0
+		this.hex = hex
+
+	Color: int red = 0
 		   int green = 0
 		   int blue = 0
 		   int alpha = 255
-		if hex: this.hex = "#" + hex
-		else    this.hex = "#" + componentToHex(red) + componentToHex(green) 
-		                       + componentToHex(blue) + componentToHex(alpha)
+		this.hex = "#" + componentToHex(red) + componentToHex(green) + componentToHex(blue) + componentToHex(alpha)
 			
 	static js string componentToHex: int c
 		var hex = c.toString(16);
@@ -36,7 +36,7 @@ class Color
 		return {hex[1..7]+componentToHex(math.floor(alpha*255))}
 	
 // A texture that can be loaded into video memory
-class Texture
+immutable Texture
 	string file
 	Vector2 size
 	
@@ -62,7 +62,7 @@ class Texture
 					this.size = new Vector2(image.width, image.height, null)
 					resolve(this);
 				}
-				image.src = this.file.startsWith("http") ? this.file : _basePath+this.file
+				image.src = this.file.startsWith("http") || this.file.startsWith("data") ? this.file : _basePath+this.file
 			})
 		} else {
 			this._htmlImage = image
@@ -71,7 +71,7 @@ class Texture
 		}
 		
 // A font that can be used to draw text
-skipInit class Font
+skipInit immutable Font
 	string name
 	string file
 	Vector2 offset
@@ -128,11 +128,11 @@ skipInit class Font
 		// log(this.name+" "+this.offset)
 
 // A single frame of an animated image
-struct ImageFrame
+immutable struct ImageFrame
 	float x1, y1, x2, y2, w, h
 
 // An image that can be drawn on the screen and can have several frames of animation
-skipInit class Image
+skipInit immutable Image
 	string file
 	Texture texture
 	Vector2 size
@@ -143,7 +143,7 @@ enum AnchorMode: TopLeft, TopCenter, Center
 enum HorizontalAlignment: Left, Center, Right
 enum VerticalAlignment: Top, Middle, Bottom
 enum FontStyle: Normal, Bold
-class ClippingPath: Vector2[] points; bool show
+immutable ClippingPath: Vector2[] points; bool show
 		
 // Draw on the screen
 transient skipInit global unit graphics
@@ -160,7 +160,8 @@ transient skipInit global unit graphics
 	visible Vector2 size
 	visible float pixelRatio
 	
-	async setup
+	async setup: Vector2 referenceSize
+		this.referenceSize = referenceSize
 	
 	internal js void onResize
 		graphics_canvas = document.getElementById("canvas");
@@ -245,7 +246,8 @@ transient skipInit global unit graphics
 				
 	private isVisibleFor: Player[] visibleFor
 		if(Platform.fastForward) return false
-		let effectiveVisibleFor = visibleFor or currentlyVisibleFor
+		// Use currentlyVisibleFor when visibleFor is null or [null]
+		let effectiveVisibleFor = visibleFor and (visibleFor.length != 1 or visibleFor[0]) ? visibleFor : currentlyVisibleFor
 		return effectiveVisibleFor == null or effectiveVisibleFor.any . == null or .id == input.localUser.id
 		
 	private Player[] gettouchableBy: Player[] visibleFor, Player[] touchableBy
@@ -330,7 +332,7 @@ transient skipInit global unit graphics
 		                      flipX = false                       // Mirror the image horizontally
 		                      flipY = false                       // Mirror the image vertically
 		                      SourceCodeLocation location
-		if(angle == 0) {
+		if(angle == 0 && !flipX && !flipY) {
 			graphics_drawImage(image, position, size, visibleFor, frame, layer, alpha, color, 1, 1, location)
 		} else {
 			if(!image.texture?.ensureIsAvailable()) return
@@ -760,18 +762,18 @@ transient skipInit global unit graphics
 	//         tick
 	//             drawPointer me
 	// Image: drawPointer.png
-	global drawPointer: Player player                         // Show the mouse position of this player
-		                ShowPointersMode showPointer = Remote // Choose whether you want to draw the pointers for local players, remote players or both
-		                Color color = null                    // The color of the pointer. If this is left out, the player color is used
-		if showPointer == LocalAndRemote
-		or (player == input.localPlayer and showPointer == Local)
-		or (player != input.localPlayer and showPointer == Remote)
+	global drawPointer: Player player                  // Show the mouse position of this player
+		                ShowPointersMode mode = Remote // Choose whether you want to draw the pointers for local players, remote players or both
+		                Color color = null             // The color of the pointer. If this is left out, the player color is used
+		if mode == LocalAndRemote
+		or (player == input.localPlayer and mode == Local)
+		or (player != input.localPlayer and mode == Remote)
 			if !color: color = player.color
 			for player.touches
 				drawImage finger, .smoothPosition+{11,32}, frame:.isDown ? 1 : 0, layer:int.maxValue
 				if color
 					if color == Black
-						drawRectangle .smoothPosition+{16,80}, size:{26,10}, color, layer:int.maxValue, outlineColor:{"a0a0a0"}, outlineWidth:2
+						drawRectangle .smoothPosition+{16,80}, size:{26,10}, color, layer:int.maxValue, outlineColor:{"#a0a0a0"}, outlineWidth:2
 					else
 						drawRectangle .smoothPosition+{16,78}, size:{26,10}, color, layer:int.maxValue
 
@@ -1032,7 +1034,7 @@ transient skipInit global unit graphics
 	const Color backgroundColor = Black
 	
 	// Teh default player colors
-	const Color[] defaultColors = [{"398CA9", "Blue"}, {"C01352", "Red"}, {"16C66E", "Green"}, {"FFD166", "Yellow"}]
+	const Color[] defaultColors = [{"#398CA9", "Blue"}, {"#C01352", "Red"}, {"#16C66E", "Green"}, {"#FFD166", "Yellow"}]
 
 	// The default color for all drawing operations
 	color
@@ -1047,7 +1049,7 @@ transient skipInit global unit graphics
 		code()
 		currentColor = prev
 		return currentColor
-	private Color currentColor = {"ffffff"}
+	private Color currentColor = {"#ffffff"}
 	
 	// ------------------------------------------------------- Font -------------------------------------------------------
 	
@@ -1194,7 +1196,7 @@ transient skipInit global unit graphics
 		code(imageData.data)
 		graphics_context.putImageData(imageData, 0, 0)
 		
-struct GizomInfluence
+immutable struct GizomInfluence
 	string file
 	int start
 	int end
@@ -1202,11 +1204,11 @@ struct GizomInfluence
 	float[] initialValues
 	string label
 
-struct GizmoOverItem
+immutable struct GizmoOverItem
 	DisplayItem item
 	SourceCodeLocation location
 	
-skipInit unit gizmo
+skipInit transient unit gizmo
 	private DisplayItem[] items
 	private Vector2 min, max
 	private SourceCodeLocation cursorLocation
@@ -1259,7 +1261,7 @@ skipInit unit gizmo
 				drawImage ResizeHandle, center + size/2*.vector, size:handleSize, location:null, layer:int.maxValue
 				
 			// Draw selection
-			drawRectangle center, size:max-min, outlineColor:{"437FDF"}, outlineWidth:4, location:null, layer:int.maxValue
+			drawRectangle center, size:max-min, outlineColor:{"#437FDF"}, outlineWidth:4, location:null, layer:int.maxValue
 			
 	private Direction overHandleDirection
 	private Vector2 touchDownPos = {float.infinity, float.infinity}
@@ -1392,7 +1394,7 @@ skipInit unit gizmo
 		if location.right: flattenLocations stack, item, location.right
 		if location.left:  flattenLocations stack, item, location.left
 		
-transient class DisplayItem
+transient immutable DisplayItem
 	float x, y, w, h
 	int layer
 	float alpha

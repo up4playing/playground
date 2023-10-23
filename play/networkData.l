@@ -15,6 +15,15 @@ localStorage
 	internal inline js string getStringDirectly: string key
 		(localStorage.getItem(key) || "")
 		
+	internal js dynamic getObjectDirectly: string key
+		try {
+			let data = localStorage.getItem(key)
+			if(!data) return {}
+			return JSON.parse(data)
+		} catch {
+			return {}
+		}
+		
 	get: string key, stored void(any data) do
 		let id = networkData.addCallback do
 		let data = getStringDirectly(key)
@@ -32,8 +41,12 @@ http
 			input_handleObject(id, data, 1)
 		}
 		
-	internal js void getInternal: string url
+	internal js void getDirectly string url
 		return await (await fetch(url)).text()
+		
+	internal js void postDirectly: string url, any body, void(any result) code
+		let data = await (await fetch(url, {method:"POST", body:JSON.stringify(body)})).text()
+		code(data)
 		
 	// Perform an http post request
 	js void post: string url

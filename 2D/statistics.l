@@ -1,22 +1,25 @@
 skipInit transient unit statistics
+	const Color backgroundColor = {"#202020"}
 	draw
 		Vector2 startPos = position + size
-		Vector2 labelPos = this.labelPos
+		Vector2 labelPos = position + {size.x/2, -12}
 		const height = size.y - 20
-		for series -> s, seriesIndex
+		int graphIndex = 0
+		for graphs -> s
 			if .set != currentSet: continue
-			string text = cast .lastValue
+			string text = "{.label}: {.lastValue.format(fractionDigits:1)}"
 			drawRectangle labelPos, {8,8}, color:.color, align:Left
 			drawText text, labelPos+{11, -2}, align:Left, size:12
-			labelPos.x += graphics.getTextWidth(text, size:12) + 20
+			labelPos.x += graphics.getTextWidth(text, size:12) + 50
 			
 			int len = math.min(.values.length, size.x.round)
 			float prevY = 0
 			for len
 				let value = s.values[-1-i]
-				Vector2 pos = {startPos.x - i, startPos.y - (value/maxValue).max(1)*height + seriesIndex*3}
+				Vector2 pos = {startPos.x - i, startPos.y - (value/maxValue).max(1)*height + graphIndex}
 				if i: drawRectangle pos, size:{4, prevY-pos.y+4}, color:s.color, valign:Top
 				prevY = pos.y
+			graphIndex++
 				
 		// Draw infos
 		for infos <-
@@ -24,7 +27,7 @@ skipInit transient unit statistics
 			if x > size.x: break
 			drawText cast .value, {position.x + size.x - x, position.y + 10*.index}, size:8, valign:Top
 				
-		if core.errorMessage: drawText core.errorMessage, position, align:Left, size:12, color:{"ffff00"}
+		if core.errorMessage: drawText core.errorMessage, position, align:Left, size:12, color:{"#ffff00"}
 		drawText "#{core.frame} {maxValue}", {position.x+size.x-8, labelPos.y}, align:Right, size:12
 		drawRectangle position, size, color:backgroundColor, align:Left, valign:Top
 		
