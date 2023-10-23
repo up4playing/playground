@@ -411,11 +411,11 @@ struct IntVector2
 	// 	let result = []
 	// 	for(let y=from.y; y < to.y; ++y)
 	// 		for(let x=from.x; x < to.x; ++x)
-	// 			result.push(selector(new IntVector2(x,y)))
+	// 			result.push(selector(IntVector2::new_(x,y)))
 	// 	return result
 		
 	// inline cpp TResult[] times: TResult(IntVector2 it) selector
-	// 	Vector2_enumerate(new IntVector2(0,0), this, selector)
+	// 	Vector2_enumerate(IntVector2::new_(0,0), this, selector)
 
 // A 3x2 matrix used to transform vectors in 2D space
 struct Matrix2D
@@ -752,7 +752,7 @@ global transient unit system
 		                                    Vector2 pos,                  // The position of the current item
 		                                    int i                         // The index of the current item of the list we are iterating over with forCentered
 		                                ) do                              // Do this for each item in a list
-		for(let i=0, _subject=subject, _start = start, _delta = delta, _len=_subject.length, _x = _start.x, _y= _start.y; i<_len; ++i, _x += _delta.x, _y += _delta.y) { let it = _subject[i], pos = new Vector2(_x, _y, _start.location || _delta.location ? new SourceCodeLocation(null, 0, 0, _start.location, _delta.location) : null); do()}
+		for(let i=0, _subject=subject, _start = start, _delta = delta, _len=_subject.length, _x = _start.x, _y= _start.y; i<_len; ++i, _x += _delta.x, _y += _delta.y) { let it = _subject[i], pos = Vector2::new_(_x, _y, _start.location || _delta.location ? new SourceCodeLocation(null, 0, 0, _start.location, _delta.location) : null); do()}
 
 	global inline cpp void forPositions: int to                            // The exclusive upper bound to iterate towards
 		                                Vector2 start = {0,0}             // Left or top align items at this position
@@ -761,7 +761,7 @@ global transient unit system
 		                                    Vector2 pos,                  // The position of the current item
 		                                    int i                         // The index of the current item of the list we are iterating over with forCentered
 		                                ) do                              // Do this for each item in a list
-		for(let i=0, _start = start, _delta = delta, _len=to, _x = _start.x, _y= _start.y; i<_len; ++i, _x += _delta.x, _y += _delta.y) { let pos = new Vector2(_x, _y, _start.location || _delta.location ? new SourceCodeLocation(null, 0, 0, _start.location, _delta.location) : null); do()}
+		for(let i=0, _start = start, _delta = delta, _len=to, _x = _start.x, _y= _start.y; i<_len; ++i, _x += _delta.x, _y += _delta.y) { let pos = Vector2::new_(_x, _y, _start.location || _delta.location ? new SourceCodeLocation(null, 0, 0, _start.location, _delta.location) : null); do()}
 
 	global inline cpp void forPositions: T[] subject                       // The list to iterate over
 		                                Vector2 start = {0,0}             // Left or top align items at this position
@@ -772,7 +772,7 @@ global transient unit system
 		                                    Vector2 pos,                  // The position of the current item
 		                                    int i                         // The index of the current item of the list we are iterating over with forCentered
 		                                ) do                              // Do this for each item in a list
-		for(let i=0, _subject=subject, _start = start, _delta = delta, _width = width, _len=_subject.length, _x = _start.x, _y= _start.y; i<_len; ++i, _x += _delta.x) { if(_x >= _start.x+_width) {_x = _start.x; _y += _delta.y} let it = _subject[i], pos = new Vector2(_x, _y, _start.location || _delta.location ? new SourceCodeLocation(null, 0, 0, _start.location, _delta.location) : null); do()}
+		for(let i=0, _subject=subject, _start = start, _delta = delta, _width = width, _len=_subject.length, _x = _start.x, _y= _start.y; i<_len; ++i, _x += _delta.x) { if(_x >= _start.x+_width) {_x = _start.x; _y += _delta.y} let it = _subject[i], pos = Vector2::new_(_x, _y, _start.location || _delta.location ? new SourceCodeLocation(null, 0, 0, _start.location, _delta.location) : null); do()}
 
 	global inline cpp void forPositions: T[] subject                       // The list to iterate over
 		                                Vector2 center = {0,0}            // Center items at this position
@@ -782,7 +782,7 @@ global transient unit system
 		                                    Vector2 pos,                  // The position of the current item
 		                                    int i                         // The index of the current item of the list we are iterating over with forCentered
 		                                ) do                              // Do this for each item in a list
-		for(let i=0, _subject=subject, _center = center, _delta = delta, _len=_subject.length, _x = _center.x-(_len-1)*_delta.x/2, _y=_center.y-(_len-1)*_delta.y/2; i<_len; ++i, _x += _delta.x, _y += _delta.y) { let it = _subject[i], pos = new Vector2(_x, _y, _center.location || _delta.location ? new SourceCodeLocation(null, 0, 0, _center.location, _delta.location) : null); do()}
+		for(let i=0, _subject=subject, _center = center, _delta = delta, _len=_subject.length, _x = _center.x-(_len-1)*_delta.x/2, _y=_center.y-(_len-1)*_delta.y/2; i<_len; ++i, _x += _delta.x, _y += _delta.y) { let it = _subject[i], pos = Vector2::new_(_x, _y, _center.location || _delta.location ? new SourceCodeLocation(null, 0, 0, _center.location, _delta.location) : null); do()}
 
 	global inline cpp void forPositions: int to                            // The exclusive upper bound to iterate towards
 		                                Vector2 center = {0,0}            // Center items at this position
@@ -791,7 +791,7 @@ global transient unit system
 		                                    Vector2 pos,                  // The position of the current item
 		                                    int i,                        // The index of the current item of the list we are iterating over with forCentered
 		                                ) do                              // Do this for each item in a list
-		for(let i=0, _center = center, _delta = delta, _len=to, _x = _center.x-(_len-1)*_delta.x/2, _y=_center.y-(_len-1)*_delta.y/2; i<_len; ++i, _x += _delta.x, _y += _delta.y) { let pos = new Vector2(_x, _y, _center.location || _delta.location ? new SourceCodeLocation(null, 0, 0, _center.location, _delta.location) : null); do()}
+		for(let i=0, _center = center, _delta = delta, _len=to, _x = _center.x-(_len-1)*_delta.x/2, _y=_center.y-(_len-1)*_delta.y/2; i<_len; ++i, _x += _delta.x, _y += _delta.y) { let pos = Vector2::new_(_x, _y, _center.location || _delta.location ? new SourceCodeLocation(null, 0, 0, _center.location, _delta.location) : null); do()}
 
 	global inline cpp void forPositions: T[] subject                       // The list to iterate over
 		                                Vector2 end = {0,0}               // Right or bottom align items at this position
@@ -801,7 +801,7 @@ global transient unit system
 		                                    Vector2 pos,                  // The position of the current item
 		                                    int i                         // The index of the current item of the list we are iterating over with forCentered
 		                                ) do                              // Do this for each item in a list
-		for(let i=0, _subject=subject, _end = end, _delta = delta, _len=_subject.length, _x = _end.x-(_len-1)*_delta.x, _y=_end.y-(_len-1)*_delta.y; i<_len; ++i, _x += _delta.x, _y += _delta.y) { let it = _subject[i], pos = new Vector2(_x, _y, _end.location || _delta.location ? new SourceCodeLocation(null, 0, 0, _end.location, _delta.location) : null); do()}
+		for(let i=0, _subject=subject, _end = end, _delta = delta, _len=_subject.length, _x = _end.x-(_len-1)*_delta.x, _y=_end.y-(_len-1)*_delta.y; i<_len; ++i, _x += _delta.x, _y += _delta.y) { let it = _subject[i], pos = Vector2::new_(_x, _y, _end.location || _delta.location ? new SourceCodeLocation(null, 0, 0, _end.location, _delta.location) : null); do()}
 
 // Converts positions within an isomatic grid with the origin in the north
 // Tilt your head slighly to the right to visualize the directions
@@ -993,7 +993,7 @@ struct Grid<T>
 		                     IntVector2 pos,
 		                     int i      // The index of the current item of the list we are iterating over with the for-loop
 		                 ) do           // Do this for each item in a list
-		for(let i=0, _subject=this.items, _len=_subject.length; i<_len; ++i) { let it = _subject[i]; if(it) { let pos = new IntVector2(i%this.size.x, Math.floor(i/this.size.x)); do()}}
+		for(let i=0, _subject=this.items, _len=_subject.length; i<_len; ++i) { let it = _subject[i]; if(it) { let pos = IntVector2::new_(i%this.size.x, Math.floor(i/this.size.x)); do()}}
 			
 	inline cpp void each: includeEmpty = false // Include items that are null
 		                 -> void(
@@ -1001,7 +1001,7 @@ struct Grid<T>
 		                     IntVector2 pos,
 		                     int i      // The index of the current item of the list we are iterating over with the for-loop
 		                 ) do           // Do this for each item in a list
-		for(let _size=this.size, y=0, _items=this.items; y<_size.y; ++y) for(let x=0; x<_size.x; ++x) { let it = _items[y*_size.x + x]; let pos = new IntVector2(x,y); do()}
+		for(let _size=this.size, y=0, _items=this.items; y<_size.y; ++y) for(let x=0; x<_size.x; ++x) { let it = _items[y*_size.x + x]; let pos = IntVector2::new_(x,y); do()}
 			
 	// Return a list that contains the selected field or expression for each item
 	inline cpp TValue[] select: TValue(T it) selector
@@ -1047,7 +1047,7 @@ global transient unit system
 		                           int x,          // The x component of the current position we are iterating over with the for-loop
 		                           int y           // The y component of the current position we are iterating over with the for-loop
 		                       ) do                // Do this the given number of times
-		for(int _y=0; _y<subject.y; ++_y) for(int _x=0; _x<subject.x; ++_x) { IntVector2 _pos = IntVector2(_x,_y); do(_pos, _x, _y)}
+		for(int _y=0; _y<subject.y; ++_y) for(int _x=0; _x<subject.x; ++_x) { IntVector2 _pos = IntVector2::new_(_x,_y); do(_pos, _x, _y)}
 			
 	global inline cpp void for: ensureSingleExecution IntVector2 subject  // The exclusive upper bound to iterate towards
 		                       <- void(
@@ -1055,7 +1055,7 @@ global transient unit system
 		                           int x,          // The x component of the current position we are iterating over with the for-loop
 		                           int y           // The y component of the current position we are iterating over with the for-loop
 		                       ) do                // Do this the given number of times
-		for(int _y=subject.y-1; _y>=0; --_y) for(let _x=subject.x-1; _x>=0; --_x) { IntVector2 _pos = IntVector2(_x,_y); do(_pos, _x, _y)}
+		for(int _y=subject.y-1; _y>=0; --_y) for(let _x=subject.x-1; _x>=0; --_x) { IntVector2 _pos = IntVector2::new_(_x,_y); do(_pos, _x, _y)}
 			
 	global inline cpp void for: ensureSingleExecution Grid<T> subject    // The grid to iterate over
 		                       -> void(
@@ -1063,7 +1063,7 @@ global transient unit system
 		                           IntVector2 pos,
 		                           int i      // The index of the current item of the list we are iterating over with the for-loop
 		                       ) do           // Do this for each item in a list
-		for(int _i=0, _len=subject.size.x*subject.size.y; _i<_len; ++_i) { auto _it = subject.items[_i]; if(_it) { IntVector2 _pos = IntVector2(_i%subject.size.x, std::floor(_i/subject.size.x)); do(_it, _pos, _i)}}
+		for(int _i=0, _len=subject.size.x*subject.size.y; _i<_len; ++_i) { auto _it = subject.items[_i]; if(_it) { IntVector2 _pos = IntVector2::new_(_i%subject.size.x, std::floor(_i/subject.size.x)); do(_it, _pos, _i)}}
 			
 	global inline cpp void for: Grid<T> subject      // The grid to iterate over
 		                       includeEmpty = false // Include items that are null
@@ -1072,13 +1072,13 @@ global transient unit system
 		                           IntVector2 pos,
 		                           int i      // The index of the current item of the list we are iterating over with the for-loop
 		                       ) do           // Do this for each item in a list
-		for(int _size=subject.size, _y=0; _y<_size.y; ++_y) for(let _x=0; x<_size.x; ++x) { auto _it = subject.items[_y*_size.x + _x]; IntVector2 _pos = IntVector2(_x,_y); do(_it, _pos, _i)}
+		for(int _size=subject.size, _y=0; _y<_size.y; ++_y) for(let _x=0; x<_size.x; ++x) { auto _it = subject.items[_y*_size.x + _x]; IntVector2 _pos = IntVector2::new_(_x,_y); do(_it, _pos, _i)}
 
 	global inline cpp TResult[] for: IntVector2 to     // Iterator over both dimensions of the vector towards this exclusive upper bound
 		                            TResult(
 		                                IntVector2 it // The current position of the vector we are iterating over with the for-loop
 		                            ) do              // Select the field or expression to be included in the result
-		IntVector2::enumerate(new IntVector2(0,0), to, do)
+		IntVector2::enumerate(IntVector2::new_(0,0), to, do)
 
 	global inline cpp TResult[] for: IntVector2 from     // Iterator over both dimensions of the vector starting from this vector
 		                            TResult(

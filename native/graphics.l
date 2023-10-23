@@ -99,16 +99,16 @@ global skipInit unit graphics
 		IMG_Init(IMG_INIT_PNG);
 		TTF_Init();
 		
-		pixelSize = Vector2(referenceSize.x, referenceSize.y);
+		pixelSize = Vector2::new_(referenceSize.x, referenceSize.y);
 		video = SDL_SetVideoMode(pixelSize.x, pixelSize.y, 32, SDL_HWSURFACE | SDL_DOUBLEBUF);
 		screen = SDL_CreateRGBSurface(SDL_HWSURFACE, pixelSize.x, pixelSize.y, 32, 0, 0, 0, 0);
 
 		// if(isFullscreen) {
 		// 	SDL_DisplayMode displayMode;
 		// 	SDL_GetCurrentDisplayMode(0, &displayMode);
-		// 	pixelSize = Vector2(displayMode.w, displayMode.h);
+		// 	pixelSize = Vector2::new_(displayMode.w, displayMode.h);
 		// } else {
-		// 	pixelSize = Vector2(referenceSize.x, referenceSize.y);
+		// 	pixelSize = Vector2::new_(referenceSize.x, referenceSize.y);
 		// }
 		
 		// SDL_Window *window = SDL_CreateWindow("Application", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, pixelSize.x, pixelSize.y, 0);
@@ -126,9 +126,9 @@ global skipInit unit graphics
 		if(isFullscreen) {
 			SDL_DisplayMode displayMode;
 			SDL_GetCurrentDisplayMode(0, &displayMode);
-			pixelSize = Vector2(displayMode.w, displayMode.h);
+			pixelSize = Vector2::new_(displayMode.w, displayMode.h);
 		} else {
-			pixelSize = Vector2(referenceSize.x, referenceSize.y);
+			pixelSize = Vector2::new_(referenceSize.x, referenceSize.y);
 		}
 		
 		// SDL_Window *window = SDL_CreateWindow("Application", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, pixelSize.x, pixelSize.y, 0);
