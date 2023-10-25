@@ -240,12 +240,12 @@ global skipInit unit graphics
 		
 		if(isVisibleFor(visibleFor))
 			float sizeX = size.x * scale
-			float sizeY = (size.y || size.x) * scale
+			float sizeY = (size.y ? size.y : size.x) * scale
 			float posX = (align == Left ? position.x : align  == Center ? position.x-sizeX*.5 : position.x-sizeX) + offset.x
 			float posY = (valign == Top ? position.y : valign == Middle ? position.y-sizeY*.5 : position.y-sizeY) + offset.y
-			items.add DisplayText(
+			items.add DisplayRectangle(
 				cast posX, cast posY, cast sizeX, cast sizeY, 
-				layer, alpha
+				layer, alpha, color, outlineWidth
 			)
 
 	startFrame
@@ -292,5 +292,53 @@ transient DisplayItem DisplayImage
 		SDL_Rect targetRect = { x, y, w, h };
 		SDL_RenderCopy(graphics::renderer, texture->texture, &sourceRect, &targetRect);
 
+transient DisplayItem DisplayRectangle
+	Color color
+	int borderWidth
+
+	cpp #sdl1.2 void draw
+		// Fill rectangle
+		SDL_Rect fillRect = { (short)x, (short)y, (unsigned short)w, (unsigned short)h };
+		Uint32 fillColor = SDL_MapRGBA(graphics::screen->format, color.red, color.green, color.blue, color.alpha);
+		SDL_FillRect(graphics::screen, &fillRect, fillColor);
+
+		// If there's a border, draw it
+		if(borderWidth > 0) {
+			// Top
+			SDL_Rect topRect = { (short)x, (short)y, (unsigned short)w, (unsigned short)borderWidth };
+			SDL_FillRect(graphics::screen, &topRect, fillColor);
+			// Bottom
+			SDL_Rect bottomRect = { (short)x, (short)(y+h-borderWidth), (unsigned short)w, (unsigned short)borderWidth };
+			SDL_FillRect(graphics::screen, &bottomRect, fillColor);
+			// Left
+			SDL_Rect leftRect = { (short)x, (short)y, (unsigned short)borderWidth, (unsigned short)h };
+			SDL_FillRect(graphics::screen, &leftRect, fillColor);
+			// Right
+			SDL_Rect rightRect = { (short)(x+w-borderWidth), (short)y, (unsigned short)borderWidth, (unsigned short)h };
+			SDL_FillRect(graphics::screen, &rightRect, fillColor);
+		}
+
+	cpp #sdl2 void draw
+		// Fill rectangle
+		SDL_Rect fillRect = { x, y, w, h };
+		SDL_SetRenderDrawColor(graphics::renderer, color.red, color.green, color.blue, color.alpha);
+		SDL_RenderFillRect(graphics::renderer, &fillRect);
+
+		// If there's a border, draw it
+		if(borderWidth > 0) {
+			// Top
+			SDL_Rect topRect = { x, y, w, borderWidth };
+			SDL_RenderFillRect(graphics::renderer, &topRect);
+			// Bottom
+			SDL_Rect bottomRect = { x, y+h-borderWidth, w, borderWidth };
+			SDL_RenderFillRect(graphics::renderer, &bottomRect);
+			// Left
+			SDL_Rect leftRect = { x, y, borderWidth, h };
+			SDL_RenderFillRect(graphics::renderer, &leftRect);
+			// Right
+			SDL_Rect rightRect = { x+w-borderWidth, y, borderWidth, h };
+			SDL_RenderFillRect(graphics::renderer, &rightRect);
+		}
+	
 transient DisplayItem DisplayText
 	string text
