@@ -21,6 +21,12 @@ immutable struct int
 	inline cpp bool toBool := this
 	
 	inline cpp(string) string toString := std::to_string(this)
+
+	static cpp(sstream, string) int fromHex: string value
+	    int result;
+	    std::stringstream ss(value);
+	    ss >> std::hex >> result;
+	    return result;
 		
     cpp(string, iomanip) string formatWithSpaces
 		std::ostringstream ss;

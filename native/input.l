@@ -73,10 +73,10 @@
 priority class Player
 	int id
 	int index
-	Color color = null
+	Color color = White
 	Vector2 pointerPosition
 	
-	toString := color ? color.name : ""
+	toString := color.name
 	
 	// Touch input
 	internal Touch[] touches

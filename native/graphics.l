@@ -1,5 +1,5 @@
 // A color comprised of a red, green, blue and alpha component
-immutable Color
+immutable struct Color
 	global const Color White       = {"#ffffff", "White"}
 	global const Color Black       = {"#000000", "Black"}
 	global const Color Red         = {"#ef476f", "Red"}
@@ -13,11 +13,16 @@ immutable Color
 	
 	string hex
 	string name
+	int red, green, blue, alpha
 	
 	// string toString := name or hex
 	
-	// Color: string hex = ""
-	// 	this.hex = hex
+	Color: string hex = ""
+		this.hex = hex
+		this.red   = hex.length >= 3 ? int.fromHex(hex[1..3]) : 0
+		this.green = hex.length >= 5 ? int.fromHex(hex[3..5]) : 0
+		this.blue  = hex.length >= 7 ? int.fromHex(hex[5..7]) : 0
+		this.alpha = hex.length >= 9 ? int.fromHex(hex[7..9]) : 255
 
 	// Color: int red = 0
 	// 	   int green = 0
@@ -203,12 +208,12 @@ global skipInit unit graphics
 	global drawText: implicit string text                // A string or anything that can be converted into a string (for example, an interger or a float)
 		                      Vector2 position = {}               // By default, {0,0} is the center, {-960,-540} is the top left, {960,540} is the bottom right
 		                      implicit Vector2 size = {}          // The size of the text
-		                      Color color = null                  // The color of the text
+		                      Color color = White                 // The color of the text
 		                      HorizontalAlignment align = Center  // The horizontal alignment of the text
 		                      VerticalAlignment valign = Middle   // The vertical alignment of the text
 		                      FontStyle style = Normal            // Whether the text should be bold or normal style
 		                      Font font = null                    // To use a custom font, just copy a TTF, WOFF or WOFF2 file to the "media" folder
-		                      Color outlineColor = null           // The color of the outline around the text
+		                      Color outlineColor = White          // The color of the outline around the text
 		                      outlineWidth = 0                    // The width of the outline around the text in pixels
 		                      implicit Player[] visibleFor = []   // Only this player or list of players will see the text
 		                      implicit layer = 0                  // Higher layers are drawn in front of lower layers
@@ -224,8 +229,8 @@ global skipInit unit graphics
 	// Image: drawRectangle.png
 	global drawRectangle: position = Vector2()                // By default, {0,0} is the center, {-960,-540} is the top left, {960,540} is the bottom right
 		                  implicit size = Vector2(256,256)    // The size of the rectangle, use a float to draw a square, use a vector to draw a rectangle
-		                  Color color = null                  // The color of the area within the rectangle
-		                  Color outlineColor = null           // The color of the outline around the rectangle
+		                  Color color = White                 // The color of the area within the rectangle
+		                  Color outlineColor = White          // The color of the outline around the rectangle
 		                  outlineWidth = 0                    // The width of the outline around the rectangle in pixels
 		                  implicit Player[] visibleFor = []   // Only this player or list of players will see the rectangle
 		                  implicit layer = 0                  // Higher layers are drawn in front of lower layers
