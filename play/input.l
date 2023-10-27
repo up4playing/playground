@@ -36,9 +36,9 @@ transient class InternalUser
 	int nextLostMessageAtFrame
 	
 	// Statistics
-	private int[] aheads      // Rolling buffer of ahead values, used to calculate bufferFrames
-	private int[] aheadsMax   // Rolling buffer of aheadMax values
-	visible int bufferFrames  // The average of all aheadMax values
+	private int[] aheadHistory    // Rolling buffer of ahead values, used to calculate bufferFrames
+	private int[] maxAheadHistory // Rolling buffer of maxAhead values
+	visible int bufferFrames      // The average of all maxAhead values
 	visible int smoothFrame = int.maxValue
 	
 	startInputFrame: int index
@@ -59,11 +59,14 @@ transient class InternalUser
 		
 	collectStatistics: int frame
 		int ahead = frame - inputFrame
-		if ahead < 50: aheads.add ahead, maxLength:200
-		int aheadMax = aheads.max .
-		aheadsMax.add aheadMax maxLength:600
-		bufferFrames = math.ceil(aheadsMax.average)
-		// bufferFrames = 10
+		
+		// Get the maximum number of frames we were ahead in the last 200 frames
+		if ahead < 50: aheadHistory.add ahead, maxLength:200
+		int maxAhead = aheadHistory.max .
+		
+		// Calculate a rolling average of the last 600 frames
+		maxAheadHistory.add maxAhead maxLength:600
+		bufferFrames = math.ceil(maxAheadHistory.average)
 		smoothFrame = frame - bufferFrames
 		
 	simulateRollback: int frame

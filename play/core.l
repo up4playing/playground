@@ -257,6 +257,7 @@ transient skipInit unit core
 	int replayFrom = -1
 	
 	collectStatistics
+		// Players
 		if mode == Connected and players.length > 1 and frame > joinFrame + 120
 			for players
 				let internalUser = input.internalUsers[.id]
