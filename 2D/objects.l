@@ -258,6 +258,8 @@ Object Button
     fontSize = 18                // The font size in pixels   
     touchMargin = {16,16}        // The margin around the button within which it is touchable
     textOffset = {}              // Draw the text at this offset
+	scaleOnHover = 1.0                   // Scale the button by this factor when the mouse hovers over the button
+	frameOnHover = 1                     // Draw this frame when the mouse hovers over the button
     showTouchArea = false        // Show the area within which the button is touchable
     implicit Player[] clickableBy = null // Only this user can click the button
     implicit layer = 0           // Higher layers are drawn in front of lower layers
@@ -268,7 +270,7 @@ Object Button
     void(Touch touch) onClick    // Execute this code when the user clicks the button
 	
 	override tick
-		drawButton image, text, position, textColor, frame, size, fontSize, touchMargin, textOffset, showTouchArea, visibleFor, clickableBy, hotkey, layer, alpha, enabled, alphaWhenDisabled, onClick(touch)
+		drawButton image, text, position, textColor, frame, size, fontSize, touchMargin, textOffset, scaleOnHover, frameOnHover, showTouchArea, visibleFor, clickableBy, hotkey, layer, alpha, enabled, alphaWhenDisabled, onTouch:onClick(touch)
 
 struct Particle
 	Vector2 pos, speed

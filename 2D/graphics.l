@@ -493,12 +493,14 @@ transient skipInit global unit graphics
 		                    text = ""                            // The text of the button
 		                    Vector2 position = {}                // By default, {0,0} is the center, {-960,-540} is the top left, {960,540} is the bottom right
 		                    implicit Vector2 size = {}           // A float scales the image to that width keeping the aspect ratio, a vector stretches the image
-		                    frame = 0                            // The frame from a sequence of images (for example "Button0.png", "Button1.png", ...)
+		                    frame = -1                           // The frame from a sequence of images (for example "Button0.png", "Button1.png", ...)
 		                    Color textColor = null               // The color of the text
 		                    textSize = 18                        // The font size in pixels   
 		                    textOffset = Vector2(0,0)            // Draw the text at this offset to the image
 		                    touchMargin = Vector2(16,16)         // The margin around the button within which it is touchable
 		                    showTouchArea = false                // Highlight the touchable area for debugging
+		                    scaleOnHover = 1.0                   // Scale the button by this factor when the mouse hovers over the button
+		                    frameOnHover = 1                     // Draw this frame when the mouse hovers over the button
 		                    implicit Player[] visibleFor = null  // Only this player or list of players will see the button
 		                    implicit Player[] touchableBy = null // Only this player or list of players can touch or click the button
 		                    hotkey = Key.None                    // This keyboard shortcut will execute the onTouch handler
@@ -508,19 +510,28 @@ transient skipInit global unit graphics
 		                    alphaWhenDisabled = .5               // The opacity of the button will be multiplied with this factor when its disabled
 		                    void(Touch touch) onTouch = null     // Execute this code when the user touches or clicks the button or presses the hotkey
 	                        SourceCodeLocation location
-		if isVisibleFor(visibleFor)
-			let effectiveAlpha = enabled ? alpha : alpha * alphaWhenDisabled
-			if text:  drawText text, position+textOffset, textSize, textColor, visibleFor, layer, effectiveAlpha, location
-			if image: drawImage image, position, frame, size, visibleFor, layer, effectiveAlpha, location
-			
+		float scale = 1.0
+		Vector2 effectiveSize = image ? getEffectiveSize(image.size, size) : {getTextWidth(text), textSize}
 		if enabled and onTouch != null
 			// Handle click (only visible buttons are clickable)
 			let effectivetouchableBy = gettouchableBy(visibleFor, touchableBy)
-			Vector2 effectiveSize = image ? getEffectiveSize(image.size, size) : {getTextWidth(text), textSize}
-			input.onTouchDownWithin position, effectiveSize + touchMargin, by:effectivetouchableBy, showTouchArea, do:onTouch
+			Vector2 sizeWithMargin = effectiveSize + touchMargin
+			if frameOnHover != -1 or scaleOnHover != 1.0
+				input.onTouchOver position, sizeWithMargin
+					if frameOnHover != -1:  frame = frameOnHover
+					if scaleOnHover != 1.0: scale = scaleOnHover
+			input.onTouchDownWithin position, sizeWithMargin, by:effectivetouchableBy, showTouchArea, do:onTouch
 			if hotkey
 				input.onKeyDown hotkey, by:effectivetouchableBy
 					onTouch null
+					
+		if isVisibleFor(visibleFor)
+			if frame == -1: frame = 0
+			if scale != 1.0: textSize = math.round(textSize * scale); effectiveSize *= scale
+			let effectiveAlpha = enabled ? alpha : alpha * alphaWhenDisabled
+			if text:  drawText text, position+textOffset, textSize, textColor, visibleFor, layer, effectiveAlpha, location
+			if image: drawImage image, position, frame, effectiveSize, visibleFor, layer, effectiveAlpha, location
+			
 			
 	// ------------------------------------------------------- Rectangle -------------------------------------------------------
 	
