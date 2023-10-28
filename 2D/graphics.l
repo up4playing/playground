@@ -625,7 +625,7 @@ transient skipInit global unit graphics
 		                       Color color = null                      // The color of the area within the circle
 		                       Color outlineColor = null               // The color of the outline around the circle
 		                       outlineWidth = 0                        // The width of the outline around the circle in pixels
-		                       Angle startAngle = -.25                 // Draw an arc with this start angle in turns, measured from the positive x-axis
+		                       Angle startAngle = 0                    // Draw an arc with this start angle in turns, measured from the positive x-axis
 		                       Angle angle = 1.0                       // Draw an arc with this angle in turns (0.25: quarter circle, 0.5: half circle, 1: full circle)
 		                       RotationDirection direction = Clockwise // The circle is drawn in this direction
 		                       implicit Player[] visibleFor = null     // Only this player or list of players will see the circle
@@ -1652,7 +1652,8 @@ transient DisplayItem DisplayCircle
 			if(this.angle == 1) {
 				graphics_context.arc(this.x+radius, this.y+radius, radius, 0, math_TwoPI, this.direction);
 			} else {
-				graphics_context.arc(this.x+radius, this.y+radius, radius, this.startAngle*math_TwoPI, (this.startAngle+this.angle)*math_TwoPI, this.direction);
+				let startAngle = this.startAngle - .25
+				graphics_context.arc(this.x+radius, this.y+radius, radius, startAngle*math_TwoPI, (startAngle+this.angle)*math_TwoPI, this.direction);
 			}
 		} else {
 			let radiusX = this.w/2
