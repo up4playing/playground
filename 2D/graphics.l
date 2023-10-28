@@ -1200,6 +1200,13 @@ transient skipInit global unit graphics
 		graphics_pixelSize.y = prevPixelSizeY
 		graphics_items = prevItems
 		return dataUrl
+		
+	js void copyScreenshotToClipboard
+		graphics_canvas.toBlob((blob) => {
+			const item = new ClipboardItem({ 'image/png': blob });
+			navigator.clipboard.write([item]);
+			log("Copied screenshot to clipboard");
+		});
 	
 	// Directly manipulate the pixels on the screen or an image
 	js int[] accessPixel: void(int[] pixels) code // This code can manipulate the pixels

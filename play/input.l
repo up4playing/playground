@@ -492,6 +492,8 @@ skipInit global unit input
 				e.preventDefault();
 			} else if(key == "F10") { 
 				Platform_toggleSmallScreen();
+			} else if(key == "F11") { 
+				graphics_copyScreenshotToClipboard();
 			} else {
 				input_handleKeyEvent(5, keyCode, key?.length == 1 ? key : "")
 				if(keyCode == 9) e.preventDefault();
