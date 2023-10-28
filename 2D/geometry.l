@@ -61,8 +61,12 @@ struct Vector2
 	
 	Vector2 operator += (Vector2 a, Vector2 b) a.x += b.x; a.y += b.y; if(a.location || b.location) {a.location = new SourceCodeLocation(null, 0, 0, a.location, b.location)} return a
 	Vector2 operator -= (Vector2 a, Vector2 b) a.x -= b.x; a.y -= b.y; if(a.location || b.location) {a.location = new SourceCodeLocation(null, 0, 0, a.location, b.location)} return a
+	
 	Vector2 operator *= (Vector2 a, Vector2 b) a.x *= b.x; a.y *= b.y; if(a.location || b.location) {a.location = new SourceCodeLocation(null, 0, 0, a.location, b.location)} return a
+	Vector2 operator *= (Vector2 a, float b) a.x *= b; a.y *= b; return a
+	
 	Vector2 operator /= (Vector2 a, Vector2 b) a.x /= b.x; a.y /= b.y; if(a.location || b.location) {a.location = new SourceCodeLocation(null, 0, 0, a.location, b.location)} return a
+	Vector2 operator /= (Vector2 a, float b) a.x /= b; a.y /= b; return a
 	
 	bool operator == (Vector2 a, Vector2 b) return a.x == b.x && a.y == b.y
 	bool operator != (Vector2 a, Vector2 b) return a.x != b.x || a.y != b.y
