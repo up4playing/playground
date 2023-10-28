@@ -250,7 +250,7 @@ transient skipInit global unit graphics
 		let effectiveVisibleFor = visibleFor and (visibleFor.length != 1 or visibleFor[0]) ? visibleFor : currentlyVisibleFor
 		return effectiveVisibleFor == null or effectiveVisibleFor.any . == null or .id == input.localUser.id
 		
-	private Player[] gettouchableBy: Player[] visibleFor, Player[] touchableBy
+	private Player[] getTouchableBy: Player[] visibleFor, Player[] touchableBy
 		Player[] effectiveVisibleBy = visibleFor or currentlyVisibleFor
 		return effectiveVisibleBy and touchableBy
 		     ? effectiveVisibleBy intersectWith touchableBy 
@@ -424,12 +424,12 @@ transient skipInit global unit graphics
 		drawImage image, position, frame, size, angle, visibleFor, layer, alpha, color, location
 			
 		// Handle click (only visible buttons are clickable)
-		let effectivetouchableBy = gettouchableBy(visibleFor, touchableBy)
+		let effectiveTouchableBy = getTouchableBy(visibleFor, touchableBy)
 		if size.x == 0 and size.y == 0: size = image.size; else
 		if size.y == 0: size.y = size.x * image.size.y / image.size.x
-		input.onTouchDownWithin position, size + touchMargin, by:effectivetouchableBy, showTouchArea, do:onTouch
+		input.onTouchDownWithin position, size + touchMargin, by:effectiveTouchableBy, showTouchArea, do:onTouch
 		if hotkey
-			input.onKeyDown hotkey, by:effectivetouchableBy
+			input.onKeyDown hotkey, by:effectiveTouchableBy
 				onTouch null
 		
 	// ------------------------------------------------------- Text -------------------------------------------------------
@@ -514,15 +514,15 @@ transient skipInit global unit graphics
 		Vector2 effectiveSize = image ? getEffectiveSize(image.size, size) : {getTextWidth(text), textSize}
 		if enabled and onTouch != null
 			// Handle click (only visible buttons are clickable)
-			let effectivetouchableBy = gettouchableBy(visibleFor, touchableBy)
+			let effectiveTouchableBy = getTouchableBy(visibleFor, touchableBy)
 			Vector2 sizeWithMargin = effectiveSize + touchMargin
 			if frameOnHover != -1 or scaleOnHover != 1.0
-				input.onTouchOver position, sizeWithMargin
+				input.onTouchOver position, sizeWithMargin, by:effectiveTouchableBy
 					if frameOnHover != -1:  frame = frameOnHover
 					if scaleOnHover != 1.0: scale = scaleOnHover
-			input.onTouchDownWithin position, sizeWithMargin, by:effectivetouchableBy, showTouchArea, do:onTouch
+			input.onTouchDownWithin position, sizeWithMargin, by:effectiveTouchableBy, showTouchArea, do:onTouch
 			if hotkey
-				input.onKeyDown hotkey, by:effectivetouchableBy
+				input.onKeyDown hotkey, by:effectiveTouchableBy
 					onTouch null
 					
 		if isVisibleFor(visibleFor)
