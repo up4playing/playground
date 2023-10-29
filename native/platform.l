@@ -1,5 +1,6 @@
 skipInit unit Platform
 	userCount = 1
+	bool running
 	
 	cpp(SDL.h) void initMedia
 		SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO);
@@ -13,7 +14,7 @@ skipInit unit Platform
 		Platform::init();
 		app::init();
 		
-	cpp void start
+	cpp(thread, chrono) void start
 		system::print(std::string("------------------------------------------ ")+std::string(_appName)+std::string(" Version ")+std::to_string(_buildVersion)+std::string(" ------------------------------------------"));
 		Platform::initMedia();
 		Platform::initPlatform();
@@ -39,16 +40,17 @@ skipInit unit Platform
 		// Mix_PlayChannel(-1, bgm, -1);
 		
 		SDL_Event event;
-		bool done = false;
-		while (!done) {
+		running = true;
+		while (running) {
 			while (SDL_PollEvent(&event)) {
 				switch(event.type) {
-					case SDL_QUIT:    done = true; break;
+					case SDL_QUIT:    running = false; break;
 					case SDL_KEYDOWN: input::handleKeyEvent(InputType_KeyDown, event.key.keysym.scancode, (Key)event.key.keysym.sym); break;
 					case SDL_KEYUP:   input::handleKeyEvent(InputType_KeyUp,   event.key.keysym.scancode, (Key)event.key.keysym.sym); break;
 				}
 			}
 			core::animationFrame();
+			// std::this_thread::sleep_for(std::chrono::milliseconds(16));
 		}
 		// Mix_HaltChannel(-1);
 		
@@ -68,5 +70,12 @@ skipInit unit Platform
 		TTF_Quit();
 		IMG_Quit();
 		SDL_Quit();
+		
+	quit
+		running = false	
+		
+	cpp(thread, chrono) void sleep: Time time
+		std::this_thread::sleep_for(std::chrono::milliseconds(time));
+		
 
 
