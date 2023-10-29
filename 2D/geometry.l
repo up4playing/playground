@@ -61,8 +61,12 @@ struct Vector2
 	
 	Vector2 operator += (Vector2 a, Vector2 b) a.x += b.x; a.y += b.y; if(a.location || b.location) {a.location = new SourceCodeLocation(null, 0, 0, a.location, b.location)} return a
 	Vector2 operator -= (Vector2 a, Vector2 b) a.x -= b.x; a.y -= b.y; if(a.location || b.location) {a.location = new SourceCodeLocation(null, 0, 0, a.location, b.location)} return a
+	
 	Vector2 operator *= (Vector2 a, Vector2 b) a.x *= b.x; a.y *= b.y; if(a.location || b.location) {a.location = new SourceCodeLocation(null, 0, 0, a.location, b.location)} return a
+	Vector2 operator *= (Vector2 a, float b) a.x *= b; a.y *= b; return a
+	
 	Vector2 operator /= (Vector2 a, Vector2 b) a.x /= b.x; a.y /= b.y; if(a.location || b.location) {a.location = new SourceCodeLocation(null, 0, 0, a.location, b.location)} return a
+	Vector2 operator /= (Vector2 a, float b) a.x /= b; a.y /= b; return a
 	
 	bool operator == (Vector2 a, Vector2 b) return a.x == b.x && a.y == b.y
 	bool operator != (Vector2 a, Vector2 b) return a.x != b.x || a.y != b.y
@@ -844,23 +848,23 @@ class IsometicGrid
 enum RotationDirection: Clockwise, CounterClockwise
 		
 immutable Direction
-	global const Direction Right = {"Right", 0, { 1, 0, location:null},   0°, 330°} // positive x direction (1,0)
-	global const Direction Down  = {"Down",  1, { 0, 1, location:null},  90°,  30°} // positive y direction (0,1)
-	global const Direction Left  = {"Left",  2, {-1, 0, location:null}, 180°, 150°} // negative x direction (-1,0)
-	global const Direction Up    = {"Up",    3, { 0,-1, location:null}, 270°, 210°} // negative y direction (0,-1)
-	global const Direction None  = {"None", -1, { 0, 0, location:null},   0°,   0°} // no direction (0,0)
+	global const Direction Up     = {"Up",      0, { 0,-1, location:null},   0, 210°} // negative y direction (0,-1)
+	global const Direction Right  = {"Right",   1, { 1, 0, location:null}, .25, 330°} // positive x direction (1,0)
+	global const Direction Down   = {"Down",    2, { 0, 1, location:null}, .50,  30°} // positive y direction (0,1)
+	global const Direction Left   = {"Left",    3, {-1, 0, location:null}, .75, 150°} // negative x direction (-1,0)
+	global const Direction Center = {"Center", -1, { 0, 0, location:null},   0,   0°} // no direction (0,0)
 		
-	const Direction DownRight = {"DownRight", 0, { 1, 1, location:null},  45°} // positive x, positive y direction (1,1)
-	const Direction DownLeft  = {"DownLeft",  1, {-1, 1, location:null}, 135°} // negative x, positive y direction (-1,1)
-	const Direction UpLeft    = {"UpLeft",    2, {-1,-1, location:null}, 225°} // negative x, negative y direction (-1,-1)
-	const Direction UpRight   = {"UpRight",   3, { 1,-1, location:null}, 315°} // positive x, negative y direction (1,-1)
+	const Direction UpLeft    = {"UpLeft",    0, {-1,-1, location:null},-.125} // negative x, negative y direction (-1,-1)
+	const Direction UpRight   = {"UpRight",   1, { 1,-1, location:null}, .125} // positive x, negative y direction (1,-1)
+	const Direction DownRight = {"DownRight", 2, { 1, 1, location:null}, .375} // positive x, positive y direction (1,1)
+	const Direction DownLeft  = {"DownLeft",  3, {-1, 1, location:null}, .625} // negative x, positive y direction (-1,1)
 		
 	
 	// List of the four primary direction: Right, Down, Left, Up
-	const Direction[] primaryDirections = [Right, Down, Left, Up]
+	const Direction[] primaryDirections = [Up, Right, Down, Left]
 	
 	// List of the four diagonals: UpLeft, UpRight, DownLeft, DownRight
-	const Direction[] diagonalDirections = [DownRight, DownLeft, UpLeft, UpRight]
+	const Direction[] diagonalDirections = [UpLeft, UpRight, DownRight, DownLeft]
 	
 	// The two horitontal directions: Left and Right
 	const Direction[] horizontalDirections = [Left, Right]
@@ -868,8 +872,26 @@ immutable Direction
 	// The two vertical directions: Up and Down
 	const Direction[] verticalDirections = [Up, Down]
 	
+	// Directions that form a triangle pointing up: Up, DownRight, DownLeft
+	const Direction[] trianglePointingUp = [Up, DownRight, DownLeft]
+	
+	// Directions that form a triangle pointing right: UpLeft, Right, DownLeft
+	const Direction[] trianglePointingRight = [UpLeft, Right, DownLeft]
+	
+	// Directions that form a triangle pointing down: UpLeft, UpRight, Down
+	const Direction[] trianglePointingDown = [UpLeft, UpRight, Down]
+	
+	// Directions that form a triangle pointing left: Left, UpRight, DownRight
+	const Direction[] trianglePointingLeft = [Left, UpRight, DownRight]
+	
 	// List of the primary direction and the diagonals
-	const Direction[] allDirections = [Right, DownRight, Down, DownLeft, Left, UpLeft, Up, UpRight]
+	const Direction[] allDirections = [Up, UpRight, Right, DownRight, Down, DownLeft, Left, UpLeft]
+
+	// The center and all surrounding directions (a 3 x 3 around the center)
+	const Direction[] centerAndAllDirections = [Center, Up, UpRight, Right, DownRight, Down, DownLeft, Left, UpLeft]
+
+	// The center and all horizontal and vertical directions (a cross)
+	const Direction[] centerAndPrimaryDirections = [Center, Up, Right, Down, Left]
 
 	string name       // The name of the direction (e.g. "Left", "Right", "Up", "Down", "UpLeft", "DownRight", ...)
 	int index         // The index starting with "Right" and going around clockwise (0: Right, 1: Down, 2: Left, 3: Up)
