@@ -1642,6 +1642,15 @@ global transient priority unit system
 											) do         // Do this for each triple in a list
 		for(auto _subject=subject, _len=_subject.size(), i=_len-1; i>=0; --i) { auto it = _subject[i], next = _subject[(((i-1)%_len)+_len)%_len], prev = _subject[(i+1)%_len]; do()}
 
+	private string logs
+	
+	global log: logstring text 
+		logs += text + "\n"
+		
+	saveLogEvery: int frames = 60
+		if logs != "" and Time.frame % frames == 0
+			print logs
+			logs = ""
 		
 	// Prints a message to the console
 	global cpp(fstream, iostream, string) void print: logstring text // The text, variables or expressions to print
@@ -1650,8 +1659,6 @@ global transient priority unit system
 		outfile << text << std::endl;
 		outfile.close();
 		
-	cpp void log: any value
-		std::cout << value << std::endl;
 	
 	// Display a message in the timeline
 	global cpp void watch: logstring text // The text, variables or expressions to watch
