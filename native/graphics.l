@@ -253,8 +253,7 @@ global skipInit unit graphics
 		
 	finishFrame
 		startRendering
-		items.sort a.layer < b.layer
-		// items.orderBy.layer
+		items.sort a.layer - b.layer
 		items.each <- .draw
 		finishRendering
 		
