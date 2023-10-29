@@ -343,9 +343,9 @@ Object Menu
 		
 	Menu
 		if includeDefaultItems
-			items.insert {New,  "New Game",        onClick:core.restart}, 0
-			items.add    {Save, "Save Game"        onClick:core.saveEventStreamAndLogs}
-			items.add    {Quit, "Exit Fullscreen", onClick:Platform.setFullscreen false, forPlayer:touch.by}
+			items.insert {image:New,  "New Game",        onClick:core.restart}, 0
+			items.add    {image:Save, "Save Game"        onClick:core.saveEventStreamAndLogs}
+			items.add    {image:Quit, "Exit Fullscreen", onClick:Platform.setFullscreen false, forPlayer:touch.by}
 		
 	override tick
 		bool doNotClose
