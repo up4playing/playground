@@ -88,7 +88,7 @@ priority class Player
 	
 	// Controller input
 	visible GameController controller = {}
-	internal int[] controllerKeyDownFrame = [0, 0, 0, 0, 0, 0]
+	internal int[] controllerKeyDownFrame
 	
 	// If a player was lost by anybody and nobody who is still connected to that player
 	// disagrees within a certrain time, we will remove this player in "handleLost"
@@ -379,7 +379,17 @@ enum Key
 	Kbdillumup      	= 1073742104
 	Eject           	= 1073742105
 	Sleep           	= 1073742106
-		
+	
+	// Libretro
+	DPadUp              = 273
+	DPadDown            = 274
+	DPadRight           = 275
+	DPadLeft            = 276
+	ControllerA         = 32
+	ControllerB         = 306
+	ControllerX         = 304
+	ControllerY         = 308
+	
 enum Cursor
 	Pointer // The cursor is a pointer that indicates a link, typically an image of a pointing hand
 	Default // The platform-dependent default cursor, typically an arrow
@@ -447,6 +457,8 @@ transient immutable class ControllerButtonPlayerAndIndex
 	// toBool() return buttonIndex != 0
 	// toString() return buttonIndex.toString
 	
+enum ControllerButton: None, Right, Down, Left, Up, A, B, X, Y, L, R, L2, R2, Select, Start, Menu
+	
 enum GameControllerType: Keyboard, Xbox, PlayStation
 class GameController
 	const deadZone = .1
@@ -461,7 +473,8 @@ class GameController
 	visible DigitalButton b = {}
 	visible DigitalButton x = {}
 	visible DigitalButton y = {}
-	visible DigitalButton[] buttons = [DigitalButton("None"), right, down, left, up, a, b, x, y]
+	visible DigitalButton menu = {}
+	visible DigitalButton[] buttons = [DigitalButton("None"), right, down, left, up, a, b, x, y, menu]
 	
 	bool inMotion
 	GameControllerType type
@@ -471,10 +484,7 @@ class GameController
 		leftStick.y = 0
 		rightStick.x = 0
 		rightStick.y = 0
-		a.startFrame
-		b.startFrame
-		x.startFrame
-		y.startFrame
+		buttons.each.startFrame
 	
 enum ShowPointersMode
 	None           // Don't show the mouse pointers or draw them manually
@@ -669,9 +679,8 @@ skipInit global unit input
 		
 		let controllerButton = controllerButtonMap[keyCode]
 			let player = players.find.id == controllerButton.userId
-			player.controllerKeyDownFrame[controllerButton.buttonIndex-1] = inputType == KeyDown ? Time.frame : 0
+			player.controllerKeyDownFrame[controllerButton.buttonIndex] = inputType == KeyDown ? Time.frame : 0
 			
-		// print scanCode, keyCode
 		// 	composite += (controllerButton.buttonIndex + 1) shiftLeft 5 // buttonIndex: 0 - 15 (4 bit)
 		// 	if core.mode == Local and not core.simulateConnection
 		// 		inputs = internalUsers[controllerButton.userId].inputs
@@ -1087,21 +1096,42 @@ skipInit global unit input
 	// 				networkData.call id, object
 	// 				if Platform.waitingForInitialData > 0: Platform.waitingForInitialData--
 	
-		for players
-			let right = .controllerKeyDownFrame[0]
-			let down  = .controllerKeyDownFrame[1]
-			let left  = .controllerKeyDownFrame[2]
-			let up    = .controllerKeyDownFrame[3]
+		for players -> p
+			// Left stick
+			let right = .controllerKeyDownFrame[ControllerButton.Right]
+			let down  = .controllerKeyDownFrame[ControllerButton.Down]
+			let left  = .controllerKeyDownFrame[ControllerButton.Left]
+			let up    = .controllerKeyDownFrame[ControllerButton.Up]
 			if right or left: .controller.leftStick.x = right >= left ? 1 : -1
 			if down  or up:   .controller.leftStick.y = down  >= up   ? 1 : -1
-			if .controllerKeyDownFrame[4]: .controller.a.state = true
-			if .controllerKeyDownFrame[5]: .controller.b.state = true
-			if .controllerKeyDownFrame[6]: .controller.x.state = true
-			if .controllerKeyDownFrame[7]: .controller.y.state = true
 			.controller.inMotion = math.abs(.controller.leftStick.x) >= GameController.deadZone
 			                    or math.abs(.controller.leftStick.y) >= GameController.deadZone
-						
-	internal updatePlayers
+			
+			// Buttons
+			for .controller.buttons
+				if p.controllerKeyDownFrame[i]: 
+					.state = true
+	
+	internal #miyoo updatePlayers
+		players.each.index = i
+			
+		GameController c = players[0].controller
+		c.right.assign "→"     DPadRight
+		c.down.assign  "↓"     DPadDown
+		c.left.assign  "←"     DPadLeft
+		c.up.assign    "↑"     DPadUp
+		c.a.assign     "A"     ControllerA
+		c.b.assign     "B"     ControllerB
+		c.menu.assign "ESCAPE" Escape
+		
+		controllerButtonMap.clear
+		for players -> player
+			player.controllerKeyDownFrame.clear
+			for .controller.buttons
+				controllerButtonMap[.key] = {userId:player.id, buttonIndex:i}
+				player.controllerKeyDownFrame.add 0
+		
+	internal #keyboard updatePlayers
 		// players.orderBy.id
 		for players
 			.index = i
@@ -1141,8 +1171,10 @@ skipInit global unit input
 			
 			controllerButtonMap.clear
 			for players -> player
+				player.controllerKeyDownFrame.clear
 				for .controller.buttons
 					controllerButtonMap[.key] = {userId:player.id, buttonIndex:i}
+					player.controllerKeyDownFrame.add 0
 		else
 			controllerButtonMap.clear
 			for players
