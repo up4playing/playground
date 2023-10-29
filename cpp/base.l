@@ -787,15 +787,15 @@ struct List<T>
 	// inline cpp T[] sort
 	// 	this.sort((a,b) => a - b)
 	
-	inline cpp(algorithm) T[] sort: bool(T a, T b) comparer // A function returning 1 if "a" is larger, -1 if "b" is larger, 0 if they are equal
-		std::sort(this.begin(), this.end(), comparer)
+	inline cpp(algorithm) T[] sort: float(T a, T b) comparer // A function returning 1 if "a" is larger, -1 if "b" is larger, 0 if they are equal
+		std::stable_sort(this.begin(), this.end(), comparer)
 	
 	// inline cpp T[] sort: Time(T a, T b) comparer // A function returning 1 if "a" is larger, -1 if "b" is larger, 0 if they are equal
 	// 	this.sort(comparer)
 	
 	// Sort the list by a given expression
 	inline cpp(algorithm) void orderBy: float(T a) expression // First order by this expression
-		std::sort(this.begin(), this.end(), [=](auto a, auto b) { return expression(a) < expression(b); });
+		std::stable_sort(this.begin(), this.end(), [=](auto a, auto b) { return expression(a) < expression(b); });
 		
 	// T[] orderBy: float(T it) expression           // First order by this expression
 	// 	         label nocolon float(T it) thenBy // Then order by this expression
@@ -1642,6 +1642,15 @@ global transient priority unit system
 											) do         // Do this for each triple in a list
 		for(auto _subject=subject, _len=_subject.size(), i=_len-1; i>=0; --i) { auto it = _subject[i], next = _subject[(((i-1)%_len)+_len)%_len], prev = _subject[(i+1)%_len]; do()}
 
+	private string logs
+	
+	global log: logstring text 
+		logs += text + "\n"
+		
+	saveLogEvery: int frames = 60
+		if logs != "" and Time.frame % frames == 0
+			print logs
+			logs = ""
 		
 	// Prints a message to the console
 	global cpp(fstream, iostream, string) void print: logstring text // The text, variables or expressions to print
@@ -1650,8 +1659,6 @@ global transient priority unit system
 		outfile << text << std::endl;
 		outfile.close();
 		
-	cpp void log: any value
-		std::cout << value << std::endl;
 	
 	// Display a message in the timeline
 	global cpp void watch: logstring text // The text, variables or expressions to watch

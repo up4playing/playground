@@ -250,7 +250,7 @@ transient skipInit global unit graphics
 		let effectiveVisibleFor = visibleFor and (visibleFor.length != 1 or visibleFor[0]) ? visibleFor : currentlyVisibleFor
 		return effectiveVisibleFor == null or effectiveVisibleFor.any . == null or .id == input.localUser.id
 		
-	private Player[] gettouchableBy: Player[] visibleFor, Player[] touchableBy
+	private Player[] getTouchableBy: Player[] visibleFor, Player[] touchableBy
 		Player[] effectiveVisibleBy = visibleFor or currentlyVisibleFor
 		return effectiveVisibleBy and touchableBy
 		     ? effectiveVisibleBy intersectWith touchableBy 
@@ -424,12 +424,12 @@ transient skipInit global unit graphics
 		drawImage image, position, frame, size, angle, visibleFor, layer, alpha, color, location
 			
 		// Handle click (only visible buttons are clickable)
-		let effectivetouchableBy = gettouchableBy(visibleFor, touchableBy)
+		let effectiveTouchableBy = getTouchableBy(visibleFor, touchableBy)
 		if size.x == 0 and size.y == 0: size = image.size; else
 		if size.y == 0: size.y = size.x * image.size.y / image.size.x
-		input.onTouchDownWithin position, size + touchMargin, by:effectivetouchableBy, showTouchArea, do:onTouch
+		input.onTouchDownWithin position, size + touchMargin, by:effectiveTouchableBy, showTouchArea, do:onTouch
 		if hotkey
-			input.onKeyDown hotkey, by:effectivetouchableBy
+			input.onKeyDown hotkey, by:effectiveTouchableBy
 				onTouch null
 		
 	// ------------------------------------------------------- Text -------------------------------------------------------
@@ -493,12 +493,14 @@ transient skipInit global unit graphics
 		                    text = ""                            // The text of the button
 		                    Vector2 position = {}                // By default, {0,0} is the center, {-960,-540} is the top left, {960,540} is the bottom right
 		                    implicit Vector2 size = {}           // A float scales the image to that width keeping the aspect ratio, a vector stretches the image
-		                    frame = 0                            // The frame from a sequence of images (for example "Button0.png", "Button1.png", ...)
+		                    frame = -1                           // The frame from a sequence of images (for example "Button0.png", "Button1.png", ...)
 		                    Color textColor = null               // The color of the text
 		                    textSize = 18                        // The font size in pixels   
 		                    textOffset = Vector2(0,0)            // Draw the text at this offset to the image
 		                    touchMargin = Vector2(16,16)         // The margin around the button within which it is touchable
 		                    showTouchArea = false                // Highlight the touchable area for debugging
+		                    scaleOnHover = 1.0                   // Scale the button by this factor when the mouse hovers over the button
+		                    frameOnHover = 1                     // Draw this frame when the mouse hovers over the button
 		                    implicit Player[] visibleFor = null  // Only this player or list of players will see the button
 		                    implicit Player[] touchableBy = null // Only this player or list of players can touch or click the button
 		                    hotkey = Key.None                    // This keyboard shortcut will execute the onTouch handler
@@ -508,19 +510,28 @@ transient skipInit global unit graphics
 		                    alphaWhenDisabled = .5               // The opacity of the button will be multiplied with this factor when its disabled
 		                    void(Touch touch) onTouch = null     // Execute this code when the user touches or clicks the button or presses the hotkey
 	                        SourceCodeLocation location
-		if isVisibleFor(visibleFor)
-			let effectiveAlpha = enabled ? alpha : alpha * alphaWhenDisabled
-			if text:  drawText text, position+textOffset, textSize, textColor, visibleFor, layer, effectiveAlpha, location
-			if image: drawImage image, position, frame, size, visibleFor, layer, effectiveAlpha, location
-			
+		float scale = 1.0
+		Vector2 effectiveSize = image ? getEffectiveSize(image.size, size) : {getTextWidth(text), textSize}
 		if enabled and onTouch != null
 			// Handle click (only visible buttons are clickable)
-			let effectivetouchableBy = gettouchableBy(visibleFor, touchableBy)
-			Vector2 effectiveSize = image ? getEffectiveSize(image.size, size) : {getTextWidth(text), textSize}
-			input.onTouchDownWithin position, effectiveSize + touchMargin, by:effectivetouchableBy, showTouchArea, do:onTouch
+			let effectiveTouchableBy = getTouchableBy(visibleFor, touchableBy)
+			Vector2 sizeWithMargin = effectiveSize + touchMargin
+			if frameOnHover != -1 or scaleOnHover != 1.0
+				input.onTouchOver position, sizeWithMargin, by:effectiveTouchableBy
+					if frameOnHover != -1:  frame = frameOnHover
+					if scaleOnHover != 1.0: scale = scaleOnHover
+			input.onTouchDownWithin position, sizeWithMargin, by:effectiveTouchableBy, showTouchArea, do:onTouch
 			if hotkey
-				input.onKeyDown hotkey, by:effectivetouchableBy
+				input.onKeyDown hotkey, by:effectiveTouchableBy
 					onTouch null
+					
+		if isVisibleFor(visibleFor)
+			if frame == -1: frame = 0
+			if scale != 1.0: textSize = math.round(textSize * scale); effectiveSize *= scale
+			let effectiveAlpha = enabled ? alpha : alpha * alphaWhenDisabled
+			if text:  drawText text, position+textOffset, textSize, textColor, visibleFor, layer, effectiveAlpha, location
+			if image: drawImage image, position, frame, effectiveSize, visibleFor, layer, effectiveAlpha, location
+			
 			
 	// ------------------------------------------------------- Rectangle -------------------------------------------------------
 	
@@ -614,7 +625,7 @@ transient skipInit global unit graphics
 		                       Color color = null                      // The color of the area within the circle
 		                       Color outlineColor = null               // The color of the outline around the circle
 		                       outlineWidth = 0                        // The width of the outline around the circle in pixels
-		                       Angle startAngle = -.25                 // Draw an arc with this start angle in turns, measured from the positive x-axis
+		                       Angle startAngle = 0                    // Draw an arc with this start angle in turns, measured from the positive x-axis
 		                       Angle angle = 1.0                       // Draw an arc with this angle in turns (0.25: quarter circle, 0.5: half circle, 1: full circle)
 		                       RotationDirection direction = Clockwise // The circle is drawn in this direction
 		                       implicit Player[] visibleFor = null     // Only this player or list of players will see the circle
@@ -1189,6 +1200,13 @@ transient skipInit global unit graphics
 		graphics_pixelSize.y = prevPixelSizeY
 		graphics_items = prevItems
 		return dataUrl
+		
+	js void copyScreenshotToClipboard
+		graphics_canvas.toBlob((blob) => {
+			const item = new ClipboardItem({ 'image/png': blob });
+			navigator.clipboard.write([item]);
+			log("Copied screenshot to clipboard");
+		});
 	
 	// Directly manipulate the pixels on the screen or an image
 	js int[] accessPixel: void(int[] pixels) code // This code can manipulate the pixels
@@ -1634,7 +1652,8 @@ transient DisplayItem DisplayCircle
 			if(this.angle == 1) {
 				graphics_context.arc(this.x+radius, this.y+radius, radius, 0, math_TwoPI, this.direction);
 			} else {
-				graphics_context.arc(this.x+radius, this.y+radius, radius, this.startAngle*math_TwoPI, (this.startAngle+this.angle)*math_TwoPI, this.direction);
+				let startAngle = this.startAngle - .25
+				graphics_context.arc(this.x+radius, this.y+radius, radius, startAngle*math_TwoPI, (startAngle+this.angle)*math_TwoPI, this.direction);
 			}
 		} else {
 			let radiusX = this.w/2
