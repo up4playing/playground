@@ -74,8 +74,8 @@ skipInit unit Platform
 	quit
 		running = false	
 		
-	cpp(thread, chrono) void sleep: Time time
-		std::this_thread::sleep_for(std::chrono::milliseconds(time));
+	// cpp(thread, chrono) void sleep: Time time
+	// 	std::this_thread::sleep_for(std::chrono::milliseconds(time));
 		
 
 

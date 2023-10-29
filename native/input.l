@@ -457,24 +457,31 @@ transient immutable class ControllerButtonPlayerAndIndex
 	// toBool() return buttonIndex != 0
 	// toString() return buttonIndex.toString
 	
-enum ControllerButton: None, Right, Down, Left, Up, A, B, X, Y, L, R, L2, R2, Select, Start, Menu
+enum ControllerButton: None, Up, Right, Down, Left, A, B, X, Y, L, R, L2, R2, Select, Start, Menu
 	
 enum GameControllerType: Keyboard, Xbox, PlayStation
 class GameController
 	const deadZone = .1
 	
+	// Sticks
 	visible Vector2 leftStick
 	visible Vector2 rightStick
+	
+	// DPad
+	visible DigitalButton up = {}
 	visible DigitalButton right = {}
 	visible DigitalButton down = {}
 	visible DigitalButton left = {}
-	visible DigitalButton up = {}
+	
+	// Buttons
 	visible DigitalButton a = {}
 	visible DigitalButton b = {}
 	visible DigitalButton x = {}
 	visible DigitalButton y = {}
+	
 	visible DigitalButton menu = {}
-	visible DigitalButton[] buttons = [DigitalButton("None"), right, down, left, up, a, b, x, y, menu]
+	
+	visible DigitalButton[] buttons = [DigitalButton("None"), up, right, down, left, a, b, x, y, menu]
 	
 	bool inMotion
 	GameControllerType type
