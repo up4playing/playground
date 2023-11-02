@@ -16,7 +16,7 @@ class Player
 	string name
 	Role role
 	
-	visible color = Color("ffffff")
+	visible color = Color("#ffffff")
 	visible Direction dir = Direction.diagonalDirections[index]
 	visible Vector2 videoPos = dir.vector * {700,270}
 	
@@ -24,10 +24,10 @@ class Player
 		// Draw round video of player with cirlce outline
 		const radius = 220
 		drawVideo me, videoPos, size:radius*2, shape:Circle
-		drawCircle videoPos, size:radius*2+50, Color("000000"), outlineColor:color, outlineWidth:12, visibleFor:me
+		drawCircle videoPos, size:radius*2+50, Color("#000000"), outlineColor:color, outlineWidth:12, visibleFor:me
 		
 		// Draw yellow player name that's visible the current player instance
-		drawText name, size:32, Color("ffff00"), visibleFor:me
+		drawText name, size:32, Color("#ffff00"), visibleFor:me
 	
 enum Role: Offence, Defence
 		
@@ -96,13 +96,13 @@ class example
 						nextRound
 			Reveal
 				// Draw yellow text thats visible for everybody
-				drawText "Reveal", size:32, Color("ffff00"), visibleFor:everybody
+				drawText "Reveal", size:32, Color("#ffff00"), visibleFor:everybody
 				
 			GameOver
 				tickGameOver
 				
 				// Draw green text thats visible for everybody
-				drawText "Game Over", size:32, Color("00ff00"), visibleFor:everybody
+				drawText "Game Over", size:32, Color("#00ff00"), visibleFor:everybody
 				
 	def tickGameOver
 		phase = GameOver
@@ -192,10 +192,10 @@ class Item
 					
 			GameOver
 				// Draw red text
-				drawText "Game Over", position, size:40, Color("ff0000"), font:OpenSans
+				drawText "Game Over", position, size:40, Color("#ff0000"), font:OpenSans
 				
 		// Draw blue circle with a radius of 200 with a green outline
-		drawCircle position, size:400, Color("0000ff"), outlineColor:Color("00ff00"), outlineWidth:5
+		drawCircle position, size:400, Color("#0000ff"), outlineColor:Color("#00ff00"), outlineWidth:5
 		
 class Box
 	Rect rect
@@ -204,7 +204,7 @@ class Box
 	
 	def tick
 		// Draw blue box with white outline
-		drawRectangle rect.position, rect.size, Color("0000ff"), outlineColor:Color("ffffff"), outlineWidth:5
+		drawRectangle rect.position, rect.size, Color("#0000ff"), outlineColor:Color("#ffffff"), outlineWidth:5
 		
 // Start of LiveTime API. ONLY call functions that are in the LiveTime API
 class Touch

@@ -21,6 +21,8 @@ immutable struct int
 	
 	inline js string toString := this.toString()
 		
+	inline js int fromHex(string value) parseInt(value, 16)
+		
 	inline js string formatWithSpaces := this.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ")
 		
 	inline js string format: int minIntegerDigits = 1, bool grouping = false
@@ -140,6 +142,9 @@ immutable struct float
 	const inline js float minValue := -Number.MAX_VALUE
 	
 	const inline js float infinity := Number.POSITIVE_INFINITY
+
+	inline js float += int value: this += value
+	inline js float += float value: this += value
 	
 	inline js float operator ** (float a, float b) 
 		Math.pow(a,b)

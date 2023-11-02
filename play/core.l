@@ -257,6 +257,7 @@ transient skipInit unit core
 	int replayFrom = -1
 	
 	collectStatistics
+		// Players
 		if mode == Connected and players.length > 1 and frame > joinFrame + 120
 			for players
 				let internalUser = input.internalUsers[.id]
@@ -526,7 +527,7 @@ transient skipInit unit core
 	internal saveLogs
 		// Ensure that current eventLog is added to the table even if we haven't processed a single frame
 		logTable += ",,,,,,,,,,,,,,,,,,,,,,,,\"{eventLog.trim}\""
-		file.saveText "{input.localUser.id} {Platform.appName} {Date.now.invariantDayMonthYearHourMinuteSecondString} v{Platform.version}.csv", logTable
+		file.saveText "{input.localUser.id} {Platform.appName} {Date.now.invariantDayMonthYearHourMinuteSecondString} v{Platform.buildVersion}.csv", logTable
 			
 	saveEventStream
 		Buffer buffer = {}
@@ -543,7 +544,7 @@ transient skipInit unit core
 			buffer.writeBool .local
 			buffer.writeBuffer .inputs
 		let date = Date.now
-		file.saveBinary "{Platform.appName} {date.dayShortMonthNameYearString} {date.hourMinuteSecondString} v{Platform.version}.state", buffer
+		file.saveBinary "{Platform.appName} {date.dayShortMonthNameYearString} {date.hourMinuteSecondString} v{Platform.buildVersion}.state", buffer
 		
 	openEventStream
 		Platform.pause
@@ -754,7 +755,7 @@ skipInit transient unit statistics
 			userId
 			userIndex: input.localUser.index
 			userEmail: user.email
-			version: Platform.version
+			version: Platform.buildVersion
 			staging: Platform.isStaging
 			server
 			loadTime: loadTime - startTime

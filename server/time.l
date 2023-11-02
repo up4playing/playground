@@ -10,6 +10,8 @@ skipInit transient float Time
 	const inline js Time minValue := Number.MIN_VALUE
 	
 	static internal inline js float realTime := Date.now()
+		
+	inline js Time += float value: this += value
 
 	static Time fromTimeString(string timeString)
 		if !timeString: return 0 milliseconds
