@@ -36,9 +36,9 @@ transient class InternalUser
 	int nextLostMessageAtFrame
 	
 	// Statistics
-	private int[] aheads      // Rolling buffer of ahead values, used to calculate bufferFrames
-	private int[] aheadsMax   // Rolling buffer of aheadMax values
-	visible int bufferFrames  // The average of all aheadMax values
+	private int[] aheadHistory    // Rolling buffer of ahead values, used to calculate bufferFrames
+	private int[] maxAheadHistory // Rolling buffer of maxAhead values
+	visible int bufferFrames      // The average of all maxAhead values
 	visible int smoothFrame = int.maxValue
 	
 	startInputFrame: int index
@@ -59,11 +59,14 @@ transient class InternalUser
 		
 	collectStatistics: int frame
 		int ahead = frame - inputFrame
-		if ahead < 50: aheads.add ahead, maxLength:200
-		int aheadMax = aheads.max .
-		aheadsMax.add aheadMax maxLength:600
-		bufferFrames = math.ceil(aheadsMax.average)
-		// bufferFrames = 10
+		
+		// Get the maximum number of frames we were ahead in the last 200 frames
+		if ahead < 50: aheadHistory.add ahead, maxLength:200
+		int maxAhead = aheadHistory.max .
+		
+		// Calculate a rolling average of the last 600 frames
+		maxAheadHistory.add maxAhead maxLength:600
+		bufferFrames = math.ceil(maxAheadHistory.average)
 		smoothFrame = frame - bufferFrames
 		
 	simulateRollback: int frame
@@ -311,21 +314,31 @@ transient immutable struct ControllerButtonPlayerAndIndex
 	int userId
 	int buttonIndex
 	
+enum ControllerButton: None, Up, Right, Down, Left, A, B, X, Y, L, R, L2, R2, Select, Start, Menu
+	
 enum GameControllerType: Keyboard, Xbox, PlayStation
 class GameController
 	const deadZone = .1
 	
+	// Sticks
 	visible Vector2 leftStick
 	visible Vector2 rightStick
+	
+	// DPad
+	visible DigitalButton up = {}
 	visible DigitalButton right = {}
 	visible DigitalButton down = {}
 	visible DigitalButton left = {}
-	visible DigitalButton up = {}
+	
+	// Buttons
 	visible DigitalButton a = {}
 	visible DigitalButton b = {}
 	visible DigitalButton x = {}
 	visible DigitalButton y = {}
-	visible DigitalButton[] buttons = [right, down, left, up, a, b, x, y]
+	
+	visible DigitalButton menu = {}
+	
+	visible DigitalButton[] buttons = [DigitalButton("None"), up, right, down, left, a, b, x, y, menu]
 	
 	bool inMotion
 	GameControllerType type
@@ -335,10 +348,7 @@ class GameController
 		leftStick.y = 0
 		rightStick.x = 0
 		rightStick.y = 0
-		a.startFrame
-		b.startFrame
-		x.startFrame
-		y.startFrame
+		buttons.each.startFrame
 	
 enum ShowPointersMode
 	None           // Don't show the mouse pointers or draw them manually
@@ -489,6 +499,8 @@ skipInit global unit input
 				e.preventDefault();
 			} else if(key == "F10") { 
 				Platform_toggleSmallScreen();
+			} else if(key == "F11") { 
+				graphics_copyScreenshotToClipboard();
 			} else {
 				input_handleKeyEvent(5, keyCode, key?.length == 1 ? key : "")
 				if(keyCode == 9) e.preventDefault();
@@ -532,7 +544,7 @@ skipInit global unit input
 		int composite = cast inputType                                  // inputType:   0 - 31 (5 bit)
 		
 		let controllerButton = controllerButtonMap[keyCode]
-			composite += (controllerButton.buttonIndex + 1) shiftLeft 5 // buttonIndex: 0 - 15 (4 bit)
+			composite += controllerButton.buttonIndex shiftLeft 5 // buttonIndex: 0 - 15 (4 bit)
 			if core.mode == Local and not core.simulateConnection
 				inputs = internalUsers[controllerButton.userId].inputs
 			
@@ -833,7 +845,7 @@ skipInit global unit input
 					if keyPressed: internalUser.pressedKeys.add keyPressed
 						
 					int controllerButtonIndex = cast((value shiftRight 5) % 16)
-						player.controllerKeyDownFrame[controllerButtonIndex-1] = frame
+						player.controllerKeyDownFrame[controllerButtonIndex] = frame
 					
 					if core.logging: core.parseLog += " KeyDown {key}"
 				else
@@ -843,7 +855,7 @@ skipInit global unit input
 					player.keysCurrentlyDown.remove key
 					
 					int controllerButtonIndex = cast((value shiftRight 5) % 16)
-						player.controllerKeyDownFrame[controllerButtonIndex-1] = 0
+						player.controllerKeyDownFrame[controllerButtonIndex] = 0
 					
 					if core.logging: core.parseLog += " KeyUp {key}"
 				else
@@ -944,21 +956,37 @@ skipInit global unit input
 					networkData.call id, object
 					if Platform.waitingForInitialData > 0: Platform.waitingForInitialData--
 	
-		for players
-			let internalUser = internalUsers[.id]
-			if frame <= internalUser.inputFrame
-				let right = .controllerKeyDownFrame[0]
-				let down  = .controllerKeyDownFrame[1]
-				let left  = .controllerKeyDownFrame[2]
-				let up    = .controllerKeyDownFrame[3]
-				if right or left: .controller.leftStick.x = right >= left ? 1 : -1
-				if down  or up:   .controller.leftStick.y = down  >= up   ? 1 : -1
-				if .controllerKeyDownFrame[4]: .controller.a.state = true
-				if .controllerKeyDownFrame[5]: .controller.b.state = true
-				if .controllerKeyDownFrame[6]: .controller.x.state = true
-				if .controllerKeyDownFrame[7]: .controller.y.state = true
-				.controller.inMotion = math.abs(.controller.leftStick.x) >= GameController.deadZone
-				                    or math.abs(.controller.leftStick.y) >= GameController.deadZone
+		// for players
+		// 	let internalUser = internalUsers[.id]
+		// 	if frame <= internalUser.inputFrame
+		// 		let right = .controllerKeyDownFrame[0]
+		// 		let down  = .controllerKeyDownFrame[1]
+		// 		let left  = .controllerKeyDownFrame[2]
+		// 		let up    = .controllerKeyDownFrame[3]
+		// 		if right or left: .controller.leftStick.x = right >= left ? 1 : -1
+		// 		if down  or up:   .controller.leftStick.y = down  >= up   ? 1 : -1
+		// 		if .controllerKeyDownFrame[4]: .controller.a.state = true
+		// 		if .controllerKeyDownFrame[5]: .controller.b.state = true
+		// 		if .controllerKeyDownFrame[6]: .controller.x.state = true
+		// 		if .controllerKeyDownFrame[7]: .controller.y.state = true
+		// 		.controller.inMotion = math.abs(.controller.leftStick.x) >= GameController.deadZone
+		// 		                    or math.abs(.controller.leftStick.y) >= GameController.deadZone
+				
+		for players -> p
+			// Left stick
+			let right = .controllerKeyDownFrame[ControllerButton.Right]
+			let down  = .controllerKeyDownFrame[ControllerButton.Down]
+			let left  = .controllerKeyDownFrame[ControllerButton.Left]
+			let up    = .controllerKeyDownFrame[ControllerButton.Up]
+			if right or left: .controller.leftStick.x = right >= left ? 1 : -1
+			if down  or up:   .controller.leftStick.y = down  >= up   ? 1 : -1
+			.controller.inMotion = math.abs(.controller.leftStick.x) >= GameController.deadZone
+			                    or math.abs(.controller.leftStick.y) >= GameController.deadZone
+			
+			// Buttons
+			for .controller.buttons
+				if p.controllerKeyDownFrame[i]: 
+					.state = true
 						
 	internal updatePlayers
 		players.orderBy.id
@@ -1000,8 +1028,10 @@ skipInit global unit input
 			
 			controllerButtonMap.clear
 			for players -> player
+				player.controllerKeyDownFrame.clear
 				for .controller.buttons
 					controllerButtonMap[.key] = {userId:player.id, buttonIndex:i}
+					player.controllerKeyDownFrame.add 0
 		else
 			controllerButtonMap.clear
 			for players

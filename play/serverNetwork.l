@@ -23,7 +23,7 @@ transient unit ServerNetwork
 			core_log("Websocket closed "+ev.code+" "+ev.reason)
 			ServerNetwork_socket = null
 			if(Date.now() - startTime < 30000) {
-				location.href = "/{core_gameId}/{core_roomId}"
+				location.href = "/"+core_gameId+"/"+core_roomId
 			}
 		}
 		socket.onerror = error => {

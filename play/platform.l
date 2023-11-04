@@ -246,3 +246,4 @@ transient skipInit unit Platform
 	inline js void debugger
 		debugger
 		
+	quit
