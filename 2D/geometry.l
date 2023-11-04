@@ -879,6 +879,8 @@ immutable Direction
 	
 	toString := name
 	
+	bool operator ==(Direction a, Direction b) a.angle == b.angle
+	
 	rotated: RotationDirection direction = Clockwise
 		return primaryDirections[(index+(direction == Clockwise ? 1:3))%4]
 		
