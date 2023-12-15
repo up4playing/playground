@@ -352,6 +352,10 @@ enum TextAlign
 	
 	MatchParent = "match-parent" // Similar to inherit, but the values are calculated according to the parent's direction
 	
+enum TextOverflow
+	Clip = "clip"
+	Ellipsis = "ellipsis"
+	
 enum BorderStyle
 	Solid = "solid" // Displays a single, straight, solid line
 	Dotted = "dotted" // Displays a series of rounded dots
@@ -549,7 +553,7 @@ dynamic Style
 	string textDecorationStyle // The style of the line in a text decoration
 	string textIndent // The indentation of the first line of text
 	string textJustify // The justification method used when text-align is "justify"
-	string textOverflow // What should happen when text overflows the containing element
+	TextOverflow textOverflow // What should happen when text overflows the containing element
 	string textShadow // The shadow effect of a text
 	string textTransform // The capitalization of a text
 	implicit Dimension top // The top position of a positioned element
