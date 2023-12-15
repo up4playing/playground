@@ -447,7 +447,9 @@ global unit Html
 		          SourceCodeLocation location
 		style.position = Absolute
 		style.zIndex = -1000
-		div tag:"video", attributes, style, location, data:{src, autoplay:"autoplay", muted:"muted"}
+		let element = div tag:"video", attributes, style, location, data:{src}
+		element.muted = true
+		element.autoplay = true
 
 	global div: string text = null                // The text content of the element 
 		        string tag = "div"                // The tag of element

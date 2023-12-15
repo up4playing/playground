@@ -17,6 +17,9 @@ class Node
 	Node nextSibling
 	Node parentNode
 	
+	bool muted
+	bool autoplay
+	
 	string sourceLocation
 		
 	inline js Node remove() this.remove()
