@@ -25,7 +25,8 @@ skipInit global unit Platform
 	// Info
 	public inline js string url := location.href
 	public inline js string host := location.host
-	public protocolAndHost := host ? "https://"+host : "http://localhost"
+	public inline js string basePath := _basePath
+	public protocolAndHost := host and not isDebug ? "https://"+host : "http://localhost"
 
 	private inline js void initMedia
 		if(window.Image_init) Image_init();
@@ -398,7 +399,7 @@ global unit Html
 		        dynamic data = null               // The data attributes of the element
 		        SourceCodeLocation location
 		let node = div tag:"img", attributes, style, data, location
-		node.src = image.src
+		node.src = Platform.basePath + image.src
 		return node
 
 	global img: string src                        // The file of the image to display
@@ -407,7 +408,7 @@ global unit Html
 		        dynamic data = null               // The data attributes of the element
 		        SourceCodeLocation location
 		let node = div tag:"img", attributes, style, data, location
-		node.src = src
+		node.src = src.startsWith("http") ? src : Platform.basePath + src
 		return node
 
 	global input: string value = ""                 // The initial value of the input
