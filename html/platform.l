@@ -195,6 +195,9 @@ skipInit global unit Platform
 		
 	inline js void debugger() debugger
 	
+	global js void onNavigate: void(string url) do
+		window.onpopstate = e => do(location.pathname)
+	
 global skipInit unit math
 	// Generates a random integer
 	global js int randomInteger: int min // The inclusive lower bound of the random integer
