@@ -714,6 +714,22 @@ unit math
 			
 		// Return a object with the x and y coordinates of the intersection
 		return new Vector2(x1 + ua * (x2 - x1), y1 + ua * (y2 - y1))
+		
+	projectPointOnLine: Vector2 from, Vector2 to, LineType type = Segment, Vector2 point
+		let lineVector = to - from
+		let pointVector = point - from
+		let scalar = (pointVector dot lineVector) / lineVector.lengthSquared
+		if type >= Ray     and scalar < 0: return Vector2.none
+		if type == Segment and scalar > 1: return Vector2.none
+		return from + lineVector * scalar
+	
+	closestPointOnLine: Vector2 from, Vector2 to, LineType type = Segment, Vector2 point
+		let lineVector = to - from
+		let pointVector = point - from
+		let scalar = (pointVector dot lineVector) / lineVector.lengthSquared
+		if type >= Ray     and scalar < 0: scalar = 0
+		if type == Segment and scalar > 1: scalar = 1
+		return from + lineVector * scalar
 	
 	// Maps a value from an input range to an output range
 	map: float value    // The input value 
