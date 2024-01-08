@@ -92,6 +92,8 @@ struct Vector2
 	// The length of the vector
 	length := math.sqrt(x * x + y * y)
 		
+	lengthSquared := x * x + y * y
+		
 	// A vector that is orthogonal to the existing vector
 	orthogonal := Vector2(x:-y, y:x)
 		

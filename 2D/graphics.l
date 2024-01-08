@@ -17,7 +17,7 @@ immutable Color
 	string toString := name or hex
 	
 	Color: string hex = ""
-		this.hex = hex
+		this.hex = hex[0] == "#" ? hex : "#"+hex
 
 	Color: int red = 0
 		   int green = 0
@@ -1128,6 +1128,9 @@ transient skipInit global unit graphics
 	
 	getAbsolutPosition: Vector2 position
 		return position.getTransformed(localMatrix)
+		
+	getRelativePosition: Vector2 position
+		return position.getRelativeTo(localMatrix)
 		
 	getPixelPosition: Vector2 position
 		return position.getTransformed(totalMatrix) / pixelRatio

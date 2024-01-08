@@ -1,6 +1,8 @@
 // A sound
 skipInit immutable Sound
 	string file
+	Time duration
+	
 	float fadeVolume = 1
 	transient dynamic audioElement
 	
