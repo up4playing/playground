@@ -880,7 +880,7 @@ immutable Direction
 	global const Direction Right  = {"Right",   1, { 1, 0, location:null}, .25, 330°} // positive x direction (1,0)
 	global const Direction Down   = {"Down",    2, { 0, 1, location:null}, .50,  30°} // positive y direction (0,1)
 	global const Direction Left   = {"Left",    3, {-1, 0, location:null}, .75, 150°} // negative x direction (-1,0)
-	global const Direction Center = {"Center", -1, { 0, 0, location:null},   0,   0°} // no direction (0,0)
+	global const Direction None   = {"None",   -1, { 0, 0, location:null},   0,   0°} // no direction (0,0)
 		
 	const Direction UpLeft    = {"UpLeft",    0, {-1,-1, location:null},-.125} // negative x, negative y direction (-1,-1)
 	const Direction UpRight   = {"UpRight",   1, { 1,-1, location:null}, .125} // positive x, negative y direction (1,-1)
@@ -916,10 +916,10 @@ immutable Direction
 	const Direction[] allDirections = [Up, UpRight, Right, DownRight, Down, DownLeft, Left, UpLeft]
 
 	// The center and all surrounding directions (a 3 x 3 around the center)
-	const Direction[] centerAndAllDirections = [Center, Up, UpRight, Right, DownRight, Down, DownLeft, Left, UpLeft]
+	const Direction[] centerAndAllDirections = [None, Up, UpRight, Right, DownRight, Down, DownLeft, Left, UpLeft]
 
 	// The center and all horizontal and vertical directions (a cross)
-	const Direction[] centerAndPrimaryDirections = [Center, Up, Right, Down, Left]
+	const Direction[] centerAndPrimaryDirections = [None, Up, Right, Down, Left]
 
 	string name       // The name of the direction (e.g. "Left", "Right", "Up", "Down", "UpLeft", "DownRight", ...)
 	int index         // The index starting with "Right" and going around clockwise (0: Right, 1: Down, 2: Left, 3: Up)
@@ -928,6 +928,8 @@ immutable Direction
 	Angle isoAngle    // The angle in turns within an isometric grid
 	
 	toString := name
+	
+	bool operator ==(Direction a, Direction b) a.angle == b.angle
 	
 	rotated: RotationDirection direction = Clockwise
 		return primaryDirections[(index+(direction == Clockwise ? 1:3))%4]

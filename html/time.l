@@ -11,6 +11,8 @@ skipInit transient float Time
 	
 	static internal inline js float realTime := Date.now()
 
+	inline js Time += float value: this += value
+
 	static Time fromTimeString(string timeString)
 		Time value = 0
 		int colon1 = timeString.indexOf(":")
@@ -28,6 +30,8 @@ skipInit transient float Time
 		
 	static inline js Time fromIsoString: string isoString
 		new Date(isoString).getTime()
+		
+	static inline js Time fromValues(int year, int month=1, int day=1, int hour = 0, int minute = 0, int second = 0) new Date(year, month-1, day, hour, minute, second).getTime()
 		
 	inline js float toFloat() this
 	inline js string toString() this.toString()
