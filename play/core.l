@@ -113,7 +113,7 @@ transient skipInit unit core
 		if !startInLobby
 			// When the developer changed Platform.userCount, add or remove internal users accordingly
 			for input.internalUsers.length to Platform.userCount
-				input.internalUsers.add {id:i, local:true, collectInputs:true}
+				input.internalUsers.add {id:i, local:true, collectInputs:true, active:true}
 			if input.internalUsers.length > Platform.userCount
 				input.internalUsers.removeRange Platform.userCount..input.internalUsers.length
 			
