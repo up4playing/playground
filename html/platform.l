@@ -25,7 +25,8 @@ skipInit global unit Platform
 	// Info
 	public inline js string url := location.href
 	public inline js string host := location.host
-	public protocolAndHost := host ? "https://"+host : "http://localhost"
+	public inline js string basePath := _basePath
+	public protocolAndHost := host and not isDebug ? "https://"+host : "http://localhost"
 
 	private inline js void initMedia
 		if(window.Image_init) Image_init();
@@ -194,6 +195,9 @@ skipInit global unit Platform
 		clearInterval(handle)
 		
 	inline js void debugger() debugger
+	
+	global js void onNavigate: void(string url) do
+		window.onpopstate = e => do(location.pathname)
 	
 global skipInit unit math
 	// Generates a random integer
@@ -395,7 +399,7 @@ global unit Html
 		        dynamic data = null               // The data attributes of the element
 		        SourceCodeLocation location
 		let node = div tag:"img", attributes, style, data, location
-		node.src = image.src
+		node.src = Platform.basePath + image.src
 		return node
 
 	global img: string src                        // The file of the image to display
@@ -404,7 +408,7 @@ global unit Html
 		        dynamic data = null               // The data attributes of the element
 		        SourceCodeLocation location
 		let node = div tag:"img", attributes, style, data, location
-		node.src = src
+		node.src = src.startsWith("http") ? src : Platform.basePath + src
 		return node
 
 	global input: string value = ""                 // The initial value of the input
@@ -444,7 +448,9 @@ global unit Html
 		          SourceCodeLocation location
 		style.position = Absolute
 		style.zIndex = -1000
-		div tag:"video", attributes, style, location, data:{src, autoplay:"autoplay", muted:"muted"}
+		let element = div tag:"video", attributes, style, location, data:{src}
+		element.muted = true
+		element.autoplay = true
 
 	global div: string text = null                // The text content of the element 
 		        string tag = "div"                // The tag of element

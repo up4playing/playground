@@ -9,7 +9,7 @@ skipInit transient float Time
 	// const inline cpp Time minValue := Number.MIN_VALUE
 	
 	static internal cpp(chrono) int realTime
-		return std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+		return std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count();
 	
 	// The current frame
 	static inline cpp int frame := core::frame

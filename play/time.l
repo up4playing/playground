@@ -166,7 +166,7 @@ js(Date) transient immutable struct Date
 	
 	// (31.12.)
 	js string dayMonthString: language = Loca.language
-		return this.getDate().toLocaleString("en-US", {minimumIntegerDigits:2})+"."+(this.getMonth()+1).toLocaleString("en-US", {minimumIntegerDigits:2})+"."
+		return this.getDate()+"."+(this.getMonth()+1).toLocaleString("en-US", {minimumIntegerDigits:2})+"."
 	
 	// (31.12.2000)
 	js string dayMonthYearString: language = Loca.language
