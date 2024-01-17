@@ -41,6 +41,9 @@ transient class InternalUser
 	visible int bufferFrames      // The average of all maxAhead values
 	visible int smoothFrame = int.maxValue
 	
+	int certainFrame
+	int prevCertainFrame
+	
 	startInputFrame: int index
 		lastTouchMoveIndex.clear
 		inputFrame = index
@@ -60,14 +63,18 @@ transient class InternalUser
 	collectStatistics: int frame
 		int ahead = frame - inputFrame
 		
-		// Get the maximum number of frames we were ahead in the last 200 frames
-		if ahead < 50: aheadHistory.add ahead, maxLength:200
-		int maxAhead = aheadHistory.max .
+		// Get the maximum number of frames we were ahead in the last 10 seconds
+		if ahead < 50: aheadHistory.add ahead, maxLength:10*core.targetFps
+		// int maxAhead = aheadHistory.max .
+		int maxAhead = aheadHistory.percentile 80
 		
-		// Calculate a rolling average of the last 600 frames
-		maxAheadHistory.add maxAhead maxLength:600
+		// Calculate a rolling average of the last 10 minutes
+		maxAheadHistory.add maxAhead maxLength:10*60*core.targetFps
 		bufferFrames = math.ceil(maxAheadHistory.average)
 		smoothFrame = frame - bufferFrames
+		
+		prevCertainFrame = certainFrame
+		certainFrame = math.min inputFrame, smoothFrame
 		
 	simulateRollback: int frame
 		bufferFrames = 5

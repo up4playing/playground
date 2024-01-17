@@ -76,12 +76,13 @@ transient skipInit unit Platform
 	// This is called when the application starts for the first time	
 	private start: bool isDebug, float referenceSizeX, float referenceSizeY, int userCount, bool simulateConnection, bool showSafeArea
 		try
+			let now = Time.preciseTime
 			this.nextHeartbeatTime = 0
 			heartbeat "start"
 			
 			initMedia
 			initPlatform
-			statistics.startTime = Time.preciseTime
+			statistics.startTime = now
 			this.engineStarted = false
 			this.isDebug = isDebug
 			this.userCount = userCount

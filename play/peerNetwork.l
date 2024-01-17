@@ -44,17 +44,17 @@ transient unit PeerNetwork
 			// 	credential: "qoy91n981vlplabb1873jdcgsouz2qm87qmmakqpc-alwyzon"
 			// });
 			// --- Alphahosting (www2) ---
-			options.iceServers.push({
-				urls: 'turn:89.22.121.145:39571',
-				username: 'play-user-x8env28gx41odbxzwjyut2oq871987syq8ovyuqp-alphahosting',
-				credential: 'qoy91n981vlplabb1873jdcgsouz2qm87qmmakqpc-alphahosting'
-			});			
-			// --- Strato-v30 (www3) ---
 			// options.iceServers.push({
-			// 	urls: 'turn:85.214.133.53:39571',
-			// 	username: 'play-user-9q2gy75kmlp4qn7tb86pogsmtyp7qqo0n5-strato-v30',
-			// 	credential: '8q76nby32odjamuzbexi6eb2f1k9gc3my99o-strato-v30'
-			// });
+			// 	urls: 'turn:89.22.121.145:39571',
+			// 	username: 'play-user-x8env28gx41odbxzwjyut2oq871987syq8ovyuqp-alphahosting',
+			// 	credential: 'qoy91n981vlplabb1873jdcgsouz2qm87qmmakqpc-alphahosting'
+			// });			
+			// --- Strato-v30 (www3) ---
+			options.iceServers.push({
+				urls: 'turn:85.214.133.53:39571',
+				username: 'play-user-9q2gy75kmlp4qn7tb86pogsmtyp7qqo0n5-strato-v30',
+				credential: '8q76nby32odjamuzbexi6eb2f1k9gc3my99o-strato-v30'
+			});
 			// --- Strato ---
 			// options.iceServers.push({
 			// 	urls: "turn:81.169.197.127",
@@ -318,7 +318,7 @@ transient unit PeerNetwork
 		float pingTime = buffer.readFloat64
 		float pingPongTime = now - pingTime
 		let player = input.players.find.id == user.id
-			statistics.add "pingPongTime" userIndex:player.index, color:player.color, value:pingPongTime, set:2, isPerFrame:false
+			statistics.add "pingPongTime" userIndex:player.index, color:player.color, value:pingPongTime, set:3, isPerFrame:false
 				
 	// --------------------------------------------- Checksum ---------------------------------------------
 	
@@ -377,7 +377,8 @@ transient unit PeerNetwork
 			PeerNetwork_videoInputId = input_localUser.mediaStream.getVideoTracks()[0]?.getSettings().deviceId || PeerNetwork_devices.videoInput[0]?.deviceId
 			PeerNetwork_audioInputId = input_localUser.mediaStream.getAudioTracks()[0]?.getSettings().deviceId || PeerNetwork_devices.audioInput[0]?.deviceId
 			PeerNetwork_audioOutputId = PeerNetwork_devices.audioInput[0]?.deviceId
-			core_log("setupLocalMedia: success")
+			statistics_mediaTime = performance.now()
+			core_log("setupLocalMedia: success after "+(statistics_mediaTime - statistics_startTime)+" ms")
 			
 		} catch(error) {
 			core_log(error.message)
