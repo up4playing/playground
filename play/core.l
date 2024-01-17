@@ -113,7 +113,7 @@ transient skipInit unit core
 		if !startInLobby
 			// When the developer changed Platform.userCount, add or remove internal users accordingly
 			for input.internalUsers.length to Platform.userCount
-				input.internalUsers.add {id:i, local:true, collectInputs:true}
+				input.internalUsers.add {id:i, local:true, collectInputs:true, active:true}
 			if input.internalUsers.length > Platform.userCount
 				input.internalUsers.removeRange Platform.userCount..input.internalUsers.length
 			
@@ -265,22 +265,24 @@ transient skipInit unit core
 					internalUser.collectStatistics frame
 					statistics.add "input", userIndex:.index, value:frame - internalUser.inputFrame, .color, set:0
 					statistics.add "smooth", userIndex:.index, value:frame - internalUser.smoothFrame, .color, set:1
+					statistics.add "delta", userIndex:.index, value:internalUser.certainFrame - internalUser.prevCertainFrame, .color, set:2
+
 			if replayFrom != -1: statistics.add "replay", value:frame - replayFrom, color:Gray
 		else
 		if mode == Local and simulateRollback
 			input.internalUsers.each.simulateRollback frame
 			
 		// Memory
-		statistics.add "memory", value:Platform.usedMemory, color:Yellow set:3
-		statistics.add "snapshotSize", value:snapshot.writePos, color:Red set:4
-		statistics.add "inputs", value:input.localUser?.inputs.writePos, color:Blue set:5
+		statistics.add "memory", value:Platform.usedMemory, color:Yellow set:4
+		statistics.add "snapshotSize", value:snapshot.writePos, color:Red set:5
+		statistics.add "inputs", value:input.localUser?.inputs.writePos, color:Blue set:6
 		
 		// Times
-		statistics.add "drawTime", value:drawTime, color:Blue set:6
-		statistics.add "tickTime", value:tickTime, color:Red set:6
-		statistics.add "restoreTime", value:restoreTime, color:Green set:6
-		statistics.add "replayTime", value:replayTime, color:Yellow set:6
-		statistics.add "saveTime", value:saveTime, color:White set:6
+		statistics.add "drawTime", value:drawTime, color:Blue set:7
+		statistics.add "tickTime", value:tickTime, color:Red set:7
+		statistics.add "restoreTime", value:restoreTime, color:Green set:7
+		statistics.add "replayTime", value:replayTime, color:Yellow set:7
+		statistics.add "saveTime", value:saveTime, color:White set:7
 			
 		// Logs
 		if logging
@@ -725,7 +727,7 @@ skipInit transient unit statistics
 	int successfullySentGameLogs
 	int successfullySentSystemLogs
 	
-	Time startTime, loadTime, connectTime
+	Time startTime, loadTime, mediaTime, connectTime
 	internal float maxValue
 	int currentSet
 	int sets = 1
@@ -758,8 +760,12 @@ skipInit transient unit statistics
 			version: Platform.buildVersion
 			staging: Platform.isStaging
 			server
-			loadTime: loadTime - startTime
-			connectTime: connectTime - startTime
+			times:
+			[
+				loadTime - startTime
+				connectTime - startTime
+				mediaTime - startTime
+			]
 			systemLogs: systemLogs[successfullySentSystemLogs..]
 		}
 			successfullySentSystemLogs = sendingSystemLogsUntil

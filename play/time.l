@@ -190,6 +190,10 @@ js(Date) transient immutable struct Date
 	
 	// (23:59)
 	string hourMinuteString: language = Loca.language
+		return ""+hour+":"+toTwoDigitString(minute)
+	
+	// (11:59 am)
+	string hourMinuteAmPmString: language = Loca.language
 		if language == English
 			let h = hour
 			return ""+((h-1)%12+1)+":"+toTwoDigitString(minute)+(h < 12 ? " am":" pm")
