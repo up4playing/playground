@@ -1839,6 +1839,15 @@ global skipInit unit math
 		let factor = ease.function((value-from) / (to-from))
 		return start + (target-start) * factor
 		
+	global animate: Time startTime = 0 //
+		            Time duration = 1  //
+		            float from = 0     // The lowest possible output value, will be returned for values smaller than "from".
+		            float to = 1       // The highest possible output value, will be returned for values larger than "to".
+		let value = Time.now - startTime
+		if value <= 0:       return from
+		if value >= duration:  return to
+		return from + (to-from) * (value/duration)
+		
 struct Average
 	float total
 	int count
