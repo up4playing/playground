@@ -864,6 +864,8 @@ class List<T>
 			this.set(j, temp)
 		return this
 		
+	shuffled := this.clone.shuffle
+		
 	private static transient T[] temporaryCopy = null
 		
 	js T percentile: int value
@@ -1183,6 +1185,9 @@ class List<T>
 		
 	rotate
 		insert pop
+		
+	rotate: int count
+		for count: insert pop
 		
 	js T[] intersectWith: T[] other
 		const a = this || []
