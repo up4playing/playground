@@ -516,9 +516,10 @@ transient skipInit global unit graphics
 			// Handle click (only visible buttons are clickable)
 			let effectiveTouchableBy = getTouchableBy(visibleFor, touchableBy)
 			Vector2 sizeWithMargin = effectiveSize + touchMargin
-			if frameOnHover != -1 or scaleOnHover != 1.0
+			bool switchFrameOnHover = frameOnHover != -1 and frame == -1 and image and image.frames.length > frameOnHover
+			if switchFrameOnHover or scaleOnHover != 1.0
 				input.onTouchOver position, sizeWithMargin, by:effectiveTouchableBy
-					if frameOnHover != -1:  frame = frameOnHover
+					if switchFrameOnHover:  frame = frameOnHover
 					if scaleOnHover != 1.0: scale = scaleOnHover
 			input.onTouchDownWithin position, sizeWithMargin, by:effectiveTouchableBy, showTouchArea, do:onTouch
 			if hotkey
