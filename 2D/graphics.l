@@ -495,12 +495,15 @@ transient skipInit global unit graphics
 		                    implicit Vector2 size = {}           // A float scales the image to that width keeping the aspect ratio, a vector stretches the image
 		                    frame = -1                           // The frame from a sequence of images (for example "Button0.png", "Button1.png", ...)
 		                    Color textColor = null               // The color of the text
-		                    textSize = 18                        // The font size in pixels   
+		                    textSize = 24                        // The font size in pixels   
 		                    textOffset = Vector2(0,0)            // Draw the text at this offset to the image
 		                    touchMargin = Vector2(16,16)         // The margin around the button within which it is touchable
 		                    showTouchArea = false                // Highlight the touchable area for debugging
 		                    scaleOnHover = 1.0                   // Scale the button by this factor when the mouse hovers over the button
 		                    frameOnHover = 1                     // Draw this frame when the mouse hovers over the button
+		                    Color textColorOnHover = null        // Draw the text in this color when the mouse hovers over the button
+		                    Image accentImage = null             // Draw this image tited with the accent color on top of the button
+		                    Color accentColor = null             // Tint the accent image with this color, defaults to the color of the local player
 		                    implicit Player[] visibleFor = null  // Only this player or list of players will see the button
 		                    implicit Player[] touchableBy = null // Only this player or list of players can touch or click the button
 		                    hotkey = Key.None                    // This keyboard shortcut will execute the onTouch handler
@@ -511,14 +514,15 @@ transient skipInit global unit graphics
 		                    void(Touch touch) onTouch = null     // Execute this code when the user touches or clicks the button or presses the hotkey
 	                        SourceCodeLocation location
 		float scale = 1.0
-		Vector2 effectiveSize = image ? getEffectiveSize(image.size, size) : {getTextWidth(text), textSize}
+		Vector2 effectiveSize = image ? getEffectiveSize(image.size, size) : {getTextWidth(text, size:textSize), textSize}
 		if enabled and onTouch != null
 			// Handle click (only visible buttons are clickable)
 			let effectiveTouchableBy = getTouchableBy(visibleFor, touchableBy)
 			Vector2 sizeWithMargin = effectiveSize + touchMargin
-			bool switchFrameOnHover = frameOnHover != -1 and frame == -1 and image and image.frames.length > frameOnHover
-			if switchFrameOnHover or scaleOnHover != 1.0
+			bool switchFrameOnHover = frameOnHover != -1 and frame == -1 and (image?.frames.length > frameOnHover or accentImage?.frames.length > frameOnHover)
+			if switchFrameOnHover or scaleOnHover != 1.0 or textColorOnHover
 				input.onTouchOver position, sizeWithMargin, by:effectiveTouchableBy
+					if textColorOnHover:    textColor = textColorOnHover
 					if switchFrameOnHover:  frame = frameOnHover
 					if scaleOnHover != 1.0: scale = scaleOnHover
 			input.onTouchDownWithin position, sizeWithMargin, by:effectiveTouchableBy, showTouchArea, do:onTouch
@@ -531,6 +535,7 @@ transient skipInit global unit graphics
 			if scale != 1.0: textSize = math.round(textSize * scale); effectiveSize *= scale
 			let effectiveAlpha = enabled ? alpha : alpha * alphaWhenDisabled
 			if text:  drawText text, position+textOffset, textSize, textColor, visibleFor, layer, effectiveAlpha, location
+			if accentImage: drawImage accentImage, position, frame, effectiveSize, visibleFor, layer, effectiveAlpha, location, color:accentColor or input.localPlayer.color
 			if image: drawImage image, position, frame, effectiveSize, visibleFor, layer, effectiveAlpha, location
 			
 			
