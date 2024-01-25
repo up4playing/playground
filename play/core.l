@@ -110,7 +110,7 @@ transient skipInit unit core
 		audio.stop
 		initAll
 		
-		if !startInLobby
+		if !startInLobby or Platform.isDebug
 			// When the developer changed Platform.userCount, add or remove internal users accordingly
 			for input.internalUsers.length to Platform.userCount
 				input.internalUsers.add {id:i, local:true, collectInputs:true, active:true}
@@ -140,10 +140,12 @@ transient skipInit unit core
 	// Keep event stream running, recreate players, call init function and start app
 	// Called manually with the global "restart" function	
 	restart
+		if not input.isCertain: return
+		Framework.clear includingLockedObjects:true
 		initAll
 		Player[] newPlayers
 		for input.players
-			Player user = {id:.id, index:i}
+			Player user = {id:.id, index:.index}
 			input.playersById[.id] = user
 			newPlayers.add user
 		input.players = newPlayers

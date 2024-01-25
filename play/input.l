@@ -84,6 +84,7 @@ priority class Player
 	int id
 	int index
 	Color color = null
+	string name
 	Vector2 pointerPosition
 	
 	toString := color ? color.name : ""
@@ -1129,7 +1130,7 @@ skipInit global unit input
 					this.cursor = cursor
 				
 		// Migrate to 3D
-		// if showTouchArea: drawRectangle position, size, color:{"#ff000080"}, align, valign, layer:10000000
+		if showTouchArea: drawRectangle position, size, color:{"#ff000080"}, align, valign, layer:10000000
 
 	// Do something when the player touches or clicks within a given rotated rectangle
 	// Example: Draw a the image "Character" rotated by 45 degrees and print "Clicked character" when the player touches within its rotated rectangle.

@@ -10,7 +10,7 @@ unit Framework
 	clear: bool includingLockedObjects = false
 		for objects <-
 			if not .locked or includingLockedObjects: objects.removeAt i
-		
+				
 	clearAtEndOfFrame
 		for objects
 			if not .locked: toBeRemoved.add .
@@ -363,6 +363,7 @@ Object Menu
 		if includeDefaultItems
 			items.insert {image:New,  "New Game",        onClick:core.restart}, 0
 			items.add    {image:Save, "Save Game"        onClick:core.saveEventStreamAndLogs}
+			items.add    {image:Back, "Back to Lobby", onClick:lobby.show}
 			items.add    {image:Quit, "Exit Fullscreen", onClick:Platform.setFullscreen false, forPlayer:touch.by}
 		
 	override tick
