@@ -1565,6 +1565,16 @@ skipInit global unit input
 				if . == key
 					do key, player
 				
+	global onKeyDown: Key modifier 
+		              Key key                             // The key that will trigger the event
+		              implicit nocolon Player[] by = null // Only consider keys pressed by this player or list of players
+		              void(Key key, Player pressedBy) do  // Do this for each key that is pressed
+		for getTargetedPlayers(by) -> player
+			if player.keysCurrentlyDown.contains modifier
+				for internalUsers[.id].downKeys
+					if . == key
+						do key, player
+				
 	// Do something when a player presses a key
 	global onKeyDown: implicit nocolon Player[] by = null // Only consider keys pressed by this player or list of players
 		              void(Key key, Player pressedBy) do  // Do this for each key that is pressed
