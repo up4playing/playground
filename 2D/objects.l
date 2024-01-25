@@ -72,6 +72,7 @@ enum Side: Front, Back
 class Object
 	Vector2 position
 	implicit Vector2 size = {32,32}
+	Angle angle
 	float alpha = 1
 	implicit Player[] visibleFor = null
 	int layer = 0
@@ -176,6 +177,19 @@ class Object
 		fx.add FadeAnimation  startTime, duration, this, startValue:0, delta:1
 		return this
 		
+	fadeScaleAndRotateIn: float startScale = 3
+		                  Angle startAngle = -.0625
+		                  //Angle startAngle = -.08
+		                  Angle endAngle = 0
+		                  Time duration = 200
+		                  Time delay = 0
+		alpha = 0
+		let startTime = fx.endOfPrevAnimation(this)+delay
+		fx.add RotateAnimation startTime, duration, this, startValue:startAngle, delta:endAngle-startAngle
+		fx.add ScaleAnimation  startTime, duration, this, startValue:startScale*size, delta:(1-startScale)*size
+		fx.add FadeAnimation   startTime, duration, this, startValue:0, delta:1
+		return this
+		
 	removeAnimations
 		fx.removeForObject this
 		
@@ -203,6 +217,7 @@ Object VisualizeObject
 	Color color = White
 	int index
 	string text
+	
 	override tick
 		drawText index, position, color:Black, layer:int.maxValue, size:30
 		drawText text, position+{0,32}, color, layer:int.maxValue, size:14
@@ -214,12 +229,12 @@ Object TextObject
 	Color color = White
 	HorizontalAlignment align = Center // The horizontal alignment of the text
 	VerticalAlignment valign = Middle  // The vertical alignment of the text
+	
 	override tick
-		drawText text, position, size, color, align, valign, font, visibleFor, alpha, layer
+		drawText text, position, size, angle, color, align, valign, font, visibleFor, alpha, layer
 		
 Object ImageObject
 	Image image
-	Angle angle
 	
 	ImageObject
 		if size.x == 0 and size.y == 0: size = image.size

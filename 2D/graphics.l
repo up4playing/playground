@@ -29,8 +29,8 @@ immutable Color
 		var hex = c.toString(16);
 		return hex.length == 1 ? "0" + hex : hex;
 		
-	inline js bool operator ==(Color a, Color b) a.hex == b.hex
-	inline js bool operator !=(Color a, Color b) a.hex != b.hex
+	inline js bool operator ==(Color a, Color b) a?.hex == b?.hex
+	inline js bool operator !=(Color a, Color b) a?.hex != b?.hex
 	
 	Color withAlpha: float alpha
 		return {hex[1..7]+componentToHex(math.floor(alpha*255))}
@@ -467,6 +467,47 @@ transient skipInit global unit graphics
 				graphics_totalMatrix, 
 				position.x - graphics_alignmentFactor[ align]*sizeX,
 				position.y - graphics_alignmentFactor[valign]*sizeY,
+				sizeX, sizeY, 
+				layer, alpha, graphics_currentClippingPath, text, 
+				location, position.location, size.location,
+				(color || graphics_currentColor).hex, 
+				outlineColor ? outlineColor.hex : null,
+				outlineWidth || graphics_currentLineWidth,
+				effectiveFont.offset.y*sizeY,
+				contextFont
+			))
+		}
+		
+	global js void drawText: implicit string text                // A string or anything that can be converted into a string (for example, an interger or a float)
+		                     Vector2 position = {}               // By default, {0,0} is the center, {-960,-540} is the top left, {960,540} is the bottom right
+		                     implicit Vector2 size = {}          // The size of the text
+		                     Color color = null                  // The color of the text
+		                     Angle angle = 0.0                   // Rotate the image by this angle in turns (0: no rotation, 1: one full rotation)
+		                     HorizontalAlignment align = Center  // The horizontal alignment of the text
+		                     VerticalAlignment valign = Middle   // The vertical alignment of the text
+		                     FontStyle style = Normal            // Whether the text should be bold or normal style
+		                     Font font = null                    // To use a custom font, just copy a TTF, WOFF or WOFF2 file to the "media" folder
+		                     Color outlineColor = null           // The color of the outline around the text
+		                     outlineWidth = 0                    // The width of the outline around the text in pixels
+		                     implicit Player[] visibleFor = null // Only this player or list of players will see the text
+		                     implicit layer = 0                  // Higher layers are drawn in front of lower layers
+		                     alpha = 1.0                         // The opacity of the text (0: fully transparent, 1: fully visible)
+		                     SourceCodeLocation location
+		if(graphics_isVisibleFor(visibleFor)) {
+			let effectiveFont = font || graphics_currentFont
+			let fontSize = size.y || size.x || graphics_currentFontSize
+			let contextFont = (style ? "bold ":"")+fontSize+"px "+effectiveFont.name;
+			graphics_context.font = contextFont
+			let textSize = graphics_context.measureText(text)
+			let sizeX = textSize.width
+			let sizeY = fontSize*effectiveFont.actualHeightFactor
+			let matrix = graphics_totalMatrix.clone()
+			matrix.move(position)
+			matrix.rotate(angle)
+			graphics_items.push(new DisplayText(
+				matrix, 
+				-graphics_alignmentFactor[ align]*sizeX,
+				-graphics_alignmentFactor[valign]*sizeY,
 				sizeX, sizeY, 
 				layer, alpha, graphics_currentClippingPath, text, 
 				location, position.location, size.location,
