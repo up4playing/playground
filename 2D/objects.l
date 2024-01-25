@@ -306,6 +306,7 @@ Object ParticleSystem
 	gravity = 1.0
 	maxRotationSpeed  = .05
 	mode = ParticleMode.Burst
+	angleSpread = 1.0
 	
 	private int burst
 	debugString := "(ParticleSystem {position.x} {position.y} {particles.length})"
@@ -325,7 +326,7 @@ Object ParticleSystem
 				nextBurst = Time.maxValue
 			else
 				for particlesPerBurst
-					let angle = -math.randomFloat
+					let angle = -math.randomFloat angleSpread
 					let speedFactor = math.randomFloat(minSpeed to maxSpeed)
 					particles.add Particle
 						pos: position
