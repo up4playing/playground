@@ -7,9 +7,9 @@ unit Framework
 	// - Coin.transferToNeighbor (the just removed coin is still their in updateNeighbors)
 	Object[] toBeRemoved
 	
-	clear
+	clear: bool includingLockedObjects = false
 		for objects <-
-			if not .locked: objects.removeAt i
+			if not .locked or includingLockedObjects: objects.removeAt i
 		
 	clearAtEndOfFrame
 		for objects
