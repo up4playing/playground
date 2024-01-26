@@ -57,10 +57,10 @@ unit lobby
 		// Control show names
 		onKeyDown by host
 			let alt = pressedBy.keysCurrentlyDown.contains Alt
-			if key == Enter and alt
+			if key == A and alt
 				setupFields host:pressedBy
 			else
-			if key == Right and alt
+			if key == Y and alt
 				showName players[showNameIndex++ % players.length]
 			else
 			if key == Tab and alt
