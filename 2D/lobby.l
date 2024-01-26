@@ -43,6 +43,8 @@ unit lobby
 		Framework.clear includingLockedObjects:true
 		fields.clear
 		inLobby = true
+		showNameIndex = 1
+		editNames = false
 		players.each.isReadyInLobby = false
 		audio.stop
 	
@@ -83,7 +85,7 @@ unit lobby
 				
 				// Start button
 				let text = not .isReadyInLobby ? "START" : Loca.language == German ? "Ich bin bereit" : "I'm ready"
-				drawButton text, pos+{0,halfVideoHeight+90}, image:Button, accentImage:ButtonAccent, accentColor:.color, textColorOnHover:Black, enabled:!.isReadyInLobby
+				drawStandardButton text, pos+{0,halfVideoHeight+90}, accentColor:.color, enabled:!.isReadyInLobby, touchableBy:player
 					if enableFullscreen: Platform.setFullscreen true forPlayer:touch.by
 					input.playersById[touch.by.id].isReadyInLobby = true
 					if players.all.isReadyInLobby

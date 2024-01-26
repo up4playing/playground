@@ -141,6 +141,7 @@ transient skipInit unit core
 	// Called manually with the global "restart" function	
 	restart
 		if not input.isCertain: return
+		let hostPlayerId = lobby.host ? lobby.host.id : -1
 		Framework.clear includingLockedObjects:true
 		initAll
 		Player[] newPlayers
@@ -152,6 +153,7 @@ transient skipInit unit core
 		let localUserId = input.localUser?.id < input.internalUsers.length ? input.localUser.id : 0
 		input.localUser = input.internalUsers[localUserId]
 		input.localPlayer = input.playersById[localUserId]
+		lobby.host = hostPlayerId != -1 ? input.playersById[hostPlayerId] : null
 		input.updatePlayers
 		startApp
 	
@@ -501,7 +503,7 @@ transient skipInit unit core
 	js void log: logstring text
 		let str = new Date().hourMinuteSecondString() + " " + text
 		statistics_systemLogs.push(str)
-			console.log(str)
+		console.log(str)
 		if(core_logging) core_eventLog += str + "\n"
 		
 	inline js int currentTime := Date.now()
