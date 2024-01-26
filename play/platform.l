@@ -56,6 +56,8 @@ transient skipInit unit Platform
 		input_init();
 		gizmo_init();
 		Loca_init();
+		ServerNetwork_init();
+		PeerNetwork_init();
 		core_log("Loading...")
 		Platform_isMobile = false;
 		Platform_isBrowser = !window.require;
