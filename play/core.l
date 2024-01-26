@@ -501,10 +501,8 @@ transient skipInit unit core
 	js void log: logstring text
 		let str = new Date().hourMinuteSecondString() + " " + text
 		statistics_systemLogs.push(str)
-		if(core_logging) {
-			core_eventLog += str + "\n"
 			console.log(str)
-		}
+		if(core_logging) core_eventLog += str + "\n"
 		
 	inline js int currentTime := Date.now()
 	

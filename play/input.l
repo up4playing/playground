@@ -759,7 +759,6 @@ skipInit global unit input
 				// which is typically the "Join" message that is sent in "startConnected",
 				// but could also be a player reconnecting that was previously kicked out
 				if not player
-					core.log "#{frame} Add {userId}"
 					if core.logging: core.parseLog += " Add {userId}"
 					players.add player = {id:userId, index:players.length}
 					playersById[userId] = player
@@ -903,7 +902,6 @@ skipInit global unit input
 					// We created the player above as soon as received the first input from that player,
 					// which is typically the "Join" message that is sent in "startConnected",
 					// but could also be a player reconnecting that was previously kicked out
-					core.log "#{frame} Join {userId}", isCertain
 					if core.logging: core.parseLog += " Join {userId}"
 				else
 				if inputType == Lost
