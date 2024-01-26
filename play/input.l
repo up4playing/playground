@@ -380,9 +380,13 @@ skipInit global unit input
 	transient internal Player localPlayer
 	transient bool isCertain
 	transient ControllerButtonPlayerAndIndex[Key] controllerButtonMap
+	
 
 	// A list of all players
 	global Player[] players
+		
+	// The player hosting the current session
+	global Player host
 		
 	// Do something for every player
 	global inline js void everybody: void(Player it) do

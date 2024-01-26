@@ -6,7 +6,6 @@ unit lobby
 	// Names
 	LobbyTextField[] fields
 	int showNameIndex = 1
-	Player host
 	bool editNames
 	const nameSuggestions = [
 		"Heiko"
@@ -125,7 +124,7 @@ unit lobby
 			drawText "Connecting...", size:32
 		
 	setupFields: Player host
-		this.host = host
+		input.host = host
 		this.showNameIndex = host.index + 1
 		Framework.clear
 		fields.clear
