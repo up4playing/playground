@@ -510,7 +510,8 @@ skipInit global unit input
 			} else if(key == "F11") { 
 				graphics_copyScreenshotToClipboard();
 			} else {
-				input_handleKeyEvent(5, keyCode, key?.length == 1 ? key : "")
+				let typedKey = key && key.length == 1  && !e.ctrlKey && !e.metaKey && !e.altKey? key : ""
+				input_handleKeyEvent(5, keyCode, typedKey)
 				if(keyCode == 9) e.preventDefault();
 			}
 		}
