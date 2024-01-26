@@ -8,16 +8,14 @@ transient skipInit unit Platform
 	js void setTitle: string title
 		document.title = title
 		
-	inline js void setFullscreen: value = true
-		                          Player forPlayer = null
-		if(!Platform_isStaging && !Platform_isDebug && (forPlayer == null || input_localUser?.id == forPlayer.id)) {
+	js async void setFullscreen: value = true
+		                         Player forPlayer = null
+		if(!Platform_isStaging && !Platform_isDebug && !Platform_fastForward && (forPlayer == null || input_localUser?.id == forPlayer.id)) {
 			try {
-				if(value) {
-					document.body.requestFullscreen()
-				} else {
-					document.exitFullscreen()
-				}
-			} catch {
+				if(value) await document.body.requestFullscreen()
+				else      await document.exitFullscreen()
+			} catch(error) {
+				core_onError(error)
 			}
 		}	
 		

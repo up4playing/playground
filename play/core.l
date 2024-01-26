@@ -336,7 +336,7 @@ transient skipInit unit core
 	// All steps except the very last of an animation frame are fast forwared, which means that nothing is drawn.
 	// The frame is increment at the end of this function. This means that while processing the frame,
 	// frame will point to the current frame. After processing, frame will point to the next frame.
-	private step: bool fastForward // If we are replaying after a rollack or a code change
+	private step: bool fastForward // If we are replaying after a rollback or a code change
 		          bool draw        // We don't draw if we are stepping multiple frames in one animation frame
 		try
 			// Set time
