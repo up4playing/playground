@@ -346,7 +346,7 @@ transient skipInit unit core
 			
 			// Flags
 			Platform.fastForward = fastForward
-			int certainFrame = input.internalUsers.min math.min(.inputFrame, .smoothFrame) where .active
+			int certainFrame = input.internalUsers.min math.min(.inputFrame, .smoothFrame) where . and .active
 			input.isCertain = frame <= certainFrame
 			
 			// Send current frame to editor	
@@ -432,7 +432,7 @@ transient skipInit unit core
 		if (mode != Connected and !simulateRollback) or input.internalUsers.length == 1: return
 			
 		if mode == Local and simulateRollback: nextSnapshotFrame = frame - 5
-		else                                   nextSnapshotFrame = (input.internalUsers.min math.min(.smoothFrame, .inputFrame) where .active and not .local)+1
+		else                                   nextSnapshotFrame = (input.internalUsers.min math.min(.smoothFrame, .inputFrame) where . and .active and not .local)+1
 		if logging: replayLog += "(next:{nextSnapshotFrame})"
 		if snapshotFrame != -1: rewindAndReplayState snapshot, snapshotFrame
 
