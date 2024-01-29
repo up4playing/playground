@@ -406,10 +406,10 @@ transient skipInit unit core
 			networkVisualizer.tick
 			
 		try
+			Framework.tick
 			tickTime = Time.measure
 				if lobby.inLobby: lobby.tick
 				else              appTick
-			Framework.tick
 		catch
 			onError error
 			
