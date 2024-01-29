@@ -556,9 +556,9 @@ transient skipInit global unit graphics
 	                        SourceCodeLocation location
 		float scale = 1.0
 		Vector2 effectiveSize = image ? getEffectiveSize(image.size, size) : {getTextWidth(text, size:textSize), textSize}
+		let effectiveTouchableBy = getTouchableBy(visibleFor, touchableBy)
 		if enabled and onTouch != null
 			// Handle click (only visible buttons are clickable)
-			let effectiveTouchableBy = getTouchableBy(visibleFor, touchableBy)
 			Vector2 sizeWithMargin = effectiveSize + touchMargin
 			bool switchFrameOnHover = frameOnHover != -1 and frame == -1 and (image?.frames.length > frameOnHover or accentImage?.frames.length > frameOnHover)
 			if switchFrameOnHover or scaleOnHover != 1.0 or textColorOnHover
@@ -576,7 +576,11 @@ transient skipInit global unit graphics
 			if scale != 1.0: textSize = math.round(textSize * scale); effectiveSize *= scale
 			let effectiveAlpha = enabled ? alpha : alpha * alphaWhenDisabled
 			if text:  drawText text, position+textOffset, textSize, textColor, visibleFor, layer, effectiveAlpha, location
-			if accentImage: drawImage accentImage, position, frame, effectiveSize, visibleFor, layer, effectiveAlpha, location, color:accentColor or input.localPlayer.color
+			if accentImage
+				if not accentColor
+					if effectiveTouchableBy and effectiveTouchableBy.length > 0: accentColor = effectiveTouchableBy[0].color
+					else                                                         accentColor = input.localPlayer.color
+				drawImage accentImage, position, frame, effectiveSize, visibleFor, layer, effectiveAlpha, location, color:accentColor
 			if image: drawImage image, position, frame, effectiveSize, visibleFor, layer, effectiveAlpha, location
 			
 			
