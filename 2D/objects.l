@@ -71,7 +71,7 @@ enum Side: Front, Back
 		
 class Object
 	Vector2 position
-	implicit Vector2 size = {32,32}
+	implicit Vector2 size
 	Angle angle
 	float alpha = 1
 	implicit Player[] visibleFor = null
@@ -363,7 +363,7 @@ Object Menu
 		if includeDefaultItems
 			items.insert {image:New,  "New Game",        onClick:core.restart}, 0
 			items.add    {image:Save, "Save Game"        onClick:core.saveEventStreamAndLogs}
-			items.add    {image:Back, "Back to Lobby", onClick:lobby.show}
+			items.add    {image:Back, "Back to Lobby",   onClick:lobby.show}
 			items.add    {image:Quit, "Exit Fullscreen", onClick:Platform.setFullscreen false, forPlayer:touch.by}
 		
 	override tick
