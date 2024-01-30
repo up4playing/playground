@@ -5,6 +5,11 @@ http
 		let result = await (await fetch(url)).json()
 		do(result)
 		
+	js void getFile: string url
+		             void(dynamic result) do = null
+		let result = await (await fetch("file://"+url)).json()
+		do(result)
+		
 	js void getText: string url
 		             void(string result) do = null
 		let result = await (await fetch(url)).text()

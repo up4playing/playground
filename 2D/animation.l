@@ -63,6 +63,11 @@ Animation ScaleAnimation
 	implicit Vector2 delta
 	tick(float f) object.size = startValue + delta * f
 	
+Animation RotateAnimation
+	implicit Angle startValue
+	implicit Angle delta
+	tick(float f) object.angle = startValue + delta * f
+	
 Animation FadeSoundAnimation
 	float startValue, delta
 	Sound sound

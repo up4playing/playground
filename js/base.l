@@ -21,6 +21,8 @@ immutable struct int
 	
 	inline js string toString := this.toString()
 		
+	inline js int fromHex(string value) parseInt(value, 16)
+		
 	inline js string formatWithSpaces := this.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ")
 		
 	inline js string format: int minIntegerDigits = 1, bool grouping = false
@@ -862,6 +864,8 @@ class List<T>
 			this.set(j, temp)
 		return this
 		
+	shuffled := this.clone.shuffle
+		
 	private static transient T[] temporaryCopy = null
 		
 	js T percentile: int value
@@ -1181,6 +1185,9 @@ class List<T>
 		
 	rotate
 		insert pop
+		
+	rotate: int count
+		for count: insert pop
 		
 	js T[] intersectWith: T[] other
 		const a = this || []
@@ -1836,6 +1843,15 @@ global skipInit unit math
 		if value >= to:   return target
 		let factor = ease.function((value-from) / (to-from))
 		return start + (target-start) * factor
+		
+	global animate: Time startTime = 0 //
+		            Time duration = 1  //
+		            float from = 0     // The lowest possible output value, will be returned for values smaller than "from".
+		            float to = 1       // The highest possible output value, will be returned for values larger than "to".
+		let value = Time.now - startTime
+		if value <= 0:       return from
+		if value >= duration:  return to
+		return from + (to-from) * (value/duration)
 		
 struct Average
 	float total
