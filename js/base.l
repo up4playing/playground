@@ -674,6 +674,10 @@ class List<T>
 		int index = indexOf(currentItem)
 		return this.get((index+1)%length)
 		
+	T previous: T currentItem
+		int index = indexOf(currentItem)
+		return this.get((index-1)%length)
+		
 	T next: T currentItem
 		    label bool(T item) where
 		int baseIndex = indexOf(currentItem)
