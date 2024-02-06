@@ -1010,30 +1010,30 @@ skipInit global unit input
 			if players.length >= 1
 				GameController c = players[0].controller
 				if c.type == Keyboard
+					c.up.assign    "↑"     Up
 					c.right.assign "→"     Right
 					c.down.assign  "↓"     Down
 					c.left.assign  "←"     Left
-					c.up.assign    "↑"     Up
 					c.a.assign     "SPACE" Space
-					c.b.assign     "B"     B
+					c.b.assign     "X"     X
 			
 			if players.length >= 2
 				GameController c = players[1].controller
 				if c.type == Keyboard
+					c.up.assign    "W"     W
 					c.right.assign "D"     D
 					c.down.assign  "S"     S
 					c.left.assign  "A"     A
-					c.up.assign    "W"     W
 					c.a.assign     "F"     F
 					c.b.assign     "G"     G
 			
 			if players.length >= 3
 				GameController c = players[2].controller
 				if c.type == Keyboard
+					c.up.assign    "I"     I
 					c.right.assign "L"     L
 					c.down.assign  "K"     K
 					c.left.assign  "J"     J
-					c.up.assign    "I"     I
 					c.a.assign     "O"     O
 					c.b.assign     "P"     P
 			
@@ -1048,21 +1048,21 @@ skipInit global unit input
 			for players
 				GameController c = .controller
 				if c.type == Keyboard
+					c.up.assign    "↑"     Up
 					c.right.assign "→"     Right
 					c.down.assign  "↓"     Down
 					c.left.assign  "←"     Left
-					c.up.assign    "↑"     Up
 					c.a.assign     "SPACE" Space
-					c.b.assign     "B"     B
+					c.b.assign     "X"     X
 			
 			controllerButtonMap.clear
 			for localPlayer.controller.buttons
 				controllerButtonMap[.key] = {userId:localPlayer.id, buttonIndex:i}
 				
-			controllerButtonMap[D] = {userId:localUser.id, buttonIndex:0}
-			controllerButtonMap[S] = {userId:localUser.id, buttonIndex:1}
-			controllerButtonMap[A] = {userId:localUser.id, buttonIndex:2}
-			controllerButtonMap[W] = {userId:localUser.id, buttonIndex:3}
+			controllerButtonMap[W] = {userId:localUser.id, buttonIndex:1}
+			controllerButtonMap[D] = {userId:localUser.id, buttonIndex:2}
+			controllerButtonMap[S] = {userId:localUser.id, buttonIndex:3}
+			controllerButtonMap[A] = {userId:localUser.id, buttonIndex:4}
 			
 		
 	private log: string text, Vector2 pos
