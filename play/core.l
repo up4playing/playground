@@ -110,10 +110,10 @@ transient skipInit unit core
 		audio.stop
 		initAll
 		
-		if !startInLobby
+		if !startInLobby or Platform.isDebug
 			// When the developer changed Platform.userCount, add or remove internal users accordingly
 			for input.internalUsers.length to Platform.userCount
-				input.internalUsers.add {id:i, local:true, collectInputs:true}
+				input.internalUsers.add {id:i, local:true, collectInputs:true, active:true}
 			if input.internalUsers.length > Platform.userCount
 				input.internalUsers.removeRange Platform.userCount..input.internalUsers.length
 			
@@ -140,16 +140,20 @@ transient skipInit unit core
 	// Keep event stream running, recreate players, call init function and start app
 	// Called manually with the global "restart" function	
 	restart
+		if not input.isCertain: return
+		let hostPlayerId = input.host ? input.host.id : -1
+		Framework.clear includingLockedObjects:true
 		initAll
 		Player[] newPlayers
 		for input.players
-			Player user = {id:.id, index:i}
+			Player user = {id:.id, index:.index}
 			input.playersById[.id] = user
 			newPlayers.add user
 		input.players = newPlayers
 		let localUserId = input.localUser?.id < input.internalUsers.length ? input.localUser.id : 0
 		input.localUser = input.internalUsers[localUserId]
 		input.localPlayer = input.playersById[localUserId]
+		input.host = hostPlayerId != -1 ? input.playersById[hostPlayerId] : null
 		input.updatePlayers
 		startApp
 	
@@ -265,22 +269,24 @@ transient skipInit unit core
 					internalUser.collectStatistics frame
 					statistics.add "input", userIndex:.index, value:frame - internalUser.inputFrame, .color, set:0
 					statistics.add "smooth", userIndex:.index, value:frame - internalUser.smoothFrame, .color, set:1
+					statistics.add "delta", userIndex:.index, value:internalUser.certainFrame - internalUser.prevCertainFrame, .color, set:2
+
 			if replayFrom != -1: statistics.add "replay", value:frame - replayFrom, color:Gray
 		else
 		if mode == Local and simulateRollback
 			input.internalUsers.each.simulateRollback frame
 			
 		// Memory
-		statistics.add "memory", value:Platform.usedMemory, color:Yellow set:3
-		statistics.add "snapshotSize", value:snapshot.writePos, color:Red set:4
-		statistics.add "inputs", value:input.localUser?.inputs.writePos, color:Blue set:5
+		statistics.add "memory", value:Platform.usedMemory, color:Yellow set:4
+		statistics.add "snapshotSize", value:snapshot.writePos, color:Red set:5
+		statistics.add "inputs", value:input.localUser?.inputs.writePos, color:Blue set:6
 		
 		// Times
-		statistics.add "drawTime", value:drawTime, color:Blue set:6
-		statistics.add "tickTime", value:tickTime, color:Red set:6
-		statistics.add "restoreTime", value:restoreTime, color:Green set:6
-		statistics.add "replayTime", value:replayTime, color:Yellow set:6
-		statistics.add "saveTime", value:saveTime, color:White set:6
+		statistics.add "drawTime", value:drawTime, color:Blue set:7
+		statistics.add "tickTime", value:tickTime, color:Red set:7
+		statistics.add "restoreTime", value:restoreTime, color:Green set:7
+		statistics.add "replayTime", value:replayTime, color:Yellow set:7
+		statistics.add "saveTime", value:saveTime, color:White set:7
 			
 		// Logs
 		if logging
@@ -332,7 +338,7 @@ transient skipInit unit core
 	// All steps except the very last of an animation frame are fast forwared, which means that nothing is drawn.
 	// The frame is increment at the end of this function. This means that while processing the frame,
 	// frame will point to the current frame. After processing, frame will point to the next frame.
-	private step: bool fastForward // If we are replaying after a rollack or a code change
+	private step: bool fastForward // If we are replaying after a rollback or a code change
 		          bool draw        // We don't draw if we are stepping multiple frames in one animation frame
 		try
 			// Set time
@@ -340,7 +346,7 @@ transient skipInit unit core
 			
 			// Flags
 			Platform.fastForward = fastForward
-			int certainFrame = input.internalUsers.min math.min(.inputFrame, .smoothFrame) where .active
+			int certainFrame = input.internalUsers.min math.min(.inputFrame, .smoothFrame) where . and .active
 			input.isCertain = frame <= certainFrame
 			
 			// Send current frame to editor	
@@ -400,12 +406,10 @@ transient skipInit unit core
 			networkVisualizer.tick
 			
 		try
-			if lobby.inLobby
-				lobby.tick
-			else
-				Framework.tick
-				tickTime = Time.measure
-					appTick
+			Framework.tick
+			tickTime = Time.measure
+				if lobby.inLobby: lobby.tick
+				else              appTick
 		catch
 			onError error
 			
@@ -428,7 +432,7 @@ transient skipInit unit core
 		if (mode != Connected and !simulateRollback) or input.internalUsers.length == 1: return
 			
 		if mode == Local and simulateRollback: nextSnapshotFrame = frame - 5
-		else                                   nextSnapshotFrame = (input.internalUsers.min math.min(.smoothFrame, .inputFrame) where .active and not .local)+1
+		else                                   nextSnapshotFrame = (input.internalUsers.min math.min(.smoothFrame, .inputFrame) where . and .active and not .local)+1
 		if logging: replayLog += "(next:{nextSnapshotFrame})"
 		if snapshotFrame != -1: rewindAndReplayState snapshot, snapshotFrame
 
@@ -499,10 +503,8 @@ transient skipInit unit core
 	js void log: logstring text
 		let str = new Date().hourMinuteSecondString() + " " + text
 		statistics_systemLogs.push(str)
-		if(core_logging) {
-			core_eventLog += str + "\n"
-			console.log(str)
-		}
+		console.log(str)
+		if(core_logging) core_eventLog += str + "\n"
 		
 	inline js int currentTime := Date.now()
 	
@@ -725,7 +727,7 @@ skipInit transient unit statistics
 	int successfullySentGameLogs
 	int successfullySentSystemLogs
 	
-	Time startTime, loadTime, connectTime
+	Time startTime, loadTime, mediaTime, connectTime
 	internal float maxValue
 	int currentSet
 	int sets = 1
@@ -742,7 +744,7 @@ skipInit transient unit statistics
 	
 	startSession
 		let user = localStorage.getObjectDirectly("user")
-		let server = Platform.host.getUntil(".")
+		let server = Platform.hostname.getUntil(".")
 		let userId = input.localUser.id
 		id = core.roomId*100 + userId
 		int sendingSystemLogsUntil = systemLogs.length
@@ -758,8 +760,12 @@ skipInit transient unit statistics
 			version: Platform.buildVersion
 			staging: Platform.isStaging
 			server
-			loadTime: loadTime - startTime
-			connectTime: connectTime - startTime
+			times:
+			[
+				loadTime - startTime
+				connectTime - startTime
+				mediaTime - startTime
+			]
 			systemLogs: systemLogs[successfullySentSystemLogs..]
 		}
 			successfullySentSystemLogs = sendingSystemLogsUntil

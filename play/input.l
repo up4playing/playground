@@ -41,6 +41,9 @@ transient class InternalUser
 	visible int bufferFrames      // The average of all maxAhead values
 	visible int smoothFrame = int.maxValue
 	
+	int certainFrame
+	int prevCertainFrame
+	
 	startInputFrame: int index
 		lastTouchMoveIndex.clear
 		inputFrame = index
@@ -60,14 +63,18 @@ transient class InternalUser
 	collectStatistics: int frame
 		int ahead = frame - inputFrame
 		
-		// Get the maximum number of frames we were ahead in the last 200 frames
-		if ahead < 50: aheadHistory.add ahead, maxLength:200
-		int maxAhead = aheadHistory.max .
+		// Get the maximum number of frames we were ahead in the last 10 seconds
+		if ahead < 50: aheadHistory.add ahead, maxLength:10*core.targetFps
+		// int maxAhead = aheadHistory.max .
+		int maxAhead = aheadHistory.percentile 80
 		
-		// Calculate a rolling average of the last 600 frames
-		maxAheadHistory.add maxAhead maxLength:600
+		// Calculate a rolling average of the last 10 minutes
+		maxAheadHistory.add maxAhead maxLength:10*60*core.targetFps
 		bufferFrames = math.ceil(maxAheadHistory.average)
 		smoothFrame = frame - bufferFrames
+		
+		prevCertainFrame = certainFrame
+		certainFrame = math.min inputFrame, smoothFrame
 		
 	simulateRollback: int frame
 		bufferFrames = 5
@@ -77,6 +84,7 @@ priority class Player
 	int id
 	int index
 	Color color = null
+	string name
 	Vector2 pointerPosition
 	
 	toString := color ? color.name : ""
@@ -372,9 +380,13 @@ skipInit global unit input
 	transient internal Player localPlayer
 	transient bool isCertain
 	transient ControllerButtonPlayerAndIndex[Key] controllerButtonMap
+	
 
 	// A list of all players
 	global Player[] players
+		
+	// The player hosting the current session
+	global Player host
 		
 	// Do something for every player
 	global inline js void everybody: void(Player it) do
@@ -502,7 +514,8 @@ skipInit global unit input
 			} else if(key == "F11") { 
 				graphics_copyScreenshotToClipboard();
 			} else {
-				input_handleKeyEvent(5, keyCode, key?.length == 1 ? key : "")
+				let typedKey = key && key.length == 1  && !e.ctrlKey && !e.metaKey && !e.altKey? key : ""
+				input_handleKeyEvent(5, keyCode, typedKey)
 				if(keyCode == 9) e.preventDefault();
 			}
 		}
@@ -750,7 +763,6 @@ skipInit global unit input
 				// which is typically the "Join" message that is sent in "startConnected",
 				// but could also be a player reconnecting that was previously kicked out
 				if not player
-					core.log "#{frame} Add {userId}"
 					if core.logging: core.parseLog += " Add {userId}"
 					players.add player = {id:userId, index:players.length}
 					playersById[userId] = player
@@ -894,7 +906,6 @@ skipInit global unit input
 					// We created the player above as soon as received the first input from that player,
 					// which is typically the "Join" message that is sent in "startConnected",
 					// but could also be a player reconnecting that was previously kicked out
-					core.log "#{frame} Join {userId}", isCertain
 					if core.logging: core.parseLog += " Join {userId}"
 				else
 				if inputType == Lost
@@ -999,30 +1010,30 @@ skipInit global unit input
 			if players.length >= 1
 				GameController c = players[0].controller
 				if c.type == Keyboard
+					c.up.assign    "↑"     Up
 					c.right.assign "→"     Right
 					c.down.assign  "↓"     Down
 					c.left.assign  "←"     Left
-					c.up.assign    "↑"     Up
 					c.a.assign     "SPACE" Space
-					c.b.assign     "B"     B
+					c.b.assign     "X"     X
 			
 			if players.length >= 2
 				GameController c = players[1].controller
 				if c.type == Keyboard
+					c.up.assign    "W"     W
 					c.right.assign "D"     D
 					c.down.assign  "S"     S
 					c.left.assign  "A"     A
-					c.up.assign    "W"     W
 					c.a.assign     "F"     F
 					c.b.assign     "G"     G
 			
 			if players.length >= 3
 				GameController c = players[2].controller
 				if c.type == Keyboard
+					c.up.assign    "I"     I
 					c.right.assign "L"     L
 					c.down.assign  "K"     K
 					c.left.assign  "J"     J
-					c.up.assign    "I"     I
 					c.a.assign     "O"     O
 					c.b.assign     "P"     P
 			
@@ -1037,21 +1048,21 @@ skipInit global unit input
 			for players
 				GameController c = .controller
 				if c.type == Keyboard
+					c.up.assign    "↑"     Up
 					c.right.assign "→"     Right
 					c.down.assign  "↓"     Down
 					c.left.assign  "←"     Left
-					c.up.assign    "↑"     Up
 					c.a.assign     "SPACE" Space
-					c.b.assign     "B"     B
+					c.b.assign     "X"     X
 			
 			controllerButtonMap.clear
 			for localPlayer.controller.buttons
 				controllerButtonMap[.key] = {userId:localPlayer.id, buttonIndex:i}
 				
-			controllerButtonMap[D] = {userId:localUser.id, buttonIndex:0}
-			controllerButtonMap[S] = {userId:localUser.id, buttonIndex:1}
-			controllerButtonMap[A] = {userId:localUser.id, buttonIndex:2}
-			controllerButtonMap[W] = {userId:localUser.id, buttonIndex:3}
+			controllerButtonMap[W] = {userId:localUser.id, buttonIndex:1}
+			controllerButtonMap[D] = {userId:localUser.id, buttonIndex:2}
+			controllerButtonMap[S] = {userId:localUser.id, buttonIndex:3}
+			controllerButtonMap[A] = {userId:localUser.id, buttonIndex:4}
 			
 		
 	private log: string text, Vector2 pos
@@ -1122,7 +1133,7 @@ skipInit global unit input
 					this.cursor = cursor
 				
 		// Migrate to 3D
-		// if showTouchArea: drawRectangle position, size, color:{"#ff000080"}, align, valign, layer:10000000
+		if showTouchArea: drawRectangle position, size, color:{"#ff000080"}, align, valign, layer:10000000
 
 	// Do something when the player touches or clicks within a given rotated rectangle
 	// Example: Draw a the image "Character" rotated by 45 degrees and print "Clicked character" when the player touches within its rotated rectangle.
@@ -1557,6 +1568,16 @@ skipInit global unit input
 			for internalUsers[.id].downKeys
 				if . == key
 					do key, player
+				
+	global onKeyDown: Key modifier 
+		              Key key                             // The key that will trigger the event
+		              implicit nocolon Player[] by = null // Only consider keys pressed by this player or list of players
+		              void(Key key, Player pressedBy) do  // Do this for each key that is pressed
+		for getTargetedPlayers(by) -> player
+			if player.keysCurrentlyDown.contains modifier
+				for internalUsers[.id].downKeys
+					if . == key
+						do key, player
 				
 	// Do something when a player presses a key
 	global onKeyDown: implicit nocolon Player[] by = null // Only consider keys pressed by this player or list of players

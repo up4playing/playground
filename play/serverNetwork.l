@@ -1,6 +1,6 @@
 enum NetworkMessageType: Join, JoinResponse, Ping, Pong, Signal, Ice, Tick, Switch, Reload, RequestState, State, Checksum
 
-transient unit ServerNetwork
+transient skipInit unit ServerNetwork
 	private object socket
 	private Buffer sendBuffer = {}
 	int nextConnectionId = 1
