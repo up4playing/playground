@@ -578,8 +578,8 @@ transient skipInit global unit graphics
 			if text:  drawText text, position+textOffset, textSize, textColor, visibleFor, layer, effectiveAlpha, location
 			if accentImage
 				if not accentColor
-					if effectiveTouchableBy and effectiveTouchableBy.length > 0: accentColor = effectiveTouchableBy[0].color
-					else                                                         accentColor = input.localPlayer.color
+					if effectiveTouchableBy and effectiveTouchableBy[0]: accentColor = effectiveTouchableBy[0].color
+					else                                                 accentColor = input.localPlayer.color
 				drawImage accentImage, position, frame, effectiveSize, visibleFor, layer, effectiveAlpha, location, color:accentColor
 			if image: drawImage image, position, frame, effectiveSize, visibleFor, layer, effectiveAlpha, location
 			
