@@ -59,7 +59,7 @@ transient skipInit unit PeerNetwork
 			core_log("<"+user.id+"> oniceconnectionstatechange " + peerConnection.iceConnectionState)
 			if(peerConnection.iceConnectionState == "disconnected") {
 				// Send logfiles to server
-				setTimeout(() => statistics_manuallyTriggerSend(-5, /*clear*/false), 7000);
+				setTimeout(() => statistics_saveStatistics(), 7000);
 			}
 		}
 		peerConnection.onicecandidate = async event => {
