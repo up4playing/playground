@@ -26,7 +26,8 @@ skipInit global unit Platform
 	public inline js string url := location.href
 	public inline js string host := location.host
 	public inline js string basePath := _basePath
-	public protocolAndHost := host and not isDebug ? "https://"+host : "http://localhost"
+	public inline js string protocolAndHost() (location.host && !Platform_isDebug ? location.origin : "http://localhost")
+	public inline js string encodeURIComponent(string value) encodeURIComponent(value)
 
 	private inline js void initMedia
 		if(window.Image_init) Image_init();
