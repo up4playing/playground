@@ -254,6 +254,8 @@ skipInit class Image
 	string previewSrc
 	string src
 	
+	toString := "url({Platform.basePath}{src})"
+	
 skipInit class Sound
 	string src
 	
