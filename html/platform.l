@@ -38,7 +38,7 @@ skipInit global unit Platform
 	js void initHandlers
 		window.onresize = e => {
 			Html_updateScale();
-			Html_render();
+			Html_refresh();
 		}
 		document.onkeydown = e => {
 			let key = e.key
@@ -91,7 +91,7 @@ skipInit global unit Platform
 			Time.frame = 0
 			startApp
 			Html.updateScale
-			Html.render
+			refresh
 		catch
 			sendErrorToEditor .
 		finally
@@ -146,7 +146,7 @@ skipInit global unit Platform
 		isMobile = !isMobile;
 		setLocalStorageString("isMobile", isMobile ? "true" : "false")
 		Html.updateScale
-		Html.render
+		refresh
 
 	inline js void setLocalStorageString: string key, string value
 		localStorage.setItem(key, value)
@@ -360,7 +360,7 @@ global unit Html
 		let rect = node.getBoundingClientRect()
 		return new Vector2((event.clientX - rect.left)/Platform_scale, (event.clientY - rect.top)/Platform_scale)
 
-	void render
+	global void refresh
 		parentNode = body
 		currentNode = parentNode.firstChild
 		currentOverlay = body.nextSibling
