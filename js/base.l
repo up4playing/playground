@@ -771,6 +771,12 @@ class List<T>
 		if order == Ascending: return this.sort(expression(a) - expression(b))
 		else                   return this.sort(expression(b) - expression(a))
 		
+	// Sort the list by a given expression
+	T[] orderBy: Time(T a) expression // First order by this expression
+		         SortingOrder order    // Specifies if you want to sort in ascending or descending order
+		if order == Ascending: return this.sort(expression(a) - expression(b))
+		else                   return this.sort(expression(b) - expression(a))
+		
 	// Returns true if the given condition is true for any item in the list
 	inline js bool any: bool(T a) predicate // The condition to check
 		this.some(predicate)
