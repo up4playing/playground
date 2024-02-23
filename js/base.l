@@ -678,6 +678,10 @@ class List<T>
 		int index = indexOf(currentItem)
 		return this.get((index+1)%length)
 		
+	T previous: T currentItem
+		int index = indexOf(currentItem)
+		return this.get((index-1)%length)
+		
 	T next: T currentItem
 		    label bool(T item) where
 		int baseIndex = indexOf(currentItem)
@@ -867,6 +871,8 @@ class List<T>
 			this.set(i, this.get(j))
 			this.set(j, temp)
 		return this
+		
+	shuffled := this.clone.shuffle
 		
 	private static transient T[] temporaryCopy = null
 		
@@ -1187,6 +1193,9 @@ class List<T>
 		
 	rotate
 		insert pop
+		
+	rotate: int count
+		for count: insert pop
 		
 	js T[] intersectWith: T[] other
 		const a = this || []
@@ -1842,6 +1851,15 @@ global skipInit unit math
 		if value >= to:   return target
 		let factor = ease.function((value-from) / (to-from))
 		return start + (target-start) * factor
+		
+	global animate: Time startTime = 0 //
+		            Time duration = 1  //
+		            float from = 0     // The lowest possible output value, will be returned for values smaller than "from".
+		            float to = 1       // The highest possible output value, will be returned for values larger than "to".
+		let value = Time.now - startTime
+		if value <= 0:       return from
+		if value >= duration:  return to
+		return from + (to-from) * (value/duration)
 		
 struct Average
 	float total

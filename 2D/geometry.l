@@ -92,6 +92,8 @@ struct Vector2
 	// The length of the vector
 	length := math.sqrt(x * x + y * y)
 		
+	lengthSquared := x * x + y * y
+		
 	// A vector that is orthogonal to the existing vector
 	orthogonal := Vector2(x:-y, y:x)
 		
@@ -552,9 +554,19 @@ transient immutable float Angle
 	inline js float in: AngleUnit unit
 		(unit==1 ? this*math_TwoPI : unit==2 ? this*360 : unit==3 ? this*400 : this)
 		
-	inline js bool isApproximately: Angle value
-		                            float epsilon = 0.0175
-		(Math.abs((((this % math_TwoPI) + math_TwoPI) % math_TwoPI) - (((value % math_TwoPI) + math_TwoPI) % math_TwoPI)) < epsilon)
+	// inline js Angle rotateTowards: Angle value
+	// 	                           Angle speed = 0.01
+	// 	(this = Angle_rotatedTowards(this, value, speed))
+		
+	// static Angle rotatedTowards: Angle value
+	// 	                         Angle target
+	// 	                         Angle speed = 0.01
+	// 	target = target % 1
+	// 	let delta = (target - value) % 1
+	// 	if delta < .5: value = (value + speed) % 1; return value < target ? value : target
+	// 	else           value = (value - speed) % 1; return value > target ? value : target
+		
+		
 		
 enum AngleUnit
 	turns    // One full rotation is 1
@@ -704,6 +716,22 @@ unit math
 			
 		// Return a object with the x and y coordinates of the intersection
 		return new Vector2(x1 + ua * (x2 - x1), y1 + ua * (y2 - y1))
+		
+	projectPointOnLine: Vector2 from, Vector2 to, LineType type = Segment, Vector2 point
+		let lineVector = to - from
+		let pointVector = point - from
+		let scalar = (pointVector dot lineVector) / lineVector.lengthSquared
+		if type >= Ray     and scalar < 0: return Vector2.none
+		if type == Segment and scalar > 1: return Vector2.none
+		return from + lineVector * scalar
+	
+	closestPointOnLine: Vector2 from, Vector2 to, LineType type = Segment, Vector2 point
+		let lineVector = to - from
+		let pointVector = point - from
+		let scalar = (pointVector dot lineVector) / lineVector.lengthSquared
+		if type >= Ray     and scalar < 0: scalar = 0
+		if type == Segment and scalar > 1: scalar = 1
+		return from + lineVector * scalar
 	
 	// Maps a value from an input range to an output range
 	map: float value    // The input value 

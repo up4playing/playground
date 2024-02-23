@@ -268,6 +268,8 @@ global unit Html
 	private Node currentOverlay
 	
 	inline js Vector2 scrollPosition() new Vector2(window.pageXOffset, window.pageYOffset/Platform_scale)
+		
+	inline js void scrollTo(float x, float y) window.scrollTo(x,y)
 	
 	private inline js Node body() document.body
 	
