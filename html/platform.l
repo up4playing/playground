@@ -90,8 +90,8 @@ skipInit global unit Platform
 			initMedia
 			initAll
 			Time.frame = 0
-			startApp
 			Html.updateScale
+			startApp
 			Html.render
 		catch
 			sendErrorToEditor .
