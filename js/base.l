@@ -339,6 +339,10 @@ immutable class string
 		                       string target
 		this.replace(new RegExp(source, "g"), target)
 		
+	inline js string padEnd: int targetLength
+		                     string padString = " "
+		this.padEnd(targetLength, padString)
+		
 	js string get: int index
 		return index >= 0 ? this[index] : this[this.length+index]
 	
