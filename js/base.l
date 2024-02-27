@@ -1460,11 +1460,11 @@ global transient priority unit System
 		for(let i=0, _subject=[...subject], _len=_subject.length; i<_len; ++i) do(_subject[i], i)
 		
 	// Do something for each item in a list. You can add or remove items inside the loop.
-	global inline js void forChangeable: T[] subject    // The list to iterate over
+	global inline js void forChangeable: T[] subject // The list to iterate over
 		                       <- inline void(
-		                           T it,      // The current item of the list we are iterating over with the for-loop
-		                           int i      // The index of the current item of the list we are iterating over with the for-loop
-		                       ) do           // Do this for each item in a list
+		                           T it,             // The current item of the list we are iterating over with the for-loop
+		                           int i             // The index of the current item of the list we are iterating over with the for-loop
+		                       ) do                  // Do this for each item in a list
 		for(let _subject=[...subject], i=_subject.length-1; i>=0; --i) do(_subject[i], i)
 		
 	global inline js void for: int from       // The integer to start iterating from (for exmaple "for 2 to 5: print ." prints 2, 3, 4)
@@ -1508,7 +1508,7 @@ global transient priority unit System
 		for(let _subject=subject, i=_subject.length-1; i>=0; --i) do(_subject[i], i)
 				
 	// [a,b,c] -> (a, next:b), (b, next:c), (c, next:null)
-	global inline js void forLookAhead: T[] subject    // The list to iterate over
+	global inline js void forLookAhead: T[] subject        // The list to iterate over
 		                                    -> inline void(
 		                                        T it,      // The current item of the list we are iterating over with forLookAhead
 		                                        T next,    // The next item of the list we are iterating over with forLookAhead
@@ -1516,7 +1516,7 @@ global transient priority unit System
 		                                    ) do           // Do this for each consecutive pair in a list
 		for(let _subject=subject, _len=_subject.length, i=0; i<_len; ++i) do(_subject[i], i+1<_len ? _subject[i+1] : null, i)
 		
-	global inline js void forLookAhead: T[] subject    // The list to iterate over
+	global inline js void forLookAhead: T[] subject        // The list to iterate over
 		                                    <- inline void(
 		                                        T it,      // The current item of the list we are iterating over with forLookAhead
 		                                        T next,    // The next item of the list we are iterating over with forLookAhead
@@ -1525,7 +1525,7 @@ global transient priority unit System
 		for(let _subject=subject, i=_subject.length-1; i>=0; --i) do(_subject[i], i>0 ? _subject[i-1] : null, i)
 		
 	// [a,b,c] -> (prev:null, a), (prev:a, b), (prev:b, c)
-	global inline js void forLookBack: T[] subject    // The list to iterate over
+	global inline js void forLookBack: T[] subject         // The list to iterate over
 		                                    -> inline void(
 		                                        T it,      // The current item of the list we are iterating over with forLookBack
 		                                        T prev,    // The previous item of the list we are iterating over with forLookBack
@@ -1533,7 +1533,7 @@ global transient priority unit System
 		                                    ) do           // Do this for each consecutive pair in a list
 		for(let _subject=subject, i=0, _len=_subject.length; i<_len; ++i) do(_subject[i], i>0 ? _subject[i-1] : null, i)
 		
-	global inline js void forLookBack: T[] subject    // The list to iterate over
+	global inline js void forLookBack: T[] subject         // The list to iterate over
 		                                    <- inline void(
 		                                        T it,      // The current item of the list we are iterating over with forLookBack
 		                                        T prev,    // The previous item of the list we are iterating over with forLookBack
@@ -1542,22 +1542,22 @@ global transient priority unit System
 		for(let _subject=subject, _len=subject.length, i=_len-1; i>=0; --i) do(_subject[i], i+1<_len ? _subject[i+1] : null, i)
 		
 	// [a,b,c] -> (prev:null, a, next:b), (prev:a, b, next:c), (prev:b, c, next:null)
-	global inline js void forLookAheadAndBack: T[] subject  // The list to iterate over
+	global inline js void forLookAheadAndBack: T[] subject // The list to iterate over
 		                              -> inline void(
-		                                  T it,    // The current item of the list we are iterating over with forLookAheadAndBack
-		                                  T prev,  // The previous item of the list we are iterating over with forLookAheadAndBack
-		                                  T next,  // The next item of the list we are iterating over with forLookAheadAndBack
-		                                  int i    // The index of the current item of the list we are iterating over with forLookAheadAndBack
-		                              ) do         // Do this for each triple in a list
+		                                  T it,            // The current item of the list we are iterating over with forLookAheadAndBack
+		                                  T prev,          // The previous item of the list we are iterating over with forLookAheadAndBack
+		                                  T next,          // The next item of the list we are iterating over with forLookAheadAndBack
+		                                  int i            // The index of the current item of the list we are iterating over with forLookAheadAndBack
+		                              ) do                 // Do this for each triple in a list
 		for(let i=0, _subject=subject, _len=_subject.length; i<_len; ++i) do(_subject[i], i>0 ? _subject[i-1] : null, i+1<_len ? _subject[i+1] : null, i)
 		
-	global inline js void forLookAheadAndBack: T[] subject  // The list to iterate over
+	global inline js void forLookAheadAndBack: T[] subject // The list to iterate over
 		                              <- inline void(
-		                                  T it,    // The current item of the list we are iterating over with forLookAheadAndBack
-		                                  T prev,  // The previous item of the list we are iterating over with forLookAheadAndBack
-		                                  T next,  // The next item of the list we are iterating over with forLookAheadAndBack
-		                                  int i    // The index of the current item of the list we are iterating over with forLookAheadAndBack
-		                              ) do         // Do this for each triple in a list
+		                                  T it,            // The current item of the list we are iterating over with forLookAheadAndBack
+		                                  T prev,          // The previous item of the list we are iterating over with forLookAheadAndBack
+		                                  T next,          // The next item of the list we are iterating over with forLookAheadAndBack
+		                                  int i            // The index of the current item of the list we are iterating over with forLookAheadAndBack
+		                              ) do                 // Do this for each triple in a list
 		for(let _subject=subject, _len=_subject.length, i=_len-1; i>=0; --i) do(_subject[i], i+1<_len ? _subject[i+1] : null, i>0 ? _subject[i-1] : null, i)
 		
 	// [a,b,c] -> (a, next:b), (b, next:c)
@@ -1578,7 +1578,7 @@ global transient priority unit System
 		for(let _subject=subject, i=_subject.length-1; i>0; --i) do(_subject[i], _subject[i-1], i)
 		
 	// [a,b,c] -> (a, next:b), (b, next:c), (c, next:a) 
-	global inline js void forWrappingPairs: T[] subject    // The list to iterate over
+	global inline js void forWrappingPairs: T[] subject   // The list to iterate over
 		                                   -> inline void(
 		                                       T it,      // The current item of the list we are iterating over with forWrappingPairs
 		                                       T next,    // The next item of the list we are iterating over with forWrappingPairs
@@ -1586,7 +1586,7 @@ global transient priority unit System
 		                                   ) do           // Do this for each consecutive pair in a list
 		for(let _subject=subject, i=0, _len=_subject.length; i<_len; ++i) do(_subject[i], _subject[(i+1)%_len], i)
 		
-	global inline js void forWrappingPairs: T[] subject    // The list to iterate over
+	global inline js void forWrappingPairs: T[] subject   // The list to iterate over
 		                                   <- inline void(
 		                                       T it,      // The current item of the list we are iterating over with forWrappingPairs
 		                                       T next,    // The next item of the list we are iterating over with forWrappingPairs
@@ -1614,7 +1614,7 @@ global transient priority unit System
 		for(let _subject=subject, i=_subject.length-2; i>=1; --i) do(_subject[i], _subject[i+1], _subject[i-1], i)
 		
 	// [a,b,c] -> (prev:c, a, next:b), (prev:a, b, next:c), (prev:b, c, next:a)
-	global inline js void forWrappingTriples: T[] subject  // The list to iterate over
+	global inline js void forWrappingTriples: T[] subject // The list to iterate over
 		                                     -> inline void(
 		                                         T it,    // The current item of the list we are iterating over with forWrappingTriples
 		                                         T prev,  // The previous item of the list we are iterating over with forWrappingTriples
@@ -1623,7 +1623,7 @@ global transient priority unit System
 		                                     ) do         // Do this for each triple in a list
 		for(let i=0, _subject=subject, _len=_subject.length; i<_len; ++i) do(_subject[i], _subject[(((i-1)%_len)+_len)%_len], _subject[(i+1)%_len], i)
 		
-	global inline js void forWrappingTriples: T[] subject  // The list to iterate over
+	global inline js void forWrappingTriples: T[] subject // The list to iterate over
 		                                     <- inline void(
 		                                         T it,    // The current item of the list we are iterating over with forWrappingTriples
 		                                         T prev,  // The previous item of the list we are iterating over with forWrappingTriples
@@ -1635,9 +1635,9 @@ global transient priority unit System
 	// Do something a given number of times or for each item in a list
 	global inline js void for: dynamic subject // The list to iterate over
 		                       -> inline void(
-		                           dynamic it,  // The current item of the dynamic we are iterating over with the for-loop
-		                           string key   // The current key of the dynamic we are iterating over with the for-loop
-		                       ) do             // Do this for each item in a list
+		                           dynamic it, // The current item of the dynamic we are iterating over with the for-loop
+		                           string key  // The current key of the dynamic we are iterating over with the for-loop
+		                       ) do            // Do this for each item in a list
 		{let _subject=subject; for(let key in _subject) do(_subject[key], key)}
 		
 	// Prints a message to the console
