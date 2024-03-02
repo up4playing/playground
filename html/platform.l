@@ -26,7 +26,8 @@ skipInit global unit Platform
 	public inline js string url := location.href
 	public inline js string host := location.host
 	public inline js string basePath := _basePath
-	public protocolAndHost := host and not isDebug ? "https://"+host : "http://localhost"
+	public inline js string protocolAndHost() (location.host && !Platform_isDebug ? location.origin : "http://localhost")
+	public inline js string encodeURIComponent(string value) encodeURIComponent(value)
 
 	private inline js void initMedia
 		if(window.Image_init) Image_init();
@@ -89,8 +90,8 @@ skipInit global unit Platform
 			initMedia
 			initAll
 			Time.frame = 0
-			startApp
 			Html.updateScale
+			startApp
 			refresh
 		catch
 			sendErrorToEditor .
@@ -253,6 +254,8 @@ skipInit class Image
 	string previewSrc
 	string src
 	
+	toString := "url({Platform.basePath}{src})"
+	
 skipInit class Sound
 	string src
 	
@@ -413,17 +416,6 @@ global unit Html
 		node.src = src.startsWith("http") ? src : Platform.basePath + src
 		return node
 
-	global input: string value = ""                 // The initial value of the input
-		          bool focused = false
-		          void() onenter = null
-		          expand Attributes attributes = {} // The attributes of the HTML element
-		          expand Style style = null         // The css style of the HTML element
-		          SourceCodeLocation location
-		let node = div tag:"input", attributes, style, location
-		if focused: node.focus
-		if(onenter != null) node.onkeydown = if(ev.key == "Enter") onenter()
-		return node
-		
 	global link: string text = null
 		         string href = "#"
 		         expand Attributes attributes = {} // The attributes of the HTML element
@@ -526,8 +518,6 @@ global unit Html
 		if style == null: style = {}	
 		if not style.inset:           style.inset = PaddingOrMargin(0,0,0,0)
 		if not style.position:        style.position = Fixed
-		// if not style.backgroundColor: style.backgroundColor = Black
-		// if not style.opacity:         style.opacity = .5
 		setStyle node, style
 		
 		if attributes != null
@@ -550,3 +540,130 @@ global unit Html
 		
 		currentOverlay = nextNode
 		return node
+		
+	// -------------------------------------- Fields with change handlers --------------------------------------
+		
+	void() currentChangeHandler
+	
+	global void onChange: stored void() onChange
+		                  void() do
+		stored void() prevChangeHandler = currentChangeHandler
+		currentChangeHandler = onChange
+		do
+		currentChangeHandler = prevChangeHandler
+		
+	// ---------- Radio & Toggle ----------
+	
+	global inline void radio: int model                         // The variable that holds the value. This will be updated when the user clicks the radio button
+		                      int value                         // The value of this state of the radio button
+		                      Image image                       // The image to display
+		                      expand Attributes attributes = {} // The attributes of the HTML element
+		                      expand Style style = null         // The css style of the HTML element
+		                      dynamic data = null               // The data attributes of the element
+		                      SourceCodeLocation location
+		stored void() changeHandler = currentChangeHandler
+		let node = div tag:"img", attributes, style, data, location
+		node.style.opacity = model == value ? 1 : .3
+		node.src = Platform.basePath + image.src
+		node.onclick = model = value; changeHandler; refresh
+
+	global inline void radio: int model                         // The variable that holds the value. This will be updated when the user clicks the radio button
+		                      int value                         // The value of this state of the radio button
+		                      Image image                       // The image to display
+		                      inline void() onInput             // Called when the user clicks the radio button
+		                      expand Attributes attributes = {} // The attributes of the HTML element
+		                      expand Style style = null         // The css style of the HTML element
+		                      dynamic data = null               // The data attributes of the element
+		                      SourceCodeLocation location
+		stored void() changeHandler = currentChangeHandler
+		let node = div tag:"img", attributes, style, data, location
+		node.style.opacity = model == value ? 1 : .3
+		node.src = Platform.basePath + image.src
+		node.onclick = model = value; onInput; changeHandler; refresh
+
+	global inline void toggle: bool model                        // The variable that holds the value. This will be updated when the user clicks the toggle button
+		                       Image[] images                    // A list with one image per state of the toggle
+		                       expand Attributes attributes = {} // The attributes of the HTML element
+		                       expand Style style = null         // The css style of the HTML element
+		                       dynamic data = null               // The data attributes of the element
+		                       SourceCodeLocation location
+		stored void() changeHandler = currentChangeHandler
+		let node = div tag:"img", attributes, style, data, location
+		node.src = Platform.basePath + images[model ? 1 : 0].src
+		node.onclick = model = !model; changeHandler; refresh
+
+	global inline void toggle: bool model                        // The variable that holds the value. This will be updated when the user clicks the toggle button
+		                       Image[] images                    // A list with one image per state of the toggle
+		                       inline void() onInput             // Called when the user clicks the toggle button
+		                       expand Attributes attributes = {} // The attributes of the HTML element
+		                       expand Style style = null         // The css style of the HTML element
+		                       dynamic data = null               // The data attributes of the element
+		                       SourceCodeLocation location
+		stored void() changeHandler = currentChangeHandler
+		let node = div tag:"img", attributes, style, data, location
+		node.src = Platform.basePath + images[model ? 1 : 0].src
+		node.onclick = model = !model; onInput; changeHandler; refresh
+
+	// ---------- Input & TextArea ----------
+	
+	global inline void input: string model = ""                 // The variable that holds the value. This will be updated when the user changed the text
+		                      bool focused = false              // Whether the cursor should be placed in the field
+		                      expand Attributes attributes = {} // The attributes of the HTML element
+		                      expand Style style = null         // The css style of the HTML element
+		                      SourceCodeLocation location
+		stored void() changeHandler = currentChangeHandler
+		let node = div tag:"input", attributes, style, location
+		node.value = model
+		node.oninput = model = node.value; changeHandler
+		if focused: node.focus
+		
+	global inline void input: string model = ""                 // The variable that holds the value. This will be updated when the user changed the text
+		                      bool focused = false              // Whether the cursor should be placed in the field
+		                      inline void() onEnter = null      // Called when the user presses the enter key
+		                      expand Attributes attributes = {} // The attributes of the HTML element
+		                      expand Style style = null         // The css style of the HTML element
+		                      SourceCodeLocation location
+		stored void() changeHandler = currentChangeHandler
+		let node = div tag:"input", attributes, style, location
+		node.value = model
+		node.oninput = model = node.value; changeHandler
+		node.onkeydown = if(ev.key == "Enter") onEnter()
+		if focused: node.focus
+		
+	global inline void input: string model = ""                  // The variable that holds the value. This will be updated when the user changed the text
+		                      bool focused = false               // Whether the cursor should be placed in the field
+		                      inline void(string value) onChange // Called when the user changes the text and leaves the field
+		                      expand Attributes attributes = {}  // The attributes of the HTML element
+		                      expand Style style = null          // The css style of the HTML element
+		                      SourceCodeLocation location
+		stored void() changeHandler = currentChangeHandler
+		let node = div tag:"input", attributes, style, location
+		node.value = model
+		node.onchange = model = node.value; onChange(node.value); changeHandler
+		if focused: node.focus
+		
+	global inline void input: string model = ""                  // The variable that holds the value. This will be updated when the user changed the text
+		                      bool focused = false               // Whether the cursor should be placed in the field
+		                      inline void(string value) onInput  // Called after every character the user types
+		                      expand Attributes attributes = {}  // The attributes of the HTML element
+		                      expand Style style = null          // The css style of the HTML element
+		                      SourceCodeLocation location
+		stored void() changeHandler = currentChangeHandler
+		let node = div tag:"input", attributes, style, location
+		node.value = model
+		node.oninput = model = node.value; onInput(node.value); changeHandler
+		if focused: node.focus
+
+	global inline void textarea: string model = ""                 // The variable that holds the value. This will be updated when the user changed the text
+		                         bool focused = false              // Whether the cursor should be placed in the field
+		                         expand Attributes attributes = {} // The attributes of the HTML element
+		                         expand Style style = null         // The css style of the HTML element
+		                         SourceCodeLocation location
+		stored void() changeHandler = currentChangeHandler
+		let node = div tag:"textarea", attributes, style, location
+		node.value = model
+		node.style.minHeight = 16px
+		node.style.overflow = Scroll; node.style.height = 1px; node.style.height = node.scrollHeight px; node.style.overflow = Hidden
+		node.oninput = model = node.value; node.style.overflow = Scroll; node.style.height = 1px; node.style.height = node.scrollHeight px; node.style.overflow = Hidden; changeHandler
+		if focused: node.focus
+
