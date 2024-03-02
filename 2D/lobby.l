@@ -173,24 +173,24 @@ unit lobby
 						drawImage cameraIcon, pos
 						forPositions PeerNetwork.devices.videoInput start:pos+{36} delta:{0,26} -> device
 							drawText .label, pos, size:18, align:Left, color:PeerNetwork.videoInputId == .deviceId ? Green : White
-							onTouchDownWithin pos+{200,0}, size:{400,30}, showTouchArea:false
-								PeerNetwork.setVideoInput device.deviceId
+							onTouchDownWithin pos+{200,0}, size:{400,30} by player
+								PeerNetwork.setVideoInput device.deviceId, player
 						pos += {450}
 					
 					if PeerNetwork.devices.audioInput
 						drawImage microphoneIcon, pos
 						forPositions PeerNetwork.devices.audioInput start:pos+{36} delta:{0,26} -> device
 							drawText .label, pos, size:18, align:Left, color:PeerNetwork.audioInputId == .deviceId ? Green : White
-							onTouchDownWithin pos+{200,0}, size:{400,30}, showTouchArea:false
-								PeerNetwork.setAudioInput device.deviceId
+							onTouchDownWithin pos+{200,0}, size:{400,30} by player
+								PeerNetwork.setAudioInput device.deviceId, player
 						pos += {550}
 						
 					if PeerNetwork.devices.audioOutput	
 						drawImage speakerIcon, pos
 						forPositions PeerNetwork.devices.audioOutput start:pos+{36} delta:{0,26} -> device
 							drawText .label, pos, size:18, align:Left, color:PeerNetwork.audioOutputId == .deviceId ? Green : White
-							onTouchDownWithin pos+{200,0}, size:{400,30}, showTouchArea:false
-								PeerNetwork.setAudioOutput device.deviceId
+							onTouchDownWithin pos+{200,0}, size:{400,30} by player
+								PeerNetwork.setAudioOutput device.deviceId, player
 						
 Player
 	bool showSettingsInLobby

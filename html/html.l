@@ -16,6 +16,7 @@ class Node
 	Node firstChild
 	Node nextSibling
 	Node parentNode
+	float scrollHeight
 	
 	bool muted
 	bool autoplay
@@ -36,6 +37,8 @@ class Node
 	native void(HtmlEvent ev) onmouseover
 	native void(HtmlEvent ev) onmouseout
 	native void(dynamic ev) onkeydown
+	native void(HtmlEvent ev) oninput
+	native void(HtmlEvent ev) onchange
 	
 	inline js void set(string name, string value) this.setAttribute(name, value)
 	inline js void get(string name) this.getAttribute(name)
@@ -353,8 +356,22 @@ enum TextAlign
 	MatchParent = "match-parent" // Similar to inherit, but the values are calculated according to the parent's direction
 	
 enum TextOverflow
-	Clip = "clip"
-	Ellipsis = "ellipsis"
+	Ellipsis = "ellipsis" // Use this to show "..." when text is too long
+	Clip = "clip" // Use the default behavior
+	
+enum Overflow: 
+	Hidden = "hidden" // Content is clipped if necessary to fit the padding box.
+	Scroll = "scroll" // Content is clipped if necessary to fit the padding box and a scrollbar is shown.
+	Visible = "visible" // Content is not clipped, it may be rendered outside the padding box.
+	Auto = "auto" // Use the default behavior, which is visible.
+
+enum WhiteSpace
+	NoWrap = "nowrap" // Collapses white space as for normal and suppresses line breaks (text wrapping).
+	Pre = "pre" // Sequences of white space are preserved. Lines are only broken at newline characters and at <br>.
+	PreWrap = "pre-wrap" // Sequences of white space are preserved. Lines are broken as necessary to fill line boxes.
+	PreLine = "pre-line" // Sequences of white space are collapsed. Lines are broken as necessary to fill line boxes.
+	BreakSpaces = "break-spaces" // Sequences of white space are preserved. Lines can be broken at arbitrary points.
+	Normal = "normal" // Sequences of white space are collapsed. Lines are broken as necessary to fill line boxes.
 	
 enum BorderStyle
 	Solid = "solid" // Displays a single, straight, solid line
@@ -525,7 +542,7 @@ dynamic Style
 	string outlineOffset // Offsets an outline, and draws it beyond the border edge
 	string outlineStyle // The style of the outline around an element
 	implicit Dimension outlineWidth // The width of the outline around an element
-	string overflow // What to do with content that renders outside the element box
+	Overflow overflow // What to do with content that renders outside the element box
 	string overflowX // Specifies what to do with the left/right edges of content rendering outside the element box
 	string overflowY // Specifies what to do with the top/bottom edges of content rendering outside the element box
 	PaddingOrMargin padding // The padding of an element (can have up to four values)
@@ -569,7 +586,7 @@ dynamic Style
 	string userSelect // Whether the text of an element can be selected or not
 	string verticalAlign // The vertical alignment of the content in an element
 	string visibility // Whether an element should be visible
-	string whiteSpace // How to handle tabs, line breaks and whitespace in a text
+	WhiteSpace whiteSpace // How to handle tabs, line breaks and whitespace in a text
 	implicit Dimension width // The width of an element
 	string wordBreak // Line breaking rules for non-CJK scripts
 	string wordSpacing // The spacing between words in a text
