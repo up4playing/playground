@@ -555,12 +555,12 @@ transient immutable float Angle
 		(unit==1 ? this*math_TwoPI : unit==2 ? this*360 : unit==3 ? this*400 : this)
 		
 	inline js Angle rotateTowards: Angle value
-		                           Angle speed = 0.01
+		                           Angle speed
 		(this = Angle_rotatedTowards(this, value, speed))
 		
 	static Angle rotatedTowards: Angle value
 		                         Angle target
-		                         Angle speed = 0.01
+		                         Angle speed
 		target = target % 1
 		let delta = (target - value) % 1
 		if delta < .5: value = (value + speed) % 1; return value < target ? value : target
