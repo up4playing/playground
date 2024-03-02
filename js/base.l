@@ -333,9 +333,9 @@ immutable class string
 	inline js string interleaveWith: int charCode
 		this.split("").join(String.fromCharCode(charCode))
 		
-	inline js string replace: string source
-		                      string target
-		(this = this.replace(new RegExp(source, "g"), target))
+	inline js string replace: string value
+		                      nocolon string with
+		(this = this.replace(new RegExp(value, "g"), with))
 		
 	inline js string replaced: string source
 		                       string target
