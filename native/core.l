@@ -93,7 +93,7 @@ skipInit unit core
 		Time.now = Time.realTime
 		let targetFrame = math.floor((Time.now - startTime)/targetFrameTime)+1
 		// print "animation frame", Time.now, startTime, Time.now - startTime, frame, targetFrame
-		while frame < targetFrame
+		if frame < targetFrame
 			step
 			
 	step

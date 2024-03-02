@@ -163,7 +163,7 @@ global unit http
 				if(handler) {
 					handler(path, body ? JSON.parse(body) : null, request, response);
 				} else {
-					response.end("Server v"+version+" up since "+startTime);
+					response.end("Server v"+_buildVersion+" up since "+startTime);
 				}
 			})
 		}

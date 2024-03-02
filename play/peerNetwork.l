@@ -21,7 +21,7 @@ immutable MediaDevices
 	MediaDeviceInfo[] audioOutput
 	MediaDeviceInfo[] videoInput
 	
-transient unit PeerNetwork
+transient skipInit unit PeerNetwork
 	RelayMode relayMode = Auto
 	
 	internal enableVideo = true
@@ -37,30 +37,12 @@ transient unit PeerNetwork
 			// iceCandidatePoolSize: 10,
 		}
 		if(PeerNetwork_relayMode > 0) {
-			// --- Alwyzon (www1) ---
-			// options.iceServers.push({
-			// 	urls: "turn:94.177.8.204:39571",
-			// 	username: "play-user-x8env28gx41odbxzwjyut2oq871987syq8ovyuqp-alwyzon",
-			// 	credential: "qoy91n981vlplabb1873jdcgsouz2qm87qmmakqpc-alwyzon"
-			// });
-			// --- Alphahosting (www2) ---
+			// Alphahosting turn server
 			options.iceServers.push({
 				urls: 'turn:89.22.121.145:39571',
 				username: 'play-user-x8env28gx41odbxzwjyut2oq871987syq8ovyuqp-alphahosting',
 				credential: 'qoy91n981vlplabb1873jdcgsouz2qm87qmmakqpc-alphahosting'
-			});			
-			// --- Strato-v30 (www3) ---
-			// options.iceServers.push({
-			// 	urls: 'turn:85.214.133.53:39571',
-			// 	username: 'play-user-9q2gy75kmlp4qn7tb86pogsmtyp7qqo0n5-strato-v30',
-			// 	credential: '8q76nby32odjamuzbexi6eb2f1k9gc3my99o-strato-v30'
-			// });
-			// --- Strato ---
-			// options.iceServers.push({
-			// 	urls: "turn:81.169.197.127",
-			// 	username: "play-user-x8env28gx41odbxzwjyut2hx82jyzdk7qm6d-ok",
-			// 	credential: "9y4vm5vxj3uyqvc8wkyzrm26ygebxutkd52bymr8zsmy6qa8-ok"
-			// });
+			});	
 		}
 		options.iceServers.push({
 			urls: [
@@ -77,7 +59,7 @@ transient unit PeerNetwork
 			core_log("<"+user.id+"> oniceconnectionstatechange " + peerConnection.iceConnectionState)
 			if(peerConnection.iceConnectionState == "disconnected") {
 				// Send logfiles to server
-				setTimeout(() => statistics_manuallyTriggerSend(-5, /*clear*/false), 7000);
+				setTimeout(() => statistics_saveStatistics(), 7000);
 			}
 		}
 		peerConnection.onicecandidate = async event => {
@@ -318,7 +300,7 @@ transient unit PeerNetwork
 		float pingTime = buffer.readFloat64
 		float pingPongTime = now - pingTime
 		let player = input.players.find.id == user.id
-			statistics.add "pingPongTime" userIndex:player.index, color:player.color, value:pingPongTime, set:2, isPerFrame:false
+			statistics.add "pingPongTime" userIndex:player.index, color:player.color, value:pingPongTime, set:3, isPerFrame:false
 				
 	// --------------------------------------------- Checksum ---------------------------------------------
 	
@@ -377,7 +359,8 @@ transient unit PeerNetwork
 			PeerNetwork_videoInputId = input_localUser.mediaStream.getVideoTracks()[0]?.getSettings().deviceId || PeerNetwork_devices.videoInput[0]?.deviceId
 			PeerNetwork_audioInputId = input_localUser.mediaStream.getAudioTracks()[0]?.getSettings().deviceId || PeerNetwork_devices.audioInput[0]?.deviceId
 			PeerNetwork_audioOutputId = PeerNetwork_devices.audioInput[0]?.deviceId
-			core_log("setupLocalMedia: success")
+			statistics_mediaTime = performance.now()
+			core_log("setupLocalMedia: success after "+(statistics_mediaTime - statistics_startTime)+" ms")
 			
 		} catch(error) {
 			core_log(error.message)
@@ -391,7 +374,8 @@ transient unit PeerNetwork
 		}
 	
 	js void setVideoInput: string videoInputId
-		if(PeerNetwork_videoInputId == videoInputId) return;
+		                   Player player
+		if(Platform_fastForward || input_localUser.id != player.id ||  PeerNetwork_videoInputId == videoInputId) return;
 		PeerNetwork_videoInputId = videoInputId;
 		
 		// Create local media stream
@@ -413,7 +397,8 @@ transient unit PeerNetwork
 		}
 			
 	js void setAudioInput: string audioInputId
-		if(PeerNetwork_audioInputId == audioInputId) return;
+		                   Player player
+		if(Platform_fastForward || input_localUser.id != player.id || PeerNetwork_audioInputId == audioInputId) return;
 		PeerNetwork_audioInputId = audioInputId;
 		
 		// Create local media stream
@@ -432,6 +417,8 @@ transient unit PeerNetwork
 		}
 			
 	js void setAudioOutput: string audioOutputId
+		                    Player player
+		if(Platform_fastForward || input_localUser.id != player.id || PeerNetwork_audioOutputId == audioOutputId) return;
 		PeerNetwork_audioOutputId = audioOutputId;
 		
 		// Update audio elements
@@ -474,7 +461,7 @@ transient unit PeerNetwork
 	
 	js object createVideoElement: object stream, bool local
 		let el = document.createElement("video")
-		el.style = "border-radius: 500px; object-fit: cover; position:absolute; top:0px; left:0px; z-index:10000; visibility:hidden; "+(local ? "transform: scaleX(-1)" : "")
+		el.style = "border-radius: 500px; object-fit: cover; position:absolute; top:0px; left:0px; z-index:10000; visibility:hidden; pointer-events: none; user-select: none; "+(local ? "transform: scaleX(-1)" : "")
 		el.autoplay = true
 		el.playsinline = true
 		el.controls = false

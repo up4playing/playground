@@ -1,23 +1,21 @@
 transient skipInit unit Platform
 	public inline js string url := location.href
-	public inline js string host := location.host
-	public protocolAndHost := host ? "https://"+host : "http://localhost"
+	public inline js string hostname := location.hostname
+	public protocolAndHost := hostname && hostname != "localhost" ? "https://"+hostname : "http://localhost"
 	public inline js int userAgent := navigator.userAgent.replace(/,/g," ")
 	public inline js float usedMemory := (performance.memory ? performance.memory.usedJSHeapSize : 0)
 	
 	js void setTitle: string title
 		document.title = title
 		
-	inline js void setFullscreen: value = true
-		                          Player forPlayer = null
-		if(!Platform_isStaging && !Platform_isDebug && (forPlayer == null || input_localUser?.id == forPlayer.id)) {
+	js async void setFullscreen: value = true
+		                         Player forPlayer = null
+		if(!Platform_isStaging && !Platform_isDebug && !Platform_fastForward && (forPlayer == null || input_localUser?.id == forPlayer.id)) {
 			try {
-				if(value) {
-					document.body.requestFullscreen()
-				} else {
-					document.exitFullscreen()
-				}
-			} catch {
+				if(value) await document.body.requestFullscreen()
+				else      await document.exitFullscreen()
+			} catch(error) {
+				core_onError(error)
 			}
 		}	
 		
