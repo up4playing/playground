@@ -21,6 +21,8 @@ immutable struct int
 	
 	inline js string toString := this.toString()
 		
+	implicit inline js Time toTime() this
+		
 	inline js int fromHex(string value) parseInt(value, 16)
 		
 	inline js string formatWithSpaces := this.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ")
