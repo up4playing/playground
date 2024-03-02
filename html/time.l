@@ -31,7 +31,7 @@ skipInit transient float Time
 	static inline js Time fromIsoString: string isoString
 		new Date(isoString).getTime()
 		
-	static inline js Time fromValues(int year, int month=1, int day=1, int hour = 0, int minute = 0, int second = 0) new Date(year, month-1, day, hour, minute, second).getTime()
+	static inline js Time fromValues(int year, int month=1, int day=1, int hour = 0, int minute = 0, int second = 0) new Date(year, (month)-1, day, hour, minute, second).getTime()
 		
 	inline js float toFloat() this
 	inline js string toString() this.toString()
@@ -239,7 +239,7 @@ js(Date) transient class Date
 			':' + pad(Math.abs(tzo) % 60);
 
 	static inline js Date fromTime(Time time) new Date(time)
-	static inline js Date fromValues(int year, int month=1, int day=1, int hour = 0, int minute = 0, int second = 0) new Date(year, month-1, day, hour, minute, second)
+	static inline js Date fromValues(int year, int month=1, int day=1, int hour = 0, int minute = 0, int second = 0) new Date(year, (month)-1, day, hour, minute, second)
 	
 	// Returns the real time, even during replay. Be careful: This can break the replay.
 	static inline js Date realtime := new Date()
