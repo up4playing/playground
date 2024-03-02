@@ -53,6 +53,12 @@ skipInit transient float Time
 	inline js int minutes      := Math.floor((this % 3600000) /   60000) 
 	inline js int hours        := Math.floor((this          ) / 3600000)
 		
+	inline js int totalSeconds      := Math.floor(this /      1000) 
+	inline js int totalMinutes      := Math.floor(this /     60000) 
+	inline js int totalHours        := Math.floor(this /   3600000)
+	inline js int totalDays         := Math.floor(this /  86400000)
+	inline js int totalWeeks        := Math.floor(this / 604800000)
+		
 	// (31.12.)
 	inline js string dayMonthString(language = Loca.language) new Date(this).dayMonthString(language)
 		
@@ -122,6 +128,18 @@ skipInit transient float Time
 	js static void startTimer() window._timerStart = performance.now()
 	js static void printTimer(string text) log(text+": "+(performance.now()-window._timerStart))
 	static inline js float preciseTime := performance.now()
+		
+	inline string minutesHoursDaysOrWeeksString() toMinutesHoursDaysOrWeeksString(this)
+		
+	static string toMinutesHoursDaysOrWeeksString: Time time
+		if time < 2 minutes: return "1 minute"
+		if time < 1 hours:   return "{time.totalMinutes} minutes"
+		if time < 2 hours:   return "1 hour"
+		if time < 1 days:    return "{time.totalHours} hours"
+		if time < 2 days:    return "1 day"
+		if time < 1 weeks:   return "{time.totalDays} days"
+		if time < 2 weeks:   return "1 week"
+		                     return "{time.totalWeeks} weeks"
 		
 enum TimeUnit
 	ms   // Milliseconds
