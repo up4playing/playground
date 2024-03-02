@@ -339,6 +339,10 @@ immutable class string
 		                       string target
 		this.replace(new RegExp(source, "g"), target)
 		
+	inline js string padEnd: int targetLength
+		                     string padString = " "
+		this.padEnd(targetLength, padString)
+		
 	js string get: int index
 		return index >= 0 ? this[index] : this[this.length+index]
 	
@@ -655,6 +659,12 @@ class List<T>
 	T random()
 		let randomInteger = math.randomInteger(length)
 		return get(randomInteger)
+		
+	T randomWhere: bool(T a) condition
+		let filteredList = this.where(condition)
+		int index = math.randomInteger(filteredList.length)
+		T item = filteredList[index]
+		return item
 	
 	// Remove a random item from the list and return it
 	T popRandom()

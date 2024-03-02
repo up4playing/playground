@@ -87,7 +87,7 @@ priority class Player
 	string name
 	Vector2 pointerPosition
 	
-	toString := color ? color.name : ""
+	toString := name or (color ? color.name : "")
 	
 	// Touch input
 	internal Touch[] touches
