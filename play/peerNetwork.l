@@ -37,37 +37,12 @@ transient skipInit unit PeerNetwork
 			// iceCandidatePoolSize: 10,
 		}
 		if(PeerNetwork_relayMode > 0) {
-			// --- Strato (1 Euro) ---
-			// options.iceServers.push({
-			// 	urls: "turn:81.169.197.127",
-			// 	username: "play-user-x8env28gx41odbxzwjyut2hx82jyzdk7qm6d-ok",
-			// 	credential: "9y4vm5vxj3uyqvc8wkyzrm26ygebxutkd52bymr8zsmy6qa8-ok"
-			// });
-			// --- Alwyzon (www1) ---
-			// options.iceServers.push({
-			// 	urls: "turn:94.177.8.204:39571",
-			// 	username: "play-user-x8env28gx41odbxzwjyut2oq871987syq8ovyuqp-alwyzon",
-			// 	credential: "qoy91n981vlplabb1873jdcgsouz2qm87qmmakqpc-alwyzon"
-			// });
-			// --- Alphahosting (www2) ---
-			// options.iceServers.push({
-			// 	urls: 'turn:89.22.121.145:39571',
-			// 	username: 'play-user-x8env28gx41odbxzwjyut2oq871987syq8ovyuqp-alphahosting',
-			// 	credential: 'qoy91n981vlplabb1873jdcgsouz2qm87qmmakqpc-alphahosting'
-			// });			
-			// --- Strato-v30 (www3) ---
-			// options.iceServers.push({
-			// 	urls: 'turn:85.214.133.53:39571',
-			// 	username: 'play-user-9q2gy75kmlp4qn7tb86pogsmtyp7qqo0n5-strato-v30',
-			// 	credential: '8q76nby32odjamuzbexi6eb2f1k9gc3my99o-strato-v30'
-			// });
-			
-			// --- Strato-Dedicated (www4) ---
+			// Alphahosting turn server
 			options.iceServers.push({
-				urls: 'turn:85.214.210.86:39571',
-				username: 'play-user-ichrnxgd73ounmreq9ykris74nmnkalap98xaq0oaalmmnchakj-strato-dedicated',
-				credential: 'iajqqmallki8c876a7a5a4asbwnxhdjpypolaaaskmoaqp0hhfgtcbnjsp00oqnmjnkwoai87c-strato-dedicated'
-			});
+				urls: 'turn:89.22.121.145:39571',
+				username: 'play-user-x8env28gx41odbxzwjyut2oq871987syq8ovyuqp-alphahosting',
+				credential: 'qoy91n981vlplabb1873jdcgsouz2qm87qmmakqpc-alphahosting'
+			});	
 		}
 		options.iceServers.push({
 			urls: [
@@ -84,7 +59,7 @@ transient skipInit unit PeerNetwork
 			core_log("<"+user.id+"> oniceconnectionstatechange " + peerConnection.iceConnectionState)
 			if(peerConnection.iceConnectionState == "disconnected") {
 				// Send logfiles to server
-				setTimeout(() => statistics_manuallyTriggerSend(-5, /*clear*/false), 7000);
+				setTimeout(() => statistics_saveStatistics(), 7000);
 			}
 		}
 		peerConnection.onicecandidate = async event => {
@@ -399,7 +374,8 @@ transient skipInit unit PeerNetwork
 		}
 	
 	js void setVideoInput: string videoInputId
-		if(PeerNetwork_videoInputId == videoInputId) return;
+		                   Player player
+		if(Platform_fastForward || input_localUser.id != player.id ||  PeerNetwork_videoInputId == videoInputId) return;
 		PeerNetwork_videoInputId = videoInputId;
 		
 		// Create local media stream
@@ -421,7 +397,8 @@ transient skipInit unit PeerNetwork
 		}
 			
 	js void setAudioInput: string audioInputId
-		if(PeerNetwork_audioInputId == audioInputId) return;
+		                   Player player
+		if(Platform_fastForward || input_localUser.id != player.id || PeerNetwork_audioInputId == audioInputId) return;
 		PeerNetwork_audioInputId = audioInputId;
 		
 		// Create local media stream
@@ -440,6 +417,8 @@ transient skipInit unit PeerNetwork
 		}
 			
 	js void setAudioOutput: string audioOutputId
+		                    Player player
+		if(Platform_fastForward || input_localUser.id != player.id || PeerNetwork_audioOutputId == audioOutputId) return;
 		PeerNetwork_audioOutputId = audioOutputId;
 		
 		// Update audio elements
