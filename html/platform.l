@@ -565,7 +565,7 @@ global unit Html
 		let node = div tag:"img", attributes, style, data, location
 		node.style.opacity = model == value ? 1 : .3
 		node.src = Platform.basePath + image.src
-		node.onclick = model = value; changeHandler; Html.render
+		node.onclick = model = value; changeHandler; refresh
 
 	global inline void radio: int model                         // The variable that holds the value. This will be updated when the user clicks the radio button
 		                      int value                         // The value of this state of the radio button
@@ -579,7 +579,7 @@ global unit Html
 		let node = div tag:"img", attributes, style, data, location
 		node.style.opacity = model == value ? 1 : .3
 		node.src = Platform.basePath + image.src
-		node.onclick = model = value; onInput; changeHandler; Html.render
+		node.onclick = model = value; onInput; changeHandler; refresh
 
 	global inline void toggle: bool model                        // The variable that holds the value. This will be updated when the user clicks the toggle button
 		                       Image[] images                    // A list with one image per state of the toggle
@@ -590,7 +590,7 @@ global unit Html
 		stored void() changeHandler = currentChangeHandler
 		let node = div tag:"img", attributes, style, data, location
 		node.src = Platform.basePath + images[model ? 1 : 0].src
-		node.onclick = model = !model; changeHandler; Html.render
+		node.onclick = model = !model; changeHandler; refresh
 
 	global inline void toggle: bool model                        // The variable that holds the value. This will be updated when the user clicks the toggle button
 		                       Image[] images                    // A list with one image per state of the toggle
@@ -602,7 +602,7 @@ global unit Html
 		stored void() changeHandler = currentChangeHandler
 		let node = div tag:"img", attributes, style, data, location
 		node.src = Platform.basePath + images[model ? 1 : 0].src
-		node.onclick = model = !model; onInput; changeHandler; Html.render
+		node.onclick = model = !model; onInput; changeHandler; refresh
 
 	// ---------- Input & TextArea ----------
 	
@@ -663,7 +663,7 @@ global unit Html
 		let node = div tag:"textarea", attributes, style, location
 		node.value = model
 		node.style.minHeight = 16px
-		node.style.overflow = "scroll"; node.style.height = 1px; node.style.height = node.scrollHeight px; node.style.overflow = "hidden"
-		node.oninput = model = node.value; node.style.overflow = "scroll"; node.style.height = 1px; node.style.height = node.scrollHeight px; node.style.overflow = "hidden"; changeHandler
+		node.style.overflow = Scroll; node.style.height = 1px; node.style.height = node.scrollHeight px; node.style.overflow = Hidden
+		node.oninput = model = node.value; node.style.overflow = Scroll; node.style.height = 1px; node.style.height = node.scrollHeight px; node.style.overflow = Hidden; changeHandler
 		if focused: node.focus
 
