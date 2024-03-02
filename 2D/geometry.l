@@ -554,19 +554,17 @@ transient immutable float Angle
 	inline js float in: AngleUnit unit
 		(unit==1 ? this*math_TwoPI : unit==2 ? this*360 : unit==3 ? this*400 : this)
 		
-	// inline js Angle rotateTowards: Angle value
-	// 	                           Angle speed = 0.01
-	// 	(this = Angle_rotatedTowards(this, value, speed))
+	inline js Angle rotateTowards: Angle value
+		                           Angle speed = 0.01
+		(this = Angle_rotatedTowards(this, value, speed))
 		
-	// static Angle rotatedTowards: Angle value
-	// 	                         Angle target
-	// 	                         Angle speed = 0.01
-	// 	target = target % 1
-	// 	let delta = (target - value) % 1
-	// 	if delta < .5: value = (value + speed) % 1; return value < target ? value : target
-	// 	else           value = (value - speed) % 1; return value > target ? value : target
-		
-		
+	static Angle rotatedTowards: Angle value
+		                         Angle target
+		                         Angle speed = 0.01
+		target = target % 1
+		let delta = (target - value) % 1
+		if delta < .5: value = (value + speed) % 1; return value < target ? value : target
+		else           value = (value - speed) % 1; return value > target ? value : target
 		
 enum AngleUnit
 	turns    // One full rotation is 1
