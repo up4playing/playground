@@ -1501,7 +1501,7 @@ global transient priority unit System
 		for(let i=0, _subject=subject, _len=_subject.length; i<_len; ++i) do(_subject[i], i)
 	
 	global inline js void for: string subject // Iterate over every character of this string
-		                       <- void(
+		                       <- inline void(
 		                           string it, // The current character of the string we are iterating over with the for-loop
 		                           int i      // The index of the current character of the string we are iterating over with the for-loop
 		                       ) do           // Do this for each character in the given string
