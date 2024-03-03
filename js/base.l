@@ -353,8 +353,21 @@ immutable class string
 		return this.substring(from >= 0 ? from : this.length+from, to >= 0 ? to : this.length+to)
 		
 	js string get: int from = 0
-		return this.substring(from >= 0 ? from : this.length+from)	
-	
+		return this.substring(from >= 0 ? from : this.length+from)
+		
+	string onlyLetters
+		let result = ""
+		for this
+			if "a" <= . <= "z" or "A" <= . <= "Z"
+				result += .
+		return result
+		
+	string onlyNumbers
+		let result = ""
+		for this
+			if "0" <= . <= "9"
+				result += .
+		return result
 		
 // A logical data type that can have the value true or false
 enum bool: false, true
@@ -1781,6 +1794,9 @@ global skipInit unit math
 	inline js float pow: float base
 		                 float exponent
 		Math.pow(base, exponent)
+		
+	inline js float log10: float value
+		Math.log10(value)
 		
 	inline js int shiftLeft: int value
 		                     int count

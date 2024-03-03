@@ -111,6 +111,8 @@ skipInit transient immutable float Time
 	inline js bool  operator >  (Time a, Time b) a>b
 	inline js bool  operator >= (Time a, Time b) a>=b
 	
+	inline js Time  operator +=  (Time a, Time b) a += b
+	
 	static measure: void() do
 		let startTime = preciseTime
 		do
