@@ -432,6 +432,15 @@ global unit Html
 		         SourceCodeLocation location
 		return div text, tag:"span", attributes, style, location
 		
+	global button: string text = null
+		           void(HtmlEvent ev) onClick = null // Called when the user clicks the button
+		           expand Attributes attributes = {} // The attributes of the HTML element
+		           expand Style style = null         // The css style of the HTML element
+		           SourceCodeLocation location
+		let node = div text, tag:"button", attributes, style, location
+		node.onclick = onClick
+		return node
+		
 // 	global lottie
 // 	<script type="module" src="https://unpkg.com/@dotlottie/player-component@1.0.0/dist/dotlottie-player.js"></script>
 // <dotlottie-player autoplay controls loop mode="normal"
