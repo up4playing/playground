@@ -327,9 +327,6 @@ immutable class string
 		if(dot != -1) return this.substring(dot+1)
 		else          return ""
 		
-	inline js string capitalizeFirstCharacter
-		(this.length > 0 ? this[0].toUpperCase() + this.substring(1) : this)
-		
 	inline js string interleaveWith: int charCode
 		this.split("").join(String.fromCharCode(charCode))
 		
@@ -337,9 +334,9 @@ immutable class string
 		                      nocolon string with
 		(this = this.replace(new RegExp(value, "g"), with))
 		
-	inline js string replaced: string source
-		                       string target
-		this.replace(new RegExp(source, "g"), target)
+	js string replaced: string value
+		                nocolon string with
+		return this.replace(new RegExp(value, "g"), $with)
 		
 	inline js string padEnd: int targetLength
 		                     string padString = " "
@@ -354,6 +351,18 @@ immutable class string
 		
 	js string get: int from = 0
 		return this.substring(from >= 0 ? from : this.length+from)
+		
+	js string capitalizeFirstWord
+		return this.length > 0 ? this[0].toUpperCase() + this.substring(1) : this
+		
+	string capitalizeWords
+		let result = ""
+		let prevChar = " "
+		for this
+			if prevChar == " " and ("a" <= . <= "z"): result += .toUpperCase
+			else                                      result += .
+			prevChar = .
+		return result
 		
 	string onlyLetters
 		let result = ""
