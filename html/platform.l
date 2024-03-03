@@ -399,12 +399,14 @@ global unit Html
 		return div attributes, style, children, location
 
 	global img: Image image                       // The image to display
+		        void(HtmlEvent ev) onClick = null // Called when the user clicks the image
 		        expand Attributes attributes = {} // The attributes of the HTML element
 		        expand Style style = null         // The css style of the HTML element
 		        dynamic data = null               // The data attributes of the element
 		        SourceCodeLocation location
 		let node = div tag:"img", attributes, style, data, location
 		node.src = Platform.basePath + image.src
+		node.onclick = onClick
 		return node
 
 	global img: string src                        // The file of the image to display
