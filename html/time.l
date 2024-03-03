@@ -129,15 +129,15 @@ skipInit transient float Time
 	js static void printTimer(string text) log(text+": "+(performance.now()-window._timerStart))
 	static inline js float preciseTime := performance.now()
 		
-	inline string minutesHoursDaysOrWeeksString() toMinutesHoursDaysOrWeeksString(this)
+	inline string minutesHoursDaysOrWeeksString(showWeeksAfterDays = 31) toMinutesHoursDaysOrWeeksString(this, showWeeksAfterDays)
 		
-	static string toMinutesHoursDaysOrWeeksString: Time time
+	private static string toMinutesHoursDaysOrWeeksString: Time time, showWeeksAfterDays = 31
 		if time < 2 minutes: return "1 minute"
 		if time < 1 hours:   return "{time.totalMinutes} minutes"
 		if time < 2 hours:   return "1 hour"
 		if time < 1 days:    return "{time.totalHours} hours"
 		if time < 2 days:    return "1 day"
-		if time < 1 weeks:   return "{time.totalDays} days"
+		if time < showWeeksAfterDays days: return "{time.totalDays} days"
 		if time < 2 weeks:   return "1 week"
 		                     return "{time.totalWeeks} weeks"
 		
