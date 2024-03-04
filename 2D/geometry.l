@@ -361,7 +361,7 @@ struct IntVector2
 		return new Vector2(x * ivalue + target.x * value, y * ivalue + target.y * value)
 	
 	// The distance to another vector
-	distanceTo: IntVector2 value // The second vector
+	odistanceTo: IntVector2 value // The second vector
 		let x = x - value.x
 		let y = y - value.y
 		return math.sqrt(x*x + y*y)
@@ -375,6 +375,12 @@ struct IntVector2
 	// The distance to another vector along axes at right angles
 	manhattanDistanceTo: IntVector2 value // The second vector
 		return math.abs(x - value.x) + math.abs(y - value.y)
+		
+	// Returns whether the vector is within a given rectangle
+	isInsideRectangle: IntVector2 center, // The center of the rectangle
+		               IntVector2 size,   // The size of the rectangle
+		return x >= center.x - size.x/2 && x < center.x + size.x/2
+		    && y >= center.y - size.y/2 && y < center.y + size.y/2		
 
 	// The angle to another vector in turns (one full rotation is 1)
 	angleTo: IntVector2 value // The second vector
