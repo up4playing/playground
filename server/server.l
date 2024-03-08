@@ -32,10 +32,10 @@ global skipInit unit math
 	// Generates a random integer
 	global js int randomInteger: int min // The inclusive lower bound of the random integer
 		                         int max // The exclusive upper bound of the random integer
-		return min + math.floor(math.random() * (max-min))
+		return min + Math.floor(Math.random() * (max-min))
 	
 	global js int randomInteger: int max = 2147483647 // The exclusive upper bound of the random integer
-		return math.floor(math.random() * max)
+		return Math.floor(Math.random() * max)
 	
 	// Generates a random float
 	global inline js int randomFloat
