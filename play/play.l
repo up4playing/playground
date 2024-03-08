@@ -39,7 +39,8 @@ transient skipInit global unit graphics
 		                         hotkey = Key.None                    // This keyboard shortcut will execute the onTouch handler
 		                         implicit layer = 0                   // Higher layers are drawn in front of lower layers
 		                         alpha = 1.0                          // The opacity of the button (0: fully transparent, 1: fully visible)
+		                         textSize = 24
 		                         enabled = true                       // When not enabled, the button isn't touchable and is drawn transparently (50% by default)
 		                         void(Touch touch) onTouch = null     // Execute this code when the user touches or clicks the button or presses the hotkey
 	                             SourceCodeLocation location
-		drawButton LargeButton, accentImage:LargeButtonAccent, textColorOnHover:Black, textSize:24, text, position, accentColor, visibleFor, touchableBy, hotkey, layer, alpha, enabled, onTouch, location
+		drawButton LargeButton, accentImage:LargeButtonAccent, textColorOnHover:Black, textSize, text, position, accentColor, visibleFor, touchableBy, hotkey, layer, alpha, enabled, onTouch, location
