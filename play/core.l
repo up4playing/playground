@@ -13,6 +13,7 @@ transient skipInit unit core
 	bool drawPointsForTesting = false
 	Time sendStatisticsEvery = 2 minutes
 	bool showVideoForStaging = true
+	bool audioForStaging = false
 	bool muteInvisibleUsers = false
 	
 	SendInputsMode sendInputsMode = Peer
@@ -609,7 +610,7 @@ transient skipInit unit core
 		graphics_updateBaseMatrix();
 		
 	private js void setupVideoAndNetwork 
-		await PeerNetwork_setupLocalMedia(/*enableVideo*/!Platform_isStaging || core_showVideoForStaging, /*enableAudio*/!Platform_isStaging)
+		await PeerNetwork_setupLocalMedia(/*enableVideo*/!Platform_isStaging || core_showVideoForStaging, /*enableAudio*/!Platform_isStaging || core_audioForStaging)
 		ServerNetwork_setup()
 		
 	internal storeUserId

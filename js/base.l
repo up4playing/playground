@@ -50,12 +50,20 @@ immutable struct int
 	inline js int bitwiseAnd: implicit int value // The value to perform the bitwise "and" with
 		(this & value)
 	
+	// Check if a certain bit it set
+	inline js bool isSet: implicit int value // The value of the bits to check (for example 1, 2, 4, 8, 16, ...)
+		(this & value)
+	
+	// Check if a certain bit it not set
+	inline js bool isNotSet: implicit int value // The value of the bits to check (for example 1, 2, 4, 8, 16, ...)
+		!(this & value)
+	
 	// Set a specific bit of the integer
-	inline js int setBit: implicit int bitIndex // The index of the bit to set
+	inline js int setFlag: implicit int bitIndex // The index of the bit to set
 		(this |= (1 << bitIndex))
 	
 	// Clear a specific bit of the integer
-	inline js int clearBit: implicit int bitIndex // The index of the bit to clear
+	inline js int clearFlag: implicit int bitIndex // The index of the bit to clear
 		(this &= ~(1 << bitIndex))
 	
 	// Limit the value to a specific range
@@ -377,6 +385,13 @@ immutable class string
 			if "0" <= . <= "9"
 				result += .
 		return result
+		
+	static generateRandomToken: int length = 16
+		string chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+		string token
+		for length
+			token += chars[math.randomInteger chars.length-1]
+		return token
 		
 // A logical data type that can have the value true or false
 enum bool: false, true
