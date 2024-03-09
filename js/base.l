@@ -386,6 +386,13 @@ immutable class string
 				result += .
 		return result
 		
+	static generateRandomToken: int length = 16
+		string chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+		string token
+		for length
+			token += chars[math.randomInteger chars.length-1]
+		return token
+		
 // A logical data type that can have the value true or false
 enum bool: false, true
 		
