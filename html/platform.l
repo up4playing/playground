@@ -423,8 +423,9 @@ global unit Html
 		         expand Attributes attributes = {} // The attributes of the HTML element
 		         expand Style style = null         // The css style of the HTML element
 		         SourceCodeLocation location
-		attributes.href = href
-		return div text, tag:"a", attributes, style, location
+		let node = div text, tag:"a", attributes, style, location
+		node.href = href
+		return node
 
 	global span: string text = null
 		         expand Attributes attributes = {} // The attributes of the HTML element

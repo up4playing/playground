@@ -17,6 +17,7 @@ class Node
 	Node nextSibling
 	Node parentNode
 	float scrollHeight
+	string href
 	
 	bool muted
 	bool autoplay
