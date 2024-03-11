@@ -1692,7 +1692,9 @@ global transient priority unit System
 	// Prints a message to the console
 	global js void print: logstring text // The text, variables or expressions to print
 		                  SourceCodeLocation location
-		(location ? log(text, location.start, location.file) : log(text))
+		let now = new Date()
+		let time = now.getDate().toLocaleString('en-US', {minimumIntegerDigits:2})+"."+(now.getMonth()+1).toLocaleString('en-US', {minimumIntegerDigits:2})+"."+now.getFullYear()+" "+now.getHours().toLocaleString('en-US', {minimumIntegerDigits:2})+":"+now.getMinutes().toLocaleString('en-US', {minimumIntegerDigits:2})+":"+now.getSeconds().toLocaleString('en-US', {minimumIntegerDigits:2})+"."+now.getMilliseconds().toLocaleString('en-US', {minimumIntegerDigits:3});
+		(location ? log(time + " " +text, location.start, location.file) : log(time + " " +text))
 		
 	js void log: any value
 		console.log(value)
