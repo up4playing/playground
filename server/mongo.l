@@ -5,7 +5,7 @@ unit db
 		var mongodb = require('mongodb')
 		var mongoClient = mongodb.MongoClient
 		window.ObjectID = mongodb.ObjectID
-		var mongo = await mongoClient.connect("mongodb://0.0.0.0:27099")
+		var mongo = await mongoClient.connect("mongodb://"+(process.env.databaseHost || "0.0.0.0:27099"))
 		db_db = mongo.db(database);
 		
 	js inline Collection collection: string name
