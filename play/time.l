@@ -33,7 +33,7 @@ skipInit transient immutable float Time
 	static inline js Time fromIsoString: string isoString
 		new Date(isoString).getTime()
 		
-	inline js float toFloat() this
+	inline js implicit float toFloat() this
 	inline js string toString() this.toString()
 		
 	// Returns true if the time is not zero
