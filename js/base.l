@@ -1463,6 +1463,11 @@ global transient priority unit System
 		                      inline label nocolon void() else // Do this if the condition is false
 		if(condition) then() @else else()
 			
+	global inline js T if: implicit bool condition
+		                   T then
+		                   label nocolon T else
+		(condition ? then : else)
+			
 	// Executes code as long as a given condition is true
 	global inline js void while: implicit bool condition // The condition to check
 		                         inline void() do        // Do this while to condition is true
