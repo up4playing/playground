@@ -1,5 +1,21 @@
 // A number stored as a 32-bit integer
 immutable struct int
+	inline int + int value
+	inline float + float value
+	
+	inline int - int value
+	inline float - float value
+	
+	inline int * int value
+	inline float * float value
+	
+	inline float / int value
+	inline float / float value
+	
+	inline int += int value
+	inline int -= int value
+	inline int *= int value
+	
 	// The largest possible integer value
 	const maxValue = 2147483647
 	
@@ -19,7 +35,7 @@ immutable struct int
 	// Returns true if the integer is not zero
 	inline js bool toBool := this
 	
-	inline js string toString := this?.toString()
+	inline js implicit string toString := this?.toString()
 		
 	implicit inline js Time toTime() this
 		
@@ -145,6 +161,21 @@ immutable struct int
 	
 // A number stored as a double precision 64-bit floating point value
 immutable struct float
+	inline float + float value
+	inline float - float value
+	inline float / float value
+	inline float * float value
+	
+	inline float += float value
+	inline float -= float value
+	inline float /= float value
+	inline float *= float value
+	
+	inline bool < float value
+	inline bool <= float value
+	inline bool > float value
+	inline bool >= float value
+	
 	// The largest possible floating point value
 	const inline js float maxValue := Number.MAX_VALUE
 	
@@ -152,9 +183,6 @@ immutable struct float
 	const inline js float minValue := -Number.MAX_VALUE
 	
 	const inline js float infinity := Number.POSITIVE_INFINITY
-
-	inline js float += int value: this += value
-	inline js float += float value: this += value
 	
 	inline js float operator ** (float a, float b) 
 		Math.pow(a,b)
@@ -271,6 +299,14 @@ immutable EaseFunction
 // A sequence of characters
 js String
 immutable class string
+	inline string + string value
+	inline string += string value
+	
+	inline string < string value
+	inline string <= string value
+	inline string > string value
+	inline string >= string value
+	
 	// Returns the number of characters in the string
 	inline js int length := this.length
 	

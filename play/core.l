@@ -15,7 +15,8 @@ transient skipInit unit core
 	bool showVideoForStaging = true
 	bool audioForStaging = false
 	bool muteInvisibleUsers = false
-	
+	bool testLobby = false                // Start in the lobby for testing
+		
 	SendInputsMode sendInputsMode = Peer
 	internal const targetFps = 30
 	const targetFrameTime = 1000/targetFps
@@ -111,7 +112,7 @@ transient skipInit unit core
 		audio.stop
 		initAll
 		
-		if !startInLobby or Platform.isDebug
+		if !startInLobby or testLobby
 			// When the developer changed Platform.userCount, add or remove internal users accordingly
 			for input.internalUsers.length to Platform.userCount
 				input.internalUsers.add {id:i, local:true, collectInputs:true, active:true}
@@ -399,7 +400,7 @@ transient skipInit unit core
 		graphics.startFrame
 		if draw and not Platform.waitingForInitialData
 			if input.showPointers or Platform.mode == Play
-				players.each drawPointer ., Platform.isDebug ? Local : input.showPointersMode
+				players.each drawPointer ., Platform.isDebug ? LocalAndRemote : input.showPointersMode
 		audio.startFrame
 		
 		if Platform.showDebugInfo

@@ -17,7 +17,7 @@ struct Vector2
 	static inline Vector2 zero() Vector2(0, 0, null)
 		
 	// A string representation of the vector
-	string toString := "({x} {y})"
+	implicit string toString := "({x} {y})"
 	
 	// Returns true if the vector is not equal to Vector2.none
 	bool toBool := (x != float.infinity || y != float.infinity)
@@ -25,25 +25,20 @@ struct Vector2
 	// Creates a copy of the vector with the same values
 	Vector2 clone() := {x, y, location}
 		
-	Vector2 operator = (Vector2 a, Vector2 b) a.x = b.x; a.y = b.y; a.location = b.location; return a
-	
-	Vector2 operator + (Vector2 a, Vector2 b) return {a.x+b.x, a.y+b.y, a.location || b.location ? new SourceCodeLocation(null, 0, 0, a.location, b.location) : null}
-	Vector2 operator - (Vector2 a, Vector2 b) return {a.x-b.x, a.y-b.y, a.location || b.location ? new SourceCodeLocation(null, 0, 0, a.location, b.location) : null}
-	
-	Vector2 operator * (Vector2 a, Vector2 b) return {a.x*b.x, a.y*b.y, a.location || b.location ? new SourceCodeLocation(null, 0, 0, a.location, b.location) : null}
-	Vector2 operator * (Vector2 a, float b)   return {a.x*b, a.y*b, a.location}
-	Vector2 operator * (Vector2 a, Time b)    return {cast a.x*b, cast a.y*b, a.location}
-	Vector2 operator * (float a, Vector2 b)   return {a*b.x, a*b.y, b.location}
-	Vector2 operator * (Vector2 vector, Matrix2D matrix)
-		return {
-			matrix.m0 * vector.x + matrix.m2 * vector.y + matrix.m4,
-			matrix.m1 * vector.x + matrix.m3 * vector.y + matrix.m5,
-			vector.location
-		}
+	Vector2 assign Vector2 other: x = other.x; y = other.y; location = other.location; return this
 		
-	Vector2 operator / (Vector2 a, Vector2 b) return {a.x/b.x, a.y/b.y, a.location || b.location ? new SourceCodeLocation(null, 0, 0, a.location, b.location) : null}
-	Vector2 operator / (Vector2 a, float b)   return {a.x/b, a.y/b, a.location}
-	Vector2 operator / (Vector2 vector, Matrix2D matrix)
+	// Vector2 operator = (Vector2 a, Vector2 b) a.x = b.x; a.y = b.y; a.location = b.location; return a
+	
+	Vector2 + Vector2 other:   return {x + other.x, y + other.y, location || other.location ? new SourceCodeLocation(null, 0, 0, location, other.location) : null}
+	Vector2 - Vector2 other:   return {x - other.x, y - other.y, location || other.location ? new SourceCodeLocation(null, 0, 0, location, other.location) : null}
+	
+	Vector2 * Vector2 other:   return {x * other.x, y * other.y, location || other.location ? new SourceCodeLocation(null, 0, 0, location, other.location) : null}
+	Vector2 * float other:     return {x * other,   y * other,   location}
+	Vector2 * Matrix2D matrix: return {matrix.m0 * x + matrix.m2 * y + matrix.m4, matrix.m1 * x + matrix.m3 * y + matrix.m5, location}
+	
+	Vector2 / Vector2 other:   return {x / other.x, y / other.y, location || other.location ? new SourceCodeLocation(null, 0, 0, location, other.location) : null}
+	Vector2 / float other:     return {x / other,   y / other,   location}
+	Vector2 / Matrix2D matrix
 		var aa = matrix.m0, ab = matrix.m1, ac = matrix.m2, ad = matrix.m3, atx = matrix.m4, aty = matrix.m5
 
 		var det = aa * ad - ab * ac
@@ -51,43 +46,100 @@ struct Vector2
 		det = 1.0 / det
 		
 		return {
-			( ad * det) * vector.x + (-ac * det) * vector.y + ((ac * aty - ad * atx) * det),
-			(-ab * det) * vector.x + ( aa * det) * vector.y + ((ab * atx - aa * aty) * det),
-			vector.location
-		}			
+			( ad * det) * x + (-ac * det) * y + ((ac * aty - ad * atx) * det),
+			(-ab * det) * x + ( aa * det) * y + ((ab * atx - aa * aty) * det),
+			location
+		}	
+				
+	Vector2 % Vector2 other:   return {x % other.x, y % other.y, location || other.location ? new SourceCodeLocation(null, 0, 0, location, other.location) : null}
+	Vector2 % float other:     return {x % other,   y % other,   location}
+		
+	Vector2 += Vector2 other: x += other.x; y += other.y; if(location || other.location) {location = new SourceCodeLocation(null, 0, 0, location, other.location)} return this
+	Vector2 -= Vector2 other: x -= other.x; y -= other.y; if(location || other.location) {location = new SourceCodeLocation(null, 0, 0, location, other.location)} return this
 	
-	Vector2 operator % (Vector2 a, Vector2 b) return {((a.x % b.x) + b.x) % b.x, ((a.y % b.y) + b.y) % b.y, a.location || b.location ? new SourceCodeLocation(null, 0, 0, a.location, b.location) : null}
-	Vector2 operator % (Vector2 a, float b)   return {((a.x % b) + b) % b, ((a.y % b) + b) % b, a.location}
+	Vector2 *= Vector2 other: x *= other.x; y *= other.y; if(location || other.location) {location = new SourceCodeLocation(null, 0, 0, location, other.location)} return this
+	Vector2 *= float other:   x *= other;   y *= other; return this
 	
-	Vector2 operator += (Vector2 a, Vector2 b) a.x += b.x; a.y += b.y; if(a.location || b.location) {a.location = new SourceCodeLocation(null, 0, 0, a.location, b.location)} return a
-	Vector2 operator -= (Vector2 a, Vector2 b) a.x -= b.x; a.y -= b.y; if(a.location || b.location) {a.location = new SourceCodeLocation(null, 0, 0, a.location, b.location)} return a
+	Vector2 /= Vector2 other: x /= other.x; y /= other.y; if(location || other.location) {location = new SourceCodeLocation(null, 0, 0, location, other.location)} return this
+	Vector2 /= float other:   x /= other;   y /= other; return this
 	
-	Vector2 operator *= (Vector2 a, Vector2 b) a.x *= b.x; a.y *= b.y; if(a.location || b.location) {a.location = new SourceCodeLocation(null, 0, 0, a.location, b.location)} return a
-	Vector2 operator *= (Vector2 a, float b) a.x *= b; a.y *= b; return a
+	// Vector2 operator + (Vector2 a, Vector2 b) return {a.x+b.x, a.y+b.y, a.location || b.location ? new SourceCodeLocation(null, 0, 0, a.location, b.location) : null}
+	// Vector2 operator - (Vector2 a, Vector2 b) return {a.x-b.x, a.y-b.y, a.location || b.location ? new SourceCodeLocation(null, 0, 0, a.location, b.location) : null}
 	
-	Vector2 operator /= (Vector2 a, Vector2 b) a.x /= b.x; a.y /= b.y; if(a.location || b.location) {a.location = new SourceCodeLocation(null, 0, 0, a.location, b.location)} return a
-	Vector2 operator /= (Vector2 a, float b) a.x /= b; a.y /= b; return a
+	// Vector2 operator * (Vector2 a, Vector2 b) return {a.x*b.x, a.y*b.y, a.location || b.location ? new SourceCodeLocation(null, 0, 0, a.location, b.location) : null}
+	// Vector2 operator * (Vector2 a, float b)   return {a.x*b, a.y*b, a.location}
+	// Vector2 operator * (Vector2 a, Time b)    return {cast a.x*b, cast a.y*b, a.location}
+	// Vector2 operator * (float a, Vector2 b)   return {a*b.x, a*b.y, b.location}
+	// Vector2 operator * (Vector2 vector, Matrix2D matrix)
+	// 	return {
+	// 		matrix.m0 * vector.x + matrix.m2 * vector.y + matrix.m4,
+	// 		matrix.m1 * vector.x + matrix.m3 * vector.y + matrix.m5,
+	// 		vector.location
+	// 	}
+		
+	// Vector2 operator / (Vector2 a, Vector2 b) return {a.x/b.x, a.y/b.y, a.location || b.location ? new SourceCodeLocation(null, 0, 0, a.location, b.location) : null}
+	// Vector2 operator / (Vector2 a, float b)   return {a.x/b, a.y/b, a.location}
+	// Vector2 operator / (Vector2 vector, Matrix2D matrix)
+	// 	var aa = matrix.m0, ab = matrix.m1, ac = matrix.m2, ad = matrix.m3, atx = matrix.m4, aty = matrix.m5
+
+	// 	var det = aa * ad - ab * ac
+	// 	if(det == 0) return {0,0,null}
+	// 	det = 1.0 / det
+		
+	// 	return {
+	// 		( ad * det) * vector.x + (-ac * det) * vector.y + ((ac * aty - ad * atx) * det),
+	// 		(-ab * det) * vector.x + ( aa * det) * vector.y + ((ab * atx - aa * aty) * det),
+	// 		vector.location
+	// 	}			
 	
-	bool operator == (Vector2 a, Vector2 b) return a.x == b.x && a.y == b.y
-	bool operator != (Vector2 a, Vector2 b) return a.x != b.x || a.y != b.y
+	// Vector2 operator % (Vector2 a, Vector2 b) return {((a.x % b.x) + b.x) % b.x, ((a.y % b.y) + b.y) % b.y, a.location || b.location ? new SourceCodeLocation(null, 0, 0, a.location, b.location) : null}
+	// Vector2 operator % (Vector2 a, float b)   return {((a.x % b) + b) % b, ((a.y % b) + b) % b, a.location}
 	
-	bool operator == (Vector2 a, IntVector2 b) return a.x == b.x && a.y == b.y
-	bool operator != (Vector2 a, IntVector2 b) return a.x != b.x || a.y != b.y
+	// Vector2 operator += (Vector2 a, Vector2 b) a.x += b.x; a.y += b.y; if(a.location || b.location) {a.location = new SourceCodeLocation(null, 0, 0, a.location, b.location)} return a
+	// Vector2 operator -= (Vector2 a, Vector2 b) a.x -= b.x; a.y -= b.y; if(a.location || b.location) {a.location = new SourceCodeLocation(null, 0, 0, a.location, b.location)} return a
 	
-	bool operator == (IntVector2 a, Vector2 b) return b.x == a.x && b.y == a.y
-	bool operator != (IntVector2 a, Vector2 b) return b.x != a.x || b.y != a.y
+	// Vector2 operator *= (Vector2 a, Vector2 b) a.x *= b.x; a.y *= b.y; if(a.location || b.location) {a.location = new SourceCodeLocation(null, 0, 0, a.location, b.location)} return a
+	// Vector2 operator *= (Vector2 a, float b) a.x *= b; a.y *= b; return a
 	
-	bool operator >  (Vector2 a, Vector2 b) return a.x >  b.x && a.y >  b.y
-	bool operator >= (Vector2 a, Vector2 b) return a.x >= b.x && a.y >= b.y
-	bool operator <  (Vector2 a, Vector2 b) return a.x <  b.x && a.y <  b.y
-	bool operator <= (Vector2 a, Vector2 b) return a.x <= b.x && a.y <= b.y
+	// Vector2 operator /= (Vector2 a, Vector2 b) a.x /= b.x; a.y /= b.y; if(a.location || b.location) {a.location = new SourceCodeLocation(null, 0, 0, a.location, b.location)} return a
+	// Vector2 operator /= (Vector2 a, float b) a.x /= b; a.y /= b; return a
 	
-	bool operator == (Vector2 a, float length) let x = a.x, y = a.y; return math.sqrt(x*x + y*y) == length
-	bool operator != (Vector2 a, float length) let x = a.x, y = a.y; return math.sqrt(x*x + y*y) != length
-	bool operator >  (Vector2 a, float length) let x = a.x, y = a.y; return math.sqrt(x*x + y*y) >  length
-	bool operator >= (Vector2 a, float length) let x = a.x, y = a.y; return math.sqrt(x*x + y*y) >= length
-	bool operator <  (Vector2 a, float length) let x = a.x, y = a.y; return math.sqrt(x*x + y*y) <  length
-	bool operator <= (Vector2 a, float length) let x = a.x, y = a.y; return math.sqrt(x*x + y*y) <= length
+	bool == Vector2 other: return x == other.x && y == other.y
+	bool != Vector2 other: return x != other.x || y != other.y
+		
+	bool == IntVector2 other: return x == other.x && y == other.y
+	bool != IntVector2 other: return x != other.x || y != other.y
+		
+	bool <  Vector2 other: return x <  other.x && y <  other.y
+	bool <= Vector2 other: return x <= other.x && y <= other.y
+	bool >  Vector2 other: return x >  other.x && y >  other.y
+	bool >= Vector2 other: return x >= other.x && y >= other.y
+	
+	bool <  float length: return math.sqrt(x*x + y*y) <  length
+	bool <= float length: return math.sqrt(x*x + y*y) <= length
+	bool >  float length: return math.sqrt(x*x + y*y) >  length
+	bool >= float length: return math.sqrt(x*x + y*y) >= length
+		
+	// bool operator == (Vector2 a, Vector2 b) return a.x == b.x && a.y == b.y
+	// bool operator != (Vector2 a, Vector2 b) return a.x != b.x || a.y != b.y
+	
+	// bool operator == (Vector2 a, IntVector2 b) return a.x == b.x && a.y == b.y
+	// bool operator != (Vector2 a, IntVector2 b) return a.x != b.x || a.y != b.y
+	
+	// bool operator == (IntVector2 a, Vector2 b) return b.x == a.x && b.y == a.y
+	// bool operator != (IntVector2 a, Vector2 b) return b.x != a.x || b.y != a.y
+	
+	// bool operator >  (Vector2 a, Vector2 b) return a.x >  b.x && a.y >  b.y
+	// bool operator >= (Vector2 a, Vector2 b) return a.x >= b.x && a.y >= b.y
+	// bool operator <  (Vector2 a, Vector2 b) return a.x <  b.x && a.y <  b.y
+	// bool operator <= (Vector2 a, Vector2 b) return a.x <= b.x && a.y <= b.y
+	
+	// bool operator == (Vector2 a, float length) let x = a.x, y = a.y; return math.sqrt(x*x + y*y) == length
+	// bool operator != (Vector2 a, float length) let x = a.x, y = a.y; return math.sqrt(x*x + y*y) != length
+	// bool operator >  (Vector2 a, float length) let x = a.x, y = a.y; return math.sqrt(x*x + y*y) >  length
+	// bool operator >= (Vector2 a, float length) let x = a.x, y = a.y; return math.sqrt(x*x + y*y) >= length
+	// bool operator <  (Vector2 a, float length) let x = a.x, y = a.y; return math.sqrt(x*x + y*y) <  length
+	// bool operator <= (Vector2 a, float length) let x = a.x, y = a.y; return math.sqrt(x*x + y*y) <= length
 	
 	// The length of the vector
 	length := math.sqrt(x * x + y * y)
@@ -266,7 +318,7 @@ struct Vector2
 	deserialize: Buffer buffer
 		x = buffer.readFloat64
 		y = buffer.readFloat64
-				
+		
 // A 2D vector comprised of an integer x and y coordinate
 struct IntVector2
 	int x // The x-coordinate of the vector
@@ -283,39 +335,77 @@ struct IntVector2
 	IntVector2 clone := {x, y, location}
 		
 	// A string representation of the vector
-	string toString := "({x} {y})"
+	implicit string toString := "({x} {y})"
 	
 	// Returns true if the vector is not equal to IntVector2.none
 	bool toBool := (x != int.minValue || y != int.minValue)
 	
 	implicit Vector2 toVector2 := {x, y, location}
 	
-	IntVector2 operator = (IntVector2 a, IntVector2 b) a.x = b.x; a.y = b.y; a.location = b.location; return a
-	
-	IntVector2 operator + (IntVector2 a, IntVector2 b) return {a.x+b.x, a.y+b.y, a.location || b.location ? new SourceCodeLocation(null, 0, 0, a.location, b.location) : null}
-	IntVector2 operator - (IntVector2 a, IntVector2 b) return {a.x-b.x, a.y-b.y, a.location || b.location ? new SourceCodeLocation(null, 0, 0, a.location, b.location) : null}
-	
-	IntVector2 operator * (IntVector2 a, IntVector2 b) return {a.x*b.x, a.y*b.y, a.location || b.location ? new SourceCodeLocation(null, 0, 0, a.location, b.location) : null}
-	IntVector2 operator * (IntVector2 a, int b)   return {a.x*b, a.y*b, a.location}
-	IntVector2 operator * (int a, IntVector2 b)   return {a*b.x, a*b.y, b.location}
+	IntVector2 assign IntVector2 other: x = other.x; y = other.y; location = other.location; return this
 		
-	Vector2 operator / (IntVector2 a, IntVector2 b) return {a.x/b.x, a.y/b.y, a.location || b.location ? new SourceCodeLocation(null, 0, 0, a.location, b.location) : null}
-	Vector2 operator / (IntVector2 a, float b)   return {a.x/b, a.y/b, a.location}
+	IntVector2 + IntVector2 other:   return {x + other.x, y + other.y, location || other.location ? new SourceCodeLocation(null, 0, 0, location, other.location) : null}
+	IntVector2 - IntVector2 other:   return {x - other.x, y - other.y, location || other.location ? new SourceCodeLocation(null, 0, 0, location, other.location) : null}
 	
-	IntVector2 operator % (IntVector2 a, IntVector2 b) return {((a.x % b.x) + b.x) % b.x, ((a.y % b.y) + b.y) % b.y, a.location || b.location ? new SourceCodeLocation(null, 0, 0, a.location, b.location) : null}
-	IntVector2 operator % (IntVector2 a, int b)   return {((a.x % b) + b) % b, ((a.y % b) + b) % b, a.location}
+	IntVector2 * IntVector2 other:   return {x * other.x, y * other.y, location || other.location ? new SourceCodeLocation(null, 0, 0, location, other.location) : null}
+	Vector2    * Vector2 other:      return {x * other.x, y * other.y, location || other.location ? new SourceCodeLocation(null, 0, 0, location, other.location) : null}
+	IntVector2 * int other:          return {x * other,   y * other, location}
+	Vector2    * float other:        return {x * other,   y * other, location}
 	
-	IntVector2 operator += (IntVector2 a, IntVector2 b) a.x += b.x; a.y += b.y; if(a.location || b.location) {a.location = new SourceCodeLocation(null, 0, 0, a.location, b.location)} return a
-	IntVector2 operator -= (IntVector2 a, IntVector2 b) a.x -= b.x; a.y -= b.y; if(a.location || b.location) {a.location = new SourceCodeLocation(null, 0, 0, a.location, b.location)} return a
-	IntVector2 operator *= (IntVector2 a, IntVector2 b) a.x *= b.x; a.y *= b.y; if(a.location || b.location) {a.location = new SourceCodeLocation(null, 0, 0, a.location, b.location)} return a
-	IntVector2 operator /= (IntVector2 a, IntVector2 b) a.x /= b.x; a.y /= b.y; if(a.location || b.location) {a.location = new SourceCodeLocation(null, 0, 0, a.location, b.location)} return a
+	Vector2 / IntVector2 other:      return {x / other.x, y / other.y, location || other.location ? new SourceCodeLocation(null, 0, 0, location, other.location) : null}
+	Vector2 / float other:           return {x / other,   y / other, location}
+
+	IntVector2 % IntVector2 other:   return {x % other.x, y % other.y, location || other.location ? new SourceCodeLocation(null, 0, 0, location, other.location) : null}
+	IntVector2 % int other:          return {x % other,   y % other, location}
+		
+	IntVector2 += IntVector2 other: x += other.x; y += other.y; if(location || other.location) {location = new SourceCodeLocation(null, 0, 0, location, other.location)} return this
+	IntVector2 -= IntVector2 other: x -= other.x; y -= other.y; if(location || other.location) {location = new SourceCodeLocation(null, 0, 0, location, other.location)} return this
 	
-	bool operator == (IntVector2 a, IntVector2 b) return a.x == b.x && a.y == b.y
-	bool operator != (IntVector2 a, IntVector2 b) return a.x != b.x || a.y != b.y
-	bool operator >  (IntVector2 a, IntVector2 b) return a.x >  b.x && a.y >  b.y
-	bool operator >= (IntVector2 a, IntVector2 b) return a.x >= b.x && a.y >= b.y
-	bool operator <  (IntVector2 a, IntVector2 b) return a.x <  b.x && a.y <  b.y
-	bool operator <= (IntVector2 a, IntVector2 b) return a.x <= b.x && a.y <= b.y
+	IntVector2 *= IntVector2 other: x *= other.x; y *= other.y; if(location || other.location) {location = new SourceCodeLocation(null, 0, 0, location, other.location)} return this
+	IntVector2 *= int other:        x *= other;   y *= other; return this
+	
+	Vector2    /= IntVector2 other: x /= other.x; y /= other.y; if(location || other.location) {location = new SourceCodeLocation(null, 0, 0, location, other.location)} return this
+	Vector2    /= float other:      x /= other;   y /= other; return this
+	
+	// IntVector2 operator = (IntVector2 a, IntVector2 b) a.x = b.x; a.y = b.y; a.location = b.location; return a
+	
+	// IntVector2 operator + (IntVector2 a, IntVector2 b) return {a.x+b.x, a.y+b.y, a.location || b.location ? new SourceCodeLocation(null, 0, 0, a.location, b.location) : null}
+	// IntVector2 operator - (IntVector2 a, IntVector2 b) return {a.x-b.x, a.y-b.y, a.location || b.location ? new SourceCodeLocation(null, 0, 0, a.location, b.location) : null}
+	
+	// IntVector2 operator * (IntVector2 a, IntVector2 b) return {a.x*b.x, a.y*b.y, a.location || b.location ? new SourceCodeLocation(null, 0, 0, a.location, b.location) : null}
+	// IntVector2 operator * (IntVector2 a, int b)   return {a.x*b, a.y*b, a.location}
+	// IntVector2 operator * (int a, IntVector2 b)   return {a*b.x, a*b.y, b.location}
+		
+	// Vector2 operator / (IntVector2 a, IntVector2 b) return {a.x/b.x, a.y/b.y, a.location || b.location ? new SourceCodeLocation(null, 0, 0, a.location, b.location) : null}
+	// Vector2 operator / (IntVector2 a, float b)   return {a.x/b, a.y/b, a.location}
+	
+	// IntVector2 operator % (IntVector2 a, IntVector2 b) return {((a.x % b.x) + b.x) % b.x, ((a.y % b.y) + b.y) % b.y, a.location || b.location ? new SourceCodeLocation(null, 0, 0, a.location, b.location) : null}
+	// IntVector2 operator % (IntVector2 a, int b)   return {((a.x % b) + b) % b, ((a.y % b) + b) % b, a.location}
+	
+	// IntVector2 operator += (IntVector2 a, IntVector2 b) a.x += b.x; a.y += b.y; if(a.location || b.location) {a.location = new SourceCodeLocation(null, 0, 0, a.location, b.location)} return a
+	// IntVector2 operator -= (IntVector2 a, IntVector2 b) a.x -= b.x; a.y -= b.y; if(a.location || b.location) {a.location = new SourceCodeLocation(null, 0, 0, a.location, b.location)} return a
+	// IntVector2 operator *= (IntVector2 a, IntVector2 b) a.x *= b.x; a.y *= b.y; if(a.location || b.location) {a.location = new SourceCodeLocation(null, 0, 0, a.location, b.location)} return a
+	// IntVector2 operator /= (IntVector2 a, IntVector2 b) a.x /= b.x; a.y /= b.y; if(a.location || b.location) {a.location = new SourceCodeLocation(null, 0, 0, a.location, b.location)} return a
+	
+	bool == IntVector2 other: return x == other.x && y == other.y
+	bool != IntVector2 other: return x != other.x || y != other.y
+		
+	bool <  IntVector2 other: return x <  other.x && y <  other.y
+	bool <= IntVector2 other: return x <= other.x && y <= other.y
+	bool >  IntVector2 other: return x >  other.x && y >  other.y
+	bool >= IntVector2 other: return x >= other.x && y >= other.y
+	
+	bool <  float length: return math.sqrt(x*x + y*y) <  length
+	bool <= float length: return math.sqrt(x*x + y*y) <= length
+	bool >  float length: return math.sqrt(x*x + y*y) >  length
+	bool >= float length: return math.sqrt(x*x + y*y) >= length
+		
+	// bool operator == (IntVector2 a, IntVector2 b) return a.x == b.x && a.y == b.y
+	// bool operator != (IntVector2 a, IntVector2 b) return a.x != b.x || a.y != b.y
+	// bool operator >  (IntVector2 a, IntVector2 b) return a.x >  b.x && a.y >  b.y
+	// bool operator >= (IntVector2 a, IntVector2 b) return a.x >= b.x && a.y >= b.y
+	// bool operator <  (IntVector2 a, IntVector2 b) return a.x <  b.x && a.y <  b.y
+	// bool operator <= (IntVector2 a, IntVector2 b) return a.x <= b.x && a.y <= b.y
 	
 	// The length of the vector
 	length := math.sqrt(x * x + y * y)
@@ -505,6 +595,13 @@ struct Matrix2D
 		result.m3 = b1 * a2 + b3 * a3
 		result.m5 = b1 * a4 + b3 * a5 + b5
 		return result
+		
+struct float
+	inline Vector2 * Vector2 other: Vector2(this * other.x, this * other.y, other.location)
+
+struct int
+	inline Vector2 * Vector2 other: Vector2(this * other.x, this * other.y, other.location)
+	inline IntVector2 * IntVector2 other: IntVector2(this * other.x, this * other.y, other.location)
 		
 class List<T>
 	Vector2 total: Vector2(T it) selector
