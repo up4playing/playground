@@ -5,7 +5,7 @@ unit db
 		var mongodb = require('mongodb')
 		var mongoClient = mongodb.MongoClient
 		window.ObjectID = mongodb.ObjectID
-		var mongo = await mongoClient.connect("mongodb://0.0.0.0:27099")
+		var mongo = await mongoClient.connect("mongodb://"+(process.env.databaseHost || "0.0.0.0:27099"))
 		db_db = mongo.db(database);
 		
 	js inline Collection collection: string name
@@ -22,6 +22,13 @@ class ObjectID
 	string id
 	implicit inline js string toString() this.toString()
 	static inline js ObjectID generate() new ObjectID()
+		
+DatabaseResult
+	bool acknowledged
+	int modifiedCount
+	ObjectID upsertedId
+	int upsertedCount
+	int matchedCount
 
 class Collection
 	string collectionName
@@ -56,14 +63,17 @@ class Collection
 	inline js async any find: dynamic query, dynamic sort, dynamic project, int skip = 0, int limit
 		this.find(query).@project(project).@sort(sort).@skip(skip).@limit(limit).toArray()
 	
-	inline js async dynamic set: dynamic query, dynamic value
+	inline js async DatabaseResult set: dynamic query, dynamic value
 		this.updateOne(query,{$set:value})
 	
-	inline js async dynamic setAll: dynamic query, dynamic value
+	inline js async DatabaseResult setMany: dynamic query, dynamic value
 		this.updateMany(query,{$set:value})
 		
-	inline js async dynamic update: dynamic query, dynamic value
+	inline js async DatabaseResult update: dynamic query, dynamic value
 		this.updateOne(query,value)
+		
+	inline js async DatabaseResult updateMany: dynamic query, dynamic value
+		this.updateMany(query,value)
 		
 	inline js async dynamic upsert: dynamic query, dynamic value
 		this.updateOne(query,{$set:value}, {upsert: true})

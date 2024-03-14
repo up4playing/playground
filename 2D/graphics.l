@@ -200,8 +200,8 @@ transient skipInit global unit graphics
 			scale = ratio.y; 
 			size = {pixelSize.x/scale, referenceSize.y}
 			
-		let offsetX = anchor > 0 ? pixelSize.x/2 : 0
-		let offsetY = anchor > 1 ? pixelSize.y/2 : 0
+		let offsetX = anchor > TopLeft   ? pixelSize.x/2 : 0
+		let offsetY = anchor > TopCenter ? pixelSize.y/2 : 0
 		baseMatrix = {scale,0,0,scale,offsetX-(statisticsMargin.x/2)*scale,offsetY-(statisticsMargin.y/2)*scale}
 		
 	internal js void startFrame
