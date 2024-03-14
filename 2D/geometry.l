@@ -345,7 +345,10 @@ struct IntVector2
 	IntVector2 assign IntVector2 other: x = other.x; y = other.y; location = other.location; return this
 		
 	IntVector2 + IntVector2 other:   return {x + other.x, y + other.y, location || other.location ? new SourceCodeLocation(null, 0, 0, location, other.location) : null}
+	Vector2 + Vector2 other:         return {x + other.x, y + other.y, location || other.location ? new SourceCodeLocation(null, 0, 0, location, other.location) : null}
+	
 	IntVector2 - IntVector2 other:   return {x - other.x, y - other.y, location || other.location ? new SourceCodeLocation(null, 0, 0, location, other.location) : null}
+	Vector2 - Vector2 other:         return {x - other.x, y - other.y, location || other.location ? new SourceCodeLocation(null, 0, 0, location, other.location) : null}
 	
 	IntVector2 * IntVector2 other:   return {x * other.x, y * other.y, location || other.location ? new SourceCodeLocation(null, 0, 0, location, other.location) : null}
 	Vector2    * Vector2 other:      return {x * other.x, y * other.y, location || other.location ? new SourceCodeLocation(null, 0, 0, location, other.location) : null}
