@@ -29,7 +29,7 @@ immutable struct int
 	// Returns true if the integer is not zero
 	inline js bool toBool := this
 	
-	inline js string toString := this?.toString()
+	inline js implicit string toString := this?.toString()
 		
 	implicit inline js Time toTime() this
 		
