@@ -833,8 +833,8 @@ class List<T>
 	inline js T[] sort: float(T a, T b) comparer // A function returning 1 if "a" is larger, -1 if "b" is larger, 0 if they are equal
 		this.sort(comparer)
 	
-	inline js T[] sort: Time(T a, T b) comparer // A function returning 1 if "a" is larger, -1 if "b" is larger, 0 if they are equal
-		this.sort(comparer)
+	// inline js T[] sort: Time(T a, T b) comparer // A function returning 1 if "a" is larger, -1 if "b" is larger, 0 if they are equal
+	// 	this.sort(comparer)
 	
 	// Sort the list by a given expression
 	T[] orderBy: float(T a) expression // First order by this expression
@@ -843,9 +843,6 @@ class List<T>
 	T[] orderBy: float(T it) expression           // First order by this expression
 		         label nocolon float(T it) thenBy // Then order by this expression
 		return this.sort(expression(a) - expression(b) || thenBy(a) - thenBy(b))
-		
-	T[] orderBy: Time(T a) expression // First order by this expression
-		return this.sort(expression(a) - expression(b))
 		
 	T[] orderBy: string(T a) expression // First order by this expression
 		return this.sort(expression(a) compareTo expression(b))
@@ -856,11 +853,14 @@ class List<T>
 		if order == Ascending: return this.sort(expression(a) - expression(b))
 		else                   return this.sort(expression(b) - expression(a))
 		
-	// Sort the list by a given expression
-	T[] orderBy: Time(T a) expression // First order by this expression
-		         SortingOrder order    // Specifies if you want to sort in ascending or descending order
-		if order == Ascending: return this.sort(expression(a) - expression(b))
-		else                   return this.sort(expression(b) - expression(a))
+	// T[] orderBy: Time(T a) expression // First order by this expression
+	// 	return this.sort(expression(a) - expression(b))
+		
+	// // Sort the list by a given expression
+	// T[] orderBy: Time(T a) expression // First order by this expression
+	// 	         SortingOrder order    // Specifies if you want to sort in ascending or descending order
+	// 	if order == Ascending: return this.sort(expression(a) - expression(b))
+	// 	else                   return this.sort(expression(b) - expression(a))
 		
 	// Returns true if the given condition is true for any item in the list
 	inline js bool any: bool(T a) predicate // The condition to check
@@ -1162,18 +1162,29 @@ class List<T>
 					resultItem = .
 		return resultValue != threshold ? resultItem : null
 		
-	withMin: Time(T a) selector
-		     Time threshold = float.maxValue
-		     label bool(T a) where
-		Time resultValue = threshold
-		T resultItem
-		for this
-			if where(.)
-				let value = selector(.)
-				if value < resultValue
-					resultValue = value
-					resultItem = .
-		return resultValue != threshold ? resultItem : null
+	// withMin: Time(T a) selector
+	// 	     Time threshold = float.maxValue
+	// 	     label bool(T a) where
+	// 	Time resultValue = threshold
+	// 	T resultItem
+	// 	for this
+	// 		if where(.)
+	// 			let value = selector(.)
+	// 			if value < resultValue
+	// 				resultValue = value
+	// 				resultItem = .
+	// 	return resultValue != threshold ? resultItem : null
+		
+	// withMin: Time(T a) selector
+	// 	     Time threshold = float.maxValue
+	// 	Time resultValue = threshold
+	// 	T resultItem
+	// 	for this
+	// 		let value = selector(.)
+	// 		if value < resultValue
+	// 			resultValue = value
+	// 			resultItem = .
+	// 	return resultValue != threshold ? resultItem : null
 		
 	withMax: int(T a) selector
 		     int threshold = int.minValue
@@ -1197,16 +1208,16 @@ class List<T>
 				resultItem = .
 		return resultValue != threshold ? resultItem : null
 		
-	withMax: Time(T a) selector
-		     Time threshold = float.minValue
-		Time resultValue = threshold
-		T resultItem
-		for this
-			let value = selector(.)
-			if value > resultValue
-				resultValue = value
-				resultItem = .
-		return resultValue != threshold ? resultItem : null
+	// withMax: Time(T a) selector
+	// 	     Time threshold = float.minValue
+	// 	Time resultValue = threshold
+	// 	T resultItem
+	// 	for this
+	// 		let value = selector(.)
+	// 		if value > resultValue
+	// 			resultValue = value
+	// 			resultItem = .
+	// 	return resultValue != threshold ? resultItem : null
 		
 	popMax: int(T a) selector
 		    int threshold = int.minValue
@@ -1914,17 +1925,6 @@ global skipInit unit math
 			            return value
 			
 	// Maps a value from an input range to an output range
-	map: Time value        // The input value 
-		 Time from = 0     // The beginning of the input range
-		 Time to = 1       // The end of the input range
-		 float start = 0   // The lowest possible output value, will be returned for values smaller than "from".
-		 float target = 1  // The highest possible output value, will be returned for values larger than "to".
-		if value <= from: return start
-		if value >= to:   return target
-		let factor = (value-from) / (to-from)
-		return start + (target-start) * factor
-			
-	// Maps a value from an input range to an output range
 	map: float value       // The input value 
 		 float from = 0    // The beginning of the input range
 		 float to = 1      // The end of the input range
@@ -1947,6 +1947,17 @@ global skipInit unit math
 		let factor = ease.function((value-from) / (to-from))
 		return start + (target-start) * factor
 		
+	// // Maps a value from an input range to an output range
+	// map: Time value        // The input value 
+	// 	 Time from = 0     // The beginning of the input range
+	// 	 Time to = 1       // The end of the input range
+	// 	 float start = 0   // The lowest possible output value, will be returned for values smaller than "from".
+	// 	 float target = 1  // The highest possible output value, will be returned for values larger than "to".
+	// 	if value <= from: return start
+	// 	if value >= to:   return target
+	// 	let factor = (value-from) / (to-from)
+	// 	return start + (target-start) * factor
+			
 	global animate: Time startTime = 0 //
 		            Time duration = 1  //
 		            float from = 0     // The lowest possible output value, will be returned for values smaller than "from".
