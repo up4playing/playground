@@ -990,15 +990,6 @@ class List<T>
 			if value < resultValue: resultValue = value
 		return resultValue != threshold ? resultValue : default
 		
-	min: Time(T a) selector 
-		 Time threshold = Time.maxValue
-		 Time default = 0
-		Time resultValue = threshold
-		for this
-			let value = selector(.)
-			if value < resultValue: resultValue = value
-		return resultValue != threshold ? resultValue : default
-		
 	min: int(T a) selector 
 		 int threshold = int.maxValue
 		 int default = 0
@@ -1021,6 +1012,15 @@ class List<T>
 				if value < resultValue: resultValue = value
 		return resultValue != threshold ? resultValue : default
 		
+	Time min: Time(T a) selector 
+		      Time threshold = Time.maxValue
+		      Time default = 0
+		Time resultValue = threshold
+		for this
+			let value = selector(.)
+			if value < resultValue: resultValue = value
+		return resultValue != threshold ? resultValue : default
+		
 	max: int(T a) selector
 		 int threshold = int.minValue
 		 int default = 0
@@ -1034,15 +1034,6 @@ class List<T>
 		 float threshold = float.minValue
 		 float default = 0
 		float resultValue = threshold
-		for this
-			let value = selector(.)
-			if value > resultValue: resultValue = value
-		return resultValue != threshold ? resultValue : default
-		
-	max: Time(T a) selector
-		 Time threshold = float.minValue
-		 Time default = 0
-		Time resultValue = threshold
 		for this
 			let value = selector(.)
 			if value > resultValue: resultValue = value
@@ -1070,9 +1061,18 @@ class List<T>
 				if value > resultValue: resultValue = value
 		return resultValue != threshold ? resultValue : default
 		
-	max: Time(T a) selector
-		 Time threshold = float.minValue
-		 Time default = 0
+	Time max: Time(T a) selector
+		      Time threshold = float.minValue
+		      Time default = 0
+		Time resultValue = threshold
+		for this
+			let value = selector(.)
+			if value > resultValue: resultValue = value
+		return resultValue != threshold ? resultValue : default
+		
+	Time max: Time(T a) selector
+		      Time threshold = float.minValue
+		      Time default = 0
 		 label bool(T a) where
 		Time resultValue = threshold
 		for this
@@ -1117,17 +1117,6 @@ class List<T>
 	withMin: float(T a) selector
 		     float threshold = float.maxValue
 		float resultValue = threshold
-		T resultItem
-		for this
-			let value = selector(.)
-			if value < resultValue
-				resultValue = value
-				resultItem = .
-		return resultValue != threshold ? resultItem : null
-		
-	withMin: Time(T a) selector
-		     Time threshold = float.maxValue
-		Time resultValue = threshold
 		T resultItem
 		for this
 			let value = selector(.)
