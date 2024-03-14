@@ -1583,20 +1583,6 @@ global transient priority unit System
 		                       ) do           // Do this the given number of times
 		for(let i=to-1; i>=0; --i) do(i)
 		
-	global inline js void for: string subject // Iterate over every character of this string
-		                       -> inline void(
-		                           string it, // The current character of the string we are iterating over with the for-loop
-		                           int i      // The index of the current character of the string we are iterating over with the for-loop
-		                       ) do           // Do this for each character in the given string
-		for(let i=0, _subject=subject, _len=_subject.length; i<_len; ++i) do(_subject[i], i)
-	
-	global inline js void for: string subject // Iterate over every character of this string
-		                       <- inline void(
-		                           string it, // The current character of the string we are iterating over with the for-loop
-		                           int i      // The index of the current character of the string we are iterating over with the for-loop
-		                       ) do           // Do this for each character in the given string
-		for(let _subject=subject, i=_subject.length-1; i>=0; --i) do(_subject[i], i)
-				
 	// [a,b,c] -> (a, next:b), (b, next:c), (c, next:null)
 	global inline js void forLookAhead: T[] subject        // The list to iterate over
 		                                    -> inline void(
@@ -1722,14 +1708,6 @@ global transient priority unit System
 		                                     ) do         // Do this for each triple in a list
 		for(let _subject=subject, _len=_subject.length, i=_len-1; i>=0; --i) do(_subject[i], _subject[(i+1)%_len], _subject[(((i-1)%_len)+_len)%_len], i)
 
-	// Do something a given number of times or for each item in a list
-	global inline js void for: dynamic subject // The list to iterate over
-		                       -> inline void(
-		                           dynamic it, // The current item of the dynamic we are iterating over with the for-loop
-		                           string key  // The current key of the dynamic we are iterating over with the for-loop
-		                       ) do            // Do this for each item in a list
-		{let _subject=subject; for(let key in _subject) do(_subject[key], key)}
-		
 	// Prints a message to the console
 	global js void print: logstring text // The text, variables or expressions to print
 		                  SourceCodeLocation location
@@ -1768,6 +1746,28 @@ global transient priority unit System
 		try code() @finally finally()
 		
 global transient priority low unit System		
+	global inline js void for: string subject // Iterate over every character of this string
+		                       -> inline void(
+		                           string it, // The current character of the string we are iterating over with the for-loop
+		                           int i      // The index of the current character of the string we are iterating over with the for-loop
+		                       ) do           // Do this for each character in the given string
+		for(let i=0, _subject=subject, _len=_subject.length; i<_len; ++i) do(_subject[i], i)
+	
+	global inline js void for: string subject // Iterate over every character of this string
+		                       <- inline void(
+		                           string it, // The current character of the string we are iterating over with the for-loop
+		                           int i      // The index of the current character of the string we are iterating over with the for-loop
+		                       ) do           // Do this for each character in the given string
+		for(let _subject=subject, i=_subject.length-1; i>=0; --i) do(_subject[i], i)
+				
+	// Do something a given number of times or for each item in a list
+	global inline js void for: dynamic subject // The list to iterate over
+		                       -> inline void(
+		                           dynamic it, // The current item of the dynamic we are iterating over with the for-loop
+		                           string key  // The current key of the dynamic we are iterating over with the for-loop
+		                       ) do            // Do this for each item in a list
+		{let _subject=subject; for(let key in _subject) do(_subject[key], key)}
+		
 	// Creates a new list populated with the results of calling a function on every element of the list
 	global inline js TResult[] for: T[] subject // The list to iterate over
 		                       -> TResult(
