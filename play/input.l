@@ -411,6 +411,7 @@ skipInit global unit input
 	Cursor cursor
 	
 	ShowPointersMode showPointersMode = Remote
+	ShowPointersMode showPointersDuringPlaybackMode = LocalAndRemote
 	bool showPointers = true
 	bool ignoreFirstClick
 	

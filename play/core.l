@@ -400,7 +400,7 @@ transient skipInit unit core
 		graphics.startFrame
 		if draw and not Platform.waitingForInitialData
 			if input.showPointers or Platform.mode == Play
-				players.each drawPointer ., Platform.isDebug ? LocalAndRemote : input.showPointersMode
+				players.each drawPointer ., Platform.mode == Play ? input.showPointersDuringPlaybackMode : input.showPointersMode
 		audio.startFrame
 		
 		if Platform.showDebugInfo
