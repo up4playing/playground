@@ -929,7 +929,7 @@ global transient unit System
 		                                    Vector2 pos,                  // The position of the current item
 		                                    int i                         // The index of the current item of the list we are iterating over with forCentered
 		                                ) do                              // Do this for each item in a list
-		for(let _subject=subject, _center = center, _delta = delta, _grid=grid, _x=0, _xPos = _center.x-(_grid.x-1)*_delta.x/2; _x < _grid.x; ++_x, _xPos += _delta.x) for(let _y=0, _yPos=_center.y-(_grid.y-1)*_delta.y/2; _y<_grid.y; ++_y, _yPos += _delta.y) {let i = _y*_grid.x+_x; do(_subject[i], new Vector2(_xPos, _yPos, _center.location || _delta.location ? new SourceCodeLocation(null, 0, 0, _center.location, _delta.location) : null), i)}
+		for(let _subject=subject, _center = center, _delta = delta, _grid=grid, _y=0, _yPos=_center.y-(_grid.y-1)*_delta.y/2; _y<_grid.y; ++_y, _yPos += _delta.y) for(let _x=0, _xPos = _center.x-(_grid.x-1)*_delta.x/2; _x < _grid.x; ++_x, _xPos += _delta.x) {let i = _y*_grid.x+_x; do(_subject[i], new Vector2(_xPos, _yPos, _center.location || _delta.location ? new SourceCodeLocation(null, 0, 0, _center.location, _delta.location) : null), i)}
 
 
 // Converts positions within an isomatic grid with the origin in the north
