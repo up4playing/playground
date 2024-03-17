@@ -1957,19 +1957,19 @@ global skipInit unit math
 	// 	let factor = (value-from) / (to-from)
 	// 	return start + (target-start) * factor
 			
-	global interpolate: Time startTime = 0
-		                Time duration = 1
-		                float from = 0
+	global interpolate: float from = 0
 		                float to = 1
+		                Time startTime = 0
+		                Time duration = 1
 		let value = Time.now - startTime
 		if value <= 0:       return from
 		if value >= duration:  return to
 		return from + (to-from) * (value/duration)
 		
-	global interpolate: Time startTime = 0
-		                Time duration = 1
-		                Color from
+	global interpolate: Color from
 		                Color to
+		                Time startTime = 0
+		                Time duration = 1
 		let value = Time.now - startTime
 		return from interpolateTo to, value/duration
 		
