@@ -214,6 +214,10 @@ immutable struct float
 	inline js float abs
 		Math.abs(this)
 		
+	// Returns -1, 0, or 1 depending on the sign of the value
+	inline js float sign
+		Math.sign(this)
+		
 	// Returns the smallest integer greater than or equal to the given value 
 	inline js int ceil
 		Math.ceil(this)
@@ -1805,6 +1809,10 @@ global skipInit unit math
 	// Returns the absolute value
 	inline js float abs: float value // The value to return the absolute value of
 		Math.abs(value)
+		
+	// Returns -1, 0, or 1 depending on the sign of the value
+	inline js float sign: float value
+		Math.sign(value)
 		
 	// Returns the smallest integer greater than or equal to the given value 
 	inline js int ceil: float value // The value to round up
