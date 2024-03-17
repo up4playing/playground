@@ -1957,10 +1957,10 @@ global skipInit unit math
 	// 	let factor = (value-from) / (to-from)
 	// 	return start + (target-start) * factor
 			
-	global animate: Time startTime = 0 //
-		            Time duration = 1  //
-		            float from = 0     // The lowest possible output value, will be returned for values smaller than "from".
-		            float to = 1       // The highest possible output value, will be returned for values larger than "to".
+	global interpolate: Time startTime = 0
+		                Time duration = 1
+		                float from = 0
+		                float to = 1
 		let value = Time.now - startTime
 		if value <= 0:       return from
 		if value >= duration:  return to
