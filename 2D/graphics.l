@@ -21,7 +21,19 @@ immutable Color
 	int blue()  return hex[5..7].parseInt(16)
 	int alpha() return hex.length >= 9 ? hex[7..9].parseInt(16) : 255
 	
-	Color * float value: return {math.floor(red*value), math.floor(green*value), math.floor(blue*value), alpha}
+	Color * float other: return {math.floor(red*other), math.floor(green*other), math.floor(blue*other), alpha}
+	
+	Color interpolateTo: Color to
+		                 float value
+		if value <= 0: return this
+		if value >= 1: return to
+		let ivalue = 1 - value
+		return {
+			math.floor(red   * ivalue + to.red   * value)
+			math.floor(green * ivalue + to.green * value)
+			math.floor(blue  * ivalue + to.blue  * value)
+		}
+		
 	inline js bool == Color other: this?.hex == other?.hex
 	inline js bool != Color other: this?.hex != other?.hex
 	

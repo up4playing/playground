@@ -1966,6 +1966,13 @@ global skipInit unit math
 		if value >= duration:  return to
 		return from + (to-from) * (value/duration)
 		
+	global interpolate: Time startTime = 0
+		                Time duration = 1
+		                Color from
+		                Color to
+		let value = Time.now - startTime
+		return from interpolateTo to, value/duration
+		
 struct Average
 	float total
 	int count
