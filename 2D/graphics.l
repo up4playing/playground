@@ -16,8 +16,18 @@ immutable Color
 	
 	string toString := name or hex
 	
+	int red()   return hex[1..3].parseInt(16)
+	int green() return hex[3..5].parseInt(16)
+	int blue()  return hex[5..7].parseInt(16)
+	int alpha() return hex.length >= 9 ? hex[7..9].parseInt(16) : 255
+	
+	Color * float value: return {math.floor(red*value), math.floor(green*value), math.floor(blue*value), alpha}
+	inline js bool == Color other: this?.hex == other?.hex
+	inline js bool != Color other: this?.hex != other?.hex
+	
 	Color: string hex = ""
 		this.hex = hex[0] == "#" ? hex : "#"+hex
+		if this.hex.length == 7: this.hex += "ff"
 
 	Color: int red = 0
 		   int green = 0
@@ -25,13 +35,10 @@ immutable Color
 		   int alpha = 255
 		this.hex = "#" + componentToHex(red) + componentToHex(green) + componentToHex(blue) + componentToHex(alpha)
 			
-	static js string componentToHex: int c
+	static private js string componentToHex: int c
 		var hex = c.toString(16);
 		return hex.length == 1 ? "0" + hex : hex;
 		
-	inline js bool operator ==(Color a, Color b) a?.hex == b?.hex
-	inline js bool operator !=(Color a, Color b) a?.hex != b?.hex
-	
 	Color withAlpha: float alpha
 		return {hex[1..7]+componentToHex(math.floor(alpha*255))}
 	

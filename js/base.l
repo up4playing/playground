@@ -328,6 +328,8 @@ immutable class string
 	inline js int toInt := parseInt(this)
 		
 	inline js int toFloat := parseFloat(this)
+		
+	inline js int parseInt(int radix = 10) parseInt(this, radix)
 	
 	inline js string[] split: string character = " "
 		this.split(character)
