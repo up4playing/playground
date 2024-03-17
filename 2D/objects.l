@@ -283,9 +283,13 @@ Object Button
 	alphaWhenDisabled = .5       // The opacity of the button will be multiplied with this factor when its disabled
 	Key hotkey                   // This keyboard shortcut will execute the onClick handler
     void(Touch touch) onClick    // Execute this code when the user clicks the button
+	bool removeOnClick = false   // Remove the button after the user clicks it
 	
 	override tick
-		drawButton image, text, position, textColor, frame, size, fontSize, touchMargin, textOffset, scaleOnHover, frameOnHover, showTouchArea, visibleFor, clickableBy, hotkey, layer, alpha, enabled, alphaWhenDisabled, onTouch:onClick(touch)
+		drawButton image, text, position, textColor, frame, size, fontSize, touchMargin, textOffset, scaleOnHover, frameOnHover, showTouchArea, visibleFor, clickableBy, hotkey, layer, alpha, enabled, alphaWhenDisabled
+		onTouch:
+			if removeOnClick: this.removeAtEndOfFrame
+			onClick(touch)
 
 struct Particle
 	Vector2 pos, speed
