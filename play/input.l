@@ -480,7 +480,7 @@ skipInit global unit input
 			else
 			if((key == "F1" || key == "F2" || key == "F3" || key == "F4") && !ctrlOrCmd && Platform_isDebug) {
 				let index = key[1] - "1"
-				core_switchUser(index);
+				core_switchPerspectiveTo(input_players[index]);
 				e.preventDefault();
 			}
 			else
