@@ -319,13 +319,13 @@ transient skipInit unit core
 			if sendInputsMode == Server: ServerNetwork.sendInputs inputFrame
 			lastSendFrame = frame
 			
-	switchUser: int userIndex
+	switchPerspectiveTo: Player player
+		if not player: return
 		let prevPlayer = input.localPlayer
-		if 0 <= userIndex < input.players.length
-			input.localPlayer = players[userIndex]
-			input.localUser = input.internalUsers.find.id == input.localPlayer.id
-			for prevPlayer.touches
-				input.handleUpdateTouchAfterSwitchingUser .id, .referencePosition
+		input.localPlayer = player
+		input.localUser = input.internalUsers.find.id == player.id
+		for prevPlayer.touches
+			input.handleUpdateTouchAfterSwitchingUser .id, .referencePosition
 			
 	switchSendInterval: int sendInterval
 		this.sendInterval = sendInterval
@@ -400,7 +400,7 @@ transient skipInit unit core
 		graphics.startFrame
 		if draw and not Platform.waitingForInitialData
 			if input.showPointers or Platform.mode == Play
-				players.each drawPointer ., Platform.isDebug ? LocalAndRemote : input.showPointersMode
+				players.each drawPointer ., Platform.mode == Play ? input.showPointersDuringPlaybackMode : input.showPointersMode
 		audio.startFrame
 		
 		if Platform.showDebugInfo

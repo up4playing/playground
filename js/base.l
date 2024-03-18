@@ -214,6 +214,10 @@ immutable struct float
 	inline js float abs
 		Math.abs(this)
 		
+	// Returns -1, 0, or 1 depending on the sign of the value
+	inline js float sign
+		Math.sign(this)
+		
 	// Returns the smallest integer greater than or equal to the given value 
 	inline js int ceil
 		Math.ceil(this)
@@ -324,6 +328,8 @@ immutable class string
 	inline js int toInt := parseInt(this)
 		
 	inline js int toFloat := parseFloat(this)
+		
+	inline js int parseInt(int radix = 10) parseInt(this, radix)
 	
 	inline js string[] split: string character = " "
 		this.split(character)
@@ -1806,6 +1812,10 @@ global skipInit unit math
 	inline js float abs: float value // The value to return the absolute value of
 		Math.abs(value)
 		
+	// Returns -1, 0, or 1 depending on the sign of the value
+	inline js float sign: float value
+		Math.sign(value)
+		
 	// Returns the smallest integer greater than or equal to the given value 
 	inline js int ceil: float value // The value to round up
 		Math.ceil(value)
@@ -1947,14 +1957,21 @@ global skipInit unit math
 	// 	let factor = (value-from) / (to-from)
 	// 	return start + (target-start) * factor
 			
-	global animate: Time startTime = 0 //
-		            Time duration = 1  //
-		            float from = 0     // The lowest possible output value, will be returned for values smaller than "from".
-		            float to = 1       // The highest possible output value, will be returned for values larger than "to".
+	global interpolate: float from = 0
+		                float to = 1
+		                Time startTime = 0
+		                Time duration = 1
 		let value = Time.now - startTime
 		if value <= 0:       return from
 		if value >= duration:  return to
 		return from + (to-from) * (value/duration)
+		
+	global interpolate: Color from
+		                Color to
+		                Time startTime = 0
+		                Time duration = 1
+		let value = Time.now - startTime
+		return from interpolateTo to, value/duration
 		
 struct Average
 	float total

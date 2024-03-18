@@ -24,6 +24,13 @@ global unit fx
 		          stored void() do
 		add DelayAnimation startTime:Time.now+time, do
 				
+	global animate: float from = 0
+		            float to = 1
+		            stored void(float value) do
+		            Time delay = 0
+		            Time duration = 0
+		add InterpolateAnimation from, to, startTime:Time.now+delay, duration, do
+				
 	global defer: stored void() do
 		add DelayAnimation startTime:Time.now, do
 	
@@ -84,5 +91,11 @@ Animation PlaySoundAnimation
 Animation DelayAnimation
 	void() do
 	tick(float f) do()
+	
+Animation InterpolateAnimation
+	float from
+	float to
+	void(float value) do
+	tick(float f) do(from + (to-from)*f)
 	
 

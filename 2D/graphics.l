@@ -16,8 +16,30 @@ immutable Color
 	
 	string toString := name or hex
 	
+	int red()   return hex[1..3].parseInt(16)
+	int green() return hex[3..5].parseInt(16)
+	int blue()  return hex[5..7].parseInt(16)
+	int alpha() return hex.length >= 9 ? hex[7..9].parseInt(16) : 255
+	
+	Color * float other: return {math.floor(red*other), math.floor(green*other), math.floor(blue*other), alpha}
+	
+	Color interpolateTo: Color to
+		                 float value
+		if value <= 0: return this
+		if value >= 1: return to
+		let ivalue = 1 - value
+		return {
+			math.floor(red   * ivalue + to.red   * value)
+			math.floor(green * ivalue + to.green * value)
+			math.floor(blue  * ivalue + to.blue  * value)
+		}
+		
+	inline js bool == Color other: this?.hex == other?.hex
+	inline js bool != Color other: this?.hex != other?.hex
+	
 	Color: string hex = ""
 		this.hex = hex[0] == "#" ? hex : "#"+hex
+		if this.hex.length == 7: this.hex += "ff"
 
 	Color: int red = 0
 		   int green = 0
@@ -25,13 +47,10 @@ immutable Color
 		   int alpha = 255
 		this.hex = "#" + componentToHex(red) + componentToHex(green) + componentToHex(blue) + componentToHex(alpha)
 			
-	static js string componentToHex: int c
+	static private js string componentToHex: int c
 		var hex = c.toString(16);
 		return hex.length == 1 ? "0" + hex : hex;
 		
-	inline js bool operator ==(Color a, Color b) a?.hex == b?.hex
-	inline js bool operator !=(Color a, Color b) a?.hex != b?.hex
-	
 	Color withAlpha: float alpha
 		return {hex[1..7]+componentToHex(math.floor(alpha*255))}
 	
@@ -1097,6 +1116,7 @@ transient skipInit global unit graphics
 	
 	// Teh default player colors
 	const Color[] defaultColors = [{"#398CA9", "Blue"}, {"#C01352", "Red"}, {"#16C66E", "Green"}, {"#FFD166", "Yellow"}]
+	const Color[] darkDefaultColors = [{"#193742", "Dark Blue"}, {"#470B21", "Dark Red"}, {"#0A3620", "Dark Green"}, {"#4B3F21", "Dark Yellow"}]
 
 	// The default color for all drawing operations
 	color
