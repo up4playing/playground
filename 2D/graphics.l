@@ -269,11 +269,11 @@ transient skipInit global unit graphics
 		let effectiveVisibleFor = visibleFor and (visibleFor.length != 1 or visibleFor[0]) ? visibleFor : currentlyVisibleFor
 		return effectiveVisibleFor == null or effectiveVisibleFor.any . == null or .id == input.localUser.id
 		
-	private Player[] getTouchableBy: Player[] visibleFor, Player[] touchableBy
+	private Player[] getClickableBy: Player[] visibleFor, Player[] clickableBy
 		Player[] effectiveVisibleBy = visibleFor or currentlyVisibleFor
-		return effectiveVisibleBy and touchableBy
-		     ? effectiveVisibleBy intersectWith touchableBy 
-		     : effectiveVisibleBy or touchableBy
+		return effectiveVisibleBy and clickableBy
+		     ? effectiveVisibleBy intersectWith clickableBy 
+		     : effectiveVisibleBy or clickableBy
 			
 	internal js void drawSafeArea
 		graphics_resetTransform()
@@ -407,7 +407,7 @@ transient skipInit global unit graphics
 		                   Vector2 position = {}                // By default, {0,0} is the center, {-960,-540} is the top left, {960,540} is the bottom right
 		                   implicit Vector2 size = {}           // A float scales the image to that width keeping the aspect ratio, a vector stretches the image
 		                   implicit Player[] visibleFor = null  // Only this player or list of players will see the image
-		                   framesPerSecond = 0                 // Animate a sequence of images (for example "Walk0.png", "Walk1.png", ...)
+		                   framesPerSecond = 0                  // Animate a sequence of images (for example "Walk0.png", "Walk1.png", ...)
 		                   implicit int layer = 0               // Higher layers are drawn in front of lower layers
 		                   alpha = 1.0                          // The opacity of the image (0: fully transparent, 1: fully visible)
 		                   Color color = White                  // Tint the image with this color
@@ -422,34 +422,34 @@ transient skipInit global unit graphics
 	// Example: If the current player instance clicks the image or 16 pixels around it, we print the exact position that was clicked. If other players will click the image, nothing will happen.
 	//     Player
 	//         tick
-	//             drawImage Idle, position:{0,0}, touchMargin:{16,16}, touchableBy:me
+	//             drawImage Idle, position:{0,0}, clickableMargin:{16,16}, clickableBy:me
 	//                 print "The image was clicked at {touch.position}"
 	// Image: drawImage0.png
 	global void drawImage: Image image                          // The image to draw. PNG images in the "media" folder will automatically show up here
 		                   Vector2 position = {}                // By default, {0,0} is the center, {-960,-540} is the top left, {960,540} is the bottom right
 		                   implicit Vector2 size = {}           // A float scales the image to that width keeping the aspect ratio, a vector stretches the image
 		                   implicit Player[] visibleFor = null  // Only this player or list of players will see the image
-		                   implicit Player[] touchableBy = null // Only this player or list of players can touch or click the image
+		                   implicit Player[] clickableBy = null // Only this player or list of players can touch or click the image
 		                   implicit frame = 0                   // The frame to draw from a sequence of images (for example "Walk0.png", "Walk1.png", ...)
 		                   implicit layer = 0                   // Higher layers are drawn in front of lower layers
 		                   alpha = 1.0                          // The opacity of the image (0: fully transparent, 1: fully visible)
 		                   Color color = White                  // Tint the image with this color
 		                   Angle angle = 0.0                    // Rotate the image by this angle in turns (0: no rotation, 1: one full rotation)
-		                   touchMargin = Vector2(16,16)         // The margin around the image within which it is touchable
-		                   showTouchArea = false                // Highlight the touchable area for debugging
-		                   hotkey = Key.None                    // This keyboard shortcut will execute the onTouch handler
-		                   void(Touch touch) onTouch            // Execute this code when the user touches or clicks the image or presses the hotkey
+		                   clickableMargin = Vector2(16,16)     // The margin around the image within which it is clickable
+		                   showClickableArea = false            // Highlight the clickable area for debugging
+		                   hotkey = Key.None                    // This keyboard shortcut will execute the onClick handler
+		                   void(Touch touch) onClick            // Execute this code when the user touches or clicks the image or presses the hotkey
 		                   SourceCodeLocation location
 		drawImage image, position, frame, size, angle, visibleFor, layer, alpha, color, location
 			
 		// Handle click (only visible buttons are clickable)
-		let effectiveTouchableBy = getTouchableBy(visibleFor, touchableBy)
+		let effectiveClickableBy = getClickableBy(visibleFor, clickableBy)
 		if size.x == 0 and size.y == 0: size = image.size; else
 		if size.y == 0: size.y = size.x * image.size.y / image.size.x
-		input.onTouchDownWithin position, size + touchMargin, by:effectiveTouchableBy, showTouchArea, do:onTouch
+		input.onTouchDown position, size + clickableMargin, by:effectiveClickableBy, showClickableArea, do:onClick
 		if hotkey
-			input.onKeyDown hotkey, by:effectiveTouchableBy
-				onTouch null
+			input.onKeyDown hotkey, by:effectiveClickableBy
+				onClick null
 		
 	// ------------------------------------------------------- Text -------------------------------------------------------
 	
@@ -557,38 +557,38 @@ transient skipInit global unit graphics
 		                    Color textColor = null               // The color of the text
 		                    textSize = 24                        // The font size in pixels   
 		                    textOffset = Vector2(0,0)            // Draw the text at this offset to the image
-		                    touchMargin = Vector2(16,16)         // The margin around the button within which it is touchable
-		                    showTouchArea = false                // Highlight the touchable area for debugging
+		                    clickableMargin = Vector2(16,16)     // The margin around the button within which it is clickable
+		                    showClickableArea = false            // Highlight the clickable area for debugging
 		                    scaleOnHover = 1.0                   // Scale the button by this factor when the mouse hovers over the button
 		                    frameOnHover = 1                     // Draw this frame when the mouse hovers over the button
 		                    Color textColorOnHover = null        // Draw the text in this color when the mouse hovers over the button
 		                    Image accentImage = null             // Draw this image tited with the accent color on top of the button
 		                    Color accentColor = null             // Tint the accent image with this color, defaults to the color of the local player
 		                    implicit Player[] visibleFor = null  // Only this player or list of players will see the button
-		                    implicit Player[] touchableBy = null // Only this player or list of players can touch or click the button
-		                    hotkey = Key.None                    // This keyboard shortcut will execute the onTouch handler
+		                    implicit Player[] clickableBy = null // Only this player or list of players can touch or click the button
+		                    hotkey = Key.None                    // This keyboard shortcut will execute the onClick handler
 		                    implicit layer = 0                   // Higher layers are drawn in front of lower layers
 		                    alpha = 1.0                          // The opacity of the button (0: fully transparent, 1: fully visible)
-		                    enabled = true                       // When not enabled, the button isn't touchable and is drawn transparently (50% by default)
+		                    enabled = true                       // When not enabled, the button isn't clickable and is drawn transparently (50% by default)
 		                    alphaWhenDisabled = .5               // The opacity of the button will be multiplied with this factor when its disabled
-		                    void(Touch touch) onTouch = null     // Execute this code when the user touches or clicks the button or presses the hotkey
+		                    void(Touch touch) onClick = null     // Execute this code when the user touches or clicks the button or presses the hotkey
 	                        SourceCodeLocation location
 		float scale = 1.0
 		Vector2 effectiveSize = image ? getEffectiveSize(image.size, size) : {getTextWidth(text, size:textSize), textSize}
-		let effectiveTouchableBy = getTouchableBy(visibleFor, touchableBy)
-		if enabled and onTouch != null
+		let effectiveClickableBy = getClickableBy(visibleFor, clickableBy)
+		if enabled and onClick != null
 			// Handle click (only visible buttons are clickable)
-			Vector2 sizeWithMargin = effectiveSize + touchMargin
+			Vector2 sizeWithMargin = effectiveSize + clickableMargin
 			bool switchFrameOnHover = frameOnHover != -1 and frame == -1 and (image?.frames.length > frameOnHover or accentImage?.frames.length > frameOnHover)
 			if switchFrameOnHover or scaleOnHover != 1.0 or textColorOnHover
-				input.onTouchOver position, sizeWithMargin, by:effectiveTouchableBy
+				input.onTouchOver position, sizeWithMargin, by:effectiveClickableBy
 					if textColorOnHover:    textColor = textColorOnHover
 					if switchFrameOnHover:  frame = frameOnHover
 					if scaleOnHover != 1.0: scale = scaleOnHover
-			input.onTouchDownWithin position, sizeWithMargin, by:effectiveTouchableBy, showTouchArea, do:onTouch
+			input.onTouchDown position, sizeWithMargin, by:effectiveClickableBy, showClickableArea, do:onClick
 			if hotkey
-				input.onKeyDown hotkey, by:effectiveTouchableBy
-					onTouch null
+				input.onKeyDown hotkey, by:effectiveClickableBy
+					onClick null
 					
 		if isVisibleFor(visibleFor)
 			if frame == -1: frame = 0
@@ -597,7 +597,7 @@ transient skipInit global unit graphics
 			if text:  drawText text, position+textOffset, textSize, textColor, visibleFor, layer, effectiveAlpha, location
 			if accentImage
 				if not accentColor
-					if effectiveTouchableBy and effectiveTouchableBy[0]: accentColor = effectiveTouchableBy[0].color
+					if effectiveClickableBy and effectiveClickableBy[0]: accentColor = effectiveClickableBy[0].color
 					else                                                 accentColor = input.localPlayer.color
 				drawImage accentImage, position, frame, effectiveSize, visibleFor, layer, effectiveAlpha, location, color:accentColor
 			if image: drawImage image, position, frame, effectiveSize, visibleFor, layer, effectiveAlpha, location

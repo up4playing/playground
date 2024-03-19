@@ -823,7 +823,7 @@ skipInit transient unit statistics
 		infos.add {value, index, frame:core.frame}
 		
 	internal tick
-		input.onTouchDownWithin position, size, align:Left, valign:Top
+		input.onTouchDown position, size, align:Left, valign:Top
 			currentSet incrementAndWrap sets
 	
 		maxValue = 12

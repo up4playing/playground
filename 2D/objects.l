@@ -271,11 +271,11 @@ Object Button
     frame = 0                    // The frame of the image
 	implicit Vector2 size = {}   // The size of the image, use a float to keep the aspect ratio, use a vector to strech the image
     fontSize = 18                // The font size in pixels   
-    touchMargin = {16,16}        // The margin around the button within which it is touchable
+    clickableMargin = {16,16}        // The margin around the button within which it is clickable
     textOffset = {}              // Draw the text at this offset
 	scaleOnHover = 1.0                   // Scale the button by this factor when the mouse hovers over the button
 	frameOnHover = 1                     // Draw this frame when the mouse hovers over the button
-    showTouchArea = false        // Show the area within which the button is touchable
+    showClickableArea = false        // Show the area within which the button is clickable
     implicit Player[] clickableBy = null // Only this user can click the button
     implicit layer = 0           // Higher layers are drawn in front of lower layers
     alpha = 1.0                  // The opacity of the button 0: fully transpart, 1: fully visible)
@@ -286,8 +286,8 @@ Object Button
 	bool removeOnClick = false   // Remove the button after the user clicks it
 	
 	override tick
-		drawButton image, text, position, textColor, frame, size, fontSize, touchMargin, textOffset, scaleOnHover, frameOnHover, showTouchArea, visibleFor, clickableBy, hotkey, layer, alpha, enabled, alphaWhenDisabled
-		onTouch:
+		drawButton image, text, position, textColor, frame, size, fontSize, clickableMargin, textOffset, scaleOnHover, frameOnHover, showClickableArea, visibleFor, clickableBy, hotkey, layer, alpha, enabled, alphaWhenDisabled
+		onClick:
 			if removeOnClick: this.removeAtEndOfFrame
 			onClick(touch)
 
@@ -377,11 +377,11 @@ Object Menu
 				drawText .label, pos+{-60}, size:30, align:Left, layer:int.maxValue
 				if item.type == Button
 					if .image: drawImage .image, pos+{-120}, layer:int.maxValue
-					onTouchDownWithin pos, size:{500,60}, do:item.onClick(true, touch)
+					onTouchDown pos, size:{500,60}, do:item.onClick(true, touch)
 				else
 				if item.type == Check
 					drawImage .image or Checkbox, pos+{-120}, layer:int.maxValue, frame:item.value ? 1 : 0
-					onTouchDownWithin pos, size:{500,60}
+					onTouchDown pos, size:{500,60}
 						item.value = !item.value
 						item.onClick(item.value, touch)
 						doNotClose = true
