@@ -184,6 +184,8 @@ immutable struct float
 	
 	const inline js float infinity := Number.POSITIVE_INFINITY
 	
+	const inline js float notANumber := Number.NaN
+	
 	inline js float operator ** (float a, float b) 
 		Math.pow(a,b)
 		
