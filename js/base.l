@@ -392,15 +392,15 @@ immutable class string
 		                     string padString = " "
 		this.padEnd(targetLength, padString)
 		
-	js string get: int index
-		return index >= 0 ? this[index] : this[this.length+index]
+	inline js string get: int index
+		this[index]
 	
-	js string get: int from = 0
-		           int to
-		return this.substring(from >= 0 ? from : this.length+from, to >= 0 ? to : this.length+to)
+	inline js string get: int from = 0
+		                  int to
+		this.substring(from, to)
 		
-	js string get: int from = 0
-		return this.substring(from >= 0 ? from : this.length+from)
+	inline js string get: int from = 0
+		this.substring(from)
 		
 	js string capitalizeFirstWord
 		return this.length > 0 ? this[0].toUpperCase() + this.substring(1) : this
@@ -1314,20 +1314,23 @@ class List<T>
 	// The last item of the list
 	inline js T last() this[this.length-1]
 		
-	// Gets an item from the list
-	js T get: implicit int index // The index of the item to get
-		return index >= 0 ? this[index] : this[this.length+index]
+	// Get an item from the list
+	inline js T get: implicit int index // The index of the item to get
+		this[index]
 		
-	js T[] get: int from = 0 // Return a new list starting from this index
-		        int to       // Return a new list up to (but not including) this index
-		return this.slice(from, to)
+	// Get a new list that is a subset of this list
+	inline js T[] get: int from = 0 // Return a new list starting from this index, a negative index will start from the end of the list
+		               int to       // Return a new list up to (but not including) this index, a negative index is counted from the end
+		this.slice(from, to)
 	
-	js T[] get: int from // Return a new list starting from this index
-		return this.slice(from)
+	// Get a new list that is a subset of this list
+	inline js T[] get: int from // Return a new list starting from this index, a negative index will start from the end of the list
+		this.slice(from)
 	
-	js T set: int index // The index of the item to set
-		      T value   // The new value to set
-		return index >= 0 ? this[index] = value : this[this.length+index] = value
+	// Set the item at a given index
+	inline js T set: int index // The index of the item to set
+		             T value   // The new value to set
+		this[index] = value
 		
 	// Tries to get an item from the list. If it doesn't exist, it sets it.
 	// TODO: Support index with side effect (e.g. list[index++] ?= 0)
@@ -1336,38 +1339,38 @@ class List<T>
 		(this.hasOwnProperty(index) ? this[index] : this[index] = value)
 		
 	// Add a value to an item of the list
-	js T addToItem: int index // The index of the item to change
-		            T value   // The value to add to the item
-		return index >= 0 ? this[index] += value : this[this.length+index] += value
+	inline js T addToItem: int index // The index of the item to change
+		                   T value   // The value to add to the item
+		this[index] += value
 		
 	// Subtract a value from an item of the list
-	js T subtractFromItem: int index // The index of the item to change
-		                   T value   // The value to subtract from the item
-		return index >= 0 ? this[index] -= value : this[this.length+index] -= value
+	inline js T subtractFromItem: int index // The index of the item to change
+		                          T value   // The value to subtract from the item
+		this[index] -= value
 		
 	// Multiply an item of the list by a value
-	js T multiplyItem: int index // The index of the item to change
-		               T value   // The value to multiply the item by
-		return index >= 0 ? this[index] *= value : this[this.length+index] *= value
+	inline js T multiplyItem: int index // The index of the item to change
+		                      T value   // The value to multiply the item by
+		this[index] *= value
 		
 	// Divide an item of the list by a value
-	js T divideItem: int index // The index of the item to change
-		             T value   // The value to divide the item by
-		return index >= 0 ? this[index] /= value : this[this.length+index] /= value
+	inline js T divideItem: int index // The index of the item to change
+		                    T value   // The value to divide the item by
+		this[index] /= value
 		
 	// Add 1 to item of the list
-	js T incrementItem: int index // The index of the item to change
-		return index >= 0 ? this[index]++ : this[this.length+index]++
+	inline js T incrementItem: int index // The index of the item to change
+		this[index]++
 	
 	// Subtract 1 from an item of the list
-	js T decrementItem: int index // The index of the item to change
-		return index >= 0 ? this[index]-- : this[this.length+index]--
+	inline js T decrementItem: int index // The index of the item to change
+		this[index]--
 		
 immutable ImmutableList<T>
 	T[] list
 	
 	inline T get: implicit int index // The index of the item to get
-		list.get(index)
+		list[index]
 		
 // A data container that stores key-value pairs
 js Map
@@ -1388,7 +1391,7 @@ class Map<TKey, TValue>
 		
 	inline js TValue getOrSet: TKey key
 		                       TValue value
-		(this.get(key) || (this.setAndReturn(key, value)))
+		(this.get(key) || this.setAndReturn(key, value))
 		
 	// Remove the item assosiated with the given key
 	inline js void delete: TKey key  // The key of the item to remove from the map

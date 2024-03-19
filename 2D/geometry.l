@@ -1122,10 +1122,7 @@ class Grid<T>
 		return items[y*size.x + x]
 	
 	get: IntVector2 position // The vector to get the value from
-		if {0,0} <= position < size
-			return items[position.y*size.x + position.x]
-		else
-			return null
+		return {0,0} <= position < size ? items[position.y*size.x + position.x] : null
 	
 	set: int x   // The column of the value to set
 		 int y   // The row of the value to set
