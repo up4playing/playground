@@ -32,11 +32,27 @@ global unit fx
 		interpolate variable, to, delay, duration, variable = .
 		
 	// Animate a variable to a target value over a given period of time
+	global inline animate: float variable = 0   // The variable to animate
+		                   float to = 1         // The target value to animate to
+		                   Time delay = 0       // The delay before the animation starts
+		                   Time duration = 300  // The duration of the animation
+		                   EaseFunction ease    // The easing function to apply
+		interpolate variable, to, delay, duration, ease, variable = .
+		
+	// Animate a variable to a target value over a given period of time
 	global inline animate: Vector2 variable    // The variable to animate
 		                   Vector2 to          // The target vector to animate to
 		                   Time delay = 0      // The delay before the animation starts
 		                   Time duration = 300 // The duration of the animation
 		interpolate variable, to, delay, duration, variable = .
+		
+	// Animate a variable to a target value over a given period of time
+	global inline animate: Vector2 variable    // The variable to animate
+		                   Vector2 to          // The target vector to animate to
+		                   Time delay = 0      // The delay before the animation starts
+		                   Time duration = 300 // The duration of the animation
+		                   EaseFunction ease   // The easing function to apply
+		interpolate variable, to, delay, duration, ease, variable = .
 		
 	// Animate a variable to a target value over a given period of time
 	global inline animate: Color variable      // The variable to animate
@@ -52,12 +68,28 @@ global unit fx
 		         Time duration = 300
 		add InterpolateAnimation startTime:Time.now+delay, duration, do:do(from + (to - from) * .)
 				
+	interpolate: float from = 0
+		         float to = 1
+		         void(float progress) do
+		         Time delay = 0
+		         Time duration = 300
+		         EaseFunction ease
+		add InterpolateAnimation startTime:Time.now+delay, duration, do:do(ease.function(from + (to - from) * .))
+				
 	interpolate: Vector2 from
 		         Vector2 to
 		         void(Vector2 progress) do
 		         Time delay = 0
 		         Time duration = 300
 		add InterpolateAnimation startTime:Time.now+delay, duration, do:do(from interpolateTo target:to, progress)
+				
+	interpolate: Vector2 from
+		         Vector2 to
+		         void(Vector2 progress) do
+		         Time delay = 0
+		         Time duration = 300
+		         EaseFunction ease
+		add InterpolateAnimation startTime:Time.now+delay, duration, do:do(from interpolateTo target:to, progress, ease)
 				
 	interpolate: Color from
 		         Color to
