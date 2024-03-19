@@ -114,7 +114,7 @@ ExampleItem
 	tick
 		if moveable
 			// Drag items
-			Input.onTouchDownWithin position, size, userId:exampleApp.currentPlayer.id
+			Input.onTouchDown position, size, userId:exampleApp.currentPlayer.id
 				// Start dragging item
 				moveTouch = .
 				originalPosition = position
@@ -239,9 +239,9 @@ class List<T>
 	T[] intersectWith: T[] other
 
 unit graphics
-	void drawImage: Image image, Vector2 position, frame = 0, Vector2 size = {}, touchMargin = Vector2(16,16), visibleFor = -1, clickableBy = -1, hotkey = Key.None, layer = 0, alpha = 1.0, void(Touch touch) onClick
+	void drawImage: Image image, Vector2 position, frame = 0, Vector2 size = {}, clickableMargin = Vector2(16,16), visibleFor = -1, clickableBy = -1, hotkey = Key.None, layer = 0, alpha = 1.0, void(Touch touch) onClick
 	void drawText: string text, Vector2 position = {}, implicit Vector2 size = {}, Color color = null, HorizontalAlignment align = , VerticalAlignment valign = Middle, FontStyle style = Normal, Font font = null, Color outlineColor = null, outlineWidth = 0, visibleFor = -1, implicit layer = 0, alpha = 1.0
-	void drawButton: Image image = null, text = "", Vector2 position = {}, Color textColor = null, frame = 0, implicit Vector2 size = {}, fontSize = 18, touchMargin = Vector2(16,16), textOffset = Vector2(0,0), showTouchArea = false, visibleFor = -1, implicit layer = 0, alpha = 1.0, void(Touch touch) onClic
+	void drawButton: Image image = null, text = "", Vector2 position = {}, Color textColor = null, frame = 0, implicit Vector2 size = {}, fontSize = 18, clickableMargin = Vector2(16,16), textOffset = Vector2(0,0), showClickableArea = false, visibleFor = -1, implicit layer = 0, alpha = 1.0, void(Touch touch) onClic
 	void drawRectangle: position = Vector2(), implicit size = Vector2(256,256), Color fillColor = null, Color outlineColor = null, outlineWidth = 0, visibleFor = -1, implicit layer = 0, alpha = 1.0, HorizontalAlignment align = Center, VerticalAlignment valign = Middle
 	void drawCircle: position = Vector2(), implicit Vector2 size = {256,256}, Color fillColor = null, Color outlineColor = null, outlineWidth = 0, Angle startAngle = 0.0, Angle endAngle = 1.0, RotationDirection direction = Clockwise, visibleFor = -1, implicit layer = 0, alpha = 1.0
 	void drawPolygon: Vector2[] points, Vector2 position = {0,0}, Color fillColor = null, Color outlineColor = null, outlineWidth = 0, smooth = false, visibleFor = -1, implicit int layer = 0, alpha = 1.0
@@ -320,7 +320,7 @@ Tile
 	private Quaternion rotation
 	
 	tick
-		Input.onTouchDownWithin position, size
+		Input.onTouchDown position, size
 			moveTouch = .
 			originalPosition = position
 			hasMoved = false

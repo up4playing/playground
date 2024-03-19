@@ -646,6 +646,11 @@ class List<T>
 			if(!this.includes(it))
 				this.push(it)
 		
+	js void toggle: T item // The item to add
+		let index = this.indexOf(item)
+		if(index != -1) this.splice(index, 1)
+		else            this.push(item)
+		
 	// Returns whether the list contains the given item
 	inline js bool contains: T item // Check if the list contains this item
 		this.includes(item)
