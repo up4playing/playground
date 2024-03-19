@@ -207,38 +207,44 @@ struct Vector2
 
 	// Interpolates to another vector
 	interpolateTo: Vector2 target  // The target position to interpolate to
-		           float value     // The input value
-		let ivalue = 1 - value
-		return new Vector2(x * ivalue + target.x * value, y * ivalue + target.y * value)
+		           float progress  // The progress of the interpolation (0: return the start vector, 1: returns the target vector)
+		let iprogress = 1 - progress
+		return new Vector2(x * iprogress + target.x * progress, y * iprogress + target.y * progress)
 
 	// Interpolates to another vector
 	interpolateTo: Vector2 target  // The target position to interpolate to
-		           float value     // The input value
+		           float progress  // The progress of the interpolation (0: return the start vector, 1: returns the target vector)
 		           EaseFunction ease
-		value = ease.function(value)
-		let ivalue = 1 - value
-		return new Vector2(x * ivalue + target.x * value, y * ivalue + target.y * value)
+		progress = ease.function(progress)
+		let iprogress = 1 - progress
+		return new Vector2(x * iprogress + target.x * progress, y * iprogress + target.y * progress)
 
 	// Interpolates to another vector
 	interpolateTo: Vector2 target // The target position to interpolate to
-		           float value    // The input value
+		           float progress // The progress of the interpolation (0: return the start vector, 1: returns the target vector)
 		           float from     // The beginning of the input range
 		           float to       // The end of the input range
-		if value <= from: return this
-		if value >= to: return target
-		let factor = (value-from) / (to-from)
+		if progress <= from: return this
+		if progress >= to: return target
+		let factor = (progress-from) / (to-from)
 		return new Vector2(x + (target.x-x)*factor, y + (target.y-y)*factor)
 
 	// Interpolates to another vector
 	interpolateTo: Vector2 target    // The target position to interpolate to
-		           float value       // The input value
+		           float progress    // The progress of the interpolation (0: return the start vector, 1: returns the target vector)
 		           float from        // The beginning of the input range
 		           float to          // The end of the input range
 		           EaseFunction ease // The easing function to apply
-		if value <= from: return this
-		if value >= to: return target
-		let factor = ease.function((value-from) / (to-from))
+		if progress <= from: return this
+		if progress >= to: return target
+		let factor = ease.function((progress-from) / (to-from))
 		return new Vector2(x + (target.x-x)*factor, y + (target.y-y)*factor)
+		
+	// Animate the vector to a target vector over a given period of time
+	inline animateTo: Vector2 target      // The target vector to animate to
+		              Time delay = 0      // The delay before the animation starts
+		              Time duration = 300 // The duration of the animation
+		fx.interpolate this, target, delay, duration, this.x = .x; this.y = .y
 
 	// A vector that points in the same direction, but has a length of 1
 	normalized
@@ -448,10 +454,10 @@ struct IntVector2
 		)
 		
 	// Interpolates linearly to another vector
-	interpolateTo: IntVector2 target  // The target vector to interpolate to
-		           float value    // The interpolation value, 0 returns the original vector, 1 returns the target vector
-		let ivalue = 1 - value
-		return new Vector2(x * ivalue + target.x * value, y * ivalue + target.y * value)
+	interpolateTo: IntVector2 target // The target vector to interpolate to
+		           float progress    // The progress of the interpolation (0: return the start vector, 1: returns the target vector)
+		let iprogress = 1 - progress
+		return new Vector2(x * iprogress + target.x * progress, y * iprogress + target.y * progress)
 	
 	// The distance to another vector
 	odistanceTo: IntVector2 value // The second vector

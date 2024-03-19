@@ -258,15 +258,23 @@ immutable struct float
 		                                   float speed
 		(this < value ? (this + speed * (value-this) < value ? (this += speed * (value-this)) : (this = value)) : (this - speed * (this-value) > value ? (this -= speed * (this-value)) : (this = value)))
 		
-	inline js float interpolateTo: float target
-		                           float value
-		(this + (target - this)*value)
+	// Interpolates to another value
+	inline js float interpolateTo: float target   // The target value to interpolate to
+		                           float progress // The progress of the interpolation (0: return the start value, 1: returns the target value)
+		(this + (target - this)*progress)
 		
-	inline js float interpolateTo: float target
-		                           float value
-		                           EaseFunction ease
-		(this + (target - this)*ease.function.invoke(value))
-		
+	// Interpolates to another value
+	inline js float interpolateTo: float target      // The target value to interpolate to
+		                           float progress    // The progress of the interpolation (0: return the start value, 1: returns the target value)
+		                           EaseFunction ease // The easing function to apply (e.g InQuad, OutBack, ...)
+		(this + (target - this)*ease.function.invoke(progress))
+	
+	// Animate the float to a target value over a given period of time	
+	inline animateTo: float target        // The target value to animate to
+		              Time delay = 0      // The delay before the animation starts
+		              Time duration = 300 // The duration of the animation
+		fx.interpolate this, target, delay, duration, this = .
+
 	inline js float incrementBy: float value
 		                         nocolon float to
 		(this+value < to ? (this += value) : to)
@@ -1970,16 +1978,15 @@ global skipInit unit math
 		                Time startTime = 0
 		                Time duration = 1
 		let value = Time.now - startTime
-		if value <= 0:       return from
-		if value >= duration:  return to
+		if value <= 0:        return from
+		if value >= duration: return to
 		return from + (to-from) * (value/duration)
 		
 	global interpolate: Color from
 		                Color to
 		                Time startTime = 0
 		                Time duration = 1
-		let value = Time.now - startTime
-		return from interpolateTo to, value/duration
+		return from interpolateTo to, (Time.now - startTime)/duration
 		
 struct Average
 	float total
