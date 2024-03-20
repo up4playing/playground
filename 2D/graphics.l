@@ -7,7 +7,6 @@ immutable Color
 	global const Color Green       = {"#06d6a0", "Green"}
 	global const Color Blue        = {"#118ab2", "Blue"}
 	global const Color Gray        = {"#3d3d3d", "Gray"}
-	global const Color Transparent = {"#00000000", "Transparent"}
 		
 	const Color TransparentRed     = {"#ff000080", "Transparent Red"}
 	
@@ -19,9 +18,8 @@ immutable Color
 	int red()   return hex[1..3].parseInt(16)
 	int green() return hex[3..5].parseInt(16)
 	int blue()  return hex[5..7].parseInt(16)
-	int alpha() return hex.length >= 9 ? hex[7..9].parseInt(16) : 255
 	
-	Color * float other: return {math.floor(red*other), math.floor(green*other), math.floor(blue*other), alpha}
+	Color * float other: return {math.floor(red*other), math.floor(green*other), math.floor(blue*other)}
 	
 	Color interpolateTo: Color to
 		                 float value
@@ -39,12 +37,16 @@ immutable Color
 	
 	Color: string hex = ""
 		this.hex = hex[0] == "#" ? hex : "#"+hex
-		if this.hex.length == 7: this.hex += "ff"
 
 	Color: int red = 0
 		   int green = 0
 		   int blue = 0
-		   int alpha = 255
+		this.hex = "#" + componentToHex(red) + componentToHex(green) + componentToHex(blue)
+			
+	Color: int red
+		   int green
+		   int blue
+		   int alpha
 		this.hex = "#" + componentToHex(red) + componentToHex(green) + componentToHex(blue) + componentToHex(alpha)
 			
 	static private js string componentToHex: int c
@@ -1540,7 +1542,7 @@ transient DisplayItem DisplayImage
 		graphics_context.globalAlpha = this.alpha
 		if(this.clippingPath) this.startClipping()
 			
-		if(this.color.hex == "#ffffff") {
+		if(this.color.hex == "#ffffff" || this.color.hex == "#ffffffff") {
 			try{ graphics_context.drawImage(this.htmlImage, this.sx, this.sy, this.sw, this.sh, this.x, this.y, this.w, this.h) }
 			catch(e) { log("DisplayImage: "+e.message) }
 		} else {
