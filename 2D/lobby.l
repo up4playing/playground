@@ -86,7 +86,7 @@ unit lobby
 				
 				// Start button
 				let text = not .isReadyInLobby ? "START" : Loca.language == German ? "Ich bin bereit" : "I'm ready"
-				drawStandardButton text, pos+{0,halfVideoHeight+90}, accentColor:.color, enabled:!.isReadyInLobby, touchableBy:player
+				drawStandardButton text, pos+{0,halfVideoHeight+90}, accentColor:.color, enabled:!.isReadyInLobby, clickableBy:player
 					if enableFullscreen: Platform.setFullscreen true forPlayer:touch.by
 					input.playersById[touch.by.id].isReadyInLobby = true
 					if players.all.isReadyInLobby
@@ -173,7 +173,7 @@ unit lobby
 						drawImage cameraIcon, pos
 						forPositions PeerNetwork.devices.videoInput start:pos+{36} delta:{0,26} -> device
 							drawText .label, pos, size:18, align:Left, color:PeerNetwork.videoInputId == .deviceId ? Green : White
-							onTouchDownWithin pos+{200,0}, size:{400,30} by player
+							onTouchDown pos+{200,0}, size:{400,30} by player
 								PeerNetwork.setVideoInput device.deviceId, player
 						pos += {450}
 					
@@ -181,7 +181,7 @@ unit lobby
 						drawImage microphoneIcon, pos
 						forPositions PeerNetwork.devices.audioInput start:pos+{36} delta:{0,26} -> device
 							drawText .label, pos, size:18, align:Left, color:PeerNetwork.audioInputId == .deviceId ? Green : White
-							onTouchDownWithin pos+{200,0}, size:{400,30} by player
+							onTouchDown pos+{200,0}, size:{400,30} by player
 								PeerNetwork.setAudioInput device.deviceId, player
 						pos += {550}
 						
@@ -189,7 +189,7 @@ unit lobby
 						drawImage speakerIcon, pos
 						forPositions PeerNetwork.devices.audioOutput start:pos+{36} delta:{0,26} -> device
 							drawText .label, pos, size:18, align:Left, color:PeerNetwork.audioOutputId == .deviceId ? Green : White
-							onTouchDownWithin pos+{200,0}, size:{400,30} by player
+							onTouchDown pos+{200,0}, size:{400,30} by player
 								PeerNetwork.setAudioOutput device.deviceId, player
 						
 Player
@@ -221,7 +221,7 @@ Object LobbyTextField
 		let c = isFocused and ((Time.now%1000) < 500)
 		onTouchDownAny by editableBy
 			focus false
-		onTouchDownWithin position+{0,size.x/2}, {width,size.x*2}, by:editableBy
+		onTouchDown position+{0,size.x/2}, {width,size.x*2}, by:editableBy
 			focus true
 		if isFocused
 			onType by editableBy

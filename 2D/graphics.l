@@ -7,7 +7,6 @@ immutable Color
 	global const Color Green       = {"#06d6a0", "Green"}
 	global const Color Blue        = {"#118ab2", "Blue"}
 	global const Color Gray        = {"#3d3d3d", "Gray"}
-	global const Color Transparent = {"#00000000", "Transparent"}
 		
 	const Color TransparentRed     = {"#ff000080", "Transparent Red"}
 	
@@ -16,22 +15,51 @@ immutable Color
 	
 	string toString := name or hex
 	
+	int red()   return hex[1..3].parseInt(16)
+	int green() return hex[3..5].parseInt(16)
+	int blue()  return hex[5..7].parseInt(16)
+	
+	Color * float other: return {math.floor(red*other), math.floor(green*other), math.floor(blue*other)}
+	
+	// Interpolates to another color
+	Color interpolateTo: Color target
+		                 float progress
+		if progress <= 0: return this
+		if progress >= 1: return target
+		let iprogress = 1 - progress
+		return {
+			math.floor(red   * iprogress + target.red   * progress)
+			math.floor(green * iprogress + target.green * progress)
+			math.floor(blue  * iprogress + target.blue  * progress)
+		}
+		
+	// Animate the color to a target vector over a given period of time
+	inline animateTo: Color target        // The target color to animate to
+		              Time delay = 0      // The delay before the animation starts
+		              Time duration = 300 // The duration of the animation
+		fx.interpolate this, target, delay, duration, this = .
+
+	inline js bool == Color other: this?.hex == other?.hex
+	inline js bool != Color other: this?.hex != other?.hex
+	
 	Color: string hex = ""
 		this.hex = hex[0] == "#" ? hex : "#"+hex
 
 	Color: int red = 0
 		   int green = 0
 		   int blue = 0
-		   int alpha = 255
+		this.hex = "#" + componentToHex(red) + componentToHex(green) + componentToHex(blue)
+			
+	Color: int red
+		   int green
+		   int blue
+		   int alpha
 		this.hex = "#" + componentToHex(red) + componentToHex(green) + componentToHex(blue) + componentToHex(alpha)
 			
-	static js string componentToHex: int c
+	static private js string componentToHex: int c
 		var hex = c.toString(16);
 		return hex.length == 1 ? "0" + hex : hex;
 		
-	inline js bool operator ==(Color a, Color b) a?.hex == b?.hex
-	inline js bool operator !=(Color a, Color b) a?.hex != b?.hex
-	
 	Color withAlpha: float alpha
 		return {hex[1..7]+componentToHex(math.floor(alpha*255))}
 	
@@ -250,11 +278,11 @@ transient skipInit global unit graphics
 		let effectiveVisibleFor = visibleFor and (visibleFor.length != 1 or visibleFor[0]) ? visibleFor : currentlyVisibleFor
 		return effectiveVisibleFor == null or effectiveVisibleFor.any . == null or .id == input.localUser.id
 		
-	private Player[] getTouchableBy: Player[] visibleFor, Player[] touchableBy
+	private Player[] getClickableBy: Player[] visibleFor, Player[] clickableBy
 		Player[] effectiveVisibleBy = visibleFor or currentlyVisibleFor
-		return effectiveVisibleBy and touchableBy
-		     ? effectiveVisibleBy intersectWith touchableBy 
-		     : effectiveVisibleBy or touchableBy
+		return effectiveVisibleBy and clickableBy
+		     ? effectiveVisibleBy intersectWith clickableBy 
+		     : effectiveVisibleBy or clickableBy
 			
 	internal js void drawSafeArea
 		graphics_resetTransform()
@@ -388,7 +416,7 @@ transient skipInit global unit graphics
 		                   Vector2 position = {}                // By default, {0,0} is the center, {-960,-540} is the top left, {960,540} is the bottom right
 		                   implicit Vector2 size = {}           // A float scales the image to that width keeping the aspect ratio, a vector stretches the image
 		                   implicit Player[] visibleFor = null  // Only this player or list of players will see the image
-		                   framesPerSecond = 0                 // Animate a sequence of images (for example "Walk0.png", "Walk1.png", ...)
+		                   framesPerSecond = 0                  // Animate a sequence of images (for example "Walk0.png", "Walk1.png", ...)
 		                   implicit int layer = 0               // Higher layers are drawn in front of lower layers
 		                   alpha = 1.0                          // The opacity of the image (0: fully transparent, 1: fully visible)
 		                   Color color = White                  // Tint the image with this color
@@ -403,34 +431,34 @@ transient skipInit global unit graphics
 	// Example: If the current player instance clicks the image or 16 pixels around it, we print the exact position that was clicked. If other players will click the image, nothing will happen.
 	//     Player
 	//         tick
-	//             drawImage Idle, position:{0,0}, touchMargin:{16,16}, touchableBy:me
+	//             drawImage Idle, position:{0,0}, clickableMargin:{16,16}, clickableBy:me
 	//                 print "The image was clicked at {touch.position}"
 	// Image: drawImage0.png
 	global void drawImage: Image image                          // The image to draw. PNG images in the "media" folder will automatically show up here
 		                   Vector2 position = {}                // By default, {0,0} is the center, {-960,-540} is the top left, {960,540} is the bottom right
 		                   implicit Vector2 size = {}           // A float scales the image to that width keeping the aspect ratio, a vector stretches the image
 		                   implicit Player[] visibleFor = null  // Only this player or list of players will see the image
-		                   implicit Player[] touchableBy = null // Only this player or list of players can touch or click the image
+		                   implicit Player[] clickableBy = null // Only this player or list of players can touch or click the image
 		                   implicit frame = 0                   // The frame to draw from a sequence of images (for example "Walk0.png", "Walk1.png", ...)
 		                   implicit layer = 0                   // Higher layers are drawn in front of lower layers
 		                   alpha = 1.0                          // The opacity of the image (0: fully transparent, 1: fully visible)
 		                   Color color = White                  // Tint the image with this color
 		                   Angle angle = 0.0                    // Rotate the image by this angle in turns (0: no rotation, 1: one full rotation)
-		                   touchMargin = Vector2(16,16)         // The margin around the image within which it is touchable
-		                   showTouchArea = false                // Highlight the touchable area for debugging
-		                   hotkey = Key.None                    // This keyboard shortcut will execute the onTouch handler
-		                   void(Touch touch) onTouch            // Execute this code when the user touches or clicks the image or presses the hotkey
+		                   clickableMargin = Vector2(16,16)     // The margin around the image within which it is clickable
+		                   showClickableArea = false            // Highlight the clickable area for debugging
+		                   hotkey = Key.None                    // This keyboard shortcut will execute the onClick handler
+		                   void(Touch touch) onClick            // Execute this code when the user touches or clicks the image or presses the hotkey
 		                   SourceCodeLocation location
 		drawImage image, position, frame, size, angle, visibleFor, layer, alpha, color, location
 			
 		// Handle click (only visible buttons are clickable)
-		let effectiveTouchableBy = getTouchableBy(visibleFor, touchableBy)
+		let effectiveClickableBy = getClickableBy(visibleFor, clickableBy)
 		if size.x == 0 and size.y == 0: size = image.size; else
 		if size.y == 0: size.y = size.x * image.size.y / image.size.x
-		input.onTouchDownWithin position, size + touchMargin, by:effectiveTouchableBy, showTouchArea, do:onTouch
+		input.onTouchDown position, size + clickableMargin, by:effectiveClickableBy, showClickableArea, do:onClick
 		if hotkey
-			input.onKeyDown hotkey, by:effectiveTouchableBy
-				onTouch null
+			input.onKeyDown hotkey, by:effectiveClickableBy
+				onClick null
 		
 	// ------------------------------------------------------- Text -------------------------------------------------------
 	
@@ -538,38 +566,38 @@ transient skipInit global unit graphics
 		                    Color textColor = null               // The color of the text
 		                    textSize = 24                        // The font size in pixels   
 		                    textOffset = Vector2(0,0)            // Draw the text at this offset to the image
-		                    touchMargin = Vector2(16,16)         // The margin around the button within which it is touchable
-		                    showTouchArea = false                // Highlight the touchable area for debugging
+		                    clickableMargin = Vector2(16,16)     // The margin around the button within which it is clickable
+		                    showClickableArea = false            // Highlight the clickable area for debugging
 		                    scaleOnHover = 1.0                   // Scale the button by this factor when the mouse hovers over the button
 		                    frameOnHover = 1                     // Draw this frame when the mouse hovers over the button
 		                    Color textColorOnHover = null        // Draw the text in this color when the mouse hovers over the button
 		                    Image accentImage = null             // Draw this image tited with the accent color on top of the button
 		                    Color accentColor = null             // Tint the accent image with this color, defaults to the color of the local player
 		                    implicit Player[] visibleFor = null  // Only this player or list of players will see the button
-		                    implicit Player[] touchableBy = null // Only this player or list of players can touch or click the button
-		                    hotkey = Key.None                    // This keyboard shortcut will execute the onTouch handler
+		                    implicit Player[] clickableBy = null // Only this player or list of players can touch or click the button
+		                    hotkey = Key.None                    // This keyboard shortcut will execute the onClick handler
 		                    implicit layer = 0                   // Higher layers are drawn in front of lower layers
 		                    alpha = 1.0                          // The opacity of the button (0: fully transparent, 1: fully visible)
-		                    enabled = true                       // When not enabled, the button isn't touchable and is drawn transparently (50% by default)
+		                    enabled = true                       // When not enabled, the button isn't clickable and is drawn transparently (50% by default)
 		                    alphaWhenDisabled = .5               // The opacity of the button will be multiplied with this factor when its disabled
-		                    void(Touch touch) onTouch = null     // Execute this code when the user touches or clicks the button or presses the hotkey
+		                    void(Touch touch) onClick = null     // Execute this code when the user touches or clicks the button or presses the hotkey
 	                        SourceCodeLocation location
 		float scale = 1.0
 		Vector2 effectiveSize = image ? getEffectiveSize(image.size, size) : {getTextWidth(text, size:textSize), textSize}
-		let effectiveTouchableBy = getTouchableBy(visibleFor, touchableBy)
-		if enabled and onTouch != null
+		let effectiveClickableBy = getClickableBy(visibleFor, clickableBy)
+		if enabled and onClick != null
 			// Handle click (only visible buttons are clickable)
-			Vector2 sizeWithMargin = effectiveSize + touchMargin
+			Vector2 sizeWithMargin = effectiveSize + clickableMargin
 			bool switchFrameOnHover = frameOnHover != -1 and frame == -1 and (image?.frames.length > frameOnHover or accentImage?.frames.length > frameOnHover)
 			if switchFrameOnHover or scaleOnHover != 1.0 or textColorOnHover
-				input.onTouchOver position, sizeWithMargin, by:effectiveTouchableBy
+				input.onTouchOver position, sizeWithMargin, by:effectiveClickableBy
 					if textColorOnHover:    textColor = textColorOnHover
 					if switchFrameOnHover:  frame = frameOnHover
 					if scaleOnHover != 1.0: scale = scaleOnHover
-			input.onTouchDownWithin position, sizeWithMargin, by:effectiveTouchableBy, showTouchArea, do:onTouch
+			input.onTouchDown position, sizeWithMargin, by:effectiveClickableBy, showClickableArea, do:onClick
 			if hotkey
-				input.onKeyDown hotkey, by:effectiveTouchableBy
-					onTouch null
+				input.onKeyDown hotkey, by:effectiveClickableBy
+					onClick null
 					
 		if isVisibleFor(visibleFor)
 			if frame == -1: frame = 0
@@ -578,7 +606,7 @@ transient skipInit global unit graphics
 			if text:  drawText text, position+textOffset, textSize, textColor, visibleFor, layer, effectiveAlpha, location
 			if accentImage
 				if not accentColor
-					if effectiveTouchableBy and effectiveTouchableBy[0]: accentColor = effectiveTouchableBy[0].color
+					if effectiveClickableBy and effectiveClickableBy[0]: accentColor = effectiveClickableBy[0].color
 					else                                                 accentColor = input.localPlayer.color
 				drawImage accentImage, position, frame, effectiveSize, visibleFor, layer, effectiveAlpha, location, color:accentColor
 			if image: drawImage image, position, frame, effectiveSize, visibleFor, layer, effectiveAlpha, location
@@ -1097,6 +1125,7 @@ transient skipInit global unit graphics
 	
 	// Teh default player colors
 	const Color[] defaultColors = [{"#398CA9", "Blue"}, {"#C01352", "Red"}, {"#16C66E", "Green"}, {"#FFD166", "Yellow"}]
+	const Color[] darkDefaultColors = [{"#193742", "Dark Blue"}, {"#470B21", "Dark Red"}, {"#0A3620", "Dark Green"}, {"#4B3F21", "Dark Yellow"}]
 
 	// The default color for all drawing operations
 	color
@@ -1520,7 +1549,7 @@ transient DisplayItem DisplayImage
 		graphics_context.globalAlpha = this.alpha
 		if(this.clippingPath) this.startClipping()
 			
-		if(this.color.hex == "#ffffff") {
+		if(this.color.hex == "#ffffff" || this.color.hex == "#ffffffff") {
 			try{ graphics_context.drawImage(this.htmlImage, this.sx, this.sy, this.sw, this.sh, this.x, this.y, this.w, this.h) }
 			catch(e) { log("DisplayImage: "+e.message) }
 		} else {

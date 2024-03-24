@@ -35,7 +35,7 @@ immutable struct int
 	// Returns true if the integer is not zero
 	inline js bool toBool := this
 	
-	inline js implicit string toString := this?.toString()
+	inline js string toString := this?.toString()
 		
 	implicit inline js Time toTime() this
 		
@@ -214,6 +214,10 @@ immutable struct float
 	inline js float abs
 		Math.abs(this)
 		
+	// Returns -1, 0, or 1 depending on the sign of the value
+	inline js float sign
+		Math.sign(this)
+		
 	// Returns the smallest integer greater than or equal to the given value 
 	inline js int ceil
 		Math.ceil(this)
@@ -254,15 +258,30 @@ immutable struct float
 		                                   float speed
 		(this < value ? (this + speed * (value-this) < value ? (this += speed * (value-this)) : (this = value)) : (this - speed * (this-value) > value ? (this -= speed * (this-value)) : (this = value)))
 		
-	inline js float interpolateTo: float target
-		                           float value
-		(this + (target - this)*value)
+	// Interpolates to another value
+	inline js float interpolateTo: float target   // The target value to interpolate to
+		                           float progress // The progress of the interpolation (0: return the start value, 1: returns the target value)
+		(this + (target - this)*progress)
 		
-	inline js float interpolateTo: float target
-		                           float value
-		                           EaseFunction ease
-		(this + (target - this)*ease.function.invoke(value))
-		
+	// Interpolates to another value
+	inline js float interpolateTo: float target      // The target value to interpolate to
+		                           float progress    // The progress of the interpolation (0: return the start value, 1: returns the target value)
+		                           EaseFunction ease // The easing function to apply (e.g InQuad, OutBack, ...)
+		(this + (target - this)*ease.function.invoke(progress))
+	
+	// Animate the float to a target value over a given period of time	
+	inline animateTo: float target        // The target value to animate to
+		              Time delay = 0      // The delay before the animation starts
+		              Time duration = 300 // The duration of the animation
+		fx.interpolate this, target, delay, duration, this = .
+	
+	// Animate the float to a target value over a given period of time	
+	inline animateTo: float target        // The target value to animate to
+		              Time delay = 0      // The delay before the animation starts
+		              Time duration = 300 // The duration of the animation
+		              EaseFunction ease   // The easing function to apply
+		fx.interpolate this, target, delay, duration, ease, this = .
+
 	inline js float incrementBy: float value
 		                         nocolon float to
 		(this+value < to ? (this += value) : to)
@@ -288,13 +307,57 @@ immutable struct float
 	
 	// Weeks	
 	inline js Time weeks := (this*604800000)
-		
-immutable EaseFunction
-	float(float value) function
 	
-	global const EaseFunction None    = { . }
-	global const EaseFunction InQuad  = { . * . }
-	global const EaseFunction OutBack = { 1 + 2.70158 * math.pow(. - 1, 3) + 1.70158 * math.pow(. - 1, 2) }
+immutable EaseFunction
+	float(float x) function
+	
+	// Interpolate linearly without easing
+	global const EaseFunction None    = { x }
+		
+	// Ease in with a sine function
+	global const EaseFunction InSin = { 1 - math.cos(.25*x) }
+	
+	// Ease out with a sine function
+	global const EaseFunction OutSin = { math.sin(.25*x) }
+		
+	// Ease in and out with a sine function
+	global const EaseFunction InOutSin = { -(math.cos(.5*x) - 1) *.5 }
+		
+	// Ease in with a quadratic function
+	global const EaseFunction InQuadratic  = { x * x }
+	
+	// Ease out with a quadratic function
+	global const EaseFunction OutQuadratic  = { 1 - (1 - x) * (1 - x) }
+		
+	// Ease in and out with a quadratic function
+	global const EaseFunction InOutQuadratic  = { x < 0.5 ? 2 * x * x : 1 - math.pow(-2 * x + 2, 2) / 2 }
+		
+	// Ease out with a cubic function
+	global const EaseFunction InCubic  = { x * x * x }
+		
+	// Ease out with a cubic function
+	global const EaseFunction OutCubic  = { 1 - math.pow(1 - x, 3) }
+		
+	// Ease in and out with a cubic function
+	global const EaseFunction InOutCubic  = { x < 0.5 ? 4 * x * x * x : 1 - math.pow(-2 * x + 2, 3) / 2 }
+		
+	// Ease out with a quartic function
+	global const EaseFunction InQuartic  = { x * x * x * x }
+		
+	// Ease out with a quartic function
+	global const EaseFunction OutQuartic  = { 1 - math.pow(1 - x, 4) }
+		
+	// Ease in and out with a quartic function
+	global const EaseFunction InOutQuartic  = { x < 0.5 ? 8 * x * x * x * x : 1 - math.pow(-2 * x + 2, 4) / 2 }
+		
+	// Bounce back in the beginning
+	global const EaseFunction InBack = { 2.70158 * x * x * x - 1.70158 * x * x }
+		
+	// Bounce back in the end
+	global const EaseFunction OutBack = { 1 + 2.70158 * math.pow(x - 1, 3) + 1.70158 * math.pow(x - 1, 2) }
+		
+	// Bounce back in the beginning and the end
+	global const EaseFunction InOutBack = { x < 0.5 ? (math.pow(2 * x, 2) * ((2.70158 + 1) * 2 * x - 2.70158)) / 2 : (math.pow(2 * x - 2, 2) * ((2.70158 + 1) * (x * 2 - 2) + 2.70158) + 2) / 2 }
 	
 // A sequence of characters
 js String
@@ -324,6 +387,8 @@ immutable class string
 	inline js int toInt := parseInt(this)
 		
 	inline js int toFloat := parseFloat(this)
+		
+	inline js int parseInt(int radix = 10) parseInt(this, radix)
 	
 	inline js string[] split: string character = " "
 		this.split(character)
@@ -386,15 +451,15 @@ immutable class string
 		                     string padString = " "
 		this.padEnd(targetLength, padString)
 		
-	js string get: int index
-		return index >= 0 ? this[index] : this[this.length+index]
+	inline js string get: int index
+		this[index]
 	
-	js string get: int from = 0
-		           int to
-		return this.substring(from >= 0 ? from : this.length+from, to >= 0 ? to : this.length+to)
+	inline js string get: int from = 0
+		                  int to
+		this.substring(from, to)
 		
-	js string get: int from = 0
-		return this.substring(from >= 0 ? from : this.length+from)
+	inline js string get: int from = 0
+		this.substring(from)
 		
 	js string capitalizeFirstWord
 		return this.length > 0 ? this[0].toUpperCase() + this.substring(1) : this
@@ -639,6 +704,11 @@ class List<T>
 		for(let it of items)
 			if(!this.includes(it))
 				this.push(it)
+		
+	js void toggle: T item // The item to add
+		let index = this.indexOf(item)
+		if(index != -1) this.splice(index, 1)
+		else            this.push(item)
 		
 	// Returns whether the list contains the given item
 	inline js bool contains: T item // Check if the list contains this item
@@ -1303,20 +1373,23 @@ class List<T>
 	// The last item of the list
 	inline js T last() this[this.length-1]
 		
-	// Gets an item from the list
-	js T get: implicit int index // The index of the item to get
-		return index >= 0 ? this[index] : this[this.length+index]
+	// Get an item from the list
+	inline js T get: implicit int index // The index of the item to get
+		this[index]
 		
-	js T[] get: int from = 0 // Return a new list starting from this index
-		        int to       // Return a new list up to (but not including) this index
-		return this.slice(from, to)
+	// Get a new list that is a subset of this list
+	inline js T[] get: int from = 0 // Return a new list starting from this index, a negative index will start from the end of the list
+		               int to       // Return a new list up to (but not including) this index, a negative index is counted from the end
+		this.slice(from, to)
 	
-	js T[] get: int from // Return a new list starting from this index
-		return this.slice(from)
+	// Get a new list that is a subset of this list
+	inline js T[] get: int from // Return a new list starting from this index, a negative index will start from the end of the list
+		this.slice(from)
 	
-	js T set: int index // The index of the item to set
-		      T value   // The new value to set
-		return index >= 0 ? this[index] = value : this[this.length+index] = value
+	// Set the item at a given index
+	inline js T set: int index // The index of the item to set
+		             T value   // The new value to set
+		this[index] = value
 		
 	// Tries to get an item from the list. If it doesn't exist, it sets it.
 	// TODO: Support index with side effect (e.g. list[index++] ?= 0)
@@ -1325,38 +1398,38 @@ class List<T>
 		(this.hasOwnProperty(index) ? this[index] : this[index] = value)
 		
 	// Add a value to an item of the list
-	js T addToItem: int index // The index of the item to change
-		            T value   // The value to add to the item
-		return index >= 0 ? this[index] += value : this[this.length+index] += value
+	inline js T addToItem: int index // The index of the item to change
+		                   T value   // The value to add to the item
+		this[index] += value
 		
 	// Subtract a value from an item of the list
-	js T subtractFromItem: int index // The index of the item to change
-		                   T value   // The value to subtract from the item
-		return index >= 0 ? this[index] -= value : this[this.length+index] -= value
+	inline js T subtractFromItem: int index // The index of the item to change
+		                          T value   // The value to subtract from the item
+		this[index] -= value
 		
 	// Multiply an item of the list by a value
-	js T multiplyItem: int index // The index of the item to change
-		               T value   // The value to multiply the item by
-		return index >= 0 ? this[index] *= value : this[this.length+index] *= value
+	inline js T multiplyItem: int index // The index of the item to change
+		                      T value   // The value to multiply the item by
+		this[index] *= value
 		
 	// Divide an item of the list by a value
-	js T divideItem: int index // The index of the item to change
-		             T value   // The value to divide the item by
-		return index >= 0 ? this[index] /= value : this[this.length+index] /= value
+	inline js T divideItem: int index // The index of the item to change
+		                    T value   // The value to divide the item by
+		this[index] /= value
 		
 	// Add 1 to item of the list
-	js T incrementItem: int index // The index of the item to change
-		return index >= 0 ? this[index]++ : this[this.length+index]++
+	inline js T incrementItem: int index // The index of the item to change
+		this[index]++
 	
 	// Subtract 1 from an item of the list
-	js T decrementItem: int index // The index of the item to change
-		return index >= 0 ? this[index]-- : this[this.length+index]--
+	inline js T decrementItem: int index // The index of the item to change
+		this[index]--
 		
 immutable ImmutableList<T>
 	T[] list
 	
 	inline T get: implicit int index // The index of the item to get
-		list.get(index)
+		list[index]
 		
 // A data container that stores key-value pairs
 js Map
@@ -1377,7 +1450,7 @@ class Map<TKey, TValue>
 		
 	inline js TValue getOrSet: TKey key
 		                       TValue value
-		(this.get(key) || (this.setAndReturn(key, value)))
+		(this.get(key) || this.setAndReturn(key, value))
 		
 	// Remove the item assosiated with the given key
 	inline js void delete: TKey key  // The key of the item to remove from the map
@@ -1806,6 +1879,10 @@ global skipInit unit math
 	inline js float abs: float value // The value to return the absolute value of
 		Math.abs(value)
 		
+	// Returns -1, 0, or 1 depending on the sign of the value
+	inline js float sign: float value
+		Math.sign(value)
+		
 	// Returns the smallest integer greater than or equal to the given value 
 	inline js int ceil: float value // The value to round up
 		Math.ceil(value)
@@ -1947,14 +2024,20 @@ global skipInit unit math
 	// 	let factor = (value-from) / (to-from)
 	// 	return start + (target-start) * factor
 			
-	global animate: Time startTime = 0 //
-		            Time duration = 1  //
-		            float from = 0     // The lowest possible output value, will be returned for values smaller than "from".
-		            float to = 1       // The highest possible output value, will be returned for values larger than "to".
+	global interpolate: float from = 0
+		                float to = 1
+		                Time startTime = 0
+		                Time duration = 1
 		let value = Time.now - startTime
-		if value <= 0:       return from
-		if value >= duration:  return to
+		if value <= 0:        return from
+		if value >= duration: return to
 		return from + (to-from) * (value/duration)
+		
+	global interpolate: Color from
+		                Color to
+		                Time startTime = 0
+		                Time duration = 1
+		return from interpolateTo to, (Time.now - startTime)/duration
 		
 struct Average
 	float total
