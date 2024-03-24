@@ -258,30 +258,6 @@ immutable struct float
 		                                   float speed
 		(this < value ? (this + speed * (value-this) < value ? (this += speed * (value-this)) : (this = value)) : (this - speed * (this-value) > value ? (this -= speed * (this-value)) : (this = value)))
 		
-	// Interpolates to another value
-	inline js float interpolateTo: float target   // The target value to interpolate to
-		                           float progress // The progress of the interpolation (0: return the start value, 1: returns the target value)
-		(this + (target - this)*progress)
-		
-	// Interpolates to another value
-	inline js float interpolateTo: float target      // The target value to interpolate to
-		                           float progress    // The progress of the interpolation (0: return the start value, 1: returns the target value)
-		                           EaseFunction ease // The easing function to apply (e.g InQuad, OutBack, ...)
-		(this + (target - this)*ease.function.invoke(progress))
-	
-	// Animate the float to a target value over a given period of time	
-	inline animateTo: float target        // The target value to animate to
-		              Time delay = 0      // The delay before the animation starts
-		              Time duration = 300 // The duration of the animation
-		fx.interpolate this, target, delay, duration, this = .
-	
-	// Animate the float to a target value over a given period of time	
-	inline animateTo: float target        // The target value to animate to
-		              Time delay = 0      // The delay before the animation starts
-		              Time duration = 300 // The duration of the animation
-		              EaseFunction ease   // The easing function to apply
-		fx.interpolate this, target, delay, duration, ease, this = .
-
 	inline js float incrementBy: float value
 		                         nocolon float to
 		(this+value < to ? (this += value) : to)
@@ -307,57 +283,6 @@ immutable struct float
 	
 	// Weeks	
 	inline js Time weeks := (this*604800000)
-	
-immutable EaseFunction
-	float(float x) function
-	
-	// Interpolate linearly without easing
-	global const EaseFunction None    = { x }
-		
-	// Ease in with a sine function
-	global const EaseFunction InSin = { 1 - math.cos(.25*x) }
-	
-	// Ease out with a sine function
-	global const EaseFunction OutSin = { math.sin(.25*x) }
-		
-	// Ease in and out with a sine function
-	global const EaseFunction InOutSin = { -(math.cos(.5*x) - 1) *.5 }
-		
-	// Ease in with a quadratic function
-	global const EaseFunction InQuadratic  = { x * x }
-	
-	// Ease out with a quadratic function
-	global const EaseFunction OutQuadratic  = { 1 - (1 - x) * (1 - x) }
-		
-	// Ease in and out with a quadratic function
-	global const EaseFunction InOutQuadratic  = { x < 0.5 ? 2 * x * x : 1 - math.pow(-2 * x + 2, 2) / 2 }
-		
-	// Ease out with a cubic function
-	global const EaseFunction InCubic  = { x * x * x }
-		
-	// Ease out with a cubic function
-	global const EaseFunction OutCubic  = { 1 - math.pow(1 - x, 3) }
-		
-	// Ease in and out with a cubic function
-	global const EaseFunction InOutCubic  = { x < 0.5 ? 4 * x * x * x : 1 - math.pow(-2 * x + 2, 3) / 2 }
-		
-	// Ease out with a quartic function
-	global const EaseFunction InQuartic  = { x * x * x * x }
-		
-	// Ease out with a quartic function
-	global const EaseFunction OutQuartic  = { 1 - math.pow(1 - x, 4) }
-		
-	// Ease in and out with a quartic function
-	global const EaseFunction InOutQuartic  = { x < 0.5 ? 8 * x * x * x * x : 1 - math.pow(-2 * x + 2, 4) / 2 }
-		
-	// Bounce back in the beginning
-	global const EaseFunction InBack = { 2.70158 * x * x * x - 1.70158 * x * x }
-		
-	// Bounce back in the end
-	global const EaseFunction OutBack = { 1 + 2.70158 * math.pow(x - 1, 3) + 1.70158 * math.pow(x - 1, 2) }
-		
-	// Bounce back in the beginning and the end
-	global const EaseFunction InOutBack = { x < 0.5 ? (math.pow(2 * x, 2) * ((2.70158 + 1) * 2 * x - 2.70158)) / 2 : (math.pow(2 * x - 2, 2) * ((2.70158 + 1) * (x * 2 - 2) + 2.70158) + 2) / 2 }
 	
 // A sequence of characters
 js String
@@ -1868,7 +1793,6 @@ global transient priority low unit System
 		                            label int to // The exclusive upper bound to iterate towards
 		int_enumerate(from, to, do)
 		
-		
 // A collection of mathematical functions and constants
 global skipInit unit math
 	// Returns the absolute value
@@ -2023,21 +1947,6 @@ global skipInit unit math
 	// 	if value >= to:   return target
 	// 	let factor = (value-from) / (to-from)
 	// 	return start + (target-start) * factor
-			
-	global interpolate: float from = 0
-		                float to = 1
-		                Time startTime = 0
-		                Time duration = 1
-		let value = Time.now - startTime
-		if value <= 0:        return from
-		if value >= duration: return to
-		return from + (to-from) * (value/duration)
-		
-	global interpolate: Color from
-		                Color to
-		                Time startTime = 0
-		                Time duration = 1
-		return from interpolateTo to, (Time.now - startTime)/duration
 		
 struct Average
 	float total
