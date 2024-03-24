@@ -205,80 +205,6 @@ struct Vector2
 	angleTo: Vector2 value // The second vector
 		return math.getAngleForVector(value - this)
 
-	// Interpolates to another vector
-	interpolateTo: Vector2 target  // The target position to interpolate to
-		           float progress  // The progress of the interpolation (0: return the start vector, 1: returns the target vector)
-		if progress <= 0: return this
-		if progress >= 1: return target
-		let iprogress = 1 - progress
-		return new Vector2(x * iprogress + target.x * progress, y * iprogress + target.y * progress)
-
-	// Interpolates to another vector
-	interpolateTo: Vector2 target  // The target position to interpolate to
-		           Time startTime
-		           Time duration = 300
-		let progress = (Time.now - startTime) / duration
-		if progress <= 0: return this
-		if progress >= 1: return target
-		let iprogress = 1 - progress
-		return new Vector2(x * iprogress + target.x * progress, y * iprogress + target.y * progress)
-
-	// Interpolates to another vector
-	interpolateTo: Vector2 target  // The target position to interpolate to
-		           float progress  // The progress of the interpolation (0: return the start vector, 1: returns the target vector)
-		           EaseFunction ease
-		if progress <= 0: return this
-		if progress >= 1: return target
-		progress = ease.function(progress)
-		let iprogress = 1 - progress
-		return new Vector2(x * iprogress + target.x * progress, y * iprogress + target.y * progress)
-
-	// Interpolates to another vector
-	interpolateTo: Vector2 target  // The target position to interpolate to
-		           Time startTime
-		           Time duration = 300
-		           EaseFunction ease
-		let progress = (Time.now - startTime) / duration
-		if progress <= 0: return this
-		if progress >= 1: return target
-		progress = ease.function(progress)
-		let iprogress = 1 - progress
-		return new Vector2(x * iprogress + target.x * progress, y * iprogress + target.y * progress)
-
-	// // Interpolates to another vector
-	// interpolateTo: Vector2 target // The target position to interpolate to
-	// 	           float progress // The progress of the interpolation (0: return the start vector, 1: returns the target vector)
-	// 	           float from     // The beginning of the input range
-	// 	           float to       // The end of the input range
-	// 	if progress <= from: return this
-	// 	if progress >= to: return target
-	// 	let factor = (progress-from) / (to-from)
-	// 	return new Vector2(x + (target.x-x)*factor, y + (target.y-y)*factor)
-
-	// // Interpolates to another vector
-	// interpolateTo: Vector2 target    // The target position to interpolate to
-	// 	           float progress    // The progress of the interpolation (0: return the start vector, 1: returns the target vector)
-	// 	           float from        // The beginning of the input range
-	// 	           float to          // The end of the input range
-	// 	           EaseFunction ease // The easing function to apply
-	// 	if progress <= from: return this
-	// 	if progress >= to: return target
-	// 	let factor = ease.function((progress-from) / (to-from))
-	// 	return new Vector2(x + (target.x-x)*factor, y + (target.y-y)*factor)
-		
-	// Animate the vector to a target vector over a given period of time
-	inline animateTo: Vector2 target      // The target vector to animate to
-		              Time delay = 0      // The delay before the animation starts
-		              Time duration = 300 // The duration of the animation
-		fx.interpolate this, target, delay, duration, this.x = .x; this.y = .y
-
-	// Animate the vector to a target vector over a given period of time
-	inline animateTo: Vector2 target      // The target vector to animate to
-		              Time delay = 0      // The delay before the animation starts
-		              Time duration = 300 // The duration of the animation
-		              EaseFunction ease   // The easing function to apply
-		fx.interpolate this, target, delay, duration, ease, this.x = .x; this.y = .y
-
 	// A vector that points in the same direction, but has a length of 1
 	normalized
 		let len = math.sqrt(x * x + y * y)
@@ -486,14 +412,8 @@ struct IntVector2
 			math.limit y, min:min.y
 		)
 		
-	// Interpolates linearly to another vector
-	interpolateTo: IntVector2 target // The target vector to interpolate to
-		           float progress    // The progress of the interpolation (0: return the start vector, 1: returns the target vector)
-		let iprogress = 1 - progress
-		return new Vector2(x * iprogress + target.x * progress, y * iprogress + target.y * progress)
-	
 	// The distance to another vector
-	odistanceTo: IntVector2 value // The second vector
+	distanceTo: IntVector2 value // The second vector
 		let x = x - value.x
 		let y = y - value.y
 		return math.sqrt(x*x + y*y)
@@ -822,7 +742,7 @@ global skipInit priority low unit math
 		if targetValue > value: return math.min(value + speed, targetValue) else
 		if targetValue < value: return math.max(value - speed, targetValue)
 			
-unit math
+global skipInit unit math
 	// Returns the arctangent of the quotient of the given values
 	Angle getAngleForVector: Vector2 vector
 		return math.atan2(vector.y, vector.x)
@@ -875,29 +795,6 @@ unit math
 		if type >= Ray     and scalar < 0: scalar = 0
 		if type == Segment and scalar > 1: scalar = 1
 		return from + lineVector * scalar
-	
-	// Maps a value from an input range to an output range
-	map: float value    // The input value 
-		 float from = 0 // The beginning of the input range
-		 float to = 1   // The end of the input range
-		 Vector2 start  // The start output position, will be returned for values smaller than "from".
-		 Vector2 target // The target output position, will be returned for values larger than "to".
-		if value <= from: return start
-		if value >= to:   return target
-		let factor = (value-from) / (to-from)
-		return start + (target-start) * factor
-			
-	// Maps a value from an input range to an output range
-	map: float value       // The input value 
-		 float from = 0    // The beginning of the input range
-		 float to = 1      // The end of the input range
-		 Vector2 start     // The start output position, will be returned for values smaller than "from".
-		 Vector2 target    // The target output position, will be returned for values larger than "to".
-		 EaseFunction ease // The easing function to apply
-		if value <= from: return start
-		if value >= to:   return target
-		let factor = (value-from) / (to-from)
-		return start + (target-start) * ease.function(factor)
 	
 global transient unit System
 	global inline js void forPositions: int to                            // The exclusive upper bound to iterate towards

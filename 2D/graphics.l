@@ -21,24 +21,6 @@ immutable Color
 	
 	Color * float other: return {math.floor(red*other), math.floor(green*other), math.floor(blue*other)}
 	
-	// Interpolates to another color
-	Color interpolateTo: Color target
-		                 float progress
-		if progress <= 0: return this
-		if progress >= 1: return target
-		let iprogress = 1 - progress
-		return {
-			math.floor(red   * iprogress + target.red   * progress)
-			math.floor(green * iprogress + target.green * progress)
-			math.floor(blue  * iprogress + target.blue  * progress)
-		}
-		
-	// Animate the color to a target vector over a given period of time
-	inline animateTo: Color target        // The target color to animate to
-		              Time delay = 0      // The delay before the animation starts
-		              Time duration = 300 // The duration of the animation
-		fx.interpolate this, target, delay, duration, this = .
-
 	inline js bool == Color other: this?.hex == other?.hex
 	inline js bool != Color other: this?.hex != other?.hex
 	
@@ -1248,7 +1230,8 @@ transient skipInit global unit graphics
 	private getScaleImagesAsPointerGetsCloserFactor: Vector2 position
 		if not scaleAsPointerGetsCloserRadius: return 1.0
 		let distance = scaleAsPointerGetsCloserBy ? scaleAsPointerGetsCloserBy.pointerPosition.distanceTo(position) : players.min.pointerPosition.distanceTo(position)
-		return math.map distance, 0, scaleAsPointerGetsCloserRadius, scaleAsPointerGetsCloserFactor, 1
+		// return math.map distance, 0, scaleAsPointerGetsCloserRadius, scaleAsPointerGetsCloserFactor, 1
+		return scaleAsPointerGetsCloserFactor interpolateTo 1 progress:distance 0..scaleAsPointerGetsCloserRadius
 		
 	// --------------------------------------------- Create and Manipulate Images ---------------------------------------------
 	
@@ -1348,7 +1331,8 @@ skipInit transient unit gizmo
 					if .y < min.y: min.y = .y
 					if .x + .w > max.x: max.x = .x + .w
 					if .y + .h > max.y: max.y = .y + .h
-		handleSize = math.map math.min(max.x-min.x, max.y-min.y) 64..256 start:16 target:32
+		// handleSize = math.map math.min(max.x-min.x, max.y-min.y) 64..256 start:16 target:32
+		handleSize = 16 interpolateTo 32 progress:math.min(max.x-min.x, max.y-min.y) 64..256
 	
 	internal tick
 		if Platform.mode != Manipulator: return
