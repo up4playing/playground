@@ -211,6 +211,7 @@ unit websocket
 	js void startWebsocketServer: int port
 		                          string keypath = ""
 		                          void(string[] path, WebsocketHttpResponse response) onGet
+		                          void() onStart
 		                          void(Connection connection) onOpen
 		                          void(Connection connection, int errorCode) onClose
 		                          void(Connection connection, Buffer buffer) onMessage
@@ -243,7 +244,7 @@ unit websocket
 			onGet(path, response);
 		}).listen(port, (token) => {
 			if (token) {
-				console.log('Listening to port ' + port);
+				onStart();
 			} else {
 				console.log('Failed to listen to port ' + port);
 			}
