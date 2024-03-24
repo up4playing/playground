@@ -1781,12 +1781,20 @@ global transient priority unit System
 		                                     ) do         // Do this for each triple in a list
 		for(let _subject=subject, _len=_subject.length, i=_len-1; i>=0; --i) do(_subject[i], _subject[(i+1)%_len], _subject[(((i-1)%_len)+_len)%_len], i)
 
+	// Prints a message to the console with date
+	// global js void print: logstring text // The text, variables or expressions to print
+	// 	                  SourceCodeLocation location
+	// 	let now = new Date()
+	// 	let time = now.getDate().toLocaleString('en-US', {minimumIntegerDigits:2})+"."+(now.getMonth()+1).toLocaleString('en-US', {minimumIntegerDigits:2})+"."+now.getFullYear()+" "+now.getHours().toLocaleString('en-US', {minimumIntegerDigits:2})+":"+now.getMinutes().toLocaleString('en-US', {minimumIntegerDigits:2})+":"+now.getSeconds().toLocaleString('en-US', {minimumIntegerDigits:2})+"."+now.getMilliseconds().toLocaleString('en-US', {minimumIntegerDigits:3});
+	// 	(location ? log(time + " " +text, location.start, location.file) : log(time + " " +text))
+		
+	// js void log: any value
+	// 	console.log(value)
+	
 	// Prints a message to the console
 	global js void print: logstring text // The text, variables or expressions to print
 		                  SourceCodeLocation location
-		let now = new Date()
-		let time = now.getDate().toLocaleString('en-US', {minimumIntegerDigits:2})+"."+(now.getMonth()+1).toLocaleString('en-US', {minimumIntegerDigits:2})+"."+now.getFullYear()+" "+now.getHours().toLocaleString('en-US', {minimumIntegerDigits:2})+":"+now.getMinutes().toLocaleString('en-US', {minimumIntegerDigits:2})+":"+now.getSeconds().toLocaleString('en-US', {minimumIntegerDigits:2})+"."+now.getMilliseconds().toLocaleString('en-US', {minimumIntegerDigits:3});
-		(location ? log(time + " " +text, location.start, location.file) : log(time + " " +text))
+		(location ? log(text, location.start, location.file) : log(text))
 		
 	js void log: any value
 		console.log(value)
