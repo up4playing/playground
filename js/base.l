@@ -1914,40 +1914,6 @@ global skipInit unit math
 		if value < min: return min
 			            return value
 			
-	// Maps a value from an input range to an output range
-	map: float value       // The input value 
-		 float from = 0    // The beginning of the input range
-		 float to = 1      // The end of the input range
-		 float start = 0   // The lowest possible output value, will be returned for values smaller than "from".
-		 float target = 1  // The highest possible output value, will be returned for values larger than "to".
-		if value <= from: return start
-		if value >= to:   return target
-		let factor = (value-from) / (to-from)
-		return start + (target-start) * factor
-			
-	// Maps a value from an input range to an output range
-	map: float value       // The input value 
-		 float from = 0    // The beginning of the input range
-		 float to = 1      // The end of the input range
-		 float start = 0   // The lowest possible output value, will be returned for values smaller than "from".
-		 float target = 1  // The highest possible output value, will be returned for values larger than "to".
-		 EaseFunction ease // The easing function to apply
-		if value <= from: return start
-		if value >= to:   return target
-		let factor = ease.function((value-from) / (to-from))
-		return start + (target-start) * factor
-		
-	// // Maps a value from an input range to an output range
-	// map: Time value        // The input value 
-	// 	 Time from = 0     // The beginning of the input range
-	// 	 Time to = 1       // The end of the input range
-	// 	 float start = 0   // The lowest possible output value, will be returned for values smaller than "from".
-	// 	 float target = 1  // The highest possible output value, will be returned for values larger than "to".
-	// 	if value <= from: return start
-	// 	if value >= to:   return target
-	// 	let factor = (value-from) / (to-from)
-	// 	return start + (target-start) * factor
-		
 struct Average
 	float total
 	int count

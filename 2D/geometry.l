@@ -796,29 +796,6 @@ global skipInit unit math
 		if type == Segment and scalar > 1: scalar = 1
 		return from + lineVector * scalar
 	
-	// Maps a value from an input range to an output range
-	map: float value    // The input value 
-		 float from = 0 // The beginning of the input range
-		 float to = 1   // The end of the input range
-		 Vector2 start  // The start output position, will be returned for values smaller than "from".
-		 Vector2 target // The target output position, will be returned for values larger than "to".
-		if value <= from: return start
-		if value >= to:   return target
-		let factor = (value-from) / (to-from)
-		return start + (target-start) * factor
-			
-	// Maps a value from an input range to an output range
-	map: float value       // The input value 
-		 float from = 0    // The beginning of the input range
-		 float to = 1      // The end of the input range
-		 Vector2 start     // The start output position, will be returned for values smaller than "from".
-		 Vector2 target    // The target output position, will be returned for values larger than "to".
-		 EaseFunction ease // The easing function to apply
-		if value <= from: return start
-		if value >= to:   return target
-		let factor = (value-from) / (to-from)
-		return start + (target-start) * ease.function(factor)
-	
 global transient unit System
 	global inline js void forPositions: int to                            // The exclusive upper bound to iterate towards
 		                                Vector2 start = {0,0}             // Left or top align items at this position

@@ -55,6 +55,12 @@ struct float
 		                           float progress // The progress of the interpolation (0: return the start value, 1: returns the target value)
 		(this + (target - this)*progress)
 		
+	inline js float interpolateTo: float target   // The target value to interpolate to
+		                           float progress // Between "from" and "to" ("from" returns the start value, "to" returns the target value)
+		                           float from     // The beginning of the input range, if "progress" is "from" or less, the start value is returned
+		                           float to       // The end of the input range, if "progress" is "to" or more, the target value is returned
+		(this + (target - this)*(progress - from)/(to - from))
+		
 	// Interpolates to another value
 	inline js float interpolateTo: float target      // The target value to interpolate to
 		                           float progress    // The progress of the interpolation (0: return the start value, 1: returns the target value)
@@ -116,25 +122,25 @@ struct Vector2
 		return new Vector2(x * iprogress + target.x * progress, y * iprogress + target.y * progress)
 
 	// // Interpolates to another vector
-	// interpolateTo: Vector2 target // The target position to interpolate to
-	// 	           float progress // The progress of the interpolation (0: return the start vector, 1: returns the target vector)
-	// 	           float from     // The beginning of the input range
-	// 	           float to       // The end of the input range
-	// 	if progress <= from: return this
-	// 	if progress >= to: return target
-	// 	let factor = (progress-from) / (to-from)
-	// 	return new Vector2(x + (target.x-x)*factor, y + (target.y-y)*factor)
+	interpolateTo: Vector2 target // The target position to interpolate to
+		           float progress // Between "from" and "to" ("from" returns the start value, "to" returns the target value)
+		           float from     // The beginning of the input range, if "progress" is "from" or less, the start value is returned
+		           float to       // The end of the input range, if "progress" is "to" or more, the target value is returned
+		if progress <= from: return this
+		if progress >= to: return target
+		let factor = (progress-from) / (to-from)
+		return new Vector2(x + (target.x-x)*factor, y + (target.y-y)*factor)
 
 	// // Interpolates to another vector
-	// interpolateTo: Vector2 target    // The target position to interpolate to
-	// 	           float progress    // The progress of the interpolation (0: return the start vector, 1: returns the target vector)
-	// 	           float from        // The beginning of the input range
-	// 	           float to          // The end of the input range
-	// 	           EaseFunction ease // The easing function to apply
-	// 	if progress <= from: return this
-	// 	if progress >= to: return target
-	// 	let factor = ease.function((progress-from) / (to-from))
-	// 	return new Vector2(x + (target.x-x)*factor, y + (target.y-y)*factor)
+	interpolateTo: Vector2 target    // The target position to interpolate to
+		           float progress    // Between "from" and "to" ("from" returns the start value, "to" returns the target value)
+		           float from        // The beginning of the input range, if "progress" is "from" or less, the start value is returned
+		           float to          // The end of the input range, if "progress" is "to" or more, the target value is returned
+		           EaseFunction ease // The easing function to apply
+		if progress <= from: return this
+		if progress >= to: return target
+		let factor = ease.function((progress-from) / (to-from))
+		return new Vector2(x + (target.x-x)*factor, y + (target.y-y)*factor)
 		
 	// Animate the vector to a target vector over a given period of time
 	inline animateTo: Vector2 target      // The target vector to animate to
@@ -169,20 +175,77 @@ Color
 		fx.interpolate this, target, delay, duration, this = .
 	
 global skipInit unit math
-	global interpolate: float from = 0
-		                float to = 1
-		                Time startTime = 0
-		                Time duration = 1
-		let value = Time.now - startTime
-		if value <= 0:        return from
-		if value >= duration: return to
-		return from + (to-from) * (value/duration)
+	// Maps a value from an input range to an output range
+	// map: float value       // The input value 
+	// 	 float from = 0    // The beginning of the input range
+	// 	 float to = 1      // The end of the input range
+	// 	 float start = 0   // The lowest possible output value, will be returned for values smaller than "from".
+	// 	 float target = 1  // The highest possible output value, will be returned for values larger than "to".
+	// 	if value <= from: return start
+	// 	if value >= to:   return target
+	// 	let factor = (value-from) / (to-from)
+	// 	return start + (target-start) * factor
+			
+	// // Maps a value from an input range to an output range
+	// map: float value       // The input value 
+	// 	 float from = 0    // The beginning of the input range
+	// 	 float to = 1      // The end of the input range
+	// 	 float start = 0   // The lowest possible output value, will be returned for values smaller than "from".
+	// 	 float target = 1  // The highest possible output value, will be returned for values larger than "to".
+	// 	 EaseFunction ease // The easing function to apply
+	// 	if value <= from: return start
+	// 	if value >= to:   return target
+	// 	let factor = ease.function((value-from) / (to-from))
+	// 	return start + (target-start) * factor
 		
-	global interpolate: Color from
-		                Color to
-		                Time startTime = 0
-		                Time duration = 1
-		return from interpolateTo to, (Time.now - startTime)/duration
+	// // Maps a value from an input range to an output range
+	// map: Time value        // The input value 
+	// 	 Time from = 0     // The beginning of the input range
+	// 	 Time to = 1       // The end of the input range
+	// 	 float start = 0   // The lowest possible output value, will be returned for values smaller than "from".
+	// 	 float target = 1  // The highest possible output value, will be returned for values larger than "to".
+	// 	if value <= from: return start
+	// 	if value >= to:   return target
+	// 	let factor = (value-from) / (to-from)
+	// 	return start + (target-start) * factor
+		
+	// Maps a value from an input range to an output range
+	// map: float value    // The input value 
+	// 	 float from = 0 // The beginning of the input range
+	// 	 float to = 1   // The end of the input range
+	// 	 Vector2 start  // The start output position, will be returned for values smaller than "from".
+	// 	 Vector2 target // The target output position, will be returned for values larger than "to".
+	// 	if value <= from: return start
+	// 	if value >= to:   return target
+	// 	let factor = (value-from) / (to-from)
+	// 	return start + (target-start) * factor
+			
+	// // Maps a value from an input range to an output range
+	// map: float value       // The input value 
+	// 	 float from = 0    // The beginning of the input range
+	// 	 float to = 1      // The end of the input range
+	// 	 Vector2 start     // The start output position, will be returned for values smaller than "from".
+	// 	 Vector2 target    // The target output position, will be returned for values larger than "to".
+	// 	 EaseFunction ease // The easing function to apply
+	// 	if value <= from: return start
+	// 	if value >= to:   return target
+	// 	let factor = (value-from) / (to-from)
+	// 	return start + (target-start) * ease.function(factor)
+		
+	// global interpolate: float from = 0
+	// 	                float to = 1
+	// 	                Time startTime = 0
+	// 	                Time duration = 1
+	// 	let value = Time.now - startTime
+	// 	if value <= 0:        return from
+	// 	if value >= duration: return to
+	// 	return from + (to-from) * (value/duration)
+		
+	// global interpolate: Color from
+	// 	                Color to
+	// 	                Time startTime = 0
+	// 	                Time duration = 1
+	// 	return from interpolateTo to, (Time.now - startTime)/duration
 	
 global unit fx
 	internal Animation[] animations

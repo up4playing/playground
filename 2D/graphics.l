@@ -1230,7 +1230,8 @@ transient skipInit global unit graphics
 	private getScaleImagesAsPointerGetsCloserFactor: Vector2 position
 		if not scaleAsPointerGetsCloserRadius: return 1.0
 		let distance = scaleAsPointerGetsCloserBy ? scaleAsPointerGetsCloserBy.pointerPosition.distanceTo(position) : players.min.pointerPosition.distanceTo(position)
-		return math.map distance, 0, scaleAsPointerGetsCloserRadius, scaleAsPointerGetsCloserFactor, 1
+		// return math.map distance, 0, scaleAsPointerGetsCloserRadius, scaleAsPointerGetsCloserFactor, 1
+		return scaleAsPointerGetsCloserFactor interpolateTo 1 progress:distance 0..scaleAsPointerGetsCloserRadius
 		
 	// --------------------------------------------- Create and Manipulate Images ---------------------------------------------
 	
@@ -1330,7 +1331,8 @@ skipInit transient unit gizmo
 					if .y < min.y: min.y = .y
 					if .x + .w > max.x: max.x = .x + .w
 					if .y + .h > max.y: max.y = .y + .h
-		handleSize = math.map math.min(max.x-min.x, max.y-min.y) 64..256 start:16 target:32
+		// handleSize = math.map math.min(max.x-min.x, max.y-min.y) 64..256 start:16 target:32
+		handleSize = 16 interpolateTo 32 progress:math.min(max.x-min.x, max.y-min.y) 64..256
 	
 	internal tick
 		if Platform.mode != Manipulator: return
