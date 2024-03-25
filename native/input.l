@@ -1236,14 +1236,14 @@ skipInit global unit input
 	//             drawText "OK", position:{0,0}, size:40, color:White
 	//             drawRoundedRectangle position:{0,0}, size:{300,100}, color:Blue
 	//             
-	//             onTouchDownWithin position:{0,0}, size:{300,100}
+	//             onTouchDown position:{0,0}, size:{300,100}
 	//                 print "Clicked OK"
-	// Image: onTouchDownWithin0.png
-	global onTouchDownWithin: Vector2 position                    // The center of the touch area
+	// Image: onTouchDown0.png
+	global onTouchDown: Vector2 position                    // The center of the touch area
 		                      Vector2 size                        // The size of the rectangular touch area
 		                      implicit nocolon Player[] by = []   // Only consider touches or clicks by this player or list of players  
 		                      Cursor cursor = Auto                // Change the mouse cursor image when hovering over this area
-		                      bool showTouchArea = false          // Highlight the touchable area for debugging
+		                      bool showClickableArea = false          // Highlight the clickable area for debugging
 		                      bool markAsHandled = true           // Mark the touch as handled so it won't trigger more touch events
 		                      HorizontalAlignment align = Center  // The horizontal alignment of the touch area
 		                      VerticalAlignment valign = Middle   // The vertical alignment of the touch area
@@ -1272,7 +1272,7 @@ skipInit global unit input
 	// 				this.cursor = cursor
 				
 	// 	// Migrate to 3D
-	// 	// if showTouchArea: drawRectangle position, size, color:{"#ff000080"}, align, valign, layer:10000000
+	// 	// if showClickableArea: drawRectangle position, size, color:{"#ff000080"}, align, valign, layer:10000000
 
 	// // Do something when the player touches or clicks within a given rotated rectangle
 	// // Example: Draw a the image "Character" rotated by 45 degrees and print "Clicked character" when the player touches within its rotated rectangle.
@@ -1283,15 +1283,15 @@ skipInit global unit input
 	// //             let angle = 45°
 	// //             
 	// //             drawImage Character, pos, size, angle
-	// //             onTouchDownWithin pos, size, angle
+	// //             onTouchDown pos, size, angle
 	// //                 print "Clicked character"
-	// // Image: onTouchDownWithin1.png
-	// global onTouchDownWithin: Vector2 position                    // The center of the touch area
+	// // Image: onTouchDown1.png
+	// global onTouchDown: Vector2 position                    // The center of the touch area
 	// 	                      Vector2 size                        // The size of the rectangular touch area
 	// 	                      Angle angle                         // Rotate the touch area by this angle
 	// 	                      implicit nocolon Player[] by = null // Only consider touches or clicks by this player or list of players
 	// 	                      Cursor cursor = Auto                // Change the mouse cursor image when hovering over this area
-	// 	                      bool showTouchArea = false          // Highlight the touchable area for debugging
+	// 	                      bool showClickableArea = false          // Highlight the clickable area for debugging
 	// 	                      bool markAsHandled = true           // Mark the touch as handled so it won't trigger more touch events
 	// 	                      HorizontalAlignment align = Center  // The horizontal alignment of the touch area
 	// 	                      VerticalAlignment valign = Middle   // The vertical alignment of the touch area
@@ -1321,7 +1321,7 @@ skipInit global unit input
 	// 					this.cursor = cursor
 				
 	// 	// Migrate to 3D
-	// 	// if showTouchArea: drawPolygon poly, color:{"#ff000080"}, layer:10000000
+	// 	// if showClickableArea: drawPolygon poly, color:{"#ff000080"}, layer:10000000
 
 	// // Do something when the player touches or clicks within a given circle
 	// // Example: Draw the image "Ball" and print "Clicked ball" when the player touches it.
@@ -1329,14 +1329,14 @@ skipInit global unit input
 	// //         Vector2 pos
 	// //         tick
 	// //             drawImage Ball, pos, size:100
-	// //             onTouchDownWithin pos, radius:50
+	// //             onTouchDown pos, radius:50
 	// //                 print "Clicked ball"
-	// // Image: onTouchDownWithin2.png
-	// global onTouchDownWithin: Vector2 position                    // The center of the circle
+	// // Image: onTouchDown2.png
+	// global onTouchDown: Vector2 position                    // The center of the circle
 	// 	                      float radius                        // The radius of the circle
 	// 	                      implicit nocolon Player[] by = null // Only consider touches or clicks by this player or list of players  
 	// 	                      Cursor cursor = Auto                // Change the mouse cursor image when hovering over this circle
-	// 	                      bool showTouchArea = false          // Highlight the touchable area for debugging
+	// 	                      bool showClickableArea = false          // Highlight the clickable area for debugging
 	// 	                      bool markAsHandled = true           // Mark the touch as handled so it won't trigger more touch events
 	// 	                      void(Touch touch) do                // Do this for each touch or click
 	// 	let referencePosition = position.getTransformed(graphics.localMatrix)
@@ -1355,7 +1355,7 @@ skipInit global unit input
 	// 					this.cursor = cursor
 				
 	// 	// Migrate to 3D
-	// 	// if showTouchArea: drawCircle position, radius*2, color:{"#ff000080"}
+	// 	// if showClickableArea: drawCircle position, radius*2, color:{"#ff000080"}
 
 	// // Do something when the player touches or clicks within a given polygon
 	// // Example: Draw a polygon and print "Clicked OK" when the player touches it.
@@ -1366,14 +1366,14 @@ skipInit global unit input
 	// //             drawText "OK", size:50
 	// //             drawPolygon polygon, color:Blue
 	// //             
-	// //             onTouchDownWithin polygon
+	// //             onTouchDown polygon
 	// //                 print "Clicked OK"
-	// // Image: onTouchDownWithin3.png
-	// global onTouchDownWithin: Vector2[] points                    // The points that define the touchable polygon
+	// // Image: onTouchDown3.png
+	// global onTouchDown: Vector2[] points                    // The points that define the clickable polygon
 	// 	                      Vector2 position = {0,0}            // The position all polygon points are relative to
 	// 	                      implicit nocolon Player[] by = null // Only consider touches or clicks by this player or list of players  
 	// 	                      Cursor cursor = Auto                // Change the mouse cursor image when hovering over this polygon
-	// 	                      bool showTouchArea = false          // Highlight the touchable area for debugging
+	// 	                      bool showClickableArea = false          // Highlight the clickable area for debugging
 	// 	                      bool markAsHandled = true           // Mark the touch as handled so it won't trigger more touch events
 	// 	                      void(Touch touch) do                // Do this for each touch or click
 	// 	Vector2[] poly
@@ -1393,7 +1393,7 @@ skipInit global unit input
 	// 					this.cursor = cursor
 				
 	// 	// Migrate to 3D
-	// 	// if showTouchArea: drawPolygon position, points, color:{"#ff0000b0"}
+	// 	// if showClickableArea: drawPolygon position, points, color:{"#ff0000b0"}
 			
 	// // Do something when the player touches or clicks, even if the event is already handled
 	// global onTouchDownAny: implicit nocolon Player[] by = null // Only consider touches or clicks by this player or list of players
@@ -1421,7 +1421,7 @@ skipInit global unit input
 	// 	                Vector2 size                        // The size of the rectangular touch area
 	// 	                implicit nocolon Player[] by = null // Only consider the mouse from this player  
 	// 	                Cursor cursor = Auto                // Change the mouse cursor image when hovering over this area
-	// 	                bool showTouchArea = false          // Highlight the area for debugging
+	// 	                bool showClickableArea = false          // Highlight the area for debugging
 	// 	                bool markAsHandled = true           // Mark the touch as handled so it won't trigger more touch events
 	// 	                void(Touch touch) do                // Do this for each mouse that is hovering over the given area
 	// 	Vector2[] poly = [
@@ -1442,7 +1442,7 @@ skipInit global unit input
 	// 					this.cursor = cursor
 				
 	// 	// Migrate to 3D
-	// 	// if showTouchArea: drawRectangle position, size, color:{"#ff000080"}
+	// 	// if showClickableArea: drawRectangle position, size, color:{"#ff000080"}
 
 			
 	// // ---------------------------------------------- Touch Move ----------------------------------------------
@@ -1455,7 +1455,7 @@ skipInit global unit input
 	// //         private Touch moveTouch
 	// //     	
 	// //         tick
-	// //             onTouchDownWithin pos, app.pieceSize
+	// //             onTouchDown pos, app.pieceSize
 	// //                 moveTouch = touch
 	// //                 moveOffset = pos - touch.position
 	// //             
@@ -1503,7 +1503,7 @@ skipInit global unit input
 	// //         private Touch moveTouch
 	// //     	
 	// //         tick
-	// //             onTouchDownWithin pos, app.pieceSize
+	// //             onTouchDown pos, app.pieceSize
 	// //                 moveTouch = touch
 	// //                 moveOffset = pos - touch.position
 	// //             
@@ -1548,13 +1548,13 @@ skipInit global unit input
 	// //             drawText "OK", position:{0,0}, size:40, color:White
 	// //             drawRoundedRectangle position:{0,0}, size:{300,100}, color:Blue
 	// //             
-	// //             onTouchUpWithin position:{0,0}, size:{300,100}
+	// //              position:{0,0}, size:{300,100}
 	// //                 print "Clicked OK"
-	// // Image: onTouchDownWithin0.png
-	// global onTouchUpWithin: Vector2 position                    // The center of the touch area
+	// // Image: onTouchDown0.png
+	// global : Vector2 position                    // The center of the touch area
 	// 	                    Vector2 size                        // The size of the rectangular touch area
 	// 	                    implicit nocolon Player[] by = null // Only consider touches or clicks by this player or list of players
-	// 	                    bool showTouchArea = false          // Highlight the touchable area for debugging
+	// 	                    bool showClickableArea = false          // Highlight the clickable area for debugging
 	// 	                    bool markAsHandled = true           // Mark the touch as handled so it won't trigger more touch events
 	// 	                    void(Touch touch) do                // Do this for each touch or click
 	// 	Vector2[] poly = [
@@ -1572,7 +1572,7 @@ skipInit global unit input
 	// 				Snapshot.autoSave
 						
 	// 	// Migrate to 3D
-	// 	// if showTouchArea: drawRectangle position, size, color:{"#ff000080"}
+	// 	// if showClickableArea: drawRectangle position, size, color:{"#ff000080"}
 
 	// // Do something when the player ends a touch or click within a given circle
 	// // Example: Draw the image "Ball" and print "Clicked ball" when the player ends a touch or releases the mouse button over this button
@@ -1580,14 +1580,14 @@ skipInit global unit input
 	// //         Vector2 pos
 	// //         tick
 	// //             drawImage Ball, pos, size:100
-	// //             onTouchUpWithin pos, radius:50
+	// //              pos, radius:50
 	// //                 print "Clicked ball"
-	// // Image: onTouchDownWithin2.png
-	// global onTouchUpWithin: Vector2 position                    // The center of the circle
+	// // Image: onTouchDown2.png
+	// global : Vector2 position                    // The center of the circle
 	// 	                    float radius                        // The radius of the circle
 	// 	                    implicit nocolon Player[] by = null // Only consider touches or clicks by this player or list of players  
 	// 	                    Cursor cursor = Auto                // Change the mouse cursor image when hovering over this area
-	// 	                    bool showTouchArea = false          // Highlight the touchable area for debugging
+	// 	                    bool showClickableArea = false          // Highlight the clickable area for debugging
 	// 	                    bool markAsHandled = true           // Mark the touch as handled so it won't trigger more touch events
 	// 	                    void(Touch touch) do                // Do this for each touch or click
 	// 	let referencePosition = position.transform(graphics.localMatrix)
@@ -1606,7 +1606,7 @@ skipInit global unit input
 	// 					this.cursor = cursor
 				
 	// 	// Migrate to 3D
-	// 	// if showTouchArea: drawCircle position, radius*2, color:{"#ff000080"}
+	// 	// if showClickableArea: drawCircle position, radius*2, color:{"#ff000080"}
 						
 	// // ---------------------------------------------- Scroll ----------------------------------------------
 	
@@ -1621,7 +1621,7 @@ skipInit global unit input
 	// global onScrolllWithin: Vector2 position                    // The center of the rectangle
 	// 	                    Vector2 size                        // The size of the rectangle
 	// 	                    implicit nocolon Player[] by = null // Only consider events by this player or list of players
-	// 	                    bool showTouchArea = false          // Highlight the rectangle for debugging
+	// 	                    bool showClickableArea = false          // Highlight the rectangle for debugging
 	// 	                    bool markAsHandled = true           // Mark the touch as handled so it won't trigger more events
 	// 	                    void(ScrollEvent event) do          // Do this for each event
 	// 	Vector2[] poly = [
@@ -1638,7 +1638,7 @@ skipInit global unit input
 	// 				if markAsHandled: .markAsHandled
 						
 	// 	// Migrate to 3D
-	// 	// if showTouchArea: drawRectangle position, size, Red
+	// 	// if showClickableArea: drawRectangle position, size, Red
 			
 	// // ---------------------------------------------- Text Input ----------------------------------------------
 	

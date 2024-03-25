@@ -17,7 +17,7 @@ struct Vector2
 	static inline Vector2 zero() Vector2(0, 0, null)
 		
 	// A string representation of the vector
-	implicit string toString := "({x} {y})"
+	string toString := "({x} {y})"
 	
 	// Returns true if the vector is not equal to Vector2.none
 	bool toBool := (x != float.infinity || y != float.infinity)
@@ -205,41 +205,6 @@ struct Vector2
 	angleTo: Vector2 value // The second vector
 		return math.getAngleForVector(value - this)
 
-	// Interpolates to another vector
-	interpolateTo: Vector2 target  // The target position to interpolate to
-		           float value     // The input value
-		let ivalue = 1 - value
-		return new Vector2(x * ivalue + target.x * value, y * ivalue + target.y * value)
-
-	// Interpolates to another vector
-	interpolateTo: Vector2 target  // The target position to interpolate to
-		           float value     // The input value
-		           EaseFunction ease
-		value = ease.function(value)
-		let ivalue = 1 - value
-		return new Vector2(x * ivalue + target.x * value, y * ivalue + target.y * value)
-
-	// Interpolates to another vector
-	interpolateTo: Vector2 target // The target position to interpolate to
-		           float value    // The input value
-		           float from     // The beginning of the input range
-		           float to       // The end of the input range
-		if value <= from: return this
-		if value >= to: return target
-		let factor = (value-from) / (to-from)
-		return new Vector2(x + (target.x-x)*factor, y + (target.y-y)*factor)
-
-	// Interpolates to another vector
-	interpolateTo: Vector2 target    // The target position to interpolate to
-		           float value       // The input value
-		           float from        // The beginning of the input range
-		           float to          // The end of the input range
-		           EaseFunction ease // The easing function to apply
-		if value <= from: return this
-		if value >= to: return target
-		let factor = ease.function((value-from) / (to-from))
-		return new Vector2(x + (target.x-x)*factor, y + (target.y-y)*factor)
-
 	// A vector that points in the same direction, but has a length of 1
 	normalized
 		let len = math.sqrt(x * x + y * y)
@@ -247,7 +212,7 @@ struct Vector2
 	
 	// Moves the vector towards the given target by the given distance	
 	moveTowards: Vector2 targetPosition // The target to move towards
-		         float speed = 1        // The distance to move by
+		         float speed = 30       // The distance to move by
 		let delta = targetPosition - this
 		if delta.x != 0 || delta.y != 0
 			delta = delta.normalized * speed
@@ -335,7 +300,7 @@ struct IntVector2
 	IntVector2 clone := {x, y, location}
 		
 	// A string representation of the vector
-	implicit string toString := "({x} {y})"
+	string toString := "({x} {y})"
 	
 	// Returns true if the vector is not equal to IntVector2.none
 	bool toBool := (x != int.minValue || y != int.minValue)
@@ -447,14 +412,8 @@ struct IntVector2
 			math.limit y, min:min.y
 		)
 		
-	// Interpolates linearly to another vector
-	interpolateTo: IntVector2 target  // The target vector to interpolate to
-		           float value    // The interpolation value, 0 returns the original vector, 1 returns the target vector
-		let ivalue = 1 - value
-		return new Vector2(x * ivalue + target.x * value, y * ivalue + target.y * value)
-	
 	// The distance to another vector
-	odistanceTo: IntVector2 value // The second vector
+	distanceTo: IntVector2 value // The second vector
 		let x = x - value.x
 		let y = y - value.y
 		return math.sqrt(x*x + y*y)
@@ -779,11 +738,11 @@ global skipInit priority low unit math
 		
 	moveTowards: Angle value
 		         Angle targetValue
-		         Angle speed = 1
+		         Angle speed = 10
 		if targetValue > value: return math.min(value + speed, targetValue) else
 		if targetValue < value: return math.max(value - speed, targetValue)
 			
-unit math
+global skipInit unit math
 	// Returns the arctangent of the quotient of the given values
 	Angle getAngleForVector: Vector2 vector
 		return math.atan2(vector.y, vector.x)
@@ -836,29 +795,6 @@ unit math
 		if type >= Ray     and scalar < 0: scalar = 0
 		if type == Segment and scalar > 1: scalar = 1
 		return from + lineVector * scalar
-	
-	// Maps a value from an input range to an output range
-	map: float value    // The input value 
-		 float from = 0 // The beginning of the input range
-		 float to = 1   // The end of the input range
-		 Vector2 start  // The start output position, will be returned for values smaller than "from".
-		 Vector2 target // The target output position, will be returned for values larger than "to".
-		if value <= from: return start
-		if value >= to:   return target
-		let factor = (value-from) / (to-from)
-		return start + (target-start) * factor
-			
-	// Maps a value from an input range to an output range
-	map: float value       // The input value 
-		 float from = 0    // The beginning of the input range
-		 float to = 1      // The end of the input range
-		 Vector2 start     // The start output position, will be returned for values smaller than "from".
-		 Vector2 target    // The target output position, will be returned for values larger than "to".
-		 EaseFunction ease // The easing function to apply
-		if value <= from: return start
-		if value >= to:   return target
-		let factor = (value-from) / (to-from)
-		return start + (target-start) * ease.function(factor)
 	
 global transient unit System
 	global inline js void forPositions: int to                            // The exclusive upper bound to iterate towards
@@ -1122,10 +1058,7 @@ class Grid<T>
 		return items[y*size.x + x]
 	
 	get: IntVector2 position // The vector to get the value from
-		if {0,0} <= position < size
-			return items[position.y*size.x + position.x]
-		else
-			return null
+		return {0,0} <= position < size ? items[position.y*size.x + position.x] : null
 	
 	set: int x   // The column of the value to set
 		 int y   // The row of the value to set

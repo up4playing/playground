@@ -136,7 +136,7 @@ transient skipInit unit core
 		for input.internalUsers if .
 			.inputs.readPos = 0
 			
-		if !startInLobby: startApp
+		if !startInLobby and not testLobby: startApp
 		if simulateRollback: checkSaveState
 		
 	// Keep event stream running, recreate players, call init function and start app
@@ -823,7 +823,7 @@ skipInit transient unit statistics
 		infos.add {value, index, frame:core.frame}
 		
 	internal tick
-		input.onTouchDownWithin position, size, align:Left, valign:Top
+		input.onTouchDown position, size, align:Left, valign:Top
 			currentSet incrementAndWrap sets
 	
 		maxValue = 12

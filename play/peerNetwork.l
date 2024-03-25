@@ -358,7 +358,7 @@ transient skipInit unit PeerNetwork
 			}
 			PeerNetwork_videoInputId = input_localUser.mediaStream.getVideoTracks()[0]?.getSettings().deviceId || PeerNetwork_devices.videoInput[0]?.deviceId
 			PeerNetwork_audioInputId = input_localUser.mediaStream.getAudioTracks()[0]?.getSettings().deviceId || PeerNetwork_devices.audioInput[0]?.deviceId
-			PeerNetwork_audioOutputId = PeerNetwork_devices.audioInput[0]?.deviceId
+			PeerNetwork_audioOutputId = PeerNetwork_devices.audioOutput[0]?.deviceId
 			statistics_mediaTime = performance.now()
 			core_log("setupLocalMedia: success after "+(statistics_mediaTime - statistics_startTime)+" ms")
 			
@@ -423,8 +423,15 @@ transient skipInit unit PeerNetwork
 		
 		// Update audio elements
 		for(let user of input_internalUsers) {
-			if(user?.audioElement && user.audioElement.setSinkId) {
-				user.audioElement.setSinkId(PeerNetwork_audioOutputId);
+			if(user) {
+				if(user.audioElement && user.audioElement.setSinkId) {
+					user.audioElement.setSinkId(PeerNetwork_audioOutputId);
+				}
+				for(let videoElement of user.videoElements) {
+					if(videoElement.setSinkId) {
+						videoElement.setSinkId(PeerNetwork_audioOutputId);
+					}
+				}
 			}
 		}
 		audio_reload();
@@ -444,12 +451,6 @@ transient skipInit unit PeerNetwork
 		// Create media stream for remote player
 		user.mediaStream = new MediaStream();
 		
-		// Create audio element so we always hear the remote user, event if no video is shown
-		let audioElement = user.audioElement = document.createElement("audio")
-		audioElement.srcObject = user.mediaStream
-		if(audioElement.setSinkId) audioElement.setSinkId(PeerNetwork_audioOutputId);
-		document.body.appendChild(audioElement);
-		
 		// Add incoming tracks to media stream for remote player
 		user.peerConnection.addEventListener("track", event => {
 			event.streams[0].getTracks().forEach(track => {
@@ -465,7 +466,7 @@ transient skipInit unit PeerNetwork
 		el.autoplay = true
 		el.playsinline = true
 		el.controls = false
-		el.muted = true
+		el.muted = local
 		el.srcObject = stream
 		document.body.appendChild(el)
 		return el

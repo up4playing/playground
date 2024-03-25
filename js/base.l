@@ -35,7 +35,7 @@ immutable struct int
 	// Returns true if the integer is not zero
 	inline js bool toBool := this
 	
-	inline js implicit string toString := this?.toString()
+	inline js string toString := this?.toString()
 		
 	implicit inline js Time toTime() this
 		
@@ -260,15 +260,6 @@ immutable struct float
 		                                   float speed
 		(this < value ? (this + speed * (value-this) < value ? (this += speed * (value-this)) : (this = value)) : (this - speed * (this-value) > value ? (this -= speed * (this-value)) : (this = value)))
 		
-	inline js float interpolateTo: float target
-		                           float value
-		(this + (target - this)*value)
-		
-	inline js float interpolateTo: float target
-		                           float value
-		                           EaseFunction ease
-		(this + (target - this)*ease.function.invoke(value))
-		
 	inline js float incrementBy: float value
 		                         nocolon float to
 		(this+value < to ? (this += value) : to)
@@ -294,13 +285,6 @@ immutable struct float
 	
 	// Weeks	
 	inline js Time weeks := (this*604800000)
-		
-immutable EaseFunction
-	float(float value) function
-	
-	global const EaseFunction None    = { . }
-	global const EaseFunction InQuad  = { . * . }
-	global const EaseFunction OutBack = { 1 + 2.70158 * math.pow(. - 1, 3) + 1.70158 * math.pow(. - 1, 2) }
 	
 // A sequence of characters
 js String
@@ -394,15 +378,15 @@ immutable class string
 		                     string padString = " "
 		this.padEnd(targetLength, padString)
 		
-	js string get: int index
-		return index >= 0 ? this[index] : this[this.length+index]
+	inline js string get: int index
+		this[index]
 	
-	js string get: int from = 0
-		           int to
-		return this.substring(from >= 0 ? from : this.length+from, to >= 0 ? to : this.length+to)
+	inline js string get: int from = 0
+		                  int to
+		this.substring(from, to)
 		
-	js string get: int from = 0
-		return this.substring(from >= 0 ? from : this.length+from)
+	inline js string get: int from = 0
+		this.substring(from)
 		
 	js string capitalizeFirstWord
 		return this.length > 0 ? this[0].toUpperCase() + this.substring(1) : this
@@ -647,6 +631,11 @@ class List<T>
 		for(let it of items)
 			if(!this.includes(it))
 				this.push(it)
+		
+	js void toggle: T item // The item to add
+		let index = this.indexOf(item)
+		if(index != -1) this.splice(index, 1)
+		else            this.push(item)
 		
 	// Returns whether the list contains the given item
 	inline js bool contains: T item // Check if the list contains this item
@@ -1311,20 +1300,23 @@ class List<T>
 	// The last item of the list
 	inline js T last() this[this.length-1]
 		
-	// Gets an item from the list
-	js T get: implicit int index // The index of the item to get
-		return index >= 0 ? this[index] : this[this.length+index]
+	// Get an item from the list
+	inline js T get: implicit int index // The index of the item to get
+		this[index]
 		
-	js T[] get: int from = 0 // Return a new list starting from this index
-		        int to       // Return a new list up to (but not including) this index
-		return this.slice(from, to)
+	// Get a new list that is a subset of this list
+	inline js T[] get: int from = 0 // Return a new list starting from this index, a negative index will start from the end of the list
+		               int to       // Return a new list up to (but not including) this index, a negative index is counted from the end
+		this.slice(from, to)
 	
-	js T[] get: int from // Return a new list starting from this index
-		return this.slice(from)
+	// Get a new list that is a subset of this list
+	inline js T[] get: int from // Return a new list starting from this index, a negative index will start from the end of the list
+		this.slice(from)
 	
-	js T set: int index // The index of the item to set
-		      T value   // The new value to set
-		return index >= 0 ? this[index] = value : this[this.length+index] = value
+	// Set the item at a given index
+	inline js T set: int index // The index of the item to set
+		             T value   // The new value to set
+		this[index] = value
 		
 	// Tries to get an item from the list. If it doesn't exist, it sets it.
 	// TODO: Support index with side effect (e.g. list[index++] ?= 0)
@@ -1333,38 +1325,38 @@ class List<T>
 		(this.hasOwnProperty(index) ? this[index] : this[index] = value)
 		
 	// Add a value to an item of the list
-	js T addToItem: int index // The index of the item to change
-		            T value   // The value to add to the item
-		return index >= 0 ? this[index] += value : this[this.length+index] += value
+	inline js T addToItem: int index // The index of the item to change
+		                   T value   // The value to add to the item
+		this[index] += value
 		
 	// Subtract a value from an item of the list
-	js T subtractFromItem: int index // The index of the item to change
-		                   T value   // The value to subtract from the item
-		return index >= 0 ? this[index] -= value : this[this.length+index] -= value
+	inline js T subtractFromItem: int index // The index of the item to change
+		                          T value   // The value to subtract from the item
+		this[index] -= value
 		
 	// Multiply an item of the list by a value
-	js T multiplyItem: int index // The index of the item to change
-		               T value   // The value to multiply the item by
-		return index >= 0 ? this[index] *= value : this[this.length+index] *= value
+	inline js T multiplyItem: int index // The index of the item to change
+		                      T value   // The value to multiply the item by
+		this[index] *= value
 		
 	// Divide an item of the list by a value
-	js T divideItem: int index // The index of the item to change
-		             T value   // The value to divide the item by
-		return index >= 0 ? this[index] /= value : this[this.length+index] /= value
+	inline js T divideItem: int index // The index of the item to change
+		                    T value   // The value to divide the item by
+		this[index] /= value
 		
 	// Add 1 to item of the list
-	js T incrementItem: int index // The index of the item to change
-		return index >= 0 ? this[index]++ : this[this.length+index]++
+	inline js T incrementItem: int index // The index of the item to change
+		this[index]++
 	
 	// Subtract 1 from an item of the list
-	js T decrementItem: int index // The index of the item to change
-		return index >= 0 ? this[index]-- : this[this.length+index]--
+	inline js T decrementItem: int index // The index of the item to change
+		this[index]--
 		
 immutable ImmutableList<T>
 	T[] list
 	
 	inline T get: implicit int index // The index of the item to get
-		list.get(index)
+		list[index]
 		
 // A data container that stores key-value pairs
 js Map
@@ -1385,7 +1377,7 @@ class Map<TKey, TValue>
 		
 	inline js TValue getOrSet: TKey key
 		                       TValue value
-		(this.get(key) || (this.setAndReturn(key, value)))
+		(this.get(key) || this.setAndReturn(key, value))
 		
 	// Remove the item assosiated with the given key
 	inline js void delete: TKey key  // The key of the item to remove from the map
@@ -1716,12 +1708,20 @@ global transient priority unit System
 		                                     ) do         // Do this for each triple in a list
 		for(let _subject=subject, _len=_subject.length, i=_len-1; i>=0; --i) do(_subject[i], _subject[(i+1)%_len], _subject[(((i-1)%_len)+_len)%_len], i)
 
+	// Prints a message to the console with date
+	// global js void print: logstring text // The text, variables or expressions to print
+	// 	                  SourceCodeLocation location
+	// 	let now = new Date()
+	// 	let time = now.getDate().toLocaleString('en-US', {minimumIntegerDigits:2})+"."+(now.getMonth()+1).toLocaleString('en-US', {minimumIntegerDigits:2})+"."+now.getFullYear()+" "+now.getHours().toLocaleString('en-US', {minimumIntegerDigits:2})+":"+now.getMinutes().toLocaleString('en-US', {minimumIntegerDigits:2})+":"+now.getSeconds().toLocaleString('en-US', {minimumIntegerDigits:2})+"."+now.getMilliseconds().toLocaleString('en-US', {minimumIntegerDigits:3});
+	// 	(location ? log(time + " " +text, location.start, location.file) : log(time + " " +text))
+		
+	// js void log: any value
+	// 	console.log(value)
+	
 	// Prints a message to the console
 	global js void print: logstring text // The text, variables or expressions to print
 		                  SourceCodeLocation location
-		let now = new Date()
-		let time = now.getDate().toLocaleString('en-US', {minimumIntegerDigits:2})+"."+(now.getMonth()+1).toLocaleString('en-US', {minimumIntegerDigits:2})+"."+now.getFullYear()+" "+now.getHours().toLocaleString('en-US', {minimumIntegerDigits:2})+":"+now.getMinutes().toLocaleString('en-US', {minimumIntegerDigits:2})+":"+now.getSeconds().toLocaleString('en-US', {minimumIntegerDigits:2})+"."+now.getMilliseconds().toLocaleString('en-US', {minimumIntegerDigits:3});
-		(location ? log(time + " " +text, location.start, location.file) : log(time + " " +text))
+		(location ? log(text, location.start, location.file) : log(text))
 		
 	js void log: any value
 		console.log(value)
@@ -1802,7 +1802,6 @@ global transient priority low unit System
 		                            ) do         // Select the field or expression to be included in the result
 		                            label int to // The exclusive upper bound to iterate towards
 		int_enumerate(from, to, do)
-		
 		
 // A collection of mathematical functions and constants
 global skipInit unit math
@@ -1925,56 +1924,6 @@ global skipInit unit math
 		if value < min: return min
 			            return value
 			
-	// Maps a value from an input range to an output range
-	map: float value       // The input value 
-		 float from = 0    // The beginning of the input range
-		 float to = 1      // The end of the input range
-		 float start = 0   // The lowest possible output value, will be returned for values smaller than "from".
-		 float target = 1  // The highest possible output value, will be returned for values larger than "to".
-		if value <= from: return start
-		if value >= to:   return target
-		let factor = (value-from) / (to-from)
-		return start + (target-start) * factor
-			
-	// Maps a value from an input range to an output range
-	map: float value       // The input value 
-		 float from = 0    // The beginning of the input range
-		 float to = 1      // The end of the input range
-		 float start = 0   // The lowest possible output value, will be returned for values smaller than "from".
-		 float target = 1  // The highest possible output value, will be returned for values larger than "to".
-		 EaseFunction ease // The easing function to apply
-		if value <= from: return start
-		if value >= to:   return target
-		let factor = ease.function((value-from) / (to-from))
-		return start + (target-start) * factor
-		
-	// // Maps a value from an input range to an output range
-	// map: Time value        // The input value 
-	// 	 Time from = 0     // The beginning of the input range
-	// 	 Time to = 1       // The end of the input range
-	// 	 float start = 0   // The lowest possible output value, will be returned for values smaller than "from".
-	// 	 float target = 1  // The highest possible output value, will be returned for values larger than "to".
-	// 	if value <= from: return start
-	// 	if value >= to:   return target
-	// 	let factor = (value-from) / (to-from)
-	// 	return start + (target-start) * factor
-			
-	global interpolate: float from = 0
-		                float to = 1
-		                Time startTime = 0
-		                Time duration = 1
-		let value = Time.now - startTime
-		if value <= 0:       return from
-		if value >= duration:  return to
-		return from + (to-from) * (value/duration)
-		
-	global interpolate: Color from
-		                Color to
-		                Time startTime = 0
-		                Time duration = 1
-		let value = Time.now - startTime
-		return from interpolateTo to, value/duration
-		
 struct Average
 	float total
 	int count
