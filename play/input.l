@@ -445,13 +445,13 @@ skipInit global unit input
 			e.stopPropagation();
 			return false;
 		}
-		window.onwheel = e => {
+		window.addEventListener('wheel', e => {
 			e.preventDefault();
 			e.stopPropagation();
 			if(e.button == 0 && Platform_mode == 0) Platform_record();
 			input_handleWheelEvent(e.pageX, e.pageY, -e.deltaX, -e.deltaY)
 			return false;			
-		}
+		}, {passive: false})
 		window.onkeydown = e => {
 			let keyCode = e.keyCode
 			let key = e.key
