@@ -1903,6 +1903,9 @@ global skipInit unit math
 		                 float exponent
 		Math.pow(base, exponent)
 		
+	inline js float exp: float exponent
+		Math.exp(exponent)
+		
 	inline js float log10: float value
 		Math.log10(value)
 		
