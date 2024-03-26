@@ -373,12 +373,25 @@ immutable class string
 		if(index != -1) return this.substring(index+1)
 		else            return ""
 		
+	js string getBetween: string from
+		                  string to
+		                  int start = 0
+		let index = this.indexOf(from, start)
+		if(index == -1) return ""
+		let startIndex = index + from.length
+		let endIndex = this.indexOf(to, startIndex)
+		if(endIndex == -1) return this.substring(startIndex)
+		return this.substring(startIndex, endIndex)
+		
 	// Returns 0 for an exact match, 1 if first is larger, -1 if second is larger
 	inline js int compareTo: string value // The string to compare to
 		this.localeCompare(value)
 		
 	inline js string trim
 		this.trim()
+		
+	js string trimQuotes
+		return this.substring(this[0] == '"' ? 1 : 0, this[this.length-1] == '"' ? this.length-1 : this.length)
 		
 	js string getExtension
 		let dot = this.lastIndexOf(".")
