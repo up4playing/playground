@@ -44,10 +44,19 @@ unit file
 		})
 		
 	js string read: string filename, void(string data) then
+		if(!core_isPremiere || !input_isCertain) return
 		let fs = require("fs")
 		fs.readFile(filename, "utf8", (err, data) => {
 			then(data)
-		})		
+		})
+				
+	js string readLineByLine: string filename, void(string line) processLine, void() then = null
+		if(!core_isPremiere || !input_isCertain) return
+		var lineReader = require('readline').createInterface({
+			input: require('fs').createReadStream(filename)
+		});
+		lineReader.on('line', processLine);
+		if(then != null) lineReader.on('close', then);
 		
 	js string write: string filename, string data, void() then = null
 		if(core_isPremiere && input_isCertain) {
@@ -78,6 +87,26 @@ unit file
 		if(!Network_isPremiere || !Input_isCertain) return
 		const { remote } = require("electron")
 		return remote.dialog.showSaveDialogSync({ filters, properties: ["createDirectory"] })
+	
+	
+	string[] readCsv: string filename, void(string[] values) processLine, void() then = null
+		read filename
+			for .split("\n")[1..] as line
+				bool inQuotes
+				string value
+				string[] results
+				for line
+					if . == "\""
+						inQuotes = !inQuotes
+					else 
+					if . == ',' and !inQuotes
+						results.add value.trim
+						value = ""
+					else 
+						value += .
+				results.add value.trim
+				processLine(results)
+			if then != null: then()
 
 immutable struct FileFilter
 	string name
