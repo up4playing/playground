@@ -330,14 +330,12 @@ immutable class string
 	
 	// Returns true if the string is not null and not empty	
 	inline js bool toBool := this
-	
 	inline js string toString() this
-	
 	inline js int toInt := parseInt(this)
-		
 	inline js int toFloat := parseFloat(this)
 		
 	inline js int parseInt(int radix = 10) parseInt(this, radix)
+	inline js dynamic parseJson() JSON.parse(this)
 	
 	inline js string[] split: string character = " "
 		this.split(character)
@@ -1431,6 +1429,8 @@ struct Nullable<T>
 	
 // A Hashtable with keys of type 'string' and values of type 'any'
 interface dynamic
+	inline js string toJson() JSON.stringify(this)
+	inline js string toFormattedJson() JSON.stringify(this, null, "\t")
 	
 // Any type
 interface any
@@ -2027,10 +2027,6 @@ immutable Range
 	inline js bool containsInclusively: int value
 		(value >= this.from && value <= this.from)
 
-unit Json
-	inline js dynamic parse(string str) JSON.parse(str)
-	inline js string stringify(any object) JSON.stringify(object)
-		
 enum Language: English, German, Spanish, Frensh, Italian, Portuguese, Japanese, Chinese, Korean, Dutch, Turkish, Polish, Russian, Hindi, Arabic, Bengali, Urdu, Indonesian, Invariant = 1000
 
 unit Loca
