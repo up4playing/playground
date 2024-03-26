@@ -30,6 +30,8 @@ localStorage
 		input.handleObject id, data
 		
 http
+	inline js string encodeURIComponent(string str) encodeURIComponent(str)
+	
 	// Perform an http get request
 	js void get: string url
 		         stored void(any result) code
@@ -41,8 +43,14 @@ http
 			input_handleObject(id, data, 1)
 		}
 		
-	internal js void getDirectly string url
+	internal js async string getDirectly string url
 		return await (await fetch(url)).text()
+		
+	internal js async dynamic getJsonDirectly: string url
+		return await (await fetch(url)).json()
+		
+	internal js async dynamic getJsonDirectly: string url, dynamic options
+		return await (await fetch(url, options)).json()
 		
 	internal js void postDirectly: string url, any body, void(any result) code
 		let data = await (await fetch(url, {method:"POST", body:JSON.stringify(body)})).text()
