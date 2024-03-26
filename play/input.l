@@ -956,7 +956,7 @@ skipInit global unit input
 					int id = inputs.readInt
 					string valueString = inputs.readString
 					if core.logging: core.parseLog += " json {id}: {valueString}"
-					dynamic object = Json.parse valueString
+					dynamic object = valueString.parseJson
 					networkData.call id, object
 					if Platform.waitingForInitialData > 0: Platform.waitingForInitialData--
 				else
@@ -964,7 +964,7 @@ skipInit global unit input
 					int id = inputs.readInt
 					string valueString = inputs.readString
 					if core.logging: core.parseLog += " object {id}: {valueString}"
-					dynamic object = Json.parse valueString
+					dynamic object = valueString.parseJson
 					networkData.call id, object
 					if Platform.waitingForInitialData > 0: Platform.waitingForInitialData--
 	
