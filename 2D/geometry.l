@@ -25,6 +25,16 @@ struct Vector2
 	// Creates a copy of the vector with the same values
 	Vector2 clone() := {x, y, location}
 		
+	// Create a new instance. Useful for data imported from json where the vector might be undefined
+	inline js Vector2 create: float x // The x-coordinate of the vector to create
+		                      float y // The y-coordinate of the vector to create
+		                      SourceCodeLocation location
+		(this = new Vector2(x, y, location))
+		
+	// Create a new instance. Useful for data imported from json where the vector might be undefined
+	inline js Vector2 create: Vector2 value  // Create a new instance with the coordinated of this vector
+		(this = new Vector2(value.x, value.y, value.location))
+		
 	Vector2 assign Vector2 other: x = other.x; y = other.y; location = other.location; return this
 		
 	// Vector2 operator = (Vector2 a, Vector2 b) a.x = b.x; a.y = b.y; a.location = b.location; return a
