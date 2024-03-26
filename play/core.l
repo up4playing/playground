@@ -136,7 +136,7 @@ transient skipInit unit core
 		for input.internalUsers if .
 			.inputs.readPos = 0
 			
-		if !startInLobby: startApp
+		if !startInLobby and not testLobby: startApp
 		if simulateRollback: checkSaveState
 		
 	// Keep event stream running, recreate players, call init function and start app
