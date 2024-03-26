@@ -354,12 +354,12 @@ immutable class string
 		
 	static inline js string fromCharCode(int charCode) String.fromCharCode(charCode)
 		
-	inline js string substring: int start
-		this.substring(start)
+	inline js string substring: int from
+		this.substring(from)
 		
-	inline js string substring: int start = 0
-		                        int end
-		this.substring(start, end)
+	inline js string substring: int from = 0
+		                        int to
+		this.substring(from, to)
 		
 	js string getUntil: string value
 		                int start = 0
