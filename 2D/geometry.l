@@ -17,7 +17,7 @@ struct Vector2
 	static inline Vector2 zero() Vector2(0, 0, null)
 		
 	// A string representation of the vector
-	string toString := "({x} {y})"
+	string toString() := "{x} {y}"
 	
 	// Returns true if the vector is not equal to Vector2.none
 	bool toBool := (x != float.infinity || y != float.infinity)
