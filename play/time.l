@@ -16,6 +16,7 @@ skipInit transient immutable float Time
 	inline js Time += float value: this += value
 	
 	static Time fromTimeString(string timeString)
+		if not timeString: return 0
 		Time value = 0
 		int colon1 = timeString.indexOf(":")
 		if(colon1 == -1)
