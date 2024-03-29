@@ -314,6 +314,11 @@ immutable class string
 		
 	inline js int parseInt(int radix = 10) parseInt(this, radix)
 	inline js dynamic parseJson() JSON.parse(this)
+	inline Time parseTime() Time.fromTimeString(this)
+		
+	Vector2 parseVector2()
+		let mid = this.indexOf " "
+		return Vector2(cast this[..mid], cast this[mid+1..]) 
 	
 	inline js string[] split: string character = " "
 		this.split(character)
