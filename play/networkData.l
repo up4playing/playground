@@ -43,6 +43,16 @@ http
 			input_handleObject(id, data, 1)
 		}
 		
+	js void getString: string url
+		               stored void(string result) code
+		let id = networkData_addCallback(code)
+		if(core_frame == 0) Platform_waitingForInitialData++
+		if(core_isPremiere && input_isCertain) {
+			let data = await (await fetch(url)).text()
+			log("http.get "+url+" -> "+data?.length+" bytes")
+			input_handleString(id, data, 1)
+		}
+		
 	internal js async string getDirectly string url
 		return await (await fetch(url)).text()
 		
