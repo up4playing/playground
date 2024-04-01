@@ -10,10 +10,7 @@ class AStarNode
 
 class BinaryHeap
 	AStarNode[] content
-	
-	scoreFunction: AStarNode node
-		return node.f
-	
+
 	push: AStarNode element
 		// Add the new element to the end of the array.
 		content.add element
@@ -45,7 +42,7 @@ class BinaryHeap
 
 		if i != content.length - 1
 			content[i] = end
-			if scoreFunction(end) < scoreFunction(node)
+			if end.combinedCost < node.combinedCost
 				sinkDown(i)
 			else
 				bubbleUp(i)
@@ -68,7 +65,7 @@ class BinaryHeap
 			let parent = content[parentN]
 			
 			// Swap the elements if the parent is greater.
-			if scoreFunction(element) < scoreFunction(parent)
+			if element.combinedCost < parent.combinedCost
 				content[parentN] = element
 				content[n] = parent
 				
@@ -83,7 +80,7 @@ class BinaryHeap
 		let n = number
 		let length = content.length,
 			element = content[n],
-			elemScore = scoreFunction(element)
+			elemScore = element.combinedCost
 
 		while(true)
 			// Compute the indices of the child elements.
@@ -99,7 +96,7 @@ class BinaryHeap
 				
 				// Look it up and compute its score.
 				let child1 = content[child1N]
-				child1Score = scoreFunction(child1)
+				child1Score = child1.combinedCost
 
 				// If the score is less than our element's, we need to swap.
 				if child1Score < elemScore
@@ -108,7 +105,7 @@ class BinaryHeap
 			// Do the same checks for the other child.
 			if child2N < length
 				let child2 = content[child2N]
-				let child2Score = scoreFunction(child2)
+				let child2Score = child2.combinedCost
 				if child2Score < (swap == -1 ? elemScore : child1Score)
 					swap = child2N
 
@@ -120,6 +117,7 @@ class BinaryHeap
 			else 
 				// Otherwise, we are done.
 				break
+				
 immutable BoxCollider
 	Vector2 position, size
 	Line rightLine, bottomLine, leftLine, topLine
