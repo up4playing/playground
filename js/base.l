@@ -311,14 +311,14 @@ immutable class string
 	inline js string toString() this
 	inline js int toInt := parseInt(this)
 	inline js int toFloat := parseFloat(this)
+	inline js dynamic toJson() JSON.parse(this)
+	inline Time toTime() Time.fromTimeString(this)
 		
-	inline js int parseInt(int radix = 10) parseInt(this, radix)
-	inline js dynamic parseJson() JSON.parse(this)
-	inline Time parseTime() Time.fromTimeString(this)
-		
-	Vector2 parseVector2()
+	Vector2 toVector2()
 		let mid = this.indexOf " "
 		return Vector2(cast this[..mid], cast this[mid+1..]) 
+		
+	inline js int parseInt(int radix) parseInt(this, radix)
 	
 	inline js string[] split: string character = " "
 		this.split(character)
