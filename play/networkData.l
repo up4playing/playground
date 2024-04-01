@@ -57,6 +57,7 @@ http
 		return await (await fetch(url)).text()
 		
 	internal js async dynamic getJsonDirectly: string url
+		if(!core_isPremiere || !input_isCertain) return null
 		return await (await fetch(url)).json()
 		
 	internal js async dynamic getJsonDirectly: string url, dynamic options

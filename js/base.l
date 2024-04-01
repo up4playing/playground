@@ -1748,9 +1748,9 @@ global transient priority unit System
 	
 	// Display a message in the timeline
 	global js void watch: logstring text // The text, variables or expressions to watch
-		                  SourceCodeLocation location
-		if(Platform_isDebug && core_frame >= core_frameWithNewWatches && location) {
-			Platform_sendWatch(core_frame, text, location.start, location.file)
+		                  SourceCodeLocation sourceCodeLocation
+		if(Platform_isDebug && core_frame >= core_frameWithNewWatches && sourceCodeLocation) {
+			Platform_sendWatch(core_frame, text, sourceCodeLocation.start, sourceCodeLocation.file)
 		}
 		
 	// Shows a dialog box with a given message
