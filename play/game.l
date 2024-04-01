@@ -1,12 +1,12 @@
 class AStarNode
 	IntVector2 pos
-	f = 0
-	g = 0
-	h = 0
+	combinedCost = 0
+	travelCostSoFar = 0
+	distanceToTarget = 0
 	cost = 1
 	visited = false
-	closed = false
-	AStarNode parent
+	exploredAllNeighbors = false
+	AStarNode previousNode
 
 class BinaryHeap
 	AStarNode[] content
@@ -183,21 +183,21 @@ unit game
 
 		while(openHeap.size() > 0)
 
-			// Grab the lowest f(x) to process next.  Heap keeps this sorted for us.
+			// Grab the node with the lowest combinedCost to process next. Heap keeps this sorted for us.
 			let currentNode = openHeap.pop()
 
 			// End case -- result has been found, return the traced path.
 			if currentNode == end
 				let curr = currentNode
 				AStarNode[] result
-				while(curr.parent)
+				while(curr.previousNode)
 					result.add curr
-					curr = curr.parent
+					curr = curr.previousNode
 				result.add curr
 				return result.reverse()
 
 			// Normal case -- move currentNode from open to closed, process each of its neighbors.
-			currentNode.closed = true
+			currentNode.exploredAllNeighbors = true
 
 			// Find all neighbors for the current node. Optionally find diagonal neighbors as well (false by default).
 			let neighbors = getNeighbors(grid, currentNode.pos.x, currentNode.pos.y)
@@ -205,26 +205,26 @@ unit game
 			for neighbors.length
 				let neighbor = neighbors[i]
 
-				if neighbor.closed
+				if neighbor.exploredAllNeighbors
 					// Not a valid node to process, skip to next neighbor.
 					continue
 
-				// The g score is the shortest distance from start to current node.
+				// The travelCostSoFar score is the shortest distance from start to current node.
 				// We need to check if the path we have arrived at this neighbor is the shortest one we have seen yet.
-				let gScore = currentNode.g + neighbor.cost
+				let travelCostUpToThisNeighbor = currentNode.travelCostSoFar + neighbor.cost
 				let beenVisited = neighbor.visited
 
-				if !beenVisited || gScore < neighbor.g
+				if !beenVisited || travelCostUpToThisNeighbor < neighbor.travelCostSoFar
 
 					// Found an optimal (so far) path to this node.  Take score for node to see how good it is.
 					neighbor.visited = true
-					neighbor.parent = currentNode
-					neighbor.h = neighbor.h || heuristic(neighbor.pos, end.pos)
-					neighbor.g = gScore
-					neighbor.f = neighbor.g + neighbor.h
+					neighbor.previousNode = currentNode
+					neighbor.distanceToTarget = neighbor.distanceToTarget || heuristic(neighbor.pos, end.pos)
+					neighbor.travelCostSoFar = travelCostUpToThisNeighbor
+					neighbor.combinedCost = neighbor.travelCostSoFar + neighbor.distanceToTarget
 
 					if !beenVisited
-						// Pushing to heap will put it in proper place based on the 'f' value.
+						// Pushing to heap will put it in proper place based on the 'combinedCost' value.
 						openHeap.push(neighbor)
 					else
 						// Already seen the node, but since it has been rescored we need to reorder it in the heap
