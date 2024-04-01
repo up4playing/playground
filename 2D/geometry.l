@@ -293,6 +293,21 @@ struct Vector2
 	deserialize: Buffer buffer
 		x = buffer.readFloat64
 		y = buffer.readFloat64
+	
+	static getPathLength: Vector2[] path
+		float length
+		forPairs path: length += .distanceTo next
+		return length
+		
+	static Vector2 getPositionAlongPath: Vector2[] path, float distance
+		float traveledSoFar
+		forPairs path
+			let segmentLength = .distanceTo next
+			let traveledAfterSegment = traveledSoFar + segmentLength
+			if  traveledAfterSegment > distance
+				return .interpolateTo next progress:distance traveledSoFar..traveledAfterSegment
+			traveledSoFar = traveledAfterSegment
+		return path.last
 		
 // A 2D vector comprised of an integer x and y coordinate
 struct IntVector2
