@@ -1105,22 +1105,24 @@ class List<T>
 		return resultValue != threshold ? resultValue : default
 		
 	minIndex: float(T a) selector
+		      int startIndex = 0
 		      float threshold = float.maxValue
 		float resultValue = threshold
 		int index = -1
-		for this
-			let value = selector(.)
+		for startIndex to length
+			let value = selector(this[.])
 			if value < resultValue
 				resultValue = value
 				index = i
 		return index
 		
 	maxIndex: float(T a) selector
+		      int startIndex = 0
 		      float threshold = float.minValue
 		float resultValue = threshold
 		int index = -1
-		for this
-			let value = selector(.)
+		for startIndex to length
+			let value = selector(this[.])
 			if value > resultValue
 				resultValue = value
 				index = i
