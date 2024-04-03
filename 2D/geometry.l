@@ -596,6 +596,16 @@ class List<T>
 		for this: sum += selector(.)
 		return sum	
 		
+	Vector2 average: Vector2(T it) selector
+		             bool(T it) where
+		int count
+		Vector2 sum = {0,0}
+		for this
+			if where(.)
+				sum += selector(.)
+				count++
+		return sum/count
+		
 // ------------------------------------------- Angle -------------------------------------------
 		
 transient immutable float Angle
