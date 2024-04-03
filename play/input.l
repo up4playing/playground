@@ -414,6 +414,8 @@ skipInit global unit input
 	ShowPointersMode showPointersDuringPlaybackMode = LocalAndRemote
 	bool showPointers = true
 	bool ignoreFirstClick
+	int lastWheelInputFrame
+	
 	
 	string textInput
 		let localPlayer = playersById[input.localUser.id]
@@ -610,9 +612,10 @@ skipInit global unit input
 		inputs.writeUnsignedInt16 composite
 		inputs.writeInt16 math.round(referencePos.x)
 		inputs.writeInt16 math.round(referencePos.y)
-	
+		
 	private handleWheelEvent: float x, float y, float deltaX, float deltaY
-		if core.mode == None || Platform.mode != Record || !localUser || !localUser.collectInputs: return
+		if core.mode == None || Platform.mode != Record || !localUser || !localUser.collectInputs || lastWheelInputFrame >= localUser.inputFrame: return
+		lastWheelInputFrame = localUser.inputFrame
 		let inputs = localUser.inputs
 		
 		Vector2 referencePos = {x*graphics.pixelRatio, y*graphics.pixelRatio}.getRelativeTo(graphics.baseMatrix)
