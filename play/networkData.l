@@ -36,7 +36,7 @@ http
 	js void get: string url
 		         stored void(any result) code
 		let id = networkData_addCallback(code)
-		if(core_frame == 0) Platform_waitingForInitialData++
+		if(core_frame == 0 || Platform_waitingForInitialData) Platform_waitingForInitialData++
 		if(core_isPremiere && input_isCertain) {
 			let data = await (await fetch(url)).text()
 			log("http.get "+url+" -> "+data?.length+" bytes")
@@ -46,7 +46,7 @@ http
 	js void getString: string url
 		               stored void(string result) code
 		let id = networkData_addCallback(code)
-		if(core_frame == 0) Platform_waitingForInitialData++
+		if(core_frame == 0 || Platform_waitingForInitialData) Platform_waitingForInitialData++
 		if(core_isPremiere && input_isCertain) {
 			let data = await (await fetch(url)).text()
 			log("http.get "+url+" -> "+data?.length+" bytes")
