@@ -309,6 +309,25 @@ struct Vector2
 			traveledSoFar = traveledAfterSegment
 		return path.last
 		
+	static PositionAndVector getPositionAndVectorAlongPath: Vector2[] path, float distance
+		float traveledSoFar
+		forPairs path
+			let segmentLength = .distanceTo next
+			let traveledAfterSegment = traveledSoFar + segmentLength
+			if  traveledAfterSegment > distance
+				return {
+					position: .interpolateTo next progress:distance traveledSoFar..traveledAfterSegment
+					vector:   next - .
+				}
+			traveledSoFar = traveledAfterSegment
+			
+		let lastPos = path.last
+		return {position:lastPos, vector:lastPos - path[path.length-2]}
+		
+PositionAndVector
+	Vector2 position
+	Vector2 vector
+		
 // A 2D vector comprised of an integer x and y coordinate
 struct IntVector2
 	int x // The x-coordinate of the vector
