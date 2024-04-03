@@ -1403,6 +1403,14 @@ class Map<TKey, TValue>
 	inline js void clear
 		this.clear()
 		
+	inline js int length() this.size
+		
+	js void removeWhere: bool(TValue it) condition // The condition to check
+		for(var pair of this) {
+			if(condition(pair[1])) {
+				this.delete(pair[0]);
+			}
+		}
 
 // Specifies that a function doesn't return a value
 immutable struct void
