@@ -320,8 +320,14 @@ immutable class string
 		
 	inline js int parseInt(int radix) parseInt(this, radix)
 	
-	inline js string[] split: string character = " "
-		this.split(character)
+	// Splits the string at the given character into a list of substrings
+	inline js string[] split: string seperator = "," // Separate the string at this character
+		this.split(seperator)
+		
+	// Splits the string and return a list with the selected field or expression for each item
+	inline js TValue[] splitInto: TValue(string it) selector // Selects a field or expression for each item
+		                          string seperator = ","     // Separate the string at this character
+		this.split(seperator).map(selector)
 		
 	inline js bool startsWith(string str) this.startsWith(str)
 	inline js bool endsWith(string str) this.endsWith(str)
@@ -891,7 +897,7 @@ class List<T>
 		this.every(predicate)
 		
 	// Return a list that contains the selected field or expression for each item
-	inline js TValue[] select: TValue(T it) selector
+	inline js TValue[] select: TValue(T it) selector // Selects a field or expression for each item
 		this.map(selector)
 		
 	// Get the selected field or expression for each item and flattens the result
