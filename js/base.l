@@ -857,6 +857,10 @@ class List<T>
 		         label nocolon float(T it) thenBy // Then order by this expression
 		return this.sort(expression(a) - expression(b) || thenBy(a) - thenBy(b))
 		
+	T[] orderBy: float(T it) expression            // First order by this expression
+		         label nocolon string(T it) thenBy // Then order by this expression
+		return this.sort(expression(a) - expression(b) || thenBy(a) compareTo thenBy(b))
+		
 	T[] orderBy: string(T a) expression // First order by this expression
 		return this.sort(expression(a) compareTo expression(b))
 		
@@ -1094,9 +1098,9 @@ class List<T>
 				if value > resultValue: resultValue = value
 		return resultValue != threshold ? resultValue : default
 		
-	minIndex: int(T a) selector
-		      int threshold = int.maxValue
-		int resultValue = threshold
+	minIndex: float(T a) selector
+		      float threshold = float.maxValue
+		float resultValue = threshold
 		int index = -1
 		for this
 			let value = selector(.)
@@ -1105,9 +1109,9 @@ class List<T>
 				index = i
 		return index
 		
-	maxIndex: int(T a) selector
-		      int threshold = int.minValue
-		int resultValue = threshold
+	maxIndex: float(T a) selector
+		      float threshold = float.minValue
+		float resultValue = threshold
 		int index = -1
 		for this
 			let value = selector(.)
