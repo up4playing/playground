@@ -912,6 +912,27 @@ class List<T>
 	inline js T find: bool(T a) condition // The condition to check
 		this.find(condition)
 		
+	inline js T find: bool(T a) condition // The condition to check
+		              int startIndex      // Start searching at this index
+		List_findStartingAtIndex(this, condition, startIndex)
+		
+	private static T findStartingAtIndex: T[] list            // The list to search
+		                                  bool(T a) condition // The condition to check
+		                                  int startIndex = 0  // Start searching at this index
+		for startIndex to list.length
+			let it = list[.]
+			if condition(it)
+				return it
+		return null
+		
+	// Does the list have an item that meets the given condition?
+	bool has: bool(T a) condition // The condition to check
+		      int startIndex = 0  // Start searching at this index
+		for startIndex to length
+			if condition(this[.])
+				return true
+		return false
+		
 	// Find the last item in the list the meets the given condition
 	// Example: Find a player with a specific id
 	//     app
@@ -923,15 +944,19 @@ class List<T>
 				return .
 		return null
 		
+	// Find the index of the item the meets the given condition
 	int indexWhere: bool(T a) condition // The condition to check
-		for this
-			if condition(.)
+		            int startIndex = 0  // Start searching at this index
+		for startIndex to length
+			if condition(this[.])
 				return i
 		return -1
 		
+	// Find the index of the item the meets the given condition
 	int indexWhere: <- bool(T a) condition // The condition to check
-		for this <-
-			if condition(.)
+		            int startIndex = 0     // Start searching at this index
+		for startIndex to length <-
+			if condition(this[.])
 				return i
 		return -1
 		

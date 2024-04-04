@@ -80,6 +80,7 @@ transient skipInit unit core
 		audio.stop
 		isPremiere = true
 		startTime = serverStartTime = currentTime
+		input.lastWheelInputFrame = -1
 		reset
 		animationFrame
 		
