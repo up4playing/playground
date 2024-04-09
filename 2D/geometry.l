@@ -327,6 +327,61 @@ struct Vector2
 PositionAndVector
 	Vector2 position
 	Vector2 vector
+	
+Path
+	Vector2[] nodes
+	float[] segmentLengths
+	float length
+	
+	Vector2 first := nodes ? nodes.first : Vector2.none
+	Vector2 last :=  nodes ? nodes.last  : Vector2.none
+	int count := nodes.length
+	inline Vector2 get(int index) this.nodes[index]
+	
+	Path
+		update
+		
+	update
+		length = 0
+		forPairs nodes
+			let x = next.x - .x
+			let y = next.y - .y
+			length += segmentLengths[i] = math.sqrt(x*x + y*y)
+		
+	Vector2 getPosition: float distance
+		if nodes.length == 0: return Vector2.none
+		if nodes.length == 1: return nodes[0]
+			
+		float travelledSoFar
+		forPairs nodes
+			let segmentLength = segmentLengths[i]
+			let travelledAfterSegment = travelledSoFar + segmentLength
+			if  travelledAfterSegment >= distance
+				let factor = (distance - travelledSoFar) / segmentLength
+				return {.x + (next.x - .x)*factor, .y + (next.y - .y)*factor}
+				// return .interpolateTo next progress:distance travelledSoFar..travelledAfterSegment
+			travelledSoFar = travelledAfterSegment
+		return nodes.last
+		
+	PositionAndVector getPositionAndVector: float distance
+		if nodes.length == 0: return { position:Vector2.none }
+		if nodes.length == 1: return { position:nodes[0] }
+			
+		float travelledSoFar
+		forPairs nodes
+			let segmentLength = segmentLengths[i]
+			let travelledAfterSegment = travelledSoFar + segmentLength
+			if  travelledAfterSegment >= distance
+				let factor = (distance - travelledSoFar) / segmentLength
+				return {
+					position:{.x + (next.x - .x)*factor, .y + (next.y - .y)*factor}
+					vector: next - .
+				}
+				// return .interpolateTo next progress:distance travelledSoFar..travelledAfterSegment
+			travelledSoFar = travelledAfterSegment
+			
+		let lastPos = nodes.last
+		return {position:lastPos, vector:lastPos - nodes[nodes.length-2]}
 		
 // A 2D vector comprised of an integer x and y coordinate
 struct IntVector2
