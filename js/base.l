@@ -325,9 +325,14 @@ immutable class string
 		this.split(seperator)
 		
 	// Splits the string and return a list with the selected field or expression for each item
-	inline js TValue[] splitInto: TValue(string it) selector // Selects a field or expression for each item
-		                          string seperator = ","     // Separate the string at this character
+	inline js TValue[] splitToList: TValue(string it) selector // Selects a field or expression for each item
+		                            string seperator = ","     // Separate the string at this character
 		this.split(seperator).map(selector)
+		
+	// Splits the string, passes a list of strings to a function and returns its return value
+	js TValue splitToObject: TValue(string[] it) selector // This functions gets a list of strings and should create an object from it
+		                     string seperator = ","       // Separate the string at this character
+		return selector(this.split(seperator))
 		
 	inline js bool startsWith(string str) this.startsWith(str)
 	inline js bool endsWith(string str) this.endsWith(str)
