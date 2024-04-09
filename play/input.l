@@ -454,12 +454,6 @@ skipInit global unit input
 			if(window.require && key == "t" && e.metaKey && e.shiftKey)
 				require("electron").remote.getCurrentWindow().toggleDevTools()
 			else
-			if(ctrlOrCmd && key == "o") {
-				// Open event stream
-				core_openEventStream();
-				e.preventDefault();
-			}
-			else
 			if(ctrlOrCmd && key == "s") {
 				// Save event steam
 				core_saveEventStream();
