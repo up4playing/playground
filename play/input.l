@@ -415,8 +415,6 @@ skipInit global unit input
 	ShowPointersMode showPointersDuringPlaybackMode = LocalAndRemote
 	bool showPointers = true
 	bool ignoreFirstClick
-	int lastWheelInputFrame
-	
 	
 	string textInput
 		let localPlayer = playersById[input.localUser.id]
@@ -612,8 +610,7 @@ skipInit global unit input
 		inputs.writeInt16 math.round(referencePos.y)
 		
 	private handleWheelEvent: float x, float y, float deltaX, float deltaY, bool isPinch
-		if core.mode == None || Platform.mode != Record || !localUser || !localUser.collectInputs || lastWheelInputFrame >= localUser.inputFrame: return
-		lastWheelInputFrame = localUser.inputFrame
+		if core.mode == None || Platform.mode != Record || !localUser || !localUser.collectInputs: return
 		let inputs = localUser.inputs
 		
 		int composite = cast(InputType.Scroll)                       // inputType: 0 -  31 (5 bit)
