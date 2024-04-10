@@ -158,7 +158,7 @@ immutable BoxCollider
 				Segment
 			}
  	
-unit game
+unit algorithms
 	// Finds the shortest path between two position using the astar algorithm
 	AStarNode[] findPath: IntVector2 startPos
 		                  IntVector2 endPos
