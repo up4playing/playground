@@ -631,7 +631,6 @@ class List<T>
 		for this <-
 			if condition(.)
 				removeAt i
-		return null
 		
 	// Remove the first item the meet a specific condition
 	// Example: Remove the first player with a health smaller than 10.
@@ -960,7 +959,15 @@ class List<T>
 	// Find the index of the item the meets the given condition
 	int indexWhere: <- bool(T a) condition // The condition to check
 		            int startIndex = 0     // Start searching at this index
-		for startIndex to length <-
+		for length - startIndex <-
+			if condition(this[.])
+				return i
+		return -1
+		
+	// Seaching backwards, find the last index of the item the meets the given condition
+	int lastIndexWhere: bool(T a) condition // The condition to check
+		                int startIndex = 0  // Start searching at this index
+		for length - startIndex <-
 			if condition(this[.])
 				return i
 		return -1
