@@ -148,7 +148,7 @@ transient skipInit unit core
 		initAll
 		Player[] newPlayers
 		for input.players
-			Player user = {id:.id, index:.index}
+			Player user = {id:.id, index:.index, name:.name}
 			input.playersById[.id] = user
 			newPlayers.add user
 		input.players = newPlayers
