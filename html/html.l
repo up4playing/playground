@@ -293,8 +293,18 @@ enum Display
 	
 	None = "none" // Turns off the display of an element so that it has no effect on layout
 
-class PaddingOrMargin
-	implicit Dimension top, right, bottom, left
+class Padding
+	implicit Dimension top    // The padding on the top of the element
+	implicit Dimension right  // The padding on the right side of the element
+	implicit Dimension bottom // The padding on the bottom of the element
+	implicit Dimension left   // The padding on the left side of the element
+	string toString := "{top} {right} {bottom} {left}"
+	
+class Margin
+	implicit Dimension top    // The margin on the top of the element
+	implicit Dimension right  // The margin on the right side of the element
+	implicit Dimension bottom // The margin on the bottom of the element
+	implicit Dimension left   // The margin on the left side of the element
 	string toString := "{top} {right} {bottom} {left}"
 	
 enum Cursor
@@ -518,8 +528,8 @@ dynamic Style
 	string listStyleImage // An image as the list-item marker
 	string listStylePosition // The position of the list-item marker
 	string listStyleType // The list-item marker type
-	PaddingOrMargin margin // The margins of an element (can have up to four values)
-	PaddingOrMargin inset
+	Margin margin // The margins of an element (can have up to four values)
+	Margin inset // A shorthand for the top, right, bottom, left properties
 	implicit Dimension marginBottom // The bottom margin of an element
 	implicit Dimension marginLeft // The left margin of an element
 	implicit Dimension marginRight // The right margin of an element
@@ -546,7 +556,7 @@ dynamic Style
 	Overflow overflow // What to do with content that renders outside the element box
 	string overflowX // Specifies what to do with the left/right edges of content rendering outside the element box
 	string overflowY // Specifies what to do with the top/bottom edges of content rendering outside the element box
-	PaddingOrMargin padding // The padding of an element (can have up to four values)
+	Padding padding // The padding of an element (can have up to four values)
 	implicit Dimension paddingBottom // The bottom padding of an element
 	implicit Dimension paddingLeft // The left padding of an element
 	implicit Dimension paddingRight // The right padding of an element

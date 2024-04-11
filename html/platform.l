@@ -528,7 +528,7 @@ global unit Html
 			nextNode = currentOverlay.nextSibling
 		
 		if style == null: style = {}	
-		if not style.inset:           style.inset = PaddingOrMargin(0,0,0,0)
+		if not style.inset:           style.inset = {0,0,0,0}
 		if not style.position:        style.position = Fixed
 		setStyle node, style
 		
