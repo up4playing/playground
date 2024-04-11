@@ -17,7 +17,7 @@ struct Vector2
 	static inline Vector2 zero() Vector2(0, 0, null)
 		
 	// A string representation of the vector
-	string toString := "({x} {y})"
+	string toString() := "{x} {y}"
 	
 	// Returns true if the vector is not equal to Vector2.none
 	bool toBool := (x != float.infinity || y != float.infinity)
@@ -293,6 +293,95 @@ struct Vector2
 	deserialize: Buffer buffer
 		x = buffer.readFloat64
 		y = buffer.readFloat64
+	
+	static getPathLength: Vector2[] path
+		float length
+		forPairs path: length += .distanceTo next
+		return length
+		
+	static Vector2 getPositionAlongPath: Vector2[] path, float distance
+		float traveledSoFar
+		forPairs path
+			let segmentLength = .distanceTo next
+			let traveledAfterSegment = traveledSoFar + segmentLength
+			if  traveledAfterSegment > distance
+				return .interpolateTo next progress:distance traveledSoFar..traveledAfterSegment
+			traveledSoFar = traveledAfterSegment
+		return path.last
+		
+	static PositionAndVector getPositionAndVectorAlongPath: Vector2[] path, float distance
+		float traveledSoFar
+		forPairs path
+			let segmentLength = .distanceTo next
+			let traveledAfterSegment = traveledSoFar + segmentLength
+			if  traveledAfterSegment > distance
+				return {
+					position: .interpolateTo next progress:distance traveledSoFar..traveledAfterSegment
+					vector:   next - .
+				}
+			traveledSoFar = traveledAfterSegment
+			
+		let lastPos = path.last
+		return {position:lastPos, vector:lastPos - path[path.length-2]}
+		
+PositionAndVector
+	Vector2 position
+	Vector2 vector
+	
+Path
+	Vector2[] nodes
+	float[] segmentLengths
+	float length
+	
+	Vector2 first := nodes ? nodes.first : Vector2.none
+	Vector2 last :=  nodes ? nodes.last  : Vector2.none
+	int count := nodes.length
+	inline Vector2 get(int index) this.nodes[index]
+	
+	Path
+		update
+		
+	update
+		length = 0
+		forPairs nodes
+			let x = next.x - .x
+			let y = next.y - .y
+			length += segmentLengths[i] = math.sqrt(x*x + y*y)
+		
+	Vector2 getPosition: float distance
+		if nodes.length == 0: return Vector2.none
+		if nodes.length == 1: return nodes[0]
+			
+		float travelledSoFar
+		forPairs nodes
+			let segmentLength = segmentLengths[i]
+			let travelledAfterSegment = travelledSoFar + segmentLength
+			if  travelledAfterSegment >= distance
+				let factor = (distance - travelledSoFar) / segmentLength
+				return {.x + (next.x - .x)*factor, .y + (next.y - .y)*factor}
+				// return .interpolateTo next progress:distance travelledSoFar..travelledAfterSegment
+			travelledSoFar = travelledAfterSegment
+		return nodes.last
+		
+	PositionAndVector getPositionAndVector: float distance
+		if nodes.length == 0: return { position:Vector2.none }
+		if nodes.length == 1: return { position:nodes[0] }
+			
+		float travelledSoFar
+		forPairs nodes
+			let segmentLength = segmentLengths[i]
+			let travelledAfterSegment = travelledSoFar + segmentLength
+			if  travelledAfterSegment >= distance
+				let factor = (distance - travelledSoFar) / segmentLength
+				return {
+					position:{.x + (next.x - .x)*factor, .y + (next.y - .y)*factor}
+					vector: next - .
+				}
+				// return .interpolateTo next progress:distance travelledSoFar..travelledAfterSegment
+			travelledSoFar = travelledAfterSegment
+			
+		let lastPos = nodes.last
+		return {position:lastPos, vector:lastPos - nodes[nodes.length-2]}
 		
 // A 2D vector comprised of an integer x and y coordinate
 struct IntVector2
@@ -581,6 +670,16 @@ class List<T>
 		for this: sum += selector(.)
 		return sum	
 		
+	Vector2 average: Vector2(T it) selector
+		             bool(T it) where
+		int count
+		Vector2 sum = {0,0}
+		for this
+			if where(.)
+				sum += selector(.)
+				count++
+		return sum/count
+		
 // ------------------------------------------- Angle -------------------------------------------
 		
 transient immutable float Angle
@@ -735,15 +834,15 @@ global skipInit priority low unit math
 	// Returns the inverse tangent in turns
 	Angle atan2: float y, float x
 		float r, angle;
-		float abs_y = math.abs(y) + .00000000001
-		if x < 0.0
-			r = (x + abs_y) / (abs_y - x);
+		float abs_x = math.abs(x) + .00000000001
+		if y < 0.0
+			r = (y + abs_x) / (abs_x - y);
 			angle = .375;
 		else
-			r = (x - abs_y) / (x + abs_y);
+			r = (y - abs_x) / (y + abs_x);
 			angle = .125;
 		angle += (.03124211533 * r * r - .1562424076) * r;
-		if y < 0.0: return cast -angle
+		if x < 0.0: return cast -angle
 		else        return cast angle
 		
 	moveTowards: Angle value

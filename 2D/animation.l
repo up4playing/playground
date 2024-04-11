@@ -51,21 +51,21 @@ immutable EaseFunction
 	
 struct float
 	// Interpolates to another value
-	inline js float interpolateTo: float target   // The target value to interpolate to
-		                           float progress // The progress of the interpolation (0: return the start value, 1: returns the target value)
-		(this + (target - this)*progress)
+	inline float interpolateTo: float target   // The target value to interpolate to
+		                        float progress // The progress of the interpolation (0: return the start value, 1: returns the target value)
+		math.map(progress, start:this, target)
 		
-	inline js float interpolateTo: float target   // The target value to interpolate to
-		                           float progress // Between "from" and "to" ("from" returns the start value, "to" returns the target value)
-		                           float from     // The beginning of the input range, if "progress" is "from" or less, the start value is returned
-		                           float to       // The end of the input range, if "progress" is "to" or more, the target value is returned
-		(this + (target - this)*(progress - from)/(to - from))
+	inline float interpolateTo: float target   // The target value to interpolate to
+		                        float progress // Between "from" and "to" ("from" returns the start value, "to" returns the target value)
+		                        float from     // The beginning of the input range, if "progress" is "from" or less, the start value is returned
+		                        float to       // The end of the input range, if "progress" is "to" or more, the target value is returned
+		math.map(progress, from, to, start:this, target)
 		
 	// Interpolates to another value
-	inline js float interpolateTo: float target      // The target value to interpolate to
-		                           float progress    // The progress of the interpolation (0: return the start value, 1: returns the target value)
-		                           EaseFunction ease // The easing function to apply (e.g InQuad, OutBack, ...)
-		(this + (target - this)*ease.function.invoke(progress))
+	inline float interpolateTo: float target      // The target value to interpolate to
+		                        float progress    // The progress of the interpolation (0: return the start value, 1: returns the target value)
+		                        EaseFunction ease // The easing function to apply (e.g InQuad, OutBack, ...)
+		math.map(progress, from:0, to:1, start:this, target, ease)
 	
 	// Animate the float to a target value over a given period of time	
 	inline animateTo: float target        // The target value to animate to
@@ -176,27 +176,35 @@ Color
 	
 global skipInit unit math
 	// Maps a value from an input range to an output range
-	// map: float value       // The input value 
-	// 	 float from = 0    // The beginning of the input range
-	// 	 float to = 1      // The end of the input range
-	// 	 float start = 0   // The lowest possible output value, will be returned for values smaller than "from".
-	// 	 float target = 1  // The highest possible output value, will be returned for values larger than "to".
-	// 	if value <= from: return start
-	// 	if value >= to:   return target
-	// 	let factor = (value-from) / (to-from)
-	// 	return start + (target-start) * factor
+	map: float progress // The input value 
+		 float from     // The beginning of the input range
+		 float to       // The end of the input range
+		 float start    // The lowest possible output value, will be returned for values smaller than "from".
+		 float target   // The highest possible output value, will be returned for values larger than "to".
+		if progress <= from: return start
+		if progress >= to:   return target
+		let factor = (progress-from) / (to-from)
+		return start + (target-start) * factor
+			
+	// Maps a value from an input range to an output range
+	map: float progress  // The input value 
+		 float start     // The lowest possible output value, will be returned for values smaller than "from".
+		 float target    // The highest possible output value, will be returned for values larger than "to".
+		if progress <= 0: return start
+		if progress >= 1: return target
+		return start + (target-start) * progress
 			
 	// // Maps a value from an input range to an output range
-	// map: float value       // The input value 
-	// 	 float from = 0    // The beginning of the input range
-	// 	 float to = 1      // The end of the input range
-	// 	 float start = 0   // The lowest possible output value, will be returned for values smaller than "from".
-	// 	 float target = 1  // The highest possible output value, will be returned for values larger than "to".
-	// 	 EaseFunction ease // The easing function to apply
-	// 	if value <= from: return start
-	// 	if value >= to:   return target
-	// 	let factor = ease.function((value-from) / (to-from))
-	// 	return start + (target-start) * factor
+	map: float progress    // The input value 
+		 float from = 0    // The beginning of the input range
+		 float to = 1      // The end of the input range
+		 float start = 0   // The lowest possible output value, will be returned for values smaller than "from".
+		 float target = 1  // The highest possible output value, will be returned for values larger than "to".
+		 EaseFunction ease // The easing function to apply
+		if progress <= from: return start
+		if progress >= to:   return target
+		let factor = ease.function((progress-from) / (to-from))
+		return start + (target-start) * factor
 		
 	// // Maps a value from an input range to an output range
 	// map: Time value        // The input value 
@@ -232,20 +240,20 @@ global skipInit unit math
 	// 	let factor = (value-from) / (to-from)
 	// 	return start + (target-start) * ease.function(factor)
 		
-	// global interpolate: float from = 0
-	// 	                float to = 1
-	// 	                Time startTime = 0
-	// 	                Time duration = 1
-	// 	let value = Time.now - startTime
-	// 	if value <= 0:        return from
-	// 	if value >= duration: return to
-	// 	return from + (to-from) * (value/duration)
+	global interpolate: float from = 0
+		                float to = 1
+		                Time startTime = 0
+		                Time duration = 1
+		let value = Time.now - startTime
+		if value <= 0:        return from
+		if value >= duration: return to
+		return from + (to-from) * (value/duration)
 		
-	// global interpolate: Color from
-	// 	                Color to
-	// 	                Time startTime = 0
-	// 	                Time duration = 1
-	// 	return from interpolateTo to, (Time.now - startTime)/duration
+	global interpolate: Color from
+		                Color to
+		                Time startTime = 0
+		                Time duration = 1
+		return from interpolateTo to, (Time.now - startTime)/duration
 	
 global unit fx
 	internal Animation[] animations
