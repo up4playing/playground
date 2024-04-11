@@ -831,7 +831,7 @@ skipInit transient unit statistics
 			if .set != currentSet: continue
 			int len = math.min(.values.length, 50)
 			for len: 
-				let value = s.values[-1-i]
+				let value = s.values[s.values.length-1-i]
 				if value > maxValue: maxValue = value
 					
 		draw
