@@ -232,20 +232,20 @@ global skipInit unit math
 	// 	let factor = (value-from) / (to-from)
 	// 	return start + (target-start) * ease.function(factor)
 		
-	// global interpolate: float from = 0
-	// 	                float to = 1
-	// 	                Time startTime = 0
-	// 	                Time duration = 1
-	// 	let value = Time.now - startTime
-	// 	if value <= 0:        return from
-	// 	if value >= duration: return to
-	// 	return from + (to-from) * (value/duration)
+	global interpolate: float from = 0
+		                float to = 1
+		                Time startTime = 0
+		                Time duration = 1
+		let value = Time.now - startTime
+		if value <= 0:        return from
+		if value >= duration: return to
+		return from + (to-from) * (value/duration)
 		
-	// global interpolate: Color from
-	// 	                Color to
-	// 	                Time startTime = 0
-	// 	                Time duration = 1
-	// 	return from interpolateTo to, (Time.now - startTime)/duration
+	global interpolate: Color from
+		                Color to
+		                Time startTime = 0
+		                Time duration = 1
+		return from interpolateTo to, (Time.now - startTime)/duration
 	
 global unit fx
 	internal Animation[] animations
