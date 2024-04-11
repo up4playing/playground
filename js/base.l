@@ -311,12 +311,28 @@ immutable class string
 	inline js string toString() this
 	inline js int toInt := parseInt(this)
 	inline js int toFloat := parseFloat(this)
+	inline js dynamic toJson() JSON.parse(this)
+	inline Time toTime() Time.fromTimeString(this)
 		
-	inline js int parseInt(int radix = 10) parseInt(this, radix)
-	inline js dynamic parseJson() JSON.parse(this)
+	Vector2 toVector2()
+		let mid = this.indexOf " "
+		return Vector2(cast this[..mid], cast this[mid+1..]) 
+		
+	inline js int parseInt(int radix) parseInt(this, radix)
 	
-	inline js string[] split: string character = " "
-		this.split(character)
+	// Splits the string at the given character into a list of substrings
+	inline js string[] split: string seperator = "," // Separate the string at this character
+		this.split(seperator)
+		
+	// Splits the string and return a list with the selected field or expression for each item
+	inline js TValue[] splitToList: TValue(string it) selector // Selects a field or expression for each item
+		                            string seperator = ","     // Separate the string at this character
+		this.split(seperator).map(selector)
+		
+	// Splits the string, passes a list of strings to a function and returns its return value
+	js TValue splitToObject: TValue(string[] it) selector // This functions gets a list of strings and should create an object from it
+		                     string seperator = ","       // Separate the string at this character
+		return selector(this.split(seperator))
 		
 	inline js bool startsWith(string str) this.startsWith(str)
 	inline js bool endsWith(string str) this.endsWith(str)
@@ -615,7 +631,6 @@ class List<T>
 		for this <-
 			if condition(.)
 				removeAt i
-		return null
 		
 	// Remove the first item the meet a specific condition
 	// Example: Remove the first player with a health smaller than 10.
@@ -854,6 +869,10 @@ class List<T>
 		         label nocolon float(T it) thenBy // Then order by this expression
 		return this.sort(expression(a) - expression(b) || thenBy(a) - thenBy(b))
 		
+	T[] orderBy: float(T it) expression            // First order by this expression
+		         label nocolon string(T it) thenBy // Then order by this expression
+		return this.sort(expression(a) - expression(b) || thenBy(a) compareTo thenBy(b))
+		
 	T[] orderBy: string(T a) expression // First order by this expression
 		return this.sort(expression(a) compareTo expression(b))
 		
@@ -884,7 +903,7 @@ class List<T>
 		this.every(predicate)
 		
 	// Return a list that contains the selected field or expression for each item
-	inline js TValue[] select: TValue(T it) selector
+	inline js TValue[] select: TValue(T it) selector // Selects a field or expression for each item
 		this.map(selector)
 		
 	// Get the selected field or expression for each item and flattens the result
@@ -899,6 +918,27 @@ class List<T>
 	inline js T find: bool(T a) condition // The condition to check
 		this.find(condition)
 		
+	inline js T find: bool(T a) condition // The condition to check
+		              int startIndex      // Start searching at this index
+		List_findStartingAtIndex(this, condition, startIndex)
+		
+	private static T findStartingAtIndex: T[] list            // The list to search
+		                                  bool(T a) condition // The condition to check
+		                                  int startIndex = 0  // Start searching at this index
+		for startIndex to list.length
+			let it = list[.]
+			if condition(it)
+				return it
+		return null
+		
+	// Does the list have an item that meets the given condition?
+	bool has: bool(T a) condition // The condition to check
+		      int startIndex = 0  // Start searching at this index
+		for startIndex to length
+			if condition(this[.])
+				return true
+		return false
+		
 	// Find the last item in the list the meets the given condition
 	// Example: Find a player with a specific id
 	//     app
@@ -910,15 +950,27 @@ class List<T>
 				return .
 		return null
 		
+	// Find the index of the item the meets the given condition
 	int indexWhere: bool(T a) condition // The condition to check
-		for this
-			if condition(.)
+		            int startIndex = 0  // Start searching at this index
+		for startIndex to length
+			if condition(this[.])
 				return i
 		return -1
 		
+	// Find the index of the item the meets the given condition
 	int indexWhere: <- bool(T a) condition // The condition to check
-		for this <-
-			if condition(.)
+		            int startIndex = 0     // Start searching at this index
+		for length - startIndex <-
+			if condition(this[.])
+				return i
+		return -1
+		
+	// Seaching backwards, find the last index of the item the meets the given condition
+	int lastIndexWhere: bool(T a) condition // The condition to check
+		                int startIndex = 0  // Start searching at this index
+		for length - startIndex <-
+			if condition(this[.])
 				return i
 		return -1
 		
@@ -1091,23 +1143,25 @@ class List<T>
 				if value > resultValue: resultValue = value
 		return resultValue != threshold ? resultValue : default
 		
-	minIndex: int(T a) selector
-		      int threshold = int.maxValue
-		int resultValue = threshold
+	minIndex: float(T a) selector
+		      int startIndex = 0
+		      float threshold = float.maxValue
+		float resultValue = threshold
 		int index = -1
-		for this
-			let value = selector(.)
+		for startIndex to length
+			let value = selector(this[.])
 			if value < resultValue
 				resultValue = value
 				index = i
 		return index
 		
-	maxIndex: int(T a) selector
-		      int threshold = int.minValue
-		int resultValue = threshold
+	maxIndex: float(T a) selector
+		      int startIndex = 0
+		      float threshold = float.minValue
+		float resultValue = threshold
 		int index = -1
-		for this
-			let value = selector(.)
+		for startIndex to length
+			let value = selector(this[.])
 			if value > resultValue
 				resultValue = value
 				index = i
@@ -1400,6 +1454,14 @@ class Map<TKey, TValue>
 	inline js void clear
 		this.clear()
 		
+	inline js int length() this.size
+		
+	js void removeWhere: bool(TValue it) condition // The condition to check
+		for(var pair of this) {
+			if(condition(pair[1])) {
+				this.delete(pair[0]);
+			}
+		}
 
 // Specifies that a function doesn't return a value
 immutable struct void
@@ -1745,9 +1807,9 @@ global transient priority unit System
 	
 	// Display a message in the timeline
 	global js void watch: logstring text // The text, variables or expressions to watch
-		                  SourceCodeLocation location
-		if(Platform_isDebug && core_frame >= core_frameWithNewWatches && location) {
-			Platform_sendWatch(core_frame, text, location.start, location.file)
+		                  SourceCodeLocation sourceCodeLocation
+		if(Platform_isDebug && core_frame >= core_frameWithNewWatches && sourceCodeLocation) {
+			Platform_sendWatch(core_frame, text, sourceCodeLocation.start, sourceCodeLocation.file)
 		}
 		
 	// Shows a dialog box with a given message

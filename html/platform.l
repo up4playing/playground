@@ -229,7 +229,7 @@ class Color
 	string hex
 	string name
 	
-	implicit string toString := hex
+	string toString := hex
 	
 	Color: string hex = ""
 		this.hex = hex
@@ -322,7 +322,7 @@ global unit Html
 			for(let key in attributes)
 				node.setAttribute(key, attributes[key])
 		
-	static js void expandStyle: Style style
+	static js Style expandStyle: Style style
 		if(style.size) { style.width = style.size.x+"px"; style.height = style.size.y+"px" }
 		if(style.overlay) {
 			let rect = document.body.getBoundingClientRect()
@@ -335,18 +335,6 @@ global unit Html
 		if(style) {
 			for(let key in Html_expandStyle(style))
 				node.style[key] = style[key]
-				
-			// Temporary Backfill. Starting from Chrome 104, Safari 14.1 this is no longer needed.
-			// let translate = style.translate
-			// if(translate) node.style.transform += "translate("+translate+") "
-			// let rotate = style.rotate
-			// if(rotate) node.style.transform += "rotate("+rotate+"turn) "
-				
-			// if(style.targetTranslate || style.targetSize) {
-			// 	setTimeout(() => {
-			// 		node.style.transform = "translate("+style.targetTranslate+") "
-			// 	}, 1000)
-			// }
 		}
 		
 	private js void addStyle: Node node, dynamic style
@@ -378,10 +366,7 @@ global unit Html
 			let next = currentOverlay.nextSibling
 			currentOverlay.remove
 			currentOverlay = next
-		// if not overlayNode
-		// 	overlayNode = div style:{position:Fixed top:0 left:0 right:0 bottom:0, backgroundColor:Black, opacity:.5}
-		// 	body.parentNode.appendChild overlayNode
-						
+
 	global row: expand Attributes attributes = null // The attributes of the HTML element
 		        expand Style style = {}             // The css style of the HTML element
 		        void() children = null              // The children of the HTML element
@@ -442,11 +427,11 @@ global unit Html
 		node.onclick = onClick
 		return node
 		
-// 	global lottie
-// 	<script type="module" src="https://unpkg.com/@dotlottie/player-component@1.0.0/dist/dotlottie-player.js"></script>
-// <dotlottie-player autoplay controls loop mode="normal"
-//       src="http://dotlottieio.s3-website-us-east-1.amazonaws.com/sample_files/animation-external-image.lottie"
-//       style="width: 320px;height:320px;"></dotlottie-player>
+	// 	global lottie
+	// 	<script type="module" src="https://unpkg.com/@dotlottie/player-component@1.0.0/dist/dotlottie-player.js"></script>
+	// <dotlottie-player autoplay controls loop mode="normal"
+	//       src="http://dotlottieio.s3-website-us-east-1.amazonaws.com/sample_files/animation-external-image.lottie"
+	//       style="width: 320px;height:320px;"></dotlottie-player>
 	
 	global video: string src                        // The file of the video to display 
 		          expand Attributes attributes = {} // The attributes of the HTML element 
@@ -491,10 +476,7 @@ global unit Html
 		if onHover != null
 			node.onmouseover = addStyle(node, onHover)
 			node.onmouseout  = setStyle(node, style)
-		// if attributes.onClick != null
-		// 	node.onclick = attributes.onClick(ev); if(!attributes.passClickToParents) ev.stopPropagation
-		// if attributes.onRightClick != null
-		// 	node.oncontextmenu = attributes.onRightClick(ev); ev.preventDefault
+			
 		if text
 			node.innerHTML = text
 		else	
@@ -528,7 +510,7 @@ global unit Html
 			nextNode = currentOverlay.nextSibling
 		
 		if style == null: style = {}	
-		if not style.inset:           style.inset = PaddingOrMargin(0,0,0,0)
+		if not style.inset:           style.inset = {0,0,0,0}
 		if not style.position:        style.position = Fixed
 		setStyle node, style
 		

@@ -146,6 +146,7 @@ class Touch
 transient class ScrollEvent
 	immutable int userId
 	immutable Vector2 delta
+	immutable bool isPinch
 	immutable Vector2 referencePosition
 	bool handled
 	
@@ -445,25 +446,12 @@ skipInit global unit input
 			e.stopPropagation();
 			return false;
 		}
-		window.addEventListener('wheel', e => {
-			e.preventDefault();
-			e.stopPropagation();
-			if(e.button == 0 && Platform_mode == 0) Platform_record();
-			input_handleWheelEvent(e.pageX, e.pageY, -e.deltaX, -e.deltaY)
-			return false;			
-		}, {passive: false})
 		window.onkeydown = e => {
 			let keyCode = e.keyCode
 			let key = e.key
 			let ctrlOrCmd = e.ctrlKey || e.metaKey
 			if(window.require && key == "t" && e.metaKey && e.shiftKey)
 				require("electron").remote.getCurrentWindow().toggleDevTools()
-			else
-			if(ctrlOrCmd && key == "o") {
-				// Open event stream
-				core_openEventStream();
-				e.preventDefault();
-			}
 			else
 			if(ctrlOrCmd && key == "s") {
 				// Save event steam
@@ -527,6 +515,16 @@ skipInit global unit input
 		// Handles navigating back or forward in the browser	
 		window.onpopstate = e => {
 			input_handleNavigate(location.pathname);
+		}
+		if(!window._isWheelHandlerSet) {
+			window._isWheelHandlerSet = true
+			window.addEventListener('wheel', e => {
+				e.preventDefault();
+				e.stopPropagation();
+				if(e.button == 0 && Platform_mode == 0) Platform_record();
+				input_handleWheelEvent(e.pageX, e.pageY, -e.deltaX, -e.deltaY, e.ctrlKey)
+				return false;			
+			}, {passive: false})
 		}
 		
 		if(window._input) window._input.value = ""
@@ -610,14 +608,17 @@ skipInit global unit input
 		inputs.writeUnsignedInt16 composite
 		inputs.writeInt16 math.round(referencePos.x)
 		inputs.writeInt16 math.round(referencePos.y)
-	
-	private handleWheelEvent: float x, float y, float deltaX, float deltaY
+		
+	private handleWheelEvent: float x, float y, float deltaX, float deltaY, bool isPinch
 		if core.mode == None || Platform.mode != Record || !localUser || !localUser.collectInputs: return
 		let inputs = localUser.inputs
 		
+		int composite = cast(InputType.Scroll)                       // inputType: 0 -  31 (5 bit)
+		              + math.shiftLeft(isPinch ? 1:0, 5)             // isPinch:   0 -   1 (1 bit)
+		
 		Vector2 referencePos = {x*graphics.pixelRatio, y*graphics.pixelRatio}.getRelativeTo(graphics.baseMatrix)
 		inputs.writeInt32 localUser.inputFrame
-		inputs.writeUnsignedInt16 cast InputType.Scroll
+		inputs.writeUnsignedInt16 composite
 		inputs.writeInt16 math.round(referencePos.x)
 		inputs.writeInt16 math.round(referencePos.y)
 		inputs.writeInt16 math.round(deltaX)
@@ -843,7 +844,8 @@ skipInit global unit input
 					else
 					if inputType == Scroll
 						Vector2 delta = {inputs.readInt16, inputs.readInt16}
-						internalUser.wheelEvents.add {player.id, delta, referencePosition:referencePos}
+						bool isPinch = (value shiftRight 5) == 1
+						internalUser.wheelEvents.add {player.id, delta, isPinch, referencePosition:referencePos}
 				else
 				if inputType == TextInput
 					let textInput = inputs.readString
@@ -956,7 +958,7 @@ skipInit global unit input
 					int id = inputs.readInt
 					string valueString = inputs.readString
 					if core.logging: core.parseLog += " json {id}: {valueString}"
-					dynamic object = valueString.parseJson
+					dynamic object = valueString.toJson
 					networkData.call id, object
 					if Platform.waitingForInitialData > 0: Platform.waitingForInitialData--
 				else
@@ -964,7 +966,7 @@ skipInit global unit input
 					int id = inputs.readInt
 					string valueString = inputs.readString
 					if core.logging: core.parseLog += " object {id}: {valueString}"
-					dynamic object = valueString.parseJson
+					dynamic object = valueString.toJson
 					networkData.call id, object
 					if Platform.waitingForInitialData > 0: Platform.waitingForInitialData--
 	

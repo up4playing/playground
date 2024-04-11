@@ -104,8 +104,9 @@ unit file
 						value = ""
 					else 
 						value += .
-				results.add value.trim
-				processLine(results)
+				if results.length
+					results.add value.trim
+					processLine(results)
 			if then != null: then()
 
 immutable struct FileFilter
