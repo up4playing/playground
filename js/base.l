@@ -810,6 +810,8 @@ class List<T>
 	// Reverses the order of the items of the list in place
 	inline js T[] reverse() this.reverse()
 		
+	inline js T[] reversed() [...this].reverse()
+		
 	// Return a list with all unique items of the original list
 	inline js T[] distinct() [...new Set(this)]
 	
