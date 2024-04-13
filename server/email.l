@@ -2,14 +2,14 @@ unit nodemailer
 	object transporter
 	js void setup
 		const nodemailer = require("nodemailer");
-		mail_transporter = nodemailer.createTransport({
+		nodemailer.transporter = nodemailer.createTransport({
 			service: 'gmail',
 			auth: {
 				user: "heiko.weible",
 				pass: ""
 			},
 		});
-		let info = await mail.transporter.sendMail({
+		let info = await nodemailer.transporter.sendMail({
 			from: "Lunchtime Games<heiko.weible@googlemail.com>",
 			to: "tina@visual-generation.de",
 			subject: "Hello Subject",
