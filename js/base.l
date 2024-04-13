@@ -8,6 +8,7 @@ immutable struct int
 	
 	inline int * int value
 	inline float * float value
+	inline Angle * Angle value
 	
 	inline float / int value
 	inline float / float value
