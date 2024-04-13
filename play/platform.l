@@ -212,7 +212,7 @@ transient skipInit unit Platform
 		else                          console.error(error)
 		
 	private inline js void sendFinished
-		console.log("[app] ----- Finished -----")
+		console.log("[app] Finished initializing")
 		if(Platform.isDebug) _sendToEditor({type:"finished"})
 	
 	private Time nextHeartbeatTime
@@ -221,7 +221,6 @@ transient skipInit unit Platform
 		if(!Platform.isDebug) return
 		let now = Date.now();
 		if(now > Platform.nextHeartbeatTime) {
-			console.log("[app]", (now%100000).toLocaleString("en-US", {minimumIntegerDigits:6, useGrouping:true})+" sending heartbeat from "+context);
 			Platform.nextHeartbeatTime = now + 3000;
 			_sendStringToEditor("~");
 		}
