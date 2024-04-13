@@ -14,14 +14,15 @@ unit db
 	js inline object ObjectId: string id
 		new ObjectID(id)
 		
-	js inline bool operator==(ObjectID a, string b) a?.equals(b)
-	js inline bool operator==(ObjectID a, ObjectID b) a?.equals(b)
 
 js ObjectID
 class ObjectID
 	string id
 	implicit inline js string toString() this.toString()
 	static inline js ObjectID generate() new ObjectID()
+		
+	js inline bool == string b:   this?.equals(b)
+	js inline bool == ObjectID b: this?.equals(b)
 		
 DatabaseResult
 	bool acknowledged

@@ -85,30 +85,25 @@ skipInit transient float Time
 	// (31-12-2000 23-59-59)
 	inline js string invariantDayMonthYearHourMinuteSecondString() new Date(this).invariantDayMonthYearHourMinuteSecondString()
 			
-	inline js Time  operator +  (Time a, Time b) a+b
-	inline js Time  operator +  (Time a, int b) a+b
-	inline js Time  operator +  (Time a, float b) a+b
+	inline Time + Time value
+	inline Time - Time value
+	inline float / Time value
+	inline float * Time value
 	
-	inline js Time  operator -  (Time a, Time b) a-b
-	inline js Time  operator -  (Time a, int b) a-b
-	inline js Time  operator -  (Time a, float b) a-b
+	inline Time += Time value
+	inline Time -= Time value
+	inline Time /= Time value
+	inline Time *= Time value
 	
-	inline js float operator /  (Time a, Time b) a/b
-	inline js Time  operator /  (Time a, int b) a/b
-	inline js Time  operator /  (Time a, float b) a/b
+	inline bool == Time value
+	inline bool != Time value
+	inline bool < Time value
+	inline bool <= Time value
+	inline bool > Time value
+	inline bool >= Time value
 	
-	inline js Time  operator *  (Time a, int b) a*b
-	inline js Time  operator *  (Time a, float b) a*b
-	inline js Time  operator *  (int a, Time b) a*b
-	inline js Time  operator *  (float a, Time b) a*b
-	
-	inline js Time  operator %  (Time a, int b) a%b
-	inline js Time  operator %  (Time a, Time b) a%b
-	
-	inline js bool  operator <  (Time a, Time b) a<b
-	inline js bool  operator <= (Time a, Time b) a<=b
-	inline js bool  operator >  (Time a, Time b) a>b
-	inline js bool  operator >= (Time a, Time b) a>=b
+	inline js Time % ensureSingleExecution Time value
+		((this % value) + value) % value
 	
 	static measure: void() do
 		let startTime = preciseTime

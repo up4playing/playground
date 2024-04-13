@@ -315,10 +315,6 @@ immutable class string
 	inline js dynamic toJson() JSON.parse(this)
 	inline Time toTime() Time.fromTimeString(this)
 		
-	Vector2 toVector2()
-		let mid = this.indexOf " "
-		return Vector2(cast this[..mid], cast this[mid+1..]) 
-		
 	inline js int parseInt(int radix) parseInt(this, radix)
 	
 	// Splits the string at the given character into a list of substrings
