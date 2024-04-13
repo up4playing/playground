@@ -856,8 +856,8 @@ class List<T>
 	inline js T[] sort: float(T a, T b) comparer // A function returning 1 if "a" is larger, -1 if "b" is larger, 0 if they are equal
 		this.sort(comparer)
 	
-	// inline js T[] sort: Time(T a, T b) comparer // A function returning 1 if "a" is larger, -1 if "b" is larger, 0 if they are equal
-	// 	this.sort(comparer)
+	inline js T[] sort: Time(T a, T b) comparer // A function returning 1 if "a" is larger, -1 if "b" is larger, 0 if they are equal
+		this.sort(comparer)
 	
 	// Sort the list by a given expression
 	T[] orderBy: float(T a) expression // First order by this expression
@@ -880,14 +880,14 @@ class List<T>
 		if order == Ascending: return this.sort(expression(a) - expression(b))
 		else                   return this.sort(expression(b) - expression(a))
 		
-	// T[] orderBy: Time(T a) expression // First order by this expression
-	// 	return this.sort(expression(a) - expression(b))
+	T[] orderBy: Time(T a) expression // First order by this expression
+		return this.sort(expression(a) - expression(b))
 		
-	// // Sort the list by a given expression
-	// T[] orderBy: Time(T a) expression // First order by this expression
-	// 	         SortingOrder order    // Specifies if you want to sort in ascending or descending order
-	// 	if order == Ascending: return this.sort(expression(a) - expression(b))
-	// 	else                   return this.sort(expression(b) - expression(a))
+	// Sort the list by a given expression
+	T[] orderBy: Time(T a) expression // First order by this expression
+		         SortingOrder order    // Specifies if you want to sort in ascending or descending order
+		if order == Ascending: return this.sort(expression(a) - expression(b))
+		else                   return this.sort(expression(b) - expression(a))
 		
 	// Returns true if the given condition is true for any item in the list
 	inline js bool any: bool(T a) predicate // The condition to check
