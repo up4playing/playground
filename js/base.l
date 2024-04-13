@@ -1469,18 +1469,17 @@ struct Nullable<T>
 	
 // A Hashtable with keys of type 'string' and values of type 'any'
 interface dynamic
-	inline js string toJson() JSON.stringify(this)
-	inline js string toFormattedJson() JSON.stringify(this, null, "\t")
-	
+
 // Any type
 interface any
-	
+
 // The base class for all classes
 interface object
 	inline js bool toBool() (this != null)
 	inline js string toString() object_stringify(this, 3)
-	inline js string toJson() JSON.stringify(this)
-	inline js string toFormattedJson() JSON.stringify(this, null, "\t")
+		
+	static inline js string toJson(any value) JSON.stringify(value)
+	static inline js string toFormattedJson(any value) JSON.stringify(value, null, "\t")
 		
 	static internal js string stringify: object subject, int depth = 0 
 		switch(typeof subject)
