@@ -415,18 +415,22 @@ transient class Buffer
 		this.dataView = newDataView
 		
 	js bool == Buffer value
-		if(writePos != value.writePos) return false
-		for(var i=0, len=writePos; i<len; i++)
-			if(dataView.getUint8(i) != value.dataView.getUint8(i))
-				return false
-		return true
+		if(this.writePos != value.writePos) return false;
+		for(var i=0, len=this.writePos; i<len; i++) {
+			if(this.dataView.getUint8(i) != value.dataView.getUint8(i)) {
+				return false;
+			}
+		}
+		return true;
 		
 	js bool != Buffer value
-		if(writePos != value.writePos) return true
-		for(var i=0, len=writePos; i<len; i++)
-			if(dataView.getUint8(i) != value.dataView.getUint8(i))
-				return true
-		return false
+		if(this.writePos != value.writePos) return true;
+		for(var i=0, len=this.writePos; i<len; i++) {
+			if(this.dataView.getUint8(i) != value.dataView.getUint8(i)) {
+				return true;
+			}
+		}
+		return false;
 			
 	js int checksum
 	    let hash = 0;
