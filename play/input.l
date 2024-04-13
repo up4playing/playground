@@ -1522,21 +1522,21 @@ skipInit global unit input
 				
 	js void startTextInput: string initalValue = null, int forUser = -1
 		if(forUser == -1 || input.localUser?.id == forUser) {
-			let input = input.getOrCreateInputField()
+			let field = input.getOrCreateInputField()
 			if(initalValue != null) { 
-				input.value = initalValue
+				field.value = initalValue
 			}
 			_input.focus()
-			input.isTextInputActive = true
+			field.isTextInputActive = true
 		}
 		
 	js void stopTextInput
 		input.isTextInputActive = false
 		
 	js void setTextInput: string value
-		let input = input.getOrCreateInputField()
-		input.value = value
-		input.handleTextInput(7, value)
+		let field = input.getOrCreateInputField()
+		field.value = value
+		field.handleTextInput(7, value)
 		
 	js void updateCursor
 		// document.body.style.cursor = (input.showPointers == 2 && Platform.mode == 4 ? "none" : input.cursor)
