@@ -1,6 +1,8 @@
 // A sound
-skipInit class Sound
+skipInit immutable Sound
 	string file
+	Time duration
+	
 	float fadeVolume = 1
 	transient dynamic audioElement
 	
@@ -17,10 +19,10 @@ skipInit class Sound
 		
 	js void volume: float value
 		this.fadeVolume = value
-		if(this.audioElement) this.audioElement.volume = this.fadeVolume * audio_volume
+		if(this.audioElement) this.audioElement.volume = this.fadeVolume * audio.volume
 		
 	js void updateVolume
-		if(this.audioElement) this.audioElement.volume = this.fadeVolume * audio_volume
+		if(this.audioElement) this.audioElement.volume = this.fadeVolume * audio.volume
 		
 	js void stop
 		if(this.audioElement) this.audioElement.pause()
@@ -47,15 +49,15 @@ skipInit class Sound
 		// Play audio
 		this.fadeVolume = 1;
 		this.audioElement = this.nextAudioElement;
-		this.audioElement.volume = audio_volume;
-		this.audioElement.onended = () => audio_playingSounds.remove(ps);
+		this.audioElement.volume = audio.volume;
+		this.audioElement.onended = () => audio.playingSounds.remove(ps);
 		this.audioElement.play();
 		this.preloadForNextPlayback()
 		
 	internal js void preloadForNextPlayback
 		this.nextAudioElement = new Audio();
-		if(PeerNetwork_audioOutputId && this.nextAudioElement.setSinkId) 
-			await this.nextAudioElement.setSinkId(PeerNetwork_audioOutputId);
+		if(PeerNetwork.audioOutputId && this.nextAudioElement.setSinkId) 
+			await this.nextAudioElement.setSinkId(PeerNetwork.audioOutputId);
 		this.nextAudioElement.src = _basePath+this.file;
 		
 	isPlaying
@@ -64,12 +66,12 @@ skipInit class Sound
 	fadeOut: Time duration = 3000
 		     Time delay = 0
 		// Migrate to 3D
-		// fx.add FadeSoundEffect startTime:Time.now+delay, duration, sound:this, startValue:1, delta:-1
+		fx.add FadeSoundAnimation startTime:Time.now+delay, duration, sound:this, startValue:1, delta:-1
 		return this
 
-transient class PlayingSound
-	Sound sound
-	int frame
+transient PlayingSound
+	immutable Sound sound
+	immutable int frame
 	bool isConfirmed
 	
 // A collection of functions for playing audio

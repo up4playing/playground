@@ -1,3 +1,4 @@
+js HTMLElement
 class Node
 	string id // A unique string to indentify a specic element, often used to style a single element
 	
@@ -14,6 +15,12 @@ class Node
 	string src
 	Node firstChild
 	Node nextSibling
+	Node parentNode
+	float scrollHeight
+	string href
+	
+	bool muted
+	bool autoplay
 	
 	string sourceLocation
 		
@@ -31,6 +38,8 @@ class Node
 	native void(HtmlEvent ev) onmouseover
 	native void(HtmlEvent ev) onmouseout
 	native void(dynamic ev) onkeydown
+	native void(HtmlEvent ev) oninput
+	native void(HtmlEvent ev) onchange
 	
 	inline js void set(string name, string value) this.setAttribute(name, value)
 	inline js void get(string name) this.getAttribute(name)
@@ -42,9 +51,9 @@ class Node
 		                    Time duration = 1 seconds
 		                    AnimationFill fill = Forwards
 		                    easing = "linear"
-		this.animate([from, to], {@duration:duration, @fill:fill, @easing:easing})
+		this.animate([Html.expandStyle(from), Html.expandStyle(to)], {@duration:duration, @fill:fill, @easing:easing})
 	
-class HtmlEvent
+immutable HtmlEvent
 	Node target        // The element that triggered the event
 	Node currentTarget // The element to the event handler is attached to
 	int button         // The mouse button that was pressed to trigger the event
@@ -52,7 +61,7 @@ class HtmlEvent
 	preventDefault     // Prevent the default action (for example, showing the context menu on a right click)
 		
 	inline Vector2 relativeMousePosition() Html.getRelativeMousePosition(this, this.currentTarget)
-	inline js Vector2 mousePosition() new Vector2(this.clientX/Platform_scale, this.clientY/Platform_scale)
+	inline js Vector2 mousePosition() new Vector2(this.clientX/Platform.scale, this.clientY/Platform.scale)
 
 enum Unit
 	Pixels = "px" // Pixels
@@ -103,6 +112,11 @@ struct Vector2
 	Unit unit = Pixels // The unit of the vector (Pixels, Percent, Centimeters, Points, ViewportHeight, ...)
 	
 	toString := "{x}{unit} {y}{unit}"
+	
+	Vector2 operator + (Vector2 a, Vector2 b) return {a.x+b.x, a.y+b.y}
+	Vector2 operator - (Vector2 a, Vector2 b) return {a.x-b.x, a.y-b.y}
+	
+	Vector2 operator * (Vector2 a, float b)   return {a.x*b, a.y*b}
 	
 enum AnimationFill
 	None = "none"
@@ -179,7 +193,7 @@ transient float Angle
 	inline js bool  operator != (Angle a, float b) a!=b
 	
 	inline js float in: AngleUnit unit
-		(unit==1 ? this*Math_TwoPI : unit==2 ? this*360 : unit==3 ? this*400 : this)
+		(unit==1 ? this*Math.TwoPI : unit==2 ? this*360 : unit==3 ? this*400 : this)
 		
 enum AngleUnit
 	turns // Turn (one full rotation is 1)
@@ -279,8 +293,18 @@ enum Display
 	
 	None = "none" // Turns off the display of an element so that it has no effect on layout
 
-class PaddingOrMargin
-	implicit Dimension top, right, bottom, left
+class Padding
+	implicit Dimension top    // The padding on the top of the element
+	implicit Dimension right  // The padding on the right side of the element
+	implicit Dimension bottom // The padding on the bottom of the element
+	implicit Dimension left   // The padding on the left side of the element
+	string toString := "{top} {right} {bottom} {left}"
+	
+class Margin
+	implicit Dimension top    // The margin on the top of the element
+	implicit Dimension right  // The margin on the right side of the element
+	implicit Dimension bottom // The margin on the bottom of the element
+	implicit Dimension left   // The margin on the left side of the element
 	string toString := "{top} {right} {bottom} {left}"
 	
 enum Cursor
@@ -341,6 +365,24 @@ enum TextAlign
 	End = "end" // The same as right if direction is left-to-right and left if direction is right-to-left
 	
 	MatchParent = "match-parent" // Similar to inherit, but the values are calculated according to the parent's direction
+	
+enum TextOverflow
+	Ellipsis = "ellipsis" // Use this to show "..." when text is too long
+	Clip = "clip" // Use the default behavior
+	
+enum Overflow: 
+	Hidden = "hidden" // Content is clipped if necessary to fit the padding box.
+	Scroll = "scroll" // Content is clipped if necessary to fit the padding box and a scrollbar is shown.
+	Visible = "visible" // Content is not clipped, it may be rendered outside the padding box.
+	Auto = "auto" // Use the default behavior, which is visible.
+
+enum WhiteSpace
+	NoWrap = "nowrap" // Collapses white space as for normal and suppresses line breaks (text wrapping).
+	Pre = "pre" // Sequences of white space are preserved. Lines are only broken at newline characters and at <br>.
+	PreWrap = "pre-wrap" // Sequences of white space are preserved. Lines are broken as necessary to fill line boxes.
+	PreLine = "pre-line" // Sequences of white space are collapsed. Lines are broken as necessary to fill line boxes.
+	BreakSpaces = "break-spaces" // Sequences of white space are preserved. Lines can be broken at arbitrary points.
+	Normal = "normal" // Sequences of white space are collapsed. Lines are broken as necessary to fill line boxes.
 	
 enum BorderStyle
 	Solid = "solid" // Displays a single, straight, solid line
@@ -486,8 +528,8 @@ dynamic Style
 	string listStyleImage // An image as the list-item marker
 	string listStylePosition // The position of the list-item marker
 	string listStyleType // The list-item marker type
-	PaddingOrMargin margin // The margins of an element (can have up to four values)
-	PaddingOrMargin inset
+	Margin margin // The margins of an element (can have up to four values)
+	Margin inset // A shorthand for the top, right, bottom, left properties
 	implicit Dimension marginBottom // The bottom margin of an element
 	implicit Dimension marginLeft // The left margin of an element
 	implicit Dimension marginRight // The right margin of an element
@@ -511,10 +553,10 @@ dynamic Style
 	string outlineOffset // Offsets an outline, and draws it beyond the border edge
 	string outlineStyle // The style of the outline around an element
 	implicit Dimension outlineWidth // The width of the outline around an element
-	string overflow // What to do with content that renders outside the element box
+	Overflow overflow // What to do with content that renders outside the element box
 	string overflowX // Specifies what to do with the left/right edges of content rendering outside the element box
 	string overflowY // Specifies what to do with the top/bottom edges of content rendering outside the element box
-	PaddingOrMargin padding // The padding of an element (can have up to four values)
+	Padding padding // The padding of an element (can have up to four values)
 	implicit Dimension paddingBottom // The bottom padding of an element
 	implicit Dimension paddingLeft // The left padding of an element
 	implicit Dimension paddingRight // The right padding of an element
@@ -539,7 +581,7 @@ dynamic Style
 	string textDecorationStyle // The style of the line in a text decoration
 	string textIndent // The indentation of the first line of text
 	string textJustify // The justification method used when text-align is "justify"
-	string textOverflow // What should happen when text overflows the containing element
+	TextOverflow textOverflow // What should happen when text overflows the containing element
 	string textShadow // The shadow effect of a text
 	string textTransform // The capitalization of a text
 	implicit Dimension top // The top position of a positioned element
@@ -555,7 +597,7 @@ dynamic Style
 	string userSelect // Whether the text of an element can be selected or not
 	string verticalAlign // The vertical alignment of the content in an element
 	string visibility // Whether an element should be visible
-	string whiteSpace // How to handle tabs, line breaks and whitespace in a text
+	WhiteSpace whiteSpace // How to handle tabs, line breaks and whitespace in a text
 	implicit Dimension width // The width of an element
 	string wordBreak // Line breaking rules for non-CJK scripts
 	string wordSpacing // The spacing between words in a text
@@ -567,8 +609,7 @@ dynamic Style
 	implicit Angle rotate // Rotate the element by this angle
 	
 	Vector2 size
-	Vector2 targetSize
-	Vector2 targetTranslate
+	bool overlay
 	
 dynamic Attributes
 	string id // A unique string to indentify a specic element, often used to style a single element

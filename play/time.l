@@ -1,4 +1,4 @@
-skipInit transient float Time
+skipInit transient immutable float Time
 	// The number of milliseconds elapsed since January 1, 1970
 	static Time now
 	
@@ -11,9 +11,10 @@ skipInit transient float Time
 	static internal inline js float realTime := Date.now()
 
 	// The current frame
-	static inline js int frame := core_frame
+	static inline js int frame := core.frame
 	
 	static Time fromTimeString(string timeString)
+		if not timeString: return 0
 		Time value = 0
 		int colon1 = timeString.indexOf(":")
 		if(colon1 == -1)
@@ -31,7 +32,7 @@ skipInit transient float Time
 	static inline js Time fromIsoString: string isoString
 		new Date(isoString).getTime()
 		
-	inline js float toFloat() this
+	inline js implicit float toFloat() this
 	inline js string toString() this.toString()
 		
 	// Returns true if the time is not zero
@@ -84,31 +85,26 @@ skipInit transient float Time
 	// (31-12-2000 23-59-59)
 	inline js string invariantDayMonthYearHourMinuteSecondString() new Date(this).invariantDayMonthYearHourMinuteSecondString()
 			
-	inline js Time  operator +  (Time a, Time b) a+b
-	inline js Time  operator +  (Time a, int b) a+b
-	inline js Time  operator +  (Time a, float b) a+b
+	inline Time + Time value
+	inline Time - Time value
+	inline float / Time value
+	inline float * Time value
 	
-	inline js Time  operator -  (Time a, Time b) a-b
-	inline js Time  operator -  (Time a, int b) a-b
-	inline js Time  operator -  (Time a, float b) a-b
+	inline Time += Time value
+	inline Time -= Time value
+	inline Time /= Time value
+	inline Time *= Time value
 	
-	inline js float operator /  (Time a, Time b) a/b
-	inline js Time  operator /  (Time a, int b) a/b
-	inline js Time  operator /  (Time a, float b) a/b
+	inline bool == Time value
+	inline bool != Time value
+	inline bool < Time value
+	inline bool <= Time value
+	inline bool > Time value
+	inline bool >= Time value
 	
-	inline js Time  operator *  (Time a, int b) a*b
-	inline js Time  operator *  (Time a, float b) a*b
-	inline js Time  operator *  (int a, Time b) a*b
-	inline js Time  operator *  (float a, Time b) a*b
-	
-	inline js Time  operator %  (Time a, int b) a%b
-	inline js Time  operator %  (Time a, Time b) a%b
-	
-	inline js bool  operator <  (Time a, Time b) a<b
-	inline js bool  operator <= (Time a, Time b) a<=b
-	inline js bool  operator >  (Time a, Time b) a>b
-	inline js bool  operator >= (Time a, Time b) a>=b
-	
+	inline js Time % ensureSingleExecution Time value
+		((this % value) + value) % value
+		
 	static measure: void() do
 		let startTime = preciseTime
 		do
@@ -117,8 +113,14 @@ skipInit transient float Time
 	inline js float in: TimeUnit unit // Convert the time to this unit
 		(unit==1 ? this/1000 : unit==2 ? this/60000 : unit==3 ? this/3600000 : unit==4 ? this/86400000 : this)
 		
-	js static void startTimer() window._timerStart = performance.now()
-	js static void printTimer(string text) log(text+": "+(performance.now()-window._timerStart))
+	js static void startTimer() 
+		window._timerStart = performance.now()
+		
+	js static void printTimer(string text)
+		let now = performance.now()
+		log(text+": "+(now-window._timerStart))
+		window._timerStart = now
+		
 	static inline js float preciseTime := performance.now()
 		
 enum TimeUnit
@@ -128,9 +130,9 @@ enum TimeUnit
 	hours        // Hours
 	days         // Days
 		
-js(Date) transient struct Date
-	inline js Date() new Date(Time_now)
-	static inline js Date now := new Date(Time_now)
+js(Date) transient immutable struct Date
+	inline js Date() new Date(Time.now)
+	static inline js Date now := new Date(Time.now)
 		
 	const dayStrings = [
 		["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
@@ -164,7 +166,7 @@ js(Date) transient struct Date
 	
 	// (31.12.)
 	js string dayMonthString: language = Loca.language
-		return this.getDate().toLocaleString("en-US", {minimumIntegerDigits:2})+"."+(this.getMonth()+1).toLocaleString("en-US", {minimumIntegerDigits:2})+"."
+		return this.getDate()+"."+(this.getMonth()+1).toLocaleString("en-US", {minimumIntegerDigits:2})+"."
 	
 	// (31.12.2000)
 	js string dayMonthYearString: language = Loca.language
@@ -188,6 +190,10 @@ js(Date) transient struct Date
 	
 	// (23:59)
 	string hourMinuteString: language = Loca.language
+		return ""+hour+":"+toTwoDigitString(minute)
+	
+	// (11:59 am)
+	string hourMinuteAmPmString: language = Loca.language
 		if language == English
 			let h = hour
 			return ""+((h-1)%12+1)+":"+toTwoDigitString(minute)+(h < 12 ? " am":" pm")

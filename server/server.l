@@ -1,8 +1,8 @@
 skipInit unit Platform
 	visible bool isDebug
-	inline js int version := version
+	inline js int version := _buildVersion
 		
-	inline js void initPlatform() Platform_init()
+	inline js void initPlatform() Platform.init()
 	inline js void initApplication() init()
 		
 	start: bool isDebug
@@ -15,7 +15,7 @@ skipInit unit Platform
 		initApplication
 		
 	private inline js void sendEvaluateFinished
-		if(Platform_isDebug) _sendToEditor({type:"evaluateFinished"})
+		if(Platform.isDebug) _sendToEditor({type:"evaluateFinished"})
 	
 	inline js string basePath := __dirname + "/"
 	
@@ -32,10 +32,10 @@ global skipInit unit math
 	// Generates a random integer
 	global js int randomInteger: int min // The inclusive lower bound of the random integer
 		                         int max // The exclusive upper bound of the random integer
-		return min + math.floor(math.random() * (max-min))
+		return min + Math.floor(Math.random() * (max-min))
 	
 	global js int randomInteger: int max = 2147483647 // The exclusive upper bound of the random integer
-		return math.floor(math.random() * max)
+		return Math.floor(Math.random() * max)
 	
 	// Generates a random float
 	global inline js int randomFloat
@@ -115,8 +115,8 @@ global unit http
 		initMap
 		
 	js void initMap
-		http_handlerMap = new Map()
-		http_contentTypeMap = {
+		http.handlerMap = new Map()
+		http.contentTypeMap = {
 			js:"application/javascript; charset=utf-8",
 			html:"text/html; charset=utf-8",
 			css:"text/css",
@@ -142,8 +142,8 @@ global unit http
 				// log(request.method+" "+procedureName)
 				// log("window "+ window)
 				// log("global "+global)
-				// var handler = global["app_"+procedureName]
-				// log("app_"+procedureName+" -> "+handler)
+				// var handler = global["app."+procedureName]
+				// log("app."+procedureName+" -> "+handler)
 				// if(handler) {
 				// 	let result = await handler(body ? JSON.parse(body) : null)
 				// 	response.writeHead(200, {'Content-Type': "application/json; charset=utf-8"}); 
@@ -151,24 +151,24 @@ global unit http
 				// 	return
 				// }
 				
-				handler = http_handlerMap.get(request.method+procedureName)
+				handler = http.handlerMap.get(request.method+procedureName)
 				if(handler) {
 					// For named handlers, the procedure name isn't included in the path
 					path.splice(0,2);
 				} else {
 					// For wildcard handlers, we pass the procedure name as path[0]
-					handler = http_handlerMap.get(request.method+"*")
+					handler = http.handlerMap.get(request.method+"*")
 					path.splice(0,1);
 				}
 				if(handler) {
 					handler(path, body ? JSON.parse(body) : null, request, response);
 				} else {
-					response.end("Server v"+version+" up since "+startTime);
+					response.end("Server v"+_buildVersion+" up since "+startTime);
 				}
 			})
 		}
 		if(window.server) server.close();
-		if(keypath && !Platform_isDebug) {
+		if(keypath && !Platform.isDebug) {
 			window.server = require('https').createServer({
 				cert: fs.readFileSync("/etc/letsencrypt/live/"+keypath+"/fullchain.pem"),
 				key: fs.readFileSync("/etc/letsencrypt/live/"+keypath+"/privkey.pem")
@@ -181,7 +181,7 @@ global unit http
 		success()
 		
 	js void on:string path, HttpMethod method = Get, void(string[] path, dynamic body, Request request, Response response) handler
-		http_handlerMap.set(http_methodName[method]+path, handler)
+		http.handlerMap.set(http.methodName[method]+path, handler)
 	
 unit Json
 	inline js object parse: string value
@@ -193,7 +193,7 @@ class Request
 	inline js string ip() this. .connection.remoteAddress
 		
 class Response
-	inline js void sendText(string result, int code = 200, filename = "") this.writeHead(code, {'Content-Type': http_contentTypeMap[filename.getExtension()] || "text/plain; charset=utf-8"}); response.end(result);
+	inline js void sendText(string result, int code = 200, filename = "") this.writeHead(code, {'Content-Type': http.contentTypeMap[filename.getExtension()] || "text/plain; charset=utf-8"}); response.end(result);
 	inline js void send(any result, int code = 200, filename = "") this.writeHead(code, {'Content-Type': "application/json; charset=utf-8"}); response.end(JSON.stringify(result));
 	inline js void redirect(string url, int code = 302) this.writeHead(code, {Location: url}); response.end();
 		
@@ -211,11 +211,12 @@ unit websocket
 	js void startWebsocketServer: int port
 		                          string keypath = ""
 		                          void(string[] path, WebsocketHttpResponse response) onGet
+		                          void() onStart
 		                          void(Connection connection) onOpen
 		                          void(Connection connection, int errorCode) onClose
 		                          void(Connection connection, Buffer buffer) onMessage
 		const uWS = require('uWebSockets.js')
-		const app =  process.platform == "win32" ? uWS.App() :
+		const app =  process.platform == "win32" || process.platform == "darwin" ? uWS.App() :
 			uWS.SSLApp({
 				key_file_name: "/etc/letsencrypt/live/"+keypath+"/privkey.pem",
 				cert_file_name: "/etc/letsencrypt/live/"+keypath+"/fullchain.pem",
@@ -243,7 +244,7 @@ unit websocket
 			onGet(path, response);
 		}).listen(port, (token) => {
 			if (token) {
-				console.log('Listening to port ' + port);
+				onStart();
 			} else {
 				console.log('Failed to listen to port ' + port);
 			}
@@ -253,7 +254,7 @@ class WebsocketHttpResponse
 	inline js void writeHeader(string key, string value)
 		this.writeHeader(key, value); 
 	inline js void send(string result, int code = 200, filename = "") 
-		this.writeHeader("Content-Type", http_contentTypeMap[filename.getExtension()] || "text/plain"); 
+		this.writeHeader("Content-Type", http.contentTypeMap[filename.getExtension()] || "text/plain"); 
 		this.end(result);
 	inline js void onAborted(void() code)
 		this.onAborted(code)

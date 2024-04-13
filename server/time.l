@@ -10,6 +10,8 @@ skipInit transient float Time
 	const inline js Time minValue := Number.MIN_VALUE
 	
 	static internal inline js float realTime := Date.now()
+		
+	inline js Time += float value: this += value
 
 	static Time fromTimeString(string timeString)
 		if !timeString: return 0 milliseconds
@@ -30,7 +32,7 @@ skipInit transient float Time
 	static inline js Time fromIsoString: string isoString
 		new Date(isoString).getTime()
 		
-	inline js float toFloat() this
+	inline js implicit float toFloat() this
 	inline js string toString() this.toString()
 		
 	// Returns true if the time is not zero
@@ -121,7 +123,7 @@ skipInit transient float Time
 		
 	js static void printTimer: string text
 		let now = performance.now();
-		log(text+": "+(now-window._timerStart));
+		System.print(text+": "+(now-window._timerStart));
 		window._timerStart = now;
 		
 	static inline js float preciseTime := performance.now()

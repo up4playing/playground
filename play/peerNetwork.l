@@ -1,27 +1,27 @@
-transient class Signal
+transient immutable Signal
 	int receiverId
 	string type
 	string sdp
 
-transient class IceMessage
+transient immutable IceMessage
 	int receiverId
 	object iceCandidate
 	
 enum VideoShape: Rectangle, Square, Circle
 enum RelayMode: Never, Auto, Always
 		
-class MediaDeviceInfo
+immutable MediaDeviceInfo
 	string deviceId
 	string groupId
 	string kind
 	string label
 
-class MediaDevices
+immutable MediaDevices
 	MediaDeviceInfo[] audioInput
 	MediaDeviceInfo[] audioOutput
 	MediaDeviceInfo[] videoInput
 	
-transient unit PeerNetwork
+transient skipInit unit PeerNetwork
 	RelayMode relayMode = Auto
 	
 	internal enableVideo = true
@@ -32,35 +32,17 @@ transient unit PeerNetwork
 	private js object setupPeerConnection: InternalUser user, bool offerByMe
 		let options = {
 			// We use the ice transport policy "relay" to test our turn server
-			iceTransportPolicy: PeerNetwork_relayMode == 2 ? "relay" : "all",
+			iceTransportPolicy: PeerNetwork.relayMode == 2 ? "relay" : "all",
 			iceServers: [],
 			// iceCandidatePoolSize: 10,
 		}
-		if(PeerNetwork_relayMode > 0) {
-			// --- Alwyzon (www1) ---
-			// options.iceServers.push({
-			// 	urls: "turn:94.177.8.204:39571",
-			// 	username: "play-user-x8env28gx41odbxzwjyut2oq871987syq8ovyuqp-alwyzon",
-			// 	credential: "qoy91n981vlplabb1873jdcgsouz2qm87qmmakqpc-alwyzon"
-			// });
-			// --- Alphahosting (www2) ---
-			// options.iceServers.push({
-			// 	urls: 'turn:89.22.121.145:39571',
-			// 	username: 'play-user-x8env28gx41odbxzwjyut2oq871987syq8ovyuqp-alphahosting',
-			// 	credential: 'qoy91n981vlplabb1873jdcgsouz2qm87qmmakqpc-alphahosting'
-			// });			
-			// --- Strato-v30 (www3) ---
+		if(PeerNetwork.relayMode > 0) {
+			// Alphahosting turn server
 			options.iceServers.push({
-				urls: 'turn:85.214.133.53:39571',
-				username: 'play-user-9q2gy75kmlp4qn7tb86pogsmtyp7qqo0n5-strato-v30',
-				credential: '8q76nby32odjamuzbexi6eb2f1k9gc3my99o-strato-v30'
-			});
-			// --- Strato ---
-			// options.iceServers.push({
-			// 	urls: "turn:81.169.197.127",
-			// 	username: "play-user-x8env28gx41odbxzwjyut2hx82jyzdk7qm6d-ok",
-			// 	credential: "9y4vm5vxj3uyqvc8wkyzrm26ygebxutkd52bymr8zsmy6qa8-ok"
-			// });
+				urls: 'turn:89.22.121.145:39571',
+				username: 'play-user-x8env28gx41odbxzwjyut2oq871987syq8ovyuqp-alphahosting',
+				credential: 'qoy91n981vlplabb1873jdcgsouz2qm87qmmakqpc-alphahosting'
+			});	
 		}
 		options.iceServers.push({
 			urls: [
@@ -70,21 +52,21 @@ transient unit PeerNetwork
 		});
 		let peerConnection = new RTCPeerConnection(options);
 		let connectionId = user.connectionId
-		core_log("<"+user.id+"> setupPeerConnection connectionId:"+connectionId+" relayMode:"+PeerNetwork_relayMode)
+		core.log("<"+user.id+"> setupPeerConnection connectionId:"+connectionId+" relayMode:"+PeerNetwork.relayMode)
 		
 		// Event handlers
 		peerConnection.oniceconnectionstatechange = e => {
-			core_log("<"+user.id+"> oniceconnectionstatechange " + peerConnection.iceConnectionState)
+			core.log("<"+user.id+"> oniceconnectionstatechange " + peerConnection.iceConnectionState)
 			if(peerConnection.iceConnectionState == "disconnected") {
 				// Send logfiles to server
-				setTimeout(() => statistics_manuallyTriggerSend(-5, /*clear*/false), 7000);
+				setTimeout(() => statistics.saveStatistics(), 7000);
 			}
 		}
 		peerConnection.onicecandidate = async event => {
 			if (event.candidate)
-				ServerNetwork_sendIce(user.id, JSON.stringify(event.candidate))
+				ServerNetwork.sendIce(user.id, JSON.stringify(event.candidate))
 			else
-				core_log("<"+user.id+"> Final ice candidate");
+				core.log("<"+user.id+"> Final ice candidate");
 		}
 		user.peerConnection = peerConnection
 		user.offerByMe = offerByMe
@@ -92,7 +74,7 @@ transient unit PeerNetwork
 	
 	js void stopRecreatingDataChannel: InternalUser user
 		if(user.recreateDataChannelInterval) {
-			core_log("<"+user.id+"> stopRecreatingDataChannel connectionId:"+user.connectionId)
+			core.log("<"+user.id+"> stopRecreatingDataChannel connectionId:"+user.connectionId)
 			clearInterval(user.recreateDataChannelInterval)
 			user.recreateDataChannelInterval = null
 		}
@@ -100,51 +82,51 @@ transient unit PeerNetwork
 	js void setupDataChannel: InternalUser user
 		// Create reliable data channel
 		// These options would create an unreliable one: {ordered:false, maxRetransmits:0}
-		core_log("<"+user.id+"> setupDataChannel: Creating data channel")
+		core.log("<"+user.id+"> setupDataChannel: Creating data channel")
 		let dataChannel = user.peerConnection.createDataChannel("channel")
 		dataChannel.binaryType = "arraybuffer"
 		dataChannel.onopen = e => {
 			user.dataChannel = dataChannel
-			core_log("<"+user.id+"> setupDataChannel: Open data channel")
-			PeerNetwork_stopRecreatingDataChannel(user)
-			PeerNetwork_logConnectionType(user)
-			if(!PeerNetwork_requestedState) {
-				PeerNetwork_requestState(user)
-				PeerNetwork_requestedState = true
+			core.log("<"+user.id+"> setupDataChannel: Open data channel")
+			PeerNetwork.stopRecreatingDataChannel(user)
+			PeerNetwork.logConnectionType(user)
+			if(!PeerNetwork.requestedState) {
+				PeerNetwork.requestState(user)
+				PeerNetwork.requestedState = true
 			}
 		}
-		dataChannel.onclosing = e => core_log("<"+user.id+"> Data channel closing")
+		dataChannel.onclosing = e => core.log("<"+user.id+"> Data channel closing")
 		dataChannel.onclose = e => {
-			core_log("<"+user.id+"> setupDataChannel: Close data channel, recreateInterval:"+user.recreateDataChannelInterval)
+			core.log("<"+user.id+"> setupDataChannel: Close data channel, recreateInterval:"+user.recreateDataChannelInterval)
 			user.dataChannel = null
 			if(!user.recreateDataChannelInterval) {
-				core_log("<"+user.id+"> setupDataChannel: Start recreating interval")
-				user.recreateDataChannelInterval = setInterval(() => PeerNetwork_setupDataChannel(user), 2000)
+				core.log("<"+user.id+"> setupDataChannel: Start recreating interval")
+				user.recreateDataChannelInterval = setInterval(() => PeerNetwork.setupDataChannel(user), 2000)
 			}
 			// Send logfiles to server
-			setTimeout(() => statistics_manuallyTriggerSend(-4, /*clear*/false), 7000);
+			setTimeout(() => statistics.manuallyTriggerSend(-4, /*clear*/false), 7000);
 		}
-		dataChannel.onerror = e => core_log("<"+user.id+"> DataChannel "+user.id+"error "+e)
-		dataChannel.onmessage = e => PeerNetwork_onMessage(user, new Buffer(e.data, 0, 0, 0))
+		dataChannel.onerror = e => core.log("<"+user.id+"> DataChannel "+user.id+"error "+e)
+		dataChannel.onmessage = e => PeerNetwork.onMessage(user, new Buffer(e.data, 0, 0, 0))
 	
 	js void createOffer: InternalUser user
 		try {
-			PeerNetwork_setupPeerConnection(user, /*offerByMe*/true)
-			PeerNetwork_setupRemoteMedia(user)
-			PeerNetwork_stopRecreatingDataChannel(user)
-			PeerNetwork_setupDataChannel(user)
+			PeerNetwork.setupPeerConnection(user, /*offerByMe*/true)
+			PeerNetwork.setupRemoteMedia(user)
+			PeerNetwork.stopRecreatingDataChannel(user)
+			PeerNetwork.setupDataChannel(user)
 			
 			// Offer
 			let peerConnection = user.peerConnection
 			let offer = await peerConnection.createOffer();
 			await peerConnection.setLocalDescription(offer);
-			ServerNetwork_sendSignal(user.id, "offer", peerConnection.localDescription.sdp)
+			ServerNetwork.sendSignal(user.id, "offer", peerConnection.localDescription.sdp)
 			user.receivedAnswer = false
-			core_log("<"+user.id+"> Sent offer to "+user.id+", waiting for answer.");
+			core.log("<"+user.id+"> Sent offer to "+user.id+", waiting for answer.");
 		}
 		catch(e) {
 			console.error(e);
-			core_log(e.stack);
+			core.log(e.stack);
 		}
 		
 	js void setBitrate: InternalUser user, float scaleResolutionDownBy = 1, float maxBitrate
@@ -163,32 +145,32 @@ transient unit PeerNetwork
 		
 	js void onReceivedOffer: InternalUser user, string sdp
 		try {
-			core_log("<"+user.id+"> Received offer, senting answer");
-			PeerNetwork_setupPeerConnection(user, /*offerByMe*/false)
-			PeerNetwork_setupRemoteMedia(user)
+			core.log("<"+user.id+"> Received offer, senting answer");
+			PeerNetwork.setupPeerConnection(user, /*offerByMe*/false)
+			PeerNetwork.setupRemoteMedia(user)
 			
 			// When a user reconnects, we receive a new offer and a new data channel,
 			// so we need to stop trying to recreate the old data channel to avoid two open data channels
-			PeerNetwork_stopRecreatingDataChannel(user)
+			PeerNetwork.stopRecreatingDataChannel(user)
 			
 			// Data channel
 			user.peerConnection.addEventListener("datachannel", e => {
-				core_log("<"+user.id+"> Data channel received")
+				core.log("<"+user.id+"> Data channel received")
 				let dataChannel = e.channel
 				dataChannel.binaryType = "arraybuffer"
 				user.dataChannel = dataChannel
 				dataChannel.onopen = e => {
-					core_log("<"+user.id+"> Data channel opened")
+					core.log("<"+user.id+"> Data channel opened")
 					user.dataChannel = dataChannel
-					PeerNetwork_logConnectionType(user)
+					PeerNetwork.logConnectionType(user)
 				}
 				dataChannel.onclosing = e => {
-					core_log("<"+user.id+"> Data channel closing")
+					core.log("<"+user.id+"> Data channel closing")
 					user.dataChannel = null
 				}
-				dataChannel.onclose = e => core_log("<"+user.id+"> Data channel close "+e)
-				dataChannel.onerror = e => core_log("<"+user.id+"> Data channel error "+e)
-				dataChannel.onmessage = e => PeerNetwork_onMessage(user, new Buffer(e.data, 0, 0, 0))
+				dataChannel.onclose = e => core.log("<"+user.id+"> Data channel close "+e)
+				dataChannel.onerror = e => core.log("<"+user.id+"> Data channel error "+e)
+				dataChannel.onmessage = e => PeerNetwork.onMessage(user, new Buffer(e.data, 0, 0, 0))
 			})
 						
 			// Answer
@@ -196,11 +178,11 @@ transient unit PeerNetwork
 			await peerConnection.setRemoteDescription(new RTCSessionDescription({type: "offer", sdp}));
 			let answer = await peerConnection.createAnswer();
 			await peerConnection.setLocalDescription(answer);
-			ServerNetwork_sendSignal(user.id, "answer", peerConnection.localDescription.sdp)
+			ServerNetwork.sendSignal(user.id, "answer", peerConnection.localDescription.sdp)
 		}
 		catch(e) {
 			console.error(e)
-			core_log(e.stack);
+			core.log(e.stack);
 		}
 		
 	Buffer sendBuffer = {}
@@ -229,12 +211,12 @@ transient unit PeerNetwork
 			return data.byteLength
 		} catch(e) {
 			console.error(e)
-			core_log(e.stack)
+			core.log(e.stack)
 			return 0
 		}
 		
 	// private js void onMessage: InternalUser user, Buffer buffer
-	// 	setTimeout(() => PeerNetwork_onMessageDo(user, buffer), 1000)
+	// 	setTimeout(() => PeerNetwork.onMessageDo(user, buffer), 1000)
 								
 	private onMessage: InternalUser user, Buffer buffer
 		NetworkMessageType type = cast buffer.readInt8
@@ -267,14 +249,14 @@ transient unit PeerNetwork
 	js void onReceivedAnswer: InternalUser user, string sdp
 		await user.peerConnection.setRemoteDescription(new RTCSessionDescription({type: "answer", sdp}));
 		user.receivedAnswer = true
-		core_log("<"+user.id+"> Received answer from "+user.id+".");
+		core.log("<"+user.id+"> Received answer from "+user.id+".");
 		
 	js void onIce: InternalUser user, string candidate
 		try {
 			await user.peerConnection.addIceCandidate(new RTCIceCandidate(JSON.parse(candidate)));
 		} catch(e) {
-			core_log("<"+user.id+"> onIce failed " + e.message)
-			core_log(e.stack);
+			core.log("<"+user.id+"> onIce failed " + e.message)
+			core.log(e.stack);
 		}
 		
 	private js void logConnectionType: InternalUser user
@@ -286,12 +268,12 @@ transient unit PeerNetwork
 				let candidate = stats.get(candidatePair.localCandidateId);
 				let ip = candidate.ip || candidate.address
 				user.connectionType = candidate.candidateType + " " + ip
-				core_log("<"+user.id+"> #################### connection to "+user.id+": "+user.connectionType)
+				core.log("<"+user.id+"> #################### connection to "+user.id+": "+user.connectionType)
 			} else {
-				core_log("<"+user.id+"> #################### connection: no candidate pair for "+user.id)
+				core.log("<"+user.id+"> #################### connection: no candidate pair for "+user.id)
 				window.stats = [...stats.values()]
 				console.log(window.stats)
-				try  { core_log(JSON.stringify(window.stats)) }
+				try  { core.log(JSON.stringify(window.stats)) }
 				catch{ }
 			}
 		}, 10000)
@@ -318,7 +300,7 @@ transient unit PeerNetwork
 		float pingTime = buffer.readFloat64
 		float pingPongTime = now - pingTime
 		let player = input.players.find.id == user.id
-			statistics.add userIndex:player.index, color:player.color, value:pingPongTime, set:2
+			statistics.add "pingPongTime" userIndex:player.index, color:player.color, value:pingPongTime, set:3, isPerFrame:false
 				
 	// --------------------------------------------- Checksum ---------------------------------------------
 	
@@ -350,62 +332,64 @@ transient unit PeerNetwork
 	string videoInputId, audioInputId, audioOutputId	
 	
 	private js void setupLocalMedia: bool enableVideo, bool enableAudio
-		core_log("setupLocalMedia: start")
-		PeerNetwork_enableVideo = enableVideo
-		PeerNetwork_enableAudio = enableAudio
+		core.log("setupLocalMedia: start")
+		PeerNetwork.enableVideo = enableVideo
+		PeerNetwork.enableAudio = enableAudio
 		if(!enableVideo && !enableAudio) return
 			
 		try {
 			// Create local media stream
-			input_localUser.mediaStream = await navigator.mediaDevices.getUserMedia({
+			input.localUser.mediaStream = await navigator.mediaDevices.getUserMedia({
 				video: {width: 500, height: 375},
 				audio: enableAudio
 			});
-			core_log("setupLocalMedia: getUserMedia done")
+			core.log("setupLocalMedia: getUserMedia done")
 			
 			// Enummerate local devices
 			let devices = await navigator.mediaDevices.enumerateDevices();
-			core_log("setupLocalMedia: enumerateDevices done")
+			core.log("setupLocalMedia: enumerateDevices done")
 			
 			for(let device of devices) {
 				switch(device.kind) {
-					case "videoinput":  PeerNetwork_devices.videoInput.push(device); break;
-					case "audioinput":  PeerNetwork_devices.audioInput.push(device); break;
-					case "audiooutput": PeerNetwork_devices.audioOutput.push(device); break;
+					case "videoinput":  PeerNetwork.devices.videoInput.push(device); break;
+					case "audioinput":  PeerNetwork.devices.audioInput.push(device); break;
+					case "audiooutput": PeerNetwork.devices.audioOutput.push(device); break;
 				}
 			}
-			PeerNetwork_videoInputId = input_localUser.mediaStream.getVideoTracks()[0]?.getSettings().deviceId || PeerNetwork_devices.videoInput[0]?.deviceId
-			PeerNetwork_audioInputId = input_localUser.mediaStream.getAudioTracks()[0]?.getSettings().deviceId || PeerNetwork_devices.audioInput[0]?.deviceId
-			PeerNetwork_audioOutputId = PeerNetwork_devices.audioInput[0]?.deviceId
-			core_log("setupLocalMedia: success")
+			PeerNetwork.videoInputId = input.localUser.mediaStream.getVideoTracks()[0]?.getSettings().deviceId || PeerNetwork.devices.videoInput[0]?.deviceId
+			PeerNetwork.audioInputId = input.localUser.mediaStream.getAudioTracks()[0]?.getSettings().deviceId || PeerNetwork.devices.audioInput[0]?.deviceId
+			PeerNetwork.audioOutputId = PeerNetwork.devices.audioOutput[0]?.deviceId
+			statistics.mediaTime = performance.now()
+			core.log("setupLocalMedia: success after "+(statistics.mediaTime - statistics.startTime)+" ms")
 			
 		} catch(error) {
-			core_log(error.message)
+			core.log(error.message)
 			if(error.name == "NotAllowedError") {
-				PeerNetwork_error = "To play with friends over a video call, you need to allow access to your webcam."
+				PeerNetwork.error = "To play with friends over a video call, you need to allow access to your webcam."
 			} else {
-				PeerNetwork_error = "Can't access webcam. Please make sure it's not used by another application."
+				PeerNetwork.error = "Can't access webcam. Please make sure it's not used by another application."
 			}
-			core_errorMessage = error.message
+			core.errorMessage = error.message
 			throw error
 		}
 	
 	js void setVideoInput: string videoInputId
-		if(PeerNetwork_videoInputId == videoInputId) return;
-		PeerNetwork_videoInputId = videoInputId;
+		                   Player player
+		if(Platform.fastForward || input.localUser.id != player.id ||  PeerNetwork.videoInputId == videoInputId) return;
+		PeerNetwork.videoInputId = videoInputId;
 		
 		// Create local media stream
-		input_localUser.mediaStream = await navigator.mediaDevices.getUserMedia({
-			audio: {deviceId: PeerNetwork_audioInputId},
-			video: {deviceId: PeerNetwork_videoInputId},
+		input.localUser.mediaStream = await navigator.mediaDevices.getUserMedia({
+			audio: {deviceId: PeerNetwork.audioInputId},
+			video: {deviceId: PeerNetwork.videoInputId},
 		});
 		
 		// Update video elements and tracks
-		for(let el of input_localUser.videoElements) {
-			el.srcObject = input_localUser.mediaStream;
+		for(let el of input.localUser.videoElements) {
+			el.srcObject = input.localUser.mediaStream;
 		}
-		const [videoTrack] = input_localUser.mediaStream.getVideoTracks();
-		for(let user of input_internalUsers) {
+		const [videoTrack] = input.localUser.mediaStream.getVideoTracks();
+		for(let user of input.internalUsers) {
 			if(user?.peerConnection) {
 				const sender = user.peerConnection.getSenders().find((s) => s.track.kind === videoTrack.kind);
 				sender.replaceTrack(videoTrack);
@@ -413,18 +397,19 @@ transient unit PeerNetwork
 		}
 			
 	js void setAudioInput: string audioInputId
-		if(PeerNetwork_audioInputId == audioInputId) return;
-		PeerNetwork_audioInputId = audioInputId;
+		                   Player player
+		if(Platform.fastForward || input.localUser.id != player.id || PeerNetwork.audioInputId == audioInputId) return;
+		PeerNetwork.audioInputId = audioInputId;
 		
 		// Create local media stream
-		input_localUser.mediaStream = await navigator.mediaDevices.getUserMedia({
-			audio: {deviceId: PeerNetwork_audioInputId},
-			video: {deviceId: PeerNetwork_videoInputId},
+		input.localUser.mediaStream = await navigator.mediaDevices.getUserMedia({
+			audio: {deviceId: PeerNetwork.audioInputId},
+			video: {deviceId: PeerNetwork.videoInputId},
 		});
 		
 		// Update tracks
-		const [audioTrack] = input_localUser.mediaStream.getAudioTracks();
-		for(let user of input_internalUsers) {
+		const [audioTrack] = input.localUser.mediaStream.getAudioTracks();
+		for(let user of input.internalUsers) {
 			if(user?.peerConnection) {
 				const sender = user.peerConnection.getSenders().find((s) => s.track.kind === audioTrack.kind);
 				sender.replaceTrack(audioTrack);
@@ -432,15 +417,24 @@ transient unit PeerNetwork
 		}
 			
 	js void setAudioOutput: string audioOutputId
-		PeerNetwork_audioOutputId = audioOutputId;
+		                    Player player
+		if(Platform.fastForward || input.localUser.id != player.id || PeerNetwork.audioOutputId == audioOutputId) return;
+		PeerNetwork.audioOutputId = audioOutputId;
 		
 		// Update audio elements
-		for(let user of input_internalUsers) {
-			if(user?.audioElement && user.audioElement.setSinkId) {
-				user.audioElement.setSinkId(PeerNetwork_audioOutputId);
+		for(let user of input.internalUsers) {
+			if(user) {
+				if(user.audioElement && user.audioElement.setSinkId) {
+					user.audioElement.setSinkId(PeerNetwork.audioOutputId);
+				}
+				for(let videoElement of user.videoElements) {
+					if(videoElement.setSinkId) {
+						videoElement.setSinkId(PeerNetwork.audioOutputId);
+					}
+				}
 			}
 		}
-		audio_reload();
+		audio.reload();
 		
 	private js void setupRemoteMedia: InternalUser user
 		// Remove old video elements
@@ -448,20 +442,14 @@ transient unit PeerNetwork
 			videoElement.remove()
 		user.videoElements.length = 0
 		
-		if(!PeerNetwork_enableVideo && !PeerNetwork_enableAudio) return
+		if(!PeerNetwork.enableVideo && !PeerNetwork.enableAudio) return
 			
 		// Add local tracks to peer connection
-		for(let track of input_localUser.mediaStream.getTracks())
-			user.peerConnection.addTrack(track, input_localUser.mediaStream);
+		for(let track of input.localUser.mediaStream.getTracks())
+			user.peerConnection.addTrack(track, input.localUser.mediaStream);
 		
 		// Create media stream for remote player
 		user.mediaStream = new MediaStream();
-		
-		// Create audio element so we always hear the remote user, event if no video is shown
-		let audioElement = user.audioElement = document.createElement("audio")
-		audioElement.srcObject = user.mediaStream
-		if(audioElement.setSinkId) audioElement.setSinkId(PeerNetwork_audioOutputId);
-		document.body.appendChild(audioElement);
 		
 		// Add incoming tracks to media stream for remote player
 		user.peerConnection.addEventListener("track", event => {
@@ -474,11 +462,11 @@ transient unit PeerNetwork
 	
 	js object createVideoElement: object stream, bool local
 		let el = document.createElement("video")
-		el.style = "border-radius: 500px; object-fit: cover; position:absolute; top:0px; left:0px; z-index:10000; visibility:hidden; "+(local ? "transform: scaleX(-1)" : "")
+		el.style = "border-radius: 500px; object-fit: cover; position:absolute; top:0px; left:0px; z-index:10000; visibility:hidden; pointer-events: none; user-select: none; "+(local ? "transform: scaleX(-1)" : "")
 		el.autoplay = true
 		el.playsinline = true
 		el.controls = false
-		el.muted = true
+		el.muted = local
 		el.srcObject = stream
 		document.body.appendChild(el)
 		return el

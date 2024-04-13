@@ -48,7 +48,7 @@ Object Piece
 	private bool rotatedOverThreshold
 	
 	Vector2 iconPos = Vector2.none
-	Vector2 touchMargin = {50,50}
+	Vector2 clickableMargin = {50,50}
 	
 	public Board board
 	private Player interactingPlayer
@@ -86,7 +86,7 @@ Object Piece
 		// Rotate	
 		Vector2 iconPos = this.iconPos ? this.iconPos : (rotatable ? {(size.x+size.y)*.29, (size.x+size.y)*.29}*{1,-1} : size/2*{1,-1})
 		if rotatable and Framework.selectedObjects.contains(this)
-			onTouchDownWithin position:position+iconPos, size:Image.rotateIcon.size+touchMargin, by:visibleFor
+			onTouchDown position:position+iconPos, size:Image.rotateIcon.size+clickableMargin, by:visibleFor
 				rotateTouch = touch
 				rotateOffset = angle - math.getAngleForVector(touch.position - position)
 				rotatedOverThreshold = false
@@ -104,7 +104,7 @@ Object Piece
 				if angle == targetAngle: onRotate
 		
 		// Move
-		onTouchDownWithin position, size, angle, by:visibleFor
+		onTouchDown position, size, angle, by:visibleFor
 			if movable
 				moveTouch = touch
 				touchOffset = position - touch.position
@@ -125,7 +125,7 @@ Object Piece
 		
 		// Flip	
 		if Framework.selectedObjects.contains(this) && flipable
-			drawButton flipIcon, position:position+iconPos*{-1,1}, touchMargin:{50,50}
+			drawButton flipIcon, position:position+iconPos*{-1,1}, clickableMargin:{50,50}
 				side = side == Back ? Front : Back
 		
 		// Animate rotation
@@ -209,7 +209,7 @@ Piece Stack
 			
 		// We pop after drawing, because the newly created card won't be drawn until the next frame
 		// and we don't want to draw the new, smaller stack without drawing the popped card as well
-		onTouchDownWithin position, size
+		onTouchDown position, size
 			let obj = pop
 			obj.moveTouch = touch
 			obj.touchOffset = obj.position - touch.position
@@ -266,7 +266,7 @@ Piece Board
 		
 		// Pan
 		if panable	
-			onTouchDownWithin position, size, by:visibleFor
+			onTouchDown position, size, by:visibleFor
 				panTouch = touch
 				downMatrix = matrix
 			onTouchMove panTouch
@@ -289,7 +289,7 @@ Piece Board
 		// Visiblity icon
 		if contentVisibleForOthers == On or contentVisibleForOthers == Off
 			Image icon =  contentVisibleForOthers == On ? visibleIcon : hiddenIcon
-			drawButton icon, position:position+{size.x/2-32, -size.y/2+32}, touchableBy:owner
+			drawButton icon, position:position+{size.x/2-32, -size.y/2+32}, clickableBy:owner
 				contentVisibleForOthers = contentVisibleForOthers == On ? Off : On
 				
 		if color: drawRectangle position, size, color:color, layer:-1, visibleFor
@@ -388,7 +388,7 @@ Piece Coin
 	
 	override tick
 		if movable
-			onTouchDownWithin position, radius:40, by:owner
+			onTouchDown position, radius:40, by:owner
 				moveTouch = touch
 				touchOffset = position - touch.position
 				siblings.moveToFront this
@@ -408,7 +408,7 @@ Piece Coin
 				if closestCoinType == Over: mergeWith closestCoin; else
 				if !isBeingMoved:           transferToNeighbor closestCoin
 		else
-			onTouchUpWithin position, radius:64, by:owner
+			onTouchUp position, radius:64, by:owner
 				transferToNeighbor closestCoin
 			
 		if isInfinate or value or allowZero

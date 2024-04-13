@@ -16,7 +16,7 @@ class Player
 	string name
 	Role role
 	
-	visible color = Color("ffffff")
+	visible color = Color("#ffffff")
 	visible Direction dir = Direction.diagonalDirections[index]
 	visible Vector2 videoPos = dir.vector * {700,270}
 	
@@ -24,10 +24,10 @@ class Player
 		// Draw round video of player with cirlce outline
 		const radius = 220
 		drawVideo me, videoPos, size:radius*2, shape:Circle
-		drawCircle videoPos, size:radius*2+50, Color("000000"), outlineColor:color, outlineWidth:12, visibleFor:me
+		drawCircle videoPos, size:radius*2+50, Color("#000000"), outlineColor:color, outlineWidth:12, visibleFor:me
 		
 		// Draw yellow player name that's visible the current player instance
-		drawText name, size:32, Color("ffff00"), visibleFor:me
+		drawText name, size:32, Color("#ffff00"), visibleFor:me
 	
 enum Role: Offence, Defence
 		
@@ -96,13 +96,13 @@ class example
 						nextRound
 			Reveal
 				// Draw yellow text thats visible for everybody
-				drawText "Reveal", size:32, Color("ffff00"), visibleFor:everybody
+				drawText "Reveal", size:32, Color("#ffff00"), visibleFor:everybody
 				
 			GameOver
 				tickGameOver
 				
 				// Draw green text thats visible for everybody
-				drawText "Game Over", size:32, Color("00ff00"), visibleFor:everybody
+				drawText "Game Over", size:32, Color("#00ff00"), visibleFor:everybody
 				
 	def tickGameOver
 		phase = GameOver
@@ -164,7 +164,7 @@ class Item
 		switch app.phase
 			DragItems
 				// Drag items
-				onTouchDownWithin position, size, by:app.currentPlayer
+				onTouchDown position, size, by:app.currentPlayer
 					// Start dragging item
 					let playerWhoClicked = touch.by
 					moveTouch = .
@@ -192,10 +192,10 @@ class Item
 					
 			GameOver
 				// Draw red text
-				drawText "Game Over", position, size:40, Color("ff0000"), font:OpenSans
+				drawText "Game Over", position, size:40, Color("#ff0000"), font:OpenSans
 				
 		// Draw blue circle with a radius of 200 with a green outline
-		drawCircle position, size:400, Color("0000ff"), outlineColor:Color("00ff00"), outlineWidth:5
+		drawCircle position, size:400, Color("#0000ff"), outlineColor:Color("#00ff00"), outlineWidth:5
 		
 class Box
 	Rect rect
@@ -204,7 +204,7 @@ class Box
 	
 	def tick
 		// Draw blue box with white outline
-		drawRectangle rect.position, rect.size, Color("0000ff"), outlineColor:Color("ffffff"), outlineWidth:5
+		drawRectangle rect.position, rect.size, Color("#0000ff"), outlineColor:Color("#ffffff"), outlineWidth:5
 		
 // Start of LiveTime API. ONLY call functions that are in the LiveTime API
 class Touch
@@ -213,7 +213,7 @@ class Touch
 	Vector2 referenceStartPosition
 	
 class input
-	def onTouchDownWithin: Vector2 position, Vector2 size, Player[] by = null, Cursor cursor = Auto, bool showTouchArea = false, bool markAsHandled = true, HorizontalAlignment align = Center, VerticalAlignment valign = Middle, def(Touch touch) do
+	def onTouchDown: Vector2 position, Vector2 size, Player[] by = null, Cursor cursor = Auto, bool showClickableArea = false, bool markAsHandled = true, HorizontalAlignment align = Center, VerticalAlignment valign = Middle, def(Touch touch) do
 	def onTouchMove: Touch touch, triggeredOnTouchDown = true, def(Touch touch) do
 	def onTouchMove: Player[] by = null, def(Touch touch) do
 	def onTouchUp: Touch touch, markAsHandled = true, def(Touch touch) do
@@ -256,9 +256,9 @@ class List<T>
 	def T max: float(T a) selector, float threshold = float.minValue, float default = 0
 
 class graphics
-	def drawImage: Image image, Vector2 position = {}, frame = 0, implicit Vector2 size = {}, Angle angle = 0.0, touchMargin = Vector2(16,16), showTouchArea = false, implicit Player[] visibleFor = null, implicit Player[] touchableBy = null, hotkey = Key.None, implicit layer = 0, alpha = 1.0, Color color = White, def(Touch touch) onTouch
+	def drawImage: Image image, Vector2 position = {}, frame = 0, implicit Vector2 size = {}, Angle angle = 0.0, clickableMargin = Vector2(16,16), showClickableArea = false, implicit Player[] visibleFor = null, implicit Player[] clickableBy = null, hotkey = Key.None, implicit layer = 0, alpha = 1.0, Color color = White, def(Touch touch) onClick
 	def drawText: implicit string text, Vector2 position = {}, implicit Vector2 size = {}, Color color = null, HorizontalAlignment align = Center, VerticalAlignment valign = Middle, FontStyle style = Normal, Font font = null, Color outlineColor = null, outlineWidth = 0, implicit Player[] visibleFor = null, implicit layer = 0, alpha = 1.0
-	def drawButton: Image image = null, text = "", Vector2 position = {}, implicit Vector2 size = {}, frame = 0, Color textColor = null, textSize = 18, textOffset = Vector2(0,0), touchMargin = Vector2(16,16), showTouchArea = false, implicit Player[] visibleFor = null, implicit Player[] touchableBy = null, hotkey = Key.None, implicit layer = 0, alpha = 1.0, enabled = true, alphaWhenDisabled = .5, def(Touch touch) onTouch = null
+	def drawButton: Image image = null, text = "", Vector2 position = {}, implicit Vector2 size = {}, frame = 0, Color textColor = null, textSize = 18, textOffset = Vector2(0,0), clickableMargin = Vector2(16,16), showClickableArea = false, implicit Player[] visibleFor = null, implicit Player[] clickableBy = null, hotkey = Key.None, implicit layer = 0, alpha = 1.0, enabled = true, alphaWhenDisabled = .5, def(Touch touch) onClick = null
 	def drawRectangle: position = Vector2(), implicit size = Vector2(256,256), Color color = null, Color outlineColor = null, outlineWidth = 0, implicit Player[] visibleFor = null, implicit layer = 0, alpha = 1.0, HorizontalAlignment align = Center, VerticalAlignment valign = Middle
 	def drawCircle: position = Vector2(), implicit Vector2 size = {256,256}, Color color = null, Color outlineColor = null, outlineWidth = 0, Angle startAngle = -.25, Angle angle = 1.0, RotationDirection direction = Clockwise, implicit Player[] visibleFor = null, implicit layer = 0, alpha = 1.0
 

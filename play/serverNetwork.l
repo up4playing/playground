@@ -1,6 +1,6 @@
 enum NetworkMessageType: Join, JoinResponse, Ping, Pong, Signal, Ice, Tick, Switch, Reload, RequestState, State, Checksum
 
-transient unit ServerNetwork
+transient skipInit unit ServerNetwork
 	private object socket
 	private Buffer sendBuffer = {}
 	int nextConnectionId = 1
@@ -12,24 +12,24 @@ transient unit ServerNetwork
 		else                                         socket = new WebSocket("wss://"+location.host+":3112");
 		socket.binaryType = "arraybuffer";
 		socket.onopen = function() {
-			core_log("Websocket open");
-			ServerNetwork_socket = socket
-			ServerNetwork_onConnectedToServer();
+			core.log("Websocket open");
+			ServerNetwork.socket = socket
+			ServerNetwork.onConnectedToServer();
 		}
 		socket.onmessage = function(event) {
-			ServerNetwork_onMessageFromServer(new Buffer(event.data, 0, 0, 0));
+			ServerNetwork.onMessageFromServer(new Buffer(event.data, 0, 0, 0));
 		}
 		socket.onclose = function(ev) {
-			core_log("Websocket closed "+ev.code+" "+ev.reason)
-			ServerNetwork_socket = null
+			core.log("Websocket closed "+ev.code+" "+ev.reason)
+			ServerNetwork.socket = null
 			if(Date.now() - startTime < 30000) {
-				location.href = "/{core_gameId}/{core_roomId}"
+				location.href = "/"+core.gameId+"/"+core.roomId
 			}
 		}
 		socket.onerror = error => {
-			core_error = "Can't connect to server."
-			core_errorMessage = error.message
-			core_log(error.message)
+			core.error = "Can't connect to server."
+			core.errorMessage = error.message
+			core.log(error.message)
 		}
 		
 	// We set the internal user to active when we receive the first signal (offer or answer)
@@ -46,18 +46,18 @@ transient unit ServerNetwork
 			core.log roomInfo, input.localUser.id
 		
 		core.log "onConnectedToServer as {input.localUser.id} {core.roomId}"
-		sendJoinMessage core.roomString, input.localUser.id, version:Platform.version
+		sendJoinMessage core.roomString, input.localUser.id, version:Platform.buildVersion
 		
 	js int bufferedAmount
-		return ServerNetwork_socket.bufferedAmount 
+		return ServerNetwork.socket.bufferedAmount 
 		
 	private js int send: Buffer buffer
 		try {
 			let data = buffer.toByteArray()
-			ServerNetwork_socket.send(data)
+			ServerNetwork.socket.send(data)
 			return data.byteLength
 		} catch(e) { 
-			core_log(e)
+			core.log(e)
 			return 0
 		}
 		
@@ -100,7 +100,7 @@ transient unit ServerNetwork
 			Platform.pushState "/{core.gameId}/{roomId}"
 			core.roomId = roomId
 			
-		if version != Platform.version
+		if version != Platform.buildVersion
 			alert "You are using an old version of this application. Please refresh your browser."
 			
 		inputsSentPos = input.localUser.inputs.writePos
@@ -166,6 +166,7 @@ transient unit ServerNetwork
 		statistics.addInfo "from average", deltaFromAverage
 		// statistics.addInfo "from reference", deltaFromReference
 		
+		// Ajust start time (currently disabled)
 		// calculatedStartTimes.add calculatedStartTime maxLength:20
 		// core.startTime = calculatedStartTimes.average
 			
