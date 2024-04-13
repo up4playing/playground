@@ -30,11 +30,11 @@ skipInit global unit Platform
 	public inline js string encodeURIComponent(string value) encodeURIComponent(value)
 
 	private inline js void initMedia
-		$Image?.init();
-		Font?.init();
-		Sound?.init();
+		$Image.init?.();
+		Font.init?.();
+		Sound.init?.();
 		audio.init();
-		app?.init()
+		app.init?.()
 			
 	js void initHandlers
 		window.onresize = e => {
