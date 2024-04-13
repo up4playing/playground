@@ -904,7 +904,10 @@ class List<T>
 		this.every(predicate)
 		
 	// Return a list that contains the selected field or expression for each item
-	inline js TValue[] select: TValue(T it) selector // Selects a field or expression for each item
+	inline js TValue[] select: TValue(
+		                           T it,  // The current item of the list
+		                           int i  // The index of the current item of the list
+		                       ) selector // Selects a field or expression for each item
 		this.map(selector)
 		
 	// Get the selected field or expression for each item and flattens the result
