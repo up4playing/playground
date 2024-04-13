@@ -173,7 +173,7 @@ transient class Buffer
 			this.expandBuffer(this.writePos+maxSize+4)
 			
 		var array = new Uint8Array(this.buffer, this.writePos+4, maxSize)
-		var result = Buffer_textEncoder.encodeInto(value, array)
+		var result = Buffer.textEncoder.encodeInto(value, array)
 		var size = result.written
 		this.dataView.setInt32(this.writePos, size)
 		this.writePos += size + 4
@@ -183,7 +183,7 @@ transient class Buffer
 		this.readPos += 4
 		var array = new Uint8Array(this.buffer, this.readPos, size)
 		this.readPos += size
-		return Buffer_textDecoder.decode(array)
+		return Buffer.textDecoder.decode(array)
 			
 	inline js void setInt16: int index, int value
 		this.dataView.setInt16(index, value)
@@ -388,8 +388,8 @@ transient class Buffer
 		this.dataView = new DataView(this.buffer)
 		
 	private static js void setupTextEncoder
-		Buffer_textEncoder = new TextEncoder
-		Buffer_textDecoder = new TextDecoder
+		Buffer.textEncoder = new TextEncoder
+		Buffer.textDecoder = new TextDecoder
 		
 	canRead := readPos < writePos
 	
@@ -414,19 +414,23 @@ transient class Buffer
 				
 		this.dataView = newDataView
 		
-	js bool operator ==(Buffer a, Buffer b)
-		if(a.writePos != b.writePos) return false
-		for(var i=0, len=a.writePos; i<len; i++)
-			if(a.dataView.getUint8(i) != b.dataView.getUint8(i))
-				return false
-		return true
+	js bool == Buffer value
+		if(this.writePos != value.writePos) return false;
+		for(var i=0, len=this.writePos; i<len; i++) {
+			if(this.dataView.getUint8(i) != value.dataView.getUint8(i)) {
+				return false;
+			}
+		}
+		return true;
 		
-	js bool operator !=(Buffer a, Buffer b)
-		if(a.writePos != b.writePos) return true
-		for(var i=0, len=a.writePos; i<len; i++)
-			if(a.dataView.getUint8(i) != b.dataView.getUint8(i))
-				return true
-		return false
+	js bool != Buffer value
+		if(this.writePos != value.writePos) return true;
+		for(var i=0, len=this.writePos; i<len; i++) {
+			if(this.dataView.getUint8(i) != value.dataView.getUint8(i)) {
+				return true;
+			}
+		}
+		return false;
 			
 	js int checksum
 	    let hash = 0;

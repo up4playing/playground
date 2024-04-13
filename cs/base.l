@@ -169,7 +169,7 @@ struct float
 		
 	inline cs bool isAngleApproximately: float value
 		                                 float epsilon = 0.0175
-		(Math.abs((((this % Math_TwoPI) + Math_TwoPI) % Math_TwoPI) - (((value % Math_TwoPI) + Math_TwoPI) % Math_TwoPI)) < epsilon)
+		(Math.abs((((this % Math.TwoPI) + Math.TwoPI) % Math.TwoPI) - (((value % Math.TwoPI) + Math.TwoPI) % Math.TwoPI)) < epsilon)
 		
 	inline cs void moveTowards: float value
 		                        float speed
@@ -688,11 +688,11 @@ class List<T>
 	// cs T percentile: int value
 	// 	if(this.Count == 0) return 0
 	// 	if(this.Count == 1) return this[0]
-	// 	if(!List_temporaryCopy) List_temporaryCopy = []
-	// 	const len = List_temporaryCopy.Count = this.Count
-	// 	for(let i=0; i<len; ++i) List_temporaryCopy[i] = this[i] 
-	// 	List_temporaryCopy.sort((a,b) => a - b)
-	// 	return List_temporaryCopy[Math.round((List_temporaryCopy.Count-1) * value / 100)]
+	// 	if(!List.temporaryCopy) List.temporaryCopy = []
+	// 	const len = List.temporaryCopy.Count = this.Count
+	// 	for(let i=0; i<len; ++i) List.temporaryCopy[i] = this[i] 
+	// 	List.temporaryCopy.sort((a,b) => a - b)
+	// 	return List.temporaryCopy[Math.round((List.temporaryCopy.Count-1) * value / 100)]
 		
 	// min: int(T a) selector 
 	// 	 int threshold = int.maxValue
@@ -1100,7 +1100,7 @@ struct Nullable<T>
 	
 interface object
 	inline cs bool toBool() (this != null)
-	inline cs string toString() object_stringify(this, 3)
+	inline cs string toString() object.stringify(this, 3)
 		
 	// static internal cs string stringify: object subject, int depth = 0 
 	// 	switch(typeof subject)
@@ -1111,7 +1111,7 @@ interface object
 	// 			if(depth > 0)
 	// 				for(let name in subject)
 	// 				{
-	// 					let item = object_stringify(subject[name], depth-1)
+	// 					let item = object.stringify(subject[name], depth-1)
 	// 					if(item != "") result += "," + name + ":" + item
 	// 				}
 	// 			return result + "\}"
@@ -1587,7 +1587,7 @@ global skipInit unit Math
 	// 	initDefaultRandomGenerator
 		
 	// cs void initDefaultRandomGenerator
-	// 	Math_randomGenerator = Math.random
+	// 	Math.randomGenerator = Math.random
 		
 	// cs string generateRandomSeed:
 	// 	let crypto = !window.crypto && typeof(require) != "undefined" ? require("crypto") : window.crypto
@@ -1607,9 +1607,9 @@ global skipInit unit Math
 	// 	for targetRandomValueIndex: randomFloat
 	
 	// cs void setRandomSeed: string seed
-	// 	Math_randomSeed = seed
-	// 	Math_randomValues.length = 0
-	// 	Math_randomValueIndex = 0
+	// 	Math.randomSeed = seed
+	// 	Math.randomValues.length = 0
+	// 	Math.randomValueIndex = 0
 		
 	// 	// Seeding the random number generator in Javascript
 	// 	// https://stackoverflow.com/a/47593316
@@ -1651,18 +1651,18 @@ global skipInit unit Math
 	// 	var rand = sfc32(seed(), seed(), seed(), seed());
 	// 	var rand = mulberry32(seed());
 		
-	// 	Math_randomGenerator = function() {
+	// 	Math.randomGenerator = function() {
 	// 		let value
-	// 		if(Math_randomValueIndex < Math_randomValues.length) {
-	// 			value = Math_randomValues[Math_randomValueIndex]
+	// 		if(Math.randomValueIndex < Math.randomValues.length) {
+	// 			value = Math.randomValues[Math.randomValueIndex]
 	// 			// Log random numbers for testing
-	// 			// Network_log("rnd("+Math_randomValueIndex+"/"+Math_randomValues.length+") replay "+value)
-	// 			Math_randomValueIndex++
+	// 			// Network.log("rnd("+Math.randomValueIndex+"/"+Math.randomValues.length+") replay "+value)
+	// 			Math.randomValueIndex++
 	// 		} else {
 	// 			value = rand()
 	// 			// Log random numbers for testing
-	// 			// Network_log("rnd("+Math_randomValueIndex+"/"+Math_randomValues.length+"):"+value)
-	// 			Math_randomValues[Math_randomValueIndex++] = value;
+	// 			// Network.log("rnd("+Math.randomValueIndex+"/"+Math.randomValues.length+"):"+value)
+	// 			Math.randomValues[Math.randomValueIndex++] = value;
 	// 		}
 	// 		return value
 	// 	}
@@ -1670,14 +1670,14 @@ global skipInit unit Math
 	// Generates a random integer
 	// global cs int randomInteger: int min // The inclusive lower bound of the random integer
 	// 	                         int max // The exclusive upper bound of the random integer
-	// 	return min + Math.floor(Math_randomGenerator() * (max-min))
+	// 	return min + Math.floor(Math.randomGenerator() * (max-min))
 	
 	// global cs int randomInteger: int max = 2147483647 // The exclusive upper bound of the random integer
-	// 	return Math.floor(Math_randomGenerator() * max)
+	// 	return Math.floor(Math.randomGenerator() * max)
 	
 	// // Generates a random float
 	// global inline cs int randomFloat
-	// 	Math_randomGenerator()
+	// 	Math.randomGenerator()
 		
 	// Generates a random float
 	global inline cs int randomFloat
@@ -1832,7 +1832,7 @@ transient float Angle
 	inline cs bool  operator != (Angle a, float b) a!=b
 	
 	inline cs float in: AngleUnit unit
-		(unit==1 ? this*Math_TwoPI : unit==2 ? this*360 : unit==3 ? this*400 : this)
+		(unit==1 ? this*Math.TwoPI : unit==2 ? this*360 : unit==3 ? this*400 : this)
 		
 enum AngleUnit
 	turns // Turn (one full rotation is 1)

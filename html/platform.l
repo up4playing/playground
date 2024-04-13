@@ -26,25 +26,25 @@ skipInit global unit Platform
 	public inline js string url := location.href
 	public inline js string host := location.host
 	public inline js string basePath := _basePath
-	public inline js string protocolAndHost() (location.host && !Platform_isDebug ? location.origin : "http://localhost")
+	public inline js string protocolAndHost() (location.host && !Platform.isDebug ? location.origin : "http://localhost")
 	public inline js string encodeURIComponent(string value) encodeURIComponent(value)
 
 	private inline js void initMedia
-		if(window.Image_init) Image_init();
-		if(window.Font_init)  Font_init();
-		if(window.Sound_init) Sound_init();
-		if(window.audio_init) audio_init();
-		if(window.app_init) app_init()
+		$Image?.init();
+		Font?.init();
+		Sound?.init();
+		audio.init();
+		app?.init()
 			
 	js void initHandlers
 		window.onresize = e => {
-			Html_updateScale();
-			Html_refresh();
+			Html.updateScale();
+			Html.refresh();
 		}
 		document.onkeydown = e => {
 			let key = e.key
 			if(key == "F10") { 
-				Platform_toggleSmallScreen();
+				Platform.toggleSmallScreen();
 			}
 		}
 	
@@ -103,22 +103,22 @@ skipInit global unit Platform
 		replay
 		
 	private js void startApp
-		if(window.app_start) app_start()
+		if(window.app.start) app.start()
 		
 	private js void tick
-		Platform_heartbeat("tick")
-		if(window.app_tick) app_tick()
-		Time_frame++
+		Platform.heartbeat("tick")
+		if(window.app.tick) app.tick()
+		Time.frame++
 		
 	private js void startTickInterval
 		if(window._tickInterval) {
 			clearInterval(_tickInterval)
 		}
-		if(Platform_tickMode == 0) {
-			_tickInterval = setInterval(() => Platform_tick(), 1000/Platform_targetFps)
+		if(Platform.tickMode == 0) {
+			_tickInterval = setInterval(() => Platform.tick(), 1000/Platform.targetFps)
 		} else {
 			window.tick = function() {
-				Platform_tick();
+				Platform.tick();
 				window.requestAnimationFrame(window.tick);
 			}
 			window.tick();
@@ -130,16 +130,16 @@ skipInit global unit Platform
 		
 	private inline js void sendFinished
 		console.log("[app] ----- Finished -----")
-		if(Platform_isDebug) _sendToEditor({type:"finished"})
+		if(Platform.isDebug) _sendToEditor({type:"finished"})
 			
 	Time nextHeartbeatTime = 0
 	
 	private js void heartbeat: string context
-		if(!Platform_isDebug) return
+		if(!Platform.isDebug) return
 		let now = Date.now();
-		if(now > Platform_nextHeartbeatTime) {
+		if(now > Platform.nextHeartbeatTime) {
 			console.log("[app]", (now%100000).toLocaleString("en-US", {minimumIntegerDigits:6, useGrouping:true})+" sending heartbeat from "+context);
-			Platform_nextHeartbeatTime = now + 3000;
+			Platform.nextHeartbeatTime = now + 3000;
 			_sendStringToEditor("~");
 		}
 		
@@ -270,7 +270,7 @@ global unit Html
 	private Node currentNode
 	private Node currentOverlay
 	
-	inline js Vector2 scrollPosition() new Vector2(window.pageXOffset, window.pageYOffset/Platform_scale)
+	inline js Vector2 scrollPosition() new Vector2(window.pageXOffset, window.pageYOffset/Platform.scale)
 		
 	inline js void scrollTo(float x, float y) window.scrollTo(x,y)
 	
@@ -283,37 +283,37 @@ global unit Html
 	
 	internal js void updateScale
 		let body = document.body
-		if(Platform_referenceSizes?.length > 0) {
+		if(Platform.referenceSizes?.length > 0) {
 			let screenWidth = localStorage.getItem("isMobile") == "true" ? 0 : screen.width
-			Platform_referenceSizes.sort((a,b) => a.forWidthBelow - b.forWidthBelow)
+			Platform.referenceSizes.sort((a,b) => a.forWidthBelow - b.forWidthBelow)
 			let referenceWidth = 0
-			for(let entry of Platform_referenceSizes) {
+			for(let entry of Platform.referenceSizes) {
 				if(screenWidth < entry.forWidthBelow) {
 					referenceWidth = entry.referenceWidth
-					Platform_isMobile = entry.isMobile
+					Platform.isMobile = entry.isMobile
 					break;
 				}
 			}
-			Platform_scale = window.innerWidth / referenceWidth
-			Platform_nativeSize = new Vector2(window.innerWidth, window.innerHeight)
-			Platform_size = new Vector2(referenceWidth, referenceWidth * window.innerHeight/window.innerWidth)
+			Platform.scale = window.innerWidth / referenceWidth
+			Platform.nativeSize = new Vector2(window.innerWidth, window.innerHeight)
+			Platform.size = new Vector2(referenceWidth, referenceWidth * window.innerHeight/window.innerWidth)
 			body.style = "background-color: white; font:32px OpenSans"
 			body.style.transform = 'none !important'
 			body.style.marginRight = '0 !important'
 			body.style.marginBottom = '0 !important'
-			body.style.width = Platform_size.x+"px"
+			body.style.width = Platform.size.x+"px"
 			const width = body.clientWidth
 			const height = body.clientHeight
-			body.style.transform = `scale(${Platform_scale})`
+			body.style.transform = `scale(${Platform.scale})`
 			body.style.transformOrigin = '0 0'
-			const pullUp = height - height * Platform_scale
-			const pullLeft = width - width * Platform_scale
+			const pullUp = height - height * Platform.scale
+			const pullLeft = width - width * Platform.scale
 			body.style.marginBottom = `${-pullUp}px`
 			body.style.marginRight = `${-pullLeft}px`
 		} else {
-			Platform_isMobile = localStorage.getItem("isMobile") == "true"
-			Platform_scale = Platform_isDebug ? Platform_debugScale : 1
-			body.style.zoom = Platform_scale
+			Platform.isMobile = localStorage.getItem("isMobile") == "true"
+			Platform.scale = Platform.isDebug ? Platform.debugScale : 1
+			body.style.zoom = Platform.scale
 			body.style.font = "32px OpenSans"
 		}
 	
@@ -326,14 +326,14 @@ global unit Html
 		if(style.size) { style.width = style.size.x+"px"; style.height = style.size.y+"px" }
 		if(style.overlay) {
 			let rect = document.body.getBoundingClientRect()
-			style.position = "fixed"; style.top = 0; style.left = 0; style.width = (window.innerWidth/Platform_scale)+"px"; style.height = (document.body.scrollHeight)+"px"  
+			style.position = "fixed"; style.top = 0; style.left = 0; style.width = (window.innerWidth/Platform.scale)+"px"; style.height = (document.body.scrollHeight)+"px"  
 		}
 		return style 
 	
 	private js void setStyle: Node node, dynamic style
 		node.style = ""
 		if(style) {
-			for(let key in Html_expandStyle(style))
+			for(let key in Html.expandStyle(style))
 				node.style[key] = style[key]
 		}
 		
@@ -351,7 +351,7 @@ global unit Html
 				
 	js Vector2 getRelativeMousePosition: HtmlEvent event, Node node
 		let rect = node.getBoundingClientRect()
-		return new Vector2((event.clientX - rect.left)/Platform_scale, (event.clientY - rect.top)/Platform_scale)
+		return new Vector2((event.clientX - rect.left)/Platform.scale, (event.clientY - rect.top)/Platform.scale)
 
 	global void refresh
 		parentNode = body

@@ -393,7 +393,7 @@ Object Menu
 				onTouchDownAny
 					active = false
 				
-		drawImage Menu, position, location
+		drawImage Menu, position, location, layer
 			active = true
 		
 enum MenuItemType: Button, Check, Radio

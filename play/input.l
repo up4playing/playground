@@ -391,19 +391,19 @@ skipInit global unit input
 		
 	// Do something for every player
 	global inline js void everybody: void(Player it) do
-		for(let i=0, _len=input_players.length; i<_len; ++i) { let it = input_players[i]; do()}
+		for(let i=0, _len=input.players.length; i<_len; ++i) { let it = input.players[i]; do()}
 		
 	// Returns true if the given condition is true for every player
 	global inline js bool everybody: bool(Player it) predicate
-		input_players.every(predicate)
+		input.players.every(predicate)
 		
 	// Returns true if the given condition is true for any player
 	global inline js bool anybody: bool(Player it) predicate
-		input_players.some(predicate)
+		input.players.some(predicate)
 		
 	// Returns true if the given condition is true for no player
 	global inline js bool nobody: bool(Player it) predicate
-		!input_players.some(predicate)
+		!input.players.some(predicate)
 		
 	// All players
 	global inline js Player everybody() null
@@ -424,22 +424,22 @@ skipInit global unit input
 		initHandlers
 	
 	internal js Vector2 logicalToPixelPosition: Vector2 pos
-		let p = pos.getTransformed(graphics_totalMatrix)
-		return new Vector2(p.x/Platform_pixelRatio, p.y/Platform_pixelRatio, null)
+		let p = pos.getTransformed(graphics.totalMatrix)
+		return new Vector2(p.x/Platform.pixelRatio, p.y/Platform.pixelRatio, null)
 
 	private js void initHandlers
 		window.onpointerdown = e => {
-			if(e.button == 0 && Platform_mode == 0) {
-				Platform_record();
-				if(input_ignoreFirstClick) return;
+			if(e.button == 0 && Platform.mode == 0) {
+				Platform.record();
+				if(input.ignoreFirstClick) return;
 			}
-			input_handleTouchEvent(1, e.pageX, e.pageY, e.pointerType, e.pointerId, e.button, e.shiftKey, e.altKey, e.ctrlKey || e.metaKey);
+			input.handleTouchEvent(1, e.pageX, e.pageY, e.pointerType, e.pointerId, e.button, e.shiftKey, e.altKey, e.ctrlKey || e.metaKey);
 		}
 		window.onpointermove = e => {
-			input_handleTouchEvent(2, e.pageX, e.pageY, e.pointerType, e.pointerId, e.button, e.shiftKey, e.altKey, e.ctrlKey || e.metaKey);
+			input.handleTouchEvent(2, e.pageX, e.pageY, e.pointerType, e.pointerId, e.button, e.shiftKey, e.altKey, e.ctrlKey || e.metaKey);
 		}
 		window.onpointerup = e => {
-			input_handleTouchEvent(3, e.pageX, e.pageY, e.pointerType, e.pointerId, e.button, e.shiftKey, e.altKey, e.ctrlKey || e.metaKey);
+			input.handleTouchEvent(3, e.pageX, e.pageY, e.pointerType, e.pointerId, e.button, e.shiftKey, e.altKey, e.ctrlKey || e.metaKey);
 		}
 		window.oncontextmenu = e => {
 			e.preventDefault();
@@ -455,74 +455,74 @@ skipInit global unit input
 			else
 			if(ctrlOrCmd && key == "s") {
 				// Save event steam
-				core_saveEventStream();
+				core.saveEventStream();
 				e.preventDefault();
 			}
 			else
 			if(ctrlOrCmd && key == "l") {
 				// Save logs
-				statistics_saveStatistics()
-				core_saveLogs();
+				statistics.saveStatistics()
+				core.saveLogs();
 				e.preventDefault();
 			}
 			else
-			if((key == "F1" || key == "F2" || key == "F3" || key == "F4") && !ctrlOrCmd && Platform_isDebug) {
+			if((key == "F1" || key == "F2" || key == "F3" || key == "F4") && !ctrlOrCmd && Platform.isDebug) {
 				let index = key[1] - "1"
-				core_switchPerspectiveTo(input_players[index]);
+				core.switchPerspectiveTo(input.players[index]);
 				e.preventDefault();
 			}
 			else
 			if(key >= "1" && key <= "0") {
 				let index = key - "0"
-				if(e.altKey)  { core_save(index); e.preventDefault(); } else
-				if(e.ctrlKey) { core_restore(index); e.preventDefault(); }
+				if(e.altKey)  { core.save(index); e.preventDefault(); } else
+				if(e.ctrlKey) { core.restore(index); e.preventDefault(); }
 			}
 			else
 			// Reload
-			if(ctrlOrCmd && key == "F1") {/*keep room, keep userId, keep master*/ ServerCore_sendReload(false, false, true ); e.preventDefault();} else
-			if(ctrlOrCmd && key == "F2") {/*keep room, keep userId, everybody*/   ServerCore_sendReload(false, false, false); e.preventDefault();} else
-			if(ctrlOrCmd && key == "F3") {/*new  room, keep userId, everybody*/   ServerCore_sendReload(true,  false, false); e.preventDefault();} else
-			if(ctrlOrCmd && key == "F4") {/*new  room, new  userId, everybody*/   ServerCore_sendReload(true,  true,  false);  e.preventDefault();} else
+			if(ctrlOrCmd && key == "F1") {/*keep room, keep userId, keep master*/ ServerCore.sendReload(false, false, true ); e.preventDefault();} else
+			if(ctrlOrCmd && key == "F2") {/*keep room, keep userId, everybody*/   ServerCore.sendReload(false, false, false); e.preventDefault();} else
+			if(ctrlOrCmd && key == "F3") {/*new  room, keep userId, everybody*/   ServerCore.sendReload(true,  false, false); e.preventDefault();} else
+			if(ctrlOrCmd && key == "F4") {/*new  room, new  userId, everybody*/   ServerCore.sendReload(true,  true,  false);  e.preventDefault();} else
 			
 			// Switch send interval
-			if(ctrlOrCmd && key == "F5") {core_switchSendInterval( 3); e.preventDefault();} else
-			if(ctrlOrCmd && key == "F6") {core_switchSendInterval(10); e.preventDefault();} else
-			if(ctrlOrCmd && key == "F7") {core_switchSendInterval(20); e.preventDefault();} else
-			if(ctrlOrCmd && key == "F8") {core_switchSendInterval(30); e.preventDefault();} else
-			if(ctrlOrCmd && key == "F9") {core_switchSendInterval(40); e.preventDefault();} else
+			if(ctrlOrCmd && key == "F5") {core.switchSendInterval( 3); e.preventDefault();} else
+			if(ctrlOrCmd && key == "F6") {core.switchSendInterval(10); e.preventDefault();} else
+			if(ctrlOrCmd && key == "F7") {core.switchSendInterval(20); e.preventDefault();} else
+			if(ctrlOrCmd && key == "F8") {core.switchSendInterval(30); e.preventDefault();} else
+			if(ctrlOrCmd && key == "F9") {core.switchSendInterval(40); e.preventDefault();} else
 				
-			if(ctrlOrCmd && key == "F10") {core_switchSendInputMode(1); e.preventDefault();} else
-			if(ctrlOrCmd && key == "F11") {core_switchSendInputMode(2); e.preventDefault();} else
+			if(ctrlOrCmd && key == "F10") {core.switchSendInputMode(1); e.preventDefault();} else
+			if(ctrlOrCmd && key == "F11") {core.switchSendInputMode(2); e.preventDefault();} else
 				
 			if(key == "F9") {
-				if(e.shiftKey) { core_saveLogs(); }
-				else           { Platform_toggleDebugInfo(); }
+				if(e.shiftKey) { core.saveLogs(); }
+				else           { Platform.toggleDebugInfo(); }
 				e.preventDefault();
 			} else if(key == "F10") { 
-				Platform_toggleSmallScreen();
+				Platform.toggleSmallScreen();
 			} else if(key == "F11") { 
-				graphics_copyScreenshotToClipboard();
+				graphics.copyScreenshotToClipboard();
 			} else {
 				let typedKey = key && key.length == 1  && !e.ctrlKey && !e.metaKey && !e.altKey? key : ""
-				input_handleKeyEvent(5, keyCode, typedKey)
+				input.handleKeyEvent(5, keyCode, typedKey)
 				if(keyCode == 9) e.preventDefault();
 			}
 		}
 		window.onkeyup = e => {
-			input_handleKeyEvent(6, e.keyCode)
+			input.handleKeyEvent(6, e.keyCode)
 		}
 			
 		// Handles navigating back or forward in the browser	
 		window.onpopstate = e => {
-			input_handleNavigate(location.pathname);
+			input.handleNavigate(location.pathname);
 		}
 		if(!window._isWheelHandlerSet) {
 			window._isWheelHandlerSet = true
 			window.addEventListener('wheel', e => {
 				e.preventDefault();
 				e.stopPropagation();
-				if(e.button == 0 && Platform_mode == 0) Platform_record();
-				input_handleWheelEvent(e.pageX, e.pageY, -e.deltaX, -e.deltaY, e.ctrlKey)
+				if(e.button == 0 && Platform.mode == 0) Platform.record();
+				input.handleWheelEvent(e.pageX, e.pageY, -e.deltaX, -e.deltaY, e.ctrlKey)
 				return false;			
 			}, {passive: false})
 		}
@@ -1076,23 +1076,6 @@ skipInit global unit input
 		
 	// ---------------------------------------------- Touch Down ----------------------------------------------
 	
-	// Do something when the player touches or clicks anywhere on the screen
-	// Example: When the current player instance touches the screen, we print out the exact touch position.
-	//     Player
-	//         tick
-	//             onTouchDown by me
-	//                 print "Click at {touch.position}"
-	// Image: onTouchDown0.png
-	global onTouchDown: implicit nocolon Player[] by = null // Only consider touches or clicks by this player or list of players
-		                bool markAsHandled = true           // Mark the touch as handled so it won't trigger more touch events
-		                void(Touch touch) do                // Do this for each touch or click
-		for getTargetedPlayers(by) -> player
-			for internalUsers[player.id].downTouches -> touch
-				if !touch.handled and (player.enableTouch or touch.type != Touch)
-					log "down", touch.referencePosition
-					do touch
-					if markAsHandled: touch.handled = true
-
 	// Do something when the player touches or clicks within a given area
 	// Example: Draw an OK button and print "Clicked OK" when the user touches it.
 	//     app
@@ -1255,6 +1238,23 @@ skipInit global unit input
 				
 		if showClickableArea: drawPolygon position, points, color:{"#ff0000b0"}
 			
+	// Do something when the player touches or clicks anywhere on the screen
+	// Example: When the current player instance touches the screen, we print out the exact touch position.
+	//     Player
+	//         tick
+	//             onTouchDown by me
+	//                 print "Click at {touch.position}"
+	// Image: onTouchDown0.png
+	global onTouchDown: implicit nocolon Player[] by = null // Only consider touches or clicks by this player or list of players
+		                bool markAsHandled = true           // Mark the touch as handled so it won't trigger more touch events
+		                void(Touch touch) do                // Do this for each touch or click
+		for getTargetedPlayers(by) -> player
+			for internalUsers[player.id].downTouches -> touch
+				if !touch.handled and (player.enableTouch or touch.type != Touch)
+					log "down", touch.referencePosition
+					do touch
+					if markAsHandled: touch.handled = true
+
 	// Do something when the player touches or clicks, even if the event is already handled
 	global onTouchDownAny: implicit nocolon Player[] by = null // Only consider touches or clicks by this player or list of players
 		                   void(Touch touch) do                // Do this for each touch or click, even those that are already marked as handled
@@ -1510,9 +1510,9 @@ skipInit global unit input
 			_input.style.height = "1px"
 			_input.style.fontSize = "1px"
 			_input.style.backgroundColor = "#000000"
-			_input.oninput = e => input_handleTextInput(7, _input.value)
+			_input.oninput = e => input.handleTextInput(7, _input.value)
 			_input.onblur = e => {
-				if(input_isTextInputActive) {
+				if(input.isTextInputActive) {
 					_input.focus()
 				}
 			}
@@ -1521,26 +1521,26 @@ skipInit global unit input
 		return _input
 				
 	js void startTextInput: string initalValue = null, int forUser = -1
-		if(forUser == -1 || input_localUser?.id == forUser) {
-			let input = input_getOrCreateInputField()
+		if(forUser == -1 || input.localUser?.id == forUser) {
+			let field = input.getOrCreateInputField()
 			if(initalValue != null) { 
-				input.value = initalValue
+				field.value = initalValue
 			}
 			_input.focus()
-			input_isTextInputActive = true
+			field.isTextInputActive = true
 		}
 		
 	js void stopTextInput
-		input_isTextInputActive = false
+		input.isTextInputActive = false
 		
 	js void setTextInput: string value
-		let input = input_getOrCreateInputField()
-		input.value = value
-		input_handleTextInput(7, value)
+		let field = input.getOrCreateInputField()
+		field.value = value
+		field.handleTextInput(7, value)
 		
 	js void updateCursor
-		// document.body.style.cursor = (input_showPointers == 2 && Platform_mode == 4 ? "none" : input_cursor)
-		document.body.style.cursor = input_cursor
+		// document.body.style.cursor = (input.showPointers == 2 && Platform.mode == 4 ? "none" : input.cursor)
+		document.body.style.cursor = input.cursor
 
 	onTextComposition: void(string characters) do
 		for internalUsers -> user if .

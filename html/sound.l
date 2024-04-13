@@ -22,7 +22,7 @@ skipInit class Sound
 		if(!this.nextAudioElement) this.preloadForNextPlayback();
 			
 		this.audioElement = this.nextAudioElement;
-		this.audioElement.volume = audio_volume;
+		this.audioElement.volume = audio.volume;
 		this.audioElement.play();
 		this.preloadForNextPlayback()
 		

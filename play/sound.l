@@ -19,10 +19,10 @@ skipInit immutable Sound
 		
 	js void volume: float value
 		this.fadeVolume = value
-		if(this.audioElement) this.audioElement.volume = this.fadeVolume * audio_volume
+		if(this.audioElement) this.audioElement.volume = this.fadeVolume * audio.volume
 		
 	js void updateVolume
-		if(this.audioElement) this.audioElement.volume = this.fadeVolume * audio_volume
+		if(this.audioElement) this.audioElement.volume = this.fadeVolume * audio.volume
 		
 	js void stop
 		if(this.audioElement) this.audioElement.pause()
@@ -49,15 +49,15 @@ skipInit immutable Sound
 		// Play audio
 		this.fadeVolume = 1;
 		this.audioElement = this.nextAudioElement;
-		this.audioElement.volume = audio_volume;
-		this.audioElement.onended = () => audio_playingSounds.remove(ps);
+		this.audioElement.volume = audio.volume;
+		this.audioElement.onended = () => audio.playingSounds.remove(ps);
 		this.audioElement.play();
 		this.preloadForNextPlayback()
 		
 	internal js void preloadForNextPlayback
 		this.nextAudioElement = new Audio();
-		if(PeerNetwork_audioOutputId && this.nextAudioElement.setSinkId) 
-			await this.nextAudioElement.setSinkId(PeerNetwork_audioOutputId);
+		if(PeerNetwork.audioOutputId && this.nextAudioElement.setSinkId) 
+			await this.nextAudioElement.setSinkId(PeerNetwork.audioOutputId);
 		this.nextAudioElement.src = _basePath+this.file;
 		
 	isPlaying

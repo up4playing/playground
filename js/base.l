@@ -8,6 +8,7 @@ immutable struct int
 	
 	inline int * int value
 	inline float * float value
+	inline Angle * Angle value
 	
 	inline float / int value
 	inline float / float value
@@ -16,18 +17,18 @@ immutable struct int
 	inline int -= int value
 	inline int *= int value
 	
+	inline js int ** int value
+		Math.pow(this, value)
+		
+	inline js int % ensureSingleExecution int value
+		((this % value) + value) % value
+		
 	// The largest possible integer value
 	const maxValue = 2147483647
 	
 	// The smallest possible integer value
 	const minValue = -2147483648
 	
-	inline js int operator ** (int a, int b) 
-		Math.pow(a,b)
-		
-	js int operator % (int a, int b)
-		return ((a % b) + b) % b
-		
 	// The remainer after a division by the given value. The sign stays the same.
 	inline js int remainder: int value // The value to divide by
 		(this % value)
@@ -157,7 +158,7 @@ immutable struct int
 		return result
 		
 	inline js TResult[] times: TResult(int i) selector
-		int_enumerate(0, this, selector)
+		int.enumerate(0, this, selector)
 	
 // A number stored as a double precision 64-bit floating point value
 immutable struct float
@@ -176,6 +177,12 @@ immutable struct float
 	inline bool > float value
 	inline bool >= float value
 	
+	inline js float ** float value
+		Math.pow(this, value)
+		
+	inline js float % ensureSingleExecution float value
+		((this % value) + value) % value
+		
 	// The largest possible floating point value
 	const inline js float maxValue := Number.MAX_VALUE
 	
@@ -186,12 +193,6 @@ immutable struct float
 	
 	const inline js float notANumber := Number.NaN
 	
-	inline js float operator ** (float a, float b) 
-		Math.pow(a,b)
-		
-	js float operator % (float a, float b)
-		return ((a % b) + b) % b
-		
 	// The remainer after a division by the given value. The sign stays the same.
 	inline js float remainder: float value
 		(this % value)
@@ -824,6 +825,8 @@ class List<T>
 	// Reverses the order of the items of the list in place
 	inline js T[] reverse() this.reverse()
 		
+	inline js T[] reversed() [...this].reverse()
+		
 	// Return a list with all unique items of the original list
 	inline js T[] distinct() [...new Set(this)]
 	
@@ -900,7 +903,10 @@ class List<T>
 		this.every(predicate)
 		
 	// Return a list that contains the selected field or expression for each item
-	inline js TValue[] select: TValue(T it) selector // Selects a field or expression for each item
+	inline js TValue[] select: TValue(
+		                           T it,  // The current item of the list
+		                           int i  // The index of the current item of the list
+		                       ) selector // Selects a field or expression for each item
 		this.map(selector)
 		
 	// Get the selected field or expression for each item and flattens the result
@@ -917,7 +923,7 @@ class List<T>
 		
 	inline js T find: bool(T a) condition // The condition to check
 		              int startIndex      // Start searching at this index
-		List_findStartingAtIndex(this, condition, startIndex)
+		List.findStartingAtIndex(this, condition, startIndex)
 		
 	private static T findStartingAtIndex: T[] list            // The list to search
 		                                  bool(T a) condition // The condition to check
@@ -1025,11 +1031,11 @@ class List<T>
 	js T percentile: int value
 		if(this.length == 0) return 0
 		if(this.length == 1) return this[0]
-		if(!List_temporaryCopy) List_temporaryCopy = []
-		const len = List_temporaryCopy.length = this.length
-		for(let i=0; i<len; ++i) List_temporaryCopy[i] = this[i] 
-		List_temporaryCopy.sort((a,b) => a - b)
-		return List_temporaryCopy[Math.round((List_temporaryCopy.length-1) * value / 100)]
+		if(!List.temporaryCopy) List.temporaryCopy = []
+		const len = List.temporaryCopy.length = this.length
+		for(let i=0; i<len; ++i) List.temporaryCopy[i] = this[i] 
+		List.temporaryCopy.sort((a,b) => a - b)
+		return List.temporaryCopy[Math.round((List.temporaryCopy.length-1) * value / 100)]
 		
 	min: int(T a) selector 
 		 int threshold = int.maxValue
@@ -1489,7 +1495,7 @@ interface object
 				if(subject.constructor) result += "_type: " + subject.constructor.name
 				if(depth > 0) {
 					for(let name in subject) {
-						let item = object_stringify(subject[name], depth-1)
+						let item = object.stringify(subject[name], depth-1)
 						if(item != "") {
 							if(result) result += ", "
 							result += name + ": " + item
@@ -1804,8 +1810,8 @@ global transient priority unit System
 	// Display a message in the timeline
 	global js void watch: logstring text // The text, variables or expressions to watch
 		                  SourceCodeLocation sourceCodeLocation
-		if(Platform_isDebug && core_frame >= core_frameWithNewWatches && sourceCodeLocation) {
-			Platform_sendWatch(core_frame, text, sourceCodeLocation.start, sourceCodeLocation.file)
+		if(Platform.isDebug && core.frame >= core.frameWithNewWatches && sourceCodeLocation) {
+			Platform.sendWatch(core.frame, text, sourceCodeLocation.start, sourceCodeLocation.file)
 		}
 		
 	// Shows a dialog box with a given message
@@ -1869,14 +1875,14 @@ global transient priority low unit System
 		                            TResult(
 		                                int i  // The iteration variable of the for-loop
 		                            ) do       // Select the field or expression to be included in the result
-		int_enumerate(0, to, do)
+		int.enumerate(0, to, do)
 		
 	global inline js TResult[] for: int from,    // The integer to start iterating from
 		                            TResult(
 		                                int i    // The iteration variable of the for-loop
 		                            ) do         // Select the field or expression to be included in the result
 		                            label int to // The exclusive upper bound to iterate towards
-		int_enumerate(from, to, do)
+		int.enumerate(from, to, do)
 		
 // A collection of mathematical functions and constants
 global skipInit unit math
@@ -2037,11 +2043,11 @@ unit Loca
 	
 	js void setLanguage: Language language
 		                 string locale = null
-		Loca_language = language
-		Loca_locale = locale || Loca_defaultLocaleForLanguage[language]
+		Loca.language = language
+		Loca.locale = locale || Loca.defaultLocaleForLanguage[language]
 		
 	js void format: int id
-		let entry = _strings[Loca_language][id]
+		let entry = _strings[Loca.language][id]
 		if(!entry || entry.s.length == 0) return "##########"
 		let strings = entry.s
 		let result = strings[0]

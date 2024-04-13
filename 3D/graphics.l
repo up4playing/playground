@@ -109,7 +109,7 @@ Bucket
 	
 js THREE.Quaternion
 Quaternion
-	inline js Quaternion(float x = 0.0, float y = 0.0, float z = 0.0) new THREE.Quaternion().setFromEuler(new THREE.Euler(x*math_TwoPI, y*math_TwoPI, z*math_TwoPI))
+	inline js Quaternion(float x = 0.0, float y = 0.0, float z = 0.0) new THREE.Quaternion().setFromEuler(new THREE.Euler(x*math.TwoPI, y*math.TwoPI, z*math.TwoPI))
 		
 	js Quaternion operator = (Quaternion a, Quaternion b) a.x = b.x; a.y = b.y; a.z = b.z; a.w = b.w; return a
 	
@@ -133,35 +133,35 @@ transient skipInit global unit graphics
 	private dynamic camera
 	
 	internal js async void setup
-		graphics_canvas = document.getElementById("canvas");
-		graphics_canvas.imageSmoothingEnabled = true;
-		graphics_canvas.imageSmoothingQuality = "high";
+		graphics.canvas = document.getElementById("canvas");
+		graphics.canvas.imageSmoothingEnabled = true;
+		graphics.canvas.imageSmoothingQuality = "high";
 		
 		window.THREE = await import('./lib/three.module.js');
 		await import("./lib/three-mesh-ui.js");
-		graphics_scene = new THREE.Scene();
+		graphics.scene = new THREE.Scene();
 		
-		let posZ = (graphics_referenceSize.y/2) / Math.tan(graphics_fieldOfView * Math.PI / 360)
-		let aspectRatio = graphics_referenceSize.x / graphics_referenceSize.y
-		graphics_camera = new THREE.PerspectiveCamera(graphics_fieldOfView, aspectRatio, 10, 10000)
-		graphics_camera.position.set(0, 0, posZ)
+		let posZ = (graphics.referenceSize.y/2) / Math.tan(graphics.fieldOfView * Math.PI / 360)
+		let aspectRatio = graphics.referenceSize.x / graphics.referenceSize.y
+		graphics.camera = new THREE.PerspectiveCamera(graphics.fieldOfView, aspectRatio, 10, 10000)
+		graphics.camera.position.set(0, 0, posZ)
 		
-		graphics_renderer = new THREE.WebGLRenderer( { antialias: true, canvas:graphics_canvas } );
+		graphics.renderer = new THREE.WebGLRenderer( { antialias: true, canvas:graphics.canvas } );
 	
 	internal js void onResize
-		graphics_pixelRatio = window.devicePixelRatio;
-		graphics_pixelSize = new Vector2(window.innerWidth*graphics_pixelRatio, window.innerHeight*graphics_pixelRatio, null);
-		graphics_isSmallScreen = screen.width < 600 || (localStorage.getItem("smallScreen") == "true")
-		graphics_canvas.style.width = window.innerWidth + "px";
-		graphics_canvas.style.height = window.innerHeight + "px";
-		graphics_canvas.width = graphics_pixelSize.x;
-		graphics_canvas.height = graphics_pixelSize.y;
-		graphics_updateBaseMatrix()
+		graphics.pixelRatio = window.devicePixelRatio;
+		graphics.pixelSize = new Vector2(window.innerWidth*graphics.pixelRatio, window.innerHeight*graphics.pixelRatio, null);
+		graphics.isSmallScreen = screen.width < 600 || (localStorage.getItem("smallScreen") == "true")
+		graphics.canvas.style.width = window.innerWidth + "px";
+		graphics.canvas.style.height = window.innerHeight + "px";
+		graphics.canvas.width = graphics.pixelSize.x;
+		graphics.canvas.height = graphics.pixelSize.y;
+		graphics.updateBaseMatrix()
 		
-		graphics_camera.aspect = graphics_pixelSize.x / graphics_pixelSize.y;
-		graphics_camera.updateProjectionMatrix();
-		graphics_renderer.setPixelRatio(graphics_pixelRatio);
-		graphics_renderer.setSize(window.innerWidth, window.innerHeight);
+		graphics.camera.aspect = graphics.pixelSize.x / graphics.pixelSize.y;
+		graphics.camera.updateProjectionMatrix();
+		graphics.renderer.setPixelRatio(graphics.pixelRatio);
+		graphics.renderer.setSize(window.innerWidth, window.innerHeight);
 		
 	internal updateBaseMatrix
 		let statisticsMargin = Platform.showDebugInfo ? statistics.margin : {}
@@ -205,7 +205,7 @@ transient skipInit global unit graphics
 		
 	private js void render
 		ThreeMeshUI.update();
-		graphics_renderer.render(graphics_scene, graphics_camera);
+		graphics.renderer.render(graphics.scene, graphics.camera);
 			
 	internal js void drawSafeArea
 	
@@ -288,7 +288,7 @@ transient skipInit global unit graphics
 		// material.opacity = .5
 		const mesh = new THREE.Mesh(geometry, material)
 		mesh.drawnThisFrame = false
-		graphics_scene.add(mesh)
+		graphics.scene.add(mesh)
 		return mesh
 		
 	global drawImage: Image image
@@ -316,7 +316,7 @@ transient skipInit global unit graphics
 		});
 		mesh.add(new ThreeMeshUI.Text());
 		mesh.drawnThisFrame = false
-		graphics_scene.add(mesh)
+		graphics.scene.add(mesh)
 		return mesh
 		
 	// Draw text on the screen

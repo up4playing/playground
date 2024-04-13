@@ -264,7 +264,7 @@ global unit fx
 		animations.removeWhere.object == object
 		
 	endOfPrevAnimation: Object object
-		let lastAnimation = animations[-1]
+		let lastAnimation = animations.last
 		if lastAnimation?.object == object
 			return math.max(Time.now, lastAnimation.startTime + lastAnimation.duration)
 		return Time.now
