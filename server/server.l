@@ -183,12 +183,6 @@ global unit http
 	js void on:string path, HttpMethod method = Get, void(string[] path, dynamic body, Request request, Response response) handler
 		http.handlerMap.set(http.methodName[method]+path, handler)
 	
-unit Json
-	inline js object parse: string value
-		JSON.parse(value)	
-	inline js string stringify: object value
-		JSON.stringify(value)	
-	
 class Request
 	inline js string ip() this. .connection.remoteAddress
 		
