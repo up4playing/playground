@@ -552,7 +552,7 @@ struct IntVector2
 		return result
 		
 	inline js TResult[] times: TResult(IntVector2 it) selector
-		Vector2_enumerate(new IntVector2(0,0), this, selector)
+		Vector2.enumerate(new IntVector2(0,0), this, selector)
 	
 // A 3x2 matrix used to transform vectors in 2D space
 struct Matrix2D
@@ -585,17 +585,21 @@ struct Matrix2D
 	Matrix2D clone
 		return Matrix2D(m0, m1, m2, m3, m4, m5)
 
-	Matrix2D operator = (Matrix2D a, Matrix2D b)
-		a.m0 = b.m0
-		a.m1 = b.m1
-		a.m2 = b.m2
-		a.m3 = b.m3
-		a.m4 = b.m4
-		a.m5 = b.m5
+	Matrix2D assign Matrix2D other
+		m0 = other.m0
+		m1 = other.m1
+		m2 = other.m2
+		m3 = other.m3
+		m4 = other.m4
+		m5 = other.m5
 		return this
 		
-	Matrix2D operator * (Matrix2D a, Matrix2D b) Matrix2D c; return multiply(a, b, c)
-	Matrix2D operator *= (Matrix2D a, Matrix2D b) return multiply(a, b, a)
+	Matrix2D * Matrix2D other
+		Matrix2D c
+		return multiply(this, other, c)
+		
+	Matrix2D *= Matrix2D other
+		return multiply(this, other, this)
 		
 	// Returns the translation component of the matrix
 	Vector2 translationVector := {m4, m5}
@@ -683,54 +687,18 @@ class List<T>
 // ------------------------------------------- Angle -------------------------------------------
 		
 transient immutable float Angle
-	inline js Angle += Angle value: this += value
-	
 	inline js float toFloat() this
 	inline js string toString() this.toString()
 		
 	// Returns true if the angle is not zero
 	inline js bool toBool := this
 	
-	inline js Angle operator +  (Angle a, Angle b) a+b
-	inline js Angle operator +  (Angle a, int b) a+b
-	inline js Angle operator +  (Angle a, float b) a+b
-	
-	inline js Angle operator -  (Angle a, Angle b) a-b
-	inline js Angle operator -  (Angle a, int b) a-b
-	inline js Angle operator -  (Angle a, float b) a-b
-	inline js Angle operator -  (Angle a) -a
-	
-	inline js float operator /  (Angle a, Angle b) a/b
-	inline js Angle operator /  (Angle a, int b) a/b
-	inline js Angle operator /  (Angle a, float b) a/b
-	
-	inline js Angle operator *  (Angle a, int b) a*b
-	inline js Angle operator *  (Angle a, float b) a*b
-	inline js Angle operator *  (int a, Angle b) a*b
-	inline js Angle operator *  (float a, Angle b) a*b
-	
-	inline js Angle operator %  (Angle a, int b) a%b
-	inline js Angle operator %  (Angle a, Angle b) a%b
-	
-	inline js bool  operator <  (Angle a, Angle b) a<b
-	inline js bool  operator <= (Angle a, Angle b) a<=b
-	inline js bool  operator >  (Angle a, Angle b) a>b
-	inline js bool  operator >= (Angle a, Angle b) a>=b
-	
-	inline js bool  operator == (Angle a, Angle b) a==b
-	inline js bool  operator == (Angle a, int b) a==b
-	inline js bool  operator == (Angle a, float b) a==b
-	
-	inline js bool  operator != (Angle a, Angle b) a!=b
-	inline js bool  operator != (Angle a, int b) a!=b
-	inline js bool  operator != (Angle a, float b) a!=b
-	
 	inline js float in: AngleUnit unit
-		(unit==1 ? this*math_TwoPI : unit==2 ? this*360 : unit==3 ? this*400 : this)
+		(unit==1 ? this*math.TwoPI : unit==2 ? this*360 : unit==3 ? this*400 : this)
 		
 	inline js Angle rotateTowards: Angle value
 		                           Angle speed
-		(this = Angle_rotatedTowards(this, value, speed))
+		(this = Angle.rotatedTowards(this, value, speed))
 		
 	static Angle rotatedTowards: Angle value
 		                         Angle target
@@ -739,6 +707,29 @@ transient immutable float Angle
 		let delta = (target - value) % 1
 		if delta < .5: value = (value + speed) % 1; return value < target ? value : target
 		else           value = (value - speed) % 1; return value > target ? value : target
+		
+	inline Angle + Angle value
+	inline Angle - Angle value
+	inline float / Angle value
+	inline float * Angle value
+	
+	inline Angle += Angle value
+	inline Angle -= Angle value
+	inline Angle /= Angle value
+	inline Angle *= Angle value
+	
+	inline bool == Angle value
+	inline bool != Angle value
+	inline bool < Angle value
+	inline bool <= Angle value
+	inline bool > Angle value
+	inline bool >= Angle value
+	
+	inline js Angle % ensureSingleExecution Angle value
+		((this % value) + value) % value
+		
+	inline js Angle operator -  (Angle a) -a
+
 		
 enum AngleUnit
 	turns    // One full rotation is 1
@@ -756,7 +747,7 @@ immutable priority low struct float
 	inline js Angle turns := this
 	
 	// One full rotation is 2π (about 6.2832)
-	inline js Angle radians := (this/math_TwoPI)
+	inline js Angle radians := (this/math.TwoPI)
 		
 	// One full rotation is 360
 	inline js Angle degrees := (this/360)
@@ -834,15 +825,15 @@ global skipInit priority low unit math
 	// Returns the inverse tangent in turns
 	Angle atan2: float y, float x
 		float r, angle;
-		float abs_x = math.abs(x) + .00000000001
-		if y < 0.0
-			r = (y + abs_x) / (abs_x - y);
+		float absY = math.abs(y) + .00000000001
+		if x < 0.0
+			r = (x + absY) / (absY - x);
 			angle = .375;
 		else
-			r = (y - abs_x) / (y + abs_x);
+			r = (x - absY) / (x + absY);
 			angle = .125;
 		angle += (.03124211533 * r * r - .1562424076) * r;
-		if x < 0.0: return cast -angle
+		if y < 0.0: return cast -angle
 		else        return cast angle
 		
 	moveTowards: Angle value
@@ -1090,7 +1081,8 @@ immutable Direction
 	
 	toString := name
 	
-	bool operator ==(Direction a, Direction b) a.angle == b.angle
+	bool == Direction value 
+		this.angle == value.angle
 	
 	rotated: RotationDirection direction = Clockwise
 		return primaryDirections[(index+(direction == Clockwise ? 1:3))%4]

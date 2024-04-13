@@ -1019,9 +1019,9 @@ skipInit unit Input
 	// 		_input.style.height = "1px"
 	// 		_input.style.fontSize = "1px"
 	// 		_input.style.backgroundColor = "#000000"
-	// 		_input.oninput = e => Input_handleTextInput(7, _input.value)
+	// 		_input.oninput = e => Input.handleTextInput(7, _input.value)
 	// 		_input.onblur = e => {
-	// 			if(Input_isTextInputActive) {
+	// 			if(Input.isTextInputActive) {
 	// 				_input.focus()
 	// 			}
 	// 		}
@@ -1030,25 +1030,25 @@ skipInit unit Input
 	// 	return _input
 				
 	// js void startTextInput: string initalValue = null, int forUser = -1
-	// 	if(forUser == -1 || Input_localUser?.id == forUser) {
-	// 		let input = Input_getOrCreateInputField()
+	// 	if(forUser == -1 || Input.localUser?.id == forUser) {
+	// 		let input = Input.getOrCreateInputField()
 	// 		if(initalValue != null) { 
 	// 			input.value = initalValue
 	// 		}
 	// 		_input.focus()
-	// 		Input_isTextInputActive = true
+	// 		Input.isTextInputActive = true
 	// 	}
 		
 	// js void stopTextInput
-	// 	Input_isTextInputActive = false
+	// 	Input.isTextInputActive = false
 		
 	// js void setTextInput: string value
-	// 	let input = Input_getOrCreateInputField()
+	// 	let input = Input.getOrCreateInputField()
 	// 	input.value = value
-	// 	Input_handleTextInput(7, value)
+	// 	Input.handleTextInput(7, value)
 		
 	// js void updateCursor
-	// 	document.body.style.cursor = Input_cursor
+	// 	document.body.style.cursor = Input.cursor
 
 	// onTextComposition: void(string characters) do
 	// 	for internalUsers -> user if .

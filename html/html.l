@@ -51,7 +51,7 @@ class Node
 		                    Time duration = 1 seconds
 		                    AnimationFill fill = Forwards
 		                    easing = "linear"
-		this.animate([Html_expandStyle(from), Html_expandStyle(to)], {@duration:duration, @fill:fill, @easing:easing})
+		this.animate([Html.expandStyle(from), Html.expandStyle(to)], {@duration:duration, @fill:fill, @easing:easing})
 	
 immutable HtmlEvent
 	Node target        // The element that triggered the event
@@ -61,7 +61,7 @@ immutable HtmlEvent
 	preventDefault     // Prevent the default action (for example, showing the context menu on a right click)
 		
 	inline Vector2 relativeMousePosition() Html.getRelativeMousePosition(this, this.currentTarget)
-	inline js Vector2 mousePosition() new Vector2(this.clientX/Platform_scale, this.clientY/Platform_scale)
+	inline js Vector2 mousePosition() new Vector2(this.clientX/Platform.scale, this.clientY/Platform.scale)
 
 enum Unit
 	Pixels = "px" // Pixels
@@ -193,7 +193,7 @@ transient float Angle
 	inline js bool  operator != (Angle a, float b) a!=b
 	
 	inline js float in: AngleUnit unit
-		(unit==1 ? this*Math_TwoPI : unit==2 ? this*360 : unit==3 ? this*400 : this)
+		(unit==1 ? this*Math.TwoPI : unit==2 ? this*360 : unit==3 ? this*400 : this)
 		
 enum AngleUnit
 	turns // Turn (one full rotation is 1)

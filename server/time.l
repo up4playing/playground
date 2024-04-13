@@ -123,7 +123,7 @@ skipInit transient float Time
 		
 	js static void printTimer: string text
 		let now = performance.now();
-		System_print(text+": "+(now-window._timerStart));
+		System.print(text+": "+(now-window._timerStart));
 		window._timerStart = now;
 		
 	static inline js float preciseTime := performance.now()

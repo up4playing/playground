@@ -35,29 +35,29 @@ http
 	// Perform an http get request
 	js void get: string url
 		         stored void(any result) code
-		let id = networkData_addCallback(code)
-		if(core_frame == 0 || Platform_waitingForInitialData) Platform_waitingForInitialData++
-		if(core_isPremiere && input_isCertain) {
+		let id = networkData.addCallback(code)
+		if(core.frame == 0 || Platform.waitingForInitialData) Platform.waitingForInitialData++
+		if(core.isPremiere && input.isCertain) {
 			let data = await (await fetch(url)).text()
 			log("http.get "+url+" -> "+data?.length+" bytes")
-			input_handleObject(id, data, 1)
+			input.handleObject(id, data, 1)
 		}
 		
 	js void getString: string url
 		               stored void(string result) code
-		let id = networkData_addCallback(code)
-		if(core_frame == 0 || Platform_waitingForInitialData) Platform_waitingForInitialData++
-		if(core_isPremiere && input_isCertain) {
+		let id = networkData.addCallback(code)
+		if(core.frame == 0 || Platform.waitingForInitialData) Platform.waitingForInitialData++
+		if(core.isPremiere && input.isCertain) {
 			let data = await (await fetch(url)).text()
 			log("http.get "+url+" -> "+data?.length+" bytes")
-			input_handleString(id, data, 1)
+			input.handleString(id, data, 1)
 		}
 		
 	internal js async string getDirectly string url
 		return await (await fetch(url)).text()
 		
 	internal js async dynamic getJsonDirectly: string url
-		if(!core_isPremiere || !input_isCertain) return null
+		if(!core.isPremiere || !input.isCertain) return null
 		return await (await fetch(url)).json()
 		
 	internal js async dynamic getJsonDirectly: string url, dynamic options
@@ -70,73 +70,73 @@ http
 	// Perform an http post request
 	js void post: string url
 		          stored void(any result) code
-		let id = networkData_addCallback(code)
-		if(core_frame == 0) Platform_waitingForInitialData++
-		if(core_isPremiere && input_isCertain) {
+		let id = networkData.addCallback(code)
+		if(core.frame == 0) Platform.waitingForInitialData++
+		if(core.isPremiere && input.isCertain) {
 			let data = await (await fetch(url, {method:"POST"})).text()
 			log("http.post "+url+" -> "+data?.length+" bytes")
-			input_handleObject(id, data)
+			input.handleObject(id, data)
 		}
 		
 	// Perform an http post request
 	js void post: string url
 		          any body
 		          stored void(any result) code
-		let id = networkData_addCallback(code)
-		if(core_frame == 0) Platform_waitingForInitialData++
-		if(core_isPremiere && input_isCertain) {
+		let id = networkData.addCallback(code)
+		if(core.frame == 0) Platform.waitingForInitialData++
+		if(core.isPremiere && input.isCertain) {
 			log("Actually fetching data: POST "+url)
 			let data = await (await fetch(url, {method:"POST", body:JSON.stringify(body)})).text()
 			log("http.post "+url+" -> "+data?.length+" bytes")
-			input_handleObject(id, data)
+			input.handleObject(id, data)
 		}
 		
 	js void post: string url
 		          any body
-		if(core_isPremiere && input_isCertain) {
+		if(core.isPremiere && input.isCertain) {
 			(await fetch(url, {method:"POST", body:JSON.stringify(body)})).text()
 		}
 		
 	// Perform an http put request
 	js void put: string url
 		         stored void(any result) code
-		let id = networkData_addCallback(code)
-		if(core_frame == 0) Platform_waitingForInitialData++
-		if(core_isPremiere && input_isCertain) {
+		let id = networkData.addCallback(code)
+		if(core.frame == 0) Platform.waitingForInitialData++
+		if(core.isPremiere && input.isCertain) {
 			let data = await (await fetch(url, {method:"PUT"})).text()
 			log("http.put "+url+" -> "+data?.length+" bytes")
-			input_handleObject(id, data)
+			input.handleObject(id, data)
 		}
 		
 	// Perform an http put request
 	js void put: string url
 		         any body
 		         stored void(any result) code
-		let id = networkData_addCallback(code)
-		if(core_frame == 0) Platform_waitingForInitialData++
-		if(core_isPremiere && input_isCertain) {
+		let id = networkData.addCallback(code)
+		if(core.frame == 0) Platform.waitingForInitialData++
+		if(core.isPremiere && input.isCertain) {
 			let data = await (await fetch(url, {method:"PUT", body:JSON.stringify(body)})).text()
 			log("http.put "+url+" -> "+data?.length+" bytes")
-			input_handleObject(id, data)
+			input.handleObject(id, data)
 		}
 		
 	// Perform an http delete request
 	js void delete: string url
 		            stored void(any result) code
-		let id = networkData_addCallback(code)
-		if(core_isPremiere && input_isCertain) {
+		let id = networkData.addCallback(code)
+		if(core.isPremiere && input.isCertain) {
 			let data = await (await fetch(url, {method:"DELETE"})).text()
 			log("http.delete "+url+" -> "+data?.length+" bytes")
-			input_handleObject(id, data)
+			input.handleObject(id, data)
 		}
 		
 	// Perform an http delete request
 	js void delete: string url
 		            any body
 		            stored void(any result) code
-		let id = networkData_addCallback(code)
-		if(core_isPremiere && input_isCertain) {
+		let id = networkData.addCallback(code)
+		if(core.isPremiere && input.isCertain) {
 			let data = await (await fetch(url, {method:"DELETE", body:JSON.stringify(body)})).text()
 			log("http.delete "+url+" -> "+data?.length+" bytes")
-			input_handleObject(id, data)
+			input.handleObject(id, data)
 		}
