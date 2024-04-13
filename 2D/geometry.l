@@ -324,6 +324,12 @@ struct Vector2
 		let lastPos = path.last
 		return {position:lastPos, vector:lastPos - path[path.length-2]}
 		
+js String
+immutable class string
+	Vector2 toVector2
+		let mid = this.indexOf " "
+		return Vector2(cast this[..mid], cast this[mid+1..]) 
+		
 PositionAndVector
 	Vector2 position
 	Vector2 vector
