@@ -1076,23 +1076,6 @@ skipInit global unit input
 		
 	// ---------------------------------------------- Touch Down ----------------------------------------------
 	
-	// Do something when the player touches or clicks anywhere on the screen
-	// Example: When the current player instance touches the screen, we print out the exact touch position.
-	//     Player
-	//         tick
-	//             onTouchDown by me
-	//                 print "Click at {touch.position}"
-	// Image: onTouchDown0.png
-	global onTouchDown: implicit nocolon Player[] by = null // Only consider touches or clicks by this player or list of players
-		                bool markAsHandled = true           // Mark the touch as handled so it won't trigger more touch events
-		                void(Touch touch) do                // Do this for each touch or click
-		for getTargetedPlayers(by) -> player
-			for internalUsers[player.id].downTouches -> touch
-				if !touch.handled and (player.enableTouch or touch.type != Touch)
-					log "down", touch.referencePosition
-					do touch
-					if markAsHandled: touch.handled = true
-
 	// Do something when the player touches or clicks within a given area
 	// Example: Draw an OK button and print "Clicked OK" when the user touches it.
 	//     app
@@ -1255,6 +1238,23 @@ skipInit global unit input
 				
 		if showClickableArea: drawPolygon position, points, color:{"#ff0000b0"}
 			
+	// Do something when the player touches or clicks anywhere on the screen
+	// Example: When the current player instance touches the screen, we print out the exact touch position.
+	//     Player
+	//         tick
+	//             onTouchDown by me
+	//                 print "Click at {touch.position}"
+	// Image: onTouchDown0.png
+	global onTouchDown: implicit nocolon Player[] by = null // Only consider touches or clicks by this player or list of players
+		                bool markAsHandled = true           // Mark the touch as handled so it won't trigger more touch events
+		                void(Touch touch) do                // Do this for each touch or click
+		for getTargetedPlayers(by) -> player
+			for internalUsers[player.id].downTouches -> touch
+				if !touch.handled and (player.enableTouch or touch.type != Touch)
+					log "down", touch.referencePosition
+					do touch
+					if markAsHandled: touch.handled = true
+
 	// Do something when the player touches or clicks, even if the event is already handled
 	global onTouchDownAny: implicit nocolon Player[] by = null // Only consider touches or clicks by this player or list of players
 		                   void(Touch touch) do                // Do this for each touch or click, even those that are already marked as handled
