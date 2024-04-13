@@ -847,9 +847,9 @@ global skipInit unit math
 	Angle getAngleForVector: Vector2 vector
 		return math.atan2(vector.y, vector.x)
 		
-	Vector2 getVectorForAngle: Angle angle      // The angle in turns (one full rotation is 1)
+	Vector2 getVectorForAngle: Angle angle      // The angle in turns (0: straight up, 1: one full rotation clockwise)
 		                       float radius = 1
-		return new Vector2(math.cos(angle)*radius, math.sin(angle)*radius)
+		return new Vector2(math.sin(angle)*radius, -math.cos(angle)*radius)
 		
 	Vector2 intersectLines: Vector2 startA
 		                    Vector2 endA
