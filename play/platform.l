@@ -73,7 +73,7 @@ transient skipInit unit Platform
 				graphics.onResize();
 				if(Platform.mode < 3/*Pause,Manipulator,Slide*/ && Platform.engineStarted) core.tick(/*draw*/true);
 			}
-		if(window.app.init) app.init();
+		if(app.init) app.init();
 		
 	// This is called when the application starts for the first time	
 	private start: bool isDebug, float referenceSizeX, float referenceSizeY, int userCount, bool simulateConnection, bool showSafeArea
@@ -110,7 +110,8 @@ transient skipInit unit Platform
 					roomId = roomId.substring(0,dashIndex)
 				
 			// If the roomId "staging", "latest" or negative, switch to staging mode (no audio, no fullscreen)
-			isStaging = isDebug or roomId == "staging" or roomId == "latest" or roomId?.startsWith("-")
+			isStaging = isDebug or roomId == "staging" or roomId == "latest" or (roomId and roomId?.startsWith("-"))
+			// TEMP until safe navigation is implemented                         ^
 			
 			openMedia
 				try
@@ -249,3 +250,7 @@ transient skipInit unit Platform
 		debugger
 		
 	quit
+		
+	js void openDevTools
+		require('@electron/remote/main').remote.getCurrentWindow().toggleDevTools()
+				

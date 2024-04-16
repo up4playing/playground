@@ -1477,7 +1477,7 @@ interface any
 // The base class for all classes
 interface object
 	inline js bool toBool() (this != null)
-	inline js string toString() object_stringify(this, 3)
+	// inline js string toString() object_stringify(this, 3)
 		
 	static inline js string toJson(any value) JSON.stringify(value)
 	static inline js string toFormattedJson(any value) JSON.stringify(value, null, "\t")
