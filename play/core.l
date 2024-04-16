@@ -421,8 +421,8 @@ transient skipInit unit core
 			if Platform.mode != Manipulator: input.updateCursor
 		audio.finishFrame
 				
-	js void appTick() if(window.app.tick) app.tick();
-	js string appDebugString() (window.app.debugString || "")
+	js void appTick() if(app.tick) app.tick();
+	js string appDebugString() (app.debugString || "")
 		
 	private Buffer snapshot = {}
 	private Buffer secondSnapshotForTesting = {}
@@ -512,7 +512,7 @@ transient skipInit unit core
 	
 	js void startApp
 		lobby.inLobby = false
-		if(window.app.start) app.start()
+		if(app.start) app.start()
 		
 	private adjustStartTime
 		startTime = math.round(currentTime - frame*targetFrameTime - (targetFrameTime*.5))

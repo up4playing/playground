@@ -73,7 +73,7 @@ transient skipInit unit Platform
 				graphics.onResize();
 				if(Platform.mode < 3/*Pause,Manipulator,Slide*/ && Platform.engineStarted) core.tick(/*draw*/true);
 			}
-		if(window.app.init) app.init();
+		if(app.init) app.init();
 		
 	// This is called when the application starts for the first time	
 	private start: bool isDebug, float referenceSizeX, float referenceSizeY, int userCount, bool simulateConnection, bool showSafeArea
