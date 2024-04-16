@@ -304,7 +304,7 @@ transient skipInit global unit graphics
 		                      HorizontalAlignment align = Center  // The horizontal alignment of the image
 		                      VerticalAlignment valign = Middle   // The vertical alignment of the image
 		                      SourceCodeLocation location
-		if(!image.texture?.ensureIsAvailable()) return
+		if(!image?.texture?.ensureIsAvailable()) return
 		if(graphics.isVisibleFor(visibleFor)) {
 			let f = image.frames[frame % image.frames.length]
 			let sizeX = size.x || f.w
@@ -426,12 +426,14 @@ transient skipInit global unit graphics
 		                   alpha = 1.0                          // The opacity of the image (0: fully transparent, 1: fully visible)
 		                   Color color = White                  // Tint the image with this color
 		                   Angle angle = 0.0                    // Rotate the image by this angle in turns (0: no rotation, 1: one full rotation)
+		                   flipX = false                        // Mirror the image horizontally
+		                   flipY = false                        // Mirror the image vertically
 		                   clickableMargin = Vector2(16,16)     // The margin around the image within which it is clickable
 		                   showClickableArea = false            // Highlight the clickable area for debugging
 		                   hotkey = Key.None                    // This keyboard shortcut will execute the onClick handler
 		                   void(Touch touch) onClick            // Execute this code when the user touches or clicks the image or presses the hotkey
 		                   SourceCodeLocation location
-		drawImage image, position, frame, size, angle, visibleFor, layer, alpha, color, location
+		drawImage image, position, frame, size, visibleFor, layer, alpha, color, angle, flipX, flipY, location
 			
 		// Handle click (only visible buttons are clickable)
 		let effectiveClickableBy = getClickableBy(visibleFor, clickableBy)
