@@ -250,3 +250,7 @@ transient skipInit unit Platform
 		debugger
 		
 	quit
+		
+	js void openDevTools
+		require('@electron/remote/main').remote.getCurrentWindow().toggleDevTools()
+				

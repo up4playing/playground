@@ -451,7 +451,7 @@ skipInit global unit input
 			let key = e.key
 			let ctrlOrCmd = e.ctrlKey || e.metaKey
 			if(window.require && key == "t" && e.metaKey && e.shiftKey)
-				require("electron").remote.getCurrentWindow().toggleDevTools()
+				Platform.openDevTools();
 			else
 			if(ctrlOrCmd && key == "s") {
 				// Save event steam
