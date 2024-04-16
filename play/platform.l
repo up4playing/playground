@@ -110,7 +110,8 @@ transient skipInit unit Platform
 					roomId = roomId.substring(0,dashIndex)
 				
 			// If the roomId "staging", "latest" or negative, switch to staging mode (no audio, no fullscreen)
-			isStaging = isDebug or roomId == "staging" or roomId == "latest" or roomId?.startsWith("-")
+			isStaging = isDebug or roomId == "staging" or roomId == "latest" or (roomId and roomId?.startsWith("-"))
+			// TEMP until safe navigation is implemented                         ^
 			
 			openMedia
 				try
@@ -212,7 +213,7 @@ transient skipInit unit Platform
 		else                          console.error(error)
 		
 	private inline js void sendFinished
-		console.log("[app] ----- Finished -----")
+		console.log("[app] Finished initializing")
 		if(Platform.isDebug) _sendToEditor({type:"finished"})
 	
 	private Time nextHeartbeatTime
@@ -221,7 +222,6 @@ transient skipInit unit Platform
 		if(!Platform.isDebug) return
 		let now = Date.now();
 		if(now > Platform.nextHeartbeatTime) {
-			console.log("[app]", (now%100000).toLocaleString("en-US", {minimumIntegerDigits:6, useGrouping:true})+" sending heartbeat from "+context);
 			Platform.nextHeartbeatTime = now + 3000;
 			_sendStringToEditor("~");
 		}
@@ -250,3 +250,7 @@ transient skipInit unit Platform
 		debugger
 		
 	quit
+		
+	js void openDevTools
+		require('@electron/remote/main').remote.getCurrentWindow().toggleDevTools()
+				

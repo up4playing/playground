@@ -113,10 +113,9 @@ struct Vector2
 	
 	toString := "{x}{unit} {y}{unit}"
 	
-	Vector2 operator + (Vector2 a, Vector2 b) return {a.x+b.x, a.y+b.y}
-	Vector2 operator - (Vector2 a, Vector2 b) return {a.x-b.x, a.y-b.y}
-	
-	Vector2 operator * (Vector2 a, float b)   return {a.x*b, a.y*b}
+	Vector2 + Vector2 other:   return {x + other.x, y + other.y}
+	Vector2 - Vector2 other:   return {x - other.x, y - other.y}
+	Vector2 * Vector2 other:   return {x * other.x, y * other.y}
 	
 enum AnimationFill
 	None = "none"
@@ -158,39 +157,27 @@ transient float Angle
 	// Returns true if the angle is not zero
 	inline js bool toBool := this
 	
-	inline js Angle operator +  (Angle a, Angle b) a+b
-	inline js Angle operator +  (Angle a, int b) a+b
-	inline js Angle operator +  (Angle a, float b) a+b
+	inline Angle + Angle value
+	inline Angle - Angle value
+	inline float / Angle value
+	inline float * Angle value
 	
-	inline js Angle operator -  (Angle a, Angle b) a-b
-	inline js Angle operator -  (Angle a, int b) a-b
-	inline js Angle operator -  (Angle a, float b) a-b
+	inline Angle += Angle value
+	inline Angle -= Angle value
+	inline Angle /= Angle value
+	inline Angle *= Angle value
+	
+	inline bool == Angle value
+	inline bool != Angle value
+	inline bool < Angle value
+	inline bool <= Angle value
+	inline bool > Angle value
+	inline bool >= Angle value
+	
+	inline js Angle % ensureSingleExecution Angle value
+		((this % value) + value) % value
+		
 	inline js Angle operator -  (Angle a) -a
-	
-	inline js float operator /  (Angle a, Angle b) a/b
-	inline js Angle operator /  (Angle a, int b) a/b
-	inline js Angle operator /  (Angle a, float b) a/b
-	
-	inline js Angle operator *  (Angle a, int b) a*b
-	inline js Angle operator *  (Angle a, float b) a*b
-	inline js Angle operator *  (int a, Angle b) a*b
-	inline js Angle operator *  (float a, Angle b) a*b
-	
-	inline js Angle operator %  (Angle a, int b) a%b
-	inline js Angle operator %  (Angle a, Angle b) a%b
-	
-	inline js bool  operator <  (Angle a, Angle b) a<b
-	inline js bool  operator <= (Angle a, Angle b) a<=b
-	inline js bool  operator >  (Angle a, Angle b) a>b
-	inline js bool  operator >= (Angle a, Angle b) a>=b
-	
-	inline js bool  operator == (Angle a, Angle b) a==b
-	inline js bool  operator == (Angle a, int b) a==b
-	inline js bool  operator == (Angle a, float b) a==b
-	
-	inline js bool  operator != (Angle a, Angle b) a!=b
-	inline js bool  operator != (Angle a, int b) a!=b
-	inline js bool  operator != (Angle a, float b) a!=b
 	
 	inline js float in: AngleUnit unit
 		(unit==1 ? this*Math.TwoPI : unit==2 ? this*360 : unit==3 ? this*400 : this)

@@ -324,6 +324,12 @@ struct Vector2
 		let lastPos = path.last
 		return {position:lastPos, vector:lastPos - path[path.length-2]}
 		
+js String
+immutable class string
+	Vector2 toVector2
+		let mid = this.indexOf " "
+		return Vector2(cast this[..mid], cast this[mid+1..]) 
+		
 PositionAndVector
 	Vector2 position
 	Vector2 vector
@@ -1261,12 +1267,12 @@ global transient unit System
 		                            TResult(
 		                                IntVector2 it // The current position of the vector we are iterating over with the for-loop
 		                            ) do              // Select the field or expression to be included in the result
-		IntVector2_enumerate(new IntVector2(0,0), to, do)
+		IntVector2.enumerate(new IntVector2(0,0), to, do)
 
 	global inline js TResult[] for: IntVector2 from     // Iterator over both dimensions of the vector starting from this vector
 		                            TResult(
 		                                IntVector2 it   // The current position of the vector we are iterating over with the for-loop
 		                            ) do                // Select the field or expression to be included in the result
 		                            label IntVector2 to // Iterator over both dimensions of the vector towards this exclusive upper bound
-		IntVector2_enumerate(from, to, do)
+		IntVector2.enumerate(from, to, do)
 		

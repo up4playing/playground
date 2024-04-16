@@ -8,6 +8,7 @@ immutable struct int
 	
 	inline int * int value
 	inline float * float value
+	inline Angle * Angle value
 	
 	inline float / int value
 	inline float / float value
@@ -314,10 +315,6 @@ immutable class string
 	inline js dynamic toJson() JSON.parse(this)
 	inline Time toTime() Time.fromTimeString(this)
 		
-	Vector2 toVector2()
-		let mid = this.indexOf " "
-		return Vector2(cast this[..mid], cast this[mid+1..]) 
-		
 	inline js int parseInt(int radix) parseInt(this, radix)
 	
 	// Splits the string at the given character into a list of substrings
@@ -369,7 +366,6 @@ immutable class string
 		                  string to
 		                  int start = 0
 		let index = this.indexOf(from, start)
-		if(index == -1) return ""
 		let startIndex = index + from.length
 		let endIndex = this.indexOf(to, startIndex)
 		if(endIndex == -1) return this.substring(startIndex)
@@ -858,8 +854,8 @@ class List<T>
 	inline js T[] sort: float(T a, T b) comparer // A function returning 1 if "a" is larger, -1 if "b" is larger, 0 if they are equal
 		this.sort(comparer)
 	
-	// inline js T[] sort: Time(T a, T b) comparer // A function returning 1 if "a" is larger, -1 if "b" is larger, 0 if they are equal
-	// 	this.sort(comparer)
+	inline js T[] sort: Time(T a, T b) comparer // A function returning 1 if "a" is larger, -1 if "b" is larger, 0 if they are equal
+		this.sort(comparer)
 	
 	// Sort the list by a given expression
 	T[] orderBy: float(T a) expression // First order by this expression
@@ -882,14 +878,14 @@ class List<T>
 		if order == Ascending: return this.sort(expression(a) - expression(b))
 		else                   return this.sort(expression(b) - expression(a))
 		
-	// T[] orderBy: Time(T a) expression // First order by this expression
-	// 	return this.sort(expression(a) - expression(b))
+	T[] orderBy: Time(T a) expression // First order by this expression
+		return this.sort(expression(a) - expression(b))
 		
-	// // Sort the list by a given expression
-	// T[] orderBy: Time(T a) expression // First order by this expression
-	// 	         SortingOrder order    // Specifies if you want to sort in ascending or descending order
-	// 	if order == Ascending: return this.sort(expression(a) - expression(b))
-	// 	else                   return this.sort(expression(b) - expression(a))
+	// Sort the list by a given expression
+	T[] orderBy: Time(T a) expression // First order by this expression
+		         SortingOrder order    // Specifies if you want to sort in ascending or descending order
+		if order == Ascending: return this.sort(expression(a) - expression(b))
+		else                   return this.sort(expression(b) - expression(a))
 		
 	// Returns true if the given condition is true for any item in the list
 	inline js bool any: bool(T a) predicate // The condition to check
@@ -903,7 +899,10 @@ class List<T>
 		this.every(predicate)
 		
 	// Return a list that contains the selected field or expression for each item
-	inline js TValue[] select: TValue(T it) selector // Selects a field or expression for each item
+	inline js TValue[] select: TValue(
+		                           T it,  // The current item of the list
+		                           int i  // The index of the current item of the list
+		                       ) selector // Selects a field or expression for each item
 		this.map(selector)
 		
 	// Get the selected field or expression for each item and flattens the result
@@ -1471,18 +1470,17 @@ struct Nullable<T>
 	
 // A Hashtable with keys of type 'string' and values of type 'any'
 interface dynamic
-	inline js string toJson() JSON.stringify(this)
-	inline js string toFormattedJson() JSON.stringify(this, null, "\t")
-	
+
 // Any type
 interface any
-	
+
 // The base class for all classes
 interface object
 	inline js bool toBool() (this != null)
-	inline js string toString() object.stringify(this, 3)
-	inline js string toJson() JSON.stringify(this)
-	inline js string toFormattedJson() JSON.stringify(this, null, "\t")
+	// inline js string toString() object_stringify(this, 3)
+		
+	static inline js string toJson(any value) JSON.stringify(value)
+	static inline js string toFormattedJson(any value) JSON.stringify(value, null, "\t")
 		
 	static internal js string stringify: object subject, int depth = 0 
 		switch(typeof subject)

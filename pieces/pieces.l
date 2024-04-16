@@ -408,7 +408,7 @@ Piece Coin
 				if closestCoinType == Over: mergeWith closestCoin; else
 				if !isBeingMoved:           transferToNeighbor closestCoin
 		else
-			 position, radius:64, by:owner
+			onTouchUp position, radius:64, by:owner
 				transferToNeighbor closestCoin
 			
 		if isInfinate or value or allowZero
