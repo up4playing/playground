@@ -110,7 +110,8 @@ transient skipInit unit Platform
 					roomId = roomId.substring(0,dashIndex)
 				
 			// If the roomId "staging", "latest" or negative, switch to staging mode (no audio, no fullscreen)
-			isStaging = isDebug or roomId == "staging" or roomId == "latest" or roomId?.startsWith("-")
+			isStaging = isDebug or roomId == "staging" or roomId == "latest" or (roomId and roomId?.startsWith("-"))
+			// TEMP until safe navigation is implemented                         ^
 			
 			openMedia
 				try
