@@ -8,7 +8,7 @@ networkData
 		networkData.callbacks.add do
 		return id
 				
-localStorage
+storage
 	inline js void set: string key, object value
 		localStorage.setItem(key, JSON.stringify(value))
 		

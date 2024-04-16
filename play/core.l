@@ -745,7 +745,7 @@ skipInit transient unit statistics
 		this.gameLogs.add value
 	
 	startSession
-		let user = localStorage.getObjectDirectly("user")
+		let user = storage.getObjectDirectly("user")
 		let server = Platform.hostname.getUntil(".")
 		let userId = input.localUser.id
 		id = core.roomId*100 + userId
