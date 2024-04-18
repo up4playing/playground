@@ -18,7 +18,6 @@ transient skipInit unit Platform
 	// Configuration
 	public userCount = 4
 	public supportedUserCount = Range 2..4
-	public bool showSafeArea = true
 	public bool showDebugInfo = false
 	public bool isLocal = false
 	public IntervalMode intervalMode = JavaScriptInterval
@@ -82,16 +81,17 @@ transient skipInit unit Platform
 			this.nextHeartbeatTime = 0
 			heartbeat "start"
 			
-			initMedia
-			initPlatform
-			statistics.startTime = now
 			this.engineStarted = false
 			this.isDebug = isDebug
 			this.userCount = userCount
 			core.simulateConnection = simulateConnection
-			this.showSafeArea = showSafeArea
+			graphics.showSafeArea = showSafeArea
 			showDebugInfo = getLocalStorageObject("showDebugInfo") == "true"
 			
+			initMedia
+			initPlatform
+			statistics.startTime = now
+		
 			await graphics.setup {referenceSizeX, referenceSizeY}
 			graphics.onResize
 			// drawLoading
