@@ -81,16 +81,15 @@ transient skipInit unit Platform
 			this.nextHeartbeatTime = 0
 			heartbeat "start"
 			
+			initMedia
+			initPlatform
+			statistics.startTime = now
 			this.engineStarted = false
 			this.isDebug = isDebug
 			this.userCount = userCount
 			core.simulateConnection = simulateConnection
 			graphics.showSafeArea = showSafeArea
 			showDebugInfo = getLocalStorageObject("showDebugInfo") == "true"
-			
-			initMedia
-			initPlatform
-			statistics.startTime = now
 		
 			await graphics.setup {referenceSizeX, referenceSizeY}
 			graphics.onResize
