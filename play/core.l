@@ -262,6 +262,8 @@ transient skipInit unit core
 	bool logging = false
 	int replayFrom = -1
 	
+	RollingAverage averageDrawTime, averageTickTime
+	
 	collectStatistics
 		// Players
 		if mode == Connected and players.length > 1 and frame > joinFrame + 120
@@ -409,14 +411,14 @@ transient skipInit unit core
 			
 		try
 			Framework.tick
-			tickTime = Time.measure
+			averageTickTime.add tickTime = Time.measure
 				if lobby.inLobby: lobby.tick
 				else              appTick
 		catch
 			onError error
 			
 		if draw and not Platform.waitingForInitialData
-			drawTime = Time.measure
+			averageDrawTime.add drawTime = Time.measure
 				graphics.finishFrame
 			if Platform.mode != Manipulator: input.updateCursor
 		audio.finishFrame
