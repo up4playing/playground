@@ -681,6 +681,14 @@ class List<T>
 		return sum	
 		
 	Vector2 average: Vector2(T it) selector
+		int count
+		Vector2 sum = {0,0}
+		for this
+			sum += selector(.)
+			count++
+		return sum/count
+		
+	Vector2 average: Vector2(T it) selector
 		             bool(T it) where
 		int count
 		Vector2 sum = {0,0}
