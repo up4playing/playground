@@ -320,7 +320,7 @@ global unit fx
 		
 	interpolate: float from = 0
 		         float to = 1
-		         void(float progress) do
+		         stored void(float progress) do
 		         Time delay = 0
 		         Time duration = 300
 		add InterpolateAnimation startTime:Time.now+delay, duration, do:do(from + (to - from) * .)
