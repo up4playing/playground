@@ -739,6 +739,9 @@ transient immutable float Angle
 	inline bool > Angle value
 	inline bool >= Angle value
 	
+	inline js Angle normalize
+		(((this + .5) % 1) + 1) % 1 - .5
+	
 	inline js Angle % ensureSingleExecution Angle value
 		((this % value) + value) % value
 		
