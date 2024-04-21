@@ -195,6 +195,7 @@ transient skipInit unit core
 	// We ensure that step is called every targetFrameTime milliseconds.
 	internal animationFrame
 		now = currentTime
+		if lastAnimationFrame: frameTimes.add now - lastAnimationFrame
 
 		// Ping
 		ServerNetwork.ping
@@ -262,7 +263,7 @@ transient skipInit unit core
 	bool logging = false
 	int replayFrom = -1
 	
-	RollingAverage averageDrawTime, averageTickTime
+	RollingList drawTimes, tickTimes, frameTimes = {length:150}
 	
 	collectStatistics
 		// Players
@@ -411,14 +412,14 @@ transient skipInit unit core
 			
 		try
 			Framework.tick
-			averageTickTime.add tickTime = Time.measure
+			tickTimes.add tickTime = Time.measure
 				if lobby.inLobby: lobby.tick
 				else              appTick
 		catch
 			onError error
 			
 		if draw and not Platform.waitingForInitialData
-			averageDrawTime.add drawTime = Time.measure
+			drawTimes.add drawTime = Time.measure
 				graphics.finishFrame
 			if Platform.mode != Manipulator: input.updateCursor
 		audio.finishFrame

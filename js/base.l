@@ -2015,7 +2015,7 @@ struct Average
 		count++
 	average := total / count		
 
-struct RollingAverage
+struct RollingList
 	int length = 30
 	int fractionDigits = 1
 	
@@ -2025,14 +2025,26 @@ struct RollingAverage
 	add: float value
 		values[index++ % length] = value
 		
-	implicit float toFloat()
-		if values.length == 0: return 0
+	average
+		if values.length == 0: return 0.0
 		float total
 		for values: total += .
 		return total / (values.length max length)
 	
+	max
+		if values.length == 0: return 0.0
+		float max = float.minValue
+		for values: if . > max: max = .
+		return max
+	
+	min
+		if values.length == 0: return 0.0
+		float min = float.maxValue
+		for values: if . < min: min = .
+		return min
+	
 	implicit string toString()
-		return toFloat.format(fractionDigits)
+		return average.format(fractionDigits)
 
 immutable Range
 	int from // The start of the range
