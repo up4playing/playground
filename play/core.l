@@ -262,6 +262,8 @@ transient skipInit unit core
 	bool logging = false
 	int replayFrom = -1
 	
+	RollingAverage averageDrawTime, averageTickTime
+	
 	collectStatistics
 		// Players
 		if mode == Connected and players.length > 1 and frame > joinFrame + 120
@@ -409,20 +411,20 @@ transient skipInit unit core
 			
 		try
 			Framework.tick
-			tickTime = Time.measure
+			averageTickTime.add tickTime = Time.measure
 				if lobby.inLobby: lobby.tick
 				else              appTick
 		catch
 			onError error
 			
 		if draw and not Platform.waitingForInitialData
-			drawTime = Time.measure
+			averageDrawTime.add drawTime = Time.measure
 				graphics.finishFrame
 			if Platform.mode != Manipulator: input.updateCursor
 		audio.finishFrame
 				
-	js void appTick() if(window.app.tick) app.tick();
-	js string appDebugString() (window.app.debugString || "")
+	js void appTick() if(app.tick) app.tick();
+	js string appDebugString() (app.debugString || "")
 		
 	private Buffer snapshot = {}
 	private Buffer secondSnapshotForTesting = {}
@@ -512,7 +514,7 @@ transient skipInit unit core
 	
 	js void startApp
 		lobby.inLobby = false
-		if(window.app.start) app.start()
+		if(app.start) app.start()
 		
 	private adjustStartTime
 		startTime = math.round(currentTime - frame*targetFrameTime - (targetFrameTime*.5))
@@ -745,7 +747,7 @@ skipInit transient unit statistics
 		this.gameLogs.add value
 	
 	startSession
-		let user = localStorage.getObjectDirectly("user")
+		let user = storage.getObjectDirectly("user")
 		let server = Platform.hostname.getUntil(".")
 		let userId = input.localUser.id
 		id = core.roomId*100 + userId

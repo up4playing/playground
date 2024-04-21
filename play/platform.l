@@ -18,7 +18,6 @@ transient skipInit unit Platform
 	// Configuration
 	public userCount = 4
 	public supportedUserCount = Range 2..4
-	public bool showSafeArea = true
 	public bool showDebugInfo = false
 	public bool isLocal = false
 	public IntervalMode intervalMode = JavaScriptInterval
@@ -73,7 +72,7 @@ transient skipInit unit Platform
 				graphics.onResize();
 				if(Platform.mode < 3/*Pause,Manipulator,Slide*/ && Platform.engineStarted) core.tick(/*draw*/true);
 			}
-		if(window.app.init) app.init();
+		if(app.init) app.init();
 		
 	// This is called when the application starts for the first time	
 	private start: bool isDebug, float referenceSizeX, float referenceSizeY, int userCount, bool simulateConnection, bool showSafeArea
@@ -89,9 +88,9 @@ transient skipInit unit Platform
 			this.isDebug = isDebug
 			this.userCount = userCount
 			core.simulateConnection = simulateConnection
-			this.showSafeArea = showSafeArea
+			graphics.showSafeArea = showSafeArea
 			showDebugInfo = getLocalStorageObject("showDebugInfo") == "true"
-			
+		
 			await graphics.setup {referenceSizeX, referenceSizeY}
 			graphics.onResize
 			// drawLoading

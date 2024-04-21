@@ -166,6 +166,7 @@ transient skipInit global unit graphics
 	public Vector2 referenceSize = {1920, 1080}
 	public ScaleMode scaleMode = Auto, effectiveScaleMode
 	public AnchorMode anchor = Center
+	public bool showSafeArea = true
 	visible Vector2 pixelSize
 	visible Vector2 size
 	visible float pixelRatio
@@ -198,14 +199,15 @@ transient skipInit global unit graphics
 		if scaleMode == Auto
 			if ratio.x < ratio.y: effectiveScaleMode = FixedWidth;  scale = ratio.x
 			else                  effectiveScaleMode = FixedHeight; scale = ratio.y
-			size = referenceSize
 		else
-		if scaleMode == FixedWidth
+			effectiveScaleMode = scaleMode
+			
+		if effectiveScaleMode == FixedWidth
 			effectiveScaleMode = scaleMode
 			scale = ratio.x
 			size = {referenceSize.x, pixelSize.y/scale}
 		else
-		if scaleMode == FixedHeight
+		if effectiveScaleMode == FixedHeight
 			effectiveScaleMode = scaleMode
 			scale = ratio.y; 
 			size = {pixelSize.x/scale, referenceSize.y}
@@ -269,7 +271,7 @@ transient skipInit global unit graphics
 	internal js void drawSafeArea
 		graphics.resetTransform()
 		graphics.context.fillStyle = "#404040"
-		if(Platform.showSafeArea) {
+		if(graphics.showSafeArea) {
 			if(graphics.effectiveScaleMode == 1) {
 				// Fixed width
 				let ratio = graphics.pixelSize.x / graphics.referenceSize.x

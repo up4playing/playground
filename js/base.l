@@ -2019,6 +2019,25 @@ struct Average
 		count++
 	average := total / count		
 
+struct RollingAverage
+	int length = 30
+	int fractionDigits = 1
+	
+	private float[] values
+	private int index
+	
+	add: float value
+		values[index++ % length] = value
+		
+	implicit float toFloat()
+		if values.length == 0: return 0
+		float total
+		for values: total += .
+		return total / (values.length max length)
+	
+	implicit string toString()
+		return toFloat.format(fractionDigits)
+
 immutable Range
 	int from // The start of the range
 	int to   // The end of the range
