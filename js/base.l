@@ -1363,6 +1363,9 @@ class List<T>
 	// The first item of the list
 	inline js T first() this[0]
 	
+	// The second item of the list
+	inline js T second() this[1]
+	
 	// The last item of the list
 	inline js T last() this[this.length-1]
 		
