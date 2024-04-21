@@ -182,6 +182,16 @@ enum Key
 	Down         =  40
 	Insert       =  45
 	Delete       =  46
+	Number0      =  48
+	Number1      =  49
+	Number2      =  50
+	Number3      =  51
+	Number4      =  52
+	Number5      =  53
+	Number6      =  54
+	Number7      =  55
+	Number8      =  56
+	Number9      =  57
 	A            =  65
 	B            =  66
 	C            =  67
@@ -481,7 +491,7 @@ skipInit global unit input
 				e.preventDefault();
 			}
 			else
-			if(key >= "1" && key <= "0") {
+			if((key >= "1" && key <= "0") && (e.altKey || e.ctrlKey)) {
 				let index = key - "0"
 				if(e.altKey)  { core.save(index); e.preventDefault(); } else
 				if(e.ctrlKey) { core.restore(index); e.preventDefault(); }
