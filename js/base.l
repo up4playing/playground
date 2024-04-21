@@ -1513,6 +1513,13 @@ interface object
 				return subject.toString()
 		}
 
+struct Reference<T>
+	dynamic container
+	string key
+	set: T value
+		container[key] = value
+	T get
+		return container[key]
 		
 // This struct is automatically filled with the source code location
 transient immutable SourceCodeLocation
