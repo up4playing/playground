@@ -91,6 +91,7 @@ priority class Player
 	
 	// Touch input
 	internal Touch[] touches
+	internal Touch[] downTouches
 	internal bool enableTouch = true
 	
 	// Text input
@@ -112,9 +113,14 @@ priority class Player
 
 	internal clearEvents
 		bool hasTouch = touches.any.type == Touch
-		for touches <-
-			if (.phase == Up and .type >= Touch) or (hasTouch and .type != Touch)
-				touches.remove .
+		for touches backwards
+			if .phase == Up
+				if .type >= Touch or (hasTouch and .type != Touch): touches.removeAt i
+				else                                                .phase = Still
+				downTouches.remove .
+			else
+			if .phase == Down
+				.phase = Still
 	
 enum InputType: None, TouchDown, TouchMove, TouchUp, Scroll, KeyDown, KeyUp, TextInput, Stick, Trigger, Grip, ButtonDown, ButtonUp, ControllerTransform, HeadTransform, DeviceRotation, Join, Lost, StillConnected, SetState, Navigate, GameController, String, Json, Object
 		
@@ -803,6 +809,7 @@ skipInit global unit input
 							player.touches.add touch
 							if core.logging: core.parseLog += " down(new) {id} {referencePos} {type}"
 								
+						player.downTouches.add touch
 						player.pointerPosition = referencePos
 						internalUser.downTouches.add touch
 					else
@@ -810,7 +817,7 @@ skipInit global unit input
 						let touch = player.touches.find.id == id
 						if touch
 							// Update the touch in player.touches
-							touch.phase = cast inputType
+							if touch.phase == Still: touch.phase = cast inputType
 							touch.referencePosition = referencePos
 							touch.type = type
 							if isSmoothPosition: touch.smoothPosition = referencePos
