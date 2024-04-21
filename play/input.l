@@ -420,6 +420,7 @@ skipInit global unit input
 	ShowPointersMode showPointersMode = Remote
 	ShowPointersMode showPointersDuringPlaybackMode = LocalAndRemote
 	bool showPointers = true
+	bool enableClickingWithAltKey = false
 	bool ignoreFirstClick
 	
 	string textInput
@@ -434,6 +435,7 @@ skipInit global unit input
 		return new Vector2(p.x/Platform.pixelRatio, p.y/Platform.pixelRatio, null)
 
 	private js void initHandlers
+		let pointerX = 0, pointerY = 0, clickWithAltKeyX = 0, clickWithAltKeyY = 0
 		window.onpointerdown = e => {
 			if(e.button == 0 && Platform.mode == 0) {
 				Platform.record();
@@ -442,6 +444,7 @@ skipInit global unit input
 			input.handleTouchEvent(1, e.pageX, e.pageY, e.pointerType, e.pointerId, e.button, e.shiftKey, e.altKey, e.ctrlKey || e.metaKey);
 		}
 		window.onpointermove = e => {
+			pointerX = e.pageX; pointerY = e.pageY;
 			input.handleTouchEvent(2, e.pageX, e.pageY, e.pointerType, e.pointerId, e.button, e.shiftKey, e.altKey, e.ctrlKey || e.metaKey);
 		}
 		window.onpointerup = e => {
@@ -508,6 +511,9 @@ skipInit global unit input
 				Platform.toggleSmallScreen();
 			} else if(key == "F11") { 
 				graphics.copyScreenshotToClipboard();
+			} else if(key == "Alt" && input.enableClickingWithAltKey) {
+				clickWithAltKeyX = pointerX; clickWithAltKeyY = pointerY;
+				input.handleTouchEvent(1, clickWithAltKeyX, clickWithAltKeyY, "touch", /*pointerId*/127, /*button*/0, /*shift*/false, /*alt*/false, /*ctrl*/false);
 			} else {
 				let typedKey = key && key.length == 1  && !e.ctrlKey && !e.metaKey && !e.altKey? key : ""
 				input.handleKeyEvent(5, keyCode, typedKey)
@@ -515,7 +521,11 @@ skipInit global unit input
 			}
 		}
 		window.onkeyup = e => {
-			input.handleKeyEvent(6, e.keyCode)
+			if(e.key == "Alt" && input.enableClickingWithAltKey) {
+				input.handleTouchEvent(3, clickWithAltKeyX, clickWithAltKeyY, "touch", /*pointerId*/127, /*button*/0, /*shift*/false, /*alt*/false, /*ctrl*/false);
+			} else {
+				input.handleKeyEvent(6, e.keyCode)
+			}
 		}
 			
 		// Handles navigating back or forward in the browser	
