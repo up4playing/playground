@@ -49,16 +49,17 @@ immutable Color
 immutable Texture
 	string file
 	Vector2 size
+	dynamic imageOrCanvas, context
 	
 	Texture
-		if Platform.engineStarted
+		if Platform.engineStarted and file
 			open
 			
 	js bool ensureIsAvailable()
-		if(!this._htmlImage) {
-			this._htmlImage = _htmlImageCache[this.file]
+		if(!this.imageOrCanvas && this.file) {
+			this.imageOrCanvas = _htmlImageCache[this.file]
 		}
-		return this._htmlImage != null
+		return this.imageOrCanvas != null
 	
 	js void open
 		if(!window._htmlImageCache) _htmlImageCache = {}
@@ -67,7 +68,7 @@ immutable Texture
 			return new Promise((resolve, reject) => {
 				image = new Image()
 				image.onload = e => {
-					this._htmlImage = image
+					this.imageOrCanvas = image
 					window._htmlImageCache[this.file] = image
 					this.size = new Vector2(image.width, image.height, null)
 					resolve(this);
@@ -75,10 +76,57 @@ immutable Texture
 				image.src = this.file.startsWith("http") || this.file.startsWith("data") ? this.file : _basePath+this.file
 			})
 		} else {
-			this._htmlImage = image
+			this.imageOrCanvas = image
 			this.size = new Vector2(image.width, image.height, null)
 			return this
 		}
+		
+	js void setSize: Vector2 size
+		if((size.x != this.size.x || size.y != this.size.y) && this.imageOrCanvas) {
+			this.imageOrCanvas.width = size.x
+			this.imageOrCanvas.height = size.y
+		}
+		this.size.assign(size);
+		
+	js void modify: void() do  // This block of code will draw on the created image instead of drawing on the screen
+		// Save previous canvas
+		let prevContext = graphics.context
+		let prevPixelSizeX = graphics.pixelSize.x
+		let prevPixelSizeY = graphics.pixelSize.y
+		let prevItems = graphics.items
+		
+		// Create canvas
+		if(!this.context) {
+			this.imageOrCanvas = document.createElement("canvas")
+			this.imageOrCanvas.width = this.size.x
+			this.imageOrCanvas.height = this.size.y
+			this.context = this.imageOrCanvas.getContext("2d")
+		}
+		
+		// Setup canvas
+		graphics.items = []
+		graphics.context = this.context
+		graphics.pixelSize.x = this.size.x
+		graphics.pixelSize.y = this.size.y
+		let a = graphics.localMatrix.matrix, b = graphics.totalMatrix.matrix
+		let a0 = graphics.localMatrix.m0, a1 = graphics.localMatrix.m1, a2 = graphics.localMatrix.m2, a3 = graphics.localMatrix.m3, a4 = graphics.localMatrix.m4, a5 = graphics.localMatrix.m5
+		let b0 = graphics.totalMatrix.m0, b1 = graphics.totalMatrix.m1, b2 = graphics.totalMatrix.m2, b3 = graphics.totalMatrix.m3, b4 = graphics.totalMatrix.m4, b5 = graphics.totalMatrix.m5
+		graphics.localMatrix.set(1, 0, 0, 1, -this.size.x/2, -this.size.y/2)
+		graphics.totalMatrix.set(1, 0, 0, 1, this.size.x/2, this.size.y/2)
+		graphics.context.clearRect(0, 0, graphics.pixelSize.x, graphics.pixelSize.y)
+		graphics.context.textBaseline = "top"
+		
+		// Draw on canvas
+		do()
+		graphics.drawItems()
+		
+		// Restore previous canvas
+		graphics.localMatrix.m0 = a0; graphics.localMatrix.m1 = a1; graphics.localMatrix.m2 = a2; graphics.localMatrix.m3 = a3; graphics.localMatrix.m4 = a4; graphics.localMatrix.m5 = a5
+		graphics.totalMatrix.m0 = b0; graphics.totalMatrix.m1 = b1; graphics.totalMatrix.m2 = b2; graphics.totalMatrix.m3 = b3; graphics.totalMatrix.m4 = b4; graphics.totalMatrix.m5 = b5
+		graphics.context = prevContext
+		graphics.pixelSize.x = prevPixelSizeX
+		graphics.pixelSize.y = prevPixelSizeY
+		graphics.items = prevItems
 		
 // A font that can be used to draw text
 skipInit immutable Font
@@ -320,7 +368,7 @@ transient skipInit global unit graphics
 				sizeX, sizeY,
 				layer, alpha, graphics.currentClippingPath, image.file,
 				location, position.location, size.location,
-				image.texture._htmlImage,
+				image.texture.imageOrCanvas,
 				f.x1, f.y1, f.w, f.h,
 				color
 			))
@@ -365,7 +413,7 @@ transient skipInit global unit graphics
 					sizeX, sizeY,
 					layer, alpha, graphics.currentClippingPath, image.file, 
 					location, position.location, size.location,
-					image.texture._htmlImage,
+					image.texture.imageOrCanvas,
 					f.x1, f.y1, f.w, f.h,
 					color
 				))
@@ -880,7 +928,7 @@ transient skipInit global unit graphics
 				sizeX, sizeY,
 				layer, alpha, graphics.currentClippingPath, texture.file,
 				location, position.location, size.location,
-				texture._htmlImage,
+				texture.imageOrCanvas,
 				0, 0, texture.size.x, texture.size.y,
 				color
 			))
@@ -913,7 +961,7 @@ transient skipInit global unit graphics
 				sizeX, sizeY,
 				layer, alpha, graphics.currentClippingPath, texture.file, 
 				location, position.location, size.location,
-				texture._htmlImage,
+				texture.imageOrCanvas,
 				sourcePosition.x+texture.size.x/2-sourceSize.x/2,
 				sourcePosition.y+texture.size.y/2-sourceSize.y/2,
 				sourceSize.x, 
