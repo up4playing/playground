@@ -375,7 +375,7 @@ transient skipInit unit PeerNetwork
 	
 	js void setVideoInput: string videoInputId
 		                   Player player
-		if(Platform.fastForward || input.localUser.id != player.id ||  PeerNetwork.videoInputId == videoInputId) return;
+		if(Platform.fastForward || input.localUser.id != player.id ||  PeerNetwork.videoInputId == videoInputId || !videoInputId) return;
 		PeerNetwork.videoInputId = videoInputId;
 		
 		// Create local media stream
@@ -398,7 +398,7 @@ transient skipInit unit PeerNetwork
 			
 	js void setAudioInput: string audioInputId
 		                   Player player
-		if(Platform.fastForward || input.localUser.id != player.id || PeerNetwork.audioInputId == audioInputId) return;
+		if(Platform.fastForward || input.localUser.id != player.id || PeerNetwork.audioInputId == audioInputId || !audioInputId) return;
 		PeerNetwork.audioInputId = audioInputId;
 		
 		// Create local media stream
@@ -418,7 +418,7 @@ transient skipInit unit PeerNetwork
 			
 	js void setAudioOutput: string audioOutputId
 		                    Player player
-		if(Platform.fastForward || input.localUser.id != player.id || PeerNetwork.audioOutputId == audioOutputId) return;
+		if(Platform.fastForward || input.localUser.id != player.id || PeerNetwork.audioOutputId == audioOutputId || !audioOutputId) return;
 		PeerNetwork.audioOutputId = audioOutputId;
 		
 		// Update audio elements
