@@ -39,6 +39,7 @@ transient skipInit unit Platform
 	internal PlatformMode mode
 	internal bool fastForward
 	internal int waitingForInitialData
+	internal int receivedInitialData
 	
 	private inline js void initMedia
 		audio.init();
