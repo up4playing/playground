@@ -1028,6 +1028,10 @@ skipInit global unit input
 			for .controller.buttons
 				if p.controllerKeyDownFrame[i]: 
 					.state = true
+					
+		if Platform.receivedInitialData
+			Platform.waitingForInitialData -= Platform.receivedInitialData
+			Platform.receivedInitialData = 0
 						
 	internal updatePlayers
 		players.orderBy.id

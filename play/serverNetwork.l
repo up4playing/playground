@@ -121,7 +121,7 @@ transient skipInit unit ServerNetwork
 		core.log "Joining room {roomId} as user {userId}"
 		
 		// The first person in the room triggers sending an notification with the link to everybody
-		if userCount <= 1 and !Platform.isStaging: http.getDirectly "{Platform.protocolAndHost}:3114/sendGamedayNotification/{core.gameId}/{core.roomId}/hasStarted"
+		if userCount <= 1 and !Platform.isStaging: http.getStringDirectly "{Platform.protocolAndHost}:3114/sendGamedayNotification/{core.gameId}/{core.roomId}/hasStarted"
 
 		
 	float nextPingTime, fastestPingPongTime = int.maxValue, lastPingPongTime
