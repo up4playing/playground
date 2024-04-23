@@ -919,7 +919,7 @@ class List<T>
 		
 	inline js T find: bool(T a) condition // The condition to check
 		              int startIndex      // Start searching at this index
-		List.findStartingAtIndex(this, condition, startIndex)
+		Array.findStartingAtIndex(this, condition, startIndex)
 		
 	private static T findStartingAtIndex: T[] list            // The list to search
 		                                  bool(T a) condition // The condition to check
@@ -1027,11 +1027,11 @@ class List<T>
 	js T percentile: int value
 		if(this.length == 0) return 0
 		if(this.length == 1) return this[0]
-		if(!List.temporaryCopy) List.temporaryCopy = []
-		const len = List.temporaryCopy.length = this.length
-		for(let i=0; i<len; ++i) List.temporaryCopy[i] = this[i] 
-		List.temporaryCopy.sort((a,b) => a - b)
-		return List.temporaryCopy[Math.round((List.temporaryCopy.length-1) * value / 100)]
+		if(!Array.temporaryCopy) Array.temporaryCopy = []
+		const len = Array.temporaryCopy.length = this.length
+		for(let i=0; i<len; ++i) Array.temporaryCopy[i] = this[i] 
+		Array.temporaryCopy.sort((a,b) => a - b)
+		return Array.temporaryCopy[Math.round((Array.temporaryCopy.length-1) * value / 100)]
 		
 	min: int(T a) selector 
 		 int threshold = int.maxValue
@@ -1516,6 +1516,13 @@ interface object
 				return subject.toString()
 		}
 
+struct Reference<T>
+	dynamic container
+	string key
+	set: T value
+		container[key] = value
+	T get
+		return container[key]
 		
 // This struct is automatically filled with the source code location
 transient immutable SourceCodeLocation

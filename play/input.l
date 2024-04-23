@@ -1090,8 +1090,10 @@ skipInit global unit input
 					c.b.assign     "X"     X
 			
 			controllerButtonMap.clear
-			for localPlayer.controller.buttons
-				controllerButtonMap[.key] = {userId:localPlayer.id, buttonIndex:i}
+			// TODO: Research why this is sometimes called before we have a local player
+			if localPlayer
+				for localPlayer.controller.buttons
+					controllerButtonMap[.key] = {userId:localPlayer.id, buttonIndex:i}
 				
 			controllerButtonMap[W] = {userId:localUser.id, buttonIndex:1}
 			controllerButtonMap[D] = {userId:localUser.id, buttonIndex:2}
