@@ -2025,6 +2025,11 @@ struct RollingList
 	add: float value
 		values[index++ % length] = value
 		
+	measure: void() do
+		let startTime = Time.preciseTime
+		do
+		values[index++ % length] = Time.preciseTime - startTime
+	
 	average
 		if values.length == 0: return 0.0
 		float total
