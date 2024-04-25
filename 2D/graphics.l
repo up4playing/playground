@@ -49,7 +49,7 @@ immutable Color
 immutable Texture
 	string file
 	Vector2 size
-	dynamic imageOrCanvas, context
+	transient dynamic imageOrCanvas, context
 	
 	Texture
 		if Platform.engineStarted and file
@@ -94,6 +94,7 @@ immutable Texture
 		let prevPixelSizeX = graphics.pixelSize.x
 		let prevPixelSizeY = graphics.pixelSize.y
 		let prevItems = graphics.items
+		let prevFastForward = Platform.fastForward
 		
 		// Create canvas
 		if(!this.context) {
@@ -104,10 +105,11 @@ immutable Texture
 		}
 		
 		// Setup canvas
-		graphics.items = []
 		graphics.context = this.context
 		graphics.pixelSize.x = this.size.x
 		graphics.pixelSize.y = this.size.y
+		graphics.items = []
+		Platform.fastForward = false
 		let a = graphics.localMatrix.matrix, b = graphics.totalMatrix.matrix
 		let a0 = graphics.localMatrix.m0, a1 = graphics.localMatrix.m1, a2 = graphics.localMatrix.m2, a3 = graphics.localMatrix.m3, a4 = graphics.localMatrix.m4, a5 = graphics.localMatrix.m5
 		let b0 = graphics.totalMatrix.m0, b1 = graphics.totalMatrix.m1, b2 = graphics.totalMatrix.m2, b3 = graphics.totalMatrix.m3, b4 = graphics.totalMatrix.m4, b5 = graphics.totalMatrix.m5
@@ -127,6 +129,7 @@ immutable Texture
 		graphics.pixelSize.x = prevPixelSizeX
 		graphics.pixelSize.y = prevPixelSizeY
 		graphics.items = prevItems
+		Platform.fastForward = Platform.fastForward
 		
 // A font that can be used to draw text
 skipInit immutable Font
