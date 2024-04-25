@@ -113,6 +113,7 @@ transient skipInit unit Platform
 			isStaging = isDebug or roomId == "staging" or roomId == "latest" or (roomId and roomId?.startsWith("-"))
 			// TEMP until safe navigation is implemented                         ^
 			
+			await preload
 			openMedia
 				try
 					this.engineStarted = true
@@ -131,7 +132,9 @@ transient skipInit unit Platform
 		catch
 			sendErrorToEditor .
 			sendFinished
-			
+	
+	private async js void preload
+		if(app.preload) await app.preload();
 		
 	// This is called after every code change to replay all inputs with the new code
 	// Since the const cache is cleared when the code changes, we reinitialize the media
