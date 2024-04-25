@@ -51,8 +51,12 @@ unit lobby
 		editNames = false
 		players.each.isReadyInLobby = false
 		audio.stop
+		
+	int counter
 	
 	tick
+		if Platform.isStaging: drawText counter++, {0, -445}, size:200
+		
 		tickSettings
 		if Platform.isStaging: drawText "Version:{Platform.buildVersion}", size:20, position:{-940, 520}, align:Left
 		if PeerNetwork.error or core.errorMessage
