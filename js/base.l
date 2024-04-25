@@ -1142,6 +1142,16 @@ class List<T>
 				if value > resultValue: resultValue = value
 		return resultValue != threshold ? resultValue : default
 		
+	maxUnique: int(T a) selector
+		       int threshold = int.minValue
+		       int default = 0
+		int resultValue = threshold
+		for this
+			let value = selector(.)
+			if value > resultValue:  resultValue = value; else
+			if value == resultValue: resultValue = threshold
+		return resultValue != threshold ? resultValue : default
+		
 	minIndex: float(T a) selector
 		      int startIndex = 0
 		      float threshold = float.maxValue
