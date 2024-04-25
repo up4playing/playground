@@ -13,11 +13,14 @@ unit lobby
 		"Bjarne"
 		"Tim"
 		
+		"Christian"
+		"Svend"
+		"Holger"
+		
 		"Joe"
 		"Kevin"
 		
 		"Simonas"
-		"Holger"
 		"Dominik"
 		"Felix"
 		"Edi"
