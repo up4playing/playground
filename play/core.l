@@ -370,9 +370,6 @@ transient skipInit unit core
 			// Update game controllers
 			input.updateGameControllers
 			
-			// Post lost messages and remove players if nobody disagrees
-			input.handleLost
-			
 			// Parse inputs
 			input.parseInputs(frame)
 			

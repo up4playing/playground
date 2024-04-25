@@ -33,7 +33,6 @@ transient class InternalUser
 	string connectionType
 	bool offerByMe
 	bool receivedAnswer
-	int nextLostMessageAtFrame
 	
 	// Statistics
 	private int[] aheadHistory    // Rolling buffer of ahead values, used to calculate bufferFrames
@@ -102,10 +101,6 @@ priority class Player
 	visible GameController controller = {}
 	internal int[] controllerKeyDownFrame = [0, 0, 0, 0, 0, 0]
 	
-	// If a player was lost by anybody and nobody who is still connected to that player
-	// disagrees within a certrain time, we will remove this player in "handleLost"
-	internal int lostAtFrame
-	
 	internal bool isReadyInLobby
 	
 	// The current player instance, equivalent to "this"
@@ -122,7 +117,7 @@ priority class Player
 			if .phase == Down
 				.phase = Still
 	
-enum InputType: None, TouchDown, TouchMove, TouchUp, Scroll, KeyDown, KeyUp, TextInput, Stick, Trigger, Grip, ButtonDown, ButtonUp, ControllerTransform, HeadTransform, DeviceRotation, Join, Lost, StillConnected, SetState, Navigate, GameController, String, Json, Object
+enum InputType: None, TouchDown, TouchMove, TouchUp, Scroll, KeyDown, KeyUp, TextInput, Stick, Trigger, Grip, ButtonDown, ButtonUp, ControllerTransform, HeadTransform, DeviceRotation, Join, SetState, Navigate, GameController, String, Json, Object
 		
 // Phase of a touch or a click
 enum TouchPhase: Still, Down, Move, Up
@@ -670,39 +665,6 @@ skipInit global unit input
 		inputs.writeInt16 cast InputType.Navigate
 		inputs.writeString url
 		
-	// Post lost messages and remove players if nobody disagrees
-	internal handleLost
-		if core.mode < Local or !lobby.inLobby: return
-		for players <- player
-			let internalUser = internalUsers[.id]
-				if player.lostAtFrame and core.frame > player.lostAtFrame + core.targetFps * 3
-					// If a player was lost by anybody and nobody who is still connected to that player
-					// disagrees within a certrain time, we remove this player
-					core.log "Removing player {player.id} at frame {core.frame}, player was lost at frame {player.lostAtFrame} and nobody disagreed", isCertain
-					players.remove player
-					playersById[player.id] = null
-					internalUser.active = false
-					updatePlayers
-				else	
-				if core.frame > internalUser.inputFrame + core.targetFps * 8
-				and core.frame > internalUser.nextLostMessageAtFrame
-					// If we lost the connection to a player, we post a lost message to everybody every 12 seconds
-					core.log "Sending lost message for player {player.id} at frame {core.frame}", internalUser.inputFrame
-					let inputs = localUser.inputs
-					inputs.writeInt32 localUser.inputFrame
-					inputs.writeInt16 cast InputType.Lost
-					inputs.writeInt16 player.id
-					internalUser.nextLostMessageAtFrame = core.frame + core.targetFps * 12
-					
-					// Send logfiles to server
-					Platform.setTimeout 7 seconds: statistics.saveStatistics
-	
-	private handleStillConnected: int userId
-		let inputs = localUser.inputs
-		inputs.writeInt32 localUser.inputFrame
-		inputs.writeInt16 cast InputType.StillConnected
-		inputs.writeInt16 userId
-				
 	internal handleString: int id, string data
 		if !data || core.mode == None || core.frames > core.frame || !localUser || !localUser.collectInputs: return
 		let inputs = localUser.inputs
@@ -937,35 +899,6 @@ skipInit global unit input
 					// which is typically the "Join" message that is sent in "startConnected",
 					// but could also be a player reconnecting that was previously kicked out
 					if core.logging: core.parseLog += " Join {userId}"
-				else
-				if inputType == Lost
-					let lostUserId = inputs.readInt16
-					let lostInternalUser = internalUsers[lostUserId]
-						let lostPlayer = playersById[lostUserId]
-						
-						// If a player was lost by anybody and nobody who is still connected to that player
-						// disagrees within a certrain time, we will remove this player in "handleLost"
-						if lostPlayer and lostPlayer.lostAtFrame == 0
-							lostPlayer.lostAtFrame = frame
-							core.log "Lost {lostUserId} by {userId} -> Set lostAtFrame to {lostPlayer.lostAtFrame}"
-							
-						// If we are still connected to that player, we disagree to their removal
-						// by posting the "StillConnected" message
-						if lostInternalUser.dataChannel and core.frame < lostInternalUser.inputFrame + core.targetFps * 5
-							core.log "Lost {lostUserId} by {userId} -> We are still connected, sending StillConnected", lostInternalUser.dataChannel, core.frame, lostInternalUser.inputFrame, isCertain
-							handleStillConnected lostUserId
-						else
-							core.log "Lost {lostUserId} by {userId} -> We also aren't connected", lostInternalUser.dataChannel, core.frame, lostInternalUser.inputFrame, isCertain
-					else
-						core.log "Lost {lostUserId} by {userId} -> No internal user!"
-				else
-				if inputType == StillConnected
-					// Somebody disagreed with the removal of that player because they are still connected,
-					// so we cancel the removal
-					let lostUserId = inputs.readInt16
-					core.log "Still connected to {lostUserId} by {userId}"
-					let lostPlayer = playersById[lostUserId]
-						lostPlayer.lostAtFrame = 0
 				else
 				if inputType == SetState
 					if core.logging: core.parseLog += " setState"
