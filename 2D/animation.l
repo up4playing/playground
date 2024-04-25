@@ -327,7 +327,7 @@ global unit fx
 				
 	interpolate: float from = 0
 		         float to = 1
-		         void(float progress) do
+		         stored void(float progress) do
 		         Time delay = 0
 		         Time duration = 300
 		         EaseFunction ease
@@ -335,14 +335,14 @@ global unit fx
 				
 	interpolate: Vector2 from
 		         Vector2 to
-		         void(Vector2 progress) do
+		         stored void(Vector2 progress) do
 		         Time delay = 0
 		         Time duration = 300
 		add InterpolateAnimation startTime:Time.now+delay, duration, do:do(from interpolateTo target:to, progress)
 				
 	interpolate: Vector2 from
 		         Vector2 to
-		         void(Vector2 progress) do
+		         stored void(Vector2 progress) do
 		         Time delay = 0
 		         Time duration = 300
 		         EaseFunction ease
@@ -350,7 +350,7 @@ global unit fx
 				
 	interpolate: Color from
 		         Color to
-		         void(Color progress) do
+		         stored void(Color progress) do
 		         Time delay = 0
 		         Time duration = 300
 		add InterpolateAnimation startTime:Time.now+delay, duration, do:do(from interpolateTo target:to, progress)
