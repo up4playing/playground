@@ -139,7 +139,6 @@ skipInit global unit Platform
 		if(!Platform.isDebug) return
 		let now = Date.now();
 		if(now > Platform.nextHeartbeatTime) {
-			console.log("[app]", (now%100000).toLocaleString("en-US", {minimumIntegerDigits:6, useGrouping:true})+" sending heartbeat from "+context);
 			Platform.nextHeartbeatTime = now + 3000;
 			_sendStringToEditor("~");
 		}
@@ -324,7 +323,10 @@ global unit Html
 				node.setAttribute(key, attributes[key])
 		
 	static js Style expandStyle: Style style
-		if(style.size) { style.width = style.size.x+"px"; style.height = style.size.y+"px" }
+		if(style.size) { 
+			style.width  = style.size.x+"px"; 
+			style.height = style.size.y+"px";
+		}
 		if(style.overlay) {
 			let rect = document.body.getBoundingClientRect()
 			style.position = "fixed"; style.top = 0; style.left = 0; style.width = (window.innerWidth/Platform.scale)+"px"; style.height = (document.body.scrollHeight)+"px"  
@@ -332,19 +334,31 @@ global unit Html
 		return style 
 	
 	private js void setStyle: Node node, dynamic style
-		node.style = ""
+		// We shouldn't need this because the same line of code can't output less styles than previously
+		// A code change always triggers a complete refresh
+		// node.style = ""
 		if(style) {
-			for(let key in Html.expandStyle(style))
-				node.style[key] = style[key]
-			
-			// let shadowStyle = node.shadowStyle || (node.shadowStyle = new Map)
-			// for(let key in Html_expandStyle(style)) {
-			// 	let value = style[key];
-			// 	if(shadowStyle.get(key) != value) {
-			// 		node.style[key] = value;
-			// 		shadowStyle.set(key, value);
+			// Always set style (slowest)
+			// for(let key in Html.expandStyle(style))
+			// 	node.style[key] = style[key]
+				
+			// Set style if it changed (slow)
+			// for(let key in Html.expandStyle(style)) {
+			// 	let value = style[key].toString();
+			// 	if(node.style[key] != value) {
+			// 		node.style[key] = value
 			// 	}
 			// }
+			
+			// Check if style has changed using a shadow copy (fastest)
+			let shadowStyle = node.shadowStyle || (node.shadowStyle = new Map)
+			for(let key in Html.expandStyle(style)) {
+				let value = style[key].toString();
+				if(shadowStyle.get(key) != value) {
+					node.style[key] = value;
+					shadowStyle.set(key, value);
+				}
+			}
 				
 			// Temporary Backfill. Starting from Chrome 104, Safari 14.1 this is no longer needed.
 			// let translate = style.translate
@@ -511,7 +525,8 @@ global unit Html
 			node.onmouseout  = setStyle(node, style)
 		
 		if text
-			if node.innerHTML != text: node.innerHTML = text
+			if node.shadowInnerHtml != text
+				node.innerHTML = node.shadowInnerHtml = text
 		else	
 			let prevParentNode = parentNode
 			parentNode = node
