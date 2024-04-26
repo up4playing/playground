@@ -335,6 +335,15 @@ global unit Html
 		if(style) {
 			for(let key in Html_expandStyle(style))
 				node.style[key] = style[key]
+			
+			// let shadowStyle = node.shadowStyle || (node.shadowStyle = new Map)
+			// for(let key in Html_expandStyle(style)) {
+			// 	let value = style[key];
+			// 	if(shadowStyle.get(key) != value) {
+			// 		node.style[key] = value;
+			// 		shadowStyle.set(key, value);
+			// 	}
+			// }
 				
 			// Temporary Backfill. Starting from Chrome 104, Safari 14.1 this is no longer needed.
 			// let translate = style.translate
@@ -365,7 +374,12 @@ global unit Html
 		let rect = node.getBoundingClientRect()
 		return new Vector2((event.clientX - rect.left)/Platform_scale, (event.clientY - rect.top)/Platform_scale)
 
+	int nodesCreated
+	int nodesUpdated
+	
 	global void refresh
+		Time.startTimer
+		nodesCreated = nodesUpdated = 0
 		parentNode = body
 		currentNode = parentNode.firstChild
 		currentOverlay = body.nextSibling
@@ -378,6 +392,7 @@ global unit Html
 			let next = currentOverlay.nextSibling
 			currentOverlay.remove
 			currentOverlay = next
+		Time.printTimer "refresh: {nodesCreated} created, {nodesUpdated} updated"
 		// if not overlayNode
 		// 	overlayNode = div style:{position:Fixed top:0 left:0 right:0 bottom:0, backgroundColor:Black, opacity:.5}
 		// 	body.parentNode.appendChild overlayNode
@@ -474,9 +489,11 @@ global unit Html
 			nextNode = currentNode
 			if nextNode: parentNode.insertBefore node, nextNode
 			else         parentNode.appendChild node
+			nodesCreated++
 		else
 			node = currentNode
 			nextNode = currentNode.nextSibling
+			nodesUpdated++
 		
 		setStyle node, style
 		setDataAttributes node, data
@@ -491,12 +508,9 @@ global unit Html
 		if onHover != null
 			node.onmouseover = addStyle(node, onHover)
 			node.onmouseout  = setStyle(node, style)
-		// if attributes.onClick != null
-		// 	node.onclick = attributes.onClick(ev); if(!attributes.passClickToParents) ev.stopPropagation
-		// if attributes.onRightClick != null
-		// 	node.oncontextmenu = attributes.onRightClick(ev); ev.preventDefault
+		
 		if text
-			node.innerHTML = text
+			if node.innerHTML != text: node.innerHTML = text
 		else	
 			let prevParentNode = parentNode
 			parentNode = node
@@ -647,24 +661,26 @@ global unit Html
 		                      inline void(string value) onChange // Called when the user changes the text and leaves the field
 		                      expand Attributes attributes = {}  // The attributes of the HTML element
 		                      expand Style style = null          // The css style of the HTML element
+		                      bool realtime = true
 		                      SourceCodeLocation location
 		stored void() changeHandler = currentChangeHandler
 		let node = div tag:"input", attributes, style, location
 		node.value = model
-		node.onchange = model = node.value; onChange(node.value); changeHandler
+		if realtime: node.oninput = model = node.value; onChange(node.value); changeHandler
+		else         node.onchange = model = node.value; onChange(node.value); changeHandler
 		if focused: node.focus
 		
-	global inline void input: string model = ""                  // The variable that holds the value. This will be updated when the user changed the text
-		                      bool focused = false               // Whether the cursor should be placed in the field
-		                      inline void(string value) onInput  // Called after every character the user types
-		                      expand Attributes attributes = {}  // The attributes of the HTML element
-		                      expand Style style = null          // The css style of the HTML element
-		                      SourceCodeLocation location
-		stored void() changeHandler = currentChangeHandler
-		let node = div tag:"input", attributes, style, location
-		node.value = model
-		node.oninput = model = node.value; onInput(node.value); changeHandler
-		if focused: node.focus
+	// global inline void input: string model = ""                  // The variable that holds the value. This will be updated when the user changed the text
+	// 	                      bool focused = false               // Whether the cursor should be placed in the field
+	// 	                      inline void(string value) onInput  // Called after every character the user types
+	// 	                      expand Attributes attributes = {}  // The attributes of the HTML element
+	// 	                      expand Style style = null          // The css style of the HTML element
+	// 	                      SourceCodeLocation location
+	// 	stored void() changeHandler = currentChangeHandler
+	// 	let node = div tag:"input", attributes, style, location
+	// 	node.value = model
+	// 	node.oninput = model = node.value; onInput(node.value); changeHandler
+	// 	if focused: node.focus
 
 	global inline void textarea: string model = ""                 // The variable that holds the value. This will be updated when the user changed the text
 		                         bool focused = false              // Whether the cursor should be placed in the field
