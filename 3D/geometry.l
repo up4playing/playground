@@ -554,7 +554,7 @@ transient float Angle
 	inline js bool  operator != (Angle a, float b) a!=b
 	
 	inline js float in: AngleUnit unit
-		(unit==1 ? this*math_TwoPI : unit==2 ? this*360 : unit==3 ? this*400 : this)
+		(unit==1 ? this*math.TwoPI : unit==2 ? this*360 : unit==3 ? this*400 : this)
 		
 enum AngleUnit
 	turns    // One full rotation is 1

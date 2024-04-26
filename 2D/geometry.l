@@ -324,9 +324,70 @@ struct Vector2
 		let lastPos = path.last
 		return {position:lastPos, vector:lastPos - path[path.length-2]}
 		
+js String
+immutable class string
+	Vector2 toVector2
+		let mid = this.indexOf " "
+		return Vector2(cast this[..mid], cast this[mid+1..]) 
+		
 PositionAndVector
 	Vector2 position
 	Vector2 vector
+	
+Path
+	Vector2[] nodes
+	float[] segmentLengths
+	float length
+	
+	Vector2 first := nodes ? nodes.first : Vector2.none
+	Vector2 last :=  nodes ? nodes.last  : Vector2.none
+	int count := nodes.length
+	inline Vector2 get(int index) this.nodes[index]
+	
+	Path
+		update
+		
+	update
+		length = 0
+		forPairs nodes
+			let x = next.x - .x
+			let y = next.y - .y
+			length += segmentLengths[i] = math.sqrt(x*x + y*y)
+		
+	Vector2 getPosition: float distance
+		if nodes.length == 0: return Vector2.none
+		if nodes.length == 1: return nodes[0]
+			
+		float travelledSoFar
+		forPairs nodes
+			let segmentLength = segmentLengths[i]
+			let travelledAfterSegment = travelledSoFar + segmentLength
+			if  travelledAfterSegment >= distance
+				let factor = (distance - travelledSoFar) / segmentLength
+				return {.x + (next.x - .x)*factor, .y + (next.y - .y)*factor}
+				// return .interpolateTo next progress:distance travelledSoFar..travelledAfterSegment
+			travelledSoFar = travelledAfterSegment
+		return nodes.last
+		
+	PositionAndVector getPositionAndVector: float distance
+		if nodes.length == 0: return { position:Vector2.none }
+		if nodes.length == 1: return { position:nodes[0] }
+			
+		float travelledSoFar
+		forPairs nodes
+			let segmentLength = segmentLengths[i]
+			let travelledAfterSegment = travelledSoFar + segmentLength
+			if  travelledAfterSegment >= distance
+				let factor = (distance - travelledSoFar) / segmentLength
+				return {
+					position:{.x + (next.x - .x)*factor, .y + (next.y - .y)*factor}
+					vector: next - .
+				}
+				// return .interpolateTo next progress:distance travelledSoFar..travelledAfterSegment
+			travelledSoFar = travelledAfterSegment
+			
+		let lastPos = nodes.last
+		return {position:lastPos, vector:lastPos - nodes[nodes.length-2]}
 		
 // A 2D vector comprised of an integer x and y coordinate
 struct IntVector2
@@ -497,7 +558,7 @@ struct IntVector2
 		return result
 		
 	inline js TResult[] times: TResult(IntVector2 it) selector
-		Vector2_enumerate(new IntVector2(0,0), this, selector)
+		Vector2.enumerate(new IntVector2(0,0), this, selector)
 	
 // A 3x2 matrix used to transform vectors in 2D space
 struct Matrix2D
@@ -530,17 +591,21 @@ struct Matrix2D
 	Matrix2D clone
 		return Matrix2D(m0, m1, m2, m3, m4, m5)
 
-	Matrix2D operator = (Matrix2D a, Matrix2D b)
-		a.m0 = b.m0
-		a.m1 = b.m1
-		a.m2 = b.m2
-		a.m3 = b.m3
-		a.m4 = b.m4
-		a.m5 = b.m5
+	Matrix2D assign Matrix2D other
+		m0 = other.m0
+		m1 = other.m1
+		m2 = other.m2
+		m3 = other.m3
+		m4 = other.m4
+		m5 = other.m5
 		return this
 		
-	Matrix2D operator * (Matrix2D a, Matrix2D b) Matrix2D c; return multiply(a, b, c)
-	Matrix2D operator *= (Matrix2D a, Matrix2D b) return multiply(a, b, a)
+	Matrix2D * Matrix2D other
+		Matrix2D c
+		return multiply(this, other, c)
+		
+	Matrix2D *= Matrix2D other
+		return multiply(this, other, this)
 		
 	// Returns the translation component of the matrix
 	Vector2 translationVector := {m4, m5}
@@ -616,6 +681,14 @@ class List<T>
 		return sum	
 		
 	Vector2 average: Vector2(T it) selector
+		int count
+		Vector2 sum = {0,0}
+		for this
+			sum += selector(.)
+			count++
+		return sum/count
+		
+	Vector2 average: Vector2(T it) selector
 		             bool(T it) where
 		int count
 		Vector2 sum = {0,0}
@@ -628,54 +701,18 @@ class List<T>
 // ------------------------------------------- Angle -------------------------------------------
 		
 transient immutable float Angle
-	inline js Angle += Angle value: this += value
-	
 	inline js float toFloat() this
 	inline js string toString() this.toString()
 		
 	// Returns true if the angle is not zero
 	inline js bool toBool := this
 	
-	inline js Angle operator +  (Angle a, Angle b) a+b
-	inline js Angle operator +  (Angle a, int b) a+b
-	inline js Angle operator +  (Angle a, float b) a+b
-	
-	inline js Angle operator -  (Angle a, Angle b) a-b
-	inline js Angle operator -  (Angle a, int b) a-b
-	inline js Angle operator -  (Angle a, float b) a-b
-	inline js Angle operator -  (Angle a) -a
-	
-	inline js float operator /  (Angle a, Angle b) a/b
-	inline js Angle operator /  (Angle a, int b) a/b
-	inline js Angle operator /  (Angle a, float b) a/b
-	
-	inline js Angle operator *  (Angle a, int b) a*b
-	inline js Angle operator *  (Angle a, float b) a*b
-	inline js Angle operator *  (int a, Angle b) a*b
-	inline js Angle operator *  (float a, Angle b) a*b
-	
-	inline js Angle operator %  (Angle a, int b) a%b
-	inline js Angle operator %  (Angle a, Angle b) a%b
-	
-	inline js bool  operator <  (Angle a, Angle b) a<b
-	inline js bool  operator <= (Angle a, Angle b) a<=b
-	inline js bool  operator >  (Angle a, Angle b) a>b
-	inline js bool  operator >= (Angle a, Angle b) a>=b
-	
-	inline js bool  operator == (Angle a, Angle b) a==b
-	inline js bool  operator == (Angle a, int b) a==b
-	inline js bool  operator == (Angle a, float b) a==b
-	
-	inline js bool  operator != (Angle a, Angle b) a!=b
-	inline js bool  operator != (Angle a, int b) a!=b
-	inline js bool  operator != (Angle a, float b) a!=b
-	
 	inline js float in: AngleUnit unit
-		(unit==1 ? this*math_TwoPI : unit==2 ? this*360 : unit==3 ? this*400 : this)
+		(unit==1 ? this*math.TwoPI : unit==2 ? this*360 : unit==3 ? this*400 : this)
 		
 	inline js Angle rotateTowards: Angle value
 		                           Angle speed
-		(this = Angle_rotatedTowards(this, value, speed))
+		(this = Angle.rotatedTowards(this, value, speed))
 		
 	static Angle rotatedTowards: Angle value
 		                         Angle target
@@ -684,6 +721,32 @@ transient immutable float Angle
 		let delta = (target - value) % 1
 		if delta < .5: value = (value + speed) % 1; return value < target ? value : target
 		else           value = (value - speed) % 1; return value > target ? value : target
+		
+	inline Angle + Angle value
+	inline Angle - Angle value
+	inline float / Angle value
+	inline float * Angle value
+	
+	inline Angle += Angle value
+	inline Angle -= Angle value
+	inline Angle /= Angle value
+	inline Angle *= Angle value
+	
+	inline bool == Angle value
+	inline bool != Angle value
+	inline bool < Angle value
+	inline bool <= Angle value
+	inline bool > Angle value
+	inline bool >= Angle value
+	
+	inline js Angle normalize
+		(((this + .5) % 1) + 1) % 1 - .5
+	
+	inline js Angle % ensureSingleExecution Angle value
+		((this % value) + value) % value
+		
+	inline js Angle operator -  (Angle a) -a
+
 		
 enum AngleUnit
 	turns    // One full rotation is 1
@@ -701,7 +764,7 @@ immutable priority low struct float
 	inline js Angle turns := this
 	
 	// One full rotation is 2π (about 6.2832)
-	inline js Angle radians := (this/math_TwoPI)
+	inline js Angle radians := (this/math.TwoPI)
 		
 	// One full rotation is 360
 	inline js Angle degrees := (this/360)
@@ -779,12 +842,12 @@ global skipInit priority low unit math
 	// Returns the inverse tangent in turns
 	Angle atan2: float y, float x
 		float r, angle;
-		float abs_x = math.abs(x) + .00000000001
-		if y < 0.0
-			r = (y + abs_x) / (abs_x - y);
+		float absx = math.abs(x) + .00000000001
+		if y > 0.0
+			r = (-y + absx) / (+y + absx);
 			angle = .375;
 		else
-			r = (y - abs_x) / (y + abs_x);
+			r = (-y - absx) / (-y + absx);
 			angle = .125;
 		angle += (.03124211533 * r * r - .1562424076) * r;
 		if x < 0.0: return cast -angle
@@ -801,9 +864,9 @@ global skipInit unit math
 	Angle getAngleForVector: Vector2 vector
 		return math.atan2(vector.y, vector.x)
 		
-	Vector2 getVectorForAngle: Angle angle      // The angle in turns (one full rotation is 1)
+	Vector2 getVectorForAngle: Angle angle      // The angle in turns (0: straight up, 1: one full rotation clockwise)
 		                       float radius = 1
-		return new Vector2(math.cos(angle)*radius, math.sin(angle)*radius)
+		return new Vector2(math.sin(angle)*radius, -math.cos(angle)*radius)
 		
 	Vector2 intersectLines: Vector2 startA
 		                    Vector2 endA
@@ -1035,7 +1098,8 @@ immutable Direction
 	
 	toString := name
 	
-	bool operator ==(Direction a, Direction b) a.angle == b.angle
+	bool == Direction value 
+		this.angle == value.angle
 	
 	rotated: RotationDirection direction = Clockwise
 		return primaryDirections[(index+(direction == Clockwise ? 1:3))%4]
@@ -1214,12 +1278,12 @@ global transient unit System
 		                            TResult(
 		                                IntVector2 it // The current position of the vector we are iterating over with the for-loop
 		                            ) do              // Select the field or expression to be included in the result
-		IntVector2_enumerate(new IntVector2(0,0), to, do)
+		IntVector2.enumerate(new IntVector2(0,0), to, do)
 
 	global inline js TResult[] for: IntVector2 from     // Iterator over both dimensions of the vector starting from this vector
 		                            TResult(
 		                                IntVector2 it   // The current position of the vector we are iterating over with the for-loop
 		                            ) do                // Select the field or expression to be included in the result
 		                            label IntVector2 to // Iterator over both dimensions of the vector towards this exclusive upper bound
-		IntVector2_enumerate(from, to, do)
+		IntVector2.enumerate(from, to, do)
 		

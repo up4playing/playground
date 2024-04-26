@@ -80,7 +80,6 @@ transient skipInit unit core
 		audio.stop
 		isPremiere = true
 		startTime = serverStartTime = currentTime
-		input.lastWheelInputFrame = -1
 		reset
 		animationFrame
 		
@@ -196,6 +195,7 @@ transient skipInit unit core
 	// We ensure that step is called every targetFrameTime milliseconds.
 	internal animationFrame
 		now = currentTime
+		if lastAnimationFrame: frameTimes.add now - lastAnimationFrame
 
 		// Ping
 		ServerNetwork.ping
@@ -262,6 +262,8 @@ transient skipInit unit core
 	int tickMessageSize
 	bool logging = false
 	int replayFrom = -1
+	
+	RollingList drawTimes, tickTimes, frameTimes = {length:150}
 	
 	collectStatistics
 		// Players
@@ -410,20 +412,20 @@ transient skipInit unit core
 			
 		try
 			Framework.tick
-			tickTime = Time.measure
+			tickTimes.add tickTime = Time.measure
 				if lobby.inLobby: lobby.tick
 				else              appTick
 		catch
 			onError error
 			
 		if draw and not Platform.waitingForInitialData
-			drawTime = Time.measure
+			drawTimes.add drawTime = Time.measure
 				graphics.finishFrame
 			if Platform.mode != Manipulator: input.updateCursor
 		audio.finishFrame
 				
-	js void appTick() if(window.app_tick) app_tick();
-	js string appDebugString() (window.app_debugString || "")
+	js void appTick() if(app.tick) app.tick();
+	js string appDebugString() (app.debugString || "")
 		
 	private Buffer snapshot = {}
 	private Buffer secondSnapshotForTesting = {}
@@ -505,15 +507,15 @@ transient skipInit unit core
 				
 	js void log: logstring text
 		let str = new Date().hourMinuteSecondString() + " " + text
-		statistics_systemLogs.push(str)
+		statistics.systemLogs.push(str)
 		console.log(str)
-		if(core_logging) core_eventLog += str + "\n"
+		if(core.logging) core.eventLog += str + "\n"
 		
 	inline js int currentTime := Date.now()
 	
 	js void startApp
-		lobby_inLobby = false
-		if(window.app_start) app_start()
+		lobby.inLobby = false
+		if(app.start) app.start()
 		
 	private adjustStartTime
 		startTime = math.round(currentTime - frame*targetFrameTime - (targetFrameTime*.5))
@@ -609,11 +611,11 @@ transient skipInit unit core
 		
 	private js void initAll
 		init()
-		graphics_updateBaseMatrix();
+		graphics.updateBaseMatrix();
 		
 	private js void setupVideoAndNetwork 
-		await PeerNetwork_setupLocalMedia(/*enableVideo*/!Platform_isStaging || core_showVideoForStaging, /*enableAudio*/!Platform_isStaging || core_audioForStaging)
-		ServerNetwork_setup()
+		await PeerNetwork.setupLocalMedia(/*enableVideo*/!Platform.isStaging || core.showVideoForStaging, /*enableAudio*/!Platform.isStaging || core.audioForStaging)
+		ServerNetwork.setup()
 		
 	internal storeUserId
 		Platform.setLocalStorageObject "room"+roomId, RoomInfo(currentTime, input.localUser.id)
@@ -746,7 +748,7 @@ skipInit transient unit statistics
 		this.gameLogs.add value
 	
 	startSession
-		let user = localStorage.getObjectDirectly("user")
+		let user = storage.getObjectDirectly("user")
 		let server = Platform.hostname.getUntil(".")
 		let userId = input.localUser.id
 		id = core.roomId*100 + userId
@@ -832,7 +834,7 @@ skipInit transient unit statistics
 			if .set != currentSet: continue
 			int len = math.min(.values.length, 50)
 			for len: 
-				let value = s.values[-1-i]
+				let value = s.values[s.values.length-1-i]
 				if value > maxValue: maxValue = value
 					
 		draw
@@ -864,7 +866,7 @@ global skipInit unit math
 		initDefaultRandomGenerator
 		
 	js void initDefaultRandomGenerator
-		math_randomGenerator = Math.random
+		math.randomGenerator = Math.random
 		
 	js string generateRandomSeed:
 		let crypto = !window.crypto && typeof(require) != "undefined" ? require("crypto") : window.crypto
@@ -884,9 +886,9 @@ global skipInit unit math
 		for targetRandomValueIndex: randomFloat
 	
 	js void setRandomSeed: string seed
-		math_randomSeed = seed
-		math_randomValues.length = 0
-		math_randomValueIndex = 0
+		math.randomSeed = seed
+		math.randomValues.length = 0
+		math.randomValueIndex = 0
 		
 		// Seeding the random number generator in Javascript
 		// https://stackoverflow.com/a/47593316
@@ -928,14 +930,14 @@ global skipInit unit math
 		var rand = sfc32(seed(), seed(), seed(), seed());
 		var rand = mulberry32(seed());
 		
-		math_randomGenerator = function() {
+		math.randomGenerator = function() {
 			let value
-			if(math_randomValueIndex < math_randomValues.length) {
-				value = math_randomValues[math_randomValueIndex]
-				math_randomValueIndex++
+			if(math.randomValueIndex < math.randomValues.length) {
+				value = math.randomValues[math.randomValueIndex]
+				math.randomValueIndex++
 			} else {
 				value = rand()
-				math_randomValues[math_randomValueIndex++] = value;
+				math.randomValues[math.randomValueIndex++] = value;
 			}
 			return value
 		}
@@ -943,16 +945,16 @@ global skipInit unit math
 	// Generates a random integer
 	global js int randomInteger: int from // The inclusive lower bound of the random integer
 		                         int to // The exclusive upper bound of the random integer
-		return from + Math.floor(math_randomGenerator() * (to-from))
+		return from + Math.floor(math.randomGenerator() * (to-from))
 	
 	global js int randomInteger: int to = 2147483647 // The exclusive upper bound of the random integer
-		return Math.floor(math_randomGenerator() * to)
+		return Math.floor(math.randomGenerator() * to)
 	
 	// Generates a random float
 	global js int randomFloat: float from
 		                       float to
-		return from + math_randomGenerator() * (to-from)
+		return from + math.randomGenerator() * (to-from)
 	
 	global js int randomFloat: float to = 1.0
-		return math_randomGenerator() * to
+		return math.randomGenerator() * to
 	

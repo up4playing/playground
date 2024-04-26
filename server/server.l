@@ -2,7 +2,7 @@ skipInit unit Platform
 	visible bool isDebug
 	inline js int version := _buildVersion
 		
-	inline js void initPlatform() Platform_init()
+	inline js void initPlatform() Platform.init()
 	inline js void initApplication() init()
 		
 	start: bool isDebug
@@ -15,7 +15,7 @@ skipInit unit Platform
 		initApplication
 		
 	private inline js void sendEvaluateFinished
-		if(Platform_isDebug) _sendToEditor({type:"evaluateFinished"})
+		if(Platform.isDebug) _sendToEditor({type:"evaluateFinished"})
 	
 	inline js string basePath := __dirname + "/"
 	
@@ -61,39 +61,25 @@ transient float Angle
 	// Returns true if the angle is not zero
 	inline js bool toBool := this
 	
-	inline js Angle operator +  (Angle a, Angle b) a+b
-	inline js Angle operator +  (Angle a, int b) a+b
-	inline js Angle operator +  (Angle a, float b) a+b
+	inline Angle + Angle value
+	inline Angle - Angle value
+	inline float / Angle value
+	inline float * Angle value
 	
-	inline js Angle operator -  (Angle a, Angle b) a-b
-	inline js Angle operator -  (Angle a, int b) a-b
-	inline js Angle operator -  (Angle a, float b) a-b
-	inline js Angle operator -  (Angle a) -a
+	inline Angle += Angle value
+	inline Angle -= Angle value
+	inline Angle /= Angle value
+	inline Angle *= Angle value
 	
-	inline js float operator /  (Angle a, Angle b) a/b
-	inline js Angle operator /  (Angle a, int b) a/b
-	inline js Angle operator /  (Angle a, float b) a/b
+	inline bool == Angle value
+	inline bool != Angle value
+	inline bool < Angle value
+	inline bool <= Angle value
+	inline bool > Angle value
+	inline bool >= Angle value
 	
-	inline js Angle operator *  (Angle a, int b) a*b
-	inline js Angle operator *  (Angle a, float b) a*b
-	inline js Angle operator *  (int a, Angle b) a*b
-	inline js Angle operator *  (float a, Angle b) a*b
-	
-	inline js Angle operator %  (Angle a, int b) a%b
-	inline js Angle operator %  (Angle a, Angle b) a%b
-	
-	inline js bool  operator <  (Angle a, Angle b) a<b
-	inline js bool  operator <= (Angle a, Angle b) a<=b
-	inline js bool  operator >  (Angle a, Angle b) a>b
-	inline js bool  operator >= (Angle a, Angle b) a>=b
-	
-	inline js bool  operator == (Angle a, Angle b) a==b
-	inline js bool  operator == (Angle a, int b) a==b
-	inline js bool  operator == (Angle a, float b) a==b
-	
-	inline js bool  operator != (Angle a, Angle b) a!=b
-	inline js bool  operator != (Angle a, int b) a!=b
-	inline js bool  operator != (Angle a, float b) a!=b
+	inline js Angle % ensureSingleExecution Angle value
+		((this % value) + value) % value
 	
 	inline js float in: AngleUnit unit
 		(unit==1 ? this*math.TwoPI : unit==2 ? this*360 : unit==3 ? this*400 : this)
@@ -115,8 +101,8 @@ global unit http
 		initMap
 		
 	js void initMap
-		http_handlerMap = new Map()
-		http_contentTypeMap = {
+		http.handlerMap = new Map()
+		http.contentTypeMap = {
 			js:"application/javascript; charset=utf-8",
 			html:"text/html; charset=utf-8",
 			css:"text/css",
@@ -142,8 +128,8 @@ global unit http
 				// log(request.method+" "+procedureName)
 				// log("window "+ window)
 				// log("global "+global)
-				// var handler = global["app_"+procedureName]
-				// log("app_"+procedureName+" -> "+handler)
+				// var handler = global["app."+procedureName]
+				// log("app."+procedureName+" -> "+handler)
 				// if(handler) {
 				// 	let result = await handler(body ? JSON.parse(body) : null)
 				// 	response.writeHead(200, {'Content-Type': "application/json; charset=utf-8"}); 
@@ -151,13 +137,13 @@ global unit http
 				// 	return
 				// }
 				
-				handler = http_handlerMap.get(request.method+procedureName)
+				handler = http.handlerMap.get(request.method+procedureName)
 				if(handler) {
 					// For named handlers, the procedure name isn't included in the path
 					path.splice(0,2);
 				} else {
 					// For wildcard handlers, we pass the procedure name as path[0]
-					handler = http_handlerMap.get(request.method+"*")
+					handler = http.handlerMap.get(request.method+"*")
 					path.splice(0,1);
 				}
 				if(handler) {
@@ -168,7 +154,7 @@ global unit http
 			})
 		}
 		if(window.server) server.close();
-		if(keypath && !Platform_isDebug) {
+		if(keypath && !Platform.isDebug) {
 			window.server = require('https').createServer({
 				cert: fs.readFileSync("/etc/letsencrypt/live/"+keypath+"/fullchain.pem"),
 				key: fs.readFileSync("/etc/letsencrypt/live/"+keypath+"/privkey.pem")
@@ -181,19 +167,13 @@ global unit http
 		success()
 		
 	js void on:string path, HttpMethod method = Get, void(string[] path, dynamic body, Request request, Response response) handler
-		http_handlerMap.set(http_methodName[method]+path, handler)
-	
-unit Json
-	inline js object parse: string value
-		JSON.parse(value)	
-	inline js string stringify: object value
-		JSON.stringify(value)	
+		http.handlerMap.set(http.methodName[method]+path, handler)
 	
 class Request
 	inline js string ip() this. .connection.remoteAddress
 		
 class Response
-	inline js void sendText(string result, int code = 200, filename = "") this.writeHead(code, {'Content-Type': http_contentTypeMap[filename.getExtension()] || "text/plain; charset=utf-8"}); response.end(result);
+	inline js void sendText(string result, int code = 200, filename = "") this.writeHead(code, {'Content-Type': http.contentTypeMap[filename.getExtension()] || "text/plain; charset=utf-8"}); response.end(result);
 	inline js void send(any result, int code = 200, filename = "") this.writeHead(code, {'Content-Type': "application/json; charset=utf-8"}); response.end(JSON.stringify(result));
 	inline js void redirect(string url, int code = 302) this.writeHead(code, {Location: url}); response.end();
 		
@@ -254,7 +234,7 @@ class WebsocketHttpResponse
 	inline js void writeHeader(string key, string value)
 		this.writeHeader(key, value); 
 	inline js void send(string result, int code = 200, filename = "") 
-		this.writeHeader("Content-Type", http_contentTypeMap[filename.getExtension()] || "text/plain"); 
+		this.writeHeader("Content-Type", http.contentTypeMap[filename.getExtension()] || "text/plain"); 
 		this.end(result);
 	inline js void onAborted(void() code)
 		this.onAborted(code)

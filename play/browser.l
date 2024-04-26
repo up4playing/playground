@@ -10,12 +10,12 @@ transient skipInit unit Platform
 		
 	js async void setFullscreen: value = true
 		                         Player forPlayer = null
-		if(!Platform_isStaging && !Platform_isDebug && !Platform_fastForward && (forPlayer == null || input_localUser?.id == forPlayer.id)) {
+		if(!Platform.isStaging && !Platform.isDebug && !Platform.fastForward && (forPlayer == null || input.localUser?.id == forPlayer.id)) {
 			try {
 				if(value) await document.body.requestFullscreen()
 				else      await document.exitFullscreen()
 			} catch(error) {
-				core_onError(error)
+				core.onError(error)
 			}
 		}	
 		
@@ -47,7 +47,7 @@ transient skipInit unit Platform
 		setTimeout(then, time)
 		
 	inline js void copyToClipboard(string text)
-		if(core_isPremiere && input_isCertain) {
+		if(core.isPremiere && input.isCertain) {
 			navigator.clipboard.writeText(text)
 		}
 		
@@ -70,17 +70,17 @@ transient skipInit unit Platform
 		
 	inline js void pushState: string url
 		                      object state = null
-		if(core_isPremiere) history.pushState(state, "", url);
+		if(core.isPremiere) history.pushState(state, "", url);
 		
 	inline js void replaceState: string url
 		                         object state = null
-		if(core_isPremiere) history.replaceState(state, "", url);
+		if(core.isPremiere) history.replaceState(state, "", url);
 		
 	inline js void back
-		if(core_isPremiere) history.back();
+		if(core.isPremiere) history.back();
 		
 	inline js void reload
-		if(!Platform_isDebug) location.reload();
+		if(!Platform.isDebug) location.reload();
 	
 unit file
 	js void saveText: string filename, string text
@@ -149,8 +149,8 @@ HTMLElement
 	tick
 	
 	static js void clear
-		if(HTMLElement_elements) {
-			for(let el of HTMLElement_elements) {
+		if(HTMLElement.elements) {
+			for(let el of HTMLElement.elements) {
 				el.remove()
 			}
 		}
@@ -187,11 +187,11 @@ HTMLElement HTMLInput
 		this.element.onkeyup = e => {
 			let value = this.element.value
 			if(value != prevValue) {
-				input_handleString(this.changeCallbackId, value);
+				input.handleString(this.changeCallbackId, value);
 				prevValue = value;
 			}
 			if(e.keyCode == 13) {
-				input_handleString(this.enterCallbackId, value);
+				input.handleString(this.enterCallbackId, value);
 			}
 		}
 		document.body.appendChild(this.element)
@@ -217,32 +217,32 @@ transient unit IndexedDB
 	
 	js void start: string databaseName, string storeName, int version = 1
 		try {
-			core_log("IndexedDB: start");
-			IndexedDB_storeName = storeName;
+			core.log("IndexedDB: start");
+			IndexedDB.storeName = storeName;
 			var request = indexedDB.open(databaseName, version)
 			request.onupgradeneeded = e => {
-				core_log("IndexedDB: upgradeneeded");
-				IndexedDB_db = e.target.result;
-				if(!IndexedDB_db.objectStoreNames.contains(storeName))
-					IndexedDB_db.createObjectStore(storeName, { keyPath: "id" });
-				core_log("IndexedDB successfully upgraded to version "+version)
+				core.log("IndexedDB: upgradeneeded");
+				IndexedDB.db = e.target.result;
+				if(!IndexedDB.db.objectStoreNames.contains(storeName))
+					IndexedDB.db.createObjectStore(storeName, { keyPath: "id" });
+				core.log("IndexedDB successfully upgraded to version "+version)
 			}
 			request.onsuccess = e => {
-				IndexedDB_db = e.target.result;
-				core_log("IndexedDB: success");
+				IndexedDB.db = e.target.result;
+				core.log("IndexedDB: success");
 			}
 			request.onerror = e => {
-				core_log("IndexedDB: error "+request.error);
+				core.log("IndexedDB: error "+request.error);
 			}
-			core_log("IndexedDB: finished");
+			core.log("IndexedDB: finished");
 		} catch(e) {
-			core_log("IndexedDB: exception "+e.message)
+			core.log("IndexedDB: exception "+e.message)
 		}
 		
 	js void open: string storeName, string id, void(object data) then, void() else = null
 		try {
-			let trans = IndexedDB_db.transaction(storeName, "readonly")
-			let req = trans.objectStore(IndexedDB_storeName).get(id)
+			let trans = IndexedDB.db.transaction(storeName, "readonly")
+			let req = trans.objectStore(IndexedDB.storeName).get(id)
 			req.onsuccess = async e => {
 				let result = req.result
 				if(result) {
@@ -252,18 +252,18 @@ transient unit IndexedDB
 				}
 			}
 			req.onerror = e => {
-				core_log("Error in IndexedDB.open: "+req.error)
+				core.log("Error in IndexedDB.open: "+req.error)
 				else?.()
 			}
 		} catch(e) {
-			core_log("Error in IndexedDB.open: "+e.message)
+			core.log("Error in IndexedDB.open: "+e.message)
 			else?.()
 		}
 				
 	js void openBuffer: string storeName, string id, void(Buffer buffer) then, void() else = null
 		try {
-			let trans = IndexedDB_db.transaction(storeName, "readonly")
-			let req = trans.objectStore(IndexedDB_storeName).get(id)
+			let trans = IndexedDB.db.transaction(storeName, "readonly")
+			let req = trans.objectStore(IndexedDB.storeName).get(id)
 			req.onsuccess = async e => {
 				let result = req.result
 				if(result) {
@@ -275,43 +275,43 @@ transient unit IndexedDB
 				}
 			}
 			req.onerror = e => {
-				core_log("Error in IndexedDB.open: "+req.error)
+				core.log("Error in IndexedDB.open: "+req.error)
 				else?.()
 			}
 		} catch(e) {
-			core_log("Error in IndexedDB.open: "+e.message)
+			core.log("Error in IndexedDB.open: "+e.message)
 			else?.()
 		}
 				
 	js void save: string storeName, object data, void() then = null, void() else = null
 		try {
-			let trans = IndexedDB_db.transaction(storeName, "readwrite")
+			let trans = IndexedDB.db.transaction(storeName, "readwrite")
 			trans.onerror = e => {
-				core_log("Error in IndexedDB.save: "+trans.error)
+				core.log("Error in IndexedDB.save: "+trans.error)
 				else?.()
 			}
-			trans.objectStore(IndexedDB_storeName).put(data).onsuccess = e => {
+			trans.objectStore(IndexedDB.storeName).put(data).onsuccess = e => {
 				then?.()
 			}
 		} catch(e) {
-			core_log("Error in IndexedDB.save: "+e.message)
+			core.log("Error in IndexedDB.save: "+e.message)
 			else?.()
 		}
 		
 	js void saveBuffer: string storeName, string id, Buffer buffer, void() then = null, void() else = null
 		try {
-			let trans = IndexedDB_db.transaction(storeName, "readwrite")
+			let trans = IndexedDB.db.transaction(storeName, "readwrite")
 			trans.onerror = e => {
-				core_log("Error in IndexedDB.save: "+trans.error)
+				core.log("Error in IndexedDB.save: "+trans.error)
 				else?.()
 			}
 			let dataView = new DataView(buffer.buffer, 0, buffer.writePos)
 			let data = new Blob([dataView])
-			trans.objectStore(IndexedDB_storeName).put({id, data}).onsuccess = e => {
+			trans.objectStore(IndexedDB.storeName).put({id, data}).onsuccess = e => {
 				then?.()
 			}
 		} catch(e) {
-			core_log("Error in IndexedDB.save: "+e.message)
+			core.log("Error in IndexedDB.save: "+e.message)
 			else?.()
 		}
 

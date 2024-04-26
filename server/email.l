@@ -2,14 +2,14 @@ unit nodemailer
 	object transporter
 	js void setup
 		const nodemailer = require("nodemailer");
-		mail_transporter = nodemailer.createTransport({
+		nodemailer.transporter = nodemailer.createTransport({
 			service: 'gmail',
 			auth: {
 				user: "heiko.weible",
 				pass: ""
 			},
 		});
-		let info = await mail_transporter.sendMail({
+		let info = await nodemailer.transporter.sendMail({
 			from: "Lunchtime Games<heiko.weible@googlemail.com>",
 			to: "tina@visual-generation.de",
 			subject: "Hello Subject",
@@ -23,8 +23,8 @@ unit mail
 	
 	async js void setup
 		try {
-			mail_aws = await import("@aws-sdk/client-ses");
-			mail_ses = new mail_aws.SESClient({ region: "eu-central-1" })
+			mail.aws = await import("@aws-sdk/client-ses");
+			mail.ses = new mail.aws.SESClient({ region: "eu-central-1" })
 		} catch (error) {
 			console.error(error)
 		}
@@ -33,9 +33,9 @@ unit mail
 		                       string to
 		                       string subject
 		                       string message
-		if(Platform_isDebug) return "preview"
+		if(Platform.isDebug) return "preview"
 		try {
-			let result = await mail_ses.send(new mail_aws.SendEmailCommand({
+			let result = await mail.ses.send(new mail.aws.SendEmailCommand({
 				Source: from,
 				Destination: { /* required */
 					ToAddresses: [to]

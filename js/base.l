@@ -8,6 +8,7 @@ immutable struct int
 	
 	inline int * int value
 	inline float * float value
+	inline Angle * Angle value
 	
 	inline float / int value
 	inline float / float value
@@ -16,18 +17,18 @@ immutable struct int
 	inline int -= int value
 	inline int *= int value
 	
+	inline js int ** int value
+		Math.pow(this, value)
+		
+	inline js int % ensureSingleExecution int value
+		((this % value) + value) % value
+		
 	// The largest possible integer value
 	const maxValue = 2147483647
 	
 	// The smallest possible integer value
 	const minValue = -2147483648
 	
-	inline js int operator ** (int a, int b) 
-		Math.pow(a,b)
-		
-	js int operator % (int a, int b)
-		return ((a % b) + b) % b
-		
 	// The remainer after a division by the given value. The sign stays the same.
 	inline js int remainder: int value // The value to divide by
 		(this % value)
@@ -157,7 +158,7 @@ immutable struct int
 		return result
 		
 	inline js TResult[] times: TResult(int i) selector
-		int_enumerate(0, this, selector)
+		int.enumerate(0, this, selector)
 	
 // A number stored as a double precision 64-bit floating point value
 immutable struct float
@@ -176,6 +177,12 @@ immutable struct float
 	inline bool > float value
 	inline bool >= float value
 	
+	inline js float ** float value
+		Math.pow(this, value)
+		
+	inline js float % ensureSingleExecution float value
+		((this % value) + value) % value
+		
 	// The largest possible floating point value
 	const inline js float maxValue := Number.MAX_VALUE
 	
@@ -186,12 +193,6 @@ immutable struct float
 	
 	const inline js float notANumber := Number.NaN
 	
-	inline js float operator ** (float a, float b) 
-		Math.pow(a,b)
-		
-	js float operator % (float a, float b)
-		return ((a % b) + b) % b
-		
 	// The remainer after a division by the given value. The sign stays the same.
 	inline js float remainder: float value
 		(this % value)
@@ -314,10 +315,6 @@ immutable class string
 	inline js dynamic toJson() JSON.parse(this)
 	inline Time toTime() Time.fromTimeString(this)
 		
-	Vector2 toVector2()
-		let mid = this.indexOf " "
-		return Vector2(cast this[..mid], cast this[mid+1..]) 
-		
 	inline js int parseInt(int radix) parseInt(this, radix)
 	
 	// Splits the string at the given character into a list of substrings
@@ -325,9 +322,14 @@ immutable class string
 		this.split(seperator)
 		
 	// Splits the string and return a list with the selected field or expression for each item
-	inline js TValue[] splitInto: TValue(string it) selector // Selects a field or expression for each item
-		                          string seperator = ","     // Separate the string at this character
+	inline js TValue[] splitToList: TValue(string it) selector // Selects a field or expression for each item
+		                            string seperator = ","     // Separate the string at this character
 		this.split(seperator).map(selector)
+		
+	// Splits the string, passes a list of strings to a function and returns its return value
+	js TValue splitToObject: TValue(string[] it) selector // This functions gets a list of strings and should create an object from it
+		                     string seperator = ","       // Separate the string at this character
+		return selector(this.split(seperator))
 		
 	inline js bool startsWith(string str) this.startsWith(str)
 	inline js bool endsWith(string str) this.endsWith(str)
@@ -364,7 +366,6 @@ immutable class string
 		                  string to
 		                  int start = 0
 		let index = this.indexOf(from, start)
-		if(index == -1) return ""
 		let startIndex = index + from.length
 		let endIndex = this.indexOf(to, startIndex)
 		if(endIndex == -1) return this.substring(startIndex)
@@ -626,7 +627,6 @@ class List<T>
 		for this <-
 			if condition(.)
 				removeAt i
-		return null
 		
 	// Remove the first item the meet a specific condition
 	// Example: Remove the first player with a health smaller than 10.
@@ -821,6 +821,8 @@ class List<T>
 	// Reverses the order of the items of the list in place
 	inline js T[] reverse() this.reverse()
 		
+	inline js T[] reversed() [...this].reverse()
+		
 	// Return a list with all unique items of the original list
 	inline js T[] distinct() [...new Set(this)]
 	
@@ -852,8 +854,8 @@ class List<T>
 	inline js T[] sort: float(T a, T b) comparer // A function returning 1 if "a" is larger, -1 if "b" is larger, 0 if they are equal
 		this.sort(comparer)
 	
-	// inline js T[] sort: Time(T a, T b) comparer // A function returning 1 if "a" is larger, -1 if "b" is larger, 0 if they are equal
-	// 	this.sort(comparer)
+	inline js T[] sort: Time(T a, T b) comparer // A function returning 1 if "a" is larger, -1 if "b" is larger, 0 if they are equal
+		this.sort(comparer)
 	
 	// Sort the list by a given expression
 	T[] orderBy: float(T a) expression // First order by this expression
@@ -876,14 +878,14 @@ class List<T>
 		if order == Ascending: return this.sort(expression(a) - expression(b))
 		else                   return this.sort(expression(b) - expression(a))
 		
-	// T[] orderBy: Time(T a) expression // First order by this expression
-	// 	return this.sort(expression(a) - expression(b))
+	T[] orderBy: Time(T a) expression // First order by this expression
+		return this.sort(expression(a) - expression(b))
 		
-	// // Sort the list by a given expression
-	// T[] orderBy: Time(T a) expression // First order by this expression
-	// 	         SortingOrder order    // Specifies if you want to sort in ascending or descending order
-	// 	if order == Ascending: return this.sort(expression(a) - expression(b))
-	// 	else                   return this.sort(expression(b) - expression(a))
+	// Sort the list by a given expression
+	T[] orderBy: Time(T a) expression // First order by this expression
+		         SortingOrder order    // Specifies if you want to sort in ascending or descending order
+		if order == Ascending: return this.sort(expression(a) - expression(b))
+		else                   return this.sort(expression(b) - expression(a))
 		
 	// Returns true if the given condition is true for any item in the list
 	inline js bool any: bool(T a) predicate // The condition to check
@@ -897,7 +899,10 @@ class List<T>
 		this.every(predicate)
 		
 	// Return a list that contains the selected field or expression for each item
-	inline js TValue[] select: TValue(T it) selector // Selects a field or expression for each item
+	inline js TValue[] select: TValue(
+		                           T it,  // The current item of the list
+		                           int i  // The index of the current item of the list
+		                       ) selector // Selects a field or expression for each item
 		this.map(selector)
 		
 	// Get the selected field or expression for each item and flattens the result
@@ -914,7 +919,7 @@ class List<T>
 		
 	inline js T find: bool(T a) condition // The condition to check
 		              int startIndex      // Start searching at this index
-		List_findStartingAtIndex(this, condition, startIndex)
+		Array.findStartingAtIndex(this, condition, startIndex)
 		
 	private static T findStartingAtIndex: T[] list            // The list to search
 		                                  bool(T a) condition // The condition to check
@@ -955,7 +960,15 @@ class List<T>
 	// Find the index of the item the meets the given condition
 	int indexWhere: <- bool(T a) condition // The condition to check
 		            int startIndex = 0     // Start searching at this index
-		for startIndex to length <-
+		for length - startIndex <-
+			if condition(this[.])
+				return i
+		return -1
+		
+	// Seaching backwards, find the last index of the item the meets the given condition
+	int lastIndexWhere: bool(T a) condition // The condition to check
+		                int startIndex = 0  // Start searching at this index
+		for length - startIndex <-
 			if condition(this[.])
 				return i
 		return -1
@@ -1014,11 +1027,11 @@ class List<T>
 	js T percentile: int value
 		if(this.length == 0) return 0
 		if(this.length == 1) return this[0]
-		if(!List_temporaryCopy) List_temporaryCopy = []
-		const len = List_temporaryCopy.length = this.length
-		for(let i=0; i<len; ++i) List_temporaryCopy[i] = this[i] 
-		List_temporaryCopy.sort((a,b) => a - b)
-		return List_temporaryCopy[Math.round((List_temporaryCopy.length-1) * value / 100)]
+		if(!Array.temporaryCopy) Array.temporaryCopy = []
+		const len = Array.temporaryCopy.length = this.length
+		for(let i=0; i<len; ++i) Array.temporaryCopy[i] = this[i] 
+		Array.temporaryCopy.sort((a,b) => a - b)
+		return Array.temporaryCopy[Math.round((Array.temporaryCopy.length-1) * value / 100)]
 		
 	min: int(T a) selector 
 		 int threshold = int.maxValue
@@ -1127,6 +1140,16 @@ class List<T>
 			if where(.)
 				let value = selector(.)
 				if value > resultValue: resultValue = value
+		return resultValue != threshold ? resultValue : default
+		
+	maxUnique: int(T a) selector
+		       int threshold = int.minValue
+		       int default = 0
+		int resultValue = threshold
+		for this
+			let value = selector(.)
+			if value > resultValue:  resultValue = value; else
+			if value == resultValue: resultValue = threshold
 		return resultValue != threshold ? resultValue : default
 		
 	minIndex: float(T a) selector
@@ -1350,6 +1373,9 @@ class List<T>
 	// The first item of the list
 	inline js T first() this[0]
 	
+	// The second item of the list
+	inline js T second() this[1]
+	
 	// The last item of the list
 	inline js T last() this[this.length-1]
 		
@@ -1457,18 +1483,17 @@ struct Nullable<T>
 	
 // A Hashtable with keys of type 'string' and values of type 'any'
 interface dynamic
-	inline js string toJson() JSON.stringify(this)
-	inline js string toFormattedJson() JSON.stringify(this, null, "\t")
-	
+
 // Any type
 interface any
-	
+
 // The base class for all classes
 interface object
 	inline js bool toBool() (this != null)
-	inline js string toString() object_stringify(this, 3)
-	inline js string toJson() JSON.stringify(this)
-	inline js string toFormattedJson() JSON.stringify(this, null, "\t")
+	// inline js string toString() object_stringify(this, 3)
+		
+	static inline js string toJson(any value) JSON.stringify(value)
+	static inline js string toFormattedJson(any value) JSON.stringify(value, null, "\t")
 		
 	static internal js string stringify: object subject, int depth = 0 
 		switch(typeof subject)
@@ -1479,7 +1504,7 @@ interface object
 				if(subject.constructor) result += "_type: " + subject.constructor.name
 				if(depth > 0) {
 					for(let name in subject) {
-						let item = object_stringify(subject[name], depth-1)
+						let item = object.stringify(subject[name], depth-1)
 						if(item != "") {
 							if(result) result += ", "
 							result += name + ": " + item
@@ -1501,6 +1526,13 @@ interface object
 				return subject.toString()
 		}
 
+struct Reference<T>
+	dynamic container
+	string key
+	set: T value
+		container[key] = value
+	T get
+		return container[key]
 		
 // This struct is automatically filled with the source code location
 transient immutable SourceCodeLocation
@@ -1794,8 +1826,8 @@ global transient priority unit System
 	// Display a message in the timeline
 	global js void watch: logstring text // The text, variables or expressions to watch
 		                  SourceCodeLocation sourceCodeLocation
-		if(Platform_isDebug && core_frame >= core_frameWithNewWatches && sourceCodeLocation) {
-			Platform_sendWatch(core_frame, text, sourceCodeLocation.start, sourceCodeLocation.file)
+		if(Platform.isDebug && core.frame >= core.frameWithNewWatches && sourceCodeLocation) {
+			Platform.sendWatch(core.frame, text, sourceCodeLocation.start, sourceCodeLocation.file)
 		}
 		
 	// Shows a dialog box with a given message
@@ -1859,14 +1891,14 @@ global transient priority low unit System
 		                            TResult(
 		                                int i  // The iteration variable of the for-loop
 		                            ) do       // Select the field or expression to be included in the result
-		int_enumerate(0, to, do)
+		int.enumerate(0, to, do)
 		
 	global inline js TResult[] for: int from,    // The integer to start iterating from
 		                            TResult(
 		                                int i    // The iteration variable of the for-loop
 		                            ) do         // Select the field or expression to be included in the result
 		                            label int to // The exclusive upper bound to iterate towards
-		int_enumerate(from, to, do)
+		int.enumerate(from, to, do)
 		
 // A collection of mathematical functions and constants
 global skipInit unit math
@@ -2000,6 +2032,42 @@ struct Average
 		count++
 	average := total / count		
 
+struct RollingList
+	int length = 30
+	int fractionDigits = 1
+	
+	private float[] values
+	private int index
+	
+	add: float value
+		values[index++ % length] = value
+		
+	measure: void() do
+		let startTime = Time.preciseTime
+		do
+		values[index++ % length] = Time.preciseTime - startTime
+	
+	average
+		if values.length == 0: return 0.0
+		float total
+		for values: total += .
+		return total / (values.length max length)
+	
+	max
+		if values.length == 0: return 0.0
+		float max = float.minValue
+		for values: if . > max: max = .
+		return max
+	
+	min
+		if values.length == 0: return 0.0
+		float min = float.maxValue
+		for values: if . < min: min = .
+		return min
+	
+	implicit string toString()
+		return average.format(fractionDigits)
+
 immutable Range
 	int from // The start of the range
 	int to   // The end of the range
@@ -2027,11 +2095,11 @@ unit Loca
 	
 	js void setLanguage: Language language
 		                 string locale = null
-		Loca_language = language
-		Loca_locale = locale || Loca_defaultLocaleForLanguage[language]
+		Loca.language = language
+		Loca.locale = locale || Loca.defaultLocaleForLanguage[language]
 		
 	js void format: int id
-		let entry = _strings[Loca_language][id]
+		let entry = _strings[Loca.language][id]
 		if(!entry || entry.s.length == 0) return "##########"
 		let strings = entry.s
 		let result = strings[0]

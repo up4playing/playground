@@ -11,9 +11,7 @@ skipInit transient immutable float Time
 	static internal inline js float realTime := Date.now()
 
 	// The current frame
-	static inline js int frame := core_frame
-	
-	inline js Time += float value: this += value
+	static inline js int frame := core.frame
 	
 	static Time fromTimeString(string timeString)
 		if not timeString: return 0
@@ -87,33 +85,26 @@ skipInit transient immutable float Time
 	// (31-12-2000 23-59-59)
 	inline js string invariantDayMonthYearHourMinuteSecondString() new Date(this).invariantDayMonthYearHourMinuteSecondString()
 			
-	inline js Time  operator +  (Time a, Time b) a+b
-	inline js Time  operator +  (Time a, int b) a+b
-	inline js Time  operator +  (Time a, float b) a+b
+	inline Time + Time value
+	inline Time - Time value
+	inline float / Time value
+	inline float * Time value
 	
-	inline js Time  operator -  (Time a, Time b) a-b
-	inline js Time  operator -  (Time a, int b) a-b
-	inline js Time  operator -  (Time a, float b) a-b
+	inline Time += Time value
+	inline Time -= Time value
+	inline Time /= Time value
+	inline Time *= Time value
 	
-	inline js float operator /  (Time a, Time b) a/b
-	inline js Time  operator /  (Time a, int b) a/b
-	inline js Time  operator /  (Time a, float b) a/b
+	inline bool == Time value
+	inline bool != Time value
+	inline bool < Time value
+	inline bool <= Time value
+	inline bool > Time value
+	inline bool >= Time value
 	
-	inline js Time  operator *  (Time a, int b) a*b
-	inline js Time  operator *  (Time a, float b) a*b
-	inline js Time  operator *  (int a, Time b) a*b
-	inline js Time  operator *  (float a, Time b) a*b
-	
-	inline js Time  operator %  (Time a, int b) a%b
-	inline js Time  operator %  (Time a, Time b) a%b
-	
-	inline js bool  operator <  (Time a, Time b) a<b
-	inline js bool  operator <= (Time a, Time b) a<=b
-	inline js bool  operator >  (Time a, Time b) a>b
-	inline js bool  operator >= (Time a, Time b) a>=b
-	
-	inline js Time  operator +=  (Time a, Time b) a += b
-	
+	inline js Time % ensureSingleExecution Time value
+		((this % value) + value) % value
+		
 	static measure: void() do
 		let startTime = preciseTime
 		do
@@ -122,8 +113,14 @@ skipInit transient immutable float Time
 	inline js float in: TimeUnit unit // Convert the time to this unit
 		(unit==1 ? this/1000 : unit==2 ? this/60000 : unit==3 ? this/3600000 : unit==4 ? this/86400000 : this)
 		
-	js static void startTimer() window._timerStart = performance.now()
-	js static void printTimer(string text) log(text+": "+(performance.now()-window._timerStart))
+	js static void startTimer() 
+		window._timerStart = performance.now()
+		
+	js static void printTimer(string text)
+		let now = performance.now()
+		log(text+": "+(now-window._timerStart))
+		window._timerStart = now
+		
 	static inline js float preciseTime := performance.now()
 		
 enum TimeUnit
@@ -134,8 +131,8 @@ enum TimeUnit
 	days         // Days
 		
 js(Date) transient immutable struct Date
-	inline js Date() new Date(Time_now)
-	static inline js Date now := new Date(Time_now)
+	inline js Date() new Date(Time.now)
+	static inline js Date now := new Date(Time.now)
 		
 	const dayStrings = [
 		["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]

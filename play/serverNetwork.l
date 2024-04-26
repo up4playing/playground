@@ -12,24 +12,24 @@ transient skipInit unit ServerNetwork
 		else                                         socket = new WebSocket("wss://"+location.host+":3112");
 		socket.binaryType = "arraybuffer";
 		socket.onopen = function() {
-			core_log("Websocket open");
-			ServerNetwork_socket = socket
-			ServerNetwork_onConnectedToServer();
+			core.log("Websocket open");
+			ServerNetwork.socket = socket
+			ServerNetwork.onConnectedToServer();
 		}
 		socket.onmessage = function(event) {
-			ServerNetwork_onMessageFromServer(new Buffer(event.data, 0, 0, 0));
+			ServerNetwork.onMessageFromServer(new Buffer(event.data, 0, 0, 0));
 		}
 		socket.onclose = function(ev) {
-			core_log("Websocket closed "+ev.code+" "+ev.reason)
-			ServerNetwork_socket = null
+			core.log("Websocket closed "+ev.code+" "+ev.reason)
+			ServerNetwork.socket = null
 			if(Date.now() - startTime < 30000) {
-				location.href = "/"+core_gameId+"/"+core_roomId
+				location.href = "/"+core.gameId+"/"+core.roomId
 			}
 		}
 		socket.onerror = error => {
-			core_error = "Can't connect to server."
-			core_errorMessage = error.message
-			core_log(error.message)
+			core.error = "Can't connect to server."
+			core.errorMessage = error.message
+			core.log(error.message)
 		}
 		
 	// We set the internal user to active when we receive the first signal (offer or answer)
@@ -49,15 +49,15 @@ transient skipInit unit ServerNetwork
 		sendJoinMessage core.roomString, input.localUser.id, version:Platform.buildVersion
 		
 	js int bufferedAmount
-		return ServerNetwork_socket.bufferedAmount 
+		return ServerNetwork.socket.bufferedAmount 
 		
 	private js int send: Buffer buffer
 		try {
 			let data = buffer.toByteArray()
-			ServerNetwork_socket.send(data)
+			ServerNetwork.socket.send(data)
 			return data.byteLength
 		} catch(e) { 
-			core_log(e)
+			core.log(e)
 			return 0
 		}
 		
@@ -121,7 +121,7 @@ transient skipInit unit ServerNetwork
 		core.log "Joining room {roomId} as user {userId}"
 		
 		// The first person in the room triggers sending an notification with the link to everybody
-		if userCount <= 1 and !Platform.isStaging: http.getDirectly "{Platform.protocolAndHost}:3114/sendGamedayNotification/{core.gameId}/{core.roomId}/hasStarted"
+		if userCount <= 1 and !Platform.isStaging: http.getStringDirectly "{Platform.protocolAndHost}:3114/sendGamedayNotification/{core.gameId}/{core.roomId}/hasStarted"
 
 		
 	float nextPingTime, fastestPingPongTime = int.maxValue, lastPingPongTime

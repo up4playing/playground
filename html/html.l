@@ -51,7 +51,7 @@ class Node
 		                    Time duration = 1 seconds
 		                    AnimationFill fill = Forwards
 		                    easing = "linear"
-		this.animate([Html_expandStyle(from), Html_expandStyle(to)], {@duration:duration, @fill:fill, @easing:easing})
+		this.animate([Html.expandStyle(from), Html.expandStyle(to)], {@duration:duration, @fill:fill, @easing:easing})
 	
 immutable HtmlEvent
 	Node target        // The element that triggered the event
@@ -61,7 +61,7 @@ immutable HtmlEvent
 	preventDefault     // Prevent the default action (for example, showing the context menu on a right click)
 		
 	inline Vector2 relativeMousePosition() Html.getRelativeMousePosition(this, this.currentTarget)
-	inline js Vector2 mousePosition() new Vector2(this.clientX/Platform_scale, this.clientY/Platform_scale)
+	inline js Vector2 mousePosition() new Vector2(this.clientX/Platform.scale, this.clientY/Platform.scale)
 
 enum Unit
 	Pixels = "px" // Pixels
@@ -113,10 +113,9 @@ struct Vector2
 	
 	toString := "{x}{unit} {y}{unit}"
 	
-	Vector2 operator + (Vector2 a, Vector2 b) return {a.x+b.x, a.y+b.y}
-	Vector2 operator - (Vector2 a, Vector2 b) return {a.x-b.x, a.y-b.y}
-	
-	Vector2 operator * (Vector2 a, float b)   return {a.x*b, a.y*b}
+	Vector2 + Vector2 other:   return {x + other.x, y + other.y}
+	Vector2 - Vector2 other:   return {x - other.x, y - other.y}
+	Vector2 * Vector2 other:   return {x * other.x, y * other.y}
 	
 enum AnimationFill
 	None = "none"
@@ -158,42 +157,30 @@ transient float Angle
 	// Returns true if the angle is not zero
 	inline js bool toBool := this
 	
-	inline js Angle operator +  (Angle a, Angle b) a+b
-	inline js Angle operator +  (Angle a, int b) a+b
-	inline js Angle operator +  (Angle a, float b) a+b
+	inline Angle + Angle value
+	inline Angle - Angle value
+	inline float / Angle value
+	inline float * Angle value
 	
-	inline js Angle operator -  (Angle a, Angle b) a-b
-	inline js Angle operator -  (Angle a, int b) a-b
-	inline js Angle operator -  (Angle a, float b) a-b
+	inline Angle += Angle value
+	inline Angle -= Angle value
+	inline Angle /= Angle value
+	inline Angle *= Angle value
+	
+	inline bool == Angle value
+	inline bool != Angle value
+	inline bool < Angle value
+	inline bool <= Angle value
+	inline bool > Angle value
+	inline bool >= Angle value
+	
+	inline js Angle % ensureSingleExecution Angle value
+		((this % value) + value) % value
+		
 	inline js Angle operator -  (Angle a) -a
 	
-	inline js float operator /  (Angle a, Angle b) a/b
-	inline js Angle operator /  (Angle a, int b) a/b
-	inline js Angle operator /  (Angle a, float b) a/b
-	
-	inline js Angle operator *  (Angle a, int b) a*b
-	inline js Angle operator *  (Angle a, float b) a*b
-	inline js Angle operator *  (int a, Angle b) a*b
-	inline js Angle operator *  (float a, Angle b) a*b
-	
-	inline js Angle operator %  (Angle a, int b) a%b
-	inline js Angle operator %  (Angle a, Angle b) a%b
-	
-	inline js bool  operator <  (Angle a, Angle b) a<b
-	inline js bool  operator <= (Angle a, Angle b) a<=b
-	inline js bool  operator >  (Angle a, Angle b) a>b
-	inline js bool  operator >= (Angle a, Angle b) a>=b
-	
-	inline js bool  operator == (Angle a, Angle b) a==b
-	inline js bool  operator == (Angle a, int b) a==b
-	inline js bool  operator == (Angle a, float b) a==b
-	
-	inline js bool  operator != (Angle a, Angle b) a!=b
-	inline js bool  operator != (Angle a, int b) a!=b
-	inline js bool  operator != (Angle a, float b) a!=b
-	
 	inline js float in: AngleUnit unit
-		(unit==1 ? this*Math_TwoPI : unit==2 ? this*360 : unit==3 ? this*400 : this)
+		(unit==1 ? this*Math.TwoPI : unit==2 ? this*360 : unit==3 ? this*400 : this)
 		
 enum AngleUnit
 	turns // Turn (one full rotation is 1)
@@ -293,8 +280,18 @@ enum Display
 	
 	None = "none" // Turns off the display of an element so that it has no effect on layout
 
-class PaddingOrMargin
-	implicit Dimension top, right, bottom, left
+class Padding
+	implicit Dimension top    // The padding on the top of the element
+	implicit Dimension right  // The padding on the right side of the element
+	implicit Dimension bottom // The padding on the bottom of the element
+	implicit Dimension left   // The padding on the left side of the element
+	string toString := "{top} {right} {bottom} {left}"
+	
+class Margin
+	implicit Dimension top    // The margin on the top of the element
+	implicit Dimension right  // The margin on the right side of the element
+	implicit Dimension bottom // The margin on the bottom of the element
+	implicit Dimension left   // The margin on the left side of the element
 	string toString := "{top} {right} {bottom} {left}"
 	
 enum Cursor
@@ -518,8 +515,8 @@ dynamic Style
 	string listStyleImage // An image as the list-item marker
 	string listStylePosition // The position of the list-item marker
 	string listStyleType // The list-item marker type
-	PaddingOrMargin margin // The margins of an element (can have up to four values)
-	PaddingOrMargin inset
+	Margin margin // The margins of an element (can have up to four values)
+	Margin inset // A shorthand for the top, right, bottom, left properties
 	implicit Dimension marginBottom // The bottom margin of an element
 	implicit Dimension marginLeft // The left margin of an element
 	implicit Dimension marginRight // The right margin of an element
@@ -546,7 +543,7 @@ dynamic Style
 	Overflow overflow // What to do with content that renders outside the element box
 	string overflowX // Specifies what to do with the left/right edges of content rendering outside the element box
 	string overflowY // Specifies what to do with the top/bottom edges of content rendering outside the element box
-	PaddingOrMargin padding // The padding of an element (can have up to four values)
+	Padding padding // The padding of an element (can have up to four values)
 	implicit Dimension paddingBottom // The bottom padding of an element
 	implicit Dimension paddingLeft // The left padding of an element
 	implicit Dimension paddingRight // The right padding of an element
