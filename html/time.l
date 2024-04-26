@@ -2,6 +2,7 @@ skipInit transient float Time
 	// The number of milliseconds elapsed since January 1, 1970
 	static inline js Time now := Date.now()
 	static int frame
+	static int timezoneOffset
 	
 	// The largest possible time value
 	const inline js Time maxValue := Number.MAX_VALUE

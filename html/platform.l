@@ -34,6 +34,7 @@ skipInit global unit Platform
 		Font.init?.();
 		Sound.init?.();
 		audio.init();
+		Time.timezoneOffset = new Date().getTimezoneOffset() * 60000
 		app.init?.()
 			
 	js void initHandlers
