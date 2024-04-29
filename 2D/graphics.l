@@ -88,48 +88,56 @@ immutable Texture
 		}
 		this.size.assign(size);
 		
-	js void modify: void() do  // This block of code will draw on the created image instead of drawing on the screen
-		// Save previous canvas
-		let prevContext = graphics.context
-		let prevPixelSizeX = graphics.pixelSize.x
-		let prevPixelSizeY = graphics.pixelSize.y
-		let prevItems = graphics.items
-		let prevFastForward = Platform.fastForward
-		
-		// Create canvas
-		if(!this.context) {
-			this.imageOrCanvas = document.createElement("canvas")
-			this.imageOrCanvas.width = this.size.x
-			this.imageOrCanvas.height = this.size.y
-			this.context = this.imageOrCanvas.getContext("2d")
+	js void modify: implicit Player[] visibleFor = null // Only make any modification for this player or list of players
+		            void() do                           // This block of code will draw on the created image instead of drawing on the screen
+		let isVisible = graphics.isVisibleFor(visibleFor)
+		if(isVisible) {
+			// Save previous canvas
+			var prevContext = graphics.context
+			var prevPixelSizeX = graphics.pixelSize.x
+			var prevPixelSizeY = graphics.pixelSize.y
+			var prevItems = graphics.items
+			var prevFastForward = Platform.fastForward
+			
+			// Create canvas
+			if(!this.context) {
+				this.imageOrCanvas = document.createElement("canvas")
+				this.imageOrCanvas.width = this.size.x
+				this.imageOrCanvas.height = this.size.y
+				this.context = this.imageOrCanvas.getContext("2d")
+			}
+			
+			// Setup canvas
+			graphics.context = this.context
+			graphics.pixelSize.x = this.size.x
+			graphics.pixelSize.y = this.size.y
+			graphics.items = []
+			Platform.fastForward = false
+			var a = graphics.localMatrix.matrix, b = graphics.totalMatrix.matrix
+			var a0 = graphics.localMatrix.m0, a1 = graphics.localMatrix.m1, a2 = graphics.localMatrix.m2, a3 = graphics.localMatrix.m3, a4 = graphics.localMatrix.m4, a5 = graphics.localMatrix.m5
+			var b0 = graphics.totalMatrix.m0, b1 = graphics.totalMatrix.m1, b2 = graphics.totalMatrix.m2, b3 = graphics.totalMatrix.m3, b4 = graphics.totalMatrix.m4, b5 = graphics.totalMatrix.m5
+			graphics.localMatrix.set(1, 0, 0, 1, -this.size.x/2, -this.size.y/2)
+			graphics.totalMatrix.set(1, 0, 0, 1, this.size.x/2, this.size.y/2)
+			graphics.context.clearRect(0, 0, graphics.pixelSize.x, graphics.pixelSize.y)
+			graphics.context.textBaseline = "top"
 		}
-		
-		// Setup canvas
-		graphics.context = this.context
-		graphics.pixelSize.x = this.size.x
-		graphics.pixelSize.y = this.size.y
-		graphics.items = []
-		Platform.fastForward = false
-		let a = graphics.localMatrix.matrix, b = graphics.totalMatrix.matrix
-		let a0 = graphics.localMatrix.m0, a1 = graphics.localMatrix.m1, a2 = graphics.localMatrix.m2, a3 = graphics.localMatrix.m3, a4 = graphics.localMatrix.m4, a5 = graphics.localMatrix.m5
-		let b0 = graphics.totalMatrix.m0, b1 = graphics.totalMatrix.m1, b2 = graphics.totalMatrix.m2, b3 = graphics.totalMatrix.m3, b4 = graphics.totalMatrix.m4, b5 = graphics.totalMatrix.m5
-		graphics.localMatrix.set(1, 0, 0, 1, -this.size.x/2, -this.size.y/2)
-		graphics.totalMatrix.set(1, 0, 0, 1, this.size.x/2, this.size.y/2)
-		graphics.context.clearRect(0, 0, graphics.pixelSize.x, graphics.pixelSize.y)
-		graphics.context.textBaseline = "top"
 		
 		// Draw on canvas
 		do()
-		graphics.drawItems()
-		
-		// Restore previous canvas
-		graphics.localMatrix.m0 = a0; graphics.localMatrix.m1 = a1; graphics.localMatrix.m2 = a2; graphics.localMatrix.m3 = a3; graphics.localMatrix.m4 = a4; graphics.localMatrix.m5 = a5
-		graphics.totalMatrix.m0 = b0; graphics.totalMatrix.m1 = b1; graphics.totalMatrix.m2 = b2; graphics.totalMatrix.m3 = b3; graphics.totalMatrix.m4 = b4; graphics.totalMatrix.m5 = b5
-		graphics.context = prevContext
-		graphics.pixelSize.x = prevPixelSizeX
-		graphics.pixelSize.y = prevPixelSizeY
-		graphics.items = prevItems
-		Platform.fastForward = Platform.fastForward
+			
+		if(isVisible) {
+			// Draw all display items
+			graphics.drawItems()
+			
+			// Restore previous canvas
+			graphics.localMatrix.m0 = a0; graphics.localMatrix.m1 = a1; graphics.localMatrix.m2 = a2; graphics.localMatrix.m3 = a3; graphics.localMatrix.m4 = a4; graphics.localMatrix.m5 = a5
+			graphics.totalMatrix.m0 = b0; graphics.totalMatrix.m1 = b1; graphics.totalMatrix.m2 = b2; graphics.totalMatrix.m3 = b3; graphics.totalMatrix.m4 = b4; graphics.totalMatrix.m5 = b5
+			graphics.context = prevContext
+			graphics.pixelSize.x = prevPixelSizeX
+			graphics.pixelSize.y = prevPixelSizeY
+			graphics.items = prevItems
+			Platform.fastForward = Platform.fastForward
+		}
 		
 // A font that can be used to draw text
 skipInit immutable Font
