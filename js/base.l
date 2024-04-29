@@ -1613,6 +1613,9 @@ global transient priority unit System
 		                      nocolon implicit bool while // The condition to check
 		@do do() 
 		@while(while)
+		
+	inline js void doNotSerialize: any object
+		_constCache.push(object)
 	
 	// Do something a given number of times or for each item in a list
 	global inline js void for: T[] subject    // The list to iterate over

@@ -417,15 +417,16 @@ skipInit global unit input
 		!input.players.some(predicate)
 		
 	// All players
-	global inline js Player everybody() null
+	global inline js Player[] everybody() input.players
 		
 	internal Player[] playersById
 	Cursor cursor
 	
+	bool showPointers = true
 	ShowPointersMode showPointersMode = Remote
 	ShowPointersMode showPointersDuringPlaybackMode = LocalAndRemote
-	bool showPointers = true
-	bool enableClickingWithAltKey = false
+	
+	bool enableClickingWithAltKey
 	bool ignoreFirstClick
 	
 	string textInput
