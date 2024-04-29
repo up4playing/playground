@@ -94,25 +94,27 @@ transient skipInit unit Platform
 		
 			await graphics.setup {referenceSizeX, referenceSizeY}
 			graphics.onResize
-			// drawLoading
+			// graphics.drawStatus "Loading media"
 			if mode >= Play: mode = Pause
 			let path = url.getUntil("?").split("/")
 			let gameId = path[3]
 			let roomId = path[4]
+			
+			// If the roomId "staging", "latest" switch to staging mode (no audio, no fullscreen)
+			isStaging = isDebug or roomId == "staging" or roomId == "latest"
 				
 			// For testing, support joining a room with a given userId using the format /gameId/{roomId}u{userId}
 			// because starting the app in two browser tabs overwrites the userId in the local storage
 			let userId = -1
 			if roomId
-				let dashIndex = roomId.indexOf("u")
+				let dashIndex = roomId.indexOf("x")
+				if dashIndex != -1: isStaging = true;
+				else                dashIndex = roomId.indexOf("u")
+				
 				if dashIndex != -1
 					userId = cast roomId.substring(dashIndex+1)
 					roomId = roomId.substring(0,dashIndex)
 				
-			// If the roomId "staging", "latest" or negative, switch to staging mode (no audio, no fullscreen)
-			isStaging = isDebug or roomId == "staging" or roomId == "latest" or (roomId and roomId?.startsWith("-"))
-			// TEMP until safe navigation is implemented                         ^
-			
 			await preload
 			openMedia
 				try
