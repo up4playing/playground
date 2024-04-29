@@ -579,7 +579,7 @@ PathfindingNeighbor
 	float cost = 0.0
 				
 PathfindingNode
-	static int searchNumber
+	transient static int searchNumber
 		
 	Vector2 location
 	
