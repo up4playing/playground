@@ -236,8 +236,6 @@ transient skipInit unit ServerNetwork
 		sendBuffer.writeFloat64 core.checksums[core.lastChecksumFrame] || 0  // The checksum of the last certain frame
 		send sendBuffer
 		
-		if core.logging: core.sentLog += " #{inputFrame} {inputsSentPos}->{inputs.writePos} {inputs.toRangeString(inputsSentPos, inputs.writePos)}"
-		
 		inputsSentPos = inputs.writePos
 		core.tickMessageSize = sendBuffer.writePos	
 						
@@ -249,8 +247,6 @@ transient skipInit unit ServerNetwork
 		sender.inputFrame = buffer.readInt32
 		buffer.readBuffer sender.inputs, prevWritePos
 
-		if core.logging: core.receivedLog += " [{core.currentTime}] <{senderId}> #{sender.inputFrame} {prevWritePos}->{sender.inputs.writePos} {sender.inputs.toRangeString(prevWritePos, sender.inputs.writePos)}"
-	
 	sendSwitch: SendInputsMode mode, int sendInterval
 		sendBuffer.reset
 		sendBuffer.writeInt8 cast NetworkMessageType.Switch

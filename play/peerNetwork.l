@@ -202,7 +202,6 @@ transient skipInit unit PeerNetwork
 				
 				core.tickMessageSize = send ., sendBuffer
 				user.inputsSentPos = inputs.writePos
-				if core.logging: core.sentLog += " <{user.id}> #{inputFrame} {user.inputsSentPos}->{inputs.writePos} {inputs.toRangeString(user.inputsSentPos, inputs.writePos)} ({core.tickMessageSize} bytes)"
 			
 	private js int send: InternalUser user, Buffer buffer
 		try {
@@ -241,10 +240,6 @@ transient skipInit unit PeerNetwork
 			let myChecksum = core.checksums[checksumFor]
 			if !myChecksum                           core.checksums[checksumFor] = checksum; else
 			if !myChecksum.isApproximately(checksum) core.onWrongChecksum checksumFor, mine:myChecksum theirs:checksum
-			
-			if core.logging: core.receivedLog += " [{core.currentTime}] <{sender.id}> #{inputFrame} {prevWritePos}->{sender.inputs.writePos} {sender.inputs.toRangeString(prevWritePos, sender.inputs.writePos)}"
-		else
-			if core.logging: core.receivedLog += " [{core.currentTime}] <{sender.id}> (ignoring #{inputFrame})"
 		
 	js void onReceivedAnswer: InternalUser user, string sdp
 		await user.peerConnection.setRemoteDescription(new RTCSessionDescription({type: "answer", sdp}));

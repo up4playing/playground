@@ -48,7 +48,6 @@ transient skipInit unit core
 		
 		input.handleJoin frame 
 		user.collectInputs = true
-		if core.logging: writeLog += " #{joinFrame} Join"
 		log "startConnected", joinFrame
 		
 		this.frame = frame
@@ -254,8 +253,8 @@ transient skipInit unit core
 	private float now               // The time at the beginning of animationFrame
 	
 	// Logs
-	string logTable = "frame,id,iframe,ahead,buffer,id,iframe,ahead,buffer,id,iframe,ahead,buffer,id,iframe,ahead,buffer,messageSize,now,animTime,networkTime,tickTime,drawTime,displayItems,iteration,restoreTime,replayFrames,replayTime,snapshotSize,saveTime,pingPong,checksums,events,replay,controller,send,receive,write,parse,touch\n"
-	public string eventLog, replayLog, sentLog, receivedLog, writeLog, parseLog, touchLog, checksumLog
+	string logs
+	public string eventLog, checksumLog
 	private float lastNetworkFrame, lastAnimationFrame, drawTime, tickTime, restoreTime, replayTime, saveTime
 	private int replayFrames
 	internal int displayItems
@@ -296,20 +295,11 @@ transient skipInit unit core
 		// Logs
 		if logging
 			try
-				logTable += "{frame-1}"
-				for 4
-					let user = input.internalUsers.find.index == i
-						logTable += ",{user.id},{user.inputFrame},{frame-user.inputFrame},{user.bufferFrames}"
-					else
-						logTable += ",,,,"
-					
-				logTable += ",{tickMessageSize},{now},{now - lastAnimationFrame},{now - lastNetworkFrame},{tickTime.format(fractionDigits:2)},{drawTime.format(fractionDigits:2)},{displayItems},{frame-animationStartFrame}"
-				logTable += ",{restoreTime.format(fractionDigits:2)},{replayFrames},{replayTime.format(fractionDigits:2)},{snapshot.writePos},{saveTime.format(fractionDigits:2)},{ServerNetwork.lastPingPongTime}"
-				logTable += ",\"{checksumLog.trim}\",\"{eventLog.trim}\",\"{replayLog.trim}\",\"{players[0]?.controller?.leftStick}\",\"{sentLog.trim}\",\"{receivedLog.trim}\",\"{writeLog.trim}\",\"{parseLog.trim}\",\"{touchLog.trim}\"\n"
+				logs += "---{frame-1}---\nCheck: {checksumLog}\n{eventLog}\n"
 			catch
 				onError error
 			
-			eventLog = ""; replayLog = ""; sentLog = ""; receivedLog = ""; writeLog = ""; parseLog = ""; touchLog = ""; checksumLog = ""
+			eventLog = ""; checksumLog = ""
 			ServerNetwork.lastPingPongTime = 0; tickMessageSize = 0
 
 	private int lastSendFrame
@@ -360,13 +350,6 @@ transient skipInit unit core
 			// Save a snapshot when we are about to start the frame after the last certain frame where we got all inputs
 			checkSaveState
 			
-			// Log
-			if logging
-				replayLog += " #{frame} c:{certainFrame}"
-				parseLog += " #{frame}"
-				if fastForward:     parseLog += "f"; replayLog += "f"
-				if input.isCertain: parseLog += "c"; replayLog += "c"
-				
 			// Update game controllers
 			input.updateGameControllers
 			
@@ -435,12 +418,10 @@ transient skipInit unit core
 			
 		if mode == Local and simulateRollback: nextSnapshotFrame = frame - 5
 		else                                   nextSnapshotFrame = (input.internalUsers.min math.min(.smoothFrame, .inputFrame) where . and .active and not .local)+1
-		if logging: replayLog += "(next:{nextSnapshotFrame})"
 		if snapshotFrame != -1: rewindAndReplayState snapshot, snapshotFrame
 
 	private rewindAndReplayState: Buffer snapshot, int snapshotFrame
 		// Rewind
-		if logging: replayLog += " rewind to {snapshotFrame}("
 		restoreTime = Time.measure
 			snapshot.rewind
 			Snapshot.deserialize snapshot
@@ -449,7 +430,6 @@ transient skipInit unit core
 			for userCount
 				let user = input.internalUsers[.]
 				user.inputs.readPos = snapshot.readInt
-		if logging: replayLog += ")"
 		
 		// Replay
 		let targetFrame = frame
@@ -457,28 +437,23 @@ transient skipInit unit core
 		replayFrames = targetFrame - frame
 		this.snapshotFrame = -1
 		
-		if logging: replayLog += "\{"
 		replayTime = Time.measure
 			while frame < targetFrame
 				step fastForward:true, draw:false			
-		if logging: replayLog += "\} "
 			
 	// This is called at the beginning of each step
 	private checkSaveState
 		if mode != Connected and !simulateRollback: return
 			
 		if snapshotFrame == -1 and frame >= nextSnapshotFrame
-			if logging: replayLog += " save{frame}("
 			snapshotFrame = frame
 			saveState snapshot
-			if logging: replayLog += ")"
 				
 	// string[] snapshotLogs
 			
 	private saveState: Buffer snapshot
 		snapshot.reset
 		saveTime = Time.measure
-			// if logging: snapshotLogs[frame] = object.stringify players, depth:5
 			Snapshot.serialize snapshot
 				
 		// To check if serialization works consistently, deserialize, serialize a second snapshot and compare it with the first
@@ -500,7 +475,6 @@ transient skipInit unit core
 		snapshot.writeInt input.internalUsers.length
 		for input.internalUsers
 			snapshot.writeInt .inputs.readPos
-		if logging: replayLog += "sn.writepos:{snapshot.writePos} "
 				
 	js void log: logstring text
 		let str = new Date().hourMinuteSecondString() + " " + text
@@ -530,8 +504,8 @@ transient skipInit unit core
 			
 	internal saveLogs
 		// Ensure that current eventLog is added to the table even if we haven't processed a single frame
-		logTable += ",,,,,,,,,,,,,,,,,,,,,,,,\"{eventLog.trim}\""
-		file.saveText "{input.localUser.id} {Platform.appName} {Date.now.invariantDayMonthYearHourMinuteSecondString} v{Platform.buildVersion}.csv", logTable
+		logs += eventLog
+		file.saveText "{input.localUser.id} {Platform.appName} {Date.now.invariantDayMonthYearHourMinuteSecondString} v{Platform.buildVersion}.csv", logs
 			
 	saveEventStream
 		Buffer buffer = {}
@@ -847,9 +821,7 @@ unit networkVisualizer
 			// Move circle with artificially created inputs to test the smoothness
 			for players -> player
 				core.smooth player
-					if core.logging and player.id == 1: core.replayLog += "C"
 					input.onKeyDown by:player
-						if core.logging and player.id == 1: core.replayLog += "D"
 						if (posForPlayer[player.index] += 2) > 1080
 							posForPlayer[player.index] -= 1080
 				

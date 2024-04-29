@@ -605,11 +605,9 @@ skipInit global unit input
 				// We already moved the pointer this input frame, so just update the last move
 				inputs.setInt16 index, math.round(referencePos.x)
 				inputs.setInt16 index+2, math.round(referencePos.y)
-				if core.logging: core.writeLog += " #{localUser.inputFrame} override {id} at {index} to {math.round(referencePos.x)} {math.round(referencePos.y)}"
 				return
 			else
 				setLastTouchMoveIndex id, inputs.writePos+6
-				if core.logging: core.writeLog += " save {id} at {inputs.writePos+6}"
 			
 		int composite = cast(inputType)                                 // inputType: 0 -  31 (5 bit)
 		              + math.shiftLeft(touchType, 5)                    // touchType: 0 -   7 (3 bit)
@@ -618,7 +616,6 @@ skipInit global unit input
 		inputs.writeUnsignedInt16 composite
 		inputs.writeInt16 math.round(referencePos.x)
 		inputs.writeInt16 math.round(referencePos.y)
-		if core.logging: core.writeLog += " #{localUser.inputFrame} {composite} {math.round(referencePos.x)} {math.round(referencePos.y)} ({inputs.readPos}/{inputs.writePos})"
 	
 	internal handleUpdateTouchAfterSwitchingUser: int id, Vector2 referencePos
 		let inputs = localUser.inputs
@@ -644,7 +641,6 @@ skipInit global unit input
 		inputs.writeInt16 math.round(referencePos.y)
 		inputs.writeInt16 math.round(deltaX)
 		inputs.writeInt16 math.round(deltaY)
-		if core.logging: core.writeLog += " [{localUser.inputFrame}] wheel {math.round(referencePos.x)} {math.round(referencePos.y)} {deltaX} {deltaY} \{r:{inputs.readPos} w:{inputs.writePos}\}"
 		
 	internal handleSetState: Buffer buffer
 		let inputs = localUser.inputs
@@ -738,14 +734,10 @@ skipInit global unit input
 			let inputs = internalUser.inputs
 			let userId = internalUser.id
 			let player = playersById[userId]
-			if core.logging: core.parseLog += " <{userId}>"
 			player?.controller.startFrame
 			
 			while true
 				int nextFrame = inputs.canRead ? inputs.peekInt32 : int.maxValue
-				if core.logging: 
-					core.parseLog += " ({inputs.readPos}/{inputs.writePos})"
-					if inputs.canRead: core.parseLog += " *{nextFrame}"
 				if nextFrame > frame: break
 				inputs.readPos += 4
 				
@@ -753,7 +745,6 @@ skipInit global unit input
 				// which is typically the "Join" message that is sent in "startConnected",
 				// but could also be a player reconnecting that was previously kicked out
 				if not player
-					if core.logging: core.parseLog += " Add {userId}"
 					players.add player = {id:userId, index:players.length}
 					playersById[userId] = player
 					if internalUser.local: localPlayer = player
@@ -769,7 +760,6 @@ skipInit global unit input
 					int id = (value shiftRight 8) % 128
 					Vector2 referencePos = {inputs.readInt16, inputs.readInt16}
 					bool isSmoothPosition = !core.smoothTouchPosition or internalUser.local or frame <= internalUser.smoothFrame
-					if core.logging: core.parseLog += " "+id
 					
 					if inputType == TouchDown
 						let touch = player.touches.find.id == id
@@ -784,12 +774,10 @@ skipInit global unit input
 							// This flag is preserved throughout "TouchMove" and "TouchUp", so if we mark the touch
 							// as handled at any point, the flags stays set to "true" until we touch down again
 							touch.handled = false
-							if core.logging: core.parseLog += " down {id} {referencePos} {type}"
 							if isSmoothPosition: touch.smoothPosition = referencePos
 						else
 							touch = {id, player, cast inputType, type, referencePos, referencePos, referencePos, isDown:true}
 							player.touches.add touch
-							if core.logging: core.parseLog += " down(new) {id} {referencePos} {type}"
 								
 						player.downTouches.add touch
 						player.pointerPosition = referencePos
@@ -803,11 +791,9 @@ skipInit global unit input
 							touch.referencePosition = referencePos
 							touch.type = type
 							if isSmoothPosition: touch.smoothPosition = referencePos
-							if core.logging: core.parseLog += " move {id} {referencePos} {type}"
 						else
 							touch = {id, player, cast inputType, type, referencePos, referenceStartPosition:Vector2.none, referencePos, isDown:false}
 							player.touches.add touch
-							if core.logging: core.parseLog += " move(new) {id} {referencePos} {type}"
 								
 						player.pointerPosition = referencePos
 						internalUser.movingTouches.add touch
@@ -822,11 +808,9 @@ skipInit global unit input
 							touch.type = type
 							touch.isDown = false
 							if isSmoothPosition: touch.smoothPosition = referencePos
-							if core.logging: core.parseLog += " up {id} {referencePos} {type}"
 						else
 							touch = {id, player, cast inputType, type, referencePos, referenceStartPosition:Vector2.none, referencePos, isDown:false}
 							player.touches.add touch
-							if core.logging: core.parseLog += " up(new) {id} {referencePos} {type}"
 								
 						player.pointerPosition = referencePos
 						internalUser.upTouches.add touch
@@ -851,7 +835,6 @@ skipInit global unit input
 					int controllerButtonIndex = cast((value shiftRight 5) % 16)
 						player.controllerKeyDownFrame[controllerButtonIndex] = frame
 					
-					if core.logging: core.parseLog += " KeyDown {key}"
 				else
 				if inputType == KeyUp
 					Key key = cast inputs.readInt32
@@ -860,8 +843,6 @@ skipInit global unit input
 					
 					int controllerButtonIndex = cast((value shiftRight 5) % 16)
 						player.controllerKeyDownFrame[controllerButtonIndex] = 0
-					
-					if core.logging: core.parseLog += " KeyUp {key}"
 				else
 				if inputType == Navigate
 					internalUser.navigations.add inputs.readString
@@ -892,16 +873,8 @@ skipInit global unit input
 						c.b.name = "O"
 						c.x.name = "SQUARE"
 						c.y.name = "TRIANGLE"
-						
-				else
-				if inputType == Join
-					// We created the player above as soon as received the first input from that player,
-					// which is typically the "Join" message that is sent in "startConnected",
-					// but could also be a player reconnecting that was previously kicked out
-					if core.logging: core.parseLog += " Join {userId}"
 				else
 				if inputType == SetState
-					if core.logging: core.parseLog += " setState"
 					core.snapshotBuffer.reset
 					inputs.readBuffer core.snapshotBuffer
 					Snapshot.deserialize core.snapshotBuffer
@@ -910,14 +883,12 @@ skipInit global unit input
 				if inputType == String
 					int id = inputs.readInt
 					string valueString = inputs.readString
-					if core.logging: core.parseLog += " string {id}: {valueString}"
 					networkData.call id, valueString
 					if Platform.waitingForInitialData > 0: Platform.waitingForInitialData--
 				else
 				if inputType == Json
 					int id = inputs.readInt
 					string valueString = inputs.readString
-					if core.logging: core.parseLog += " json {id}: {valueString}"
 					dynamic object = valueString.toJson
 					networkData.call id, object
 					if Platform.waitingForInitialData > 0: Platform.waitingForInitialData--
@@ -925,7 +896,6 @@ skipInit global unit input
 				if inputType == Object
 					int id = inputs.readInt
 					string valueString = inputs.readString
-					if core.logging: core.parseLog += " object {id}: {valueString}"
 					dynamic object = valueString.toJson
 					networkData.call id, object
 					if Platform.waitingForInitialData > 0: Platform.waitingForInitialData--
@@ -1034,9 +1004,6 @@ skipInit global unit input
 			controllerButtonMap[A] = {userId:localUser.id, buttonIndex:4}
 			
 		
-	private log: string text, Vector2 pos
-		if core.logging: core.touchLog += " #{core.frame}{isCertain ? " c" : ""} {text} {pos}"
-
 	private getTargetedPlayers: Player[] by
 		return (core.mode == Connected || core.simulateConnection) and by and by.length > 0 and by[0] ? by : players
 		
@@ -1123,7 +1090,6 @@ skipInit global unit input
 			for internalUsers[player.id].downTouches -> touch
 				if !touch.handled and (player.enableTouch or touch.type != Touch)
 				and touch.referencePosition.isInsidePoygon(poly)
-					log "down", touch.referencePosition
 					do touch
 					if markAsHandled: touch.handled = true
 						
@@ -1156,7 +1122,6 @@ skipInit global unit input
 			for internalUsers[player.id].downTouches -> touch
 				if !touch.handled and (player.enableTouch or touch.type != Touch)
 				and (touch.referencePosition distanceTo referencePosition) <= referenceRadius
-					log "down", touch.referencePosition
 					do touch
 					if markAsHandled: touch.handled = true
 						
@@ -1193,7 +1158,6 @@ skipInit global unit input
 			for internalUsers[player.id].downTouches -> touch
 				if !touch.handled and (player.enableTouch or touch.type != Touch)
 				and touch.referencePosition.isInsidePoygon(poly)
-					log "down", touch.referencePosition
 					do touch
 					if markAsHandled: touch.handled = true
 						
@@ -1217,7 +1181,6 @@ skipInit global unit input
 		for getTargetedPlayers(by) -> player
 			for internalUsers[player.id].downTouches -> touch
 				if !touch.handled and (player.enableTouch or touch.type != Touch)
-					log "down", touch.referencePosition
 					do touch
 					if markAsHandled: touch.handled = true
 
@@ -1227,7 +1190,6 @@ skipInit global unit input
 		for getTargetedPlayers(by) -> player
 			for internalUsers[player.id].downTouches -> touch
 				if player.enableTouch or touch.type != Touch
-					log "down", touch.referencePosition
 					do touch
 
 	// ---------------------------------------------- Touch Over ----------------------------------------------
@@ -1259,7 +1221,6 @@ skipInit global unit input
 		for getTargetedPlayers(by) -> player
 			for player.touches -> touch
 				if touch.referencePosition.isInsidePoygon(poly)
-					log "over", touch.referencePosition
 					do touch
 					
 			if cursor != Auto
@@ -1298,11 +1259,9 @@ skipInit global unit input
 			if triggeredOnTouchDown
 				for user.downTouches
 					if .id == touchId
-						log "down triggers move", .referencePosition
 						do .
 			for user.movingTouches
 				if .id == touchId
-					log "move", .referencePosition
 					do .
 	
 	// Do something when a touch or click of the given player moves
@@ -1315,7 +1274,6 @@ skipInit global unit input
 		                void(Touch touch) do                // Do this for each touch or click
 		for getTargetedPlayers(by)
 			for internalUsers[.id].movingTouches
-				log "move", .referencePosition
 				do .
 					
 	// ---------------------------------------------- Touch Up ----------------------------------------------
@@ -1345,7 +1303,6 @@ skipInit global unit input
 		let user = internalUsers[touch.by.id]
 			for user.upTouches
 				if .id == touchId
-					log "up", .referencePosition
 					do .
 					Snapshot.autoSave
 					if markAsHandled: .handled = true
@@ -1362,7 +1319,6 @@ skipInit global unit input
 		for getTargetedPlayers(by)
 			for internalUsers[.id].upTouches
 				if !.handled
-					log "up", .referencePosition
 					do .
 					Snapshot.autoSave
 					
@@ -1391,7 +1347,6 @@ skipInit global unit input
 		for getTargetedPlayers(by) -> player
 			for internalUsers[player.id].upTouches -> touch
 				if !touch.handled && touch.referencePosition.isInsidePoygon(poly)
-					log "up", touch.referencePosition
 					do touch
 					if markAsHandled: touch.handled = true
 					Snapshot.autoSave
@@ -1419,7 +1374,6 @@ skipInit global unit input
 		for getTargetedPlayers(by) -> player
 			for internalUsers[player.id].upTouches -> touch
 				if !touch.handled && (touch.referencePosition distanceTo referencePosition) <= referenceRadius
-					log "up", touch.referencePosition
 					do touch
 					if markAsHandled: touch.handled = true
 					Snapshot.autoSave
@@ -1456,7 +1410,6 @@ skipInit global unit input
 		for getTargetedPlayers(by)
 			for internalUsers[.id].wheelEvents
 				if !.handled && .referencePosition.isInsidePoygon(poly)
-					log "wheel", .referencePosition
 					do .
 					if markAsHandled: .markAsHandled
 						
