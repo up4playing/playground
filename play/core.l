@@ -145,6 +145,7 @@ transient skipInit unit core
 		if not input.isCertain: return
 		let hostPlayerId = input.host ? input.host.id : -1
 		Framework.clear includingLockedObjects:true
+		Platform.fastForward = false
 		initAll
 		Player[] newPlayers
 		for input.players

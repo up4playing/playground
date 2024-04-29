@@ -42,6 +42,7 @@ transient skipInit unit Platform
 	internal int receivedInitialData
 	
 	private inline js void initMedia
+		_constCache = [null]
 		audio.init();
 		$Image.init?.();
 		Font.init?.();

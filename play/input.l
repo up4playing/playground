@@ -427,10 +427,11 @@ skipInit global unit input
 	internal Player[] playersById
 	Cursor cursor
 	
+	bool showPointers = true
 	ShowPointersMode showPointersMode = Remote
 	ShowPointersMode showPointersDuringPlaybackMode = LocalAndRemote
-	bool showPointers = true
-	bool enableClickingWithAltKey = false
+	
+	bool enableClickingWithAltKey
 	bool ignoreFirstClick
 	
 	string textInput
