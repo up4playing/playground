@@ -1,3 +1,6 @@
+// Platform.start
+// core.join
+	
 transient immutable Signal
 	int receiverId
 	string type
@@ -326,7 +329,7 @@ transient skipInit unit PeerNetwork
 	MediaDevices devices = {}
 	string videoInputId, audioInputId, audioOutputId	
 	
-	private js void setupLocalMedia: bool enableVideo, bool enableAudio
+	js async void setupLocalMedia: bool enableVideo, bool enableAudio
 		core.log("setupLocalMedia: start")
 		PeerNetwork.enableVideo = enableVideo
 		PeerNetwork.enableAudio = enableAudio

@@ -12,10 +12,11 @@ transient skipInit unit core
 	bool simulateRollback = false
 	bool drawPointsForTesting = false
 	Time sendStatisticsEvery = 2 minutes
-	bool showVideoForStaging = true
-	bool audioForStaging = false
 	bool muteInvisibleUsers = false
 	bool testLobby = false                // Start in the lobby for testing
+	
+	bool enableVideoForStaging = true
+	bool enableAudioForStaging = false
 		
 	SendInputsMode sendInputsMode = Peer
 	internal const targetFps = 30
@@ -577,17 +578,16 @@ transient skipInit unit core
 		this.roomString = roomString
 		this.roomId = cast roomString
 		input.localUser = {userId, local:true, connectionId:0}
-		//initDatabase
-		setupVideoAndNetwork
+		// initDatabase
+		await PeerNetwork.setupLocalMedia 
+			enableVideo:not Platform.isStaging || core.enableVideoForStaging
+			enableAudio:not Platform.isStaging || core.enableAudioForStaging
+		ServerNetwork.setup
 		lobby.enableFullscreen = !Platform.isStaging
 		
 	private js void initAll
 		init()
 		graphics.updateBaseMatrix();
-		
-	private js void setupVideoAndNetwork 
-		await PeerNetwork.setupLocalMedia(/*enableVideo*/!Platform.isStaging || core.showVideoForStaging, /*enableAudio*/!Platform.isStaging || core.audioForStaging)
-		ServerNetwork.setup()
 		
 	internal storeUserId
 		Platform.setLocalStorageObject "room"+roomId, RoomInfo(currentTime, input.localUser.id)
