@@ -113,7 +113,7 @@ priority class Player
 
 	internal clearEvents
 		bool hasTouch = touches.any.type == Touch
-		for touches backward
+		for touches backwards
 			if .phase == Up
 				if .type >= Touch or (hasTouch and .type != Touch): touches.removeAt i
 				else                                                .phase = Still
