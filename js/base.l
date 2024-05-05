@@ -929,6 +929,15 @@ class List<T>
 			if condition(it)
 				return it
 		return null
+	
+	// Execute a selector for each item and if it returns a value that isn't null, return this value
+	// Example: Find object that is nested within another object
+	//     transport.routes.findIn.trips.find.id == tripId
+	TValue findIn: TValue(T it) selector
+		for this
+			let value = selector(it)
+			if value != null: return value
+		return null
 		
 	// Does the list have an item that meets the given condition?
 	bool has: bool(T a) condition // The condition to check
