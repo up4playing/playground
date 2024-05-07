@@ -103,11 +103,11 @@ skipInit global unit Platform
 		replay
 		
 	private js void startApp
-		if(window.app.start) app.start()
+		if(app.start) app.start()
 		
 	private js void tick
 		Platform.heartbeat("tick")
-		if(window.app.tick) app.tick()
+		if(app.tick) app.tick()
 		Time.frame++
 		
 	private js void startTickInterval
