@@ -919,7 +919,7 @@ class List<T>
 		
 	inline js T find: bool(T a) condition // The condition to check
 		              int startIndex      // Start searching at this index
-		List.findStartingAtIndex(this, condition, startIndex)
+		Array.findStartingAtIndex(this, condition, startIndex)
 		
 	private static T findStartingAtIndex: T[] list            // The list to search
 		                                  bool(T a) condition // The condition to check
@@ -928,6 +928,15 @@ class List<T>
 			let it = list[.]
 			if condition(it)
 				return it
+		return null
+	
+	// Execute a selector for each item and if it returns a value that isn't null, return this value
+	// Example: Find object that is nested within another object
+	//     transport.routes.findIn.trips.find.id == tripId
+	TValue findIn: TValue(T it) selector
+		for this
+			let value = selector(it)
+			if value != null: return value
 		return null
 		
 	// Does the list have an item that meets the given condition?
@@ -1027,11 +1036,11 @@ class List<T>
 	js T percentile: int value
 		if(this.length == 0) return 0
 		if(this.length == 1) return this[0]
-		if(!List.temporaryCopy) List.temporaryCopy = []
-		const len = List.temporaryCopy.length = this.length
-		for(let i=0; i<len; ++i) List.temporaryCopy[i] = this[i] 
-		List.temporaryCopy.sort((a,b) => a - b)
-		return List.temporaryCopy[Math.round((List.temporaryCopy.length-1) * value / 100)]
+		if(!Array.temporaryCopy) Array.temporaryCopy = []
+		const len = Array.temporaryCopy.length = this.length
+		for(let i=0; i<len; ++i) Array.temporaryCopy[i] = this[i] 
+		Array.temporaryCopy.sort((a,b) => a - b)
+		return Array.temporaryCopy[Math.round((Array.temporaryCopy.length-1) * value / 100)]
 		
 	min: int(T a) selector 
 		 int threshold = int.maxValue
@@ -1140,6 +1149,16 @@ class List<T>
 			if where(.)
 				let value = selector(.)
 				if value > resultValue: resultValue = value
+		return resultValue != threshold ? resultValue : default
+		
+	maxUnique: int(T a) selector
+		       int threshold = int.minValue
+		       int default = 0
+		int resultValue = threshold
+		for this
+			let value = selector(.)
+			if value > resultValue:  resultValue = value; else
+			if value == resultValue: resultValue = threshold
 		return resultValue != threshold ? resultValue : default
 		
 	minIndex: float(T a) selector
@@ -1363,6 +1382,9 @@ class List<T>
 	// The first item of the list
 	inline js T first() this[0]
 	
+	// The second item of the list
+	inline js T second() this[1]
+	
 	// The last item of the list
 	inline js T last() this[this.length-1]
 		
@@ -1477,7 +1499,7 @@ interface any
 // The base class for all classes
 interface object
 	inline js bool toBool() (this != null)
-	inline js string toString() object_stringify(this, 3)
+	// inline js string toString() object_stringify(this, 3)
 		
 	static inline js string toJson(any value) JSON.stringify(value)
 	static inline js string toFormattedJson(any value) JSON.stringify(value, null, "\t")
@@ -1513,6 +1535,13 @@ interface object
 				return subject.toString()
 		}
 
+struct Reference<T>
+	dynamic container
+	string key
+	set: T value
+		container[key] = value
+	T get
+		return container[key]
 		
 // This struct is automatically filled with the source code location
 transient immutable SourceCodeLocation
@@ -1593,6 +1622,9 @@ global transient priority unit System
 		                      nocolon implicit bool while // The condition to check
 		@do do() 
 		@while(while)
+		
+	inline js void doNotSerialize: any object
+		_constCache.push(object)
 	
 	// Do something a given number of times or for each item in a list
 	global inline js void for: T[] subject    // The list to iterate over
@@ -2011,6 +2043,42 @@ struct Average
 		total += value
 		count++
 	average := total / count		
+
+struct RollingList
+	int length = 30
+	int fractionDigits = 1
+	
+	private float[] values
+	private int index
+	
+	add: float value
+		values[index++ % length] = value
+		
+	measure: void() do
+		let startTime = Time.preciseTime
+		do
+		values[index++ % length] = Time.preciseTime - startTime
+	
+	average
+		if values.length == 0: return 0.0
+		float total
+		for values: total += .
+		return total / (values.length max length)
+	
+	max
+		if values.length == 0: return 0.0
+		float max = float.minValue
+		for values: if . > max: max = .
+		return max
+	
+	min
+		if values.length == 0: return 0.0
+		float min = float.maxValue
+		for values: if . < min: min = .
+		return min
+	
+	implicit string toString()
+		return average.format(fractionDigits)
 
 immutable Range
 	int from // The start of the range
