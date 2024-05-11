@@ -2,6 +2,7 @@ skipInit transient float Time
 	// The number of milliseconds elapsed since January 1, 1970
 	static inline js Time now := Date.now()
 	static int frame
+	static int timezoneOffset
 	
 	// The largest possible time value
 	const inline js Time maxValue := Number.MAX_VALUE
@@ -14,6 +15,7 @@ skipInit transient float Time
 	inline js Time += float value: this += value
 
 	static Time fromTimeString(string timeString)
+		if !timeString: return 0 milliseconds
 		Time value = 0
 		int colon1 = timeString.indexOf(":")
 		if(colon1 == -1)
@@ -33,7 +35,7 @@ skipInit transient float Time
 		
 	static inline js Time fromValues(int year, int month=1, int day=1, int hour = 0, int minute = 0, int second = 0) new Date(year, (month)-1, day, hour, minute, second).getTime()
 		
-	inline js float toFloat() this
+	inline js implicit float toFloat() this
 	inline js string toString() this.toString()
 		
 	// Returns true if the time is not zero
@@ -60,19 +62,22 @@ skipInit transient float Time
 	inline js int totalWeeks        := Math.floor(this / 604800000)
 		
 	// (31.12.)
-	inline js string dayMonthString(language = Loca.language) new Date(this).dayMonthString(language)
+	inline js string dayMonthString(language = Loca.language) new DateTime(this).dayMonthString(language)
 		
 	// (31.12.2000)
-	inline js string dayMonthYearString(language = Loca.language) new Date(this).dayMonthYearString(language)
+	inline js string dayMonthYearString(language = Loca.language) new DateTime(this).dayMonthYearString(language)
 	
 	// (31 December 2000)
-	inline js string dayLongMonthNameYearString(language = Loca.language) new Date(this).dayLongMonthNameYearString(language)
+	inline js string dayLongMonthNameYearString(language = Loca.language) new DateTime(this).dayLongMonthNameYearString(language)
 	
 	// (31 Dec 2000)
-	inline js string dayShortMonthNameYearString(language = Loca.language) new Date(this).dayShortMonthNameYearString(language)
+	inline js string dayShortMonthNameYearString(language = Loca.language) new DateTime(this).dayShortMonthNameYearString(language)
+	
+	// (Monday, December 31)
+	inline string dayOfWeekDayMonthString() new DateTime(this).dayOfWeekDayMonthString
 	
 	// (Monday)
-	inline js string weekdayString(language = Loca.language) new Date(this).weekdayString(language)
+	inline js string weekdayString(language = Loca.language) new DateTime(this).weekdayString(language)
 	
 	// (23:59)
 	inline js string hourMinuteString(language = Loca.language) new Date(this).hourMinuteString(language)
@@ -142,6 +147,75 @@ enum TimeUnit
 	min  // Minutes
 	h    // Hours
 	days // Days
+	
+immutable struct DateTime
+	const dayNames = [
+		["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
+		["Sonntag", "Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag"]
+	]
+	const shortDayNames = [
+		["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
+		["So", "Mo", "Di", "Mi", "Do", "Fr", "Sa"]
+	]
+	const monthNames = [
+		["","January","February","March","April","May","June","July","August","September","October","November","December"]
+		["","Januar", "Februar", "März", "April", "Mai", "Juni", "Juli", "August", "September", "Oktober", "November", "Dezember"]
+	]
+	const daysInMonthCommon = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
+	const daysInMonthLeap = [31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
+
+	int year
+	int month
+	int day
+	int dayOfWeek
+	
+	DateTime: Time time
+		const daysSinceEpoch = math.floor (time - Time.timezoneOffset) / 86400000
+		
+		// Year
+		let currentYear = 1970;
+		let daysLeft = daysSinceEpoch;
+		
+		loop
+			let daysInYear = ((currentYear remainder 4) == 0 && (currentYear remainder 100) != 0) || (currentYear remainder 400 == 0) ? 366 : 365;
+			if daysLeft < daysInYear: break
+			daysLeft -= daysInYear
+			currentYear++
+		
+		// Month and Day
+		let daysInMonth = ((currentYear remainder 4) == 0 && (currentYear remainder 100) != 0) || (currentYear remainder 400 == 0) ? daysInMonthLeap : daysInMonthCommon
+		let currentMonth = 0
+		
+		while daysLeft >= daysInMonth[currentMonth]
+			daysLeft -= daysInMonth[currentMonth]
+			currentMonth++
+			
+		this.day = daysLeft + 1
+		this.month = currentMonth + 1
+		this.year = currentYear
+		this.dayOfWeek = (daysSinceEpoch + 4) % 7; // January 1, 1970 was a Thursday
+		
+	// (31.12.)
+	dayMonthString: language = Loca.language
+		if language == German return "{day}.{month}."
+		else                  return "{month}-{day}"
+		
+	// (31.12.2000)
+	dayMonthYearString: language = Loca.language
+		if language == German return "{day}.{month}.{year}"
+		else                  return "{year}-{month}-{day}"
+	
+	// (31 December 2000)
+	dayMonthNameYearString: language = Loca.language
+		return "{day} {monthNames[language][month]} {year}"
+		
+	// (Monday, December 31)
+	dayOfWeekDayMonthString: language = Loca.language
+		if language == German return "{dayNames[language][dayOfWeek]}, {day}. {monthNames[language][month]}"
+		else                  return "{dayNames[language][dayOfWeek]}, {day} {monthNames[language][month]}"
+			
+	dayOfWeekString: language = Loca.language
+		return dayNames[language][dayOfWeek]
 		
 js(Date) transient class Date
 	inline js Date() new Date()
