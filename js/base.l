@@ -371,6 +371,14 @@ immutable class string
 		if(endIndex == -1) return this.substring(startIndex)
 		return this.substring(startIndex, endIndex)
 		
+	js string getBetweenLast: string from
+		                      string to
+		let index = this.lastIndexOf(from)
+		let startIndex = index + from.length
+		let endIndex = this.indexOf(to, startIndex)
+		if(endIndex == -1) return this.substring(startIndex)
+		return this.substring(startIndex, endIndex)
+		
 	// Returns 0 for an exact match, 1 if first is larger, -1 if second is larger
 	inline js int compareTo: string value // The string to compare to
 		this.localeCompare(value)
