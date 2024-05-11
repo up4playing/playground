@@ -148,6 +148,7 @@ enum TimeUnit
 	h    // Hours
 	days // Days
 	
+// Calculate dates using pure math for better performance without using the Date class
 immutable struct DateTime
 	const dayNames = [
 		["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
@@ -217,6 +218,7 @@ immutable struct DateTime
 	dayOfWeekString: language = Loca.language
 		return dayNames[language][dayOfWeek]
 		
+// Calculate dates using the JavaScript Date class
 js(Date) transient class Date
 	inline js Date() new Date()
 	static inline js Date now := new Date()
