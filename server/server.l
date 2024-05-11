@@ -2,8 +2,12 @@ skipInit unit Platform
 	visible bool isDebug
 	inline js int version := _buildVersion
 		
-	inline js void initPlatform() Platform.init()
-	inline js void initApplication() init()
+	inline js void initPlatform
+		Platform.init()
+		Time.timezoneOffset = new Date().getTimezoneOffset() * 60000
+		
+	inline js void initApplication
+		init()
 		
 	start: bool isDebug
 		initPlatform
