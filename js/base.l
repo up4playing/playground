@@ -1586,7 +1586,7 @@ global transient priority unit System
 		                         inline void() do        // Do this while to condition is true
 		while(condition) do()
 			
-	global inline js void loop: void() do
+	global inline js void loop: inline void() do
 		for(;;) do()
 	
 	global inline js void do: inline void() do            // Do this while to condition is true
