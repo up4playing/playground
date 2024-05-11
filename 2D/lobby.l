@@ -13,11 +13,14 @@ unit lobby
 		"Bjarne"
 		"Tim"
 		
+		"Christian"
+		"Svend"
+		"Holger"
+		
 		"Joe"
 		"Kevin"
 		
 		"Simonas"
-		"Holger"
 		"Dominik"
 		"Felix"
 		"Edi"
@@ -158,7 +161,6 @@ unit lobby
 		let field = LobbyTextField(text:player.name, player, visibleFor, editableBy:host, color:White, size:100, font:ByTheWay, angle:-.01, onChanged:player.name = .)
 		fields.add field
 		return field
-
 	
 	tickSettings
 		for players -> player
@@ -169,28 +171,29 @@ unit lobby
 				if player.showSettingsInLobby
 					Vector2 pos = {-650,-500}
 					
-					if PeerNetwork.devices.videoInput
-						drawImage cameraIcon, pos
-						forPositions PeerNetwork.devices.videoInput start:pos+{36} delta:{0,26} -> device
-							drawText .label, pos, size:18, align:Left, color:PeerNetwork.videoInputId == .deviceId ? Green : White
-							onTouchDown pos+{200,0}, size:{400,30} by player
-								PeerNetwork.setVideoInput device.deviceId, player
-						pos += {450}
+					drawImage cameraIcon, pos
+					forPositions 10 start:pos+{36} delta:{0,26}
+						let device = PeerNetwork.devices.videoInput[i]
+							drawText device.label, pos, size:18, align:Left, color:PeerNetwork.videoInputId == device.deviceId ? player.color : White
+						onTouchDown pos+{200,0}, size:{400,30} by player
+							PeerNetwork.setVideoInput device?.deviceId, player
+					pos += {450}
 					
-					if PeerNetwork.devices.audioInput
-						drawImage microphoneIcon, pos
-						forPositions PeerNetwork.devices.audioInput start:pos+{36} delta:{0,26} -> device
-							drawText .label, pos, size:18, align:Left, color:PeerNetwork.audioInputId == .deviceId ? Green : White
-							onTouchDown pos+{200,0}, size:{400,30} by player
-								PeerNetwork.setAudioInput device.deviceId, player
-						pos += {550}
+					drawImage microphoneIcon, pos
+					forPositions 10 start:pos+{36} delta:{0,26}
+						let device = PeerNetwork.devices.audioInput[i]
+							drawText device.label, pos, size:18, align:Left, color:PeerNetwork.audioInputId == device.deviceId ? player.color : White
+						onTouchDown pos+{200,0}, size:{400,30} by player
+							PeerNetwork.setAudioInput device?.deviceId, player
+					pos += {550}
 						
 					if PeerNetwork.devices.audioOutput	
 						drawImage speakerIcon, pos
-						forPositions PeerNetwork.devices.audioOutput start:pos+{36} delta:{0,26} -> device
-							drawText .label, pos, size:18, align:Left, color:PeerNetwork.audioOutputId == .deviceId ? Green : White
-							onTouchDown pos+{200,0}, size:{400,30} by player
-								PeerNetwork.setAudioOutput device.deviceId, player
+					forPositions 10 start:pos+{36} delta:{0,26}
+						let device = PeerNetwork.devices.audioOutput[i]
+							drawText device.label, pos, size:18, align:Left, color:PeerNetwork.audioOutputId == device.deviceId ? player.color : White
+						onTouchDown pos+{200,0}, size:{400,30} by player
+							PeerNetwork.setAudioOutput device?.deviceId, player
 						
 Player
 	bool showSettingsInLobby

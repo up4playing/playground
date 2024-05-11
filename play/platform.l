@@ -18,7 +18,6 @@ transient skipInit unit Platform
 	// Configuration
 	public userCount = 4
 	public supportedUserCount = Range 2..4
-	public bool showSafeArea = true
 	public bool showDebugInfo = false
 	public bool isLocal = false
 	public IntervalMode intervalMode = JavaScriptInterval
@@ -40,8 +39,10 @@ transient skipInit unit Platform
 	internal PlatformMode mode
 	internal bool fastForward
 	internal int waitingForInitialData
+	internal int receivedInitialData
 	
 	private inline js void initMedia
+		_constCache = [null]
 		audio.init();
 		$Image.init?.();
 		Font.init?.();
@@ -73,7 +74,7 @@ transient skipInit unit Platform
 				graphics.onResize();
 				if(Platform.mode < 3/*Pause,Manipulator,Slide*/ && Platform.engineStarted) core.tick(/*draw*/true);
 			}
-		if(window.app.init) app.init();
+		if(app.init) app.init();
 		
 	// This is called when the application starts for the first time	
 	private start: bool isDebug, float referenceSizeX, float referenceSizeY, int userCount, bool simulateConnection, bool showSafeArea
@@ -89,29 +90,33 @@ transient skipInit unit Platform
 			this.isDebug = isDebug
 			this.userCount = userCount
 			core.simulateConnection = simulateConnection
-			this.showSafeArea = showSafeArea
+			graphics.showSafeArea = showSafeArea
 			showDebugInfo = getLocalStorageObject("showDebugInfo") == "true"
-			
+		
 			await graphics.setup {referenceSizeX, referenceSizeY}
 			graphics.onResize
-			// drawLoading
+			// graphics.drawStatus "Loading media"
 			if mode >= Play: mode = Pause
 			let path = url.getUntil("?").split("/")
 			let gameId = path[3]
 			let roomId = path[4]
+			
+			// If the roomId "staging", "latest" switch to staging mode (no audio, no fullscreen)
+			isStaging = isDebug or roomId == "staging" or roomId == "latest"
 				
 			// For testing, support joining a room with a given userId using the format /gameId/{roomId}u{userId}
 			// because starting the app in two browser tabs overwrites the userId in the local storage
 			let userId = -1
 			if roomId
-				let dashIndex = roomId.indexOf("u")
+				let dashIndex = roomId.indexOf("x")
+				if dashIndex != -1: isStaging = true;
+				else                dashIndex = roomId.indexOf("u")
+				
 				if dashIndex != -1
 					userId = cast roomId.substring(dashIndex+1)
 					roomId = roomId.substring(0,dashIndex)
 				
-			// If the roomId "staging", "latest" or negative, switch to staging mode (no audio, no fullscreen)
-			isStaging = isDebug or roomId == "staging" or roomId == "latest" or roomId?.startsWith("-")
-			
+			await preload
 			openMedia
 				try
 					this.engineStarted = true
@@ -130,7 +135,9 @@ transient skipInit unit Platform
 		catch
 			sendErrorToEditor .
 			sendFinished
-			
+	
+	private async js void preload
+		if(app.preload) await app.preload();
 		
 	// This is called after every code change to replay all inputs with the new code
 	// Since the const cache is cleared when the code changes, we reinitialize the media
@@ -249,3 +256,7 @@ transient skipInit unit Platform
 		debugger
 		
 	quit
+		
+	js void openDevTools
+		require('@electron/remote/main').remote.getCurrentWindow().toggleDevTools()
+				

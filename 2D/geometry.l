@@ -681,6 +681,14 @@ class List<T>
 		return sum	
 		
 	Vector2 average: Vector2(T it) selector
+		int count
+		Vector2 sum = {0,0}
+		for this
+			sum += selector(.)
+			count++
+		return sum/count
+		
+	Vector2 average: Vector2(T it) selector
 		             bool(T it) where
 		int count
 		Vector2 sum = {0,0}
@@ -730,6 +738,9 @@ transient immutable float Angle
 	inline bool <= Angle value
 	inline bool > Angle value
 	inline bool >= Angle value
+	
+	inline js Angle normalize
+		(((this + .5) % 1) + 1) % 1 - .5
 	
 	inline js Angle % ensureSingleExecution Angle value
 		((this % value) + value) % value
@@ -831,15 +842,15 @@ global skipInit priority low unit math
 	// Returns the inverse tangent in turns
 	Angle atan2: float y, float x
 		float r, angle;
-		float absY = math.abs(y) + .00000000001
-		if x < 0.0
-			r = (x + absY) / (absY - x);
+		float absx = math.abs(x) + .00000000001
+		if y > 0.0
+			r = (-y + absx) / (+y + absx);
 			angle = .375;
 		else
-			r = (x - absY) / (x + absY);
+			r = (-y - absx) / (-y + absx);
 			angle = .125;
 		angle += (.03124211533 * r * r - .1562424076) * r;
-		if y < 0.0: return cast -angle
+		if x < 0.0: return cast -angle
 		else        return cast angle
 		
 	moveTowards: Angle value

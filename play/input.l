@@ -91,6 +91,7 @@ priority class Player
 	
 	// Touch input
 	internal Touch[] touches
+	internal Touch[] downTouches
 	internal bool enableTouch = true
 	
 	// Text input
@@ -112,9 +113,14 @@ priority class Player
 
 	internal clearEvents
 		bool hasTouch = touches.any.type == Touch
-		for touches <-
-			if (.phase == Up and .type >= Touch) or (hasTouch and .type != Touch)
-				touches.remove .
+		for touches backwards
+			if .phase == Up
+				if .type >= Touch or (hasTouch and .type != Touch): touches.removeAt i
+				else                                                .phase = Still
+				downTouches.remove .
+			else
+			if .phase == Down
+				.phase = Still
 	
 enum InputType: None, TouchDown, TouchMove, TouchUp, Scroll, KeyDown, KeyUp, TextInput, Stick, Trigger, Grip, ButtonDown, ButtonUp, ControllerTransform, HeadTransform, DeviceRotation, Join, Lost, StillConnected, SetState, Navigate, GameController, String, Json, Object
 		
@@ -176,6 +182,16 @@ enum Key
 	Down         =  40
 	Insert       =  45
 	Delete       =  46
+	Number0      =  48
+	Number1      =  49
+	Number2      =  50
+	Number3      =  51
+	Number4      =  52
+	Number5      =  53
+	Number6      =  54
+	Number7      =  55
+	Number8      =  56
+	Number9      =  57
 	A            =  65
 	B            =  66
 	C            =  67
@@ -406,14 +422,16 @@ skipInit global unit input
 		!input.players.some(predicate)
 		
 	// All players
-	global inline js Player everybody() null
+	global inline js Player[] everybody() input.players
 		
 	internal Player[] playersById
 	Cursor cursor
 	
+	bool showPointers = true
 	ShowPointersMode showPointersMode = Remote
 	ShowPointersMode showPointersDuringPlaybackMode = LocalAndRemote
-	bool showPointers = true
+	
+	bool enableClickingWithAltKey
 	bool ignoreFirstClick
 	
 	string textInput
@@ -428,6 +446,7 @@ skipInit global unit input
 		return new Vector2(p.x/Platform.pixelRatio, p.y/Platform.pixelRatio, null)
 
 	private js void initHandlers
+		let pointerX = 0, pointerY = 0, clickWithAltKeyX = 0, clickWithAltKeyY = 0
 		window.onpointerdown = e => {
 			if(e.button == 0 && Platform.mode == 0) {
 				Platform.record();
@@ -436,6 +455,7 @@ skipInit global unit input
 			input.handleTouchEvent(1, e.pageX, e.pageY, e.pointerType, e.pointerId, e.button, e.shiftKey, e.altKey, e.ctrlKey || e.metaKey);
 		}
 		window.onpointermove = e => {
+			pointerX = e.pageX; pointerY = e.pageY;
 			input.handleTouchEvent(2, e.pageX, e.pageY, e.pointerType, e.pointerId, e.button, e.shiftKey, e.altKey, e.ctrlKey || e.metaKey);
 		}
 		window.onpointerup = e => {
@@ -451,7 +471,7 @@ skipInit global unit input
 			let key = e.key
 			let ctrlOrCmd = e.ctrlKey || e.metaKey
 			if(window.require && key == "t" && e.metaKey && e.shiftKey)
-				require("electron").remote.getCurrentWindow().toggleDevTools()
+				Platform.openDevTools();
 			else
 			if(ctrlOrCmd && key == "s") {
 				// Save event steam
@@ -472,7 +492,7 @@ skipInit global unit input
 				e.preventDefault();
 			}
 			else
-			if(key >= "1" && key <= "0") {
+			if((key >= "1" && key <= "0") && (e.altKey || e.ctrlKey)) {
 				let index = key - "0"
 				if(e.altKey)  { core.save(index); e.preventDefault(); } else
 				if(e.ctrlKey) { core.restore(index); e.preventDefault(); }
@@ -502,6 +522,9 @@ skipInit global unit input
 				Platform.toggleSmallScreen();
 			} else if(key == "F11") { 
 				graphics.copyScreenshotToClipboard();
+			} else if(key == "Alt" && input.enableClickingWithAltKey) {
+				clickWithAltKeyX = pointerX; clickWithAltKeyY = pointerY;
+				input.handleTouchEvent(1, clickWithAltKeyX, clickWithAltKeyY, "touch", /*pointerId*/127, /*button*/0, /*shift*/false, /*alt*/false, /*ctrl*/false);
 			} else {
 				let typedKey = key && key.length == 1  && !e.ctrlKey && !e.metaKey && !e.altKey? key : ""
 				input.handleKeyEvent(5, keyCode, typedKey)
@@ -509,7 +532,11 @@ skipInit global unit input
 			}
 		}
 		window.onkeyup = e => {
-			input.handleKeyEvent(6, e.keyCode)
+			if(e.key == "Alt" && input.enableClickingWithAltKey) {
+				input.handleTouchEvent(3, clickWithAltKeyX, clickWithAltKeyY, "touch", /*pointerId*/127, /*button*/0, /*shift*/false, /*alt*/false, /*ctrl*/false);
+			} else {
+				input.handleKeyEvent(6, e.keyCode)
+			}
 		}
 			
 		// Handles navigating back or forward in the browser	
@@ -803,6 +830,7 @@ skipInit global unit input
 							player.touches.add touch
 							if core.logging: core.parseLog += " down(new) {id} {referencePos} {type}"
 								
+						player.downTouches.add touch
 						player.pointerPosition = referencePos
 						internalUser.downTouches.add touch
 					else
@@ -810,7 +838,7 @@ skipInit global unit input
 						let touch = player.touches.find.id == id
 						if touch
 							// Update the touch in player.touches
-							touch.phase = cast inputType
+							if touch.phase == Still: touch.phase = cast inputType
 							touch.referencePosition = referencePos
 							touch.type = type
 							if isSmoothPosition: touch.smoothPosition = referencePos
@@ -1001,6 +1029,10 @@ skipInit global unit input
 			for .controller.buttons
 				if p.controllerKeyDownFrame[i]: 
 					.state = true
+					
+		if Platform.receivedInitialData
+			Platform.waitingForInitialData -= Platform.receivedInitialData
+			Platform.receivedInitialData = 0
 						
 	internal updatePlayers
 		players.orderBy.id
@@ -1059,8 +1091,10 @@ skipInit global unit input
 					c.b.assign     "X"     X
 			
 			controllerButtonMap.clear
-			for localPlayer.controller.buttons
-				controllerButtonMap[.key] = {userId:localPlayer.id, buttonIndex:i}
+			// TODO: Research why this is sometimes called before we have a local player
+			if localPlayer
+				for localPlayer.controller.buttons
+					controllerButtonMap[.key] = {userId:localPlayer.id, buttonIndex:i}
 				
 			controllerButtonMap[W] = {userId:localUser.id, buttonIndex:1}
 			controllerButtonMap[D] = {userId:localUser.id, buttonIndex:2}

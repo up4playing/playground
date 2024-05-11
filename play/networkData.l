@@ -8,7 +8,7 @@ networkData
 		networkData.callbacks.add do
 		return id
 				
-localStorage
+storage
 	inline js void set: string key, object value
 		localStorage.setItem(key, JSON.stringify(value))
 		
@@ -44,16 +44,28 @@ http
 		}
 		
 	js void getString: string url
+		               bool storeForDeterministicReplay = true
 		               stored void(string result) code
-		let id = networkData.addCallback(code)
-		if(core.frame == 0 || Platform.waitingForInitialData) Platform.waitingForInitialData++
-		if(core.isPremiere && input.isCertain) {
-			let data = await (await fetch(url)).text()
-			log("http.get "+url+" -> "+data?.length+" bytes")
-			input.handleString(id, data, 1)
+		if(core.frame == 0 || Platform.waitingForInitialData) {
+			Platform.waitingForInitialData++
+			log("getString: "+url)
+		}
+		if(storeForDeterministicReplay) {
+			let id = networkData.addCallback(code)
+			if(core.isPremiere && input.isCertain) {
+				let data = await (await fetch(url)).text()
+				input.handleString(id, data, 1)
+			}
+		} else {
+			if(core.isPremiere && input.isCertain) {
+				let data = await (await fetch(url)).text()
+				log("received: "+url)
+				code.invoke(data)
+				if(Platform.waitingForInitialData > 0) Platform.receivedInitialData++
+			}
 		}
 		
-	internal js async string getDirectly string url
+	internal js async string getStringDirectly string url
 		return await (await fetch(url)).text()
 		
 	internal js async dynamic getJsonDirectly: string url

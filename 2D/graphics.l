@@ -49,16 +49,17 @@ immutable Color
 immutable Texture
 	string file
 	Vector2 size
+	transient dynamic imageOrCanvas, context
 	
 	Texture
-		if Platform.engineStarted
+		if Platform.engineStarted and file
 			open
 			
 	js bool ensureIsAvailable()
-		if(!this._htmlImage) {
-			this._htmlImage = _htmlImageCache[this.file]
+		if(!this.imageOrCanvas && this.file) {
+			this.imageOrCanvas = _htmlImageCache[this.file]
 		}
-		return this._htmlImage != null
+		return this.imageOrCanvas != null
 	
 	js void open
 		if(!window._htmlImageCache) _htmlImageCache = {}
@@ -67,7 +68,7 @@ immutable Texture
 			return new Promise((resolve, reject) => {
 				image = new Image()
 				image.onload = e => {
-					this._htmlImage = image
+					this.imageOrCanvas = image
 					window._htmlImageCache[this.file] = image
 					this.size = new Vector2(image.width, image.height, null)
 					resolve(this);
@@ -75,9 +76,67 @@ immutable Texture
 				image.src = this.file.startsWith("http") || this.file.startsWith("data") ? this.file : _basePath+this.file
 			})
 		} else {
-			this._htmlImage = image
+			this.imageOrCanvas = image
 			this.size = new Vector2(image.width, image.height, null)
 			return this
+		}
+		
+	js void setSize: Vector2 size
+		if((size.x != this.size.x || size.y != this.size.y) && this.imageOrCanvas) {
+			this.imageOrCanvas.width = size.x
+			this.imageOrCanvas.height = size.y
+		}
+		this.size.assign(size);
+		
+	js void modify: implicit Player[] visibleFor = null // Only make any modification for this player or list of players
+		            void() do                           // This block of code will draw on the created image instead of drawing on the screen
+		let isVisible = graphics.isVisibleFor(visibleFor)
+		if(isVisible) {
+			// Save previous canvas
+			var prevContext = graphics.context
+			var prevPixelSizeX = graphics.pixelSize.x
+			var prevPixelSizeY = graphics.pixelSize.y
+			var prevItems = graphics.items
+			var prevFastForward = Platform.fastForward
+			
+			// Create canvas
+			if(!this.context) {
+				this.imageOrCanvas = document.createElement("canvas")
+				this.imageOrCanvas.width = this.size.x
+				this.imageOrCanvas.height = this.size.y
+				this.context = this.imageOrCanvas.getContext("2d")
+			}
+			
+			// Setup canvas
+			graphics.context = this.context
+			graphics.pixelSize.x = this.size.x
+			graphics.pixelSize.y = this.size.y
+			graphics.items = []
+			Platform.fastForward = false
+			var a = graphics.localMatrix.matrix, b = graphics.totalMatrix.matrix
+			var a0 = graphics.localMatrix.m0, a1 = graphics.localMatrix.m1, a2 = graphics.localMatrix.m2, a3 = graphics.localMatrix.m3, a4 = graphics.localMatrix.m4, a5 = graphics.localMatrix.m5
+			var b0 = graphics.totalMatrix.m0, b1 = graphics.totalMatrix.m1, b2 = graphics.totalMatrix.m2, b3 = graphics.totalMatrix.m3, b4 = graphics.totalMatrix.m4, b5 = graphics.totalMatrix.m5
+			graphics.localMatrix.set(1, 0, 0, 1, -this.size.x/2, -this.size.y/2)
+			graphics.totalMatrix.set(1, 0, 0, 1, this.size.x/2, this.size.y/2)
+			graphics.context.clearRect(0, 0, graphics.pixelSize.x, graphics.pixelSize.y)
+			graphics.context.textBaseline = "top"
+		}
+		
+		// Draw on canvas
+		do()
+			
+		if(isVisible) {
+			// Draw all display items
+			graphics.drawItems()
+			
+			// Restore previous canvas
+			graphics.localMatrix.m0 = a0; graphics.localMatrix.m1 = a1; graphics.localMatrix.m2 = a2; graphics.localMatrix.m3 = a3; graphics.localMatrix.m4 = a4; graphics.localMatrix.m5 = a5
+			graphics.totalMatrix.m0 = b0; graphics.totalMatrix.m1 = b1; graphics.totalMatrix.m2 = b2; graphics.totalMatrix.m3 = b3; graphics.totalMatrix.m4 = b4; graphics.totalMatrix.m5 = b5
+			graphics.context = prevContext
+			graphics.pixelSize.x = prevPixelSizeX
+			graphics.pixelSize.y = prevPixelSizeY
+			graphics.items = prevItems
+			Platform.fastForward = Platform.fastForward
 		}
 		
 // A font that can be used to draw text
@@ -166,6 +225,7 @@ transient skipInit global unit graphics
 	public Vector2 referenceSize = {1920, 1080}
 	public ScaleMode scaleMode = Auto, effectiveScaleMode
 	public AnchorMode anchor = Center
+	public bool showSafeArea = true
 	visible Vector2 pixelSize
 	visible Vector2 size
 	visible float pixelRatio
@@ -198,14 +258,15 @@ transient skipInit global unit graphics
 		if scaleMode == Auto
 			if ratio.x < ratio.y: effectiveScaleMode = FixedWidth;  scale = ratio.x
 			else                  effectiveScaleMode = FixedHeight; scale = ratio.y
-			size = referenceSize
 		else
-		if scaleMode == FixedWidth
+			effectiveScaleMode = scaleMode
+			
+		if effectiveScaleMode == FixedWidth
 			effectiveScaleMode = scaleMode
 			scale = ratio.x
 			size = {referenceSize.x, pixelSize.y/scale}
 		else
-		if scaleMode == FixedHeight
+		if effectiveScaleMode == FixedHeight
 			effectiveScaleMode = scaleMode
 			scale = ratio.y; 
 			size = {pixelSize.x/scale, referenceSize.y}
@@ -269,7 +330,7 @@ transient skipInit global unit graphics
 	internal js void drawSafeArea
 		graphics.resetTransform()
 		graphics.context.fillStyle = "#404040"
-		if(Platform.showSafeArea) {
+		if(graphics.showSafeArea) {
 			if(graphics.effectiveScaleMode == 1) {
 				// Fixed width
 				let ratio = graphics.pixelSize.x / graphics.referenceSize.x
@@ -304,7 +365,7 @@ transient skipInit global unit graphics
 		                      HorizontalAlignment align = Center  // The horizontal alignment of the image
 		                      VerticalAlignment valign = Middle   // The vertical alignment of the image
 		                      SourceCodeLocation location
-		if(!image.texture?.ensureIsAvailable()) return
+		if(!image?.texture?.ensureIsAvailable()) return
 		if(graphics.isVisibleFor(visibleFor)) {
 			let f = image.frames[frame % image.frames.length]
 			let sizeX = size.x || f.w
@@ -318,7 +379,7 @@ transient skipInit global unit graphics
 				sizeX, sizeY,
 				layer, alpha, graphics.currentClippingPath, image.file,
 				location, position.location, size.location,
-				image.texture._htmlImage,
+				image.texture.imageOrCanvas,
 				f.x1, f.y1, f.w, f.h,
 				color
 			))
@@ -363,7 +424,7 @@ transient skipInit global unit graphics
 					sizeX, sizeY,
 					layer, alpha, graphics.currentClippingPath, image.file, 
 					location, position.location, size.location,
-					image.texture._htmlImage,
+					image.texture.imageOrCanvas,
 					f.x1, f.y1, f.w, f.h,
 					color
 				))
@@ -426,12 +487,14 @@ transient skipInit global unit graphics
 		                   alpha = 1.0                          // The opacity of the image (0: fully transparent, 1: fully visible)
 		                   Color color = White                  // Tint the image with this color
 		                   Angle angle = 0.0                    // Rotate the image by this angle in turns (0: no rotation, 1: one full rotation)
+		                   flipX = false                        // Mirror the image horizontally
+		                   flipY = false                        // Mirror the image vertically
 		                   clickableMargin = Vector2(16,16)     // The margin around the image within which it is clickable
 		                   showClickableArea = false            // Highlight the clickable area for debugging
 		                   hotkey = Key.None                    // This keyboard shortcut will execute the onClick handler
 		                   void(Touch touch) onClick            // Execute this code when the user touches or clicks the image or presses the hotkey
 		                   SourceCodeLocation location
-		drawImage image, position, frame, size, angle, visibleFor, layer, alpha, color, location
+		drawImage image, position, frame, size, visibleFor, layer, alpha, color, angle, flipX, flipY, location
 			
 		// Handle click (only visible buttons are clickable)
 		let effectiveClickableBy = getClickableBy(visibleFor, clickableBy)
@@ -876,7 +939,7 @@ transient skipInit global unit graphics
 				sizeX, sizeY,
 				layer, alpha, graphics.currentClippingPath, texture.file,
 				location, position.location, size.location,
-				texture._htmlImage,
+				texture.imageOrCanvas,
 				0, 0, texture.size.x, texture.size.y,
 				color
 			))
@@ -909,7 +972,7 @@ transient skipInit global unit graphics
 				sizeX, sizeY,
 				layer, alpha, graphics.currentClippingPath, texture.file, 
 				location, position.location, size.location,
-				texture._htmlImage,
+				texture.imageOrCanvas,
 				sourcePosition.x+texture.size.x/2-sourceSize.x/2,
 				sourcePosition.y+texture.size.y/2-sourceSize.y/2,
 				sourceSize.x, 
