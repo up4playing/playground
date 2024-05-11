@@ -309,11 +309,13 @@ global unit Html
 			const pullLeft = width - width * Platform.scale
 			body.style.marginBottom = `${-pullUp}px`
 			body.style.marginRight = `${-pullLeft}px`
+			body.className = Platform.isMobile ? "mobile" : ""
 		} else {
 			Platform.isMobile = localStorage.getItem("isMobile") == "true"
 			Platform.scale = Platform.isDebug ? Platform.debugScale : 1
 			body.style.zoom = Platform.scale
 			body.style.font = "32px OpenSans"
+			body.className = Platform.isMobile ? "mobile" : ""
 		}
 	
 	private js void setDataAttributes: Node node, dynamic attributes
