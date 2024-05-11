@@ -11,7 +11,7 @@ skipInit transient float Time
 	const inline js Time minValue := Number.MIN_VALUE
 	
 	static internal inline js float realTime := Date.now()
-		
+
 	inline js Time += float value: this += value
 
 	static Time fromTimeString(string timeString)
@@ -33,6 +33,8 @@ skipInit transient float Time
 	static inline js Time fromIsoString: string isoString
 		new Date(isoString).getTime()
 		
+	static inline js Time fromValues(int year, int month=1, int day=1, int hour = 0, int minute = 0, int second = 0) new Date(year, (month)-1, day, hour, minute, second).getTime()
+		
 	inline js implicit float toFloat() this
 	inline js string toString() this.toString()
 		
@@ -52,6 +54,12 @@ skipInit transient float Time
 	inline js int seconds      := Math.floor((this %   60000) /    1000) 
 	inline js int minutes      := Math.floor((this % 3600000) /   60000) 
 	inline js int hours        := Math.floor((this          ) / 3600000)
+		
+	inline js int totalSeconds      := Math.floor(this /      1000) 
+	inline js int totalMinutes      := Math.floor(this /     60000) 
+	inline js int totalHours        := Math.floor(this /   3600000)
+	inline js int totalDays         := Math.floor(this /  86400000)
+	inline js int totalWeeks        := Math.floor(this / 604800000)
 		
 	// (31.12.)
 	inline js string dayMonthString(language = Loca.language) new DateTime(this).dayMonthString(language)
@@ -88,8 +96,7 @@ skipInit transient float Time
 	
 	// (31-12-2000 23-59-59)
 	inline js string invariantDayMonthYearHourMinuteSecondString() new Date(this).invariantDayMonthYearHourMinuteSecondString()
-		
-		
+			
 	inline Time + Time value
 	inline Time - Time value
 	inline float / Time value
@@ -118,15 +125,21 @@ skipInit transient float Time
 	inline js float in: TimeUnit unit // Convert the time to this unit
 		(unit==1 ? this/1000 : unit==2 ? this/60000 : unit==3 ? this/3600000 : unit==4 ? this/86400000 : this)
 		
-	js static void startTimer
-		window._timerStart = performance.now();
-		
-	js static void printTimer: string text
-		let now = performance.now();
-		System.print(text+": "+(now-window._timerStart));
-		window._timerStart = now;
-		
+	js static void startTimer() window._timerStart = performance.now()
+	js static void printTimer(string text) log(text+": "+(performance.now()-window._timerStart))
 	static inline js float preciseTime := performance.now()
+		
+	inline string minutesHoursDaysOrWeeksString(showWeeksAfterDays = 31) toMinutesHoursDaysOrWeeksString(this, showWeeksAfterDays)
+		
+	private static string toMinutesHoursDaysOrWeeksString: Time time, showWeeksAfterDays = 31
+		if time < 2 minutes: return "1 minute"
+		if time < 1 hours:   return "{time.totalMinutes} minutes"
+		if time < 2 hours:   return "1 hour"
+		if time < 1 days:    return "{time.totalHours} hours"
+		if time < 2 days:    return "1 day"
+		if time < showWeeksAfterDays days: return "{time.totalDays} days"
+		if time < 2 weeks:   return "1 week"
+		                     return "{time.totalWeeks} weeks"
 		
 enum TimeUnit
 	ms   // Milliseconds
@@ -135,6 +148,7 @@ enum TimeUnit
 	h    // Hours
 	days // Days
 	
+// Calculate dates using pure math for better performance without using the Date class
 immutable struct DateTime
 	const dayNames = [
 		["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
@@ -204,7 +218,8 @@ immutable struct DateTime
 	dayOfWeekString: language = Loca.language
 		return dayNames[language][dayOfWeek]
 		
-js(Date) transient struct Date
+// Calculate dates using the JavaScript Date class
+js(Date) transient class Date
 	inline js Date() new Date()
 	static inline js Date now := new Date()
 		
@@ -313,7 +328,7 @@ js(Date) transient struct Date
 			':' + pad(Math.abs(tzo) % 60);
 
 	static inline js Date fromTime(Time time) new Date(time)
-	static inline js Date fromValues(int year, int month=1, int day=1, int hour = 0, int minute = 0, int second = 0) new Date(year, month-1, day, hour, minute, second)
+	static inline js Date fromValues(int year, int month=1, int day=1, int hour = 0, int minute = 0, int second = 0) new Date(year, (month)-1, day, hour, minute, second)
 	
 	// Returns the real time, even during replay. Be careful: This can break the replay.
 	static inline js Date realtime := new Date()
