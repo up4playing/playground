@@ -605,9 +605,10 @@ global unit Html
 		                      bool focused = false              // Whether the cursor should be placed in the field
 		                      expand Attributes attributes = {} // The attributes of the HTML element
 		                      expand Style style = null         // The css style of the HTML element
+		                      dynamic data = {}                 // The data attributes of the element
 		                      SourceCodeLocation location
 		stored void() changeHandler = currentChangeHandler
-		let node = div tag:"input", attributes, style, location
+		let node = div tag:"input", attributes, style, data, location
 		node.value = model
 		node.oninput = model = node.value; changeHandler
 		if focused: node.focus
