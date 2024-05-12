@@ -390,7 +390,9 @@ global unit Html
 		        expand Attributes attributes = {} // The attributes of the HTML element
 		        expand Style style = null         // The css style of the HTML element
 		        dynamic data = null               // The data attributes of the element
+		        bool visible = true
 		        SourceCodeLocation location
+		if not visible: return
 		let node = div tag:"img", attributes, style, data, location
 		node.src = Platform.basePath + image.src
 		node.onclick = onClick
