@@ -79,10 +79,17 @@ skipInit transient float Time
 	// (Monday)
 	inline js string weekdayString(language = Loca.language) new DateTime(this).weekdayString(language)
 	
-	// (23:59)
-	inline js string hourMinuteString(language = Loca.language) new Date(this).hourMinuteString(language)
+	// (23:59) The time is assumed to be local time, doesn't account for timezone offset
+	inline string hourMinuteString(language = Loca.language) Time.toHourMinuteString(this, language)
+		
+	// (23:59) The time is assumed to be local time, doesn't account for timezone offset
+	static string toHourMinuteString: Time value, language = Loca.language
+		let hour = math.floor (value % 86400000) / 3600000
+		let minute = math.floor (value % 3600000) / 60000
+		if language == English: return ""+((hour-1)%12+1)+":"+(minute < 10 ? "0":"")+minute+(hour < 12 ? " am":" pm")
+		else                    return ""+hour+":"+(minute < 10 ? "0":"")+minute
 	
- 	// (59:59)
+ 	// (59:59) The time is assumed to be local time, doesn't account for timezone offset
 	inline js string minuteSecondString() (Math.floor((this % 3600000) / 60000) + (this % 60000 < 10000 ? ":0":":") + Math.floor((this % 60000) / 1000))
 	
 	// (23:59:59)
@@ -162,6 +169,10 @@ immutable struct DateTime
 		["","January","February","March","April","May","June","July","August","September","October","November","December"]
 		["","Januar", "Februar", "März", "April", "Mai", "Juni", "Juli", "August", "September", "Oktober", "November", "Dezember"]
 	]
+	const onString = [" on ", " am "]
+	const atString = [" at ", " um "]
+	const timeSuffixString = ["", " Uhr"]
+	
 	const daysInMonthCommon = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
 	const daysInMonthLeap = [31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
 
@@ -169,9 +180,12 @@ immutable struct DateTime
 	int month
 	int day
 	int dayOfWeek
+	int hour
+	int minute
 	
 	DateTime: Time time
-		const daysSinceEpoch = math.floor (time - Time.timezoneOffset) / 86400000
+		const localTime = time - Time.timezoneOffset
+		const daysSinceEpoch = math.floor(localTime / 86400000)
 		
 		// Year
 		let currentYear = 1970;
@@ -195,6 +209,8 @@ immutable struct DateTime
 		this.month = currentMonth + 1
 		this.year = currentYear
 		this.dayOfWeek = (daysSinceEpoch + 4) % 7; // January 1, 1970 was a Thursday
+		this.hour = math.floor (localTime % 86400000) / 3600000
+		this.minute = math.floor (localTime % 3600000) / 60000
 		
 	// (31.12.)
 	dayMonthString: language = Loca.language
@@ -217,6 +233,15 @@ immutable struct DateTime
 			
 	dayOfWeekString: language = Loca.language
 		return dayNames[language][dayOfWeek]
+		
+	hourMinuteString: language = Loca.language
+		if language == English: return ""+((hour-1)%12+1)+":"+(minute < 10 ? "0":"")+minute+(hour < 12 ? " am":" pm")
+		else                    return ""+hour+":"+(minute < 10 ? "0":"")+minute
+		
+	// (on Monday, December 31 at 12:59 pm)
+	onDayOfWeekDayMonthAtHourMinuteString: language = Loca.language
+		return onString[language] + dayOfWeekDayMonthString(language) 
+		     + atString[language] + hourMinuteString(language) + timeSuffixString[language]
 		
 // Calculate dates using the JavaScript Date class
 js(Date) transient class Date
