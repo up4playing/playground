@@ -188,6 +188,9 @@ skipInit global unit Platform
 		                  void() do
 		setTimeout(do, time)
 		
+	global inline js void onBlur: void() do
+		window.onblur = do
+		
 	global inline js int interval: Time time
 		                           void(int handle) do
 		var handle = setInterval(do, time)
