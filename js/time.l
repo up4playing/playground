@@ -72,10 +72,13 @@ skipInit transient float Time
 	inline js string dayShortMonthNameYearString(language = Loca.language) new DateTime(this).dayShortMonthNameYearString(language)
 	
 	// (Monday, December 31)
-	inline string dayOfWeekDayMonthString() new DateTime(this).dayOfWeekDayMonthString
+	inline string dayOfWeekDayMonthString(language = Loca.language) new DateTime(this).dayOfWeekDayMonthString(language)
 	
 	// (Monday)
 	inline js string weekdayString(language = Loca.language) new DateTime(this).weekdayString(language)
+	
+	// (Monday, December 31 at 12:59 pm)
+	inline dayOfWeekDayMonthAtHourMinuteString(language = Loca.language) new DateTime(this).dayOfWeekDayMonthAtHourMinuteString(language)
 	
 	// (23:59) The time is assumed to be local time, doesn't account for timezone offset
 	inline string hourMinuteString(language = Loca.language) Time.toHourMinuteString(this, language)
@@ -105,6 +108,18 @@ skipInit transient float Time
 	// (20001231235959+02:00)
 	inline js string compactString() new DateTime(this).compactString()
 		
+	// (7 weeks)
+	inline string minutesHoursDaysOrWeeksString(showWeeksAfterDays = 31) toMinutesHoursDaysOrWeeksString(this, showWeeksAfterDays)
+		
+	private static string toMinutesHoursDaysOrWeeksString: Time time, showWeeksAfterDays = 31
+		if time < 2 minutes: return "1 minute"
+		if time < 1 hours:   return "{time.totalMinutes} minutes"
+		if time < 2 hours:   return "1 hour"
+		if time < 1 days:    return "{time.totalHours} hours"
+		if time < 2 days:    return "1 day"
+		if time < showWeeksAfterDays days: return "{time.totalDays} days"
+		if time < 2 weeks:   return "1 week"
+		                     return "{time.totalWeeks} weeks"
 	inline Time + Time value
 	inline Time - Time value
 	inline float / Time value
@@ -136,18 +151,6 @@ skipInit transient float Time
 	js static void startTimer() window._timerStart = performance.now()
 	js static void printTimer(string text) log(text+": "+(performance.now()-window._timerStart))
 	static inline js float preciseTime := performance.now()
-		
-	inline string minutesHoursDaysOrWeeksString(showWeeksAfterDays = 31) toMinutesHoursDaysOrWeeksString(this, showWeeksAfterDays)
-		
-	private static string toMinutesHoursDaysOrWeeksString: Time time, showWeeksAfterDays = 31
-		if time < 2 minutes: return "1 minute"
-		if time < 1 hours:   return "{time.totalMinutes} minutes"
-		if time < 2 hours:   return "1 hour"
-		if time < 1 days:    return "{time.totalHours} hours"
-		if time < 2 days:    return "1 day"
-		if time < showWeeksAfterDays days: return "{time.totalDays} days"
-		if time < 2 weeks:   return "1 week"
-		                     return "{time.totalWeeks} weeks"
 		
 enum TimeUnit
 	ms   // Milliseconds

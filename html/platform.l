@@ -90,7 +90,6 @@ skipInit global unit Platform
 			heartbeat "replay"
 			initMedia
 			initAll
-			Time.frame = 0
 			Html.updateScale
 			startApp
 			refresh
