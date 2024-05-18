@@ -161,6 +161,7 @@ global unit http
 					}
 				} catch(e) {
 					console.error(e)
+					_sendErrorToEditor(e);
 					response.end(`{error:"${e.message}"}`)
 				}
 			})
