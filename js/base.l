@@ -389,6 +389,21 @@ immutable class string
 	js string trimQuotes
 		return this.substring(this[0] == '"' ? 1 : 0, this[this.length-1] == '"' ? this.length-1 : this.length)
 		
+	js string trimTabs
+		let lines = this.split("\n")
+		if(lines.length < 2) return this
+		let firstLine = lines[1]
+		let tabs=0;
+		while(tabs < firstLine.length-1 && firstLine[tabs] == "\t") tabs++;
+		let result = ""
+		for(let i=1; i<lines.length; i++) {
+			let line = lines[i]
+			if(line.length > tabs) {
+				result += lines[i].substring(tabs) + "\n"
+			}
+		}
+		return result
+	
 	js string getExtension
 		let dot = this.lastIndexOf(".")
 		if(dot != -1) return this.substring(dot+1)
