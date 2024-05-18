@@ -36,6 +36,7 @@ skipInit transient float Time
 	static inline js Time fromValues(int year, int month=1, int day=1, int hour = 0, int minute = 0, int second = 0) new Date(year, (month)-1, day, hour, minute, second).getTime()
 		
 	inline js implicit float toFloat() this
+	inline js int toInt() Math.floor(this)
 	inline js string toString() this.toString()
 		
 	// Returns true if the time is not zero
@@ -104,6 +105,9 @@ skipInit transient float Time
 	// (31-12-2000 23-59-59)
 	inline js string invariantDayMonthYearHourMinuteSecondString() new Date(this).invariantDayMonthYearHourMinuteSecondString()
 			
+	// (20001231235959+02:00)
+	inline js string compactString() new DateTime(this).compactString()
+		
 	inline Time + Time value
 	inline Time - Time value
 	inline float / Time value
@@ -169,7 +173,6 @@ immutable struct DateTime
 		["","January","February","March","April","May","June","July","August","September","October","November","December"]
 		["","Januar", "Februar", "März", "April", "Mai", "Juni", "Juli", "August", "September", "Oktober", "November", "Dezember"]
 	]
-	const onString = [" on ", " am "]
 	const atString = [" at ", " um "]
 	const timeSuffixString = ["", " Uhr"]
 	
@@ -182,6 +185,13 @@ immutable struct DateTime
 	int dayOfWeek
 	int hour
 	int minute
+	int second
+	
+	string twoDigitDay    := (this.day < 10 ? "0"+this.day : this.day.toString())
+	string twoDigitMonth  := (this.month < 10 ? "0"+this.month : this.month.toString())
+	string twoDigitHour   := (this.hour < 10 ? "0"+this.hour : this.hour.toString())
+	string twoDigitMinute := (this.minute < 10 ? "0"+this.minute : this.minute.toString())
+	string twoDigitSecond := (this.second < 10 ? "0"+this.second : this.second.toString())
 	
 	DateTime: Time time
 		const localTime = time - Time.timezoneOffset
@@ -211,6 +221,7 @@ immutable struct DateTime
 		this.dayOfWeek = (daysSinceEpoch + 4) % 7; // January 1, 1970 was a Thursday
 		this.hour = math.floor (localTime % 86400000) / 3600000
 		this.minute = math.floor (localTime % 3600000) / 60000
+		this.second = math.floor (localTime % 60000) / 1000
 		
 	// (31.12.)
 	dayMonthString: language = Loca.language
@@ -239,9 +250,13 @@ immutable struct DateTime
 		else                    return ""+hour+":"+(minute < 10 ? "0":"")+minute
 		
 	// (on Monday, December 31 at 12:59 pm)
-	onDayOfWeekDayMonthAtHourMinuteString: language = Loca.language
-		return onString[language] + dayOfWeekDayMonthString(language) 
-		     + atString[language] + hourMinuteString(language) + timeSuffixString[language]
+	dayOfWeekDayMonthAtHourMinuteString: language = Loca.language
+		return dayOfWeekDayMonthString(language) + atString[language] + hourMinuteString(language) + timeSuffixString[language]
+		
+	// (20001231235959+02:00)
+	compactString
+		return "{year}{twoDigitMonth}{twoDigitDay}T{twoDigitHour}{twoDigitMinute}{twoDigitSecond}+02:00"
+		
 		
 // Calculate dates using the JavaScript Date class
 js(Date) transient class Date
