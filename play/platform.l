@@ -260,3 +260,9 @@ transient skipInit unit Platform
 	js void openDevTools
 		require('@electron/remote/main').remote.getCurrentWindow().toggleDevTools()
 				
+skipInit transient immutable float Time
+	// The number of milliseconds elapsed since January 1, 1970
+	static Time now
+	
+	// The current frame
+	static inline js int frame := core.frame
