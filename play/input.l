@@ -83,7 +83,7 @@ transient class InternalUser
 priority class Player
 	int id
 	int index
-	Color color = null
+	Color color, darkColor
 	string name
 	Vector2 pointerPosition
 	
@@ -1039,6 +1039,7 @@ skipInit global unit input
 		for players
 			.index = i
 			.color = graphics.defaultColors[i]
+			.darkColor = graphics.darkDefaultColors[i]
 			internalUsers[.id].index = i
 			
 		if core.mode == Local and not core.simulateConnection
