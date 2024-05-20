@@ -2,8 +2,12 @@ skipInit unit Platform
 	visible bool isDebug
 	inline js int version := _buildVersion
 		
-	inline js void initPlatform() Platform.init()
-	inline js void initApplication() init()
+	inline js void initPlatform
+		Platform.init()
+		Time.timezoneOffset = new Date().getTimezoneOffset() * 60000
+		
+	inline js void initApplication
+		init()
 		
 	start: bool isDebug
 		initPlatform
@@ -27,6 +31,8 @@ skipInit unit Platform
 		
 	inline js string getEnvironmentVariable: string key
 		process.env[key]
+		
+	public inline js string encodeURIComponent(string value) encodeURIComponent(value)
 		
 global skipInit unit math
 	// Generates a random integer
@@ -53,7 +59,11 @@ global skipInit unit math
 		return 'xxxx-xxxx-xxx-xxxx'.replace(/[x]/g, (c) => {  
 			return math.floor(math.random() * 16).toString(16);  
 		}); 
-		
+
+skipInit transient float Time
+	// The number of milliseconds elapsed since January 1, 1970
+	static inline js Time now := Date.now()
+	
 transient float Angle
 	inline js float toFloat() this
 	inline js string toString() this.toString()
@@ -119,37 +129,44 @@ global unit http
 			var body = "";
 			request.on("data", a => body += a)
 			request.on("end", async () => {
-				response.setHeader('Access-Control-Allow-Origin', '*');
-				response.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS, PUT, DELETE");
-				// response.writeHead(200)//, {'Content-Type': 'text/plain'});
-				var path = request.url.split("/");
-				var procedureName = path[1];
-				
-				// log(request.method+" "+procedureName)
-				// log("window "+ window)
-				// log("global "+global)
-				// var handler = global["app."+procedureName]
-				// log("app."+procedureName+" -> "+handler)
-				// if(handler) {
-				// 	let result = await handler(body ? JSON.parse(body) : null)
-				// 	response.writeHead(200, {'Content-Type': "application/json; charset=utf-8"}); 
-				// 	response.end(result ? JSON.stringify(result) : "");
-				// 	return
-				// }
-				
-				handler = http.handlerMap.get(request.method+procedureName)
-				if(handler) {
-					// For named handlers, the procedure name isn't included in the path
-					path.splice(0,2);
-				} else {
-					// For wildcard handlers, we pass the procedure name as path[0]
-					handler = http.handlerMap.get(request.method+"*")
-					path.splice(0,1);
-				}
-				if(handler) {
-					handler(path, body ? JSON.parse(body) : null, request, response);
-				} else {
-					response.end("Server v"+_buildVersion+" up since "+startTime);
+				try {
+					response.setHeader('Access-Control-Allow-Origin', '*');
+					response.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS, PUT, DELETE");
+					// response.writeHead(200)//, {'Content-Type': 'text/plain'});
+					var path = request.url.split("/");
+					var procedureName = path[1];
+					
+					// log(request.method+" "+procedureName)
+					// log("window "+ window)
+					// log("global "+global)
+					// var handler = global["app."+procedureName]
+					// log("app."+procedureName+" -> "+handler)
+					// if(handler) {
+					// 	let result = await handler(body ? JSON.parse(body) : null)
+					// 	response.writeHead(200, {'Content-Type': "application/json; charset=utf-8"}); 
+					// 	response.end(result ? JSON.stringify(result) : "");
+					// 	return
+					// }
+					
+					handler = http.handlerMap.get(request.method+procedureName)
+					if(handler) {
+						// For named handlers, the procedure name isn't included in the path
+						path.splice(0,2);
+					} else {
+						// For wildcard handlers, we pass the procedure name as path[0]
+						handler = http.handlerMap.get(request.method+"*")
+						path.splice(0,1);
+					}
+					
+					if(handler) {
+						await handler(path, body ? JSON.parse(body) : null, request, response);
+					} else {
+						response.end("Server v"+_buildVersion+" up since "+startTime);
+					}
+				} catch(e) {
+					console.error(e)
+					_sendErrorToEditor(e);
+					response.end(`{error:"${e.message}"}`)
 				}
 			})
 		}
@@ -249,5 +266,3 @@ class Connection
 	inline js object data := this.data
 	inline js void data(object value) this.data = value
 	inline js void close() this.close()
-
-

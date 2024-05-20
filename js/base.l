@@ -371,6 +371,14 @@ immutable class string
 		if(endIndex == -1) return this.substring(startIndex)
 		return this.substring(startIndex, endIndex)
 		
+	js string getBetweenLast: string from
+		                      string to
+		let index = this.lastIndexOf(from)
+		let startIndex = index + from.length
+		let endIndex = this.indexOf(to, startIndex)
+		if(endIndex == -1) return this.substring(startIndex)
+		return this.substring(startIndex, endIndex)
+		
 	// Returns 0 for an exact match, 1 if first is larger, -1 if second is larger
 	inline js int compareTo: string value // The string to compare to
 		this.localeCompare(value)
@@ -381,6 +389,21 @@ immutable class string
 	js string trimQuotes
 		return this.substring(this[0] == '"' ? 1 : 0, this[this.length-1] == '"' ? this.length-1 : this.length)
 		
+	js string trimTabs
+		let lines = this.split("\n")
+		if(lines.length < 2) return this
+		let firstLine = lines[1]
+		let tabs=0;
+		while(tabs < firstLine.length-1 && firstLine[tabs] == "\t") tabs++;
+		let result = ""
+		for(let i=1; i<lines.length; i++) {
+			let line = lines[i]
+			if(line.length > tabs) {
+				result += lines[i].substring(tabs) + "\n"
+			}
+		}
+		return result
+	
 	js string getExtension
 		let dot = this.lastIndexOf(".")
 		if(dot != -1) return this.substring(dot+1)
@@ -928,6 +951,15 @@ class List<T>
 			let it = list[.]
 			if condition(it)
 				return it
+		return null
+	
+	// Execute a selector for each item and if it returns a value that isn't null, return this value
+	// Example: Find object that is nested within another object
+	//     transport.routes.findIn.trips.find.id == tripId
+	TValue findIn: TValue(T it) selector
+		for this
+			let value = selector(it)
+			if value != null: return value
 		return null
 		
 	// Does the list have an item that meets the given condition?
@@ -1606,7 +1638,7 @@ global transient priority unit System
 		                         inline void() do        // Do this while to condition is true
 		while(condition) do()
 			
-	global inline js void loop: void() do
+	global inline js void loop: inline void() do
 		for(;;) do()
 	
 	global inline js void do: inline void() do            // Do this while to condition is true

@@ -34,6 +34,7 @@ skipInit global unit Platform
 		Font.init?.();
 		Sound.init?.();
 		audio.init();
+		Time.timezoneOffset = new Date().getTimezoneOffset() * 60000
 		app.init?.()
 			
 	js void initHandlers
@@ -89,7 +90,6 @@ skipInit global unit Platform
 			heartbeat "replay"
 			initMedia
 			initAll
-			Time.frame = 0
 			Html.updateScale
 			startApp
 			refresh
@@ -103,11 +103,11 @@ skipInit global unit Platform
 		replay
 		
 	private js void startApp
-		if(window.app.start) app.start()
+		if(app.start) app.start()
 		
 	private js void tick
 		Platform.heartbeat("tick")
-		if(window.app.tick) app.tick()
+		if(app.tick) app.tick()
 		Time.frame++
 		
 	private js void startTickInterval
@@ -138,7 +138,6 @@ skipInit global unit Platform
 		if(!Platform.isDebug) return
 		let now = Date.now();
 		if(now > Platform.nextHeartbeatTime) {
-			console.log("[app]", (now%100000).toLocaleString("en-US", {minimumIntegerDigits:6, useGrouping:true})+" sending heartbeat from "+context);
 			Platform.nextHeartbeatTime = now + 3000;
 			_sendStringToEditor("~");
 		}
@@ -188,6 +187,9 @@ skipInit global unit Platform
 		                  void() do
 		setTimeout(do, time)
 		
+	global inline js void onBlur: void() do
+		window.onblur = do
+		
 	global inline js int interval: Time time
 		                           void(int handle) do
 		var handle = setInterval(do, time)
@@ -212,7 +214,11 @@ global skipInit unit math
 	// Generates a random float
 	global inline js int randomFloat
 		Math.random()
-		
+
+skipInit transient float Time
+	// The number of milliseconds elapsed since January 1, 1970
+	static inline js Time now := Date.now()
+	
 // A color comprised of a red, green, blue and alpha component
 class Color
 	global const Color White       = {"#ffffff", "White"}
@@ -310,11 +316,13 @@ global unit Html
 			const pullLeft = width - width * Platform.scale
 			body.style.marginBottom = `${-pullUp}px`
 			body.style.marginRight = `${-pullLeft}px`
+			body.className = Platform.isMobile ? "mobile" : ""
 		} else {
 			Platform.isMobile = localStorage.getItem("isMobile") == "true"
 			Platform.scale = Platform.isDebug ? Platform.debugScale : 1
 			body.style.zoom = Platform.scale
 			body.style.font = "32px OpenSans"
+			body.className = Platform.isMobile ? "mobile" : ""
 		}
 	
 	private js void setDataAttributes: Node node, dynamic attributes
@@ -388,7 +396,9 @@ global unit Html
 		        expand Attributes attributes = {} // The attributes of the HTML element
 		        expand Style style = null         // The css style of the HTML element
 		        dynamic data = null               // The data attributes of the element
+		        bool visible = true
 		        SourceCodeLocation location
+		if not visible: return
 		let node = div tag:"img", attributes, style, data, location
 		node.src = Platform.basePath + image.src
 		node.onclick = onClick
@@ -604,9 +614,10 @@ global unit Html
 		                      bool focused = false              // Whether the cursor should be placed in the field
 		                      expand Attributes attributes = {} // The attributes of the HTML element
 		                      expand Style style = null         // The css style of the HTML element
+		                      dynamic data = {}                 // The data attributes of the element
 		                      SourceCodeLocation location
 		stored void() changeHandler = currentChangeHandler
-		let node = div tag:"input", attributes, style, location
+		let node = div tag:"input", attributes, style, data, location
 		node.value = model
 		node.oninput = model = node.value; changeHandler
 		if focused: node.focus
