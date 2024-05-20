@@ -184,7 +184,7 @@ transient skipInit unit Platform
 	private enterSlideMode(PlatformMode mode) this.mode = mode; sendMode
 	
 	internal stop()    mode = Pause; gizmo.clear; core.stop; sendMode
-	internal pause()   mode = Pause; gizmo.clear; audio.stop; core.tick(draw:true); sendMode
+	internal pause()   mode = Pause; gizmo.clear; audio.stop; sendMode
 	internal record()  core.adjustStartTimeIfNeeded; mode = Record; core.record;  gizmo.clear;  sendMode
 	internal play()    core.adjustStartTimeIfNeeded; mode = Play;   gizmo.clear;  sendMode
 	
