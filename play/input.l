@@ -1106,7 +1106,7 @@ skipInit global unit input
 		if core.logging: core.touchLog += " #{core.frame}{isCertain ? " c" : ""} {text} {pos}"
 
 	private getTargetedPlayers: Player[] by
-		return (core.mode == Connected || core.simulateConnection) and by and by.length > 0 and by[0] ? by : players
+		return by and by.length > 0 and by[0] and not core.everybodyCanClickForEverybody ? by : players
 		
 	// ---------------------------------------------- Touch Down ----------------------------------------------
 	

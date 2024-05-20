@@ -7,6 +7,7 @@ transient skipInit unit core
 	int sendInterval = 1
 	int smoothStrength = 90
 	bool smoothTouchPosition = true
+	bool everybodyCanClickForEverybody = false
 	bool simulateConnection = true
 	bool simulateInputsForTesting = false
 	bool simulateRollback = false
