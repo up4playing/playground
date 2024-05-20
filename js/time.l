@@ -78,7 +78,7 @@ skipInit transient float Time
 	inline js string weekdayString(language = Loca.language) new DateTime(this).weekdayString(language)
 	
 	// (Monday, December 31 at 12:59 pm)
-	inline dayOfWeekDayMonthAtHourMinuteString(language = Loca.language) new DateTime(this).dayOfWeekDayMonthAtHourMinuteString(language)
+	inline js string dayOfWeekDayMonthAtHourMinuteString(language = Loca.language) new DateTime(this).dayOfWeekDayMonthAtHourMinuteString(language)
 	
 	// (23:59) The time is assumed to be local time, doesn't account for timezone offset
 	inline string hourMinuteString(language = Loca.language) Time.toHourMinuteString(this, language)
