@@ -331,7 +331,10 @@ global unit Html
 				node.setAttribute(key, attributes[key])
 		
 	static js Style expandStyle: Style style
-		if(style.size) { style.width = style.size.x+"px"; style.height = style.size.y+"px" }
+		if(style.size) { 
+			style.width  = style.size.x+"px"; 
+			style.height = style.size.y+"px";
+		}
 		if(style.overlay) {
 			let rect = document.body.getBoundingClientRect()
 			style.position = "fixed"; style.top = 0; style.left = 0; style.width = (window.innerWidth/Platform.scale)+"px"; style.height = (document.body.scrollHeight)+"px"  
@@ -339,10 +342,43 @@ global unit Html
 		return style 
 	
 	private js void setStyle: Node node, dynamic style
-		node.style = ""
+		// We shouldn't need this because the same line of code can't output less styles than previously
+		// A code change always triggers a complete refresh
+		// node.style = ""
 		if(style) {
-			for(let key in Html.expandStyle(style))
-				node.style[key] = style[key]
+			// Always set style (slowest)
+			// for(let key in Html.expandStyle(style))
+			// 	node.style[key] = style[key]
+				
+			// Set style if it changed (slow)
+			// for(let key in Html.expandStyle(style)) {
+			// 	let value = style[key].toString();
+			// 	if(node.style[key] != value) {
+			// 		node.style[key] = value
+			// 	}
+			// }
+			
+			// Check if style has changed using a shadow copy (fastest)
+			let shadowStyle = node.shadowStyle || (node.shadowStyle = new Map)
+			for(let key in Html.expandStyle(style)) {
+				let value = style[key].toString();
+				if(shadowStyle.get(key) != value) {
+					node.style[key] = value;
+					shadowStyle.set(key, value);
+				}
+			}
+				
+			// Temporary Backfill. Starting from Chrome 104, Safari 14.1 this is no longer needed.
+			// let translate = style.translate
+			// if(translate) node.style.transform += "translate("+translate+") "
+			// let rotate = style.rotate
+			// if(rotate) node.style.transform += "rotate("+rotate+"turn) "
+				
+			// if(style.targetTranslate || style.targetSize) {
+			// 	setTimeout(() => {
+			// 		node.style.transform = "translate("+style.targetTranslate+") "
+			// 	}, 1000)
+			// }
 		}
 		
 	private js void addStyle: Node node, dynamic style
@@ -361,7 +397,12 @@ global unit Html
 		let rect = node.getBoundingClientRect()
 		return new Vector2((event.clientX - rect.left)/Platform.scale, (event.clientY - rect.top)/Platform.scale)
 
+	int nodesCreated
+	int nodesUpdated
+	
 	global void refresh
+		Time.startTimer
+		nodesCreated = nodesUpdated = 0
 		parentNode = body
 		currentNode = parentNode.firstChild
 		currentOverlay = body.nextSibling
@@ -374,7 +415,11 @@ global unit Html
 			let next = currentOverlay.nextSibling
 			currentOverlay.remove
 			currentOverlay = next
-
+		Time.printTimer "refresh: {nodesCreated} created, {nodesUpdated} updated"
+		// if not overlayNode
+		// 	overlayNode = div style:{position:Fixed top:0 left:0 right:0 bottom:0, backgroundColor:Black, opacity:.5}
+		// 	body.parentNode.appendChild overlayNode
+						
 	global row: expand Attributes attributes = null // The attributes of the HTML element
 		        expand Style style = {}             // The css style of the HTML element
 		        void() children = null              // The children of the HTML element
@@ -469,9 +514,11 @@ global unit Html
 			nextNode = currentNode
 			if nextNode: parentNode.insertBefore node, nextNode
 			else         parentNode.appendChild node
+			nodesCreated++
 		else
 			node = currentNode
 			nextNode = currentNode.nextSibling
+			nodesUpdated++
 		
 		setStyle node, style
 		setDataAttributes node, data
@@ -486,9 +533,10 @@ global unit Html
 		if onHover != null
 			node.onmouseover = addStyle(node, onHover)
 			node.onmouseout  = setStyle(node, style)
-			
+		
 		if text
-			node.innerHTML = text
+			if node.shadowInnerHtml != text
+				node.innerHTML = node.shadowInnerHtml = text
 		else	
 			let prevParentNode = parentNode
 			parentNode = node
@@ -640,24 +688,26 @@ global unit Html
 		                      inline void(string value) onChange // Called when the user changes the text and leaves the field
 		                      expand Attributes attributes = {}  // The attributes of the HTML element
 		                      expand Style style = null          // The css style of the HTML element
+		                      bool realtime = true
 		                      SourceCodeLocation location
 		stored void() changeHandler = currentChangeHandler
 		let node = div tag:"input", attributes, style, location
 		node.value = model
-		node.onchange = model = node.value; onChange(node.value); changeHandler
+		if realtime: node.oninput = model = node.value; onChange(node.value); changeHandler
+		else         node.onchange = model = node.value; onChange(node.value); changeHandler
 		if focused: node.focus
 		
-	global inline void input: string model = ""                  // The variable that holds the value. This will be updated when the user changed the text
-		                      bool focused = false               // Whether the cursor should be placed in the field
-		                      inline void(string value) onInput  // Called after every character the user types
-		                      expand Attributes attributes = {}  // The attributes of the HTML element
-		                      expand Style style = null          // The css style of the HTML element
-		                      SourceCodeLocation location
-		stored void() changeHandler = currentChangeHandler
-		let node = div tag:"input", attributes, style, location
-		node.value = model
-		node.oninput = model = node.value; onInput(node.value); changeHandler
-		if focused: node.focus
+	// global inline void input: string model = ""                  // The variable that holds the value. This will be updated when the user changed the text
+	// 	                      bool focused = false               // Whether the cursor should be placed in the field
+	// 	                      inline void(string value) onInput  // Called after every character the user types
+	// 	                      expand Attributes attributes = {}  // The attributes of the HTML element
+	// 	                      expand Style style = null          // The css style of the HTML element
+	// 	                      SourceCodeLocation location
+	// 	stored void() changeHandler = currentChangeHandler
+	// 	let node = div tag:"input", attributes, style, location
+	// 	node.value = model
+	// 	node.oninput = model = node.value; onInput(node.value); changeHandler
+	// 	if focused: node.focus
 
 	global inline void textarea: string model = ""                 // The variable that holds the value. This will be updated when the user changed the text
 		                         bool focused = false              // Whether the cursor should be placed in the field
