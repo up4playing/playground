@@ -448,12 +448,13 @@ transient skipInit unit core
 			snapshotFrame = frame
 			saveState snapshot
 				
-	// string[] snapshotLogs
+	string[] serializeLogs
 			
 	private saveState: Buffer snapshot
 		snapshot.reset
 		saveTime = Time.measure
 			Snapshot.serialize snapshot
+			serializeLogs[frame % 100] = Snapshot.serializeLog
 				
 		// To check if serialization works consistently, deserialize, serialize a second snapshot and compare it with the first
 		if simulateRollback
@@ -582,15 +583,21 @@ transient skipInit unit core
 	internal storeUserId
 		Platform.setLocalStorageObject "room"+roomId, RoomInfo(currentTime, input.localUser.id)
 		
+	string snapshotLogWithWrongChecksum
+		
 	onWrongChecksum: int frame, float mine, float theirs
-		string message = "Out of sync. frame:{frame} mine:{mine} theirs:{theirs}"
-		if logging: checksumLog += message
+		string message = " Out of sync. frame:{frame} mine:{mine} theirs:{theirs}"
+		string serializeLog = serializeLogs[frame % 100]
+		core.log message
+		if not snapshotLogWithWrongChecksum
+			snapshotLogWithWrongChecksum = "frame:{frame} mine:{mine} theirs:{theirs}\n{serializeLog}"
+			core.log "\n{serializeLog}"
 		onError {message}
-		// file.saveText "{input.localUser.id}-snapshot{frame}.json", snapshotLogs[frame] 
+		file.saveText "{input.localUser.id}-snapshot{frame}.json", serializeLog
 		
 	onError: Error error
 		errorMessage = error.stack
-		if logging: eventLog += errorMessage + "\n" 
+		if logging: logs += errorMessage + "\n" 
 		statistics.systemLogs.add errorMessage
 		Platform.sendErrorToEditor error
 		
@@ -606,6 +613,7 @@ transient unit Snapshot
 	
 	inline js string serialize(Buffer buffer) serialize_internal(buffer)
 	inline js void deserialize(Buffer buffer) deserialize_internal(buffer)
+	inline js string serializeLog() _serializeLog
 		
 	js string toString: object value
 		let buffer = new Buffer(null, 1024, 0, 0);

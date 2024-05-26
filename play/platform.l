@@ -1,3 +1,6 @@
+CompilerSettings
+	logSerialize = true
+	
 enum PlatformMode: Pause, Manipulator, Slide, Play, Record
 enum OperatingSystem: Windows, Mac, Linux, Android, iOS
 enum IntervalMode: JavaScriptInterval, AnimationFrame
