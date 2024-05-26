@@ -1,5 +1,14 @@
 // Platform.start
 // core.join
+
+// ServerNetwork.setup
+// ServerNetwork.onConnectedToServer
+// ServerNetwork.sendJoinMessage
+// ServerNetwork.onJoinResponse
+
+// ServerNetwork.ping                       PeerNetwork.createOffer
+// ServerNetwork.onPong                     PeerNetwork.onReceivedOffer
+// ServerNetwork.startConnected             PeerNetwork.onReceivedAnswer
 	
 transient immutable Signal
 	int receiverId

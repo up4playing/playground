@@ -215,6 +215,17 @@ enum FontStyle: Normal, Bold
 immutable ClippingPath: Vector2[] points; bool show
 		
 // Draw on the screen
+// Screen space
+// - has always the reference size (1920 x 1080 by default) on all platforms
+// - the origin is in the middle of the screen
+//
+//          Top              → x
+//     Left  +  Right      ↓ 
+//         Bottom          y
+//
+// Pixel space
+// - the size in the screen size in pixels of the target platform
+// - the origin in the top left corner
 transient skipInit global unit graphics
 	private object canvas
 	internal object context
