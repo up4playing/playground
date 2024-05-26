@@ -251,7 +251,7 @@ transient skipInit unit PeerNetwork
 			// Checksum
 			int checksumFor = buffer.readInt
 			float checksum = buffer.readFloat64
-			if core.logging: core.checksumLog += " <{sender.id}> #{checksumFor} {checksum}"
+			if core.logging: core.log "<{sender.id}> #{checksumFor} {checksum}"
 			
 			let myChecksum = core.checksums[checksumFor]
 			if !myChecksum                           core.checksums[checksumFor] = checksum; else
@@ -328,7 +328,7 @@ transient skipInit unit PeerNetwork
 	onChecksum: InternalUser user, Buffer buffer
 		int checksumFor = buffer.readInt
 		float checksum = buffer.readFloat64
-		if core.logging: core.checksumLog += " <{user.id}> #{checksumFor} {checksum}"
+		if core.logging: core.log "<{user.id}> #{checksumFor} {checksum}"
 		
 		let myChecksum = core.checksums[checksumFor]
 		if !myChecksum

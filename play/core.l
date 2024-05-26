@@ -26,7 +26,7 @@ transient skipInit unit core
 	NetworkMode mode                // Whether we are in local or connected mode
 	visible string errorMessage     // The error message if we caught any exceptions in the main loop
 	public float startTime          // The time the room was created, syncroniced between all clients
-	public float serverStartTime
+	public float serverStartTime    // Used to calculate the same Time.now from core.frame for all users in core.step
 	visible int frame               // Current frame, will increase by 1 at the end of every step (every targetFrameTime ms)
 	internal int frames             // Total number of frames we have inputs for
 	internal int frameWithNewWatches// First frame with new watches, do not send watches for frames below this
@@ -253,8 +253,13 @@ transient skipInit unit core
 	private float now               // The time at the beginning of animationFrame
 	
 	// Logs
-	string logs
-	public string eventLog, checksumLog
+	js void log: logstring text
+		let str = new Date().hourMinuteSecondMillisecondString() + " " + text
+		statistics.systemLogs.push(str)
+		console.log(str)
+		if(core.logging) core.logs += str + "\n"
+			
+	internal string logs
 	private float lastNetworkFrame, lastAnimationFrame, drawTime, tickTime, restoreTime, replayTime, saveTime
 	private int replayFrames
 	internal int displayItems
@@ -294,12 +299,6 @@ transient skipInit unit core
 			
 		// Logs
 		if logging
-			try
-				logs += "---{frame-1}---\nCheck: {checksumLog}\n{eventLog}\n"
-			catch
-				onError error
-			
-			eventLog = ""; checksumLog = ""
 			ServerNetwork.lastPingPongTime = 0; tickMessageSize = 0
 
 	private int lastSendFrame
@@ -467,7 +466,7 @@ transient skipInit unit core
 		if players.length >= 2 and frame > 200
 			float myChecksum = snapshot.checksum
 			float theirChecksum = checksums[frame]
-			if logging: checksumLog += " <{input.localUser.id}*> #{frame} {myChecksum} writePos:{snapshot.writePos}"
+			if logging: core.log "<{input.localUser.id}*> #{frame} {myChecksum} writePos:{snapshot.writePos}"
 			if !theirChecksum                             checksums[frame] = myChecksum; else
 			if !theirChecksum.isApproximately(myChecksum) onWrongChecksum frame, mine:myChecksum theirs:theirChecksum
 			lastChecksumFrame = frame
@@ -476,12 +475,6 @@ transient skipInit unit core
 		for input.internalUsers
 			snapshot.writeInt .inputs.readPos
 				
-	js void log: logstring text
-		let str = new Date().hourMinuteSecondString() + " " + text
-		statistics.systemLogs.push(str)
-		console.log(str)
-		if(core.logging) core.eventLog += str + "\n"
-		
 	inline js int currentTime := Date.now()
 	
 	js void startApp
@@ -504,7 +497,6 @@ transient skipInit unit core
 			
 	internal saveLogs
 		// Ensure that current eventLog is added to the table even if we haven't processed a single frame
-		logs += eventLog
 		file.saveText "{input.localUser.id} {Platform.appName} {Date.now.invariantDayMonthYearHourMinuteSecondString} v{Platform.buildVersion}.csv", logs
 			
 	saveEventStream
