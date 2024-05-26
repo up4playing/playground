@@ -206,9 +206,6 @@ transient skipInit unit core
 			lobby.tick
 			graphics.finishFrame
 			return
-		else
-		if mode == Connected
-			PeerNetwork.processSendStateQueue
 			
 		let targetFrame = math.floor((now - startTime)/targetFrameTime)+1
 		

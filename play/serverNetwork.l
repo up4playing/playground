@@ -111,13 +111,6 @@ transient skipInit unit ServerNetwork
 		for input.internalUsers
 			if . and !.local: PeerNetwork.createOffer .
 		core.storeUserId
-		
-		if userCount <= 1
-			core.log "We are the only user so far -> Make primary user"
-			PeerNetwork.makePrimaryUser
-		else
-			PeerNetwork.makePrimiaryUserIfStateIsNotReceived
-
 		core.log "Joining room {roomId} as user {userId}"
 		
 		// The first person in the room triggers sending an notification with the link to everybody
@@ -179,6 +172,9 @@ transient skipInit unit ServerNetwork
 			core.startTime = referenceStartTime
 			
 			core.log "New fastest pingPongTime", pongCount, now, pingPongTime, timeSinceStart, core.startTime, referenceStartTime
+			
+		if pongCount >= 5
+			core.startConnected frame:math.floor((now - core.startTime)/core.targetFrameTime)+1
 			
 	sendSignal:	int receiverId, string type, string sdp
 		sendBuffer.reset

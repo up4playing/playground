@@ -238,8 +238,6 @@ transient skipInit unit PeerNetwork
 	private onMessage: InternalUser user, Buffer buffer
 		NetworkMessageType type = cast buffer.readInt8
 		if type == Tick:         onTick user, buffer; else
-		if type == RequestState: onRequestState user, buffer; else
-		if type == State:        onState user, buffer;  else
 		if type == Ping:         onPing user, buffer;  else
 		if type == Pong:         onPong user, buffer;
 			
@@ -497,88 +495,3 @@ transient skipInit unit PeerNetwork
 		
 	js void setAudioMuted: object audioElement, bool muted
 		if(audioElement) audioElement.muted = muted
-		
-	// --------------------------------------------- Send state ---------------------------------------------
-		
-	Buffer snapshotBuffer = {}
-	int[] sendStateQueue
-	bool requestedState
-	int stateTimeout
-	
-	makePrimiaryUserIfStateIsNotReceived
-		requestedState = false
-		stateTimeout = Platform.setTimeout 25 seconds
-			if input.internalUsers.any.receivedAnswer
-				core.log "No state after 25s, but we received answers -> Alert the user to make sure WebRTC connections aren't blocked."
-				alert "Could not connect. Please make sure WebRTC connections aren't block by your router, firewall or a browser extension. If you have a VPN browser extension installed, please check your settings and make sure WebRTC connections aren't blocked."
-			else
-				core.log "No state after 25s -> Make primary user"
-				makePrimaryUser
-	
-	makePrimaryUser
-		let frame = math.floor((core.currentTime - core.startTime)/core.targetFrameTime)+3
-		core.startConnected frame
-	
-	private requestState: InternalUser from
-		sendBuffer.reset
-		sendBuffer.writeInt8 cast NetworkMessageType.RequestState
-		send from, sendBuffer
-		
-	private onRequestState: InternalUser sender, Buffer buffer
-		core.log "Received state request from {sender.id}"
-		sendStateQueue.add sender.id
-		if core.mode == Connected: processSendStateQueue
-	
-	processSendStateQueue
-		if sendStateQueue.length > 0
-			snapshotBuffer.reset
-			Snapshot.serialize snapshotBuffer
-			for sendStateQueue <-
-				let user = input.internalUsers[.]
-				if user?.dataChannel
-					sendState user, snapshotBuffer
-					sendStateQueue.removeAt i
-		
-	private sendState: InternalUser to, Buffer buffer
-		core.log "Sending state to {to.id}"
-		let localUser = input.localUser
-		sendBuffer.reset
-		sendBuffer.writeInt8 cast NetworkMessageType.State
-		sendBuffer.writeInt32 core.frame-1
-		let userCount = input.internalUsers.count . != null
-		sendBuffer.writeInt32 userCount
-		for input.internalUsers if .
-			sendBuffer.writeInt32 .id
-			sendBuffer.writeInt32 .inputs.readPos
-			sendBuffer.writeBool .active
-		to.inputsSentPos = localUser.inputs.readPos
-		sendBuffer.writeBuffer buffer
-		send to, sendBuffer
-		
-	private onState: InternalUser c, Buffer buffer
-		Platform.clearTimeout stateTimeout
-		if core.mode == Connected:
-			core.log "Ignoring received state from {c.id} because we are already connected"
-			return
-			
-		core.log "Received state from {c.id}"
-		let frame = buffer.readInt32
-		let userCount = buffer.readInt32
-		for userCount
-			let id = buffer.readInt32
-			let readPos = buffer.readInt32
-			let active = buffer.readBool
-			let user = input.internalUsers[id]
-				user.inputFrame = frame
-				user.inputs.readPos = user.inputs.writePos = readPos
-				user.active = active
-				
-		for input.internalUsers if .
-			.inputsSentPos = input.localUser.inputs.writePos
-			
-		snapshotBuffer.reset
-		buffer.readBuffer snapshotBuffer
-		Snapshot.deserialize snapshotBuffer
-		math.recreateRandomValues
-		core.startConnected frame+1
-		
