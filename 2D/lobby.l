@@ -55,7 +55,9 @@ unit lobby
 	int counter
 	
 	tick
-		if Platform.isStaging: drawText counter++, {0, -445}, size:200
+		if Platform.isStaging:
+			drawText ++counter, {0, -445}, size:200
+			print counter
 		
 		tickSettings
 		if Platform.isStaging: drawText "Version:{Platform.buildVersion}", size:20, position:{-940, 520}, align:Left
@@ -120,7 +122,7 @@ unit lobby
 		// Place points with a click for testing
 		if core.drawPointsForTesting
 			onTouchDown: points.add .position.clone
-				points.each drawCircle ., size:50
+			points.each drawText text:. position:. size:70; drawCircle . outlineColor:White size:400
 		
 		// Switch language
 		if Loca.supportedLanguages.length > 1
