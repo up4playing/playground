@@ -343,7 +343,7 @@ Object ParticleSystem
 		for particles <-
 			graphics.move .pos
 				graphics.rotate .angle
-					drawImage image, frame:.frame
+					drawImage image, frame:.frame, visibleFor
 			.pos += .speed
 			.speed.y += gravity
 			.angle += .rotationSpeed

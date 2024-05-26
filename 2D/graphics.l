@@ -315,7 +315,7 @@ transient skipInit global unit graphics
 		graphics.context.resetTransform()
 		graphics.context.globalAlpha = 1
 				
-	private isVisibleFor: Player[] visibleFor
+	internal isVisibleFor: Player[] visibleFor
 		if(Platform.fastForward) return false
 		// Use currentlyVisibleFor when visibleFor is null or [null]
 		let effectiveVisibleFor = visibleFor and (visibleFor.length != 1 or visibleFor[0]) ? visibleFor : currentlyVisibleFor
