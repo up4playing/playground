@@ -108,14 +108,15 @@ transient skipInit unit ServerNetwork
 		math.setRandomSeed seed
 		core.serverStartTime = serverStartTime
 		core.mode = Ping
-		for input.internalUsers
-			if . and !.local: PeerNetwork.createOffer .
 		core.storeUserId
 		core.log "Joining room {roomId} as user {userId}"
-		
-		// The first person in the room triggers sending an notification with the link to everybody
-		if userCount <= 1 and !Platform.isStaging: http.getStringDirectly "{Platform.protocolAndHost}:3114/sendGamedayNotification/{core.gameId}/{core.roomId}/hasStarted"
 
+		// The first person in the room triggers sending an notification with the link to everybody
+		// if userCount <= 1 and !Platform.isStaging: http.getStringDirectly "{Platform.protocolAndHost}:3114/sendGamedayNotification/{core.gameId}/{core.roomId}/hasStarted"
+		
+		// Create an offer for each user already in the room
+		for input.internalUsers
+			if . and !.local: PeerNetwork.createOffer .
 		
 	float nextPingTime, fastestPingPongTime = int.maxValue, lastPingPongTime
 	int pongCount
