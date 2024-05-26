@@ -660,6 +660,16 @@ transient unit Snapshot
 global transient unit System
 	// Reset all variables to their initial value and restart the app
 	global inline restart() core.restart
+		
+	// Prints a message to the console
+	global js void print: logstring text // The text, variables or expressions to print
+		                  SourceCodeLocation location
+		// (location ? log(text, location.start, location.file) : log(text))
+		core.log(text);
+		if(location && Platform.isDebug) {
+			var stringValue = typeof text === "string" ? text : JSON.stringify(text);
+			if(stringValue) _sendToEditor({type:"log", value:stringValue, location:location.start, file:location.file});
+		}
 
 class StatisticsGraph
 	int userIndex = -1
