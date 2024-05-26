@@ -90,7 +90,6 @@ skipInit global unit Platform
 			heartbeat "replay"
 			initMedia
 			initAll
-			Time.frame = 0
 			Html.updateScale
 			startApp
 			refresh
@@ -215,7 +214,11 @@ global skipInit unit math
 	// Generates a random float
 	global inline js int randomFloat
 		Math.random()
-		
+
+skipInit transient float Time
+	// The number of milliseconds elapsed since January 1, 1970
+	static inline js Time now := Date.now()
+	
 // A color comprised of a red, green, blue and alpha component
 class Color
 	global const Color White       = {"#ffffff", "White"}
