@@ -55,10 +55,6 @@ unit lobby
 	int counter
 	
 	tick
-		if Platform.isStaging:
-			drawText ++counter, {0, -445}, size:200
-			print counter
-		
 		tickSettings
 		if Platform.isStaging: drawText "Version:{Platform.buildVersion}", size:20, position:{-940, 520}, align:Left
 		if PeerNetwork.error or core.errorMessage
@@ -119,10 +115,12 @@ unit lobby
 						if showNameIndex == playerIndex
 							drawCircle field.position+{0,60}, size:20, visibleFor:host
 
-		// Place points with a click for testing
+		// For testing, display to coordinates when we click the screen
 		if core.drawPointsForTesting
 			onTouchDown: points.add .position.clone
-			points.each drawText text:. position:. size:70; drawCircle . outlineColor:White size:400
+			points.each drawText text:. position:. size:30; drawCircle . outlineColor:White size:200
+			drawText ++counter, {0, -445}, size:200
+			// print counter
 		
 		// Switch language
 		if Loca.supportedLanguages.length > 1
