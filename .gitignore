@@ -1,0 +1,11 @@
+.DS_Store
+*.eventstream
+/.livetime/state.json
+/.livetime/navigation.json
+/assets/index.html
+/assets/blank.html
+/assets/*.js
+/doc/
+/logs/
+/backup/
+/video/

@@ -1,0 +1,26 @@
+Common
+	Id: playground
+	Title: Are you up for playing?
+	Description: 
+	Image: preview-v1.png
+	Icon: favicon-v1.png
+	UserCount: 4
+	
+	Library: git@github.com:livetime-language/core.git
+	Tags: js, 2D, play
+	Technology: Web
+	Rendering: 2D
+	
+	Upload: Yes
+	Username: dev
+	PrivateKey: ~/.ssh/id_rsa_up4playing_dev
+	TargetPath: /srv/play/{id}/
+	
+Editor
+	Debug: Yes
+	
+Alphahosting
+	Host: 89.22.121.145
+	
+OVH
+	Host: 193.70.81.132

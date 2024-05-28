@@ -1,0 +1,75 @@
+{
+	"language": 1,
+	"appType": 0,
+	"appIntergrationMode": 1,
+	"autoImportMedia": true,
+	"optionalBraces": true,
+	"alwaysUpdateHtml": false,
+	"liveUpdateInterval": 0,
+	"evaluateTimelineMode": 0,
+	"libs": [],
+	"sources": [
+		"src/",
+		"lib/core/js/",
+		"lib/core/2D/",
+		"lib/core/play/"
+	],
+	"compilerOptions": {},
+	"traceActive": false,
+	"traceTimeBudget": 50,
+	"useExternalWindow": false,
+	"autoFormat": false,
+	"liveCompilation": true,
+	"runAllTests": false,
+	"aiModel": 1,
+	"processBuild": 1,
+	"servers": [
+		{
+			"name": "Alphahosting",
+			"host": "89.22.121.145",
+			"username": "heiko",
+			"privateKey": "/Users/Heiko/.ssh/id_rsa",
+			"targetPath": "/srv/play/playground/"
+		},
+		{
+			"name": "Alwyzon",
+			"host": "94.177.8.204",
+			"username": "heiko",
+			"privateKey": "/Users/Heiko/.ssh/id_rsa",
+			"targetPath": "/srv/play/playground/"
+		},
+		{
+			"name": "Amazon",
+			"host": "18.198.112.114",
+			"username": "ec2-user",
+			"privateKey": "/Users/Heiko/.ssh/id_rsa",
+			"targetPath": "/srv/play/playground/assets/"
+		}
+	],
+	"serverIndex": 0,
+	"properties": {
+		"basePath": "",
+		"title": "Are you up for Playground?",
+		"description": "",
+		"image": "preview-v1.png",
+		"favIcon": "favicon-v1.png"
+	},
+	"startupConfig": {
+		"simulateConnection": true,
+		"userCount": 3,
+		"showSafeArea": true,
+		"referenceSize": {
+			"x": 1920,
+			"y": 1080
+		}
+	},
+	"assistant": true,
+	"fontSize": 12,
+	"keepAspectRatio": true,
+	"timeout": 7000,
+	"linesOfContextForTests": 5,
+	"backupCount": 100,
+	"buildTargets": [
+		"OVH"
+	]
+}
