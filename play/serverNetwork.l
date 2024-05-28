@@ -32,11 +32,8 @@ transient skipInit unit ServerNetwork
 			core.log(error.message)
 		}
 		
-	// We set the internal user to active when we receive the first signal (offer or answer)
-	// to ensure we hold on to the current snapshot, so we can later rewind to a frame before the new user joined.
-	// This ensured that the user joins on the same frame on all clients
 	private getOrCreateUser: int id
-		return input.internalUsers[id] || (input.internalUsers[id] = {id, local:false, active:true})
+		return input.internalUsers[id] || (input.internalUsers[id] = {id, local:false})
 		
 	private onConnectedToServer
 		if input.localUser.id == -1 and !Platform.isStaging

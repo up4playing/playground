@@ -4,7 +4,6 @@ transient class InternalUser
 	bool local          // Is this the local user?
 	int connectionId    // The connectionId increases with every connection, even if the same user reconnects
 	int index
-	bool active
 	
 	// Event Stream
 	bool collectInputs       // When we are done pinging, we add a join event and start collecting inputs
@@ -393,7 +392,6 @@ skipInit global unit input
 	transient bool isCertain
 	transient ControllerButtonPlayerAndIndex[Key] controllerButtonMap
 	
-
 	// A list of all players
 	global Player[] players
 		
@@ -751,7 +749,6 @@ skipInit global unit input
 					players.add player = {id:userId, index:players.length}
 					playersById[userId] = player
 					if internalUser.local: localPlayer = player
-					internalUser.active = true
 					updatePlayers
 				
 				let value = inputs.readUnsignedInt16

@@ -115,7 +115,7 @@ transient skipInit unit core
 		if !startInLobby or testLobby
 			// When the developer changed Platform.userCount, add or remove internal users accordingly
 			for input.internalUsers.length to Platform.userCount
-				input.internalUsers.add {id:i, local:true, collectInputs:true, active:true}
+				input.internalUsers.add {id:i, local:true, collectInputs:true}
 			if input.internalUsers.length > Platform.userCount
 				input.internalUsers.removeRange Platform.userCount..input.internalUsers.length
 			
@@ -335,7 +335,7 @@ transient skipInit unit core
 			
 			// Flags
 			Platform.fastForward = fastForward
-			int certainFrame = input.internalUsers.min math.min(.inputFrame, .smoothFrame) where . and .active
+			int certainFrame = input.internalUsers.min math.min(.inputFrame, .smoothFrame) where . != null
 			input.isCertain = frame <= certainFrame
 			
 			// Send current frame to editor	
@@ -411,14 +411,15 @@ transient skipInit unit core
 		if (mode != Connected and !simulateRollback) or input.internalUsers.length == 1: return
 			
 		if mode == Local and simulateRollback: nextSnapshotFrame = frame - 5
-		else                                   nextSnapshotFrame = (input.internalUsers.min math.min(.smoothFrame, .inputFrame) where . and .active and not .local)+1
+		else                                   nextSnapshotFrame = (input.internalUsers.min math.min(.smoothFrame, .inputFrame) where . and not .local)+1
+		
 		if snapshotFrame != -1: rewindAndReplayState snapshot, snapshotFrame
 
 	private rewindAndReplayState: Buffer snapshot, int snapshotFrame
 		if verbose
 			core.log "rewindAndReplayState", snapshotFrame, frame, nextSnapshotFrame
 			for input.internalUsers
-				core.log "\t<{.id}>", .smoothFrame, .inputFrame, .active, .local
+				core.log "\t<{.id}>", .smoothFrame, .inputFrame, .local
 		
 		// Rewind
 		restoreTime = Time.measure
