@@ -593,8 +593,8 @@ transient skipInit unit core
 		if not snapshotLogWithWrongChecksum
 			snapshotLogWithWrongChecksum = "frame:{frame} mine:{mine} theirs:{theirs}\n{serializeLog}"
 			core.log "\n{serializeLog}"
+			// file.saveText "{input.localUser.id}-snapshot{frame}.json", serializeLog
 		onError {message}
-		file.saveText "{input.localUser.id}-snapshot{frame}.json", serializeLog
 		
 	onError: Error error
 		errorMessage = error.stack
