@@ -32,6 +32,8 @@ transient class InternalUser
 	string connectionType
 	bool offerByMe
 	bool receivedAnswer
+	bool connected
+	int connectionTries
 	
 	// Statistics
 	private int[] aheadHistory    // Rolling buffer of ahead values, used to calculate bufferFrames

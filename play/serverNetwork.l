@@ -103,6 +103,7 @@ transient skipInit unit ServerNetwork
 		inputsSentPos = input.localUser.inputs.writePos
 		input.localUser.id = userId
 		math.setRandomSeed seed
+		PeerNetwork.retries = 0
 		core.serverStartTime = serverStartTime
 		core.mode = Ping
 		core.storeUserId
@@ -113,7 +114,7 @@ transient skipInit unit ServerNetwork
 		
 		// Create an offer for each user already in the room
 		for input.internalUsers
-			if . and !.local: PeerNetwork.createOffer .
+			if . and !.local: PeerNetwork.initiate .
 		
 	float nextPingTime, fastestPingPongTime = int.maxValue
 	int pongCount

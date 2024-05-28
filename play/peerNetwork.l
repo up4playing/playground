@@ -10,6 +10,15 @@
 // ServerNetwork.onPong                     PeerNetwork.onReceivedOffer
 // ServerNetwork.startConnected             PeerNetwork.onReceivedAnswer
 	
+// Stability Checklist
+// [ ] Handle situations where a new user isn't connected to all users yet
+//         A users probably shouldn't be able to do anything before they connect all their offers
+//         For example: A+B connect, B+C connect, C does something, A can' rewind
+// [ ] Allow removing users
+// [ ] Save event stream to db
+// [ ] Save snapshots to db
+// [ ] Test all users connecting at once
+	
 transient immutable Signal
 	int receiverId
 	string type
@@ -40,130 +49,213 @@ transient skipInit unit PeerNetwork
 	internal enableAudio = true
 	
 	visible string error
+	int retries
+	
+	initiate: InternalUser user
+		setupPeerConnection user, offerByMe:true
+		setupRemoteMedia user
+		stopRecreatingDataChannel user
+		setupDataChannel user
 	
 	private js object setupPeerConnection: InternalUser user, bool offerByMe
-		let options = {
-			// We use the ice transport policy "relay" to test our turn server
-			iceTransportPolicy: PeerNetwork.relayMode == 2 ? "relay" : "all",
-			iceServers: [],
-			// iceCandidatePoolSize: 10,
-		}
-		if(PeerNetwork.relayMode > 0) {
-			// OVH turn server
-			options.iceServers.push({
-				urls: 'turn:193.70.81.132:39571',
-				username: 'play-user-x8env28gx41odbxzwjyut2oq871987syq8ovyuqp128djbsjue',
-				credential: 'qoy91n981vlplabb1873jdcgsouz2qm87qmmakqpc2t8hbeyjsyaqkuz'
-			});	
-			// // Alphahosting turn server
-			// options.iceServers.push({
-			// 	urls: 'turn:89.22.121.145:39571',
-			// 	username: 'play-user-x8env28gx41odbxzwjyut2oq871987syq8ovyuqp-alphahosting',
-			// 	credential: 'qoy91n981vlplabb1873jdcgsouz2qm87qmmakqpc-alphahosting'
-			// });	
-		}
-		options.iceServers.push({
-			urls: [
-				"stun:stun1.l.google.com:19302",
-				"stun:stun2.l.google.com:19302",
-			],
-		});
-		let peerConnection = new RTCPeerConnection(options);
-		let connectionId = user.connectionId
-		core.log("<"+user.id+"> setupPeerConnection connectionId:"+connectionId+" relayMode:"+PeerNetwork.relayMode)
-		
-		// Event handlers
-		peerConnection.oniceconnectionstatechange = e => {
-			core.log("<"+user.id+"> oniceconnectionstatechange " + peerConnection.iceConnectionState)
-			if(peerConnection.iceConnectionState == "disconnected") {
-				// Send logfiles to server
-				setTimeout(() => statistics.saveStatistics(), 7000);
+		try {
+			let options = {
+				// We use the ice transport policy "relay" to test our turn server
+				iceTransportPolicy: PeerNetwork.relayMode == 2 ? "relay" : "all",
+				iceServers: [],
+				// iceCandidatePoolSize: 10,
 			}
+			if(PeerNetwork.relayMode > 0) {
+				// OVH turn server
+				options.iceServers.push({
+					urls: 'turn:193.70.81.132:39571',
+					username: 'play-user-x8env28gx41odbxzwjyut2oq871987syq8ovyuqp128djbsjue',
+					credential: 'qoy91n981vlplabb1873jdcgsouz2qm87qmmakqpc2t8hbeyjsyaqkuz'
+				});	
+				
+				// // Alphahosting turn server
+				// options.iceServers.push({
+				// 	urls: 'turn:89.22.121.145:39571',
+				// 	username: 'play-user-x8env28gx41odbxzwjyut2oq871987syq8ovyuqp-alphahosting',
+				// 	credential: 'qoy91n981vlplabb1873jdcgsouz2qm87qmmakqpc-alphahosting'
+				// });	
+			}
+			options.iceServers.push({
+				urls: [
+					// OVH stun server
+					"stun:193.70.81.132:39571",
+					
+					// Google stun server
+					// "stun:stun1.l.google.com:19302",
+					// "stun:stun2.l.google.com:19302",
+				],
+			});
+			core.log(`#peer <${user.id}> Setup Peer Connection connectionId:${user.connectionId} relayMode:${PeerNetwork.relayMode}`);
+			let peerConnection = new RTCPeerConnection(options);
+			
+			// Negotiation
+			peerConnection.onnegotiationneeded = e => {
+				core.log(`#peer <${user.id}> Negotiation Needed -> Create Offer`);
+				PeerNetwork.createOffer(user);
+			}
+			
+			// Signaling, Connection
+			peerConnection.onsignalingstatechange = e => {
+				core.log(`#peer <${user.id}> Signaling State Change: ${peerConnection.signalingState}`);
+			}
+			peerConnection.onconnectionstatechange = e => {
+				core.log(`#peer <${user.id}> Connection State Change: ${peerConnection.connectionState}`);
+			}
+			
+			// ICE: Candidate, Error, Connection, Gathering
+			let candidateCount = 0
+			peerConnection.onicecandidate = async event => {
+				if (event.candidate) {
+					core.log(`#peer <${user.id}> Gathered Local Ice Candidate ${++candidateCount} -> Send to peer`);
+					ServerNetwork.sendIce(user.id, JSON.stringify(event.candidate));
+				} else {
+					core.log(`#peer <${user.id}> Gathered Local Ice Candidates Complete`);
+				}
+			}
+			peerConnection.icecandidateerror = e => {
+				core.log(`#peer <${user.id}> IDE Candidate Error: ${e.errorText}`);
+			}
+			peerConnection.oniceconnectionstatechange = e => {
+				core.log(`#peer <${user.id}> ICE Connection State Change: ${peerConnection.iceConnectionState}`);
+				if(peerConnection.iceConnectionState == "disconnected") {
+					// Send logfiles to server
+					setTimeout(() => statistics.saveStatistics(), 7000);
+				}
+			}
+			peerConnection.onicegatheringstatechange = e => {
+				core.log(`#peer <${user.id}> ICE Gathering State Change: ${peerConnection.iceGatheringState}`);
+			}
+			user.peerConnection = peerConnection;
+			user.offerByMe = offerByMe;
+			return peerConnection;
+		} 
+		catch(e) {
+			core.log("#peer <"+user.id+"> setupPeerConnection failed " + e.message)
+			console.error(e);
+			core.log(e.stack);
+			return null;
 		}
-		peerConnection.onicecandidate = async event => {
-			if (event.candidate)
-				ServerNetwork.sendIce(user.id, JSON.stringify(event.candidate))
-			else
-				core.log("<"+user.id+"> Final ice candidate");
-		}
-		user.peerConnection = peerConnection
-		user.offerByMe = offerByMe
-		return peerConnection
 	
 	js void stopRecreatingDataChannel: InternalUser user
 		if(user.recreateDataChannelInterval) {
-			core.log("<"+user.id+"> stopRecreatingDataChannel connectionId:"+user.connectionId)
+			core.log("#peer <"+user.id+"> Stop Recreating Data Channel connectionId:"+user.connectionId)
 			clearInterval(user.recreateDataChannelInterval)
 			user.recreateDataChannelInterval = null
 		}
 	
-	js void setupDataChannel: InternalUser user
-		// Create reliable data channel
-		// These options would create an unreliable one: {ordered:false, maxRetransmits:0}
-		core.log("<"+user.id+"> setupDataChannel: Creating data channel")
-		let dataChannel = user.peerConnection.createDataChannel("channel")
-		dataChannel.binaryType = "arraybuffer"
-		dataChannel.onopen = e => {
-			user.dataChannel = dataChannel
-			core.log("<"+user.id+"> setupDataChannel: Open data channel")
-			PeerNetwork.stopRecreatingDataChannel(user)
-			PeerNetwork.logConnectionType(user)
-			if(!PeerNetwork.requestedState) {
-				PeerNetwork.requestState(user)
-				PeerNetwork.requestedState = true
-			}
-		}
-		dataChannel.onclosing = e => core.log("<"+user.id+"> Data channel closing")
-		dataChannel.onclose = e => {
-			core.log("<"+user.id+"> setupDataChannel: Close data channel, recreateInterval:"+user.recreateDataChannelInterval)
-			user.dataChannel = null
-			if(!user.recreateDataChannelInterval) {
-				core.log("<"+user.id+"> setupDataChannel: Start recreating interval")
-				user.recreateDataChannelInterval = setInterval(() => PeerNetwork.setupDataChannel(user), 2000)
-			}
-			// Send logfiles to server
-			setTimeout(() => statistics.manuallyTriggerSend(-4, /*clear*/false), 7000);
-		}
-		dataChannel.onerror = e => core.log("<"+user.id+"> DataChannel "+user.id+"error "+e)
-		dataChannel.onmessage = e => PeerNetwork.onMessage(user, new Buffer(e.data, 0, 0, 0))
-	
-	js void createOffer: InternalUser user
+	private js void setupDataChannel: InternalUser user
 		try {
-			PeerNetwork.setupPeerConnection(user, /*offerByMe*/true)
-			PeerNetwork.setupRemoteMedia(user)
-			PeerNetwork.stopRecreatingDataChannel(user)
-			PeerNetwork.setupDataChannel(user)
+			core.log("#peer <"+user.id+"> Data Channel Creating");
 			
-			// Offer
+			// Create reliable data channel
+			// These options would create an unreliable one: {ordered:false, maxRetransmits:0}
+			let dataChannel = user.peerConnection.createDataChannel("channel");
+			dataChannel.binaryType = "arraybuffer";
+			
+			// Open
+			dataChannel.onopen = e => {
+				user.dataChannel = dataChannel;
+				PeerNetwork.onDataChannelOpen(user);
+				PeerNetwork.stopRecreatingDataChannel(user);
+				PeerNetwork.logConnectionType(user);
+			}
+			
+			// Close, Error
+			dataChannel.onclosing = e => {
+				core.log("#peer <"+user.id+"> Data Channel Closing");
+			}
+			dataChannel.onclose = e => {
+				core.log("#peer <"+user.id+"> Data Channel Close, recreateInterval:"+user.recreateDataChannelInterval);
+				user.dataChannel = null;
+				if(!user.recreateDataChannelInterval) {
+					core.log("#peer <"+user.id+"> setupDataChannel: Start recreating interval");
+					user.recreateDataChannelInterval = setInterval(() => PeerNetwork.setupDataChannel(user), 2000);
+				}
+				// Send logfiles to server
+				setTimeout(() => statistics.manuallyTriggerSend(-4, /*clear*/false), 7000);
+			}
+			dataChannel.onerror = e => {
+				core.log("#peer <"+user.id+"> Data Channel Error " + ev.error.message);
+			}
+			
+			// Message
+			dataChannel.onmessage = e => {
+				PeerNetwork.onMessage(user, new Buffer(e.data, 0, 0, 0));
+			}
+		} 
+		catch(e) {
+			core.log("#peer <"+user.id+"> setupDataChannel failed " + e.message)
+			console.error(e);
+			core.log(e.stack);
+		}
+		
+	onDataChannelOpen: InternalUser user
+		core.log "#peer <{user.id}> Data Channel Open, Connected on try {user.connectionTries}"
+		user.connected = true
+		int connectedCount = input.internalUsers.count.offerByMe and .connected
+		int offerCount = input.internalUsers.count.offerByMe
+		core.log "#peer {connectedCount} of {offerCount} my offers are connected"
+		
+		if connectedCount >= offerCount
+			statistics.connectTime = Time.preciseTime - statistics.startTime
+			core.log "#peer All my offers are connected after {statistics.connectTime} ms and {retries} retries"
+		
+	js void setBitrate: InternalUser user, float scaleResolutionDownBy = 1, float maxBitrate
+		try {
+			let senderList = user.peerConnection.getSenders();
+			for(let sender of senderList) {
+				const params = sender.getParameters();
+				console.log(params);
+				if (!params.encodings) {
+					params.encodings = [{ }];
+				}
+				params.encodings[0].scaleResolutionDownBy = scaleResolutionDownBy;
+				params.encodings[0].maxBitrate = maxBitrate;
+				// params.encodings[0].adaptivePtime = true;
+				await sender.setParameters(params);
+			}
+		}
+		catch(e) {
+			core.log("#peer <"+user.id+"> setBitrate failed " + e.message)
+			console.error(e);
+			core.log(e.stack);
+		}
+				
+	private js void createOffer: InternalUser user
+		try {
+			const retryIfNotConnectedAfter = 5000
+			 		
+			user.connectionTries++
 			let peerConnection = user.peerConnection
 			let offer = await peerConnection.createOffer();
 			await peerConnection.setLocalDescription(offer);
 			ServerNetwork.sendSignal(user.id, "offer", peerConnection.localDescription.sdp)
 			user.receivedAnswer = false
-			core.log("<"+user.id+"> Sent offer to "+user.id+", waiting for answer.");
+			core.log("#peer <"+user.id+"> Sent offer to "+user.id+", waiting for answer. Try:"+user.connectionTries);
+			
+			setTimeout(() => {
+				let state = peerConnection.connectionState 
+				core.log(`#peer <${user.id}> Checking connection state after ${retryIfNotConnectedAfter}: ${state}`);
+				if(state != "connected") {
+					peerConnection.restartIce();
+					PeerNetwork.retries++
+				}
+			}, retryIfNotConnectedAfter);
 		}
 		catch(e) {
+			core.log("#peer <"+user.id+"> createOffer failed " + e.message)
 			console.error(e);
 			core.log(e.stack);
 		}
 		
-	js void setBitrate: InternalUser user, float scaleResolutionDownBy = 1, float maxBitrate
-		let senderList = user.peerConnection.getSenders();
-		for(let sender of senderList) {
-			const params = sender.getParameters();
-			console.log(params);
-			if (!params.encodings) {
-				params.encodings = [{ }];
-			}
-			params.encodings[0].scaleResolutionDownBy = scaleResolutionDownBy;
-			params.encodings[0].maxBitrate = maxBitrate;
-			// params.encodings[0].adaptivePtime = true;
-			await sender.setParameters(params);
-		}
-		
 	js void onReceivedOffer: InternalUser user, string sdp
 		try {
-			core.log("<"+user.id+"> Received offer, senting answer");
+			core.log("#peer <"+user.id+"> Received offer -> Send answer");
 			PeerNetwork.setupPeerConnection(user, /*offerByMe*/false)
 			PeerNetwork.setupRemoteMedia(user)
 			
@@ -173,22 +265,34 @@ transient skipInit unit PeerNetwork
 			
 			// Data channel
 			user.peerConnection.addEventListener("datachannel", e => {
-				core.log("<"+user.id+"> Data channel received")
+				core.log("#peer <"+user.id+"> Data Channel Received")
 				let dataChannel = e.channel
 				dataChannel.binaryType = "arraybuffer"
 				user.dataChannel = dataChannel
+				
+				// Open
 				dataChannel.onopen = e => {
-					core.log("<"+user.id+"> Data channel opened")
+					core.log("#peer <"+user.id+"> Data Channel Open")
 					user.dataChannel = dataChannel
 					PeerNetwork.logConnectionType(user)
 				}
+				
+				// Close, Error
 				dataChannel.onclosing = e => {
-					core.log("<"+user.id+"> Data channel closing")
+					core.log("#peer <"+user.id+"> Data Channel Closing "+e)
 					user.dataChannel = null
 				}
-				dataChannel.onclose = e => core.log("<"+user.id+"> Data channel close "+e)
-				dataChannel.onerror = e => core.log("<"+user.id+"> Data channel error "+e)
-				dataChannel.onmessage = e => PeerNetwork.onMessage(user, new Buffer(e.data, 0, 0, 0))
+				dataChannel.onclose = e => {
+					core.log("#peer <"+user.id+"> Data Channel Close "+e)
+				}
+				dataChannel.onerror = e => {
+					core.log("#peer <"+user.id+"> Data Channel Error "+e.error.message)
+				}
+				
+				// Message
+				dataChannel.onmessage = e => {
+					PeerNetwork.onMessage(user, new Buffer(e.data, 0, 0, 0))
+				}
 			})
 						
 			// Answer
@@ -199,6 +303,7 @@ transient skipInit unit PeerNetwork
 			ServerNetwork.sendSignal(user.id, "answer", peerConnection.localDescription.sdp)
 		}
 		catch(e) {
+			core.log("#peer <"+user.id+"> onReceivedOffer failed " + e.message)
 			console.error(e)
 			core.log(e.stack);
 		}
@@ -220,13 +325,16 @@ transient skipInit unit PeerNetwork
 				
 				core.tickMessageSize = send ., sendBuffer
 				user.inputsSentPos = inputs.writePos
+					
 			
 	private js int send: InternalUser user, Buffer buffer
 		try {
 			let data = buffer.toByteArray()
 			user.dataChannel.send(data)
 			return data.byteLength
-		} catch(e) {
+		} 
+		catch(e) {
+			core.log("#peer <"+user.id+"> send failed " + e.message)
 			console.error(e)
 			core.log(e.stack)
 			return 0
@@ -243,30 +351,43 @@ transient skipInit unit PeerNetwork
 			
 	private onTick: InternalUser sender, Buffer buffer
 		let inputFrame = buffer.readInt
+		
 		if inputFrame >= sender.inputFrame
-			sender.inputFrame = inputFrame
+			let prevInputFrame = sender.inputFrame
 			let prevWritePos = buffer.readInt
+			
+			sender.inputFrame = inputFrame
 			buffer.readBuffer sender.inputs, prevWritePos
+			
+			if core.verbose: core.log "<{sender.id}> Received inputFrame: {prevInputFrame}->{inputFrame} writePos: {prevWritePos}->{sender.inputs.writePos}"
 			
 			// Checksum
 			int checksumFor = buffer.readInt
 			float checksum = buffer.readFloat64
-			if core.logging: core.log "<{sender.id}> #{checksumFor} {checksum}"
+			if core.verbose: core.log "<{sender.id}> #{checksumFor} {checksum}"
 			
 			let myChecksum = core.checksums[checksumFor]
 			if !myChecksum                           core.checksums[checksumFor] = checksum; else
 			if !myChecksum.isApproximately(checksum) core.onWrongChecksum checksumFor, mine:myChecksum theirs:checksum
 		
 	js void onReceivedAnswer: InternalUser user, string sdp
-		await user.peerConnection.setRemoteDescription(new RTCSessionDescription({type: "answer", sdp}));
-		user.receivedAnswer = true
-		core.log("<"+user.id+"> Received answer from "+user.id+".");
-		
+		core.log("#peer <"+user.id+"> Received Answer");
+		try {
+			await user.peerConnection.setRemoteDescription(new RTCSessionDescription({type: "answer", sdp}));
+			user.receivedAnswer = true
+		}
+		catch(e) {
+			core.log("#peer <"+user.id+"> onReceivedAnswer failed " + e.message)
+			core.log(e.stack);
+		}	
+			
 	js void onIce: InternalUser user, string candidate
+		core.log("#peer <"+user.id+"> Received Ice Candidate");
 		try {
 			await user.peerConnection.addIceCandidate(new RTCIceCandidate(JSON.parse(candidate)));
-		} catch(e) {
-			core.log("<"+user.id+"> onIce failed " + e.message)
+		}
+		catch(e) {
+			core.log("#peer <"+user.id+"> onIce failed " + e.message)
 			core.log(e.stack);
 		}
 		
@@ -279,9 +400,9 @@ transient skipInit unit PeerNetwork
 				let candidate = stats.get(candidatePair.localCandidateId);
 				let ip = candidate.ip || candidate.address
 				user.connectionType = candidate.candidateType + " " + ip
-				core.log("<"+user.id+"> #################### connection to "+user.id+": "+user.connectionType)
+				core.log("#connection <"+user.id+"> connection "+user.connectionType)
 			} else {
-				core.log("<"+user.id+"> #################### connection: no candidate pair for "+user.id)
+				core.log("#connection <"+user.id+"> connection: no candidate pair for "+user.id)
 				window.stats = [...stats.values()]
 				console.log(window.stats)
 				try  { core.log(JSON.stringify(window.stats)) }
@@ -463,11 +584,15 @@ transient skipInit unit PeerNetwork
 		user.mediaStream = new MediaStream();
 		
 		// Add incoming tracks to media stream for remote player
-		user.peerConnection.addEventListener("track", event => {
+		user.peerConnection.ontrack = event => {
+			core.log("#peer <"+user.id+"> Add track");
 			event.streams[0].getTracks().forEach(track => {
 				user.mediaStream.addTrack(track);
 			});
-		});
+		}
+		user.peerConnection.onremovetrack = event => {
+			core.log("#peer <"+user.id+"> Remove track");
+		}
 
 	// --------------------------------------------- Media elements ---------------------------------------------
 	
