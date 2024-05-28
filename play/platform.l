@@ -111,7 +111,7 @@ transient skipInit unit Platform
 			openMedia
 				try
 					this.engineStarted = true
-					statistics.loadTime = Time.preciseTime
+					statistics.loadTime = Time.preciseTime - statistics.startTime
 					startInterval
 					if isDebug || isLocal || roomId == "local" || url.startsWith("file"): core.startLocal
 					else                                                                  core.join gameId, roomId, userId

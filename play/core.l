@@ -712,7 +712,7 @@ skipInit transient unit statistics
 	int successfullySentGameLogs
 	int successfullySentSystemLogs
 	
-	Time startTime, loadTime, mediaTime, connectTime
+	Time startTime, loadTime, cameraTime, connectTime
 	internal float maxValue
 	int currentSet
 	int sets = 1
@@ -745,12 +745,7 @@ skipInit transient unit statistics
 			version: Platform.buildVersion
 			staging: Platform.isStaging
 			server
-			times:
-			[
-				loadTime - startTime
-				connectTime - startTime
-				mediaTime - startTime
-			]
+			times: [ loadTime, connectTime, cameraTime ]
 			systemLogs: systemLogs[successfullySentSystemLogs..]
 		}
 			successfullySentSystemLogs = sendingSystemLogsUntil

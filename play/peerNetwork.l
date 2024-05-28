@@ -370,8 +370,8 @@ transient skipInit unit PeerNetwork
 			PeerNetwork.videoInputId = input.localUser.mediaStream.getVideoTracks()[0]?.getSettings().deviceId || PeerNetwork.devices.videoInput[0]?.deviceId
 			PeerNetwork.audioInputId = input.localUser.mediaStream.getAudioTracks()[0]?.getSettings().deviceId || PeerNetwork.devices.audioInput[0]?.deviceId
 			PeerNetwork.audioOutputId = PeerNetwork.devices.audioOutput[0]?.deviceId
-			statistics.mediaTime = performance.now()
-			core.log("setupLocalMedia: success after "+(statistics.mediaTime - statistics.startTime)+" ms")
+			statistics.cameraTime = performance.now() - statistics.startTime
+			core.log("#camera Setup Local Camera and Microphone after "+statistics.cameraTime+" ms")
 			
 		} catch(error) {
 			core.log(error.message)
