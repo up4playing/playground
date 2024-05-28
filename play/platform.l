@@ -142,6 +142,13 @@ transient skipInit unit Platform
 			sendErrorToEditor .
 			sendFinished
 			
+	generateIntegrationTest: GenerateIntegrationTestMode mode
+		input.generateIntegrationTest = mode
+		input.integrationTest = ""
+		goToCurrentFrame
+		input.generateIntegrationTest = None
+		sendToEditor {type:"integrationTest", text:input.integrationTest}
+			
 	private goToCurrentFrame
 		try
 			core.goToFrame core.frame-1, replayFromStart:true
@@ -149,7 +156,6 @@ transient skipInit unit Platform
 			sendErrorToEditor .
 		finally 
 			sendFinished
-		
 			
 	object interval
 	private js void startInterval
@@ -208,6 +214,9 @@ transient skipInit unit Platform
 	internal inline js void sendErrorToEditor: Error error
 		if(window._sendErrorToEditor) _sendErrorToEditor(error)
 		else                          console.error(error)
+		
+	internal inline js void sendToEditor: any message
+		if(Platform.isDebug) _sendToEditor(message)
 		
 	private inline js void sendFinished
 		console.log("[app] Finished initializing")

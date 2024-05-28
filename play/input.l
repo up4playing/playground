@@ -386,6 +386,8 @@ immutable class InternetGamePad
 	InternetGamePadButton[] buttons
 	string id
 	
+enum GenerateIntegrationTestMode: None, Clicks, Drags
+	
 // Collect user input
 skipInit global unit input
 	transient visible InternalUser[] internalUsers
@@ -428,6 +430,9 @@ skipInit global unit input
 	
 	bool enableClickingWithAltKey
 	bool ignoreFirstClick
+	
+	GenerateIntegrationTestMode generateIntegrationTest
+	string integrationTest
 	
 	string textInput
 		let localPlayer = playersById[input.localUser.id]
@@ -784,6 +789,7 @@ skipInit global unit input
 						player.downTouches.add touch
 						player.pointerPosition = referencePos
 						internalUser.downTouches.add touch
+						if generateIntegrationTest == Clicks: integrationTest += "\tclick window:{userId} x:{referencePos.x} y:{referencePos.y}\n"
 					else
 					if inputType == TouchMove
 						let touch = player.touches.find.id == id
