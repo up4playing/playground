@@ -208,6 +208,7 @@ transient skipInit unit core
 			return
 			
 		let targetFrame = math.floor((now - startTime)/targetFrameTime)+1
+		if verbose: core.log "----- #{frame} -> #{targetFrame} -----"
 		
 		if mode == Local && targetFrame > frame + targetFps*2
 			// After a long pause in local mode, we do not want to process all missed frames, so we adjust the start time
@@ -257,14 +258,14 @@ transient skipInit unit core
 		let str = new Date().hourMinuteSecondMillisecondString() + " " + text
 		statistics.systemLogs.push(str)
 		console.log(str)
-		if(core.logging) core.logs += str + "\n"
+		core.logs += str + "\n"
 			
 	internal string logs
 	private float lastNetworkFrame, lastAnimationFrame, drawTime, tickTime, restoreTime, replayTime, saveTime
 	private int replayFrames
 	internal int displayItems
 	int tickMessageSize
-	bool logging = false
+	bool verbose = false
 	int replayFrom = -1
 	
 	RollingList drawTimes, tickTimes, frameTimes = {length:150}
@@ -296,10 +297,6 @@ transient skipInit unit core
 		statistics.add "restoreTime", value:restoreTime, color:Green set:7
 		statistics.add "replayTime", value:replayTime, color:Yellow set:7
 		statistics.add "saveTime", value:saveTime, color:White set:7
-			
-		// Logs
-		if logging
-			ServerNetwork.lastPingPongTime = 0; tickMessageSize = 0
 
 	private int lastSendFrame
 	
@@ -335,6 +332,8 @@ transient skipInit unit core
 	private step: bool fastForward // If we are replaying after a rollback or a code change
 		          bool draw        // We don't draw if we are stepping multiple frames in one animation frame
 		try
+			if verbose: core.log "#{frame}{fastForward ? " fastForward":""}{draw ? " draw":""}"
+				
 			// Set time
 			Time.now = serverStartTime + math.round(frame * targetFrameTime)
 			
@@ -420,6 +419,11 @@ transient skipInit unit core
 		if snapshotFrame != -1: rewindAndReplayState snapshot, snapshotFrame
 
 	private rewindAndReplayState: Buffer snapshot, int snapshotFrame
+		if verbose
+			core.log "rewindAndReplayState", snapshotFrame, frame, nextSnapshotFrame
+			for input.internalUsers
+				core.log "\t<{.id}>", .smoothFrame, .inputFrame, .active, .local
+		
 		// Rewind
 		restoreTime = Time.measure
 			snapshot.rewind
@@ -467,7 +471,7 @@ transient skipInit unit core
 		if players.length >= 2 and frame > 200
 			float myChecksum = snapshot.checksum
 			float theirChecksum = checksums[frame]
-			if logging: core.log "<{input.localUser.id}*> #{frame} {myChecksum} writePos:{snapshot.writePos}"
+			if verbose: core.log "<{input.localUser.id}*> #{frame} {myChecksum} writePos:{snapshot.writePos}"
 			if !theirChecksum                             checksums[frame] = myChecksum; else
 			if !theirChecksum.isApproximately(myChecksum) onWrongChecksum frame, mine:myChecksum theirs:theirChecksum
 			lastChecksumFrame = frame
@@ -597,7 +601,7 @@ transient skipInit unit core
 		
 	onError: Error error
 		errorMessage = error.stack
-		if logging: logs += errorMessage + "\n" 
+		logs += errorMessage + "\n" 
 		statistics.systemLogs.add errorMessage
 		Platform.sendErrorToEditor error
 		

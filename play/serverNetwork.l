@@ -118,7 +118,7 @@ transient skipInit unit ServerNetwork
 		for input.internalUsers
 			if . and !.local: PeerNetwork.createOffer .
 		
-	float nextPingTime, fastestPingPongTime = int.maxValue, lastPingPongTime
+	float nextPingTime, fastestPingPongTime = int.maxValue
 	int pongCount
 	
 	ping
@@ -150,7 +150,6 @@ transient skipInit unit ServerNetwork
 		
 		// Ignore pings that took more than twice as long as the average
 		pongCount++
-		lastPingPongTime = pingPongTime
 		pingPongTimes.add pingPongTime maxLength:30
 		let pingPongTimesAverage = pingPongTimes.average
 		if pingPongTime > 400 or (pingPongTimes.length >= 15 and pingPongTime > pingPongTimesAverage * 2)

@@ -746,6 +746,8 @@ skipInit global unit input
 				// which is typically the "Join" message that is sent in "startConnected",
 				// but could also be a player reconnecting that was previously kicked out
 				if not player
+					if core.verbose and not internalUser.local: core.log "<{internalUser.id}> Received first message from new user"
+					
 					players.add player = {id:userId, index:players.length}
 					playersById[userId] = player
 					if internalUser.local: localPlayer = player
