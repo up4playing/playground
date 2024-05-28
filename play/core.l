@@ -52,13 +52,12 @@ transient skipInit unit core
 		user.collectInputs = true
 		log "startConnected", joinFrame
 		
-		this.frame = frame
+		this.frame = 0
 		mode = Connected
 		snapshotFrame = -1
 		nextSnapshotFrame = 0
 		checkSaveState
-		statistics.connectTime = Time.preciseTime
-		log "Connected", user.id, frame, startTime, serverStartTime
+		log "Start", user.id, frame, startTime, serverStartTime
 		
 	startLocal
 		mode = Local
