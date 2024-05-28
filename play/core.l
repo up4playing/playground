@@ -202,9 +202,6 @@ transient skipInit unit core
 		// Ping
 		ServerNetwork.ping
 		if mode == None || mode == Ping
-			graphics.startFrame
-			lobby.tick
-			graphics.finishFrame
 			return
 			
 		let targetFrame = math.floor((now - startTime)/targetFrameTime)+1

@@ -127,10 +127,6 @@ unit lobby
 			forPositions Loca.supportedLanguages, end:{930,-510}, delta:{40}
 				drawImage Flag[i], pos, frame:Loca.language == cast(i) ? 1 : 0
 					Loca.setLanguage cast(i)
-			
-		// Connecting text
-		if core.mode == Ping
-			drawText "Connecting...", size:32
 		
 	setupFields: Player newHost
 		input.host = newHost
