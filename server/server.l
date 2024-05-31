@@ -59,7 +59,11 @@ global skipInit unit math
 		return 'xxxx-xxxx-xxx-xxxx'.replace(/[x]/g, (c) => {  
 			return math.floor(math.random() * 16).toString(16);  
 		}); 
-		
+
+skipInit transient float Time
+	// The number of milliseconds elapsed since January 1, 1970
+	static inline js Time now := Date.now()
+	
 transient float Angle
 	inline js float toFloat() this
 	inline js string toString() this.toString()
@@ -161,6 +165,7 @@ global unit http
 					}
 				} catch(e) {
 					console.error(e)
+					_sendErrorToEditor(e);
 					response.end(`{error:"${e.message}"}`)
 				}
 			})
@@ -261,5 +266,3 @@ class Connection
 	inline js object data := this.data
 	inline js void data(object value) this.data = value
 	inline js void close() this.close()
-
-

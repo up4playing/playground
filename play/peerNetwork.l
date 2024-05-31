@@ -37,12 +37,18 @@ transient skipInit unit PeerNetwork
 			// iceCandidatePoolSize: 10,
 		}
 		if(PeerNetwork.relayMode > 0) {
-			// Alphahosting turn server
+			// OVH turn server
 			options.iceServers.push({
-				urls: 'turn:89.22.121.145:39571',
-				username: 'play-user-x8env28gx41odbxzwjyut2oq871987syq8ovyuqp-alphahosting',
-				credential: 'qoy91n981vlplabb1873jdcgsouz2qm87qmmakqpc-alphahosting'
+				urls: 'turn:193.70.81.132:39571',
+				username: 'play-user-x8env28gx41odbxzwjyut2oq871987syq8ovyuqp128djbsjue',
+				credential: 'qoy91n981vlplabb1873jdcgsouz2qm87qmmakqpc2t8hbeyjsyaqkuz'
 			});	
+			// // Alphahosting turn server
+			// options.iceServers.push({
+			// 	urls: 'turn:89.22.121.145:39571',
+			// 	username: 'play-user-x8env28gx41odbxzwjyut2oq871987syq8ovyuqp-alphahosting',
+			// 	credential: 'qoy91n981vlplabb1873jdcgsouz2qm87qmmakqpc-alphahosting'
+			// });	
 		}
 		options.iceServers.push({
 			urls: [
@@ -503,7 +509,7 @@ transient skipInit unit PeerNetwork
 				makePrimaryUser
 	
 	makePrimaryUser
-		let frame = math.floor((core.currentTime - core.startTime)/core.targetFrameTime)+3
+		let frame = math.floor((core.currentTime - core.startTime)/core.frameTime)+3
 		core.startConnected frame
 	
 	private requestState: InternalUser from
