@@ -13,7 +13,9 @@ unit Framework
 				
 	clearAtEndOfFrame
 		for objects
-			if not .locked: toBeRemoved.add .
+			if not .locked
+				.hide
+				toBeRemoved.add .
 		
 	removeWhere: bool(Object value) condition
 		for objects -> obj
@@ -400,7 +402,7 @@ Object Menu
 				onTouchDownAny
 					active = false
 				
-		if alpha
+		if alpha and not input.showOnlyVideos
 			drawImage Menu, position, location, layer
 				active = true
 		

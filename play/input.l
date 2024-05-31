@@ -85,9 +85,11 @@ priority class Player
 	int index
 	Color color, darkColor
 	string name
+	int score
 	Vector2 pointerPosition
 	
 	toString := name or (color ? color.name : "")
+	highlightPerspectiveColor := input.showPerspectiveOf == null or input.showPerspectiveOf == this ? this.color : this.darkColor
 	
 	// Touch input
 	internal Touch[] touches
@@ -421,6 +423,15 @@ skipInit global unit input
 	// All players
 	global inline js Player[] everybody() input.players
 		
+	Player showPerspectiveOf
+	bool showOnlyVideos
+		
+	// Show the perspective of this player
+	switchPerspectiveTo: Player player
+		watch "Switching to {player}"
+		showPerspectiveOf = player
+		if Platform.mode == Play or Platform.mode == Pause: core.switchToPlayer player
+		
 	internal Player[] playersById
 	Cursor cursor
 	
@@ -488,7 +499,7 @@ skipInit global unit input
 			else
 			if((key == "F1" || key == "F2" || key == "F3" || key == "F4") && !ctrlOrCmd && Platform.isDebug) {
 				let index = key[1] - "1"
-				core.switchPerspectiveTo(input.players[index]);
+				core.switchToPlayer(input.players[index]);
 				e.preventDefault();
 			}
 			else
@@ -1484,14 +1495,6 @@ skipInit global unit input
 	// ---------------------------------------------- Keys ----------------------------------------------
 	
 	// Do something when a player presses a key
-	global onKeyDown: Key key                             // The key that will trigger the event
-		              implicit nocolon Player[] by = null // Only consider keys pressed by this player or list of players
-		              void(Key key, Player pressedBy) do  // Do this for each key that is pressed
-		for getTargetedPlayers(by) -> player
-			for internalUsers[.id].downKeys
-				if . == key
-					do key, player
-				
 	global onKeyDown: Key modifier 
 		              Key key                             // The key that will trigger the event
 		              implicit nocolon Player[] by = null // Only consider keys pressed by this player or list of players
@@ -1501,6 +1504,15 @@ skipInit global unit input
 				for internalUsers[.id].downKeys
 					if . == key
 						do key, player
+				
+	// Do something when a player presses a key
+	global onKeyDown: Key key                             // The key that will trigger the event
+		              implicit nocolon Player[] by = null // Only consider keys pressed by this player or list of players
+		              void(Key key, Player pressedBy) do  // Do this for each key that is pressed
+		for getTargetedPlayers(by) -> player
+			for internalUsers[.id].downKeys
+				if . == key
+					do key, player
 				
 	// Do something when a player presses a key
 	global onKeyDown: implicit nocolon Player[] by = null // Only consider keys pressed by this player or list of players
