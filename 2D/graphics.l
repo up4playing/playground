@@ -527,15 +527,28 @@ transient skipInit global unit graphics
 		                     implicit Player[] visibleFor = null // Only this player or list of players will see the text
 		                     implicit layer = 0                  // Higher layers are drawn in front of lower layers
 		                     alpha = 1.0                         // The opacity of the text (0: fully transparent, 1: fully visible)
+		                     float maxWidth = 0
 		                     SourceCodeLocation location
 		if(graphics.isVisibleFor(visibleFor)) {
 			let effectiveFont = font || graphics.currentFont
 			let fontSize = size.y || size.x || graphics.currentFontSize
+			
+			let width = graphics.getTextWidth(text, {x:fontSize}, effectiveFont, style)
+			if(maxWidth > 0) {
+				if(width > maxWidth) {
+					fontSize = Math.floor(fontSize * maxWidth/width)
+					width = graphics.getTextWidth(text, {x:fontSize}, effectiveFont, style)
+					while(width > maxWidth) {
+						width = graphics.getTextWidth(text, {x:--fontSize}, effectiveFont, style)
+					}	
+				}		
+			}
+			
 			let contextFont = (style ? "bold ":"")+fontSize+"px "+effectiveFont.name;
 			graphics.context.font = contextFont
-			let textSize = graphics.context.measureText(text)
-			let sizeX = textSize.width
+			let sizeX = width
 			let sizeY = fontSize*effectiveFont.actualHeightFactor
+			
 			graphics.items.push(new DisplayText(
 				graphics.totalMatrix, 
 				position.x - graphics.alignmentFactor[ align]*sizeX,
@@ -565,14 +578,26 @@ transient skipInit global unit graphics
 		                     implicit Player[] visibleFor = null // Only this player or list of players will see the text
 		                     implicit layer = 0                  // Higher layers are drawn in front of lower layers
 		                     alpha = 1.0                         // The opacity of the text (0: fully transparent, 1: fully visible)
+		                     float maxWidth = 0
 		                     SourceCodeLocation location
 		if(graphics.isVisibleFor(visibleFor)) {
 			let effectiveFont = font || graphics.currentFont
 			let fontSize = size.y || size.x || graphics.currentFontSize
+			
+			let width = graphics.getTextWidth(text, {x:fontSize}, effectiveFont, style)
+			if(maxWidth > 0) {
+				if(width > maxWidth) {
+					fontSize = Math.floor(fontSize * maxWidth/width)
+					width = graphics.getTextWidth(text, {x:fontSize}, effectiveFont, style)
+					while(width > maxWidth) {
+						width = graphics.getTextWidth(text, {x:--fontSize}, effectiveFont, style)
+					}	
+				}		
+			}
+			
 			let contextFont = (style ? "bold ":"")+fontSize+"px "+effectiveFont.name;
 			graphics.context.font = contextFont
-			let textSize = graphics.context.measureText(text)
-			let sizeX = textSize.width
+			let sizeX = width
 			let sizeY = fontSize*effectiveFont.actualHeightFactor
 			let matrix = graphics.totalMatrix.clone()
 			matrix.move(position)
