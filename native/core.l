@@ -5,7 +5,7 @@ skipInit unit core
 	int frame
 	Time startTime
 	internal const targetFps = 30
-	const targetFrameTime = 1000/targetFps
+	const frameTime = 1000/targetFps
 	
 	startLocal
 		// mode = Local
@@ -91,7 +91,7 @@ skipInit unit core
 		
 	animationFrame
 		Time.now = Time.realTime
-		let targetFrame = math.floor((Time.now - startTime)/targetFrameTime)+1
+		let targetFrame = math.floor((Time.now - startTime)/frameTime)+1
 		// print "animation frame", Time.now, startTime, Time.now - startTime, frame, targetFrame
 		if frame < targetFrame
 			step

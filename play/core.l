@@ -21,7 +21,7 @@ transient skipInit unit core
 		
 	SendInputsMode sendInputsMode = Peer
 	internal const targetFps = 30
-	const targetFrameTime = 1000/targetFps
+	const frameTime = 1000/targetFps
 	
 	NetworkMode mode                // Whether we are in local or connected mode
 	visible string errorMessage     // The error message if we caught any exceptions in the main loop
@@ -193,7 +193,7 @@ transient skipInit unit core
 		
 	// Send tick message, replay state, call step, and logging
 	// This is called by the requestAnimationFrame callback.
-	// We ensure that step is called every targetFrameTime milliseconds.
+	// We ensure that step is called every frameTime milliseconds.
 	internal animationFrame
 		now = currentTime
 		if lastAnimationFrame: frameTimes.add now - lastAnimationFrame
@@ -210,8 +210,8 @@ transient skipInit unit core
 			// After a long pause in local mode, we do not want to process all missed frames, so we adjust the start time
 			let prevTargetFrame = targetFrame
 			targetFrame = frame
-			startTime = math.round(now - targetFrame*targetFrameTime)
-			log "Paused {prevTargetFrame-frame} frames, adjusting startTime. prevTargetTime:{prevTargetFrame} frame:{frame} targetFrame:{math.floor((now - startTime)/targetFrameTime)}"
+			startTime = math.round(now - targetFrame*frameTime)
+			log "Paused {prevTargetFrame-frame} frames, adjusting startTime. prevTargetTime:{prevTargetFrame} frame:{frame} targetFrame:{math.floor((now - startTime)/frameTime)}"
 		
 		if frame < targetFrame
 			// Create artificial inputs to test the smoothness
@@ -230,7 +230,7 @@ transient skipInit unit core
 			catch 
 				onError error
 					
-			// Ensure that step is called every targetFrameTime milliseconds
+			// Ensure that step is called every frameTime milliseconds
 			while frame < targetFrame
 				for input.internalUsers -> user
 					if user?.local: user.startInputFrame frame+1
@@ -331,7 +331,7 @@ transient skipInit unit core
 			if verbose: core.log "#{frame}{fastForward ? " fastForward":""}{draw ? " draw":""}"
 				
 			// Set time
-			Time.now = serverStartTime + math.round(frame * targetFrameTime)
+			Time.now = serverStartTime + math.round(frame * frameTime)
 			
 			// Flags
 			Platform.fastForward = fastForward
@@ -484,7 +484,7 @@ transient skipInit unit core
 		if(app.start) app.start()
 		
 	private adjustStartTime
-		startTime = math.round(currentTime - frame*targetFrameTime - (targetFrameTime*.5))
+		startTime = math.round(currentTime - frame*frameTime - (frameTime*.5))
 		
 	adjustStartTimeIfNeeded
 		if Platform.mode < Play: adjustStartTime

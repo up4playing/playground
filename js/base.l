@@ -1008,6 +1008,13 @@ class List<T>
 	inline js T[] where: bool(T a) condition // The condition to check
 		this.filter(condition)
 		
+	T[] except: T item 
+		T[] result
+		for this 
+			if . != item
+				result.add .
+		return result
+		
 	inline js T[] take: int count
 		this.slice(0, count)
 		
