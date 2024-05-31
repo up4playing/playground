@@ -717,10 +717,9 @@ transient immutable float Angle
 	static Angle rotatedTowards: Angle value
 		                         Angle target
 		                         Angle speed
-		target = target % 1
-		let delta = (target - value) % 1
-		if delta < .5: value = (value + speed) % 1; return value < target ? value : target
-		else           value = (value - speed) % 1; return value > target ? value : target
+		let delta = (target - value) normalize
+		if delta > 0: value = value + speed; return value < target ? value : target
+		else          value = value - speed; return value > target ? value : target
 		
 	inline Angle + Angle value
 	inline Angle - Angle value
@@ -746,6 +745,10 @@ transient immutable float Angle
 		((this % value) + value) % value
 		
 	inline js Angle operator -  (Angle a) -a
+	
+	// The remainer after a division by the given value. The sign stays the same.
+	inline js Angle remainder: Angle value
+		(this % value)
 
 		
 enum AngleUnit
