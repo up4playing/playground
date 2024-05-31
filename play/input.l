@@ -85,6 +85,7 @@ priority class Player
 	int index
 	Color color, darkColor
 	string name
+	int score
 	Vector2 pointerPosition
 	
 	toString := name or (color ? color.name : "")

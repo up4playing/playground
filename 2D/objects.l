@@ -402,7 +402,7 @@ Object Menu
 				onTouchDownAny
 					active = false
 				
-		if alpha
+		if alpha and not input.showOnlyVideos
 			drawImage Menu, position, location, layer
 				active = true
 		

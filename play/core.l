@@ -421,6 +421,7 @@ transient skipInit unit core
 					let size = {720, 540}
 					forPositions players, grid:{2,2}, delta:size
 						drawVideo . position:pos, size
+						drawText .score, pos * {2.13, 1.8}, font:ByTheWay
 				else
 					if lobby.inLobby: lobby.tick
 					else              appTick
