@@ -99,6 +99,7 @@ transient skipInit unit core
 	reset
 		players.clear
 		input.playersById.clear
+		input.host = null
 		errorMessage = ""
 		HTMLElement.clear
 		math.randomValueIndex = 0
