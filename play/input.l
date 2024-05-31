@@ -88,6 +88,7 @@ priority class Player
 	Vector2 pointerPosition
 	
 	toString := name or (color ? color.name : "")
+	highlightPerspectiveColor := input.showPerspectiveOf == null or input.showPerspectiveOf == this ? this.color : this.darkColor
 	
 	// Touch input
 	internal Touch[] touches
@@ -398,7 +399,6 @@ skipInit global unit input
 	transient bool isCertain
 	transient ControllerButtonPlayerAndIndex[Key] controllerButtonMap
 	
-
 	// A list of all players
 	global Player[] players
 		
@@ -423,6 +423,14 @@ skipInit global unit input
 		
 	// All players
 	global inline js Player[] everybody() input.players
+		
+	Player showPerspectiveOf
+			
+	// Show the perspective of this player
+	switchPerspectiveTo: Player player
+		watch "Switching to {player}"
+		showPerspectiveOf = player
+		if Platform.mode == Play or Platform.mode == Pause: core.switchToPlayer player
 		
 	internal Player[] playersById
 	Cursor cursor
@@ -488,7 +496,7 @@ skipInit global unit input
 			else
 			if((key == "F1" || key == "F2" || key == "F3" || key == "F4") && !ctrlOrCmd && Platform.isDebug) {
 				let index = key[1] - "1"
-				core.switchPerspectiveTo(input.players[index]);
+				core.switchToPlayer(input.players[index]);
 				e.preventDefault();
 			}
 			else

@@ -322,8 +322,8 @@ transient skipInit unit core
 			if sendInputsMode == Peer:   PeerNetwork.sendInputs inputFrame
 			if sendInputsMode == Server: ServerNetwork.sendInputs inputFrame
 			lastSendFrame = frame
-			
-	switchPerspectiveTo: Player player
+	
+	internal switchToPlayer: Player player
 		if not player: return
 		let prevPlayer = input.localPlayer
 		input.localPlayer = player
