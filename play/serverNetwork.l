@@ -35,14 +35,9 @@ transient skipInit unit ServerNetwork
 	private getOrCreateUser: int id
 		return input.internalUsers[id] || (input.internalUsers[id] = {id, local:false})
 		
+	// Called when we first connec to the server or when we reconnect
 	private onConnectedToServer
-		if input.localUser.id == -1 and !Platform.isStaging
-			// We were in this room before -> connect with the same userId we had before
-			RoomInfo roomInfo = cast Platform.getLocalStorageObject "room"+core.roomId
-			input.localUser.id = roomInfo && roomInfo.time > core.currentTime - 3600000*6 ? roomInfo.userId : -1
-			core.log roomInfo, input.localUser.id
-		
-		core.log "onConnectedToServer as {input.localUser.id} {core.roomId}"
+		core.log "#server Connected to Server", input.localUser.id, core.roomId
 		sendJoinMessage core.roomString, input.localUser.id, version:Platform.buildVersion
 		
 	js int bufferedAmount

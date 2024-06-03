@@ -296,6 +296,14 @@ transient skipInit unit core
 		statistics.add "restoreTime", value:restoreTime, color:Green set:7
 		statistics.add "replayTime", value:replayTime, color:Yellow set:7
 		statistics.add "saveTime", value:saveTime, color:White set:7
+		
+	connectionStates
+		string result
+		for input.internalUsers
+			if not .local
+				if result: result += ", "
+				result += .connectionState
+		return result
 
 	private int lastSendFrame
 	
