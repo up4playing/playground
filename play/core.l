@@ -580,9 +580,9 @@ transient skipInit unit core
 		
 		isPremiere = true
 		initAll
-		log Platform.url
-		log Date.realtime.dayMonthYearHourMinuteSecondString
-		log Platform.userAgent
+		log "{Platform.url}"
+		log "{Date.realtime.dayMonthYearHourMinuteSecondString} v{Platform.buildVersion}"
+		log "{Platform.userAgent}"
 		startInLobby = true
 		this.gameId = gameId
 		this.roomString = roomString
@@ -616,8 +616,7 @@ transient skipInit unit core
 		
 	onError: Error error
 		errorMessage = error.stack
-		logs += errorMessage + "\n" 
-		statistics.systemLogs.add errorMessage
+		log "{errorMessage}"
 		Platform.sendErrorToEditor error
 		
 transient unit Snapshot
