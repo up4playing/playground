@@ -199,12 +199,11 @@ transient skipInit unit core
 		now = currentTime
 		if lastAnimationFrame: frameTimes.add now - lastAnimationFrame
 
-		// Ping
-		ServerNetwork.ping
-		if mode == None || mode == Ping
-			return
+		ServerNetwork.tick
+		PeerNetwork.tick
+		if mode == None or mode == Ping: return
 			
-		let targetFrame = math.floor((now - startTime)/targetFrameTime)+1
+		let targetFrame = math.floor((now - startTime)/frameTime)+1
 		if verbose: core.log "----- #{frame} -> #{targetFrame} -----"
 		
 		if mode == Local && targetFrame > frame + targetFps*2
@@ -256,6 +255,9 @@ transient skipInit unit core
 		statistics.systemLogs.push(str)
 		console.log(str)
 		core.logs += str + "\n"
+		
+		// !!! Temporary for debugging windows that are crashed or don't respond
+		if(Platform.isStaging) localStorage.setItem(`logs-${core.roomId}-${input.localUser ? input.localUser.id : "?"}`, core.logs)
 			
 	internal string logs
 	private float lastNetworkFrame, lastAnimationFrame, drawTime, tickTime, restoreTime, replayTime, saveTime
