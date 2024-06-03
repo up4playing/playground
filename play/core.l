@@ -483,7 +483,7 @@ transient skipInit unit core
 				onError {"Inconsistent serialization"}
 												
 		// Checksum
-		if players.length >= 2 and frame > 200
+		if players.length >= 2 and input.isCertain
 			float myChecksum = snapshot.checksum
 			float theirChecksum = checksums[frame]
 			if verbose: core.log "<{input.localUser.id}*> #{frame} {myChecksum} writePos:{snapshot.writePos}"
