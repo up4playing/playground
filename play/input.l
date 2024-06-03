@@ -26,14 +26,17 @@ transient class InternalUser
 	int videoElementIndex = 0
 	
 	// Connection
-	object peerConnection
-	object dataChannel
-	object recreateDataChannelInterval
+	dynamic peerConnection
+	dynamic dataChannel
 	string connectionType
 	bool offerByMe
 	bool receivedAnswer
 	bool connected
 	int connectionTries
+	string connectionState
+	
+	Time startToConnectTime = Time.maxValue
+	Time startDataChannelTime = Time.maxValue
 	
 	// Statistics
 	private int[] aheadHistory    // Rolling buffer of ahead values, used to calculate bufferFrames
