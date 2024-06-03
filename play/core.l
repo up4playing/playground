@@ -587,7 +587,7 @@ transient skipInit unit core
 		this.gameId = gameId
 		this.roomString = roomString
 		this.roomId = cast roomString
-		input.localUser = {userId, local:true, connectionId:0}
+		input.localUser = {userId, local:true, connected:true, connectionId:0}
 		// initDatabase
 		await PeerNetwork.setupLocalMedia 
 			enableVideo:not Platform.isStaging || core.enableVideoForStaging
