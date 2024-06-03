@@ -228,7 +228,7 @@ immutable ClippingPath: Vector2[] points; bool show
 // - the origin in the top left corner
 transient skipInit global unit graphics
 	private object canvas
-	internal object context
+	internal dynamic context
 	internal Matrix2D baseMatrix, totalMatrix, localMatrix
 	internal DisplayItem[] items		
 	private const alignmentFactor = [0, .5, 1]
@@ -525,109 +525,71 @@ transient skipInit global unit graphics
 	//             if winner == me
 	//                 drawText "You've won!", size:100, color:Black, font:OpenSans, visibleFor:me
 	// Image: drawText.png
-	global js void drawText: implicit string text                // A string or anything that can be converted into a string (for example, an interger or a float)
-		                     Vector2 position = {}               // By default, {0,0} is the center, {-960,-540} is the top left, {960,540} is the bottom right
-		                     implicit Vector2 size = {}          // The size of the text
-		                     Color color = null                  // The color of the text
-		                     HorizontalAlignment align = Center  // The horizontal alignment of the text
-		                     VerticalAlignment valign = Middle   // The vertical alignment of the text
-		                     FontStyle style = Normal            // Whether the text should be bold or normal style
-		                     Font font = null                    // To use a custom font, just copy a TTF, WOFF or WOFF2 file to the "media" folder
-		                     Color outlineColor = null           // The color of the outline around the text
-		                     outlineWidth = 0                    // The width of the outline around the text in pixels
-		                     implicit Player[] visibleFor = null // Only this player or list of players will see the text
-		                     implicit layer = 0                  // Higher layers are drawn in front of lower layers
-		                     alpha = 1.0                         // The opacity of the text (0: fully transparent, 1: fully visible)
-		                     float maxWidth = 0
-		                     SourceCodeLocation location
-		if(graphics.isVisibleFor(visibleFor)) {
-			let effectiveFont = font || graphics.currentFont
-			let fontSize = size.y || size.x || graphics.currentFontSize
-			
-			let width = graphics.getTextWidth(text, {x:fontSize}, effectiveFont, style)
-			if(maxWidth > 0) {
-				if(width > maxWidth) {
-					fontSize = Math.floor(fontSize * maxWidth/width)
-					width = graphics.getTextWidth(text, {x:fontSize}, effectiveFont, style)
-					while(width > maxWidth) {
-						width = graphics.getTextWidth(text, {x:--fontSize}, effectiveFont, style)
-					}	
-				}		
-			}
-			
-			let contextFont = (style ? "bold ":"")+fontSize+"px "+effectiveFont.name;
-			graphics.context.font = contextFont
-			let sizeX = width
-			let sizeY = fontSize*effectiveFont.actualHeightFactor
-			
-			graphics.items.push(new DisplayText(
-				graphics.totalMatrix, 
-				position.x - graphics.alignmentFactor[ align]*sizeX,
-				position.y - graphics.alignmentFactor[valign]*sizeY,
-				sizeX, sizeY, 
-				layer, alpha, graphics.currentClippingPath, text, 
-				location, position.location, size.location,
-				(color || graphics.currentColor).hex, 
-				outlineColor ? outlineColor.hex : null,
-				outlineWidth || graphics.currentLineWidth,
-				effectiveFont.offset.y*sizeY,
-				contextFont
-			))
-		}
+	global drawText: implicit string text                 // A string or anything that can be converted into a string (for example, an interger or a float)
+		             Vector2 position = {}                // By default, {0,0} is the center, {-960,-540} is the top left, {960,540} is the bottom right
+		             implicit Vector2 size = {}           // The size of the text
+		             Color color = null                   // The color of the text
+		             HorizontalAlignment align = Center   // The horizontal alignment of the text
+		             VerticalAlignment valign = Middle    // The vertical alignment of the text
+		             FontStyle style = Normal             // Whether the text should be bold or normal style
+		             Font font = null                     // To use a custom font, just copy a TTF, WOFF or WOFF2 file to the "media" folder
+		             Color outlineColor = null            // The color of the outline around the text
+		             outlineWidth = 0                     // The width of the outline around the text in pixels
+		             implicit layer = 0                   // Higher layers are drawn in front of lower layers
+		             alpha = 1.0                          // The opacity of the text (0: fully transparent, 1: fully visible)
+		             Angle angle = 0.0                    // Rotate the image by this angle in turns (0: no rotation, 1: one full rotation)
+		             float maxWidth = 0
+		             implicit Player[] visibleFor = null  // Only this player or list of players will see the text
+		             implicit Player[] clickableBy = null // Only this player or list of players can touch or click the text
+		             clickableMargin = Vector2(16,16)     // The margin around the text within which it is clickable
+		             showClickableArea = false            // Highlight the clickable area for debugging
+		             hotkey = Key.None                    // This keyboard shortcut will execute the onClick handler
+		             void(Touch touch) onClick = null     // Execute this code when the user touches or clicks the text or presses the hotkey
+		             SourceCodeLocation location
 		
-	global js void drawText: implicit string text                // A string or anything that can be converted into a string (for example, an interger or a float)
-		                     Vector2 position = {}               // By default, {0,0} is the center, {-960,-540} is the top left, {960,540} is the bottom right
-		                     implicit Vector2 size = {}          // The size of the text
-		                     Color color = null                  // The color of the text
-		                     Angle angle = 0.0                   // Rotate the image by this angle in turns (0: no rotation, 1: one full rotation)
-		                     HorizontalAlignment align = Center  // The horizontal alignment of the text
-		                     VerticalAlignment valign = Middle   // The vertical alignment of the text
-		                     FontStyle style = Normal            // Whether the text should be bold or normal style
-		                     Font font = null                    // To use a custom font, just copy a TTF, WOFF or WOFF2 file to the "media" folder
-		                     Color outlineColor = null           // The color of the outline around the text
-		                     outlineWidth = 0                    // The width of the outline around the text in pixels
-		                     implicit Player[] visibleFor = null // Only this player or list of players will see the text
-		                     implicit layer = 0                  // Higher layers are drawn in front of lower layers
-		                     alpha = 1.0                         // The opacity of the text (0: fully transparent, 1: fully visible)
-		                     float maxWidth = 0
-		                     SourceCodeLocation location
-		if(graphics.isVisibleFor(visibleFor)) {
-			let effectiveFont = font || graphics.currentFont
-			let fontSize = size.y || size.x || graphics.currentFontSize
-			
-			let width = graphics.getTextWidth(text, {x:fontSize}, effectiveFont, style)
-			if(maxWidth > 0) {
-				if(width > maxWidth) {
-					fontSize = Math.floor(fontSize * maxWidth/width)
-					width = graphics.getTextWidth(text, {x:fontSize}, effectiveFont, style)
-					while(width > maxWidth) {
-						width = graphics.getTextWidth(text, {x:--fontSize}, effectiveFont, style)
-					}	
-				}		
-			}
-			
-			let contextFont = (style ? "bold ":"")+fontSize+"px "+effectiveFont.name;
-			graphics.context.font = contextFont
-			let sizeX = width
-			let sizeY = fontSize*effectiveFont.actualHeightFactor
-			let matrix = graphics.totalMatrix.clone()
-			matrix.move(position)
-			matrix.rotate(angle)
-			graphics.items.push(new DisplayText(
-				matrix, 
-				-graphics.alignmentFactor[ align]*sizeX,
-				-graphics.alignmentFactor[valign]*sizeY,
-				sizeX, sizeY, 
-				layer, alpha, graphics.currentClippingPath, text, 
-				location, position.location, size.location,
-				(color || graphics.currentColor).hex, 
-				outlineColor ? outlineColor.hex : null,
-				outlineWidth || graphics.currentLineWidth,
-				effectiveFont.offset.y*sizeY,
-				contextFont
-			))
-		}
+		bool isVisible = isVisibleFor(visibleFor)
+		Font effectiveFont = font || currentFont
+		int fontSize = math.floor(size.y || size.x || currentFontSize)
+		float sizeX, sizeY
 		
+		if isVisible or onClick != null
+			sizeX = getTextWidth(text, {x:fontSize}, effectiveFont, style)
+			if maxWidth > 0
+				if sizeX > maxWidth
+					fontSize = math.floor(fontSize * maxWidth/sizeX)
+					sizeX = getTextWidth(text, {x:fontSize}, effectiveFont, style)
+					while sizeX > maxWidth
+						sizeX = getTextWidth(text, {x:--fontSize}, effectiveFont, style)
+			sizeY = fontSize*effectiveFont.actualHeightFactor
+		
+		if isVisible
+			Matrix2D matrix
+			float x, y
+			if not angle: matrix = totalMatrix; x = position.x; y = position.y
+			else          matrix = totalMatrix.clone().move(position).rotate(angle); x = 0; y = 0
+			items.add new DisplayText(
+				matrix,
+				x - alignmentFactor[ align]*sizeX,
+				y - alignmentFactor[valign]*sizeY,
+				sizeX, sizeY, 
+				layer, alpha, currentClippingPath, text, 
+				location, position.location, size.location,
+				(color || currentColor).hex, 
+				outlineColor ? outlineColor.hex : null,
+				outlineWidth || currentLineWidth,
+				effectiveFont.offset.y*sizeY,
+				(style ? "bold ":"")+fontSize+"px "+effectiveFont.name
+			)
+		
+		if onClick != null
+			// Handle click (only visible buttons are clickable)
+			let effectiveClickableBy = getClickableBy(visibleFor, clickableBy)
+			Vector2 effectiveSize = {sizeX + clickableMargin.x, sizeY + clickableMargin.y}
+			input.onTouchDown position, size:effectiveSize, by:effectiveClickableBy, showClickableArea, do:onClick
+			if hotkey
+				input.onKeyDown hotkey, by:effectiveClickableBy
+					onClick null
+
 	// ------------------------------------------------------- Button -------------------------------------------------------
 	
 	// Draw a button made up of an image and a text and execute code when its touched or clicked
