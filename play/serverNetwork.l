@@ -72,6 +72,8 @@ transient skipInit unit ServerNetwork
 		send sendBuffer
 		
 	private onJoinResponse: Buffer buffer
+		// Use float64 or string for roomId in future to support 20240603121500
+		// int roomId = cast buffer.readFloat64
 		let roomId = buffer.readInt32
 		let userId = buffer.readInt32
 		let version = buffer.readInt32
@@ -88,7 +90,7 @@ transient skipInit unit ServerNetwork
 			buffer.readBuffer user.inputs
 
 		if roomId != core.roomId
-			core.log "Received room id {roomId}"
+			core.log "#server Received room id {roomId}"
 			Platform.pushState "/{core.gameId}/{roomId}"
 			core.roomId = roomId
 			
@@ -102,7 +104,7 @@ transient skipInit unit ServerNetwork
 		core.serverStartTime = serverStartTime
 		core.mode = Ping
 		core.storeUserId
-		core.log "Joining room {roomId} as user {userId}"
+		core.log "#server Joining room {roomId} as user {userId}"
 
 		// The first person in the room triggers sending an notification with the link to everybody
 		// if userCount <= 1 and !Platform.isStaging: http.getStringDirectly "{Platform.protocolAndHost}:3114/sendGamedayNotification/{core.gameId}/{core.roomId}/hasStarted"
@@ -146,7 +148,7 @@ transient skipInit unit ServerNetwork
 		pingPongTimes.add pingPongTime maxLength:30
 		let pingPongTimesAverage = pingPongTimes.average
 		if pingPongTime > 400 or (pingPongTimes.length >= 15 and pingPongTime > pingPongTimesAverage * 2)
-			core.log "ignoring ping-pong", pingPongTimes.length, pingPongTimesAverage
+			core.log "#server ignoring ping-pong", pingPongTimes.length, pingPongTimesAverage
 			return
 			
 		statistics.addInfo "from average", deltaFromAverage
@@ -164,10 +166,10 @@ transient skipInit unit ServerNetwork
 			// For testing
 			core.startTime = referenceStartTime
 			
-			core.log "New fastest pingPongTime", pongCount, now, pingPongTime, timeSinceStart, core.startTime, referenceStartTime
+			core.log "#server New fastest pingPongTime", pongCount, now, pingPongTime, timeSinceStart, core.startTime, referenceStartTime
 			
 		if pongCount >= 5
-			core.startConnected frame:math.floor((now - core.startTime)/core.targetFrameTime)+1
+			core.startConnected frame:math.floor((now - core.startTime)/core.frameTime)+1
 			
 	sendSignal:	int receiverId, string type, string sdp
 		sendBuffer.reset
