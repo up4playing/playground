@@ -4,34 +4,63 @@ transient skipInit unit ServerNetwork
 	private object socket
 	private Buffer sendBuffer = {}
 	int nextConnectionId = 1
+	bool connected
+	Time startToConnectTime = Time.maxValue
+	int retries
 	
+	tick
+		let now = Time.realTime
+		// Reconnect to server: Try to connect again if we aren't connected 5 seconds after starting to connect
+		// We use a central place to reconnect and no intervals, timeouts or reloads to make it easier to reason about
+		if not connected and now > startToConnectTime + 5000
+			core.log "#server WebSocket not connected after {now - startToConnectTime} ms -> Reconnecting"
+			setup
+			retries++
+			
+		// Ping
+		if (core.mode == Ping or core.mode == Connected) and now >= nextPingTime
+			sendBuffer.reset
+			sendBuffer.writeInt8 cast NetworkMessageType.Ping
+			sendBuffer.writeFloat64 now
+			send sendBuffer
+			nextPingTime = now + (core.mode == Ping ? 200 : pongCount < 20 ? 1000 : 30000)
+		
 	js void setup
-		let startTime = Date.now()
-		let socket
-		if(location.href.indexOf("localhost") != -1) socket = new WebSocket("ws://localhost:3112");
-		else                                         socket = new WebSocket("wss://"+location.host+":3112");
-		socket.binaryType = "arraybuffer";
-		socket.onopen = function() {
-			core.log("Websocket open");
-			ServerNetwork.socket = socket
-			ServerNetwork.onConnectedToServer();
-		}
-		socket.onmessage = function(event) {
-			ServerNetwork.onMessageFromServer(new Buffer(event.data, 0, 0, 0));
-		}
-		socket.onclose = function(ev) {
-			core.log("Websocket closed "+ev.code+" "+ev.reason)
-			ServerNetwork.socket = null
-			if(Date.now() - startTime < 30000) {
-				location.href = "/"+core.gameId+"/"+core.roomId
-			}
-		}
-		socket.onerror = error => {
-			core.error = "Can't connect to server."
-			core.errorMessage = error.message
-			core.log(error.message)
+		ServerNetwork.startToConnectTime = Date.now()
+		ServerNetwork.connected = false
+		
+		if(ServerNetwork.socket) {
+			core.log("#server Closing Previous Websocket");
+			ServerNetwork.socket.onopen = null
+			ServerNetwork.socket.onclose = null
+			ServerNetwork.socket.onmessage = null
+			ServerNetwork.socket.onerror = null
+			ServerNetwork.socket.close()
 		}
 		
+		core.log("#server Creating Websocket");
+		if(location.href.indexOf("localhost") != -1) ServerNetwork.socket = new WebSocket("ws://localhost:3112");
+		else                                         ServerNetwork.socket = new WebSocket("wss://"+location.host+":3112");
+		ServerNetwork.socket.binaryType = "arraybuffer";
+		
+		ServerNetwork.socket.onopen = () => {
+			core.log("#server Websocket Open");
+			ServerNetwork.connected = true;
+			if(!ServerNetwork.firstConnectionTime)
+				ServerNetwork.firstConnectionTime = Date.now() - ServerNetwork.startToConnectTime;
+			ServerNetwork.onConnectedToServer();
+		}
+		ServerNetwork.socket.onclose = ev => {
+			core.log("#server Websocket Closed "+ev.code+" "+ev.reason);
+			ServerNetwork.connected = false;
+		}
+		ServerNetwork.socket.onerror = ev => {
+			core.log("#server Websocket Error "+ev);
+		}
+		ServerNetwork.socket.onmessage = ev => {
+			ServerNetwork.onMessageFromServer(new Buffer(ev.data, 0, 0, 0));
+		}
+	
 	private getOrCreateUser: int id
 		return input.internalUsers[id] || (input.internalUsers[id] = {id, local:false})
 		
@@ -115,16 +144,7 @@ transient skipInit unit ServerNetwork
 		
 	float nextPingTime, fastestPingPongTime = int.maxValue
 	int pongCount
-	
-	ping
-		let now = core.currentTime
-		if (core.mode == Ping or core.mode == Connected) and now >= nextPingTime
-			sendBuffer.reset
-			sendBuffer.writeInt8 cast NetworkMessageType.Ping
-			sendBuffer.writeFloat64 now
-			send sendBuffer
-			nextPingTime = now + (core.mode == Ping ? 200 : pongCount < 20 ? 1000 : 5000)
-			
+
 	float[] calculatedStartTimes
 	float referenceStartTime
 	float[] pingPongTimes
@@ -267,4 +287,3 @@ transient skipInit unit ServerNetwork
 		let url = buffer.readString
 		if !newUserId: url += "u{input.localUser.id}"
 		Platform.setLocation url
-			
