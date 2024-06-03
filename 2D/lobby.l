@@ -98,6 +98,11 @@ unit lobby
 					and players.length withinInclusively Platform.supportedUserCount
 						fields.clear
 						restart
+						
+				Vector2 closePos = pos+{videoWidth/2-15,-halfVideoHeight-25}
+				let state = input.internalUsers[player.id]?.connectionState
+				if state && state != "connected"
+					drawText state, size:80, color:state == "failed" ? Red : Yellow, position:pos+{0, -halfVideoHeight-40}
 				
 				let field = fields.find.player == player
 					// Set field position
@@ -119,8 +124,7 @@ unit lobby
 		if core.drawPointsForTesting
 			onTouchDown: points.add .position.clone
 			points.each drawText text:. position:. size:30; drawCircle . outlineColor:White size:200
-			drawText ++counter, {0, -445}, size:200
-			// print counter
+			drawText ++counter, {0, -480}, size:100
 		
 		// Switch language
 		if Loca.supportedLanguages.length > 1
