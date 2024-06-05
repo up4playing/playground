@@ -99,6 +99,7 @@ transient skipInit unit core
 	reset
 		players.clear
 		input.playersById.clear
+		input.host = null
 		errorMessage = ""
 		HTMLElement.clear
 		math.randomValueIndex = 0
@@ -323,8 +324,8 @@ transient skipInit unit core
 			if sendInputsMode == Peer:   PeerNetwork.sendInputs inputFrame
 			if sendInputsMode == Server: ServerNetwork.sendInputs inputFrame
 			lastSendFrame = frame
-			
-	switchPerspectiveTo: Player player
+	
+	internal switchToPlayer: Player player
 		if not player: return
 		let prevPlayer = input.localPlayer
 		input.localPlayer = player
@@ -398,7 +399,7 @@ transient skipInit unit core
 		frame++
 		if frames < frame: frames = frame
 		if frameWithNewWatches < frame: frameWithNewWatches = frame
-		
+			
 	// Clear screen, process application tick, and draw all graphics
 	// This is called in step.
 	internal tick: bool draw
@@ -415,8 +416,15 @@ transient skipInit unit core
 		try
 			Framework.tick
 			tickTimes.add tickTime = Time.measure
-				if lobby.inLobby: lobby.tick
-				else              appTick
+				onKeyDown Alt W: input.showOnlyVideos = not input.showOnlyVideos
+				if input.showOnlyVideos
+					let size = {720, 540}
+					forPositions players, grid:{2,2}, delta:size
+						drawVideo . position:pos, size
+						drawText .score, pos * {2.13, 1.8}, font:ByTheWay
+				else
+					if lobby.inLobby: lobby.tick
+					else              appTick
 		catch
 			onError error
 			
