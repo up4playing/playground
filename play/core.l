@@ -257,7 +257,13 @@ transient skipInit unit core
 		core.logs += str + "\n"
 		
 		// !!! Temporary for debugging windows that are crashed or don't respond
-		if(Platform.isStaging) localStorage.setItem(`logs-${core.roomId}-${input.localUser ? input.localUser.id : "?"}`, core.logs)
+		if(Platform.isStaging) {
+			try {
+				localStorage.setItem(`logs-${core.roomId}-${input.localUser ? input.localUser.id : "?"}`, core.logs)
+			} catch(e) {
+				console.error(e)
+			}
+		}
 			
 	internal string logs
 	private float lastNetworkFrame, lastAnimationFrame, drawTime, tickTime, restoreTime, replayTime, saveTime
@@ -474,7 +480,8 @@ transient skipInit unit core
 		snapshot.reset
 		saveTime = Time.measure
 			Snapshot.serialize snapshot
-			serializeLogs[frame % 100] = Snapshot.serializeLog
+			if Platform.logSerialize
+				serializeLogs[frame % 100] = Snapshot.serializeLog
 				
 		// To check if serialization works consistently, deserialize, serialize a second snapshot and compare it with the first
 		if simulateRollback

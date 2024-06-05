@@ -22,18 +22,27 @@ transient skipInit unit Platform
 	inline js void preventScrolling
 		window.scrollTo(0,0)
 		
-	inline js void setLocalStorageObject: string key, any value
+	inline js void setLocalStorageObject: string key
+		                                  any value
 		localStorage.setItem(key, JSON.stringify(value))
 		
 	js any getLocalStorageObject: string key
-		let str = localStorage.getItem(key)
-		return str ? JSON.parse(str) : null 
-		
+		try {
+			let str = localStorage.getItem(key)
+			return str ? JSON.parse(str) : null 
+		} catch {
+			return null
+		}
+			
 	inline js void setLocalStorageString: string key, string value
 		localStorage.setItem(key, value)
 		
-	inline js string getLocalStorageString: string key
-		(localStorage.getItem(key) || "")
+	js string getLocalStorageString: string key
+		try {
+			return localStorage.getItem(key) || ""
+		} catch {
+			return ""
+		}
 		
 	inline js void vibrate: int duration = 100
 		if(navigator.vibrate) navigator.vibrate(duration)
