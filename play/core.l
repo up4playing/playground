@@ -201,6 +201,7 @@ transient skipInit unit core
 
 		ServerNetwork.tick
 		PeerNetwork.tick
+		statistics.tick
 		if mode == None or mode == Ping: return
 			
 		let targetFrame = math.floor((now - startTime)/frameTime)+1
@@ -392,7 +393,7 @@ transient skipInit unit core
 		audio.startFrame
 		
 		if Platform.showDebugInfo
-			if draw: statistics.tick
+			if draw: statistics.tickGraph
 			networkVisualizer.tick
 			
 		try
@@ -573,11 +574,7 @@ transient skipInit unit core
 	string gameId
 	
 	join: string gameId, string roomString, int userId
-		// Send statistics
-		Platform.setTimeout 30 seconds
-			statistics.startSession
-			if sendStatisticsEvery: Platform.setInterval sendStatisticsEvery: statistics.saveStatistics
-		
+		statistics.scheduleSendIn 30 seconds
 		isPremiere = true
 		initAll
 		log "{Platform.url}"
@@ -740,18 +737,33 @@ skipInit transient unit statistics
 	private string[] infoNames
 	private bool currentlySendingStatistics
 	
+	bool sessionStarted
+	Time nextSendTime = Time.maxValue
+	
+	scheduleSendIn: Time delay
+		nextSendTime = math.min(nextSendTime, Time.realTime + delay)
+	
+	tick
+		if Time.realTime > nextSendTime
+			if not sessionStarted: startSession
+			else                   saveStatistics
+			nextSendTime = Time.realTime + core.sendStatisticsEvery
+	
 	// Log game events (like scores, playtimes, etc)
 	log: any value
 		value.frame = Time.frame
 		this.gameLogs.add value
 	
-	startSession
+	private startSession
+		core.log "#statistics Start Session"
+		if currentlySendingStatistics: return
+		currentlySendingStatistics = true
+		
 		let user = storage.getObjectDirectly("user")
 		let server = Platform.hostname.getUntil(".")
 		let userId = input.localUser.id
 		id = core.roomId*100 + userId
 		int sendingSystemLogsUntil = systemLogs.length
-		currentlySendingStatistics = true
 
 		http.postDirectly "{Platform.protocolAndHost}:3114/startSession", body:{
 			id
@@ -768,8 +780,12 @@ skipInit transient unit statistics
 		}
 			successfullySentSystemLogs = sendingSystemLogsUntil
 			currentlySendingStatistics = false
+			sessionStarted = true
+		else
+			currentlySendingStatistics = false
 	
-	saveStatistics
+	private saveStatistics
+		core.log "#statistics Send Statistics"
 		if currentlySendingStatistics: return
 		currentlySendingStatistics = true
 		
@@ -802,6 +818,8 @@ skipInit transient unit statistics
 			successfullySentSystemLogs = sendingSystemLogsUntil
 			successfullySentGameLogs = sendingGameLogsUntil
 			currentlySendingStatistics = false
+		else
+			currentlySendingStatistics = false
 						
 	add: string label, int userIndex = -1, float value, Color color = White, int set = 0, isPerFrame = true
 		if userIndex != -1: label += " #{userIndex}"
@@ -818,7 +836,7 @@ skipInit transient unit statistics
 		if index == -1: index = infoNames.length; infoNames.add name
 		infos.add {value, index, frame:core.frame}
 		
-	internal tick
+	internal tickGraph
 		input.onTouchDown position, size, align:Left, valign:Top
 			currentSet incrementAndWrap sets
 	
