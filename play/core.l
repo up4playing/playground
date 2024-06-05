@@ -259,7 +259,13 @@ transient skipInit unit core
 		core.logs += str + "\n"
 		
 		// !!! Temporary for debugging windows that are crashed or don't respond
-		if(Platform.isStaging) localStorage.setItem(`logs-${core.roomId}-${input.localUser ? input.localUser.id : "?"}`, core.logs)
+		if(Platform.isStaging) {
+			try {
+				localStorage.setItem(`logs-${core.roomId}-${input.localUser ? input.localUser.id : "?"}`, core.logs)
+			} catch(e) {
+				console.error(e)
+			}
+		}
 			
 	internal string logs
 	private float lastNetworkFrame, lastAnimationFrame, drawTime, tickTime, restoreTime, replayTime, saveTime
@@ -338,8 +344,8 @@ transient skipInit unit core
 	// All steps except the very last of an animation frame are fast forwared, which means that nothing is drawn.
 	// The frame is increment at the end of this function. This means that while processing the frame,
 	// frame will point to the current frame. After processing, frame will point to the next frame.
-	private step: bool fastForward // If we are replaying after a rollback or a code change
-		          bool draw        // We don't draw if we are stepping multiple frames in one animation frame
+	internal step: bool fastForward // If we are replaying after a rollback or a code change
+		           bool draw        // We don't draw if we are stepping multiple frames in one animation frame
 		try
 			if verbose: core.log "#{frame}{fastForward ? " fastForward":""}{draw ? " draw":""}"
 				
@@ -352,7 +358,8 @@ transient skipInit unit core
 			input.isCertain = frame <= certainFrame
 			
 			// Send current frame to editor	
-			if Platform.isDebug and !fastForward and (Platform.mode == Record or Platform.mode == Play or Platform.waitingForInitialData): Platform.sendFrame(frame, math.max(frame+1, frames))
+			// if Platform.isDebug and !fastForward and (Platform.mode == Record or Platform.mode == Play or Platform.waitingForInitialData): Platform.sendFrame(frame, math.max(frame+1, frames))
+			if Platform.isDebug and !fastForward: Platform.sendFrame(frame, math.max(frame+1, frames))
 			
 			// Save a snapshot when we are about to start the frame after the last certain frame where we got all inputs
 			checkSaveState
@@ -469,7 +476,8 @@ transient skipInit unit core
 		snapshot.reset
 		saveTime = Time.measure
 			Snapshot.serialize snapshot
-			serializeLogs[frame % 100] = Snapshot.serializeLog
+			if Platform.logSerialize
+				serializeLogs[frame % 100] = Snapshot.serializeLog
 				
 		// To check if serialization works consistently, deserialize, serialize a second snapshot and compare it with the first
 		if simulateRollback
