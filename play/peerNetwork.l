@@ -70,7 +70,7 @@ transient skipInit unit PeerNetwork
 	tick
 		let now = Time.realTime
 		for input.internalUsers
-			if . and .offerByMe
+			if . 
 				// Reconnect to peer: Try to connect again if we aren't connected 5 seconds after starting to connect
 				// We use a central place to reconnect and no intervals, timeouts or reloads to make it easier to reason about
 				if .connectionState != "connected" and now > .startToConnectTime + 5000
@@ -82,9 +82,16 @@ transient skipInit unit PeerNetwork
 				// !!! EVALUATE Reconned immediately when failed
 				// or .connectionState == "failed"
 					
-					core.log "#peer The state is {.connectionState} after {now-.startToConnectTime} ms and {.connectionTries} tries -> Restart ICE"
-					setupDataChannel .
-					.peerConnection.restartIce()
+					core.log "#peer The state is {.connectionState} after {now-.startToConnectTime} ms and {.connectionTries} retries"
+					.startToConnectTime = Time.realTime
+					statistics.scheduleSendIn 3 seconds
+					
+					if .offerByMe
+						core.log "#peer Restarting ICE (offer by me)"
+						setupDataChannel .
+						.peerConnection.restartIce()
+						retries++
+						.connectionTries++
 					
 					// !!! EVALUATE Recreate peer channel after a few failed tries
 					// if .connectionTries < 2
@@ -96,13 +103,11 @@ transient skipInit unit PeerNetwork
 					// 	setupPeerConnection . offerByMe:true
 					// 	setupDataChannel .
 						
-					.startToConnectTime = Time.realTime
-					retries++
-					.connectionTries++
 					
 				if .connectionState == "connected" and (.dataChannel == null or .dataChannel.readyState != "open") and now > .startDataChannelTime + 5000
 					core.log "#peer The data channel is {.dataChannel?.readyState} after {now-.startDataChannelTime} ms -> Recreate data channel"
 					setupDataChannel .
+				
 	
 	private js object setupPeerConnection: InternalUser user, bool offerByMe
 		if(user.peerConnection) {
