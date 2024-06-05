@@ -1,5 +1,5 @@
 CompilerSettings
-	logSerialize = true
+	logSerialize = false
 	
 enum PlatformMode: Pause, Manipulator, Slide, Play, Record
 enum OperatingSystem: Windows, Mac, Linux, Android, iOS
@@ -31,6 +31,7 @@ transient skipInit unit Platform
 	internal bool fastForward
 	internal int waitingForInitialData
 	internal int receivedInitialData
+	internal bool logSerialize
 	
 	private inline js void initMedia
 		_constCache = [null]
@@ -54,6 +55,7 @@ transient skipInit unit Platform
 		Platform.isMobile = false;
 		Platform.isBrowser = !window.require;
 		Platform.isNode = window.process && process.versions.node
+		Platform.logSerialize = window._serializeLog != null
 		let platform = navigator.platform
 		Platform.os = platform.startsWith("Win") ? 0 : platform.startsWith("Mac") ? 1 : 2
 		if(/(android|bb\d+|meego).+mobile|avantgo|bada\/|blackberry|blazer|compal|elaine|fennec|hiptop|iemobile|ip(hone|od)|ipad|iris|kindle|Android|Silk|lge |maemo|midp|mmp|netfront|opera m(ob|in)i|palm( os)?|phone|p(ixi|re)\/|plucker|pocket|psp|series(4|6)0|symbian|treo|up\.(browser|link)|vodafone|wap|windows (ce|phone)|xda|xiino/i.test(navigator.userAgent) 

@@ -479,7 +479,8 @@ transient skipInit unit core
 		snapshot.reset
 		saveTime = Time.measure
 			Snapshot.serialize snapshot
-			serializeLogs[frame % 100] = Snapshot.serializeLog
+			if Platform.logSerialize
+				serializeLogs[frame % 100] = Snapshot.serializeLog
 				
 		// To check if serialization works consistently, deserialize, serialize a second snapshot and compare it with the first
 		if simulateRollback
