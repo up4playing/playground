@@ -427,7 +427,6 @@ skipInit global unit input
 	global inline js Player[] everybody() input.players
 		
 	Player showPerspectiveOf
-	bool showOnlyVideos
 		
 	// Show the perspective of this player
 	switchPerspectiveTo: Player player

@@ -402,7 +402,7 @@ Object Menu
 				onTouchDownAny
 					active = false
 				
-		if alpha and not input.showOnlyVideos
+		if alpha and not awardScreen.active
 			drawImage Menu, position, location, layer
 				active = true
 		

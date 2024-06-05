@@ -233,8 +233,9 @@ transient skipInit unit core
 					
 			// Ensure that step is called every frameTime milliseconds
 			while frame < targetFrame
-				for input.internalUsers -> user
-					if user?.local: user.startInputFrame frame+1
+				if Platform.mode == Record
+					for input.internalUsers -> user
+						if user?.local: user.startInputFrame frame+1
 				step fastForward:false, draw:frame == targetFrame-1
 				collectStatistics
 				lastNetworkFrame = now
@@ -399,15 +400,9 @@ transient skipInit unit core
 		try
 			Framework.tick
 			tickTimes.add tickTime = Time.measure
-				onKeyDown Alt W: input.showOnlyVideos = not input.showOnlyVideos
-				if input.showOnlyVideos
-					let size = {720, 540}
-					forPositions players, grid:{2,2}, delta:size
-						drawVideo . position:pos, size
-						drawText .score, pos * {2.13, 1.8}, font:ByTheWay
-				else
-					if lobby.inLobby: lobby.tick
-					else              appTick
+				if lobby.inLobby:      lobby.tick; else
+				if awardScreen.active: awardScreen.tick; else
+				                       appTick
 		catch
 			onError error
 			
