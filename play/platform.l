@@ -185,6 +185,10 @@ transient skipInit unit Platform
 	internal record()  core.adjustStartTimeIfNeeded; mode = Record; core.record;  gizmo.clear;  sendMode
 	internal play()    core.adjustStartTimeIfNeeded; mode = Play;   gizmo.clear;  sendMode
 	
+	internal switchToPlayer(int index)
+		core.switchToPlayer(input.players[index]);
+		if mode == Pause: core.step fastForward:false draw:true
+	
 	private goToFrame(int targetFrame) pause(); core.goToFrame(targetFrame)
 		
 	internal js void sendSelectToEditor: string cursorFile, int cursorPos

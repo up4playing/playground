@@ -336,8 +336,8 @@ transient skipInit unit core
 	// All steps except the very last of an animation frame are fast forwared, which means that nothing is drawn.
 	// The frame is increment at the end of this function. This means that while processing the frame,
 	// frame will point to the current frame. After processing, frame will point to the next frame.
-	private step: bool fastForward // If we are replaying after a rollback or a code change
-		          bool draw        // We don't draw if we are stepping multiple frames in one animation frame
+	internal step: bool fastForward // If we are replaying after a rollback or a code change
+		           bool draw        // We don't draw if we are stepping multiple frames in one animation frame
 		try
 			if verbose: core.log "#{frame}{fastForward ? " fastForward":""}{draw ? " draw":""}"
 				
@@ -350,7 +350,8 @@ transient skipInit unit core
 			input.isCertain = frame <= certainFrame
 			
 			// Send current frame to editor	
-			if Platform.isDebug and !fastForward and (Platform.mode == Record or Platform.mode == Play or Platform.waitingForInitialData): Platform.sendFrame(frame, math.max(frame+1, frames))
+			// if Platform.isDebug and !fastForward and (Platform.mode == Record or Platform.mode == Play or Platform.waitingForInitialData): Platform.sendFrame(frame, math.max(frame+1, frames))
+			if Platform.isDebug and !fastForward: Platform.sendFrame(frame, math.max(frame+1, frames))
 			
 			// Save a snapshot when we are about to start the frame after the last certain frame where we got all inputs
 			checkSaveState
