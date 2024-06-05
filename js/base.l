@@ -235,10 +235,10 @@ immutable struct float
 		
 	inline js float limit: float from
 		                   float to
-		(this < from ? from : this > to ? to : this)
+		(this < from ? from : this < to ? this : to)
 		
 	inline js float limit: float to
-		(this > to ? to : this)
+		(this < to ? this : to)
 	
 	inline js float limit: float from
 		(this < from ? from : this)
