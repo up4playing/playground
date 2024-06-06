@@ -1152,7 +1152,7 @@ skipInit global unit input
 					if !touch.handled && (touch.referencePosition distanceTo position) <= radius
 						this.cursor = cursor
 				
-		if showClickableArea: drawCircle position, radius*2, color:{"#ff000080"}
+		if showClickableArea: drawCircle position, radius*2, color:{"#ff0000b0"}, layer:10000000
 
 	// Do something when the player touches or clicks within a given polygon
 	// Example: Draw a polygon and print "Clicked OK" when the player touches it.
@@ -1188,7 +1188,7 @@ skipInit global unit input
 					if !touch.handled && touch.referencePosition.isInsidePolygon(poly)
 						this.cursor = cursor
 				
-		if showClickableArea: drawPolygon position, points, color:{"#ff0000b0"}
+		if showClickableArea: drawPolygon position, points, color:{"#ff0000b0"}, layer:10000000
 			
 	// Do something when the player touches or clicks anywhere on the screen
 	// Example: When the current player instance touches the screen, we print out the exact touch position.
