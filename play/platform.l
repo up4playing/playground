@@ -70,7 +70,7 @@ transient skipInit unit Platform
 		if(app.init) app.init();
 		
 	// This is called when the application starts for the first time	
-	private start: bool isDebug, float referenceSizeX, float referenceSizeY, int userCount, bool simulateConnection, bool showSafeArea
+	private start: bool isDebug, float referenceSizeX, float referenceSizeY, int userCount, bool simulateConnection
 		try
 			let now = Time.preciseTime
 			this.nextHeartbeatTime = 0
@@ -83,7 +83,6 @@ transient skipInit unit Platform
 			this.isDebug = isDebug
 			this.userCount = userCount
 			core.simulateConnection = simulateConnection
-			graphics.showSafeArea = showSafeArea
 			showDebugInfo = getLocalStorageObject("showDebugInfo") == "true"
 		
 			await graphics.setup {referenceSizeX, referenceSizeY}
