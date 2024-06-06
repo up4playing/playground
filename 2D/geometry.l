@@ -259,13 +259,14 @@ struct Vector2
 		)
 		
 	// Returns whether the vector is within a given rectangle
-	isInsideRectangle: Vector2 center, // The center of the rectangle
-		               Vector2 size,   // The size of the rectangle
-		return x >= center.x - size.x/2 && x < center.x + size.x/2
-		    && y >= center.y - size.y/2 && y < center.y + size.y/2
+	isInsideRectangle: Vector2 center // The center of the rectangle
+		               Vector2 size   // The size of the rectangle
+		let halfSizeX = size.x/2, halfSizeY = size.y/2
+		return x >= center.x - halfSizeX && x < center.x + halfSizeX
+		    && y >= center.y - halfSizeY && y < center.y + halfSizeY
 		
 	// Returns whether the vector is within a given polygon
-	isInsidePoygon: Vector2[] poly // A list of points that make up the polygon
+	isInsidePolygon: Vector2[] poly // A list of points that make up the polygon
 		let c = false, i = -1, l = poly.length, j = l - 1
 		while ++i < l
 			((poly[i].y <= this.y && this.y < poly[j].y) || (poly[j].y <= this.y && this.y < poly[i].y))
