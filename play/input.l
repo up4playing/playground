@@ -118,7 +118,6 @@ priority class Player
 			if .phase == Up
 				if .type >= Touch or (hasTouch and .type != Touch): touches.removeAt i
 				else                                                .phase = Still
-				downTouches.remove .
 			else
 			if .phase == Down
 				.phase = Still
@@ -832,7 +831,8 @@ skipInit global unit input
 						else
 							touch = {id, player, cast inputType, type, referencePos, referenceStartPosition:Vector2.none, referencePos, isDown:false}
 							player.touches.add touch
-								
+						
+						player.downTouches.remove touch
 						player.pointerPosition = referencePos
 						internalUser.upTouches.add touch
 					else
