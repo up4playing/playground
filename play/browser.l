@@ -22,9 +22,16 @@ transient skipInit unit Platform
 	inline js void preventScrolling
 		window.scrollTo(0,0)
 		
-	inline js void setLocalStorageObject: string key
-		                                  any value
-		localStorage.setItem(key, JSON.stringify(value))
+	js void setLocalStorageObject: string key
+		                           any value
+		                           void() then = null
+		                           void() else = null
+		try {
+			localStorage.setItem(key, JSON.stringify(value))
+			then?.()
+		} catch(e) {
+			else?.()
+		}
 		
 	js any getLocalStorageObject: string key
 		try {
@@ -34,8 +41,16 @@ transient skipInit unit Platform
 			return null
 		}
 			
-	inline js void setLocalStorageString: string key, string value
-		localStorage.setItem(key, value)
+	js void setLocalStorageString: string key
+		                           string value
+		                           void() then = null
+		                           void() else = null
+		try {
+			localStorage.setItem(key, value)
+			then?.()
+		} catch(e) {
+			else?.()
+		}
 		
 	js string getLocalStorageString: string key
 		try {
