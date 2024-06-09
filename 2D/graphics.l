@@ -236,10 +236,13 @@ transient skipInit global unit graphics
 	public Vector2 referenceSize = {1920, 1080}
 	public ScaleMode scaleMode = Auto, effectiveScaleMode
 	public AnchorMode anchor = Center
-	public bool showSafeArea = true
-	visible Vector2 pixelSize
-	visible Vector2 size
-	visible float pixelRatio
+	
+	public Color topAndBottomMarginColor = null // If the screen is higher than the reference, show a letterbox in this color
+	public Color leftAndRightMarginColor = null // If the screen is wider than the reference, show a letterbox in this color
+	
+	private Vector2 pixelSize
+	private Vector2 size
+	internal float pixelRatio
 	
 	async setup: Vector2 referenceSize
 		this.referenceSize = referenceSize
@@ -273,12 +276,10 @@ transient skipInit global unit graphics
 			effectiveScaleMode = scaleMode
 			
 		if effectiveScaleMode == FixedWidth
-			effectiveScaleMode = scaleMode
 			scale = ratio.x
 			size = {referenceSize.x, pixelSize.y/scale}
 		else
 		if effectiveScaleMode == FixedHeight
-			effectiveScaleMode = scaleMode
 			scale = ratio.y; 
 			size = {pixelSize.x/scale, referenceSize.y}
 			
@@ -308,7 +309,7 @@ transient skipInit global unit graphics
 		for input.internalUsers if .
 			.videoElementIndex = 0
 		drawItems
-		drawSafeArea
+		drawMargins
 		for input.internalUsers -> user if .
 			for user.videoElementIndex to user.videoElements.length
 				PeerNetwork.removeVideoElement user.videoElements[.]
@@ -338,18 +339,23 @@ transient skipInit global unit graphics
 		     ? effectiveVisibleBy intersectWith clickableBy 
 		     : effectiveVisibleBy or clickableBy
 			
-	internal js void drawSafeArea
-		graphics.resetTransform()
-		graphics.context.fillStyle = "#404040"
-		if(graphics.showSafeArea) {
-			if(graphics.effectiveScaleMode == 1) {
-				// Fixed width
+	internal js void drawMargins
+		if(graphics.effectiveScaleMode == 1) {
+			if(graphics.topAndBottomMarginColor) {
+				// Top and Bottom Letterbox
+				graphics.resetTransform()
+				graphics.context.fillStyle = graphics.topAndBottomMarginColor.hex
 				let ratio = graphics.pixelSize.x / graphics.referenceSize.x
 				let margin = (graphics.pixelSize.y-graphics.referenceSize.y*ratio)/2
 				graphics.context.fillRect(0,0,graphics.pixelSize.x, margin)
 				graphics.context.fillRect(0,graphics.pixelSize.y-margin,graphics.pixelSize.x, margin)
-			} else if(graphics.effectiveScaleMode == 2) {
-				// Fixed height
+			}
+		} else 
+		if(graphics.effectiveScaleMode == 2) {
+			if(graphics.leftAndRightMarginColor) {
+				// Left and Right Letterbox
+				graphics.resetTransform()
+				graphics.context.fillStyle = graphics.leftAndRightMarginColor.hex
 				let ratio = graphics.pixelSize.y / graphics.referenceSize.y
 				let margin = (graphics.pixelSize.x-graphics.referenceSize.x*ratio)/2
 				graphics.context.fillRect(0, 0, margin, graphics.pixelSize.y)
@@ -1457,7 +1463,7 @@ skipInit transient unit gizmo
 				// Collect all items and locations the mouse pointer is over
 				GizmoOverItem[] overItems
 				for graphics.items -> item
-					if pixelPos.isInsidePoygon item.poly
+					if pixelPos.isInsidePolygon item.poly
 						if item.positionLocation: flattenLocations overItems, item, item.positionLocation; else
 						if item.location:         overItems.add {item, item.location}
 									

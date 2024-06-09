@@ -118,7 +118,6 @@ priority class Player
 			if .phase == Up
 				if .type >= Touch or (hasTouch and .type != Touch): touches.removeAt i
 				else                                                .phase = Still
-				downTouches.remove .
 			else
 			if .phase == Down
 				.phase = Still
@@ -427,7 +426,6 @@ skipInit global unit input
 	global inline js Player[] everybody() input.players
 		
 	Player showPerspectiveOf
-	bool showOnlyVideos
 		
 	// Show the perspective of this player
 	switchPerspectiveTo: Player player
@@ -833,7 +831,8 @@ skipInit global unit input
 						else
 							touch = {id, player, cast inputType, type, referencePos, referenceStartPosition:Vector2.none, referencePos, isDown:false}
 							player.touches.add touch
-								
+						
+						player.downTouches.remove touch
 						player.pointerPosition = referencePos
 						internalUser.upTouches.add touch
 					else
@@ -1065,13 +1064,13 @@ skipInit global unit input
 		for getTargetedPlayers(by) -> player
 			for internalUsers[player.id].downTouches -> touch
 				if !touch.handled and (player.enableTouch or touch.type != Touch)
-				and touch.referencePosition.isInsidePoygon(poly)
+				and touch.referencePosition.isInsidePolygon(poly)
 					do touch
 					if markAsHandled: touch.handled = true
 						
 		if cursor != Auto
 			for localUser.movingTouches -> touch
-				if !touch.handled && touch.referencePosition.isInsidePoygon(poly)
+				if !touch.handled && touch.referencePosition.isInsidePolygon(poly)
 					this.cursor = cursor
 				
 		if showClickableArea: drawRectangle position, size, color:{"#ff000080"}, align, valign, layer:10000000
@@ -1112,13 +1111,13 @@ skipInit global unit input
 		for getTargetedPlayers(by) -> player
 			for internalUsers[player.id].downTouches -> touch
 				if !touch.handled and (player.enableTouch or touch.type != Touch)
-				and touch.referencePosition.isInsidePoygon(poly)
+				and touch.referencePosition.isInsidePolygon(poly)
 					do touch
 					if markAsHandled: touch.handled = true
 						
 			if cursor != Auto
 				for localUser.movingTouches -> touch
-					if !touch.handled && touch.referencePosition.isInsidePoygon(poly)
+					if !touch.handled && touch.referencePosition.isInsidePolygon(poly)
 						this.cursor = cursor
 				
 		if showClickableArea: drawPolygon poly, color:{"#ff000080"}, layer:10000000
@@ -1153,7 +1152,7 @@ skipInit global unit input
 					if !touch.handled && (touch.referencePosition distanceTo position) <= radius
 						this.cursor = cursor
 				
-		if showClickableArea: drawCircle position, radius*2, color:{"#ff000080"}
+		if showClickableArea: drawCircle position, radius*2, color:{"#ff0000b0"}, layer:10000000
 
 	// Do something when the player touches or clicks within a given polygon
 	// Example: Draw a polygon and print "Clicked OK" when the player touches it.
@@ -1180,16 +1179,16 @@ skipInit global unit input
 		for getTargetedPlayers(by) -> player
 			for internalUsers[player.id].downTouches -> touch
 				if !touch.handled and (player.enableTouch or touch.type != Touch)
-				and touch.referencePosition.isInsidePoygon(poly)
+				and touch.referencePosition.isInsidePolygon(poly)
 					do touch
 					if markAsHandled: touch.handled = true
 						
 			if cursor != Auto
 				for localUser.movingTouches -> touch
-					if !touch.handled && touch.referencePosition.isInsidePoygon(poly)
+					if !touch.handled && touch.referencePosition.isInsidePolygon(poly)
 						this.cursor = cursor
 				
-		if showClickableArea: drawPolygon position, points, color:{"#ff0000b0"}
+		if showClickableArea: drawPolygon position, points, color:{"#ff0000b0"}, layer:10000000
 			
 	// Do something when the player touches or clicks anywhere on the screen
 	// Example: When the current player instance touches the screen, we print out the exact touch position.
@@ -1243,12 +1242,12 @@ skipInit global unit input
 		]
 		for getTargetedPlayers(by) -> player
 			for player.touches -> touch
-				if touch.referencePosition.isInsidePoygon(poly)
+				if touch.referencePosition.isInsidePolygon(poly)
 					do touch
 					
 			if cursor != Auto
 				for localUser.movingTouches -> touch
-					if !touch.handled && touch.referencePosition.isInsidePoygon(poly)
+					if !touch.handled && touch.referencePosition.isInsidePolygon(poly)
 						this.cursor = cursor
 				
 		if showClickableArea: drawRectangle position, size, color:{"#ff000080"}
@@ -1369,7 +1368,7 @@ skipInit global unit input
 		]
 		for getTargetedPlayers(by) -> player
 			for internalUsers[player.id].upTouches -> touch
-				if !touch.handled && touch.referencePosition.isInsidePoygon(poly)
+				if !touch.handled && touch.referencePosition.isInsidePolygon(poly)
 					do touch
 					if markAsHandled: touch.handled = true
 					Snapshot.autoSave
@@ -1432,7 +1431,7 @@ skipInit global unit input
 		]
 		for getTargetedPlayers(by)
 			for internalUsers[.id].wheelEvents
-				if !.handled && .referencePosition.isInsidePoygon(poly)
+				if !.handled && .referencePosition.isInsidePolygon(poly)
 					do .
 					if markAsHandled: .markAsHandled
 						
