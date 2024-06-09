@@ -259,13 +259,13 @@ transient skipInit unit core
 		core.logs += str + "\n"
 		
 		// !!! Temporary for debugging windows that are crashed or don't respond
-		if(Platform.isStaging) {
-			try {
-				localStorage.setItem(`logs-${core.roomId}-${input.localUser ? input.localUser.id : "?"}`, core.logs)
-			} catch(e) {
-				console.error(e)
-			}
-		}
+		// if(Platform.isStaging) {
+		// 	try {
+		// 		localStorage.setItem(`logs-${core.roomId}-${input.localUser ? input.localUser.id : "?"}`, core.logs)
+		// 	} catch(e) {
+		// 		console.error(e)
+		// 	}
+		// }
 			
 	internal string logs
 	private float lastNetworkFrame, lastAnimationFrame, drawTime, tickTime, restoreTime, replayTime, saveTime
