@@ -101,46 +101,56 @@ transient skipInit unit ServerNetwork
 		send sendBuffer
 		
 	private onJoinResponse: Buffer buffer
-		// Use float64 or string for roomId in future to support 20240603121500
-		// int roomId = cast buffer.readFloat64
-		let roomId = buffer.readInt32
-		let userId = buffer.readInt32
-		let version = buffer.readInt32
-		let seed = buffer.readString
-		let serverStartTime = buffer.readFloat64
-		let userCount = buffer.readInt16
-		for userCount
-			let id = buffer.readInt32
-			InternalUser user
-			if id == userId: user = input.localUser
-			else             user = {offerByMe:true, connectionId:nextConnectionId++}
-			user.id = id
-			input.internalUsers[id] = user
-			buffer.readBuffer user.inputs
-
-		if roomId != core.roomId
-			core.log "#server Received room id {roomId}"
-			Platform.pushState "/{core.gameId}/{roomId}"
-			core.roomId = roomId
+		try
+			// Use float64 or string for roomId in future to support 20240603121500
+			int roomId = cast buffer.readFloat64
+			// let roomId = buffer.readInt32
+			let userId = buffer.readInt32
+			let version = buffer.readInt32
+			let seed = buffer.readString
+			let serverStartTime = buffer.readFloat64
+			let userCount = buffer.readInt16
+			for userCount
+				let id = buffer.readInt32
+				InternalUser user
+				if id == userId: user = input.localUser
+				else             user = {offerByMe:true, connectionId:nextConnectionId++}
+				user.id = id
+				input.internalUsers[id] = user
+				buffer.readBuffer user.inputs
+				
+				core.log "#onJoinResponse", id, user.local, user.inputs
+				
+			// TEMP
+			// for input.internalUsers
+			// 	core.log "#onJoinResponse <{.id}>", .local, .inputs
+	
+			if roomId != core.roomId
+				core.log "#server Received room id {roomId}"
+				Platform.pushState "/{core.gameId}/{roomId}"
+				core.roomId = roomId
+				
+			if version != Platform.buildVersion
+				alert "You are using an old version of this application. Please refresh your browser."
+				
+			inputsSentPos = input.localUser.inputs.writePos
+			input.localUser.id = userId
+			math.setRandomSeed seed
+			PeerNetwork.retries = 0
+			core.serverStartTime = serverStartTime
+			core.mode = Ping
+			core.storeUserId
+			core.log "#server Joining room {roomId} as user {userId}"
+	
+			// The first person in the room triggers sending an notification with the link to everybody
+			// if userCount <= 1 and !Platform.isStaging: http.getStringDirectly "{Platform.protocolAndHost}:3114/sendGamedayNotification/{core.gameId}/{core.roomId}/hasStarted"
 			
-		if version != Platform.buildVersion
-			alert "You are using an old version of this application. Please refresh your browser."
-			
-		inputsSentPos = input.localUser.inputs.writePos
-		input.localUser.id = userId
-		math.setRandomSeed seed
-		PeerNetwork.retries = 0
-		core.serverStartTime = serverStartTime
-		core.mode = Ping
-		core.storeUserId
-		core.log "#server Joining room {roomId} as user {userId}"
-
-		// The first person in the room triggers sending an notification with the link to everybody
-		// if userCount <= 1 and !Platform.isStaging: http.getStringDirectly "{Platform.protocolAndHost}:3114/sendGamedayNotification/{core.gameId}/{core.roomId}/hasStarted"
-		
-		// Create an offer for each user already in the room
-		for input.internalUsers
-			if . and !.local: PeerNetwork.initiate .
+			// Create an offer for each user already in the room
+			for input.internalUsers
+				if . and !.local
+					PeerNetwork.initiate .
+		catch 
+			core.onError error
 		
 	float nextPingTime, fastestPingPongTime = int.maxValue
 	int pongCount
