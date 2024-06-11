@@ -415,6 +415,7 @@ global unit Html
 			let next = currentOverlay.nextSibling
 			currentOverlay.remove
 			currentOverlay = next
+		focusTabIndex = -1
 		Time.printTimer "refresh: {nodesCreated} created, {nodesUpdated} updated"
 		// if not overlayNode
 		// 	overlayNode = div style:{position:Fixed top:0 left:0 right:0 bottom:0, backgroundColor:Black, opacity:.5}
@@ -529,6 +530,8 @@ global unit Html
 			if attributes.onClick != null:      node.onclick = attributes.onClick
 			if attributes.onRightClick != null: node.oncontextmenu = attributes.onRightClick
 				
+			if attributes.tabIndex:             node.set("tabindex", attributes.tabIndex.toString)
+			
 		node.sourceLocation = sourceLocation
 		if onHover != null
 			node.onmouseover = addStyle(node, onHover)
@@ -658,6 +661,8 @@ global unit Html
 
 	// ---------- Input & TextArea ----------
 	
+	int focusTabIndex = 0
+	
 	global inline void input: string model = ""                 // The variable that holds the value. This will be updated when the user changed the text
 		                      bool focused = false              // Whether the cursor should be placed in the field
 		                      expand Attributes attributes = {} // The attributes of the HTML element
@@ -681,7 +686,7 @@ global unit Html
 		node.value = model
 		node.oninput = model = node.value; changeHandler
 		node.onkeydown = if(ev.key == "Enter") onEnter()
-		if focused: node.focus
+		if focused or focusTabIndex == attributes.tabIndex: node.focus
 		
 	global inline void input: string model = ""                  // The variable that holds the value. This will be updated when the user changed the text
 		                      bool focused = false               // Whether the cursor should be placed in the field
@@ -692,10 +697,10 @@ global unit Html
 		                      SourceCodeLocation location
 		stored void() changeHandler = currentChangeHandler
 		let node = div tag:"input", attributes, style, location
-		node.value = model
+		node.value = model or ""
 		if realtime: node.oninput = model = node.value; onChange(node.value); changeHandler
 		else         node.onchange = model = node.value; onChange(node.value); changeHandler
-		if focused: node.focus
+		if focused or focusTabIndex == attributes.tabIndex: node.focus
 		
 	// global inline void input: string model = ""                  // The variable that holds the value. This will be updated when the user changed the text
 	// 	                      bool focused = false               // Whether the cursor should be placed in the field
@@ -720,5 +725,5 @@ global unit Html
 		node.style.minHeight = 16px
 		node.style.overflow = Scroll; node.style.height = 1px; node.style.height = node.scrollHeight px; node.style.overflow = Hidden
 		node.oninput = model = node.value; node.style.overflow = Scroll; node.style.height = 1px; node.style.height = node.scrollHeight px; node.style.overflow = Hidden; changeHandler
-		if focused: node.focus
+		if focused or focusTabIndex == attributes.tabIndex: node.focus
 

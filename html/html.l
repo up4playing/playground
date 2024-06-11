@@ -22,6 +22,7 @@ class Node
 	
 	bool muted
 	bool autoplay
+	int tabindex
 	
 	string sourceLocation
 		
@@ -605,5 +606,6 @@ dynamic Attributes
 	native void(HtmlEvent ev) onClick = null      // Execute this code when the user clicks the HTML element
 	native void(HtmlEvent ev) onRightClick = null // Execute this code when the user clicks the HTML element with the right mouse button
 	native void(dynamic ev) onKeyDown = null      // Execute this code when the user clicks the HTML element with the right mouse button
+	int tabIndex = 0
 	// bool passClickToParents = false            // Even if this elements handles a click, its parents will also receive the event
 		
