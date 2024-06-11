@@ -29,7 +29,7 @@ class Node
 	inline js void appendChild(Node node) this.appendChild(node)
 	inline js void insertBefore(Node newNode, Node referenceNode) this.insertBefore(newNode, referenceNode)
 	inline js void setSelectionRange(int from, int to) this.setSelectionRange(from, to)
-	inline js void select() this.setSelectionRange(0, this.value.length)
+	inline js void select() this.select()
 	inline js void focus() this.focus()
 	inline js void scrollToBottom() this.scrollTo(0, this.scrollHeight)
 	inline js void scrollIntoView() this.scrollIntoView()
