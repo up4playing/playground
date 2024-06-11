@@ -509,7 +509,7 @@ transient skipInit unit PeerNetwork
 				makePrimaryUser
 	
 	makePrimaryUser
-		let frame = math.floor((core.currentTime - core.startTime)/core.targetFrameTime)+3
+		let frame = math.floor((core.currentTime - core.startTime)/core.frameTime)+3
 		core.startConnected frame
 	
 	private requestState: InternalUser from

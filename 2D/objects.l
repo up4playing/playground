@@ -13,11 +13,14 @@ unit Framework
 				
 	clearAtEndOfFrame
 		for objects
-			if not .locked: toBeRemoved.add .
+			if not .locked
+				.hide
+				toBeRemoved.add .
 		
 	removeWhere: bool(Object value) condition
 		for objects -> obj
 			if condition obj
+				obj.hide
 				toBeRemoved.add obj
 				
 	tick
@@ -69,6 +72,7 @@ transient global unit graphics
 		
 enum Side: Front, Back
 		
+// Bug: Place the cursor in the following lines to get a "can't be a constructor parameter" error
 class Object
 	Vector2 position
 	implicit Vector2 size
@@ -91,6 +95,9 @@ class Object
 		
 	removeAtEndOfFrame
 		Framework.toBeRemoved.add this
+		
+	hide() alpha = 0.0
+	show() alpha = 1.0
 		
 	moveToFront() siblings.moveToFront this
 	moveToBack()  siblings.moveToBack this
@@ -196,12 +203,12 @@ class Object
 Object RectangleObject
 	Color color = White
 	override tick
-		drawRectangle position, size, color, visibleFor, layer, alpha
+		if alpha: drawRectangle position, size, color, visibleFor, layer, alpha
 
 Object CircleObject
 	Color color = White
 	override tick
-		drawCircle position, size, color:color, visibleFor, layer
+		if alpha: drawCircle position, size, color:color, visibleFor, layer
 
 global transient unit System
 	global visualize: Vector2 position = {}
@@ -229,9 +236,10 @@ Object TextObject
 	Color color = White
 	HorizontalAlignment align = Center // The horizontal alignment of the text
 	VerticalAlignment valign = Middle  // The vertical alignment of the text
+	float maxWidth
 	
 	override tick
-		drawText text, position, size, angle, color, align, valign, font, visibleFor, alpha, layer
+		if alpha: drawText text, position, size, angle, color, align, valign, font, visibleFor, alpha, layer, maxWidth
 		
 Object ImageObject
 	Image image
@@ -240,7 +248,7 @@ Object ImageObject
 		if size.x == 0 and size.y == 0: size = image.size
 	
 	override tick
-		drawImage image, position, size, angle, alpha, visibleFor, layer
+		if alpha: drawImage image, position, size, angle, alpha, visibleFor, layer
 		
 Object Effect
 	Image image
@@ -252,7 +260,7 @@ Object Effect
 	
 	override tick
 		var frame = math.floor((Time.frame - startFrame) * math.max(framesPerSecond, 0) / core.targetFps)
-		if frame < image.frames.length
+		if alpha and frame < image.frames.length
 			drawImage image, position, size, alpha, visibleFor, layer, frame, location
 		else
 			Framework.objects.remove this
@@ -261,7 +269,7 @@ Object VideoObject
 	Player player
 	VideoShape shape
 	override tick
-		drawVideo player, position, size, shape
+		if alpha: drawVideo player, position, size, shape
 			
 Object Button
 	Image image                  // The image of the button
@@ -286,10 +294,11 @@ Object Button
 	bool removeOnClick = false   // Remove the button after the user clicks it
 	
 	override tick
-		drawButton image, text, position, textColor, frame, size, fontSize, clickableMargin, textOffset, scaleOnHover, frameOnHover, showClickableArea, visibleFor, clickableBy, hotkey, layer, alpha, enabled, alphaWhenDisabled
-		onClick:
-			if removeOnClick: this.removeAtEndOfFrame
-			onClick(touch)
+		if alpha
+			drawButton image, text, position, textColor, frame, size, fontSize, clickableMargin, textOffset, scaleOnHover, frameOnHover, showClickableArea, visibleFor, clickableBy, hotkey, layer, alpha, enabled, alphaWhenDisabled
+			onClick:
+				if removeOnClick: this.removeAtEndOfFrame
+				onClick(touch)
 
 struct Particle
 	Vector2 pos, speed
@@ -343,7 +352,7 @@ Object ParticleSystem
 		for particles <-
 			graphics.move .pos
 				graphics.rotate .angle
-					drawImage image, frame:.frame
+					drawImage image, frame:.frame, visibleFor
 			.pos += .speed
 			.speed.y += gravity
 			.angle += .rotationSpeed
@@ -393,8 +402,9 @@ Object Menu
 				onTouchDownAny
 					active = false
 				
-		drawImage Menu, position, location, layer
-			active = true
+		if alpha and not input.showOnlyVideos
+			drawImage Menu, position, location, layer
+				active = true
 		
 enum MenuItemType: Button, Check, Radio
 		

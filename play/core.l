@@ -20,13 +20,13 @@ transient skipInit unit core
 		
 	SendInputsMode sendInputsMode = Peer
 	internal const targetFps = 30
-	const targetFrameTime = 1000/targetFps
+	const frameTime = 1000/targetFps
 	
 	NetworkMode mode                // Whether we are in local or connected mode
 	visible string errorMessage     // The error message if we caught any exceptions in the main loop
 	public float startTime          // The time the room was created, syncroniced between all clients
 	public float serverStartTime
-	visible int frame               // Current frame, will increase by 1 at the end of every step (every targetFrameTime ms)
+	visible int frame               // Current frame, will increase by 1 at the end of every step (every frameTime ms)
 	internal int frames             // Total number of frames we have inputs for
 	internal int frameWithNewWatches// First frame with new watches, do not send watches for frames below this
 	int watchIndex
@@ -99,6 +99,7 @@ transient skipInit unit core
 	reset
 		players.clear
 		input.playersById.clear
+		input.host = null
 		errorMessage = ""
 		HTMLElement.clear
 		math.randomValueIndex = 0
@@ -194,7 +195,7 @@ transient skipInit unit core
 		
 	// Send tick message, replay state, call step, and logging
 	// This is called by the requestAnimationFrame callback.
-	// We ensure that step is called every targetFrameTime milliseconds.
+	// We ensure that step is called every frameTime milliseconds.
 	internal animationFrame
 		now = currentTime
 		if lastAnimationFrame: frameTimes.add now - lastAnimationFrame
@@ -210,14 +211,14 @@ transient skipInit unit core
 		if mode == Connected
 			PeerNetwork.processSendStateQueue
 			
-		let targetFrame = math.floor((now - startTime)/targetFrameTime)+1
+		let targetFrame = math.floor((now - startTime)/frameTime)+1
 		
 		if mode == Local && targetFrame > frame + targetFps*2
 			// After a long pause in local mode, we do not want to process all missed frames, so we adjust the start time
 			let prevTargetFrame = targetFrame
 			targetFrame = frame
-			startTime = math.round(now - targetFrame*targetFrameTime)
-			log "Paused {prevTargetFrame-frame} frames, adjusting startTime. prevTargetTime:{prevTargetFrame} frame:{frame} targetFrame:{math.floor((now - startTime)/targetFrameTime)}"
+			startTime = math.round(now - targetFrame*frameTime)
+			log "Paused {prevTargetFrame-frame} frames, adjusting startTime. prevTargetTime:{prevTargetFrame} frame:{frame} targetFrame:{math.floor((now - startTime)/frameTime)}"
 		
 		if frame < targetFrame
 			// Create artificial inputs to test the smoothness
@@ -236,7 +237,7 @@ transient skipInit unit core
 			catch 
 				onError error
 					
-			// Ensure that step is called every targetFrameTime milliseconds
+			// Ensure that step is called every frameTime milliseconds
 			while frame < targetFrame
 				for input.internalUsers -> user
 					if user?.local: user.startInputFrame frame+1
@@ -323,8 +324,8 @@ transient skipInit unit core
 			if sendInputsMode == Peer:   PeerNetwork.sendInputs inputFrame
 			if sendInputsMode == Server: ServerNetwork.sendInputs inputFrame
 			lastSendFrame = frame
-			
-	switchPerspectiveTo: Player player
+	
+	internal switchToPlayer: Player player
 		if not player: return
 		let prevPlayer = input.localPlayer
 		input.localPlayer = player
@@ -349,7 +350,7 @@ transient skipInit unit core
 		          bool draw        // We don't draw if we are stepping multiple frames in one animation frame
 		try
 			// Set time
-			Time.now = serverStartTime + math.round(frame * targetFrameTime)
+			Time.now = serverStartTime + math.round(frame * frameTime)
 			
 			// Flags
 			Platform.fastForward = fastForward
@@ -398,7 +399,7 @@ transient skipInit unit core
 		frame++
 		if frames < frame: frames = frame
 		if frameWithNewWatches < frame: frameWithNewWatches = frame
-		
+			
 	// Clear screen, process application tick, and draw all graphics
 	// This is called in step.
 	internal tick: bool draw
@@ -415,8 +416,15 @@ transient skipInit unit core
 		try
 			Framework.tick
 			tickTimes.add tickTime = Time.measure
-				if lobby.inLobby: lobby.tick
-				else              appTick
+				onKeyDown Alt W: input.showOnlyVideos = not input.showOnlyVideos
+				if input.showOnlyVideos
+					let size = {720, 540}
+					forPositions players, grid:{2,2}, delta:size
+						drawVideo . position:pos, size
+						drawText .score, pos * {2.13, 1.8}, font:ByTheWay
+				else
+					if lobby.inLobby: lobby.tick
+					else              appTick
 		catch
 			onError error
 			
@@ -520,7 +528,7 @@ transient skipInit unit core
 		if(app.start) app.start()
 		
 	private adjustStartTime
-		startTime = math.round(currentTime - frame*targetFrameTime - (targetFrameTime*.5))
+		startTime = math.round(currentTime - frame*frameTime - (frameTime*.5))
 		
 	adjustStartTimeIfNeeded
 		if Platform.mode < Play: adjustStartTime
