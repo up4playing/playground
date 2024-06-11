@@ -542,8 +542,8 @@ dynamic Style
 	string outlineStyle // The style of the outline around an element
 	implicit Dimension outlineWidth // The width of the outline around an element
 	Overflow overflow // What to do with content that renders outside the element box
-	string overflowX // Specifies what to do with the left/right edges of content rendering outside the element box
-	string overflowY // Specifies what to do with the top/bottom edges of content rendering outside the element box
+	Overflow overflowX // Specifies what to do with the left/right edges of content rendering outside the element box
+	Overflow overflowY // Specifies what to do with the top/bottom edges of content rendering outside the element box
 	Padding padding // The padding of an element (can have up to four values)
 	implicit Dimension paddingBottom // The bottom padding of an element
 	implicit Dimension paddingLeft // The left padding of an element
