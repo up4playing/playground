@@ -107,6 +107,7 @@ struct Dimension
 	Unit unit   // The unit of the value (Pixels, Percent, Centimeters, Points, ViewportHeight, ViewportWidth, ...)
 	
 	string toString := unit == Auto ? "auto" : "{value}{unit}"
+	bool toBool := value != 0
 	
 struct Vector2
 	float x // The x coordinate of the vector
