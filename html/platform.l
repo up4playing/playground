@@ -277,10 +277,24 @@ global unit Html
 	private Node currentOverlay
 	
 	inline js Vector2 scrollPosition() new Vector2(window.pageXOffset, window.pageYOffset/Platform.scale)
-		
 	inline js void scrollTo(float x, float y) window.scrollTo(x,y)
-	
+	inline js Node get(string id) document.getElementById(id)
 	private inline js Node body() document.body
+	
+	init
+		initHandlers
+	
+	js void initHandlers
+		document.onkeydown = ev => {
+			for(let listener of Html.keyDownListeners) {
+				if(ev.keyCode == listener.key) {
+					listener.do.invoke(ev.keyCode)
+					ev.preventDefault();
+					ev.stopPropagation();
+					return false;
+				}
+			}
+		}
 	
 	internal js void reset
 		while(document.body.nextSibling) 
@@ -406,6 +420,7 @@ global unit Html
 		parentNode = body
 		currentNode = parentNode.firstChild
 		currentOverlay = body.nextSibling
+		keyDownListeners.clear
 		app.render
 		while currentNode
 			let next = currentNode.nextSibling
@@ -529,7 +544,7 @@ global unit Html
 			if attributes.class != null:        node.class = attributes.class
 			if attributes.onClick != null:      node.onclick = attributes.onClick
 			if attributes.onRightClick != null: node.oncontextmenu = attributes.onRightClick
-				
+			if attributes.onKeyDown != null:    node.onkeydown = attributes.onKeyDown
 			if attributes.tabIndex:             node.set("tabindex", attributes.tabIndex.toString)
 			
 		node.sourceLocation = sourceLocation
@@ -727,3 +742,126 @@ global unit Html
 		node.oninput = model = node.value; node.style.overflow = Scroll; node.style.height = 1px; node.style.height = node.scrollHeight px; node.style.overflow = Hidden; changeHandler
 		if focused or focusTabIndex == attributes.tabIndex: node.focus
 
+	KeyListener[] keyDownListeners
+	
+	global onKeyDown: Key key
+		              stored void(Key key) do
+		keyDownListeners.add {key, do}
+		
+KeyListener
+	Key key
+	void(Key key) do
+		
+enum Key
+	None         =   0
+	Backspace    =   8
+	Tab          =   9
+	Enter        =  13
+	Shift        =  16
+	Ctrl         =  17
+	Alt          =  18
+	Pause        =  19
+	CapsLock     =  20
+	Escape       =  27
+	Space        =  32
+	PageUp       =  33
+	PageDown     =  34
+	End          =  35
+	Home         =  36
+	Left         =  37
+	Up           =  38
+	Right        =  39
+	Down         =  40
+	Insert       =  45
+	Delete       =  46
+	Number0      =  48
+	Number1      =  49
+	Number2      =  50
+	Number3      =  51
+	Number4      =  52
+	Number5      =  53
+	Number6      =  54
+	Number7      =  55
+	Number8      =  56
+	Number9      =  57
+	A            =  65
+	B            =  66
+	C            =  67
+	D            =  68
+	E            =  69
+	F            =  70
+	G            =  71
+	H            =  72
+	I            =  73
+	J            =  74
+	K            =  75
+	L            =  76
+	M            =  77
+	N            =  78
+	O            =  79
+	P            =  80
+	Q            =  81
+	R            =  82
+	S            =  83
+	T            =  84
+	U            =  85
+	V            =  86
+	W            =  87
+	X            =  88
+	Y            =  89
+	Z            =  90
+	LeftMetaKey  =  91
+	RightMetaKey =  92
+	Select       =  93
+	Numpad0      =  96
+	Numpad1      =  97
+	Numpad2      =  98
+	Numpad3      =  99
+	Numpad4      = 100
+	Numpad5      = 101
+	Numpad6      = 102
+	Numpad7      = 103
+	Numpad8      = 104
+	Numpad9      = 105
+	Multiply     = 106
+	Add          = 107
+	Subtract     = 109
+	DecimalPoint = 110
+	Divide       = 111
+	F1           = 112
+	F2           = 113
+	F3           = 114
+	F4           = 115
+	F5           = 116
+	F6           = 117
+	F7           = 118
+	F8           = 119
+	F9           = 120
+	F10          = 121
+	F11          = 122
+	F12          = 123
+	F13          = 124
+	F14          = 125
+	F15          = 126
+	F16          = 127
+	F17          = 128
+	F18          = 129
+	F19          = 130
+	F20          = 131
+	F21          = 132
+	F22          = 133
+	F23          = 134
+	F24          = 135
+	NumLock      = 144
+	ScrollLock   = 145
+	SemiColon    = 186
+	EqualSign    = 187
+	Comma        = 188
+	Dash         = 189
+	Period       = 190
+	ForwardSlash = 191
+	GraveAccent  = 192
+	OpenBracket  = 219
+	BackSlash    = 220
+	CloseBraket  = 221
+	SingleQuote  = 222
