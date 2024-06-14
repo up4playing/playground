@@ -311,6 +311,11 @@ skipInit class Font
 	string name
 	string src
 	
+Node WebView
+	string url
+	inline js void downloadURL(string url) this.downloadURL(url)
+	inline js void goBack() this.goBack()
+	
 global unit Html
 	Unit defaultUnit = Pixels
 	
@@ -561,6 +566,24 @@ global unit Html
 		let element = div tag:"video", attributes, style, location, data:{src}
 		element.muted = true
 		element.autoplay = true
+		
+	global iframe: string src                        // The url of the content to display
+		           expand Attributes attributes = {} // The attributes of the HTML element
+		           expand Style style = null         // The css style of the HTML element
+		           dynamic data = null               // The data attributes of the element
+		           SourceCodeLocation location
+		let node = div tag:"iframe", attributes, style, data, location
+		if node.src != src: node.src = src
+		return node
+
+	global WebView webview: string src = ""                   // The url of the content to display
+		                    expand Attributes attributes = {} // The attributes of the HTML element
+		                    expand Style style = null         // The css style of the HTML element
+		                    dynamic data = null               // The data attributes of the element
+		                    SourceCodeLocation location
+		WebView node = cast div tag:"webview", attributes, style, data, location
+		if node.src != src: node.src = src
+		return node
 
 	global div: string text = null                // The text content of the element 
 		        string tag = "div"                // The tag of element
