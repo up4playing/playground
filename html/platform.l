@@ -54,6 +54,9 @@ skipInit global unit Platform
 				Platform.toggleSmallScreen();
 			}
 		}
+		window.onfocus = e => {
+			if(app.updateMenu) app.updateMenu();
+		}
 	
 	start: bool isDebug
 		try
@@ -210,6 +213,36 @@ skipInit global unit Platform
 		
 	inline js void blur() document.activeElement.blur()
 	
+	js void setMenu: MenuItem[] menuTemplate
+		if(!Platform.isElectron || !document.hasFocus()) return;
+		const remote = require('@electron/remote');
+		if (process.platform == 'darwin') {
+			menuTemplate.unshift({
+				label: "",
+				submenu: [
+					{role: 'about'},
+					{type: 'separator'},
+					{role: 'hide'},
+					{role: 'hideothers'},
+					{role: 'unhide'},
+					{type: 'separator'},
+					{role: 'quit'},
+				]
+			})
+			let menu = remote.Menu.buildFromTemplate(menuTemplate)
+			remote.Menu.setApplicationMenu(menu)
+		} else {
+			let menu = remote.Menu.buildFromTemplate(menuTemplate)
+			remote.getCurrentWindow().setMenu(menu)
+		}
+	
+MenuItem
+	string label
+	string accelerator
+	native void() click
+	string type = null
+	string role = null
+	MenuItem[] submenu = null
 	
 global skipInit unit math
 	// Generates a random integer
