@@ -207,6 +207,9 @@ skipInit global unit Platform
 	
 	global js void onNavigate: void(string url) do
 		window.onpopstate = e => do(location.pathname)
+		
+	inline js void blur() document.activeElement.blur()
+	
 	
 global skipInit unit math
 	// Generates a random integer
