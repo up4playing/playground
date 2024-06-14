@@ -413,7 +413,7 @@ immutable class string
 		this.split("").join(String.fromCharCode(charCode))
 		
 	inline js string replace: string value
-		                      nocolon string with
+		                      nocolon implicit string with
 		(this = this.replace(new RegExp(value, "g"), with))
 		
 	js string replaced: string value
