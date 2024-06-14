@@ -749,6 +749,7 @@ global unit Html
 	
 	int focusTabIndex = 0
 	
+	// Automatic Text Input: Updates the model automatically in with every keystroke
 	global inline void input: string model = ""                 // The variable that holds the value. This will be updated when the user changed the text
 		                      bool focused = false              // Whether the cursor should be placed in the field
 		                      expand Attributes attributes = {} // The attributes of the HTML element
@@ -761,6 +762,7 @@ global unit Html
 		node.oninput = model = node.value; changeHandler
 		if focused: node.focus
 		
+	// Automatic Text Input: Updates the model automatically in with every keystroke
 	global inline void input: string model = ""                 // The variable that holds the value. This will be updated when the user changed the text
 		                      bool focused = false              // Whether the cursor should be placed in the field
 		                      inline void() onEnter = null      // Called when the user presses the enter key
@@ -774,32 +776,22 @@ global unit Html
 		node.onkeydown = if(ev.key == "Enter") onEnter()
 		if focused or focusTabIndex == attributes.tabIndex: node.focus
 		
+	// Manual Text Input: If you specify a onChange handler, the model won't be updated automatically
 	global inline void input: string model = ""                  // The variable that holds the value. This will be updated when the user changed the text
 		                      bool focused = false               // Whether the cursor should be placed in the field
-		                      inline void(string value) onChange // Called when the user changes the text and leaves the field
+		                      inline void(string value) onChange // If you specify a onChange handler, the model won't be updated automatically
 		                      expand Attributes attributes = {}  // The attributes of the HTML element
 		                      expand Style style = null          // The css style of the HTML element
-		                      bool realtime = true
+		                      bool realtime = true               // Should onChange be called with every keystroke?
 		                      SourceCodeLocation location
 		stored void() changeHandler = currentChangeHandler
 		let node = div tag:"input", attributes, style, location
 		node.value = model or ""
-		if realtime: node.oninput = model = node.value; onChange(node.value); changeHandler
-		else         node.onchange = model = node.value; onChange(node.value); changeHandler
+		if realtime: node.oninput = onChange(node.value); changeHandler
+		else         node.onchange = onChange(node.value); changeHandler
 		if focused or focusTabIndex == attributes.tabIndex: node.focus
-		
-	// global inline void input: string model = ""                  // The variable that holds the value. This will be updated when the user changed the text
-	// 	                      bool focused = false               // Whether the cursor should be placed in the field
-	// 	                      inline void(string value) onInput  // Called after every character the user types
-	// 	                      expand Attributes attributes = {}  // The attributes of the HTML element
-	// 	                      expand Style style = null          // The css style of the HTML element
-	// 	                      SourceCodeLocation location
-	// 	stored void() changeHandler = currentChangeHandler
-	// 	let node = div tag:"input", attributes, style, location
-	// 	node.value = model
-	// 	node.oninput = model = node.value; onInput(node.value); changeHandler
-	// 	if focused: node.focus
-
+	
+	// Automatic Text Area: Updates the model automatically in with every keystroke
 	global inline void textarea: string model = ""                 // The variable that holds the value. This will be updated when the user changed the text
 		                         bool focused = false              // Whether the cursor should be placed in the field
 		                         expand Attributes attributes = {} // The attributes of the HTML element
