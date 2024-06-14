@@ -17,6 +17,8 @@ skipInit global unit Platform
 		
 	bool isDebug
 	global bool isMobile
+	bool isElectron
+	string environment
 	Vector2 size, nativeSize
 	float scale
 	float debugScale = 1
@@ -30,6 +32,10 @@ skipInit global unit Platform
 	public inline js string encodeURIComponent(string value) encodeURIComponent(value)
 
 	private inline js void initMedia
+		if(process?.versions?.electron) {
+			this.isElectron = true;
+			this.environment = `Electron ${process.versions.electron}, Chrome ${process.versions.chrome}, Node ${process.versions.node}`;
+		}
 		$Image.init?.();
 		Font.init?.();
 		Sound.init?.();
