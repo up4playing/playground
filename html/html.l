@@ -34,6 +34,7 @@ class Node
 	inline js void focus() this.focus()
 	inline js void scrollToBottom() this.scrollTo(0, this.scrollHeight)
 	inline js void scrollIntoView() this.scrollIntoView()
+	inline js void on(string eventName, void(dynamic event) listener) this.addEventListener(eventName, listener)
 		
 	native void(HtmlEvent ev) onclick
 	native void(HtmlEvent ev) oncontextmenu
