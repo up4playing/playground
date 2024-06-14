@@ -337,6 +337,12 @@ global unit Html
 				}
 			}
 		}
+
+	KeyListener[] keyDownListeners
+	
+	global onKeyDown: Key key
+		              stored void(Key key) do
+		keyDownListeners.add {key, do}
 	
 	internal js void reset
 		while(document.body.nextSibling) 
