@@ -356,7 +356,10 @@ Object ParticleSystem
 			.pos += .speed
 			.speed.y += gravity
 			.angle += .rotationSpeed
-			if .pos.y > graphics.size.y/2
+			
+			// Delete the particle when it leaves the botom edge of the screen
+			// We add 10% of margin because the actual screen size might be heigher than the reference size
+			if .pos.y > graphics.referenceSize.y*.55
 				particles.removeAt i
 		
 		if particles.length == 0	
@@ -402,7 +405,7 @@ Object Menu
 				onTouchDownAny
 					active = false
 				
-		if alpha and not input.showOnlyVideos
+		if alpha and not awardScreen.active
 			drawImage Menu, position, location, layer
 				active = true
 		

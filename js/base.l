@@ -1862,11 +1862,6 @@ global transient priority unit System
 	// js void log: any value
 	// 	console.log(value)
 	
-	// Prints a message to the console
-	global js void print: logstring text // The text, variables or expressions to print
-		                  SourceCodeLocation location
-		(location ? log(text, location.start, location.file) : log(text))
-		
 	js void log: any value
 		console.log(value)
 	
