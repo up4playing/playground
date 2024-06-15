@@ -230,8 +230,8 @@ immutable struct DateTime
 		
 	// (31.12.2000)
 	dayMonthYearString: language = Loca.language
-		if language == German return "{day}.{month}.{year}"
-		else                  return "{year}-{month}-{day}"
+		if language == German return "{twoDigitDay}.{twoDigitMonth}.{year}"
+		else                  return "{year}-{twoDigitMonth}-{twoDigitDay}"
 	
 	// (31 December 2000)
 	dayMonthNameYearString: language = Loca.language
