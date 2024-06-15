@@ -29,6 +29,9 @@ immutable struct int
 	// The smallest possible integer value
 	const minValue = -2147483648
 	
+	// Indicates that the variable isn't defined at all, useful for importet data (e.g  from JSON)
+	const inline js int undefined := undefined
+	
 	// The remainer after a division by the given value. The sign stays the same.
 	inline js int remainder: int value // The value to divide by
 		(this % value)
@@ -189,8 +192,13 @@ immutable struct float
 	// The smallest possible floating point value
 	const inline js float minValue := -Number.MAX_VALUE
 	
+	// Indicates that the variable isn't defined at all, useful for importet data (e.g  from JSON)
+	const inline js int undefined := undefined
+	
+	// Positiv infinity
 	const inline js float infinity := Number.POSITIVE_INFINITY
 	
+	// Can result from failed conversion or operations with undefined or complex result
 	const inline js float notANumber := Number.NaN
 	
 	// The remainer after a division by the given value. The sign stays the same.
