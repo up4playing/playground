@@ -509,23 +509,21 @@ class List<T>
 		                   ) do           // Do this for each item in a list
 		for(let _subject=[...this], i=_subject.length-1; i>=0; --i) do(_subject[i], i)
 			
-	js void eachDistinct: any(T it) selector
+	js void eachDistinct: TKey(T it) selector
 		                  void(
-		                      T it,
+		                      TKey it,
 		                      T[] items,
 		                      int i
 		                  ) do
 		if(this.length > 0) {
-			let _subject = this.sort((a,b) => selector(a) - selector(b))
-			let it=_subject[0], _selectedField=selector(it), i=0;
+			let _subject = [...this].sort((a,b) => selector(a) - selector(b))
+			let it = selector(_subject[0]), i=0;
 			for(let _nextIndex=1; _nextIndex<_subject.length; ++_nextIndex) { 
-				let _nextIt = _subject[_nextIndex]
-				let _nextSelectedField = selector(_nextIt);
-				if(_nextSelectedField != _selectedField) {
+				let _nextIt = selector(_subject[_nextIndex]);
+				if(_nextIt != it) {
 					let items = _subject.slice(i, _nextIndex);
 					do(it, items, i)
-					_selectedField = _nextSelectedField;
-					it = _nextIt
+					it = _nextIt;
 					i = _nextIndex;
 				}
 			}
