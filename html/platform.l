@@ -337,7 +337,7 @@ global unit Html
 	inline js Vector2 scrollPosition() new Vector2(window.pageXOffset, window.pageYOffset/Platform.scale)
 	inline js void scrollTo(float x, float y) window.scrollTo(x,y)
 	inline js Node get(string id) document.getElementById(id)
-	private inline js Node body() document.body
+	private inline js Node documentBody() document.body
 	
 	init
 		initHandlers
@@ -481,9 +481,9 @@ global unit Html
 	global void refresh
 		Time.startTimer
 		nodesCreated = nodesUpdated = 0
-		parentNode = body
+		parentNode = documentBody
 		currentNode = parentNode.firstChild
-		currentOverlay = body.nextSibling
+		currentOverlay = documentBody.nextSibling
 		keyDownListeners.clear
 		app.render
 		while currentNode
@@ -595,6 +595,19 @@ global unit Html
 		WebView node = cast div tag:"webview", attributes, style, data, location
 		if node.src != src: node.src = src
 		return node
+	global body: expand Attributes attributes = {} // The attributes of the element
+		         expand Style style = null         // Apply this css style to the element
+		         void() children
+		         nocolon void() header
+		         SourceCodeLocation location
+		let node = div attributes, style, children, location
+		let prevParentNode = parentNode
+		let prevCurrentNode = currentNode
+		parentNode = node
+		currentNode = node.firstChild
+		header
+		parentNode = prevParentNode
+		currentNode = prevCurrentNode
 
 	global div: string text = null                // The text content of the element 
 		        string tag = "div"                // The tag of element
@@ -661,8 +674,8 @@ global unit Html
 		if !currentOverlay or currentOverlay.sourceLocation != sourceLocation
 			node = Node.create "div"
 			nextNode = currentOverlay
-			if nextNode: body.parentNode.insertBefore node, nextNode
-			else         body.parentNode.appendChild node
+			if nextNode: documentBody.parentNode.insertBefore node, nextNode
+			else         documentBody.parentNode.appendChild node
 		else
 			node = currentOverlay
 			nextNode = currentOverlay.nextSibling
@@ -816,4 +829,3 @@ global unit Html
 		node.oninput = model = node.value; node.style.overflow = Scroll; node.style.height = 1px; node.style.height = node.scrollHeight px; node.style.overflow = Hidden; changeHandler
 		if focused or focusTabIndex == attributes.tabIndex: node.focus
 
-	
