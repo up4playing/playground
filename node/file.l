@@ -2,7 +2,7 @@ file
 	js async void save: any object
 		                string to
 		const fs = require("fs").promises;
-		await fs.writeFile(to, JSON.stringify(object))
+		await fs.writeFile(to, JSON.stringify(object, null, "\t"))
 		
 	js async void save: ArrayBuffer buffer
 		                string to
