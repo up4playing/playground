@@ -11,6 +11,7 @@ class Node
 	string tagName
 	Style style
 	string innerHTML
+	string innerText
 	string shadowInnerHtml
 	string value
 	string src

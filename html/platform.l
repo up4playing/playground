@@ -461,6 +461,8 @@ global unit Html
 			// 		node.style.transform = "translate("+style.targetTranslate+") "
 			// 	}, 1000)
 			// }
+		} else {
+			node.shadowStyle = null
 		}
 		
 	private js void addStyle: Node node, dynamic style
@@ -506,7 +508,7 @@ global unit Html
 			let next = currentOverlay.nextSibling
 			currentOverlay.remove
 			currentOverlay = next
-		focusTabIndex = -1
+		focusTabIndex = int.minValue
 		Time.printTimer "refresh: {nodesCreated} created, {nodesUpdated} updated"
 		// if not overlayNode
 		// 	overlayNode = div style:{position:Fixed top:0 left:0 right:0 bottom:0, backgroundColor:Black, opacity:.5}
@@ -665,10 +667,12 @@ global unit Html
 			node.onmouseover = addStyle(node, onHover)
 			node.onmouseout  = setStyle(node, style)
 		
-		if text
+		if text != null
 			if node.shadowInnerHtml != text
-				node.innerHTML = node.shadowInnerHtml = text
-		else	
+				node.innerHTML = text
+				node.shadowInnerHtml = text
+		else
+			node.shadowInnerHtml = null	
 			let prevParentNode = parentNode
 			parentNode = node
 			currentNode = node.firstChild
