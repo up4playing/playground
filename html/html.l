@@ -23,6 +23,7 @@ class Node
 	bool muted
 	bool autoplay
 	int tabindex
+	string contentEditable
 	
 	string sourceLocation
 		

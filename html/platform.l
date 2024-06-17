@@ -833,6 +833,18 @@ global unit Html
 		else         node.onchange = onChange(node.value); changeHandler
 		if focused or focusTabIndex == attributes.tabIndex: node.focus
 	
+	// Automatic Editable Text: Updates the model automatically in with every keystroke
+	global inline void editableText: string model = ""                 // The variable that holds the value. This will be updated when the user changed the text
+		                             expand Attributes attributes = {} // The attributes of the HTML element
+		                             expand Style style = null         // The css style of the HTML element
+		                             dynamic data = {}                 // The data attributes of the element
+		                             SourceCodeLocation location
+		stored void() changeHandler = currentChangeHandler
+		let node = div attributes, style, data, location
+		node.innerText = model
+		node.contentEditable = "plaintext-only"
+		node.oninput = model = node.innerText; changeHandler
+
 	// Automatic Text Area: Updates the model automatically in with every keystroke
 	global inline void textarea: string model = ""                 // The variable that holds the value. This will be updated when the user changed the text
 		                         bool focused = false              // Whether the cursor should be placed in the field
