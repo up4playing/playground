@@ -54,9 +54,6 @@ skipInit global unit Platform
 				Platform.toggleSmallScreen();
 			}
 		}
-		window.onfocus = e => {
-			if(app.updateMenu) app.updateMenu();
-		}
 	
 	start: bool isDebug
 		try
@@ -196,8 +193,11 @@ skipInit global unit Platform
 		                  void() do
 		setTimeout(do, time)
 		
-	global inline js void onBlur: void() do
+	inline js void onBlur: void() do
 		window.onblur = do
+		
+	inline js void onFocus: void() do
+		window.onfocus = do
 		
 	global inline js int interval: Time time
 		                           void(int handle) do
