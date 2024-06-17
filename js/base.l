@@ -908,6 +908,10 @@ class List<T>
 		         label nocolon string(T it) thenBy // Then order by this expression
 		return this.sort(expression(a) - expression(b) || thenBy(a) compareTo thenBy(b))
 		
+	T[] orderBy: string(T it) expression           // First order by this expression
+		         label nocolon float(T it) thenBy // Then order by this expression
+		return this.sort(expression(a) compareTo expression(b) || thenBy(a) - thenBy(b))
+		
 	T[] orderBy: string(T a) expression // First order by this expression
 		return this.sort(expression(a) compareTo expression(b))
 		
