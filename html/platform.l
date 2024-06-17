@@ -324,6 +324,10 @@ skipInit class Font
 	
 Node WebView
 	string url
+	
+	native void(string url) onWillNavigate
+	bool hasHandlers
+	
 	inline js void downloadURL(string url) this.downloadURL(url)
 	inline js void goBack() this.goBack()
 	
@@ -595,14 +599,20 @@ global unit Html
 		if node.src != src: node.src = src
 		return node
 
-	global WebView webview: string src = ""                   // The url of the content to display
-		                    expand Attributes attributes = {} // The attributes of the HTML element
-		                    expand Style style = null         // The css style of the HTML element
-		                    dynamic data = null               // The data attributes of the element
-		                    SourceCodeLocation location
+	global webview: string initialUrl = ""              // The url of the content to display
+		            expand Attributes attributes = {} // The attributes of the HTML element
+		            expand Style style = null         // The css style of the HTML element
+		            dynamic data = null               // The data attributes of the element
+		            void(string url) onNavigate = null
+		            SourceCodeLocation location
 		WebView node = cast div tag:"webview", attributes, style, data, location
-		if node.src != src: node.src = src
+		node.onWillNavigate = onNavigate
+		if not node.src: node.src = initialUrl
+		if !node.hasHandlers
+			node.hasHandlers = true
+			node.on "will-navigate": if node.onWillNavigate != null: node.onWillNavigate(event.url)
 		return node
+
 	global body: expand Attributes attributes = {} // The attributes of the element
 		         expand Style style = null         // Apply this css style to the element
 		         void() children
