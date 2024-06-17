@@ -576,6 +576,11 @@ class List<T>
 		                   index = 0 // Insert the item at this index
 		this.splice(index, 0, item)
 		
+	// Insert an item at a given index
+	inline js void insert: T item    // The item to insert
+		                   T after
+		this.splice(this.indexOf(after)+1, 0, item)
+		
 	// Remove an item from the list
 	// Example: Remove the current player instrance from the list of playeres when they died
 	//     Player
