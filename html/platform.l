@@ -475,6 +475,14 @@ global unit Html
 		let rect = node.getBoundingClientRect()
 		return new Vector2((event.clientX - rect.left)/Platform.scale, (event.clientY - rect.top)/Platform.scale)
 
+	js void setCursorPosition: Node element, int position
+		const range = document.createRange();
+		const selection = window.getSelection();
+		range.setStart(element.childNodes[0], position);
+		range.collapse(true);
+		selection.removeAllRanges();
+		selection.addRange(range);
+	
 	int nodesCreated
 	int nodesUpdated
 	
