@@ -760,11 +760,8 @@ class List<T>
 	// Example: Print and remove "Apple" from the list
 	//     let fruits = ["Apple", "Lemon", "Orange"]
 	//     print fruits.popFirst
-	js T popFirst
-		if(this.length == 0) return null
-		let firstItem = this[0]
-		this.splice(0, 1)
-		return firstItem
+	inline js T popFirst
+		this.shift()
 	
 	// Gets the number of items in the list
 	inline js int length() this.length
