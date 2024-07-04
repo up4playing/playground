@@ -135,18 +135,18 @@ transient skipInit unit PeerNetwork
 			}
 			if(PeerNetwork.relayMode > 0) {
 				// OVH turn server
-				// options.iceServers.push({
-				// 	urls: 'turn:193.70.81.132:39571',
-				// 	username: 'play-user-x8env28gx41odbxzwjyut2oq871987syq8ovyuqp128djbsjue',
-				// 	credential: 'qoy91n981vlplabb1873jdcgsouz2qm87qmmakqpc2t8hbeyjsyaqkuz'
-				// });	
-				
-				// Alphahosting turn server
 				options.iceServers.push({
-					urls: 'turn:89.22.121.145:39571',
+					urls: 'turn:193.70.81.132:39571',
 					username: 'play-user-x8env28gx41odbxzwjyut2oq871987syq8ovyuqp128djbsjue',
 					credential: 'qoy91n981vlplabb1873jdcgsouz2qm87qmmakqpc2t8hbeyjsyaqkuz'
 				});	
+				
+				// Alphahosting turn server
+				// options.iceServers.push({
+				// 	urls: 'turn:89.22.121.145:39571',
+				// 	username: 'play-user-x8env28gx41odbxzwjyut2oq871987syq8ovyuqp128djbsjue',
+				// 	credential: 'qoy91n981vlplabb1873jdcgsouz2qm87qmmakqpc2t8hbeyjsyaqkuz'
+				// });	
 			}
 			options.iceServers.push({
 				urls: [
