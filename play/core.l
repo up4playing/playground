@@ -99,6 +99,7 @@ transient skipInit unit core
 		players.clear
 		input.playersById.clear
 		input.host = null
+		input.playersToRemove.clear
 		errorMessage = ""
 		HTMLElement.clear
 		math.randomValueIndex = 0
@@ -115,8 +116,9 @@ transient skipInit unit core
 		
 		if !startInLobby or testLobby
 			// When the developer changed Platform.userCount, add or remove internal users accordingly
-			for input.internalUsers.length to Platform.userCount
-				input.internalUsers.add {id:i, local:true, collectInputs:true}
+			for Platform.userCount
+				if not input.internalUsers[.]
+					input.internalUsers[.] = {id:i, local:true, collectInputs:true}
 			if input.internalUsers.length > Platform.userCount
 				input.internalUsers.removeRange Platform.userCount..input.internalUsers.length
 			
@@ -327,7 +329,7 @@ transient skipInit unit core
 		if not player: return
 		let prevPlayer = input.localPlayer
 		input.localPlayer = player
-		input.localUser = input.internalUsers.find.id == player.id
+		input.localUser = input.internalUsers.find . and .id == player.id
 		for prevPlayer.touches
 			input.handleUpdateTouchAfterSwitchingUser .id, .referencePosition
 			
@@ -377,6 +379,7 @@ transient skipInit unit core
 			tick draw
 			
 			if HTMLElement.elements: HTMLElement.elements.each.tick
+			input.removePlayersIfNecessary
 			
 		catch
 			onError error

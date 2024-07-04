@@ -1029,6 +1029,22 @@ skipInit global unit input
 	private getTargetedPlayers: Player[] by
 		return by and by.length > 0 and by[0] and not core.everybodyCanClickForEverybody ? by : players
 		
+	Player[] playersToRemove
+		
+	removePlayer: Player player
+		if not isCertain: return
+		core.log "Removing player {player.id} at frame {core.frame}"
+		playersToRemove.add player
+		
+	internal removePlayersIfNecessary
+		for playersToRemove
+			players.remove .
+			playersById[.id] = null
+			updatePlayers
+			InternalUser user = internalUsers[.id]
+				PeerNetwork.disconnect user
+		playersToRemove.clear
+		
 	// ---------------------------------------------- Touch Down ----------------------------------------------
 	
 	// Do something when the player touches or clicks within a given area

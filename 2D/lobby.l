@@ -103,6 +103,9 @@ unit lobby
 				let state = input.internalUsers[player.id]?.connectionState
 				if state && state != "connected"
 					drawText state, size:80, color:state == "failed" ? Red : Yellow, position:pos+{0, -halfVideoHeight-40}
+					drawText "x", size:50, color:#808080, position:closePos
+				onTouchDown closePos, size:{32,32}
+					input.removePlayer player
 				
 				let field = fields.find.player == player
 					// Set field position
