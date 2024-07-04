@@ -39,8 +39,11 @@ transient skipInit unit core
 	public float[] checksums
 	public int lastChecksumFrame
 	
+	IndexedDBStore inputStore = {"input", indices:[{"roomId"}]}
+	IndexedDBStore roomStore  = {"room"}
+	
 	initDatabase
-		IndexedDB.start "up4playing", "snapshot", 5
+		IndexedDB.start "up4playing", version:2
 
 	startConnected: int frame
 		if mode == Connected: return
@@ -63,7 +66,6 @@ transient skipInit unit core
 		mode = Local
 		input.internalUsers.clear
 		math.setRandomSeed math.generateRandomSeed 
-		// initDatabase
 		stop
 		
 	// Clear all inputs and reset the application to the first frame
@@ -543,6 +545,63 @@ transient skipInit unit core
 		let date = Date.now
 		file.saveBinary "{Platform.appName} {date.dayShortMonthNameYearString} {date.hourMinuteSecondString} v{Platform.buildVersion}.state", buffer
 		
+	const chunkSize = 256
+	
+	storeRoomToDB
+		roomStore.put {
+			id: roomId
+			frame
+			frames
+			eventStreamVersion
+			math.randomSeed
+			startInLobby
+			Platform.isStaging
+			localUserId: input.localUser.id
+		}
+	
+	storeInputsToDB: InternalUser user
+		let inputs = user.inputs
+		// let chunkStart = math.floor(inputs.writePos / chunkSize) * chunkSize
+		let start = inputs.writePos - (inputs.writePos % chunkSize)
+		let id = "{roomId}-{user.id}-{start}"
+		inputStore.put {id, roomId, userId:user.id, start, inputs:inputs.subArrayBuffer(start to inputs.writePos)}
+			print "storeInputsLocally", roomId, user.id, start, inputs.writePos
+		else
+			print "failed"
+			
+	openFromDB: int roomId, void() then, void() else
+		roomStore.get roomId
+			int targetFrame = .frame
+			frames = .frames
+			let randomSeed = .randomSeed
+			startInLobby = .startInLobby
+			Platform.isStaging =.isStaging
+			let localUserId = .localUserId
+			
+			inputStore.getAllFromIndex "roomId", roomId
+				result.orderBy.start
+				for result
+					int userId = .userId
+					int start = .start
+					any inputs = .inputs
+					let user = input.internalUsers[.userId] ?= {id:.userId, local:.userId == localUserId, collectInputs:true}
+					user.inputs.insertArrayBuffer .inputs
+					
+				// Replay
+				for input.internalUsers if .
+					.startInputFrame frames
+				math.setRandomSeed randomSeed
+				
+				Platform.sendClearTimeline
+				goToFrame targetFrame, replayFromStart:true
+				Platform.sendFrame(targetFrame, frames)
+				then
+				
+			else
+				else
+		else
+			else
+						
 	openEventStream
 		Platform.pause
 		file.openBinary
@@ -664,16 +723,6 @@ transient unit Snapshot
 		
 	autoSave() autoSaveAtEndOfStep = true
 	
-	internal onEndOfStep
-		if input.isCertain
-			if autoSaveAtEndOfStep and ++autoSaveCount > 5
-				let snap = save
-				IndexedDB.saveBuffer "snapshot", "{core.gameId}-0", snap
-				lastSnapshotSize = snap.writePos
-			if core.frame/snapshotEvery > snapshotStarts.length
-				snapshotStarts.add snapshots.writePos
-				serialize(snapshots)
-			autoSaveAtEndOfStep = false
 	
 global transient unit System
 	// Reset all variables to their initial value and restart the app

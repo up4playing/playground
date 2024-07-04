@@ -42,6 +42,7 @@ transient skipInit unit Platform
 		
 	private js void initPlatform
 		statistics.init();
+		IndexedDB?.init();
 		Platform.init();
 		graphics.init();
 		math.init();

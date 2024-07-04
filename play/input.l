@@ -1025,7 +1025,6 @@ skipInit global unit input
 			controllerButtonMap[S] = {userId:localUser.id, buttonIndex:3}
 			controllerButtonMap[A] = {userId:localUser.id, buttonIndex:4}
 			
-		
 	private getTargetedPlayers: Player[] by
 		return by and by.length > 0 and by[0] and not core.everybodyCanClickForEverybody ? by : players
 		
