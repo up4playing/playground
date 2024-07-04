@@ -147,7 +147,9 @@ transient skipInit unit core
 		let hostPlayerId = input.host ? input.host.id : -1
 		Framework.clear includingLockedObjects:true
 		Platform.fastForward = false
+		let prevLanguage = Loca.language
 		initAll
+		Loca.setLanguage prevLanguage
 		Player[] newPlayers
 		for input.players
 			Player user = {id:.id, index:.index}
