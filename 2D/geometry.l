@@ -718,9 +718,10 @@ transient immutable float Angle
 	static Angle rotatedTowards: Angle value
 		                         Angle target
 		                         Angle speed
-		let delta = (target - value) normalize
-		if delta > 0: value = value + speed; return value < target ? value : target
-		else          value = value - speed; return value > target ? value : target
+		let delta = (((target - value + .5) % 1) + 1) % 1 - .5
+		let valuePlusDelta = value + delta
+		if delta > 0: value += speed; return value < valuePlusDelta ? value : target
+		else          value -= speed; return value > valuePlusDelta ? value : target
 		
 	inline Angle + Angle value
 	inline Angle - Angle value
