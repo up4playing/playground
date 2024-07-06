@@ -71,9 +71,12 @@ transient skipInit unit PeerNetwork
 		let now = Time.realTime
 		for input.internalUsers
 			if . 
-				// Reconnect to peer: Try to connect again if we aren't connected 5 seconds after starting to connect
+				// Reconnect to peer: Try to connect again if
+				// - we aren't connected 5 seconds after starting to connect
+				// - we are connect, but haven't received a message for 10 seconds
 				// We use a central place to reconnect and no intervals, timeouts or reloads to make it easier to reason about
-				if .connectionState != "connected" and now > .startToConnectTime + 5000
+				if (not .connected and now > .startToConnectTime + 5000)
+				or (    .connected and now > .lastIncomingMessageTime + 10000)
 				
 				// !!! EVALUATE Wait longer for the 2nd retry
 				// if .connectionState != "connected" and (now > .startToConnectTime + 10000
@@ -82,7 +85,7 @@ transient skipInit unit PeerNetwork
 				// !!! EVALUATE Reconned immediately when failed
 				// or .connectionState == "failed"
 					
-					core.log "#peer The state is {.connectionState} after {now-.startToConnectTime} ms and {.connectionTries} retries"
+					core.log "#problem -------------------------------- State is {.connectionState} after {now-.startToConnectTime} ms, {.connectionTries} retries, last incomming message {now - .lastIncomingMessageTime} ms ago --------------------------------"
 					.startToConnectTime = Time.realTime
 					statistics.scheduleSendIn 3 seconds
 					
@@ -102,11 +105,15 @@ transient skipInit unit PeerNetwork
 					// 	core.log "#peer The state is {.connectionState} after {now-.startToConnectTime} ms and {.connectionTries} tries -> Recreate Peer Connection"
 					// 	setupPeerConnection . offerByMe:true
 					// 	setupDataChannel .
-						
-					
-				if .connectionState == "connected" and (.dataChannel == null or .dataChannel.readyState != "open") and now > .startDataChannelTime + 5000
-					core.log "#peer The data channel is {.dataChannel?.readyState} after {now-.startDataChannelTime} ms -> Recreate data channel"
-					setupDataChannel .
+				
+				// !!! Evaluate: Recreate data channel if all are closed
+				// if .connectionState == "connected" and .dataChannels.length == 0 and now > .startDataChannelTime + 5000
+				// 	core.log "#peer No data channels after {now-.startDataChannelTime} ms -> Recreate data channel"
+				// 	setupDataChannel .
+				
+				// if .connectionState == "connected" and now > .lastIncomingMessageTime + 10000
+				// 	core.log "#peer No data channels after {now-.startDataChannelTime} ms -> Recreate data channel"
+				// 	setupDataChannel .
 				
 	
 	private js object setupPeerConnection: InternalUser user, bool offerByMe
@@ -277,7 +284,7 @@ transient skipInit unit PeerNetwork
 		}
 		
 	onConnected: InternalUser user
-		user.startDataChannelTime = Time.realTime
+		user.startDataChannelTime = user.lastIncomingMessageTime = Time.realTime
 		logConnectionType user
 		
 		if not statistics.connectTime
@@ -432,8 +439,9 @@ transient skipInit unit PeerNetwork
 		
 	// private js void onMessage: InternalUser user, Buffer buffer
 	// 	setTimeout(() => PeerNetwork.onMessageDo(user, buffer), 1000)
-								
+			
 	private onMessage: InternalUser user, Buffer buffer
+		user.lastIncomingMessageTime = Time.realTime
 		NetworkMessageType type = cast buffer.readInt8
 		if type == Tick:         onTick user, buffer; else
 		if type == Ping:         onPing user, buffer;  else

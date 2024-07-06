@@ -37,6 +37,7 @@ transient class InternalUser
 	
 	Time startToConnectTime = Time.maxValue
 	Time startDataChannelTime = Time.maxValue
+	Time lastIncomingMessageTime = Time.maxValue
 	
 	// Statistics
 	private int[] aheadHistory    // Rolling buffer of ahead values, used to calculate bufferFrames
