@@ -27,7 +27,7 @@ transient class InternalUser
 	
 	// Connection
 	dynamic peerConnection
-	dynamic dataChannel
+	dynamic[] dataChannels
 	string connectionType
 	bool offerByMe
 	bool receivedAnswer
