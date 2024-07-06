@@ -17,6 +17,8 @@ skipInit global unit Platform
 		
 	bool isDebug
 	global bool isMobile
+	bool isElectron
+	string environment
 	Vector2 size, nativeSize
 	float scale
 	float debugScale = 1
@@ -30,6 +32,10 @@ skipInit global unit Platform
 	public inline js string encodeURIComponent(string value) encodeURIComponent(value)
 
 	private inline js void initMedia
+		if(process?.versions?.electron) {
+			this.isElectron = true;
+			this.environment = `Electron ${process.versions.electron}, Chrome ${process.versions.chrome}, Node ${process.versions.node}`;
+		}
 		$Image.init?.();
 		Font.init?.();
 		Sound.init?.();
@@ -187,8 +193,11 @@ skipInit global unit Platform
 		                  void() do
 		setTimeout(do, time)
 		
-	global inline js void onBlur: void() do
+	inline js void onBlur: void() do
 		window.onblur = do
+		
+	inline js void onFocus: void() do
+		window.onfocus = do
 		
 	global inline js int interval: Time time
 		                           void(int handle) do
@@ -201,6 +210,50 @@ skipInit global unit Platform
 	
 	global js void onNavigate: void(string url) do
 		window.onpopstate = e => do(location.pathname)
+		
+	inline js void blur() document.activeElement.blur()
+	
+	js void setMenu: MenuItem[] menuTemplate
+		if(!Platform.isElectron || !document.hasFocus()) return;
+		const remote = require('@electron/remote');
+		if (process.platform == 'darwin') {
+			menuTemplate.unshift({
+				label: "",
+				submenu: [
+					{role: 'about'},
+					{type: 'separator'},
+					{role: 'hide'},
+					{role: 'hideothers'},
+					{role: 'unhide'},
+					{type: 'separator'},
+					{role: 'quit'},
+				]
+			})
+			let menu = remote.Menu.buildFromTemplate(menuTemplate)
+			remote.Menu.setApplicationMenu(menu)
+		} else {
+			let menu = remote.Menu.buildFromTemplate(menuTemplate)
+			remote.getCurrentWindow().setMenu(menu)
+		}
+	
+MenuItem
+	string label
+	string accelerator
+	native void() click
+	string type = null
+	string role = null
+	MenuItem[] submenu = null
+	
+global transient unit System
+	// Prints a message to the console
+	global js void print: logstring text // The text, variables or expressions to print
+		                  SourceCodeLocation location
+		if(location && Platform.isDebug) {
+			var stringValue = typeof text === "string" ? text : JSON.stringify(text);
+			if(stringValue) _sendToEditor({type:"log", value:stringValue, location:location.start, file:location.file});
+		} else {
+			console.log(text)
+		}
 	
 global skipInit unit math
 	// Generates a random integer
@@ -269,6 +322,15 @@ skipInit class Font
 	string name
 	string src
 	
+Node WebView
+	string url
+	
+	native void(string url) onWillNavigate
+	bool hasHandlers
+	
+	inline js void downloadURL(string url) this.downloadURL(url)
+	inline js void goBack() this.goBack()
+	
 global unit Html
 	Unit defaultUnit = Pixels
 	
@@ -277,10 +339,30 @@ global unit Html
 	private Node currentOverlay
 	
 	inline js Vector2 scrollPosition() new Vector2(window.pageXOffset, window.pageYOffset/Platform.scale)
-		
 	inline js void scrollTo(float x, float y) window.scrollTo(x,y)
+	inline js Node get(string id) document.getElementById(id)
+	private inline js Node documentBody() document.body
 	
-	private inline js Node body() document.body
+	init
+		initHandlers
+	
+	js void initHandlers
+		document.onkeydown = ev => {
+			for(let listener of Html.keyDownListeners) {
+				if(ev.keyCode == listener.key) {
+					listener.do.invoke(ev.keyCode)
+					ev.preventDefault();
+					ev.stopPropagation();
+					return false;
+				}
+			}
+		}
+
+	KeyListener[] keyDownListeners
+	
+	global onKeyDown: Key key
+		              stored void(Key key) do
+		keyDownListeners.add {key, do}
 	
 	internal js void reset
 		while(document.body.nextSibling) 
@@ -331,7 +413,10 @@ global unit Html
 				node.setAttribute(key, attributes[key])
 		
 	static js Style expandStyle: Style style
-		if(style.size) { style.width = style.size.x+"px"; style.height = style.size.y+"px" }
+		if(style.size) { 
+			style.width  = style.size.x+"px"; 
+			style.height = style.size.y+"px";
+		}
 		if(style.overlay) {
 			let rect = document.body.getBoundingClientRect()
 			style.position = "fixed"; style.top = 0; style.left = 0; style.width = (window.innerWidth/Platform.scale)+"px"; style.height = (document.body.scrollHeight)+"px"  
@@ -339,10 +424,45 @@ global unit Html
 		return style 
 	
 	private js void setStyle: Node node, dynamic style
-		node.style = ""
+		// We shouldn't need this because the same line of code can't output less styles than previously
+		// A code change always triggers a complete refresh
+		// node.style = ""
 		if(style) {
-			for(let key in Html.expandStyle(style))
-				node.style[key] = style[key]
+			// Always set style (slowest)
+			// for(let key in Html.expandStyle(style))
+			// 	node.style[key] = style[key]
+				
+			// Set style if it changed (slow)
+			// for(let key in Html.expandStyle(style)) {
+			// 	let value = style[key].toString();
+			// 	if(node.style[key] != value) {
+			// 		node.style[key] = value
+			// 	}
+			// }
+			
+			// Check if style has changed using a shadow copy (fastest)
+			let shadowStyle = node.shadowStyle || (node.shadowStyle = new Map)
+			for(let key in Html.expandStyle(style)) {
+				let value = style[key].toString();
+				if(shadowStyle.get(key) != value) {
+					node.style[key] = value;
+					shadowStyle.set(key, value);
+				}
+			}
+				
+			// Temporary Backfill. Starting from Chrome 104, Safari 14.1 this is no longer needed.
+			// let translate = style.translate
+			// if(translate) node.style.transform += "translate("+translate+") "
+			// let rotate = style.rotate
+			// if(rotate) node.style.transform += "rotate("+rotate+"turn) "
+				
+			// if(style.targetTranslate || style.targetSize) {
+			// 	setTimeout(() => {
+			// 		node.style.transform = "translate("+style.targetTranslate+") "
+			// 	}, 1000)
+			// }
+		} else {
+			node.shadowStyle = null
 		}
 		
 	private js void addStyle: Node node, dynamic style
@@ -361,10 +481,24 @@ global unit Html
 		let rect = node.getBoundingClientRect()
 		return new Vector2((event.clientX - rect.left)/Platform.scale, (event.clientY - rect.top)/Platform.scale)
 
+	js void setCursorPosition: Node element, int position
+		const range = document.createRange();
+		const selection = window.getSelection();
+		range.setStart(element.childNodes[0], position);
+		range.collapse(true);
+		selection.removeAllRanges();
+		selection.addRange(range);
+	
+	int nodesCreated
+	int nodesUpdated
+	
 	global void refresh
-		parentNode = body
+		Time.startTimer
+		nodesCreated = nodesUpdated = 0
+		parentNode = documentBody
 		currentNode = parentNode.firstChild
-		currentOverlay = body.nextSibling
+		currentOverlay = documentBody.nextSibling
+		keyDownListeners.clear
 		app.render
 		while currentNode
 			let next = currentNode.nextSibling
@@ -374,7 +508,12 @@ global unit Html
 			let next = currentOverlay.nextSibling
 			currentOverlay.remove
 			currentOverlay = next
-
+		focusTabIndex = int.minValue
+		Time.printTimer "refresh: {nodesCreated} created, {nodesUpdated} updated"
+		// if not overlayNode
+		// 	overlayNode = div style:{position:Fixed top:0 left:0 right:0 bottom:0, backgroundColor:Black, opacity:.5}
+		// 	body.parentNode.appendChild overlayNode
+						
 	global row: expand Attributes attributes = null // The attributes of the HTML element
 		        expand Style style = {}             // The css style of the HTML element
 		        void() children = null              // The children of the HTML element
@@ -452,6 +591,43 @@ global unit Html
 		let element = div tag:"video", attributes, style, location, data:{src}
 		element.muted = true
 		element.autoplay = true
+		
+	global iframe: string src                        // The url of the content to display
+		           expand Attributes attributes = {} // The attributes of the HTML element
+		           expand Style style = null         // The css style of the HTML element
+		           dynamic data = null               // The data attributes of the element
+		           SourceCodeLocation location
+		let node = div tag:"iframe", attributes, style, data, location
+		if node.src != src: node.src = src
+		return node
+
+	global webview: string initialUrl = ""              // The url of the content to display
+		            expand Attributes attributes = {} // The attributes of the HTML element
+		            expand Style style = null         // The css style of the HTML element
+		            dynamic data = null               // The data attributes of the element
+		            void(string url) onNavigate = null
+		            SourceCodeLocation location
+		WebView node = cast div tag:"webview", attributes, style, data, location
+		node.onWillNavigate = onNavigate
+		if not node.src: node.src = initialUrl
+		if !node.hasHandlers
+			node.hasHandlers = true
+			node.on "will-navigate": if node.onWillNavigate != null: node.onWillNavigate(event.url)
+		return node
+
+	global body: expand Attributes attributes = {} // The attributes of the element
+		         expand Style style = null         // Apply this css style to the element
+		         void() children
+		         nocolon void() header
+		         SourceCodeLocation location
+		let node = div attributes, style, children, location
+		let prevParentNode = parentNode
+		let prevCurrentNode = currentNode
+		parentNode = node
+		currentNode = node.firstChild
+		header
+		parentNode = prevParentNode
+		currentNode = prevCurrentNode
 
 	global div: string text = null                // The text content of the element 
 		        string tag = "div"                // The tag of element
@@ -469,9 +645,11 @@ global unit Html
 			nextNode = currentNode
 			if nextNode: parentNode.insertBefore node, nextNode
 			else         parentNode.appendChild node
+			nodesCreated++
 		else
 			node = currentNode
 			nextNode = currentNode.nextSibling
+			nodesUpdated++
 		
 		setStyle node, style
 		setDataAttributes node, data
@@ -481,15 +659,20 @@ global unit Html
 			if attributes.class != null:        node.class = attributes.class
 			if attributes.onClick != null:      node.onclick = attributes.onClick
 			if attributes.onRightClick != null: node.oncontextmenu = attributes.onRightClick
-				
+			if attributes.onKeyDown != null:    node.onkeydown = attributes.onKeyDown
+			if attributes.tabIndex:             node.set("tabindex", attributes.tabIndex.toString)
+			
 		node.sourceLocation = sourceLocation
 		if onHover != null
 			node.onmouseover = addStyle(node, onHover)
 			node.onmouseout  = setStyle(node, style)
-			
-		if text
-			node.innerHTML = text
-		else	
+		
+		if text != null
+			if node.shadowInnerHtml != text
+				node.innerHTML = text
+				node.shadowInnerHtml = text
+		else
+			node.shadowInnerHtml = null	
 			let prevParentNode = parentNode
 			parentNode = node
 			currentNode = node.firstChild
@@ -513,8 +696,8 @@ global unit Html
 		if !currentOverlay or currentOverlay.sourceLocation != sourceLocation
 			node = Node.create "div"
 			nextNode = currentOverlay
-			if nextNode: body.parentNode.insertBefore node, nextNode
-			else         body.parentNode.appendChild node
+			if nextNode: documentBody.parentNode.insertBefore node, nextNode
+			else         documentBody.parentNode.appendChild node
 		else
 			node = currentOverlay
 			nextNode = currentOverlay.nextSibling
@@ -610,6 +793,9 @@ global unit Html
 
 	// ---------- Input & TextArea ----------
 	
+	int focusTabIndex = 0
+	
+	// Automatic Text Input: Updates the model automatically in with every keystroke
 	global inline void input: string model = ""                 // The variable that holds the value. This will be updated when the user changed the text
 		                      bool focused = false              // Whether the cursor should be placed in the field
 		                      expand Attributes attributes = {} // The attributes of the HTML element
@@ -622,6 +808,7 @@ global unit Html
 		node.oninput = model = node.value; changeHandler
 		if focused: node.focus
 		
+	// Automatic Text Input: Updates the model automatically in with every keystroke
 	global inline void input: string model = ""                 // The variable that holds the value. This will be updated when the user changed the text
 		                      bool focused = false              // Whether the cursor should be placed in the field
 		                      inline void() onEnter = null      // Called when the user presses the enter key
@@ -633,32 +820,36 @@ global unit Html
 		node.value = model
 		node.oninput = model = node.value; changeHandler
 		node.onkeydown = if(ev.key == "Enter") onEnter()
-		if focused: node.focus
+		if focused or focusTabIndex == attributes.tabIndex: node.focus
 		
+	// Manual Text Input: If you specify a onChange handler, the model won't be updated automatically
 	global inline void input: string model = ""                  // The variable that holds the value. This will be updated when the user changed the text
 		                      bool focused = false               // Whether the cursor should be placed in the field
-		                      inline void(string value) onChange // Called when the user changes the text and leaves the field
+		                      inline void(string value) onChange // If you specify a onChange handler, the model won't be updated automatically
 		                      expand Attributes attributes = {}  // The attributes of the HTML element
 		                      expand Style style = null          // The css style of the HTML element
+		                      bool realtime = true               // Should onChange be called with every keystroke?
 		                      SourceCodeLocation location
 		stored void() changeHandler = currentChangeHandler
 		let node = div tag:"input", attributes, style, location
-		node.value = model
-		node.onchange = model = node.value; onChange(node.value); changeHandler
-		if focused: node.focus
-		
-	global inline void input: string model = ""                  // The variable that holds the value. This will be updated when the user changed the text
-		                      bool focused = false               // Whether the cursor should be placed in the field
-		                      inline void(string value) onInput  // Called after every character the user types
-		                      expand Attributes attributes = {}  // The attributes of the HTML element
-		                      expand Style style = null          // The css style of the HTML element
-		                      SourceCodeLocation location
+		node.value = model or ""
+		if realtime: node.oninput = onChange(node.value); changeHandler
+		else         node.onchange = onChange(node.value); changeHandler
+		if focused or focusTabIndex == attributes.tabIndex: node.focus
+	
+	// Automatic Editable Text: Updates the model automatically in with every keystroke
+	global inline void editableText: string model = ""                 // The variable that holds the value. This will be updated when the user changed the text
+		                             expand Attributes attributes = {} // The attributes of the HTML element
+		                             expand Style style = null         // The css style of the HTML element
+		                             dynamic data = {}                 // The data attributes of the element
+		                             SourceCodeLocation location
 		stored void() changeHandler = currentChangeHandler
-		let node = div tag:"input", attributes, style, location
-		node.value = model
-		node.oninput = model = node.value; onInput(node.value); changeHandler
-		if focused: node.focus
+		let node = div attributes, style, data, location
+		node.innerText = model
+		node.contentEditable = "plaintext-only"
+		node.oninput = model = node.innerText; changeHandler
 
+	// Automatic Text Area: Updates the model automatically in with every keystroke
 	global inline void textarea: string model = ""                 // The variable that holds the value. This will be updated when the user changed the text
 		                         bool focused = false              // Whether the cursor should be placed in the field
 		                         expand Attributes attributes = {} // The attributes of the HTML element
@@ -670,5 +861,5 @@ global unit Html
 		node.style.minHeight = 16px
 		node.style.overflow = Scroll; node.style.height = 1px; node.style.height = node.scrollHeight px; node.style.overflow = Hidden
 		node.oninput = model = node.value; node.style.overflow = Scroll; node.style.height = 1px; node.style.height = node.scrollHeight px; node.style.overflow = Hidden; changeHandler
-		if focused: node.focus
+		if focused or focusTabIndex == attributes.tabIndex: node.focus
 

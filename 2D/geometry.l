@@ -223,6 +223,7 @@ struct Vector2
 	// Moves the vector towards the given target by the given distance	
 	moveTowards: Vector2 targetPosition // The target to move towards
 		         float speed = 30       // The distance to move by
+		         void() onReachedTarget = null
 		let delta = targetPosition - this
 		if delta.x != 0 || delta.y != 0
 			delta = delta.normalized * speed
@@ -230,7 +231,10 @@ struct Vector2
 			else            x = math.max(x + delta.x, targetPosition.x)
 			if delta.y > 0: y = math.min(y + delta.y, targetPosition.y)
 			else            y = math.max(y + delta.y, targetPosition.y)
-		
+		else
+		if onReachedTarget != null
+			onReachedTarget
+
 	// Transforms the vector by a given matrix
 	transform: Matrix2D matrix // The matrix to transform the vector by
 		let ax = x, ay = y
@@ -987,8 +991,18 @@ global transient unit System
 		                                    Vector2 pos,                   // The position of the current item
 		                                    int i                          // The index of the current item of the list we are iterating over with forCentered
 		                                ) do                               // Do this for each item in a list
-		for(let _subject=subject, _center = center, _delta = delta, _grid=grid, _y=0, _yPos=_center.y-(_grid.y-1)*_delta.y/2; _y<_grid.y; ++_y, _yPos += _delta.y) for(let _x=0, _xPos = _center.x-(_grid.x-1)*_delta.x/2; _x < _grid.x; ++_x, _xPos += _delta.x) {let i = _y*_grid.x+_x; do(_subject[i], new Vector2(_xPos, _yPos, _center.location || _delta.location ? new SourceCodeLocation(null, 0, 0, _center.location, _delta.location) : null), i)}
-
+		for(let i=0, _subject=subject, _center = center, _delta = delta, _grid=grid, _y=0, _yPos=_center.y-(_grid.y-1)*_delta.y/2; _y<_grid.y; ++_y, _yPos += _delta.y) for(let _x=0, _xPos = _center.x-(_grid.x-1)*_delta.x/2; _x < _grid.x && i < _subject.length; ++_x, _xPos += _delta.x, i++) {do(_subject[i], new Vector2(_xPos, _yPos, _center.location || _delta.location ? new SourceCodeLocation(null, 0, 0, _center.location, _delta.location) : null), i)}
+	
+	global inline js void forPositions: int to                             // The exclusive upper bound to iterate towards
+		                                IntVector2 grid                    // Align items in a grid with this size
+		                                Vector2 center = {0,0}             // Center items at this position
+		                                implicit Vector2 delta = {300,300} // Distance between items
+		                                inline -> void(
+		                                    T it,                          // The current item of the list we are iterating over with forCentered
+		                                    Vector2 pos,                   // The position of the current item
+		                                    int i                          // The index of the current item of the list we are iterating over with forCentered
+		                                ) do                               // Do this for each item in a list
+		for(let i=0, _center = center, _delta = delta, _grid=grid, _y=0, _yPos=_center.y-(_grid.y-1)*_delta.y/2; _y<_grid.y; ++_y, _yPos += _delta.y) for(let _x=0, _xPos = _center.x-(_grid.x-1)*_delta.x/2; _x < _grid.x && i < to; ++_x, _xPos += _delta.x, i++) {do(i, new Vector2(_xPos, _yPos, _center.location || _delta.location ? new SourceCodeLocation(null, 0, 0, _center.location, _delta.location) : null), i)}
 
 // Converts positions within an isomatic grid with the origin in the north
 // Tilt your head slighly to the right to visualize the directions

@@ -29,6 +29,9 @@ immutable struct int
 	// The smallest possible integer value
 	const minValue = -2147483648
 	
+	// Indicates that the variable isn't defined at all, useful for importet data (e.g  from JSON)
+	const inline js int undefined := undefined
+	
 	// The remainer after a division by the given value. The sign stays the same.
 	inline js int remainder: int value // The value to divide by
 		(this % value)
@@ -189,8 +192,13 @@ immutable struct float
 	// The smallest possible floating point value
 	const inline js float minValue := -Number.MAX_VALUE
 	
+	// Indicates that the variable isn't defined at all, useful for importet data (e.g  from JSON)
+	const inline js int undefined := undefined
+	
+	// Positiv infinity
 	const inline js float infinity := Number.POSITIVE_INFINITY
 	
+	// Can result from failed conversion or operations with undefined or complex result
 	const inline js float notANumber := Number.NaN
 	
 	// The remainer after a division by the given value. The sign stays the same.
@@ -413,7 +421,7 @@ immutable class string
 		this.split("").join(String.fromCharCode(charCode))
 		
 	inline js string replace: string value
-		                      nocolon string with
+		                      nocolon implicit string with
 		(this = this.replace(new RegExp(value, "g"), with))
 		
 	js string replaced: string value
@@ -502,14 +510,15 @@ class List<T>
 		for(let _subject=[...this], i=_subject.length-1; i>=0; --i) do(_subject[i], i)
 			
 	js void eachDistinct: TKey(T it) selector
-		                         void(
-		                             TKey it,
-		                             T[] items,
-		                             int i
-		                         ) do
+		                  void(
+		                      TKey it,
+		                      T[] items,
+		                      int i
+		                  ) do
 		if(this.length > 0) {
-			let _subject = this.sort((a,b) => selector(a) - selector(b))
-			for(let _nextIndex=1, it = selector(_subject[0]), i=0; _nextIndex<_subject.length; ++_nextIndex) { 
+			let _subject = [...this].sort((a,b) => selector(a) - selector(b))
+			let it = selector(_subject[0]), i=0;
+			for(let _nextIndex=1; _nextIndex<_subject.length; ++_nextIndex) { 
 				let _nextIt = selector(_subject[_nextIndex]);
 				if(_nextIt != it) {
 					let items = _subject.slice(i, _nextIndex);
@@ -518,6 +527,8 @@ class List<T>
 					i = _nextIndex;
 				}
 			}
+			let items = _subject.slice(i, _subject.length);
+			do(it, items, i)
 		}
 			
 	// Add an item to the end of the list
@@ -564,6 +575,11 @@ class List<T>
 	inline js void insert: T item    // The item to insert
 		                   index = 0 // Insert the item at this index
 		this.splice(index, 0, item)
+		
+	// Insert an item at a given index
+	inline js void insert: T item    // The item to insert
+		                   T after
+		this.splice(this.indexOf(after)+1, 0, item)
 		
 	// Remove an item from the list
 	// Example: Remove the current player instrance from the list of playeres when they died
@@ -744,11 +760,8 @@ class List<T>
 	// Example: Print and remove "Apple" from the list
 	//     let fruits = ["Apple", "Lemon", "Orange"]
 	//     print fruits.popFirst
-	js T popFirst
-		if(this.length == 0) return null
-		let firstItem = this[0]
-		this.splice(0, 1)
-		return firstItem
+	inline js T popFirst
+		this.shift()
 	
 	// Gets the number of items in the list
 	inline js int length() this.length
@@ -891,6 +904,10 @@ class List<T>
 	T[] orderBy: float(T it) expression            // First order by this expression
 		         label nocolon string(T it) thenBy // Then order by this expression
 		return this.sort(expression(a) - expression(b) || thenBy(a) compareTo thenBy(b))
+		
+	T[] orderBy: string(T it) expression           // First order by this expression
+		         label nocolon float(T it) thenBy // Then order by this expression
+		return this.sort(expression(a) compareTo expression(b) || thenBy(a) - thenBy(b))
 		
 	T[] orderBy: string(T a) expression // First order by this expression
 		return this.sort(expression(a) compareTo expression(b))

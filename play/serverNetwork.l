@@ -137,6 +137,7 @@ transient skipInit unit ServerNetwork
 			input.localUser.id = userId
 			math.setRandomSeed seed
 			PeerNetwork.retries = 0
+			PeerNetwork.dataChannelId = 0
 			core.serverStartTime = serverStartTime
 			core.mode = Ping
 			core.storeUserId
