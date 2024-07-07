@@ -753,7 +753,7 @@ skipInit transient unit statistics
 			nextSendTime = Time.realTime + core.sendStatisticsEvery
 	
 	// Log game events (like scores, playtimes, etc)
-	log: any value
+	log: dynamic value
 		value.frame = Time.frame
 		this.gameLogs.add value
 	
