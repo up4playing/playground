@@ -1600,7 +1600,7 @@ transient DisplayItem DisplayImage
 		graphics.context.globalAlpha = this.alpha
 		if(this.clippingPath) this.startClipping()
 			
-		if(this.color.hex == "#ffffff" || this.color.hex == "#ffffffff") {
+		if(this.color.hex == "#ffffff" || this.color.hex == "#ffffffff" || this.color == null) {
 			try{ graphics.context.drawImage(this.htmlImage, this.sx, this.sy, this.sw, this.sh, this.x, this.y, this.w, this.h) }
 			catch(e) { log("DisplayImage: "+e.message) }
 		} else {
