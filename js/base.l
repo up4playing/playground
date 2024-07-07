@@ -798,6 +798,7 @@ class List<T>
 	
 	// Remove a random item from the list and return it
 	T popRandom()
+		if length == 0: return null
 		int index = math.randomInteger(length)
 		T item = get(index)
 		this.removeAt(index)
