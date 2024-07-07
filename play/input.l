@@ -118,6 +118,7 @@ priority class Player
 			if .phase == Up
 				if .type >= Touch or (hasTouch and .type != Touch): touches.removeAt i
 				else                                                .phase = Still
+				downTouches.remove .
 			else
 			if .phase == Down
 				.phase = Still
@@ -798,7 +799,7 @@ skipInit global unit input
 							touch = {id, player, cast inputType, type, referencePos, referencePos, referencePos, isDown:true}
 							player.touches.add touch
 								
-						player.downTouches.add touch
+						player.downTouches.ensure touch
 						player.pointerPosition = referencePos
 						internalUser.downTouches.add touch
 						if generateIntegrationTest == Clicks: integrationTest += "\tclick window:{userId} x:{referencePos.x} y:{referencePos.y}\n"
@@ -832,7 +833,6 @@ skipInit global unit input
 							touch = {id, player, cast inputType, type, referencePos, referenceStartPosition:Vector2.none, referencePos, isDown:false}
 							player.touches.add touch
 						
-						player.downTouches.remove touch
 						player.pointerPosition = referencePos
 						internalUser.upTouches.add touch
 					else
