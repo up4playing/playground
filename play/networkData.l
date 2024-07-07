@@ -80,7 +80,7 @@ http
 			let data = await (await fetch(url, {method:"POST", body:JSON.stringify(body)})).text();
 			code(data);
 		} catch(e) {
-			core.onError(e);
+			core.log(e.stack.toString());
 			else();
 		}
 		
