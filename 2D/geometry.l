@@ -223,6 +223,7 @@ struct Vector2
 	// Moves the vector towards the given target by the given distance	
 	moveTowards: Vector2 targetPosition // The target to move towards
 		         float speed = 30       // The distance to move by
+		         void() onReachedTarget = null
 		let delta = targetPosition - this
 		if delta.x != 0 || delta.y != 0
 			delta = delta.normalized * speed
@@ -230,7 +231,10 @@ struct Vector2
 			else            x = math.max(x + delta.x, targetPosition.x)
 			if delta.y > 0: y = math.min(y + delta.y, targetPosition.y)
 			else            y = math.max(y + delta.y, targetPosition.y)
-		
+		else
+		if onReachedTarget != null
+			onReachedTarget
+
 	// Transforms the vector by a given matrix
 	transform: Matrix2D matrix // The matrix to transform the vector by
 		let ax = x, ay = y
