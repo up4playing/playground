@@ -54,9 +54,6 @@ skipInit global unit Platform
 				Platform.toggleSmallScreen();
 			}
 		}
-		window.onfocus = e => {
-			if(app.updateMenu) app.updateMenu();
-		}
 	
 	start: bool isDebug
 		try
@@ -196,8 +193,11 @@ skipInit global unit Platform
 		                  void() do
 		setTimeout(do, time)
 		
-	global inline js void onBlur: void() do
+	inline js void onBlur: void() do
 		window.onblur = do
+		
+	inline js void onFocus: void() do
+		window.onfocus = do
 		
 	global inline js int interval: Time time
 		                           void(int handle) do
@@ -324,6 +324,10 @@ skipInit class Font
 	
 Node WebView
 	string url
+	
+	native void(string url) onWillNavigate
+	bool hasHandlers
+	
 	inline js void downloadURL(string url) this.downloadURL(url)
 	inline js void goBack() this.goBack()
 	
@@ -457,6 +461,8 @@ global unit Html
 			// 		node.style.transform = "translate("+style.targetTranslate+") "
 			// 	}, 1000)
 			// }
+		} else {
+			node.shadowStyle = null
 		}
 		
 	private js void addStyle: Node node, dynamic style
@@ -475,6 +481,14 @@ global unit Html
 		let rect = node.getBoundingClientRect()
 		return new Vector2((event.clientX - rect.left)/Platform.scale, (event.clientY - rect.top)/Platform.scale)
 
+	js void setCursorPosition: Node element, int position
+		const range = document.createRange();
+		const selection = window.getSelection();
+		range.setStart(element.childNodes[0], position);
+		range.collapse(true);
+		selection.removeAllRanges();
+		selection.addRange(range);
+	
 	int nodesCreated
 	int nodesUpdated
 	
@@ -494,7 +508,7 @@ global unit Html
 			let next = currentOverlay.nextSibling
 			currentOverlay.remove
 			currentOverlay = next
-		focusTabIndex = -1
+		focusTabIndex = int.minValue
 		Time.printTimer "refresh: {nodesCreated} created, {nodesUpdated} updated"
 		// if not overlayNode
 		// 	overlayNode = div style:{position:Fixed top:0 left:0 right:0 bottom:0, backgroundColor:Black, opacity:.5}
@@ -587,14 +601,20 @@ global unit Html
 		if node.src != src: node.src = src
 		return node
 
-	global WebView webview: string src = ""                   // The url of the content to display
-		                    expand Attributes attributes = {} // The attributes of the HTML element
-		                    expand Style style = null         // The css style of the HTML element
-		                    dynamic data = null               // The data attributes of the element
-		                    SourceCodeLocation location
+	global webview: string initialUrl = ""              // The url of the content to display
+		            expand Attributes attributes = {} // The attributes of the HTML element
+		            expand Style style = null         // The css style of the HTML element
+		            dynamic data = null               // The data attributes of the element
+		            void(string url) onNavigate = null
+		            SourceCodeLocation location
 		WebView node = cast div tag:"webview", attributes, style, data, location
-		if node.src != src: node.src = src
+		node.onWillNavigate = onNavigate
+		if not node.src: node.src = initialUrl
+		if !node.hasHandlers
+			node.hasHandlers = true
+			node.on "will-navigate": if node.onWillNavigate != null: node.onWillNavigate(event.url)
 		return node
+
 	global body: expand Attributes attributes = {} // The attributes of the element
 		         expand Style style = null         // Apply this css style to the element
 		         void() children
@@ -647,10 +667,12 @@ global unit Html
 			node.onmouseover = addStyle(node, onHover)
 			node.onmouseout  = setStyle(node, style)
 		
-		if text
+		if text != null
 			if node.shadowInnerHtml != text
-				node.innerHTML = node.shadowInnerHtml = text
-		else	
+				node.innerHTML = text
+				node.shadowInnerHtml = text
+		else
+			node.shadowInnerHtml = null	
 			let prevParentNode = parentNode
 			parentNode = node
 			currentNode = node.firstChild
@@ -815,6 +837,18 @@ global unit Html
 		else         node.onchange = onChange(node.value); changeHandler
 		if focused or focusTabIndex == attributes.tabIndex: node.focus
 	
+	// Automatic Editable Text: Updates the model automatically in with every keystroke
+	global inline void editableText: string model = ""                 // The variable that holds the value. This will be updated when the user changed the text
+		                             expand Attributes attributes = {} // The attributes of the HTML element
+		                             expand Style style = null         // The css style of the HTML element
+		                             dynamic data = {}                 // The data attributes of the element
+		                             SourceCodeLocation location
+		stored void() changeHandler = currentChangeHandler
+		let node = div attributes, style, data, location
+		node.innerText = model
+		node.contentEditable = "plaintext-only"
+		node.oninput = model = node.innerText; changeHandler
+
 	// Automatic Text Area: Updates the model automatically in with every keystroke
 	global inline void textarea: string model = ""                 // The variable that holds the value. This will be updated when the user changed the text
 		                         bool focused = false              // Whether the cursor should be placed in the field
