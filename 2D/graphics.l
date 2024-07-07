@@ -337,7 +337,7 @@ transient skipInit global unit graphics
 		Player[] effectiveVisibleBy = visibleFor or currentlyVisibleFor
 		return effectiveVisibleBy and clickableBy
 		     ? effectiveVisibleBy intersectWith clickableBy 
-		     : effectiveVisibleBy or clickableBy
+		     : effectiveVisibleBy or clickableBy or players
 			
 	internal js void drawMargins
 		if(graphics.effectiveScaleMode == 1) {
@@ -515,12 +515,12 @@ transient skipInit global unit graphics
 			
 		// Handle click (only visible buttons are clickable)
 		let effectiveClickableBy = getClickableBy(visibleFor, clickableBy)
-		if size.x == 0 and size.y == 0: size = image.size; else
-		if size.y == 0: size.y = size.x * image.size.y / image.size.x
-		input.onTouchDown position, size + clickableMargin, by:effectiveClickableBy, showClickableArea, do:onClick
-		if hotkey
-			input.onKeyDown hotkey, by:effectiveClickableBy
-				onClick null
+			if size.x == 0 and size.y == 0: size = image.size; else
+			if size.y == 0: size.y = size.x * image.size.y / image.size.x
+			input.onTouchDown position, size + clickableMargin, by:effectiveClickableBy, showClickableArea, do:onClick
+			if hotkey
+				input.onKeyDown hotkey, by:effectiveClickableBy
+					onClick null
 		
 	// ------------------------------------------------------- Text -------------------------------------------------------
 	
@@ -590,11 +590,11 @@ transient skipInit global unit graphics
 		if onClick != null
 			// Handle click (only visible buttons are clickable)
 			let effectiveClickableBy = getClickableBy(visibleFor, clickableBy)
-			Vector2 effectiveSize = {sizeX + clickableMargin.x, sizeY + clickableMargin.y}
-			input.onTouchDown position, size:effectiveSize, by:effectiveClickableBy, showClickableArea, do:onClick
-			if hotkey
-				input.onKeyDown hotkey, by:effectiveClickableBy
-					onClick null
+				Vector2 effectiveSize = {sizeX + clickableMargin.x, sizeY + clickableMargin.y}
+				input.onTouchDown position, size:effectiveSize, by:effectiveClickableBy, showClickableArea, do:onClick
+				if hotkey
+					input.onKeyDown hotkey, by:effectiveClickableBy
+						onClick null
 
 	// ------------------------------------------------------- Button -------------------------------------------------------
 	
@@ -634,7 +634,7 @@ transient skipInit global unit graphics
 		float scale = 1.0
 		Vector2 effectiveSize = image ? getEffectiveSize(image.size, size) : {getTextWidth(text, size:textSize), textSize}
 		let effectiveClickableBy = getClickableBy(visibleFor, clickableBy)
-		if enabled and onClick != null
+		if enabled and effectiveClickableBy and onClick != null
 			// Handle click (only visible buttons are clickable)
 			Vector2 sizeWithMargin = effectiveSize + clickableMargin
 			bool switchFrameOnHover = frameOnHover != -1 and frame == -1 and (image?.frames.length > frameOnHover or accentImage?.frames.length > frameOnHover)
