@@ -1515,6 +1515,14 @@ class Map<TKey, TValue>
 		                       TValue value
 		(this.get(key) || this.setAndReturn(key, value))
 		
+	// Add 1 to item of the map
+	inline js T incrementItem: TKey key
+		this.set(key, this.get(key)+1)
+		
+	// Subtract 1 to item of the map
+	inline js T decrementItem: TKey key
+		this.set(key, this.get(key)-1)
+		
 	// Remove the item assosiated with the given key
 	inline js void delete: TKey key  // The key of the item to remove from the map
 		this.delete(key)
