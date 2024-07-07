@@ -403,6 +403,8 @@ skipInit global unit input
 	// A list of all players
 	global Player[] players
 		
+	bool active = true
+		
 	// The player hosting the current session
 	global Player host
 		
@@ -1050,6 +1052,7 @@ skipInit global unit input
 		                HorizontalAlignment align = Center  // The horizontal alignment of the touch area
 		                VerticalAlignment valign = Middle   // The vertical alignment of the touch area
 		                void(Touch touch) do                // Do this for each touch or click
+		if not active: return
 		let sizeX = size.x
 		let sizeY = size.y || size.x
 		let x = align == Left ? position.x : align  == Center ? position.x-sizeX/2 : position.x-sizeX
@@ -1097,6 +1100,7 @@ skipInit global unit input
 		                HorizontalAlignment align = Center  // The horizontal alignment of the touch area
 		                VerticalAlignment valign = Middle   // The vertical alignment of the touch area
 		                void(Touch touch) do                // Do this for each touch or click
+		if not active: return
 		let halfSizeX = size.x/2
 		let halfSizeY = (size.y || size.x)/2
 		let x = align == Left ? position.x+halfSizeX : align  == Center ? position.x : position.x-halfSizeX
@@ -1138,6 +1142,7 @@ skipInit global unit input
 		                bool showClickableArea = false      // Highlight the clickable area for debugging
 		                bool markAsHandled = true           // Mark the touch as handled so it won't trigger more touch events
 		                void(Touch touch) do                // Do this for each touch or click
+		if not active: return
 		let referencePosition = position.getTransformed(graphics.localMatrix)
 		let referenceRadius = radius * graphics.localMatrix.scaleVector.x
 		for getTargetedPlayers(by) -> player
@@ -1173,6 +1178,7 @@ skipInit global unit input
 		                bool showClickableArea = false      // Highlight the clickable area for debugging
 		                bool markAsHandled = true           // Mark the touch as handled so it won't trigger more touch events
 		                void(Touch touch) do                // Do this for each touch or click
+		if not active: return
 		Vector2[] poly
 		for points: poly.add (position + .).transform(graphics.localMatrix)
 			
@@ -1209,6 +1215,7 @@ skipInit global unit input
 	// Do something when the player touches or clicks, even if the event is already handled
 	global onTouchDownAny: implicit nocolon Player[] by = null // Only consider touches or clicks by this player or list of players
 		                   void(Touch touch) do                // Do this for each touch or click, even those that are already marked as handled
+		if not active: return
 		for getTargetedPlayers(by) -> player
 			for internalUsers[player.id].downTouches -> touch
 				if player.enableTouch or touch.type != Touch
@@ -1275,7 +1282,7 @@ skipInit global unit input
 	global onTouchMove: Touch touch                 // Only consider this particular touch or click
 		                triggeredOnTouchDown = true // Also trigger this event right after the player touches or clicks before moving
 		                void(Touch touch) do        // Do this for each touch or click
-		if !touch: return
+		if not touch or not active: return
 		let touchId = touch.id
 		let user = internalUsers[touch.by.id]
 			if triggeredOnTouchDown
@@ -1294,6 +1301,7 @@ skipInit global unit input
 	//                 print "Touch moved to {touch.position}"
 	global onTouchMove: implicit nocolon Player[] by = null // Only consider touches or clicks by this player or list of players
 		                void(Touch touch) do                // Do this for each touch or click
+		if not active: return
 		for getTargetedPlayers(by)
 			for internalUsers[.id].movingTouches
 				do .
@@ -1320,7 +1328,7 @@ skipInit global unit input
 	global onTouchUp: Touch touch          // Only consider this particular touch or click
 		              markAsHandled = true // Mark the touch as handled so it won't trigger more touch events
 		              void(Touch touch) do // Do this for each touch or click
-		if !touch: return
+		if not touch or not active: return
 		let touchId = touch.id
 		let user = internalUsers[touch.by.id]
 			for user.upTouches
@@ -1338,6 +1346,7 @@ skipInit global unit input
 	global onTouchUp: implicit nocolon Player[] by = null // Only consider touches or clicks by this player or list of players
 		              bool markAsHandled = true           // Mark the touch as handled so it won't trigger more touch events
 		              void(Touch touch) do                // Do this for each touch or click
+		if not active: return
 		for getTargetedPlayers(by)
 			for internalUsers[.id].upTouches
 				if !.handled
@@ -1360,6 +1369,7 @@ skipInit global unit input
 		              bool showClickableArea = false      // Highlight the clickable area for debugging
 		              bool markAsHandled = true           // Mark the touch as handled so it won't trigger more touch events
 		              void(Touch touch) do                // Do this for each touch or click
+		if not active: return
 		Vector2[] poly = [
 			{ position.x-size.x/2, position.y-size.y/2 }.transform(graphics.localMatrix),
 			{ position.x+size.x/2, position.y-size.y/2 }.transform(graphics.localMatrix),
@@ -1391,6 +1401,7 @@ skipInit global unit input
 		              bool showClickableArea = false      // Highlight the clickable area for debugging
 		              bool markAsHandled = true           // Mark the touch as handled so it won't trigger more touch events
 		              void(Touch touch) do                // Do this for each touch or click
+		if not active: return
 		let referencePosition = position.transform(graphics.localMatrix)
 		let referenceRadius = radius * graphics.localMatrix.scaleVector.x
 		for getTargetedPlayers(by) -> player
@@ -1412,6 +1423,7 @@ skipInit global unit input
 	// Do something when a player scrolls with the touch pad or mouse wheel
 	global onScroll: implicit nocolon Player[] by = null // Only consider events by this player or list of players
 		             void(ScrollEvent event) do          // Do this for each event
+		if not active: return
 		for getTargetedPlayers(by)
 			for internalUsers[.id].wheelEvents
 				do .
@@ -1423,6 +1435,7 @@ skipInit global unit input
 		                    bool showClickableArea = false      // Highlight the rectangle for debugging
 		                    bool markAsHandled = true           // Mark the touch as handled so it won't trigger more events
 		                    void(ScrollEvent event) do          // Do this for each event
+		if not active: return
 		Vector2[] poly = [
 			{ position.x-size.x/2, position.y-size.y/2 }.transform(graphics.localMatrix),
 			{ position.x+size.x/2, position.y-size.y/2 }.transform(graphics.localMatrix),
