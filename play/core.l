@@ -35,6 +35,7 @@ transient skipInit unit core
 	internal bool startInLobby      // Connected sessions usually start in the lobby, local sessions start in the app
 	private int joinFrame           // The frame the local user joined
 	bool isPremiere
+	UserAccount account
 	
 	// Checksum
 	public float[] checksums
@@ -52,7 +53,12 @@ transient skipInit unit core
 		let user = input.localUser
 		user.startInputFrame 0
 		
-		input.handleJoin frame 
+		account = Platform.getLocalStorageObject("user") or {}
+		if not account._id
+			account._id = generateObjectId
+			Platform.setLocalStorageObject("user", account)
+			
+		input.handleJoin frame, account
 		user.collectInputs = true
 		log "startConnected", joinFrame
 		
@@ -63,10 +69,18 @@ transient skipInit unit core
 		checkSaveState
 		log "Start", user.id, frame, startTime, serverStartTime
 		
+	js string generateObjectId
+		const timestamp = Math.floor(new Date().getTime() / 1000).toString(16);
+		const machineIdentifier = Math.floor(Math.random() * 0xFFFFFF).toString(16).padStart(6, '0');
+		const processIdentifier = Math.floor(Math.random() * 0xFFFF).toString(16).padStart(4, '0');
+		const counter = Math.floor(Math.random() * 0xFFFFFF).toString(16).padStart(6, '0');
+		return (timestamp + machineIdentifier + processIdentifier + counter).toLowerCase();
+		
 	startLocal
 		mode = Local
 		input.internalUsers.clear
 		math.setRandomSeed math.generateRandomSeed 
+		// initDatabase
 		stop
 		
 	// Clear all inputs and reset the application to the first frame
@@ -157,7 +171,7 @@ transient skipInit unit core
 		Loca.setLanguage prevLanguage
 		Player[] newPlayers
 		for input.players
-			Player user = {id:.id, index:.index}
+			Player user = .cloneBaseData
 			input.playersById[.id] = user
 			newPlayers.add user
 		input.players = newPlayers

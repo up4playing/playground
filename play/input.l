@@ -4,6 +4,8 @@ transient class InternalUser
 	bool local          // Is this the local user?
 	int connectionId    // The connectionId increases with every connection, even if the same user reconnects
 	int index
+	string _id          // User account id
+	string name         // User account name
 	
 	// Event Stream
 	bool collectInputs       // When we are done pinging, we add a join event and start collecting inputs
@@ -85,13 +87,19 @@ transient class InternalUser
 		smoothFrame = frame - bufferFrames		
 		
 priority class Player
+	string _id             // User account id
+	Language language
+	string email
+	string name
+	int[] colorPreferences
+	
 	int id
 	int index
 	Color color, darkColor
-	string name
 	int score
 	Vector2 pointerPosition
 	
+	internal Player cloneBaseData := {_id, language, email, name, colorPreferences, id, index}
 	toString := name or (color ? color.name : "")
 	highlightPerspectiveColor := input.showPerspectiveOf == null or input.showPerspectiveOf == this ? this.color : this.darkColor
 	
@@ -112,7 +120,7 @@ priority class Player
 	
 	// The current player instance, equivalent to "this"
 	inline js Player me() this
-
+	
 	internal clearEvents
 		bool hasTouch = touches.any.type == Touch
 		for touches backwards
@@ -122,6 +130,13 @@ priority class Player
 			else
 			if .phase == Down
 				.phase = Still
+				
+UserAccount
+	string _id
+	Language language
+	string email
+	string name
+	string colorPreferences
 	
 enum InputType: None, TouchDown, TouchMove, TouchUp, Scroll, KeyDown, KeyUp, TextInput, Stick, Trigger, Grip, ButtonDown, ButtonUp, ControllerTransform, HeadTransform, DeviceRotation, Join, SetState, Navigate, GameController, String, Json, Object
 		
@@ -667,10 +682,15 @@ skipInit global unit input
 		inputs.writeUnsignedInt16 cast InputType.SetState
 		inputs.writeBuffer buffer
 		
-	internal handleJoin: int frame
+	internal handleJoin: int frame, UserAccount account
 		let inputs = localUser.inputs
 		inputs.writeInt32 frame
 		inputs.writeInt16 cast InputType.Join
+		inputs.writeString account._id
+		inputs.writeInt8 cast account.language
+		inputs.writeString account.name
+		inputs.writeString account.email
+		inputs.writeString account.colorPreferences
 				
 	// Handles navigating back or forward in the browser	
 	internal handleNavigate: string url
@@ -921,6 +941,14 @@ skipInit global unit input
 					dynamic object = valueString.toJson
 					networkData.call id, object
 					if Platform.waitingForInitialData > 0: Platform.waitingForInitialData--
+				else
+				if inputType == Join
+					player._id = internalUser._id = inputs.readString
+					player.language = cast inputs.readInt8
+					player.name = internalUser.name = inputs.readString 
+					player.email = inputs.readString
+					string colorPreferencesString = inputs.readString
+					player.colorPreferences = colorPreferencesString.split(",").select.toInt
 	
 		// for players
 		// 	let internalUser = internalUsers[.id]
