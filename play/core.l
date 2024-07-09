@@ -3,8 +3,9 @@ transient immutable RoomInfo: int time, userId
 enum SendInputsMode: None, Peer, Server
 	
 transient skipInit unit core
-	int eventStreamVersion = 1
+	int eventStreamVersion = 2
 	int sendInterval = 1
+	int milestoneInterval = 100
 	int smoothStrength = 90
 	bool smoothTouchPosition = true
 	bool everybodyCanClickForEverybody = false
@@ -175,11 +176,20 @@ transient skipInit unit core
 	// to only replay from the beginning when going to a frame in the past
 	goToFrame: int targetFrame, replayFromStart = false
 		isPremiere = false
-		if replayFromStart: frameWithNewWatches = 0
-		if targetFrame < frame or replayFromStart: reset
+		if replayFromStart
+			frameWithNewWatches = 0
+			reset
+		else
+		if targetFrame < frame
+			let milestoneIndex = math.floor(targetFrame/milestoneInterval) - 1
+			if 0 <= milestoneIndex < milestones.length
+				let milestone = milestones[milestoneIndex]
+				frame = (milestoneIndex+1) * milestoneInterval
+				rewind milestone
+			else
+				reset
 			
-		while frame < targetFrame
-			step fastForward:true, draw:false
+		replay frame to targetFrame
 		adjustStartTime
 		animationFrame
 		isPremiere = true
@@ -280,7 +290,6 @@ transient skipInit unit core
 			
 	internal string logs
 	private float lastNetworkFrame, lastAnimationFrame, drawTime, tickTime, restoreTime, replayTime, saveTime
-	private int replayFrames
 	internal int displayItems
 	int tickMessageSize
 	bool verbose = false
@@ -401,7 +410,7 @@ transient skipInit unit core
 		// Advance frame
 		frame++
 		if frames < frame: frames = frame
-		if frameWithNewWatches < frame: frameWithNewWatches = frame
+		if frame > frameWithNewWatches: frameWithNewWatches = frame
 			
 	// Clear screen, process application tick, and draw all graphics
 	// This is called in step.
@@ -439,6 +448,8 @@ transient skipInit unit core
 	private int snapshotFrame = -1
 	private int nextSnapshotFrame = -1
 	
+	private Buffer[] milestones
+	
 	// This is called at the begining of animationFrame before we start stepping.
 	private checkRewindAndReplayState
 		if (mode != Connected and !simulateRollback) or input.internalUsers.length == 1: return
@@ -446,15 +457,18 @@ transient skipInit unit core
 		if mode == Local and simulateRollback: nextSnapshotFrame = frame - 5
 		else                                   nextSnapshotFrame = (input.internalUsers.min math.min(.smoothFrame, .inputFrame) where . and not .local)+1
 		
-		if snapshotFrame != -1: rewindAndReplayState snapshot, snapshotFrame
+		if snapshotFrame != -1
+			if verbose
+				core.log "rewindAndReplayState", snapshotFrame, frame, nextSnapshotFrame
+				for input.internalUsers
+					core.log "\t<{.id}>", .smoothFrame, .inputFrame, .local
+			
+			let prevSnapshotFrame = snapshotFrame
+			snapshotFrame = -1
+			rewind snapshot
+			replay prevSnapshotFrame to frame
 
-	private rewindAndReplayState: Buffer snapshot, int snapshotFrame
-		if verbose
-			core.log "rewindAndReplayState", snapshotFrame, frame, nextSnapshotFrame
-			for input.internalUsers
-				core.log "\t<{.id}>", .smoothFrame, .inputFrame, .local
-		
-		// Rewind
+	private rewind: Buffer snapshot
 		restoreTime = Time.measure
 			snapshot.rewind
 			Snapshot.deserialize snapshot
@@ -464,24 +478,25 @@ transient skipInit unit core
 				let user = input.internalUsers[.]
 				user.inputs.readPos = snapshot.readInt
 		
-		// Replay
-		let targetFrame = frame
-		frame = replayFrom = snapshotFrame
-		replayFrames = targetFrame - frame
-		this.snapshotFrame = -1
-		
+	private replay: int from, int to
 		replayTime = Time.measure
-			while frame < targetFrame
+			frame = replayFrom = from
+			while frame < to
 				step fastForward:true, draw:false			
 			
 	// This is called at the beginning of each step
 	private checkSaveState
-		if mode != Connected and !simulateRollback: return
+		if input.isCertain and frame > 0 and frame % milestoneInterval == 0
+			Buffer buffer = {}
+			saveState buffer
+			int milestoneIndex = math.floor(frame / milestoneInterval) - 1
+			milestones[milestoneIndex] = buffer
+			watch "Milestone {milestoneIndex}"
 			
-		if snapshotFrame == -1 and frame >= nextSnapshotFrame
+		if (mode == Connected or simulateRollback) and snapshotFrame == -1 and frame >= nextSnapshotFrame
 			snapshotFrame = frame
 			saveState snapshot
-				
+			
 	string[] serializeLogs
 			
 	private saveState: Buffer snapshot
@@ -498,6 +513,10 @@ transient skipInit unit core
 			if(snapshot != secondSnapshotForTesting)
 				onError {"Inconsistent serialization"}
 												
+		snapshot.writeInt input.internalUsers.length
+		for input.internalUsers
+			snapshot.writeInt .inputs.readPos
+				
 		// Checksum
 		if players.length >= 2 and input.isCertain
 			float myChecksum = snapshot.checksum
@@ -506,10 +525,6 @@ transient skipInit unit core
 			if !theirChecksum                             checksums[frame] = myChecksum; else
 			if !theirChecksum.isApproximately(myChecksum) onWrongChecksum frame, mine:myChecksum theirs:theirChecksum
 			lastChecksumFrame = frame
-			
-		snapshot.writeInt input.internalUsers.length
-		for input.internalUsers
-			snapshot.writeInt .inputs.readPos
 				
 	inline js int currentTime := Date.now()
 	
@@ -549,6 +564,11 @@ transient skipInit unit core
 			buffer.writeInt .id
 			buffer.writeBool .local
 			buffer.writeBuffer .inputs
+			
+		buffer.writeInt milestones.length
+		for milestones
+			buffer.writeBuffer .
+			
 		let date = Date.now
 		file.saveBinary "{Platform.appName} {date.dayShortMonthNameYearString} {date.hourMinuteSecondString} v{Platform.buildVersion}.state", buffer
 		
@@ -629,6 +649,14 @@ transient skipInit unit core
 				if user.local: input.localUser = user
 				buffer.readBuffer user.inputs
 				input.internalUsers[user.id] = user
+			
+			if version >= 2
+				milestones.clear
+				let milestoneCount = buffer.readInt
+				for milestoneCount
+					Buffer milestone = {}
+					buffer.readBuffer milestone
+					milestones.add milestone
 				
 			// Replay
 			for input.internalUsers if .
@@ -637,9 +665,10 @@ transient skipInit unit core
 				.startInputFrame frames
 			math.setRandomSeed randomSeed
 			
-			Platform.sendClearTimeline
-			goToFrame targetFrame, replayFromStart:true
-			Platform.sendFrame(targetFrame, frames)
+			if Platform.isDebug: Platform.sendClearTimeline
+			frame = int.maxValue
+			goToFrame targetFrame
+			if Platform.isDebug: Platform.sendFrame(targetFrame, frames)
 		
 	string roomString
 	int roomId
