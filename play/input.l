@@ -999,7 +999,6 @@ skipInit global unit input
 			Platform.receivedInitialData = 0
 						
 	internal updatePlayers
-		players.orderBy.id
 		for players
 			.index = i
 			.color = graphics.defaultColors[i]
