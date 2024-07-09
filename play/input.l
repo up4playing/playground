@@ -507,6 +507,13 @@ skipInit global unit input
 				e.preventDefault();
 			}
 			else
+			if(ctrlOrCmd && key == "o") {
+				// Open event stream or state
+				if(Platform.debug) core.openEventStream();
+				else               core.openState();
+				e.preventDefault();
+			}
+			else
 			if(ctrlOrCmd && key == "l") {
 				// Save logs
 				statistics.saveStatistics()
@@ -916,12 +923,6 @@ skipInit global unit input
 						c.x.name = "SQUARE"
 						c.y.name = "TRIANGLE"
 				else
-				if inputType == SetState
-					core.snapshotBuffer.reset
-					inputs.readBuffer core.snapshotBuffer
-					Snapshot.deserialize core.snapshotBuffer
-					math.recreateRandomValues
-				else
 				if inputType == String
 					int id = inputs.readInt
 					string valueString = inputs.readString
@@ -941,6 +942,17 @@ skipInit global unit input
 					dynamic object = valueString.toJson
 					networkData.call id, object
 					if Platform.waitingForInitialData > 0: Platform.waitingForInitialData--
+				else
+				if inputType == SetState
+					core.snapshotBuffer.reset
+					inputs.readBuffer core.snapshotBuffer
+					Snapshot.deserialize core.snapshotBuffer
+					math.recreateRandomValues
+					
+					for players as player
+						let user = internalUsers.find.name == player.name
+						player.id = user.id
+						
 				else
 				if inputType == Join
 					player._id = internalUser._id = inputs.readString

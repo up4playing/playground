@@ -221,7 +221,7 @@ transient skipInit unit Platform
 		if(window._sendErrorToEditor) _sendErrorToEditor(error)
 		else                          console.error(error)
 		
-	internal inline js void sendToEditor: any message
+	internal inline js void sendToEditor: dynamic message
 		if(Platform.isDebug) _sendToEditor(message)
 		
 	private inline js void sendFinished

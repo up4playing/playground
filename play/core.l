@@ -567,11 +567,17 @@ transient skipInit unit core
 	saveEventStream
 		Buffer buffer = {}
 		buffer.writeInt eventStreamVersion
+		
+		Buffer finalSnapshot = {}
+		Snapshot.serialize finalSnapshot
+		buffer.writeBuffer finalSnapshot
+		
 		buffer.writeInt frame-1
 		buffer.writeInt frames
 		buffer.writeString math.randomSeed
 		buffer.writeBool startInLobby
 		buffer.writeBool Platform.isStaging
+		
 		let userCount = input.internalUsers.count . != null
 		buffer.writeInt8 userCount
 		for input.internalUsers if .
@@ -642,12 +648,24 @@ transient skipInit unit core
 				else
 		else
 			else
+	
+	openState
+		file.openBinary
+			int version = buffer.readInt
+			Buffer finalSnapshot = {}
+			buffer.readBuffer finalSnapshot
+			input.handleSetState finalSnapshot
 						
 	openEventStream
 		Platform.pause
 		file.openBinary
 			// Read event stream
 			int version = buffer.readInt
+			
+			if version >= 2
+				Buffer finalSnapshot = {}
+				buffer.readBuffer finalSnapshot
+			
 			int targetFrame = buffer.readInt
 			frames = buffer.readInt
 			let randomSeed = buffer.readString
