@@ -5,7 +5,7 @@ enum SendInputsMode: None, Peer, Server
 transient skipInit unit core
 	int eventStreamVersion = 2
 	int sendInterval = 1
-	int milestoneInterval = 100
+	int milestoneInterval = 1800
 	int smoothStrength = 90
 	bool smoothTouchPosition = true
 	bool everybodyCanClickForEverybody = false
@@ -151,6 +151,7 @@ transient skipInit unit core
 			input.localUser = input.internalUsers[localUserId]
 			input.localPlayer = input.playersById[localUserId]
 			input.updatePlayers
+			account = {}
 			
 		// Reset read pos to replay inputs from the beginning
 		for input.internalUsers if .
@@ -553,6 +554,7 @@ transient skipInit unit core
 		if Platform.mode < Play: adjustStartTime
 			
 	Buffer snapshotBuffer = {}
+	Buffer eventStreamSnapshotBuffer = {}
 		
 	saveEventStreamAndLogs
 		if input.isCertain
@@ -568,9 +570,9 @@ transient skipInit unit core
 		Buffer buffer = {}
 		buffer.writeInt eventStreamVersion
 		
-		Buffer finalSnapshot = {}
-		Snapshot.serialize finalSnapshot
-		buffer.writeBuffer finalSnapshot
+		eventStreamSnapshotBuffer.reset
+		Snapshot.serialize eventStreamSnapshotBuffer
+		buffer.writeBuffer eventStreamSnapshotBuffer
 		
 		buffer.writeInt frame-1
 		buffer.writeInt frames

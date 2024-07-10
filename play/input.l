@@ -100,7 +100,7 @@ priority class Player
 	Vector2 pointerPosition
 	
 	internal Player cloneBaseData := {_id, language, email, name, colorPreferences, id, index}
-	toString := name or (color ? color.name : "")
+	toString := name or (color ? color.name : "Player {index+1}")
 	highlightPerspectiveColor := input.showPerspectiveOf == null or input.showPerspectiveOf == this ? this.color : this.darkColor
 	
 	// Touch input
@@ -509,8 +509,8 @@ skipInit global unit input
 			else
 			if(ctrlOrCmd && key == "o") {
 				// Open event stream or state
-				if(Platform.debug) core.openEventStream();
-				else               core.openState();
+				if(Platform.isDebug) core.openEventStream();
+				else                 core.openState();
 				e.preventDefault();
 			}
 			else
@@ -944,14 +944,25 @@ skipInit global unit input
 					if Platform.waitingForInitialData > 0: Platform.waitingForInitialData--
 				else
 				if inputType == SetState
+					// Set state
 					core.snapshotBuffer.reset
 					inputs.readBuffer core.snapshotBuffer
 					Snapshot.deserialize core.snapshotBuffer
 					math.recreateRandomValues
 					
+					// Match users
+					playersById.clear
+					let availableUsers = clone input.internalUsers
 					for players as player
-						let user = internalUsers.find.name == player.name
+						let user = availableUsers.popWhere.name == player.name
+						if not user: user = availableUsers.popWhere.index == player.index
+						if not user: availableUsers.pop
 						player.id = user.id
+						
+						user._id = player._id
+						user.index = player.index
+						user.name = player.name
+						playersById[player.id] = player
 						
 				else
 				if inputType == Join
@@ -999,6 +1010,7 @@ skipInit global unit input
 			Platform.receivedInitialData = 0
 						
 	internal updatePlayers
+		players.orderBy.id
 		for players
 			.index = i
 			.color = graphics.defaultColors[i]
