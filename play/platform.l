@@ -1,19 +1,10 @@
+CompilerSettings
+	logSerialize = false
+	
 enum PlatformMode: Pause, Manipulator, Slide, Play, Record
 enum OperatingSystem: Windows, Mac, Linux, Android, iOS
 enum IntervalMode: JavaScriptInterval, AnimationFrame
 
-// Basic platform functionality
-// Screen space
-// - has always the reference size (1920 x 1080 by default) on all platforms
-// - the origin is in the middle of the screen
-//
-//          Top              → x
-//     Left  +  Right      ↓ 
-//         Bottom          y
-//
-// Pixel space
-// - the size in the screen size in pixels of the target platform
-// - the origin in the top left corner
 transient skipInit unit Platform
 	// Configuration
 	public userCount = 4
@@ -40,6 +31,7 @@ transient skipInit unit Platform
 	internal bool fastForward
 	internal int waitingForInitialData
 	internal int receivedInitialData
+	internal bool logSerialize
 	
 	private inline js void initMedia
 		_constCache = [null]
@@ -63,6 +55,7 @@ transient skipInit unit Platform
 		Platform.isMobile = false;
 		Platform.isBrowser = !window.require;
 		Platform.isNode = window.process && process.versions.node
+		Platform.logSerialize = window._serializeLog != null
 		let platform = navigator.platform
 		Platform.os = platform.startsWith("Win") ? 0 : platform.startsWith("Mac") ? 1 : 2
 		if(/(android|bb\d+|meego).+mobile|avantgo|bada\/|blackberry|blazer|compal|elaine|fennec|hiptop|iemobile|ip(hone|od)|ipad|iris|kindle|Android|Silk|lge |maemo|midp|mmp|netfront|opera m(ob|in)i|palm( os)?|phone|p(ixi|re)\/|plucker|pocket|psp|series(4|6)0|symbian|treo|up\.(browser|link)|vodafone|wap|windows (ce|phone)|xda|xiino/i.test(navigator.userAgent) 
@@ -77,7 +70,7 @@ transient skipInit unit Platform
 		if(app.init) app.init();
 		
 	// This is called when the application starts for the first time	
-	private start: bool isDebug, float referenceSizeX, float referenceSizeY, int userCount, bool simulateConnection, bool showSafeArea
+	private start: bool isDebug, float referenceSizeX, float referenceSizeY, int userCount, bool simulateConnection
 		try
 			let now = Time.preciseTime
 			this.nextHeartbeatTime = 0
@@ -90,7 +83,6 @@ transient skipInit unit Platform
 			this.isDebug = isDebug
 			this.userCount = userCount
 			core.simulateConnection = simulateConnection
-			graphics.showSafeArea = showSafeArea
 			showDebugInfo = getLocalStorageObject("showDebugInfo") == "true"
 		
 			await graphics.setup {referenceSizeX, referenceSizeY}
@@ -120,7 +112,7 @@ transient skipInit unit Platform
 			openMedia
 				try
 					this.engineStarted = true
-					statistics.loadTime = Time.preciseTime
+					statistics.loadTime = Time.preciseTime - statistics.startTime
 					startInterval
 					if isDebug || isLocal || roomId == "local" || url.startsWith("file"): core.startLocal
 					else                                                                  core.join gameId, roomId, userId
@@ -151,6 +143,13 @@ transient skipInit unit Platform
 			sendErrorToEditor .
 			sendFinished
 			
+	generateIntegrationTest: GenerateIntegrationTestMode mode
+		input.generateIntegrationTest = mode
+		input.integrationTest = ""
+		goToCurrentFrame
+		input.generateIntegrationTest = None
+		sendToEditor {type:"integrationTest", text:input.integrationTest}
+			
 	private goToCurrentFrame
 		try
 			core.goToFrame core.frame-1, replayFromStart:true
@@ -158,7 +157,6 @@ transient skipInit unit Platform
 			sendErrorToEditor .
 		finally 
 			sendFinished
-		
 			
 	object interval
 	private js void startInterval
@@ -184,9 +182,13 @@ transient skipInit unit Platform
 	private enterSlideMode(PlatformMode mode) this.mode = mode; sendMode
 	
 	internal stop()    mode = Pause; gizmo.clear; core.stop; sendMode
-	internal pause()   mode = Pause; gizmo.clear; audio.stop; core.tick(draw:true); sendMode
+	internal pause()   mode = Pause; gizmo.clear; audio.stop; sendMode
 	internal record()  core.adjustStartTimeIfNeeded; mode = Record; core.record;  gizmo.clear;  sendMode
 	internal play()    core.adjustStartTimeIfNeeded; mode = Play;   gizmo.clear;  sendMode
+	
+	internal switchToPlayer(int index)
+		core.switchToPlayer(input.players[index]);
+		if mode == Pause: core.step fastForward:false draw:true
 	
 	private goToFrame(int targetFrame) pause(); core.goToFrame(targetFrame)
 		
@@ -217,6 +219,9 @@ transient skipInit unit Platform
 	internal inline js void sendErrorToEditor: Error error
 		if(window._sendErrorToEditor) _sendErrorToEditor(error)
 		else                          console.error(error)
+		
+	internal inline js void sendToEditor: any message
+		if(Platform.isDebug) _sendToEditor(message)
 		
 	private inline js void sendFinished
 		console.log("[app] Finished initializing")

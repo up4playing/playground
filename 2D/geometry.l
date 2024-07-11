@@ -223,6 +223,7 @@ struct Vector2
 	// Moves the vector towards the given target by the given distance	
 	moveTowards: Vector2 targetPosition // The target to move towards
 		         float speed = 30       // The distance to move by
+		         void() onReachedTarget = null
 		let delta = targetPosition - this
 		if delta.x != 0 || delta.y != 0
 			delta = delta.normalized * speed
@@ -230,7 +231,10 @@ struct Vector2
 			else            x = math.max(x + delta.x, targetPosition.x)
 			if delta.y > 0: y = math.min(y + delta.y, targetPosition.y)
 			else            y = math.max(y + delta.y, targetPosition.y)
-		
+		else
+		if onReachedTarget != null
+			onReachedTarget
+
 	// Transforms the vector by a given matrix
 	transform: Matrix2D matrix // The matrix to transform the vector by
 		let ax = x, ay = y
@@ -259,13 +263,14 @@ struct Vector2
 		)
 		
 	// Returns whether the vector is within a given rectangle
-	isInsideRectangle: Vector2 center, // The center of the rectangle
-		               Vector2 size,   // The size of the rectangle
-		return x >= center.x - size.x/2 && x < center.x + size.x/2
-		    && y >= center.y - size.y/2 && y < center.y + size.y/2
+	isInsideRectangle: Vector2 center // The center of the rectangle
+		               Vector2 size   // The size of the rectangle
+		let halfSizeX = size.x/2, halfSizeY = size.y/2
+		return x >= center.x - halfSizeX && x < center.x + halfSizeX
+		    && y >= center.y - halfSizeY && y < center.y + halfSizeY
 		
 	// Returns whether the vector is within a given polygon
-	isInsidePoygon: Vector2[] poly // A list of points that make up the polygon
+	isInsidePolygon: Vector2[] poly // A list of points that make up the polygon
 		let c = false, i = -1, l = poly.length, j = l - 1
 		while ++i < l
 			((poly[i].y <= this.y && this.y < poly[j].y) || (poly[j].y <= this.y && this.y < poly[i].y))
@@ -717,10 +722,10 @@ transient immutable float Angle
 	static Angle rotatedTowards: Angle value
 		                         Angle target
 		                         Angle speed
-		target = target % 1
-		let delta = (target - value) % 1
-		if delta < .5: value = (value + speed) % 1; return value < target ? value : target
-		else           value = (value - speed) % 1; return value > target ? value : target
+		let delta = (((target - value + .5) % 1) + 1) % 1 - .5
+		let valuePlusDelta = value + delta
+		if delta > 0: value += speed; return value < valuePlusDelta ? value : target
+		else          value -= speed; return value > valuePlusDelta ? value : target
 		
 	inline Angle + Angle value
 	inline Angle - Angle value
@@ -746,6 +751,10 @@ transient immutable float Angle
 		((this % value) + value) % value
 		
 	inline js Angle operator -  (Angle a) -a
+	
+	// The remainer after a division by the given value. The sign stays the same.
+	inline js Angle remainder: Angle value
+		(this % value)
 
 		
 enum AngleUnit
@@ -932,6 +941,15 @@ global transient unit System
 		                                ) do                              // Do this for each item in a list
 		for(let i=0, _center = center, _delta = delta, _len=to, _x = _center.x-(_len-1)*_delta.x/2, _y=_center.y-(_len-1)*_delta.y/2; i<_len; ++i, _x += _delta.x, _y += _delta.y) do(new Vector2(_x, _y, _center.location || _delta.location ? new SourceCodeLocation(null, 0, 0, _center.location, _delta.location) : null), i)
 
+	global inline js void forPositions: int to                            // The exclusive upper bound to iterate towards
+		                                Vector2 end = {0,0}               // Center items at this position
+		                                implicit Vector2 delta = {300,0}  // Distance between items
+		                                inline -> void(
+		                                    Vector2 pos,                  // The position of the current item
+		                                    int i,                        // The index of the current item of the list we are iterating over with forCentered
+		                                ) do                              // Do this for each item in a list
+		for(let i=0, _end = end, _delta = delta, _len=to, _x = _end.x-(_len-1)*_delta.x, _y=_end.y-(_len-1)*_delta.y; i<_len; ++i, _x += _delta.x, _y += _delta.y) do(new Vector2(_x, _y, _end.location || _delta.location ? new SourceCodeLocation(null, 0, 0, _end.location, _delta.location) : null), i)
+
 	global inline js void forPositions: T[] subject                       // The list to iterate over
 		                                Vector2 start = {0,0}             // Left or top align items at this position
 		                                implicit Vector2 delta = {300,0}  // Distance between items
@@ -982,8 +1000,18 @@ global transient unit System
 		                                    Vector2 pos,                   // The position of the current item
 		                                    int i                          // The index of the current item of the list we are iterating over with forCentered
 		                                ) do                               // Do this for each item in a list
-		for(let _subject=subject, _center = center, _delta = delta, _grid=grid, _y=0, _yPos=_center.y-(_grid.y-1)*_delta.y/2; _y<_grid.y; ++_y, _yPos += _delta.y) for(let _x=0, _xPos = _center.x-(_grid.x-1)*_delta.x/2; _x < _grid.x; ++_x, _xPos += _delta.x) {let i = _y*_grid.x+_x; do(_subject[i], new Vector2(_xPos, _yPos, _center.location || _delta.location ? new SourceCodeLocation(null, 0, 0, _center.location, _delta.location) : null), i)}
-
+		for(let i=0, _subject=subject, _center = center, _delta = delta, _grid=grid, _y=0, _yPos=_center.y-(_grid.y-1)*_delta.y/2; _y<_grid.y; ++_y, _yPos += _delta.y) for(let _x=0, _xPos = _center.x-(_grid.x-1)*_delta.x/2; _x < _grid.x && i < _subject.length; ++_x, _xPos += _delta.x, i++) {do(_subject[i], new Vector2(_xPos, _yPos, _center.location || _delta.location ? new SourceCodeLocation(null, 0, 0, _center.location, _delta.location) : null), i)}
+	
+	global inline js void forPositions: int to                             // The exclusive upper bound to iterate towards
+		                                IntVector2 grid                    // Align items in a grid with this size
+		                                Vector2 center = {0,0}             // Center items at this position
+		                                implicit Vector2 delta = {300,300} // Distance between items
+		                                inline -> void(
+		                                    T it,                          // The current item of the list we are iterating over with forCentered
+		                                    Vector2 pos,                   // The position of the current item
+		                                    int i                          // The index of the current item of the list we are iterating over with forCentered
+		                                ) do                               // Do this for each item in a list
+		for(let i=0, _center = center, _delta = delta, _grid=grid, _y=0, _yPos=_center.y-(_grid.y-1)*_delta.y/2; _y<_grid.y; ++_y, _yPos += _delta.y) for(let _x=0, _xPos = _center.x-(_grid.x-1)*_delta.x/2; _x < _grid.x && i < to; ++_x, _xPos += _delta.x, i++) {do(i, new Vector2(_xPos, _yPos, _center.location || _delta.location ? new SourceCodeLocation(null, 0, 0, _center.location, _delta.location) : null), i)}
 
 // Converts positions within an isomatic grid with the origin in the north
 // Tilt your head slighly to the right to visualize the directions

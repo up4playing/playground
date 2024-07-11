@@ -11,6 +11,8 @@ class Node
 	string tagName
 	Style style
 	string innerHTML
+	string innerText
+	string shadowInnerHtml
 	string value
 	string src
 	Node firstChild
@@ -21,6 +23,9 @@ class Node
 	
 	bool muted
 	bool autoplay
+	bool disabled
+	int tabindex
+	string contentEditable
 	
 	string sourceLocation
 		
@@ -28,10 +33,12 @@ class Node
 	inline js void appendChild(Node node) this.appendChild(node)
 	inline js void insertBefore(Node newNode, Node referenceNode) this.insertBefore(newNode, referenceNode)
 	inline js void setSelectionRange(int from, int to) this.setSelectionRange(from, to)
-	inline js void select() this.setSelectionRange(0, this.value.length)
+	inline js void select() this.select()
+	inline js void setCursorPosition(int index) Html.setCursorPosition(this, index)
 	inline js void focus() this.focus()
 	inline js void scrollToBottom() this.scrollTo(0, this.scrollHeight)
 	inline js void scrollIntoView() this.scrollIntoView()
+	inline js void on(string eventName, void(dynamic event) listener) this.addEventListener(eventName, listener)
 		
 	native void(HtmlEvent ev) onclick
 	native void(HtmlEvent ev) oncontextmenu
@@ -52,7 +59,7 @@ class Node
 		                    AnimationFill fill = Forwards
 		                    easing = "linear"
 		this.animate([Html.expandStyle(from), Html.expandStyle(to)], {@duration:duration, @fill:fill, @easing:easing})
-	
+
 immutable HtmlEvent
 	Node target        // The element that triggered the event
 	Node currentTarget // The element to the event handler is attached to
@@ -63,6 +70,124 @@ immutable HtmlEvent
 	inline Vector2 relativeMousePosition() Html.getRelativeMousePosition(this, this.currentTarget)
 	inline js Vector2 mousePosition() new Vector2(this.clientX/Platform.scale, this.clientY/Platform.scale)
 
+KeyListener
+	Key key
+	void(Key key) do
+		
+enum Key
+	None         =   0
+	Backspace    =   8
+	Tab          =   9
+	Enter        =  13
+	Shift        =  16
+	Ctrl         =  17
+	Alt          =  18
+	Pause        =  19
+	CapsLock     =  20
+	Escape       =  27
+	Space        =  32
+	PageUp       =  33
+	PageDown     =  34
+	End          =  35
+	Home         =  36
+	Left         =  37
+	Up           =  38
+	Right        =  39
+	Down         =  40
+	Insert       =  45
+	Delete       =  46
+	Number0      =  48
+	Number1      =  49
+	Number2      =  50
+	Number3      =  51
+	Number4      =  52
+	Number5      =  53
+	Number6      =  54
+	Number7      =  55
+	Number8      =  56
+	Number9      =  57
+	A            =  65
+	B            =  66
+	C            =  67
+	D            =  68
+	E            =  69
+	F            =  70
+	G            =  71
+	H            =  72
+	I            =  73
+	J            =  74
+	K            =  75
+	L            =  76
+	M            =  77
+	N            =  78
+	O            =  79
+	P            =  80
+	Q            =  81
+	R            =  82
+	S            =  83
+	T            =  84
+	U            =  85
+	V            =  86
+	W            =  87
+	X            =  88
+	Y            =  89
+	Z            =  90
+	LeftMetaKey  =  91
+	RightMetaKey =  92
+	Select       =  93
+	Numpad0      =  96
+	Numpad1      =  97
+	Numpad2      =  98
+	Numpad3      =  99
+	Numpad4      = 100
+	Numpad5      = 101
+	Numpad6      = 102
+	Numpad7      = 103
+	Numpad8      = 104
+	Numpad9      = 105
+	Multiply     = 106
+	Add          = 107
+	Subtract     = 109
+	DecimalPoint = 110
+	Divide       = 111
+	F1           = 112
+	F2           = 113
+	F3           = 114
+	F4           = 115
+	F5           = 116
+	F6           = 117
+	F7           = 118
+	F8           = 119
+	F9           = 120
+	F10          = 121
+	F11          = 122
+	F12          = 123
+	F13          = 124
+	F14          = 125
+	F15          = 126
+	F16          = 127
+	F17          = 128
+	F18          = 129
+	F19          = 130
+	F20          = 131
+	F21          = 132
+	F22          = 133
+	F23          = 134
+	F24          = 135
+	NumLock      = 144
+	ScrollLock   = 145
+	SemiColon    = 186
+	EqualSign    = 187
+	Comma        = 188
+	Dash         = 189
+	Period       = 190
+	ForwardSlash = 191
+	GraveAccent  = 192
+	OpenBracket  = 219
+	BackSlash    = 220
+	CloseBraket  = 221
+	SingleQuote  = 222
+	
 enum Unit
 	Pixels = "px" // Pixels
 	Percent = "%" // Makes the value relative to its parent's value
@@ -105,6 +230,7 @@ struct Dimension
 	Unit unit   // The unit of the value (Pixels, Percent, Centimeters, Points, ViewportHeight, ViewportWidth, ...)
 	
 	string toString := unit == Auto ? "auto" : "{value}{unit}"
+	bool toBool := value != 0
 	
 struct Vector2
 	float x // The x coordinate of the vector
@@ -541,8 +667,8 @@ dynamic Style
 	string outlineStyle // The style of the outline around an element
 	implicit Dimension outlineWidth // The width of the outline around an element
 	Overflow overflow // What to do with content that renders outside the element box
-	string overflowX // Specifies what to do with the left/right edges of content rendering outside the element box
-	string overflowY // Specifies what to do with the top/bottom edges of content rendering outside the element box
+	Overflow overflowX // Specifies what to do with the left/right edges of content rendering outside the element box
+	Overflow overflowY // Specifies what to do with the top/bottom edges of content rendering outside the element box
 	Padding padding // The padding of an element (can have up to four values)
 	implicit Dimension paddingBottom // The bottom padding of an element
 	implicit Dimension paddingLeft // The left padding of an element
@@ -604,5 +730,6 @@ dynamic Attributes
 	native void(HtmlEvent ev) onClick = null      // Execute this code when the user clicks the HTML element
 	native void(HtmlEvent ev) onRightClick = null // Execute this code when the user clicks the HTML element with the right mouse button
 	native void(dynamic ev) onKeyDown = null      // Execute this code when the user clicks the HTML element with the right mouse button
+	int tabIndex = 0
 	// bool passClickToParents = false            // Even if this elements handles a click, its parents will also receive the event
 		
