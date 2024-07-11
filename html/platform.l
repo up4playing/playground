@@ -15,14 +15,15 @@ skipInit global unit Platform
 	public TickMode tickMode = Interval
 	public targetFps = 20
 		
-	bool isDebug
-	global bool isMobile
-	bool isElectron
-	string environment
 	Vector2 size, nativeSize
 	float scale
 	float debugScale = 1
 	ReferenceSize[] referenceSizes
+	
+	// Environment
+	bool isDebug
+	global bool isMobile
+	bool electron
 	
 	// Info
 	public inline js string url := location.href
@@ -34,10 +35,7 @@ skipInit global unit Platform
 	public inline js string decodeURIComponent(string value) decodeURIComponent(value)
 
 	private inline js void initMedia
-		if(process?.versions?.electron) {
-			this.isElectron = true;
-			this.environment = `Electron ${process.versions.electron}, Chrome ${process.versions.chrome}, Node ${process.versions.node}`;
-		}
+		this.electron = window?.process?.versions?.electron
 		$Image.init?.();
 		Font.init?.();
 		Sound.init?.();
@@ -216,7 +214,7 @@ skipInit global unit Platform
 	inline js void blur() document.activeElement.blur()
 	
 	js void setMenu: MenuItem[] menuTemplate
-		if(!Platform.isElectron || !document.hasFocus()) return;
+		if(!Platform.electron || !document.hasFocus()) return;
 		const remote = require('@electron/remote');
 		if (process.platform == 'darwin') {
 			menuTemplate.unshift({
