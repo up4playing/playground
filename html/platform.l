@@ -27,7 +27,9 @@ skipInit global unit Platform
 	public inline js string host := location.host
 	public inline js string basePath := _basePath
 	public inline js string protocolAndHost() (location.host && !Platform.isDebug ? location.origin : "http://localhost")
+	
 	public inline js string encodeURIComponent(string value) encodeURIComponent(value)
+	public inline js string decodeURIComponent(string value) decodeURIComponent(value)
 
 	private inline js void initMedia
 		$Image.init?.();
