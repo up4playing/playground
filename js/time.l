@@ -230,8 +230,8 @@ immutable struct DateTime
 		
 	// (31.12.2000)
 	dayMonthYearString: language = Loca.language
-		if language == German return "{day}.{month}.{year}"
-		else                  return "{year}-{month}-{day}"
+		if language == German return "{twoDigitDay}.{twoDigitMonth}.{year}"
+		else                  return "{year}-{twoDigitMonth}-{twoDigitDay}"
 	
 	// (31 December 2000)
 	dayMonthNameYearString: language = Loca.language
@@ -282,6 +282,7 @@ js(Date) transient class Date
 	inline js int hour := this.getHours()
 	inline js int minute := this.getMinutes()
 	inline js int second := this.getSeconds()
+	inline js int millisecond := this.getMilliseconds()
 		
 	inline js string twoDigitMonth := (this.getMonth()+1).toLocaleString('en-US', {minimumIntegerDigits:2})
 	inline js string twoDigitDay := this.getDate().toLocaleString('en-US', {minimumIntegerDigits:2})
@@ -333,6 +334,10 @@ js(Date) transient class Date
 			return ""+((h-1)%12+1)+":"+toTwoDigitString(minute)+":"+toTwoDigitString(second)+(h < 12 ? " am":" pm")
 		else
 			return ""+hour+":"+toTwoDigitString(minute)+":"+toTwoDigitString(second)
+	
+	// (23:59:59.999)
+	string hourMinuteSecondMillisecondString: language = Loca.language
+		return ""+hour+":"+toTwoDigitString(minute)+":"+toTwoDigitString(second)+"."+millisecond
 	
 	// (31.12.2000 23:59)
 	js string dayMonthYearHourMinuteString: language = Loca.language

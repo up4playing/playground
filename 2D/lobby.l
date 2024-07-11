@@ -51,11 +51,13 @@ unit lobby
 		editNames = false
 		players.each.isReadyInLobby = false
 		audio.stop
+		
+	int counter
 	
 	tick
 		tickSettings
 		if Platform.isStaging: drawText "Version:{Platform.buildVersion}", size:20, position:{-940, 520}, align:Left
-		if PeerNetwork.error or core.errorMessage
+		if (PeerNetwork.error or core.errorMessage) and Platform.isStaging
 			drawText PeerNetwork.error, size:40
 			drawText core.errorMessage, size:14, position:{0,40}
 			return
@@ -96,6 +98,11 @@ unit lobby
 					and players.length withinInclusively Platform.supportedUserCount
 						fields.clear
 						restart
+						
+				Vector2 closePos = pos+{videoWidth/2-15,-halfVideoHeight-25}
+				let state = input.internalUsers[player.id]?.connectionState
+				if state && state != "connected"
+					drawText state, size:80, color:state == "failed" ? Red : Yellow, position:pos+{0, -halfVideoHeight-40}
 				
 				let field = fields.find.player == player
 					// Set field position
@@ -113,20 +120,17 @@ unit lobby
 						if showNameIndex == playerIndex
 							drawCircle field.position+{0,60}, size:20, visibleFor:host
 
-		// Place points with a click for testing
+		// For testing, display to coordinates when we click the screen
 		if core.drawPointsForTesting
 			onTouchDown: points.add .position.clone
-				points.each drawCircle ., size:50
+			points.each drawText text:. position:. size:30; drawCircle . outlineColor:White size:200
+			drawText ++counter, {0, -480}, size:100
 		
 		// Switch language
 		if Loca.supportedLanguages.length > 1
 			forPositions Loca.supportedLanguages, end:{930,-510}, delta:{40}
 				drawImage Flag[i], pos, frame:Loca.language == cast(i) ? 1 : 0
 					Loca.setLanguage cast(i)
-			
-		// Connecting text
-		if core.mode == Ping
-			drawText "Connecting...", size:32
 		
 	setupFields: Player newHost
 		input.host = newHost
