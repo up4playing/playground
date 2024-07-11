@@ -60,25 +60,22 @@ skipInit transient float Time
 	inline js int totalWeeks        := Math.floor(this / 604800000)
 		
 	// (31.12.)
-	inline js string dayMonthString(language = Loca.language) new DateTime(this).dayMonthString(language)
+	inline string dayMonthString(language = Loca.language) new DateTime(this).dayMonthString(language)
 		
 	// (31.12.2000)
-	inline js string dayMonthYearString(language = Loca.language) new DateTime(this).dayMonthYearString(language)
+	inline string dayMonthYearString(language = Loca.language) new DateTime(this).dayMonthYearString(language)
 	
 	// (31 December 2000)
-	inline js string dayLongMonthNameYearString(language = Loca.language) new DateTime(this).dayLongMonthNameYearString(language)
-	
-	// (31 Dec 2000)
-	inline js string dayShortMonthNameYearString(language = Loca.language) new DateTime(this).dayShortMonthNameYearString(language)
+	inline string dayMonthNameYearString(language = Loca.language) new DateTime(this).dayMonthNameYearString(language)
 	
 	// (Monday, December 31)
 	inline string dayOfWeekDayMonthString(language = Loca.language) new DateTime(this).dayOfWeekDayMonthString(language)
 	
 	// (Monday)
-	inline js string weekdayString(language = Loca.language) new DateTime(this).weekdayString(language)
+	inline js string dayOfWeekString(language = Loca.language) new DateTime(this).dayOfWeekString(language)
 	
 	// (Monday, December 31 at 12:59 pm)
-	inline js string dayOfWeekDayMonthAtHourMinuteString(language = Loca.language) new DateTime(this).dayOfWeekDayMonthAtHourMinuteString(language)
+	inline dayOfWeekDayMonthAtHourMinuteString(language = Loca.language) new DateTime(this).dayOfWeekDayMonthAtHourMinuteString(language)
 	
 	// (23:59) The time is assumed to be local time, doesn't account for timezone offset
 	inline string hourMinuteString(language = Loca.language) Time.toHourMinuteString(this, language)
@@ -312,11 +309,11 @@ js(Date) transient class Date
 		return this.getDate()+" "+this.toLocaleString('en-US', {month: 'short'})+" "+this.getFullYear()
 	
 	// (Monday)
-	string weekdayString: language = Loca.language
+	string dayOfWeekString: language = Loca.language
 		return dayStrings[language][dayOfWeek]
 	
 	// (Mon)
-	string shortWeekdayString: language = Loca.language
+	string shortDayOfWeekString: language = Loca.language
 		return shortDayStrings[language][dayOfWeek]
 	
 	// (23:59)
