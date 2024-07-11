@@ -686,6 +686,18 @@ class List<T>
 	inline js bool contains: T item // Check if the list contains this item
 		this.includes(item)
 		
+	bool containsAny: T[] list
+		for list
+			if this contains .
+				return true
+		return false
+		
+	bool containsNone: T[] list
+		for list
+			if this contains .
+				return false
+		return true
+		
 	// The index of an item in the list
 	inline js int indexOf: T item // Get the index of this item
 		this.indexOf(item)
