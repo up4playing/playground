@@ -1,6 +1,55 @@
 skipInit transient float Time
 	static int timezoneOffset
 	
+	// (31.12.)
+	inline string dayMonthString(language = Loca.language) new DateTime(this).dayMonthString(language)
+		
+	// (31.12.2000)
+	inline string dayMonthYearString(language = Loca.language) new DateTime(this).dayMonthYearString(language)
+	
+	// (31 December 2000)
+	inline string dayMonthNameYearString(language = Loca.language) new DateTime(this).dayMonthNameYearString(language)
+	
+	// (Monday, December 31)
+	inline string dayOfWeekDayMonthString(language = Loca.language) new DateTime(this).dayOfWeekDayMonthString(language)
+	
+	// (Monday)
+	inline string dayOfWeekString(language = Loca.language) new DateTime(this).dayOfWeekString(language)
+	
+	// (Monday, December 31 at 12:59 pm)
+	inline string dayOfWeekDayMonthAtHourMinuteString(language = Loca.language) new DateTime(this).dayOfWeekDayMonthAtHourMinuteString(language)
+	
+	// (23:59) The time is assumed to be local time, doesn't account for timezone offset
+	inline string hourMinuteString(language = Loca.language) Time.toHourMinuteString(this, language)
+		
+	// (23:59) The time is assumed to be local time, doesn't account for timezone offset
+	static string toHourMinuteString: Time value, language = Loca.language
+		let hour = math.floor (value % 86400000) / 3600000
+		let minute = math.floor (value % 3600000) / 60000
+		if language == English: return ""+((hour-1)%12+1)+":"+(minute < 10 ? "0":"")+minute+(hour < 12 ? " am":" pm")
+		else                    return ""+hour+":"+(minute < 10 ? "0":"")+minute
+	
+ 	// (59:59) The time is assumed to be local time, doesn't account for timezone offset
+	inline js string minuteSecondString() (Math.floor((this % 3600000) / 60000) + (this % 60000 < 10000 ? ":0":":") + Math.floor((this % 60000) / 1000))
+	
+	// (23:59:59)
+	inline js string hourMinuteSecondString(language = Loca.language) new Date(this).hourMinuteSecondString(language)
+	
+	// (31.12.2000 23:59)
+	inline js string dayMonthYearHourMinuteString(language = Loca.language) new Date(this).dayMonthYearHourMinuteString(language)
+	
+	// (31.12.2000 23:59:59)
+	inline js string dayMonthYearHourMinuteSecondString(language = Loca.language) new Date(this).dayMonthYearHourMinuteSecondString(language)
+	
+	// (31-12-2000 23-59-59)
+	inline js string invariantDayMonthYearHourMinuteSecondString() new Date(this).invariantDayMonthYearHourMinuteSecondString()
+			
+	// (20001231235959+02:00)
+	inline js string compactString() new DateTime(this).compactString()
+		
+	// (7 weeks)
+	inline string minutesHoursDaysOrWeeksString(showWeeksAfterDays = 31) toMinutesHoursDaysOrWeeksString(this, showWeeksAfterDays)
+		
 	// The largest possible time value
 	const inline js Time maxValue := Number.MAX_VALUE
 	
@@ -58,55 +107,6 @@ skipInit transient float Time
 	inline js int totalHours        := Math.floor(this /   3600000)
 	inline js int totalDays         := Math.floor(this /  86400000)
 	inline js int totalWeeks        := Math.floor(this / 604800000)
-		
-	// (31.12.)
-	inline string dayMonthString(language = Loca.language) new DateTime(this).dayMonthString(language)
-		
-	// (31.12.2000)
-	inline string dayMonthYearString(language = Loca.language) new DateTime(this).dayMonthYearString(language)
-	
-	// (31 December 2000)
-	inline string dayMonthNameYearString(language = Loca.language) new DateTime(this).dayMonthNameYearString(language)
-	
-	// (Monday, December 31)
-	inline string dayOfWeekDayMonthString(language = Loca.language) new DateTime(this).dayOfWeekDayMonthString(language)
-	
-	// (Monday)
-	inline js string dayOfWeekString(language = Loca.language) new DateTime(this).dayOfWeekString(language)
-	
-	// (Monday, December 31 at 12:59 pm)
-	inline dayOfWeekDayMonthAtHourMinuteString(language = Loca.language) new DateTime(this).dayOfWeekDayMonthAtHourMinuteString(language)
-	
-	// (23:59) The time is assumed to be local time, doesn't account for timezone offset
-	inline string hourMinuteString(language = Loca.language) Time.toHourMinuteString(this, language)
-		
-	// (23:59) The time is assumed to be local time, doesn't account for timezone offset
-	static string toHourMinuteString: Time value, language = Loca.language
-		let hour = math.floor (value % 86400000) / 3600000
-		let minute = math.floor (value % 3600000) / 60000
-		if language == English: return ""+((hour-1)%12+1)+":"+(minute < 10 ? "0":"")+minute+(hour < 12 ? " am":" pm")
-		else                    return ""+hour+":"+(minute < 10 ? "0":"")+minute
-	
- 	// (59:59) The time is assumed to be local time, doesn't account for timezone offset
-	inline js string minuteSecondString() (Math.floor((this % 3600000) / 60000) + (this % 60000 < 10000 ? ":0":":") + Math.floor((this % 60000) / 1000))
-	
-	// (23:59:59)
-	inline js string hourMinuteSecondString(language = Loca.language) new Date(this).hourMinuteSecondString(language)
-	
-	// (31.12.2000 23:59)
-	inline js string dayMonthYearHourMinuteString(language = Loca.language) new Date(this).dayMonthYearHourMinuteString(language)
-	
-	// (31.12.2000 23:59:59)
-	inline js string dayMonthYearHourMinuteSecondString(language = Loca.language) new Date(this).dayMonthYearHourMinuteSecondString(language)
-	
-	// (31-12-2000 23-59-59)
-	inline js string invariantDayMonthYearHourMinuteSecondString() new Date(this).invariantDayMonthYearHourMinuteSecondString()
-			
-	// (20001231235959+02:00)
-	inline js string compactString() new DateTime(this).compactString()
-		
-	// (7 weeks)
-	inline string minutesHoursDaysOrWeeksString(showWeeksAfterDays = 31) toMinutesHoursDaysOrWeeksString(this, showWeeksAfterDays)
 		
 	private static string toMinutesHoursDaysOrWeeksString: Time time, showWeeksAfterDays = 31
 		if time < 2 minutes: return "1 minute"
