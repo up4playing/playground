@@ -465,17 +465,12 @@ global unit Html
 			node.shadowStyle = null
 		}
 		
-	private js void addStyle: Node node, dynamic style
-		if(style) {
-			for(let key in style)
-				node.style[key] = style[key]
-				
-			// Temporary Backfill. Starting from Chrome 104, Safari 14.1 this is no longer needed.
-			let translate = style.translate
-			if(translate) node.style.transform += "translate({translate}) "
-			let rotate = style.rotate
-			if(rotate) node.style.transform += "rotate({rotate}turn) "
+	private js Style getStyleToRevert: Style originalStyle, Style onHover
+		let styleToRevert = {}
+		for(let key in onHover) {
+			styleToRevert[key] = originalStyle[key] || "" 
 		}
+		return styleToRevert
 				
 	js Vector2 getRelativeMousePosition: HtmlEvent event, Node node
 		let rect = node.getBoundingClientRect()
@@ -666,8 +661,9 @@ global unit Html
 			
 		node.sourceLocation = sourceLocation
 		if onHover != null
-			node.onmouseover = addStyle(node, onHover)
-			node.onmouseout  = setStyle(node, style)
+			Style unHover = getStyleToRevert originalStyle:style, onHover
+			node.onmouseover = setStyle(node, onHover)
+			node.onmouseout  = setStyle(node, unHover)
 		
 		if text != null
 			if node.shadowInnerHtml != text
