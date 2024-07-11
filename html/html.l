@@ -21,6 +21,7 @@ class Node
 	
 	bool muted
 	bool autoplay
+	bool disabled
 	
 	string sourceLocation
 		

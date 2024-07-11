@@ -434,9 +434,11 @@ global unit Html
 		           void(HtmlEvent ev) onClick = null // Called when the user clicks the button
 		           expand Attributes attributes = {} // The attributes of the HTML element
 		           expand Style style = null         // The css style of the HTML element
+		           bool disableAfterClick = false
 		           SourceCodeLocation location
 		let node = div text, tag:"button", attributes, style, location
-		node.onclick = onClick
+		if disableAfterClick: node.onclick = node.disabled = true; onClick(.)
+		else                  node.onclick = onClick
 		return node
 		
 	// 	global lottie
