@@ -165,7 +165,7 @@ global unit http
 					}
 				} catch(e) {
 					console.error(e)
-					_sendErrorToEditor(e);
+					if(Platform.isDebug) _sendErrorToEditor(e);
 					response.end(`{error:"${e.message}"}`)
 				}
 			})
