@@ -71,13 +71,16 @@ transient skipInit unit PeerNetwork
 	tick
 		let now = Time.realTime
 		for input.internalUsers
-			if . 
+			if . and not .local
 				// Reconnect to peer: Try to connect again if
 				// - we aren't connected 5 seconds after starting to connect
 				// - we are connect, but haven't received a message for 10 seconds
 				// We use a central place to reconnect and no intervals, timeouts or reloads to make it easier to reason about
-				if (not .connected and now > .startToConnectTime + 5000)
-				or (    .connected and now > .lastIncomingMessageTime + 10000)
+				// if (not .connected and now > .startToConnectTime + 5000)
+				// or (    .connected and now > .lastIncomingMessageTime + 10000)
+				// if (not .connected and now > .lastIncomingMessageTime +  8000)
+				// or (    .connected and now > .lastIncomingMessageTime + 12000)
+				if now > .lastIncomingMessageTime + 10000
 				
 				// !!! EVALUATE Wait longer for the 2nd retry
 				// if .connectionState != "connected" and (now > .startToConnectTime + 10000
@@ -87,7 +90,7 @@ transient skipInit unit PeerNetwork
 				// or .connectionState == "failed"
 					
 					core.log "#problem -------------------------------- State is {.connectionState} after {now-.startToConnectTime} ms, {.connectionTries} retries, last incomming message {now - .lastIncomingMessageTime} ms ago --------------------------------"
-					.startToConnectTime = Time.realTime
+					.startToConnectTime = .lastIncomingMessageTime = Time.realTime
 					statistics.scheduleSendIn 3 seconds
 					
 					if .offerByMe
