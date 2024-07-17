@@ -133,7 +133,7 @@ transient skipInit unit PeerNetwork
 			} catch {}
 		}
 		try {
-			user.startToConnectTime = Date.now();
+			user.startToConnectTime = user.lastIncomingMessageTime = Date.now();
 			user.offerByMe = offerByMe;
 			
 			let options = {
