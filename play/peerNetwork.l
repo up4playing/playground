@@ -66,7 +66,6 @@ transient skipInit unit PeerNetwork
 	initiate: InternalUser user
 		setupPeerConnection user, offerByMe:true
 		setupRemoteMedia user
-		setupDataChannel user
 		
 	tick
 		let now = Time.realTime
@@ -95,7 +94,6 @@ transient skipInit unit PeerNetwork
 					
 					if .offerByMe
 						core.log "#peer Restarting ICE (offer by me)"
-						setupDataChannel .
 						.peerConnection.restartIce()
 						retries++
 						.connectionTries++
@@ -308,6 +306,9 @@ transient skipInit unit PeerNetwork
 	onConnected: InternalUser user
 		user.startDataChannelTime = user.lastIncomingMessageTime = Time.realTime
 		logConnectionType user
+		
+		if user.offerByMe
+			setupDataChannel user
 		
 		if not statistics.connectTime
 			int connectedCount = input.internalUsers.count.offerByMe and .connected
