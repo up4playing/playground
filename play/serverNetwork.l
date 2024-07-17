@@ -100,7 +100,13 @@ transient skipInit unit ServerNetwork
 		sendBuffer.writeInt16 version
 		send sendBuffer
 		
+		
+	bool alreadyJoinedBefore
+		
 	private onJoinResponse: Buffer buffer
+		if alreadyJoinedBefore: return
+		alreadyJoinedBefore = true
+		
 		try
 			// Use float64 or string for roomId in future to support 20240603121500
 			int roomId = cast buffer.readFloat64
@@ -113,11 +119,12 @@ transient skipInit unit ServerNetwork
 			for userCount
 				let id = buffer.readInt32
 				InternalUser user
-				if id == userId: user = input.localUser
-				else             user = {offerByMe:true, connectionId:nextConnectionId++}
+				if id == userId: user = input.internalUsers[id] ?= input.localUser
+				else             user = input.internalUsers[id] ?= {offerByMe:true, connectionId:nextConnectionId++}
 				user.id = id
-				input.internalUsers[id] = user
-				buffer.readBuffer user.inputs
+				
+				// We don't send inputs from server any more
+				// buffer.readBuffer user.inputs
 				
 				core.log "#onJoinResponse", id, user.local, user.inputs
 				
@@ -148,7 +155,7 @@ transient skipInit unit ServerNetwork
 			
 			// Create an offer for each user already in the room
 			for input.internalUsers
-				if . and !.local
+				if . and not .local
 					PeerNetwork.initiate .
 		catch 
 			core.onError error

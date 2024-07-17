@@ -69,7 +69,8 @@ transient skipInit unit PeerNetwork
 		
 	tick
 		let now = Time.realTime
-		for input.internalUsers
+		
+		for input.internalUsers as user
 			if . and not .local
 				// Reconnect to peer: Try to connect again if
 				// - we aren't connected 5 seconds after starting to connect
@@ -88,15 +89,18 @@ transient skipInit unit PeerNetwork
 				// !!! EVALUATE Reconned immediately when failed
 				// or .connectionState == "failed"
 					
-					core.log "#problem -------------------------------- State is {.connectionState} after {now-.startToConnectTime} ms, {.connectionTries} retries, last incomming message {now - .lastIncomingMessageTime} ms ago --------------------------------"
-					.startToConnectTime = .lastIncomingMessageTime = Time.realTime
+					core.log "[{Time.frame}] <{.id}> #problem -------------------------------- State is {.connectionState} after {now-.startToConnectTime} ms, {.connectionTries} retries, last incomming message {now - .lastIncomingMessageTime} ms ago, offerByMe:{.offerByMe} --------------------------------"
+					.startToConnectTime = user.lastIncomingMessageTime = Time.realTime
 					statistics.scheduleSendIn 3 seconds
 					
-					if .offerByMe
-						core.log "#peer Restarting ICE (offer by me)"
-						.peerConnection.restartIce()
+					if user.offerByMe
 						retries++
-						.connectionTries++
+						if ++user.connectionTries < 3
+							core.log "#peer Restarting ICE (offer by me)"
+							user.peerConnection.restartIce()
+						else
+							core.log "#peer Recreate peer connection (offer by me)"
+							initiate user
 					
 					// !!! EVALUATE Recreate peer channel after a few failed tries
 					// if .connectionTries < 2
@@ -441,7 +445,11 @@ transient skipInit unit PeerNetwork
 				sendBuffer.writeFloat64 core.checksums[core.lastChecksumFrame] || 0  // The checksum of the last certain frame
 				
 				core.tickMessageSize = send ., sendBuffer
-				if core.verbose: core.log "<{receiver.id}> sendInputs {receiver.receivedMyInputsUpToPos}->{inputs.writePos}", receiver.inputs.writePos, receiver.receivedMyInputsUpToPos, receiver.dataChannels[0]._id
+				if core.verbose
+					if receiver.receivedMyInputsUpToPos > inputs.writePos
+						core.log "[{inputFrame}] <{receiver.id}> #send -->> {receiver.receivedMyInputsUpToPos}->{inputs.writePos} id:{receiver.dataChannels[0]._id}"
+					else
+						core.log "[{inputFrame}] <{receiver.id}> #send -->>"
 				
 			// if length
 			// 	core.storeInputsToDB user
@@ -483,7 +491,11 @@ transient skipInit unit PeerNetwork
 			sender.inputFrame = inputFrame
 			buffer.readBuffer sender.inputs, incomingInputsWritePos
 			
-			if core.verbose: core.log "<{sender.id}> Received inputFrame: {prevInputFrame}->{inputFrame} writePos: {incomingInputsWritePos}->{sender.inputs.writePos}", sender.receivedMyInputsUpToPos
+			if core.verbose
+				if sender.inputs.writePos > incomingInputsWritePos
+					core.log "[{inputFrame}] <{sender.id}> #receive <<-- writePos: {incomingInputsWritePos}->{sender.inputs.writePos}"
+				else
+					core.log "[{inputFrame}] <{sender.id}> #receive <<--"
 			
 			// Checksum
 			int checksumFor = buffer.readInt
