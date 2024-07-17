@@ -181,14 +181,16 @@ transient skipInit unit PeerNetwork
 			}
 			
 			// Signaling, Connection
-			peerConnection.onsignalingstatechange = e => {
-				core.log(`#peer <${user.id}> Signaling State Change: ${peerConnection.signalingState}`);
-			}
+			// peerConnection.onsignalingstatechange = e => {
+			// 	core.log(`#peer <${user.id}> Signaling State Change: ${peerConnection.signalingState}`);
+			// }
 			peerConnection.onconnectionstatechange = e => {
 				core.log(`#peer <${user.id}> Connection State Change: ${peerConnection.connectionState}`);
 				user.connectionState = peerConnection.connectionState;
 				user.connected = peerConnection.connectionState == "connected";
 				if(user.connected) PeerNetwork.onConnected(user);
+				if(peerConnection.connectionState == "disconnected")
+					setTimeout(() => statistics.saveStatistics(), 7000);
 					
 				// !!! EVALUATE Retry right away when connection failed
 				// if(peerConnection.connectionState == "failed" && offerByMe) {
@@ -213,16 +215,12 @@ transient skipInit unit PeerNetwork
 			peerConnection.icecandidateerror = e => {
 				core.log(`#peer <${user.id}> IDE Candidate Error: ${e.errorText}`);
 			}
-			peerConnection.oniceconnectionstatechange = e => {
-				core.log(`#peer <${user.id}> ICE Connection State Change: ${peerConnection.iceConnectionState}`);
-				if(peerConnection.iceConnectionState == "disconnected") {
-					// Send logfiles to server
-					setTimeout(() => statistics.saveStatistics(), 7000);
-				}
-			}
-			peerConnection.onicegatheringstatechange = e => {
-				core.log(`#peer <${user.id}> ICE Gathering State Change: ${peerConnection.iceGatheringState}`);
-			}
+			// peerConnection.oniceconnectionstatechange = e => {
+			// 	core.log(`#peer <${user.id}> ICE Connection State Change: ${peerConnection.iceConnectionState}`);
+			// }
+			// peerConnection.onicegatheringstatechange = e => {
+			// 	core.log(`#peer <${user.id}> ICE Gathering State Change: ${peerConnection.iceGatheringState}`);
+			// }
 			
 			// !!! EVALUATE Create offer right away, because sometimes "negotiationneeded" isn't fired
 			// if(offerByMe) PeerNetwork.createOffer(user);
