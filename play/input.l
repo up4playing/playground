@@ -8,9 +8,9 @@ transient class InternalUser
 	string name         // User account name
 	
 	// Event Stream
-	bool collectInputs       // When we are done pinging, we add a join event and start collecting inputs
-	int inputFrame = -1      // We got all inputs from this player up to and including this frame
-	int inputsSentPos
+	bool collectInputs          // When we are done pinging, we add a join event and start collecting inputs
+	int inputFrame = -1         // We received all inputs from this player up to and including this frame
+	int receivedMyInputsUpToPos // We received all inputs from this player up to this pos
 	int[] lastTouchMoveIndex
 	Buffer inputs = {}       // The stream of inputs of this user
 	

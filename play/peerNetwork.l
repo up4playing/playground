@@ -426,21 +426,22 @@ transient skipInit unit PeerNetwork
 	Buffer sendBuffer = {}
 	
 	sendInputs: int inputFrame
-		for input.internalUsers -> user if user
+		for input.internalUsers -> receiver if receiver
 			let inputs = input.localUser.inputs
-			let length = inputs.writePos - user.inputsSentPos
+			let length = inputs.writePos - receiver.receivedMyInputsUpToPos
 			
-			if user.dataChannels
+			if receiver.dataChannels
 				sendBuffer.reset
 				sendBuffer.writeInt8 cast NetworkMessageType.Tick
-				sendBuffer.writeInt inputFrame // You got all inputs up to and including this frame
-				sendBuffer.writeInt user.inputsSentPos
-				sendBuffer.writeBuffer inputs, user.inputsSentPos, length
+				sendBuffer.writeInt inputFrame                       // I send inputs up to and including this frame
+				sendBuffer.writeInt receiver.receivedMyInputsUpToPos // I send inputs starting from the last pos you received
+				sendBuffer.writeInt receiver.inputs.writePos         // I received your inputs up to this pos
+				sendBuffer.writeBuffer inputs, receiver.receivedMyInputsUpToPos, length
 				sendBuffer.writeInt core.lastChecksumFrame                           // The last certain frame with inputs from everybody
 				sendBuffer.writeFloat64 core.checksums[core.lastChecksumFrame] || 0  // The checksum of the last certain frame
 				
 				core.tickMessageSize = send ., sendBuffer
-				user.inputsSentPos = inputs.writePos
+				if core.verbose: core.log "<{receiver.id}> sendInputs {receiver.receivedMyInputsUpToPos}->{inputs.writePos}", receiver.inputs.writePos, receiver.receivedMyInputsUpToPos, receiver.dataChannels[0]._id
 				
 			// if length
 			// 	core.storeInputsToDB user
@@ -463,28 +464,26 @@ transient skipInit unit PeerNetwork
 			core.log(e.stack)
 			return 0
 		}
-		
-	// private js void onMessage: InternalUser user, Buffer buffer
-	// 	setTimeout(() => PeerNetwork.onMessageDo(user, buffer), 1000)
-			
+	
 	private onMessage: InternalUser user, Buffer buffer
 		user.lastIncomingMessageTime = Time.realTime
 		NetworkMessageType type = cast buffer.readInt8
 		if type == Tick:         onTick user, buffer; else
-		if type == Ping:         onPing user, buffer;  else
+		if type == Ping:         onPing user, buffer; else
 		if type == Pong:         onPong user, buffer;
 			
 	private onTick: InternalUser sender, Buffer buffer
-		let inputFrame = buffer.readInt
+		let inputFrame = buffer.readInt                     // The sender sent inputs up to and including this frame
 		
 		if inputFrame >= sender.inputFrame
-			let prevInputFrame = sender.inputFrame
-			let prevWritePos = buffer.readInt
+			let prevInputFrame = sender.inputFrame         
+			let incomingInputsWritePos = buffer.readInt     // The sender sent inputs starting from the last pos I received
+			sender.receivedMyInputsUpToPos = buffer.readInt // The sender received my inputs up to this pos
 			
 			sender.inputFrame = inputFrame
-			buffer.readBuffer sender.inputs, prevWritePos
+			buffer.readBuffer sender.inputs, incomingInputsWritePos
 			
-			if core.verbose: core.log "<{sender.id}> Received inputFrame: {prevInputFrame}->{inputFrame} writePos: {prevWritePos}->{sender.inputs.writePos}"
+			if core.verbose: core.log "<{sender.id}> Received inputFrame: {prevInputFrame}->{inputFrame} writePos: {incomingInputsWritePos}->{sender.inputs.writePos}", sender.receivedMyInputsUpToPos
 			
 			// Checksum
 			int checksumFor = buffer.readInt
