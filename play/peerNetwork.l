@@ -267,8 +267,8 @@ transient skipInit unit PeerNetwork
 			user.dataChannels.length = 0;
 			
 			// Create reliable data channel
-			// These options would create an unreliable one: {ordered:false, maxRetransmits:0}
-			let dataChannel = user.peerConnection.createDataChannel("channel");
+			// let dataChannel = user.peerConnection.createDataChannel("channel"); // reliable
+			let dataChannel = user.peerConnection.createDataChannel("channel", {ordered:false, maxRetransmits:0}); // unreliable
 			dataChannel.binaryType = "arraybuffer";
 			dataChannel._id = PeerNetwork.dataChannelId++;
 			
