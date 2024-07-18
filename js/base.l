@@ -329,6 +329,16 @@ immutable class string
 	inline js string[] split: string seperator = "," // Separate the string at this character
 		this.split(seperator)
 		
+	string[] splitAndStrip: string seperator = "," // Separate the string at this character
+		string[] result
+		int start
+		while start < this.length
+			int end = this.indexOf(seperator, start)
+			if end == -1: break
+			if end > start+1: result.add this[start to end]
+			start = end+1
+		return result
+		
 	// Splits the string and return a list with the selected field or expression for each item
 	inline js TValue[] splitToList: TValue(string it) selector // Selects a field or expression for each item
 		                            string seperator = ","     // Separate the string at this character
