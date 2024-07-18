@@ -595,6 +595,8 @@ transient skipInit global unit graphics
 			if hotkey
 				input.onKeyDown hotkey, by:effectiveClickableBy
 					onClick null
+					
+		return sizeX
 
 	// ------------------------------------------------------- Button -------------------------------------------------------
 	
