@@ -712,6 +712,18 @@ class List<T>
 	inline js bool contains: T item // Check if the list contains this item
 		this.includes(item)
 		
+	bool containsAny: T[] list
+		for list
+			if this contains .
+				return true
+		return false
+		
+	bool containsNone: T[] list
+		for list
+			if this contains .
+				return false
+		return true
+		
 	// The index of an item in the list
 	inline js int indexOf: T item // Get the index of this item
 		this.indexOf(item)
@@ -808,6 +820,7 @@ class List<T>
 	
 	// Remove a random item from the list and return it
 	T popRandom()
+		if length == 0: return null
 		int index = math.randomInteger(length)
 		T item = get(index)
 		this.removeAt(index)
@@ -1523,6 +1536,14 @@ class Map<TKey, TValue>
 	inline js TValue getOrSet: TKey key
 		                       TValue value
 		(this.get(key) || this.setAndReturn(key, value))
+		
+	// Add 1 to item of the map
+	inline js T incrementItem: TKey key
+		this.set(key, this.get(key)+1)
+		
+	// Subtract 1 to item of the map
+	inline js T decrementItem: TKey key
+		this.set(key, this.get(key)-1)
 		
 	// Remove the item assosiated with the given key
 	inline js void delete: TKey key  // The key of the item to remove from the map

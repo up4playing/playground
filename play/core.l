@@ -253,8 +253,13 @@ transient skipInit unit core
 	private int animationStartFrame // The frame at the beginning of animationFrame, used to calculate iteration
 	private float now               // The time at the beginning of animationFrame
 	
+	private Time prevLogTime
+	
 	// Logs
 	js void log: logstring text
+		if(Time.now > core.prevLog + 3000) core.logs += "\n"
+		core.prevLog = Time.now
+		
 		let str = new Date().hourMinuteSecondMillisecondString() + " " + text
 		statistics.systemLogs.push(str)
 		console.log(str)
@@ -755,7 +760,7 @@ skipInit transient unit statistics
 			nextSendTime = Time.realTime + core.sendStatisticsEvery
 	
 	// Log game events (like scores, playtimes, etc)
-	log: any value
+	log: dynamic value
 		value.frame = Time.frame
 		this.gameLogs.add value
 	

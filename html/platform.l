@@ -15,27 +15,27 @@ skipInit global unit Platform
 	public TickMode tickMode = Interval
 	public targetFps = 20
 		
-	bool isDebug
-	global bool isMobile
-	bool isElectron
-	string environment
 	Vector2 size, nativeSize
 	float scale
 	float debugScale = 1
 	ReferenceSize[] referenceSizes
+	
+	// Environment
+	bool isDebug
+	global bool isMobile
+	bool electron
 	
 	// Info
 	public inline js string url := location.href
 	public inline js string host := location.host
 	public inline js string basePath := _basePath
 	public inline js string protocolAndHost() (location.host && !Platform.isDebug ? location.origin : "http://localhost")
+	
 	public inline js string encodeURIComponent(string value) encodeURIComponent(value)
+	public inline js string decodeURIComponent(string value) decodeURIComponent(value)
 
 	private inline js void initMedia
-		if(process?.versions?.electron) {
-			this.isElectron = true;
-			this.environment = `Electron ${process.versions.electron}, Chrome ${process.versions.chrome}, Node ${process.versions.node}`;
-		}
+		this.electron = window?.process?.versions?.electron
 		$Image.init?.();
 		Font.init?.();
 		Sound.init?.();
@@ -214,7 +214,7 @@ skipInit global unit Platform
 	inline js void blur() document.activeElement.blur()
 	
 	js void setMenu: MenuItem[] menuTemplate
-		if(!Platform.isElectron || !document.hasFocus()) return;
+		if(!Platform.electron || !document.hasFocus()) return;
 		const remote = require('@electron/remote');
 		if (process.platform == 'darwin') {
 			menuTemplate.unshift({
@@ -465,17 +465,12 @@ global unit Html
 			node.shadowStyle = null
 		}
 		
-	private js void addStyle: Node node, dynamic style
-		if(style) {
-			for(let key in style)
-				node.style[key] = style[key]
-				
-			// Temporary Backfill. Starting from Chrome 104, Safari 14.1 this is no longer needed.
-			let translate = style.translate
-			if(translate) node.style.transform += "translate({translate}) "
-			let rotate = style.rotate
-			if(rotate) node.style.transform += "rotate({rotate}turn) "
+	private js Style getStyleToRevert: Style originalStyle, Style onHover
+		let styleToRevert = {}
+		for(let key in onHover) {
+			styleToRevert[key] = originalStyle[key] || "" 
 		}
+		return styleToRevert
 				
 	js Vector2 getRelativeMousePosition: HtmlEvent event, Node node
 		let rect = node.getBoundingClientRect()
@@ -571,9 +566,11 @@ global unit Html
 		           void(HtmlEvent ev) onClick = null // Called when the user clicks the button
 		           expand Attributes attributes = {} // The attributes of the HTML element
 		           expand Style style = null         // The css style of the HTML element
+		           bool disableAfterClick = false
 		           SourceCodeLocation location
 		let node = div text, tag:"button", attributes, style, location
-		node.onclick = onClick
+		if disableAfterClick: node.onclick = node.disabled = true; onClick(.)
+		else                  node.onclick = onClick
 		return node
 		
 	// 	global lottie
@@ -664,8 +661,9 @@ global unit Html
 			
 		node.sourceLocation = sourceLocation
 		if onHover != null
-			node.onmouseover = addStyle(node, onHover)
-			node.onmouseout  = setStyle(node, style)
+			Style unHover = getStyleToRevert originalStyle:style, onHover
+			node.onmouseover = setStyle(node, onHover)
+			node.onmouseout  = setStyle(node, unHover)
 		
 		if text != null
 			if node.shadowInnerHtml != text

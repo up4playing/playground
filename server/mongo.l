@@ -34,7 +34,7 @@ DatabaseResult
 class Collection
 	string collectionName
 	
-	inline js async string add: any value
+	inline js async DatabaseResult add: any value
 		this.insertOne(value)
 	
 	inline js async any findOne: dynamic query

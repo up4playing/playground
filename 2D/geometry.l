@@ -941,6 +941,15 @@ global transient unit System
 		                                ) do                              // Do this for each item in a list
 		for(let i=0, _center = center, _delta = delta, _len=to, _x = _center.x-(_len-1)*_delta.x/2, _y=_center.y-(_len-1)*_delta.y/2; i<_len; ++i, _x += _delta.x, _y += _delta.y) do(new Vector2(_x, _y, _center.location || _delta.location ? new SourceCodeLocation(null, 0, 0, _center.location, _delta.location) : null), i)
 
+	global inline js void forPositions: int to                            // The exclusive upper bound to iterate towards
+		                                Vector2 end = {0,0}               // Center items at this position
+		                                implicit Vector2 delta = {300,0}  // Distance between items
+		                                inline -> void(
+		                                    Vector2 pos,                  // The position of the current item
+		                                    int i,                        // The index of the current item of the list we are iterating over with forCentered
+		                                ) do                              // Do this for each item in a list
+		for(let i=0, _end = end, _delta = delta, _len=to, _x = _end.x-(_len-1)*_delta.x, _y=_end.y-(_len-1)*_delta.y; i<_len; ++i, _x += _delta.x, _y += _delta.y) do(new Vector2(_x, _y, _end.location || _delta.location ? new SourceCodeLocation(null, 0, 0, _end.location, _delta.location) : null), i)
+
 	global inline js void forPositions: T[] subject                       // The list to iterate over
 		                                Vector2 start = {0,0}             // Left or top align items at this position
 		                                implicit Vector2 delta = {300,0}  // Distance between items
