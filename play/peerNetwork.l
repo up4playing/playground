@@ -66,18 +66,21 @@ transient skipInit unit PeerNetwork
 	initiate: InternalUser user
 		setupPeerConnection user, offerByMe:true
 		setupRemoteMedia user
-		setupDataChannel user
 		
 	tick
 		let now = Time.realTime
-		for input.internalUsers
-			if . 
+		
+		for input.internalUsers as user
+			if . and not .local
 				// Reconnect to peer: Try to connect again if
 				// - we aren't connected 5 seconds after starting to connect
 				// - we are connect, but haven't received a message for 10 seconds
 				// We use a central place to reconnect and no intervals, timeouts or reloads to make it easier to reason about
-				if (not .connected and now > .startToConnectTime + 5000)
-				or (    .connected and now > .lastIncomingMessageTime + 10000)
+				// if (not .connected and now > .startToConnectTime + 5000)
+				// or (    .connected and now > .lastIncomingMessageTime + 10000)
+				// if (not .connected and now > .lastIncomingMessageTime +  8000)
+				// or (    .connected and now > .lastIncomingMessageTime + 12000)
+				if now > .lastIncomingMessageTime + 10000
 				
 				// !!! EVALUATE Wait longer for the 2nd retry
 				// if .connectionState != "connected" and (now > .startToConnectTime + 10000
@@ -86,16 +89,18 @@ transient skipInit unit PeerNetwork
 				// !!! EVALUATE Reconned immediately when failed
 				// or .connectionState == "failed"
 					
-					core.log "#problem -------------------------------- State is {.connectionState} after {now-.startToConnectTime} ms, {.connectionTries} retries, last incomming message {now - .lastIncomingMessageTime} ms ago --------------------------------"
-					.startToConnectTime = Time.realTime
+					core.log "[{Time.frame}] <{.id}> #problem -------------------------------- State is {.connectionState} after {now-.startToConnectTime} ms, {.connectionTries} retries, last incomming message {now - .lastIncomingMessageTime} ms ago, offerByMe:{.offerByMe} --------------------------------"
+					.startToConnectTime = user.lastIncomingMessageTime = Time.realTime
 					statistics.scheduleSendIn 3 seconds
 					
-					if .offerByMe
-						core.log "#peer Restarting ICE (offer by me)"
-						setupDataChannel .
-						.peerConnection.restartIce()
+					if user.offerByMe
 						retries++
-						.connectionTries++
+						if ++user.connectionTries < 3
+							core.log "#peer Restarting ICE (offer by me)"
+							user.peerConnection.restartIce()
+						else
+							core.log "#peer Recreate peer connection (offer by me)"
+							initiate user
 					
 					// !!! EVALUATE Recreate peer channel after a few failed tries
 					// if .connectionTries < 2
@@ -132,7 +137,7 @@ transient skipInit unit PeerNetwork
 			} catch {}
 		}
 		try {
-			user.startToConnectTime = Date.now();
+			user.startToConnectTime = user.lastIncomingMessageTime = Date.now();
 			user.offerByMe = offerByMe;
 			
 			let options = {
@@ -143,18 +148,18 @@ transient skipInit unit PeerNetwork
 			}
 			if(PeerNetwork.relayMode > 0) {
 				// OVH turn server
-				// options.iceServers.push({
-				// 	urls: 'turn:193.70.81.132:39571',
-				// 	username: 'play-user-x8env28gx41odbxzwjyut2oq871987syq8ovyuqp128djbsjue',
-				// 	credential: 'qoy91n981vlplabb1873jdcgsouz2qm87qmmakqpc2t8hbeyjsyaqkuz'
-				// });	
-				
-				// Alphahosting turn server
 				options.iceServers.push({
-					urls: 'turn:89.22.121.145:39571',
+					urls: 'turn:193.70.81.132:39571',
 					username: 'play-user-x8env28gx41odbxzwjyut2oq871987syq8ovyuqp128djbsjue',
 					credential: 'qoy91n981vlplabb1873jdcgsouz2qm87qmmakqpc2t8hbeyjsyaqkuz'
 				});	
+				
+				// Alphahosting turn server
+				// options.iceServers.push({
+				// 	urls: 'turn:89.22.121.145:39571',
+				// 	username: 'play-user-x8env28gx41odbxzwjyut2oq871987syq8ovyuqp128djbsjue',
+				// 	credential: 'qoy91n981vlplabb1873jdcgsouz2qm87qmmakqpc2t8hbeyjsyaqkuz'
+				// });	
 			}
 			options.iceServers.push({
 				urls: [
@@ -176,14 +181,16 @@ transient skipInit unit PeerNetwork
 			}
 			
 			// Signaling, Connection
-			peerConnection.onsignalingstatechange = e => {
-				core.log(`#peer <${user.id}> Signaling State Change: ${peerConnection.signalingState}`);
-			}
+			// peerConnection.onsignalingstatechange = e => {
+			// 	core.log(`#peer <${user.id}> Signaling State Change: ${peerConnection.signalingState}`);
+			// }
 			peerConnection.onconnectionstatechange = e => {
 				core.log(`#peer <${user.id}> Connection State Change: ${peerConnection.connectionState}`);
 				user.connectionState = peerConnection.connectionState;
 				user.connected = peerConnection.connectionState == "connected";
 				if(user.connected) PeerNetwork.onConnected(user);
+				if(peerConnection.connectionState == "disconnected")
+					setTimeout(() => statistics.saveStatistics(), 7000);
 					
 				// !!! EVALUATE Retry right away when connection failed
 				// if(peerConnection.connectionState == "failed" && offerByMe) {
@@ -208,16 +215,12 @@ transient skipInit unit PeerNetwork
 			peerConnection.icecandidateerror = e => {
 				core.log(`#peer <${user.id}> IDE Candidate Error: ${e.errorText}`);
 			}
-			peerConnection.oniceconnectionstatechange = e => {
-				core.log(`#peer <${user.id}> ICE Connection State Change: ${peerConnection.iceConnectionState}`);
-				if(peerConnection.iceConnectionState == "disconnected") {
-					// Send logfiles to server
-					setTimeout(() => statistics.saveStatistics(), 7000);
-				}
-			}
-			peerConnection.onicegatheringstatechange = e => {
-				core.log(`#peer <${user.id}> ICE Gathering State Change: ${peerConnection.iceGatheringState}`);
-			}
+			// peerConnection.oniceconnectionstatechange = e => {
+			// 	core.log(`#peer <${user.id}> ICE Connection State Change: ${peerConnection.iceConnectionState}`);
+			// }
+			// peerConnection.onicegatheringstatechange = e => {
+			// 	core.log(`#peer <${user.id}> ICE Gathering State Change: ${peerConnection.iceGatheringState}`);
+			// }
 			
 			// !!! EVALUATE Create offer right away, because sometimes "negotiationneeded" isn't fired
 			// if(offerByMe) PeerNetwork.createOffer(user);
@@ -266,8 +269,8 @@ transient skipInit unit PeerNetwork
 			user.dataChannels.length = 0;
 			
 			// Create reliable data channel
-			// These options would create an unreliable one: {ordered:false, maxRetransmits:0}
-			let dataChannel = user.peerConnection.createDataChannel("channel");
+			// let dataChannel = user.peerConnection.createDataChannel("channel"); // reliable
+			let dataChannel = user.peerConnection.createDataChannel("channel", {ordered:false, maxRetransmits:0}); // unreliable
 			dataChannel.binaryType = "arraybuffer";
 			dataChannel._id = PeerNetwork.dataChannelId++;
 			
@@ -305,6 +308,9 @@ transient skipInit unit PeerNetwork
 	onConnected: InternalUser user
 		user.startDataChannelTime = user.lastIncomingMessageTime = Time.realTime
 		logConnectionType user
+		
+		if user.offerByMe
+			setupDataChannel user
 		
 		if not statistics.connectTime
 			int connectedCount = input.internalUsers.count.offerByMe and .connected
@@ -422,21 +428,26 @@ transient skipInit unit PeerNetwork
 	Buffer sendBuffer = {}
 	
 	sendInputs: int inputFrame
-		for input.internalUsers -> user if user
+		for input.internalUsers -> receiver if receiver
 			let inputs = input.localUser.inputs
-			let length = inputs.writePos - user.inputsSentPos
+			let length = inputs.writePos - receiver.receivedMyInputsUpToPos
 			
-			if user.dataChannels
+			if receiver.dataChannels
 				sendBuffer.reset
 				sendBuffer.writeInt8 cast NetworkMessageType.Tick
-				sendBuffer.writeInt inputFrame // You got all inputs up to and including this frame
-				sendBuffer.writeInt user.inputsSentPos
-				sendBuffer.writeBuffer inputs, user.inputsSentPos, length
+				sendBuffer.writeInt inputFrame                       // I send inputs up to and including this frame
+				sendBuffer.writeInt receiver.receivedMyInputsUpToPos // I send inputs starting from the last pos you received
+				sendBuffer.writeInt receiver.inputs.writePos         // I received your inputs up to this pos
+				sendBuffer.writeBuffer inputs, receiver.receivedMyInputsUpToPos, length
 				sendBuffer.writeInt core.lastChecksumFrame                           // The last certain frame with inputs from everybody
 				sendBuffer.writeFloat64 core.checksums[core.lastChecksumFrame] || 0  // The checksum of the last certain frame
 				
 				core.tickMessageSize = send ., sendBuffer
-				user.inputsSentPos = inputs.writePos
+				if core.verbose
+					if receiver.receivedMyInputsUpToPos > inputs.writePos
+						core.log "[{inputFrame}] <{receiver.id}> #send -->> {receiver.receivedMyInputsUpToPos}->{inputs.writePos} id:{receiver.dataChannels[0]._id}"
+					else
+						core.log "[{inputFrame}] <{receiver.id}> #send -->>"
 				
 			// if length
 			// 	core.storeInputsToDB user
@@ -459,28 +470,30 @@ transient skipInit unit PeerNetwork
 			core.log(e.stack)
 			return 0
 		}
-		
-	// private js void onMessage: InternalUser user, Buffer buffer
-	// 	setTimeout(() => PeerNetwork.onMessageDo(user, buffer), 1000)
-			
+	
 	private onMessage: InternalUser user, Buffer buffer
 		user.lastIncomingMessageTime = Time.realTime
 		NetworkMessageType type = cast buffer.readInt8
 		if type == Tick:         onTick user, buffer; else
-		if type == Ping:         onPing user, buffer;  else
+		if type == Ping:         onPing user, buffer; else
 		if type == Pong:         onPong user, buffer;
 			
 	private onTick: InternalUser sender, Buffer buffer
-		let inputFrame = buffer.readInt
+		let inputFrame = buffer.readInt                     // The sender sent inputs up to and including this frame
 		
 		if inputFrame >= sender.inputFrame
-			let prevInputFrame = sender.inputFrame
-			let prevWritePos = buffer.readInt
+			let prevInputFrame = sender.inputFrame         
+			let incomingInputsWritePos = buffer.readInt     // The sender sent inputs starting from the last pos I received
+			sender.receivedMyInputsUpToPos = buffer.readInt // The sender received my inputs up to this pos
 			
 			sender.inputFrame = inputFrame
-			buffer.readBuffer sender.inputs, prevWritePos
+			buffer.readBuffer sender.inputs, incomingInputsWritePos
 			
-			if core.verbose: core.log "<{sender.id}> Received inputFrame: {prevInputFrame}->{inputFrame} writePos: {prevWritePos}->{sender.inputs.writePos}"
+			if core.verbose
+				if sender.inputs.writePos > incomingInputsWritePos
+					core.log "[{inputFrame}] <{sender.id}> #receive <<-- writePos: {incomingInputsWritePos}->{sender.inputs.writePos}"
+				else
+					core.log "[{inputFrame}] <{sender.id}> #receive <<--"
 			
 			// Checksum
 			int checksumFor = buffer.readInt
