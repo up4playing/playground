@@ -33,6 +33,7 @@ skipInit unit Platform
 		process.env[key]
 		
 	public inline js string encodeURIComponent(string value) encodeURIComponent(value)
+	public inline js string decodeURIComponent(string value) decodeURIComponent(value)
 		
 global transient unit System
 	// Prints a message to the console
