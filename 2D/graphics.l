@@ -905,8 +905,8 @@ transient skipInit global unit graphics
 		                ShowPointersMode mode = Remote // Choose whether you want to draw the pointers for local players, remote players or both
 		                Color color = null             // The color of the pointer. If this is left out, the player color is used
 		if mode == LocalAndRemote
-		or (player == input.localPlayer and mode == Local)
-		or (player != input.localPlayer and mode == Remote)
+		or (player.id == input.localUser.id and mode == Local)
+		or (player.id != input.localUser.id and mode == Remote)
 			if !color: color = player.color
 			for player.touches
 				drawImage finger, .smoothPosition+{11,32}, frame:.isDown ? 1 : 0, layer:int.maxValue
