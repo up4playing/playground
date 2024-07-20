@@ -64,14 +64,15 @@ unit lobby
 		
 		// Control show names
 		onKeyDown by host
-			let alt = pressedBy.keysCurrentlyDown.contains Alt
-			if key == A and alt
+			let cmd = pressedBy.keysCurrentlyDown.contains LeftMetaKey
+			if key == E and cmd
 				setupFields newHost:pressedBy
-			else
-			if key == Y and alt
+				
+			if not host: return
+			if key == Right
 				showName players[showNameIndex++ % players.length]
 			else
-			if key == Tab and alt
+			if key == Tab and cmd
 				showNameIndex = (showNameIndex+1) % players.length
 			else
 			if key == Enter or key == Tab or key == Right
@@ -85,7 +86,12 @@ unit lobby
 			float offset = -videoWidth*(count-1)/2
 			float halfVideoHeight = videoWidth*3/8
 			
-			for players -> player, playerIndex
+			for players as player, playerIndex
+				Vector2 pos = {offset+videoWidth*.index, 0}
+				onTouchDown position:pos size:{videoWidth, videoWidth*3/4}
+					cyclePlayer player
+					
+			for players as player, playerIndex
 				Vector2 pos = {offset+videoWidth*.index, 0}
 				drawVideo ., pos, videoWidth
 				
@@ -103,6 +109,9 @@ unit lobby
 				let state = input.internalUsers[player.id]?.connectionState
 				if state && state != "connected"
 					drawText state, size:80, color:state == "failed" ? Red : Yellow, position:pos+{0, -halfVideoHeight-40}
+					drawText "x", size:50, color:#808080, position:closePos
+				onTouchDown closePos, size:{32,32}
+					input.removePlayer player
 				
 				let field = fields.find.player == player
 					// Set field position
@@ -114,7 +123,8 @@ unit lobby
 						// Suggestions
 						for nameSuggestions -> name
 							drawButton name, position:pos+{-150+100*(i%4),halfVideoHeight+150+20*math.floor(i/4)}, textSize:14, textColor:#808080, textColorOnHover:White, visibleFor:host
-								fields[playerIndex].text = player.name = name
+								fields[playerIndex].text = name
+								setPlayerName player, name
 								
 						// Circle indicating the first player name to show
 						if showNameIndex == playerIndex
@@ -162,9 +172,23 @@ unit lobby
 		playSound LobbyImpact
 		
 	createField: Player player, implicit Player[] visibleFor = null
-		let field = LobbyTextField(text:player.name, player, visibleFor, editableBy:host, color:White, size:100, font:ByTheWay, angle:-.01, onChanged:player.name = .)
+		let field = LobbyTextField(text:player.name, player, visibleFor, editableBy:host, color:White, size:100, font:ByTheWay, angle:-.01, onChanged:setPlayerName player, .)
 		fields.add field
 		return field
+		
+	setPlayerName: Player player, string name
+		player.name = name.capitalizeWords
+		let user = input.internalUsers[player.id]
+			user.name = player.name
+		if player.id == input.localUser.id
+			core.account.name = player.name
+			Platform.setLocalStorageObject("user", core.account)
+	
+	cyclePlayer: Player player
+		watch "Cycle color {player.index}"
+		players.moveToBack player
+		input.updatePlayers
+		player.colorPreferences = [player.index]
 	
 	tickSettings
 		for players -> player
