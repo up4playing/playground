@@ -1575,6 +1575,7 @@ interface object
 		
 	static inline js string toJson(any value) JSON.stringify(value)
 	static inline js string toFormattedJson(any value) JSON.stringify(value, null, "\t")
+	static inline js bool isEqualAndSameType(any a, any b) a === b
 		
 	static internal js string stringify: object subject, int depth = 0 
 		switch(typeof subject)
