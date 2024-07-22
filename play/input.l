@@ -4,11 +4,13 @@ transient class InternalUser
 	bool local          // Is this the local user?
 	int connectionId    // The connectionId increases with every connection, even if the same user reconnects
 	int index
+	string _id          // User account id
+	string name         // User account name
 	
 	// Event Stream
-	bool collectInputs       // When we are done pinging, we add a join event and start collecting inputs
-	int inputFrame = -1      // We got all inputs from this player up to and including this frame
-	int inputsSentPos
+	bool collectInputs          // When we are done pinging, we add a join event and start collecting inputs
+	int inputFrame = -1         // We received all inputs from this player up to and including this frame
+	int receivedMyInputsUpToPos // We received all inputs from this player up to this pos
 	int[] lastTouchMoveIndex
 	Buffer inputs = {}       // The stream of inputs of this user
 	
@@ -85,14 +87,20 @@ transient class InternalUser
 		smoothFrame = frame - bufferFrames		
 		
 priority class Player
+	string _id             // User account id
+	Language language
+	string email
+	string name
+	int[] colorPreferences
+	
 	int id
 	int index
 	Color color, darkColor
-	string name
 	int score
 	Vector2 pointerPosition
 	
-	toString := name or (color ? color.name : "")
+	internal Player cloneBaseData := {_id, language, email, name, colorPreferences, id, index}
+	toString := name or (color ? color.name : "Player {index+1}")
 	highlightPerspectiveColor := input.showPerspectiveOf == null or input.showPerspectiveOf == this ? this.color : this.darkColor
 	
 	// Touch input
@@ -112,7 +120,7 @@ priority class Player
 	
 	// The current player instance, equivalent to "this"
 	inline js Player me() this
-
+	
 	internal clearEvents
 		bool hasTouch = touches.any.type == Touch
 		for touches backwards
@@ -123,6 +131,13 @@ priority class Player
 			else
 			if .phase == Down
 				.phase = Still
+				
+UserAccount
+	string _id
+	Language language
+	string email
+	string name
+	string colorPreferences
 	
 enum InputType: None, TouchDown, TouchMove, TouchUp, Scroll, KeyDown, KeyUp, TextInput, Stick, Trigger, Grip, ButtonDown, ButtonUp, ControllerTransform, HeadTransform, DeviceRotation, Join, SetState, Navigate, GameController, String, Json, Object
 		
@@ -495,6 +510,13 @@ skipInit global unit input
 				e.preventDefault();
 			}
 			else
+			if(ctrlOrCmd && key == "o") {
+				// Open event stream or state
+				if(Platform.isDebug) core.openEventStream();
+				else                 core.openState();
+				e.preventDefault();
+			}
+			else
 			if(ctrlOrCmd && key == "l") {
 				// Save logs
 				statistics.saveStatistics()
@@ -670,10 +692,15 @@ skipInit global unit input
 		inputs.writeUnsignedInt16 cast InputType.SetState
 		inputs.writeBuffer buffer
 		
-	internal handleJoin: int frame
+	internal handleJoin: int frame, UserAccount account
 		let inputs = localUser.inputs
 		inputs.writeInt32 frame
 		inputs.writeInt16 cast InputType.Join
+		inputs.writeString account._id
+		inputs.writeInt8 cast account.language
+		inputs.writeString account.name
+		inputs.writeString account.email
+		inputs.writeString account.colorPreferences
 				
 	// Handles navigating back or forward in the browser	
 	internal handleNavigate: string url
@@ -898,12 +925,6 @@ skipInit global unit input
 						c.x.name = "SQUARE"
 						c.y.name = "TRIANGLE"
 				else
-				if inputType == SetState
-					core.snapshotBuffer.reset
-					inputs.readBuffer core.snapshotBuffer
-					Snapshot.deserialize core.snapshotBuffer
-					math.recreateRandomValues
-				else
 				if inputType == String
 					int id = inputs.readInt
 					string valueString = inputs.readString
@@ -923,6 +944,36 @@ skipInit global unit input
 					dynamic object = valueString.toJson
 					networkData.call id, object
 					if Platform.waitingForInitialData > 0: Platform.waitingForInitialData--
+				else
+				if inputType == SetState
+					// Set state
+					core.snapshotBuffer.reset
+					inputs.readBuffer core.snapshotBuffer
+					Snapshot.deserialize core.snapshotBuffer
+					math.recreateRandomValues
+					
+					// Match users
+					playersById.clear
+					let availableUsers = clone input.internalUsers
+					for players as player
+						let user = availableUsers.popWhere.name == player.name
+						if not user: user = availableUsers.popWhere.index == player.index
+						if not user: availableUsers.pop
+						player.id = user.id
+						
+						user._id = player._id
+						user.index = player.index
+						user.name = player.name
+						playersById[player.id] = player
+						
+				else
+				if inputType == Join
+					player._id = internalUser._id = inputs.readString
+					player.language = cast inputs.readInt8
+					player.name = internalUser.name = inputs.readString 
+					player.email = inputs.readString
+					string colorPreferencesString = inputs.readString
+					player.colorPreferences = colorPreferencesString.split(",").select.toInt
 	
 		// for players
 		// 	let internalUser = internalUsers[.id]
@@ -1028,9 +1079,24 @@ skipInit global unit input
 			controllerButtonMap[S] = {userId:localUser.id, buttonIndex:3}
 			controllerButtonMap[A] = {userId:localUser.id, buttonIndex:4}
 			
-		
 	private getTargetedPlayers: Player[] by
 		return by and by.length > 0 and by[0] and not core.everybodyCanClickForEverybody ? by : players
+		
+	Player[] playersToRemove
+		
+	removePlayer: Player player
+		if not isCertain: return
+		core.log "Removing player {player.id} at frame {core.frame}"
+		playersToRemove.add player
+		
+	internal removePlayersIfNecessary
+		for playersToRemove
+			players.remove .
+			playersById[.id] = null
+			updatePlayers
+			InternalUser user = internalUsers[.id]
+				PeerNetwork.disconnect user
+		playersToRemove.clear
 		
 	// ---------------------------------------------- Touch Down ----------------------------------------------
 	

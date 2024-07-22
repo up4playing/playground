@@ -236,31 +236,122 @@ HTMLElement HTMLInput
 		// this.element.style.height = "{size.y}px"
 		// this.element.style.font = "{fontSize}px OpenSans"
 		
-transient unit IndexedDB
-	private object db
+IndexedDBIndex
+	string name
+	string[] keyPaths
 	
-	js void start: string databaseName, string storeName, int version = 1
+	IndexedDBIndex
+		if not keyPaths: keyPaths.add name
+		
+IndexedDBStore
+	string name
+	IndexedDBIndex[] indices
+	
+	string keyPath = "id"
+	bool autoIncrement = false
+	
+	private dynamic db
+	
+	IndexedDBStore
+		IndexedDB.stores.add this
+		print "Adding store {name} {IndexedDB.stores.length}"
+		
+	js void put: any data, void() then = null, void(Error error) else = null
 		try {
-			core.log("IndexedDB: start");
-			IndexedDB.storeName = storeName;
+			let trans = this.db.transaction(this.name, "readwrite")
+			trans.onerror = e => {
+				core.log("Error in IndexedDB.save: "+trans.error)
+				else?.()
+			}
+			trans.objectStore(this.name).put(data).onsuccess = e => {
+				then?.()
+			}
+		} catch(error) {
+			core.onError(error)
+			else?.(error)
+		}
+		
+	js void get: any id, void(any result) then, void(Error error) else = null
+		try {
+			let trans = this.db.transaction(storeName, "readonly");
+			let req = trans.objectStore(this.name).get(id);
+			req.onsuccess = async e => {
+				let result = req.result;
+				if(result) {
+					then(result);
+				} @else {
+					else?.();
+				}
+			}
+			req.onerror = e => {
+				core.onError(e);
+				else?.();
+			}
+		} catch(e) {
+			core.onError(e);
+			else?.();
+		}
+		
+	js void getAllFromIndex: string index, any query, void(any[] result) then, void(Error error) else = null
+		try {
+			let trans = this.db.transaction(storeName, "readonly");
+			let req = trans.objectStore(this.name).index(index).getAll(query);
+			req.onsuccess = async e => {
+				let result = req.result;
+				if(result) {
+					then(result);
+				} @else {
+					else?.();
+				}
+			}
+			req.onerror = e => {
+				core.onError(e);
+				else?.();
+			}
+		} catch(e) {
+			core.onError(e);
+			else?.();
+		}
+	
+		
+transient skipInit unit IndexedDB
+	internal dynamic db
+	IndexedDBStore[] stores
+	
+	js void start: string databaseName, int version = 1, void() success = null, void(Error error) else = null
+		try {
+			System.print("IndexedDB: start stores:"+IndexedDB.stores.length);
 			var request = indexedDB.open(databaseName, version)
 			request.onupgradeneeded = e => {
 				core.log("IndexedDB: upgradeneeded");
 				IndexedDB.db = e.target.result;
-				if(!IndexedDB.db.objectStoreNames.contains(storeName))
-					IndexedDB.db.createObjectStore(storeName, { keyPath: "id" });
-				core.log("IndexedDB successfully upgraded to version "+version)
+				for(let store of IndexedDB.stores) {
+					if(!IndexedDB.db.objectStoreNames.contains(store.name)) {
+						let storeObject = IndexedDB.db.createObjectStore(store.name, { keyPath: store.keyPath, autoIncrement: store.autoIncrement });
+						System.print("IndexedDB: created store "+store.name)
+						for(let index of store.indices) {
+							storeObject.createIndex(index.name, index.keyPaths)
+						}
+					}
+				}
+				System.print("IndexedDB: successfully upgraded to version "+version)
 			}
 			request.onsuccess = e => {
+				System.print("IndexedDB: success");
 				IndexedDB.db = e.target.result;
-				core.log("IndexedDB: success");
+				for(let store of IndexedDB.stores) {
+					store.db = IndexedDB.db
+				}
+				success?.();
 			}
 			request.onerror = e => {
-				core.log("IndexedDB: error "+request.error);
+				core.onError(request.error);
+				else?.(request.error);
 			}
 			core.log("IndexedDB: finished");
 		} catch(e) {
-			core.log("IndexedDB: exception "+e.message)
+			core.onError(e);
+			else?.(e);
 		}
 		
 	js void open: string storeName, string id, void(object data) then, void() else = null

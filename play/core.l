@@ -3,8 +3,9 @@ transient immutable RoomInfo: int time, userId
 enum SendInputsMode: None, Peer, Server
 	
 transient skipInit unit core
-	int eventStreamVersion = 1
+	int eventStreamVersion = 2
 	int sendInterval = 1
+	int milestoneInterval = 1800
 	int smoothStrength = 90
 	bool smoothTouchPosition = true
 	bool everybodyCanClickForEverybody = false
@@ -34,13 +35,17 @@ transient skipInit unit core
 	internal bool startInLobby      // Connected sessions usually start in the lobby, local sessions start in the app
 	private int joinFrame           // The frame the local user joined
 	bool isPremiere
+	UserAccount account
 	
 	// Checksum
 	public float[] checksums
 	public int lastChecksumFrame
 	
+	IndexedDBStore inputStore = {"input", indices:[{"roomId"}]}
+	IndexedDBStore roomStore  = {"room"}
+	
 	initDatabase
-		IndexedDB.start "up4playing", "snapshot", 5
+		IndexedDB.start "up4playing", version:2
 
 	startConnected: int frame
 		if mode == Connected: return
@@ -48,7 +53,12 @@ transient skipInit unit core
 		let user = input.localUser
 		user.startInputFrame 0
 		
-		input.handleJoin frame 
+		account = Platform.getLocalStorageObject("user") or {}
+		if not account._id
+			account._id = generateObjectId
+			Platform.setLocalStorageObject("user", account)
+			
+		input.handleJoin frame, account
 		user.collectInputs = true
 		log "startConnected", joinFrame
 		
@@ -58,6 +68,13 @@ transient skipInit unit core
 		nextSnapshotFrame = 0
 		checkSaveState
 		log "Start", user.id, frame, startTime, serverStartTime
+		
+	js string generateObjectId
+		const timestamp = Math.floor(new Date().getTime() / 1000).toString(16);
+		const machineIdentifier = Math.floor(Math.random() * 0xFFFFFF).toString(16).padStart(6, '0');
+		const processIdentifier = Math.floor(Math.random() * 0xFFFF).toString(16).padStart(4, '0');
+		const counter = Math.floor(Math.random() * 0xFFFFFF).toString(16).padStart(6, '0');
+		return (timestamp + machineIdentifier + processIdentifier + counter).toLowerCase();
 		
 	startLocal
 		mode = Local
@@ -99,6 +116,7 @@ transient skipInit unit core
 		players.clear
 		input.playersById.clear
 		input.host = null
+		input.playersToRemove.clear
 		errorMessage = ""
 		HTMLElement.clear
 		math.randomValueIndex = 0
@@ -115,8 +133,9 @@ transient skipInit unit core
 		
 		if !startInLobby or testLobby
 			// When the developer changed Platform.userCount, add or remove internal users accordingly
-			for input.internalUsers.length to Platform.userCount
-				input.internalUsers.add {id:i, local:true, collectInputs:true}
+			for Platform.userCount
+				if not input.internalUsers[.]
+					input.internalUsers[.] = {id:i, local:true, collectInputs:true}
 			if input.internalUsers.length > Platform.userCount
 				input.internalUsers.removeRange Platform.userCount..input.internalUsers.length
 			
@@ -132,6 +151,7 @@ transient skipInit unit core
 			input.localUser = input.internalUsers[localUserId]
 			input.localPlayer = input.playersById[localUserId]
 			input.updatePlayers
+			account = {}
 			
 		// Reset read pos to replay inputs from the beginning
 		for input.internalUsers if .
@@ -152,7 +172,7 @@ transient skipInit unit core
 		Loca.setLanguage prevLanguage
 		Player[] newPlayers
 		for input.players
-			Player user = {id:.id, index:.index}
+			Player user = .cloneBaseData
 			input.playersById[.id] = user
 			newPlayers.add user
 		input.players = newPlayers
@@ -171,11 +191,20 @@ transient skipInit unit core
 	// to only replay from the beginning when going to a frame in the past
 	goToFrame: int targetFrame, replayFromStart = false
 		isPremiere = false
-		if replayFromStart: frameWithNewWatches = 0
-		if targetFrame < frame or replayFromStart: reset
+		if replayFromStart
+			frameWithNewWatches = 0
+			reset
+		else
+		if targetFrame < frame
+			let milestoneIndex = math.floor(targetFrame/milestoneInterval) - 1
+			if 0 <= milestoneIndex < milestones.length
+				let milestone = milestones[milestoneIndex]
+				frame = (milestoneIndex+1) * milestoneInterval
+				rewind milestone
+			else
+				reset
 			
-		while frame < targetFrame
-			step fastForward:true, draw:false
+		replay frame to targetFrame
 		adjustStartTime
 		animationFrame
 		isPremiere = true
@@ -276,7 +305,6 @@ transient skipInit unit core
 			
 	internal string logs
 	private float lastNetworkFrame, lastAnimationFrame, drawTime, tickTime, restoreTime, replayTime, saveTime
-	private int replayFrames
 	internal int displayItems
 	int tickMessageSize
 	bool verbose = false
@@ -334,7 +362,7 @@ transient skipInit unit core
 		if not player: return
 		let prevPlayer = input.localPlayer
 		input.localPlayer = player
-		input.localUser = input.internalUsers.find.id == player.id
+		input.localUser = input.internalUsers.find . and .id == player.id
 		for prevPlayer.touches
 			input.handleUpdateTouchAfterSwitchingUser .id, .referencePosition
 			
@@ -384,6 +412,7 @@ transient skipInit unit core
 			tick draw
 			
 			if HTMLElement.elements: HTMLElement.elements.each.tick
+			input.removePlayersIfNecessary
 			
 		catch
 			onError error
@@ -396,7 +425,7 @@ transient skipInit unit core
 		// Advance frame
 		frame++
 		if frames < frame: frames = frame
-		if frameWithNewWatches < frame: frameWithNewWatches = frame
+		if frame > frameWithNewWatches: frameWithNewWatches = frame
 			
 	// Clear screen, process application tick, and draw all graphics
 	// This is called in step.
@@ -434,6 +463,8 @@ transient skipInit unit core
 	private int snapshotFrame = -1
 	private int nextSnapshotFrame = -1
 	
+	private Buffer[] milestones
+	
 	// This is called at the begining of animationFrame before we start stepping.
 	private checkRewindAndReplayState
 		if (mode != Connected and !simulateRollback) or input.internalUsers.length == 1: return
@@ -441,15 +472,18 @@ transient skipInit unit core
 		if mode == Local and simulateRollback: nextSnapshotFrame = frame - 5
 		else                                   nextSnapshotFrame = (input.internalUsers.min math.min(.smoothFrame, .inputFrame) where . and not .local)+1
 		
-		if snapshotFrame != -1: rewindAndReplayState snapshot, snapshotFrame
+		if snapshotFrame != -1
+			if verbose
+				core.log "rewindAndReplayState", snapshotFrame, frame, nextSnapshotFrame
+				for input.internalUsers
+					core.log "\t<{.id}>", .smoothFrame, .inputFrame, .local
+			
+			let prevSnapshotFrame = snapshotFrame
+			snapshotFrame = -1
+			rewind snapshot
+			replay prevSnapshotFrame to frame
 
-	private rewindAndReplayState: Buffer snapshot, int snapshotFrame
-		if verbose
-			core.log "rewindAndReplayState", snapshotFrame, frame, nextSnapshotFrame
-			for input.internalUsers
-				core.log "\t<{.id}>", .smoothFrame, .inputFrame, .local
-		
-		// Rewind
+	private rewind: Buffer snapshot
 		restoreTime = Time.measure
 			snapshot.rewind
 			Snapshot.deserialize snapshot
@@ -459,24 +493,25 @@ transient skipInit unit core
 				let user = input.internalUsers[.]
 				user.inputs.readPos = snapshot.readInt
 		
-		// Replay
-		let targetFrame = frame
-		frame = replayFrom = snapshotFrame
-		replayFrames = targetFrame - frame
-		this.snapshotFrame = -1
-		
+	private replay: int from, int to
 		replayTime = Time.measure
-			while frame < targetFrame
+			frame = replayFrom = from
+			while frame < to
 				step fastForward:true, draw:false			
 			
 	// This is called at the beginning of each step
 	private checkSaveState
-		if mode != Connected and !simulateRollback: return
+		if input.isCertain and frame > 0 and frame % milestoneInterval == 0
+			Buffer buffer = {}
+			saveState buffer
+			int milestoneIndex = math.floor(frame / milestoneInterval) - 1
+			milestones[milestoneIndex] = buffer
+			watch "Milestone {milestoneIndex}"
 			
-		if snapshotFrame == -1 and frame >= nextSnapshotFrame
+		if (mode == Connected or simulateRollback) and snapshotFrame == -1 and frame >= nextSnapshotFrame
 			snapshotFrame = frame
 			saveState snapshot
-				
+			
 	string[] serializeLogs
 			
 	private saveState: Buffer snapshot
@@ -493,6 +528,10 @@ transient skipInit unit core
 			if(snapshot != secondSnapshotForTesting)
 				onError {"Inconsistent serialization"}
 												
+		snapshot.writeInt input.internalUsers.length
+		for input.internalUsers
+			snapshot.writeInt .inputs.readPos
+				
 		// Checksum
 		if players.length >= 2 and input.isCertain
 			float myChecksum = snapshot.checksum
@@ -501,10 +540,6 @@ transient skipInit unit core
 			if !theirChecksum                             checksums[frame] = myChecksum; else
 			if !theirChecksum.isApproximately(myChecksum) onWrongChecksum frame, mine:myChecksum theirs:theirChecksum
 			lastChecksumFrame = frame
-			
-		snapshot.writeInt input.internalUsers.length
-		for input.internalUsers
-			snapshot.writeInt .inputs.readPos
 				
 	inline js int currentTime := Date.now()
 	
@@ -519,6 +554,7 @@ transient skipInit unit core
 		if Platform.mode < Play: adjustStartTime
 			
 	Buffer snapshotBuffer = {}
+	Buffer eventStreamSnapshotBuffer = {}
 		
 	saveEventStreamAndLogs
 		if input.isCertain
@@ -533,25 +569,105 @@ transient skipInit unit core
 	saveEventStream
 		Buffer buffer = {}
 		buffer.writeInt eventStreamVersion
+		
+		eventStreamSnapshotBuffer.reset
+		Snapshot.serialize eventStreamSnapshotBuffer
+		buffer.writeBuffer eventStreamSnapshotBuffer
+		
 		buffer.writeInt frame-1
 		buffer.writeInt frames
 		buffer.writeString math.randomSeed
 		buffer.writeBool startInLobby
 		buffer.writeBool Platform.isStaging
+		
 		let userCount = input.internalUsers.count . != null
 		buffer.writeInt8 userCount
 		for input.internalUsers if .
 			buffer.writeInt .id
 			buffer.writeBool .local
 			buffer.writeBuffer .inputs
+			
+		buffer.writeInt milestones.length
+		for milestones
+			buffer.writeBuffer .
+			
 		let date = Date.now
 		file.saveBinary "{Platform.appName} {date.dayShortMonthNameYearString} {date.hourMinuteSecondString} v{Platform.buildVersion}.state", buffer
 		
+	const chunkSize = 256
+	
+	storeRoomToDB
+		roomStore.put {
+			id: roomId
+			frame
+			frames
+			eventStreamVersion
+			math.randomSeed
+			startInLobby
+			Platform.isStaging
+			localUserId: input.localUser.id
+		}
+	
+	storeInputsToDB: InternalUser user
+		let inputs = user.inputs
+		// let chunkStart = math.floor(inputs.writePos / chunkSize) * chunkSize
+		let start = inputs.writePos - (inputs.writePos % chunkSize)
+		let id = "{roomId}-{user.id}-{start}"
+		inputStore.put {id, roomId, userId:user.id, start, inputs:inputs.subArrayBuffer(start to inputs.writePos)}
+			print "storeInputsLocally", roomId, user.id, start, inputs.writePos
+		else
+			print "failed"
+			
+	openFromDB: int roomId, void() then, void() else
+		roomStore.get roomId
+			int targetFrame = .frame
+			frames = .frames
+			let randomSeed = .randomSeed
+			startInLobby = .startInLobby
+			Platform.isStaging =.isStaging
+			let localUserId = .localUserId
+			
+			inputStore.getAllFromIndex "roomId", roomId
+				result.orderBy.start
+				for result
+					int userId = .userId
+					int start = .start
+					any inputs = .inputs
+					let user = input.internalUsers[.userId] ?= {id:.userId, local:.userId == localUserId, collectInputs:true}
+					user.inputs.insertArrayBuffer .inputs
+					
+				// Replay
+				for input.internalUsers if .
+					.startInputFrame frames
+				math.setRandomSeed randomSeed
+				
+				Platform.sendClearTimeline
+				goToFrame targetFrame, replayFromStart:true
+				Platform.sendFrame(targetFrame, frames)
+				then
+				
+			else
+				else
+		else
+			else
+	
+	openState
+		file.openBinary
+			int version = buffer.readInt
+			Buffer finalSnapshot = {}
+			buffer.readBuffer finalSnapshot
+			input.handleSetState finalSnapshot
+						
 	openEventStream
 		Platform.pause
 		file.openBinary
 			// Read event stream
 			int version = buffer.readInt
+			
+			if version >= 2
+				Buffer finalSnapshot = {}
+				buffer.readBuffer finalSnapshot
+			
 			int targetFrame = buffer.readInt
 			frames = buffer.readInt
 			let randomSeed = buffer.readString
@@ -567,6 +683,14 @@ transient skipInit unit core
 				if user.local: input.localUser = user
 				buffer.readBuffer user.inputs
 				input.internalUsers[user.id] = user
+			
+			if version >= 2
+				milestones.clear
+				let milestoneCount = buffer.readInt
+				for milestoneCount
+					Buffer milestone = {}
+					buffer.readBuffer milestone
+					milestones.add milestone
 				
 			// Replay
 			for input.internalUsers if .
@@ -575,9 +699,10 @@ transient skipInit unit core
 				.startInputFrame frames
 			math.setRandomSeed randomSeed
 			
-			Platform.sendClearTimeline
-			goToFrame targetFrame, replayFromStart:true
-			Platform.sendFrame(targetFrame, frames)
+			if Platform.isDebug: Platform.sendClearTimeline
+			frame = int.maxValue
+			goToFrame targetFrame
+			if Platform.isDebug: Platform.sendFrame(targetFrame, frames)
 		
 	string roomString
 	int roomId
@@ -668,16 +793,6 @@ transient unit Snapshot
 		
 	autoSave() autoSaveAtEndOfStep = true
 	
-	internal onEndOfStep
-		if input.isCertain
-			if autoSaveAtEndOfStep and ++autoSaveCount > 5
-				let snap = save
-				IndexedDB.saveBuffer "snapshot", "{core.gameId}-0", snap
-				lastSnapshotSize = snap.writePos
-			if core.frame/snapshotEvery > snapshotStarts.length
-				snapshotStarts.add snapshots.writePos
-				serialize(snapshots)
-			autoSaveAtEndOfStep = false
 	
 global transient unit System
 	// Reset all variables to their initial value and restart the app
@@ -760,7 +875,7 @@ skipInit transient unit statistics
 			nextSendTime = Time.realTime + core.sendStatisticsEvery
 	
 	// Log game events (like scores, playtimes, etc)
-	log: dynamic value
+	log: any value
 		value.frame = Time.frame
 		this.gameLogs.add value
 	

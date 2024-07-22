@@ -33,7 +33,19 @@ skipInit unit Platform
 		process.env[key]
 		
 	public inline js string encodeURIComponent(string value) encodeURIComponent(value)
+	public inline js string decodeURIComponent(string value) decodeURIComponent(value)
 		
+global transient unit System
+	// Prints a message to the console
+	global js void print: logstring text // The text, variables or expressions to print
+		                  SourceCodeLocation location
+		if(location && Platform.isDebug) {
+			var stringValue = typeof text === "string" ? text : JSON.stringify(text);
+			if(stringValue) _sendToEditor({type:"log", value:stringValue, location:location.start, file:location.file});
+		} else {
+			console.log(text)
+		}
+
 global skipInit unit math
 	// Generates a random integer
 	global js int randomInteger: int min // The inclusive lower bound of the random integer
