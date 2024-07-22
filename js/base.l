@@ -479,6 +479,7 @@ immutable class string
 enum bool: false, true
 		
 enum SortingOrder: Ascending, Descending
+enum EachDistinctSortBy: DoNotSort = 0, SortByInteger = 1, SortByString = 2
 	
 // A data container that grows in size as needed
 js Array
@@ -510,13 +511,16 @@ class List<T>
 		for(let _subject=[...this], i=_subject.length-1; i>=0; --i) do(_subject[i], i)
 			
 	js void eachDistinct: TKey(T it) selector
+		                  EachDistinctSortBy sortBy = SortByInteger
 		                  void(
 		                      TKey it,
 		                      T[] items,
 		                      int i
 		                  ) do
 		if(this.length > 0) {
-			let _subject = [...this].sort((a,b) => selector(a) - selector(b))
+			let _subject = this
+			if(sortBy == 1) _subject = [...this].sort((a,b) => selector(a) - selector(b)); else
+			if(sortBy == 2) _subject = [...this].sort((a,b) => selector(a)?.localeCompare(selector(b)))
 			let it = selector(_subject[0]), i=0;
 			for(let _nextIndex=1; _nextIndex<_subject.length; ++_nextIndex) { 
 				let _nextIt = selector(_subject[_nextIndex]);
