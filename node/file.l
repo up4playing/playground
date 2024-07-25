@@ -15,6 +15,16 @@ file
 		const fs = require("fs").promises;
 		await fs.writeFile(to, text)
 		
+	js void download: string text
+		              string to
+		var element = document.createElement("a");
+		element.setAttribute("href", "data:text/plain;charset=utf-8," + encodeURIComponent(text));
+		element.setAttribute("download", to);
+		element.style.display = "none";
+		document.body.appendChild(element);
+		element.click();
+		document.body.removeChild(element);
+		
 	inline js async string[] readDirectory: string path
 		require("fs").promises.readdir(path)
 		
