@@ -666,6 +666,7 @@ global unit Html
 			if attributes.onClick != null:      node.onclick = attributes.onClick
 			if attributes.onRightClick != null: node.oncontextmenu = attributes.onRightClick
 			if attributes.onKeyDown != null:    node.onkeydown = attributes.onKeyDown
+			if attributes.onKeyUp != null:      node.onkeyup = attributes.onKeyUp
 			if attributes.tabIndex:             node.set("tabindex", attributes.tabIndex.toString)
 			
 		node.sourceLocation = sourceLocation
