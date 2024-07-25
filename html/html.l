@@ -192,6 +192,7 @@ enum Key
 enum Unit
 	Pixels = "px" // Pixels
 	Percent = "%" // Makes the value relative to its parent's value
+	Fraction = "fr" // A fraction of the available space
 	
 	Centimeters = "cm" // Centimeters
 	Millimeters = "mm" // Millimeters
@@ -258,6 +259,9 @@ struct float
 		
 	// Makes the value relative to its parent's value
 	inline Dimension percent()     Dimension(this, Percent)
+		
+	// A fraction of the available space
+	inline Dimension fr()          Dimension(this, Fraction)
 		
 	// Font size of the parent (for font-size), font size of the element itself (for other properties)
 	inline Dimension em()          Dimension(this, Em)
@@ -718,6 +722,7 @@ dynamic Style
 	string wordWrap // Allows long, unbreakable words to be broken and wrap to the next line
 	string widows // The minimum number of lines for an element that must be visible at the top of a page
 	int zIndex // The stack order of a positioned element
+	string gridTemplateColumns // The line names and track sizing functions of the grid columns
 	
 	Vector2 translate // Move the element by this vector
 	implicit Angle rotate // Rotate the element by this angle
