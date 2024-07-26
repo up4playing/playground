@@ -156,7 +156,7 @@ immutable struct int
 		
 	static js TResult[] enumerate: int from, int to, TResult(int i) selector
 		let result = []
-		for(let i=from; i < to; i += step)
+		for(let i=from; i < to; ++i)
 			result.push(selector(i))
 		return result
 		
