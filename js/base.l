@@ -485,6 +485,9 @@ immutable class string
 			token += chars[math.randomInteger chars.length-1]
 		return token
 		
+	inline string backspace
+		(this.length ? this = this[0 to this.length-1] : this)
+		
 // A logical data type that can have the value true or false
 enum bool: false, true
 		
