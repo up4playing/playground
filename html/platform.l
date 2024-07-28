@@ -508,7 +508,8 @@ global unit Html
 		// if not overlayNode
 		// 	overlayNode = div style:{position:Fixed top:0 left:0 right:0 bottom:0, backgroundColor:Black, opacity:.5}
 		// 	body.parentNode.appendChild overlayNode
-						
+		
+	// Lays outs its children in a horizontal row				
 	global row: expand Attributes attributes = null // The attributes of the HTML element
 		        expand Style style = {}             // The css style of the HTML element
 		        void() children = null              // The children of the HTML element
@@ -517,12 +518,26 @@ global unit Html
 		style.flexDirection = Row
 		return div attributes, style, children, location
 
+	// Lays out its children in a vertical column
 	global column: expand Attributes attributes = null // The attributes of the HTML element
 		           expand Style style = {}             // The css style of the HTML element
 		           void() children = null              // The children of the HTML element
 		           SourceCodeLocation location
 		style.display = Flex
 		style.flexDirection = Column
+		return div attributes, style, children, location
+
+	// Lays out its children in a grid
+	global grid: expand Attributes attributes = null // The attributes of the HTML element
+		         expand Style style = {}             // The css style of the HTML element
+		         float[] gridTemplateColumns         // The sizes of the columns
+		         void() children = null              // The children of the HTML element
+		         SourceCodeLocation location
+		style.display = Grid
+		string gridTemplateColumnsString
+		for gridTemplateColumns
+			gridTemplateColumnsString += "{.}fr "
+		style.gridTemplateColumns = gridTemplateColumnsString
 		return div attributes, style, children, location
 
 	global img: Image image                       // The image to display
@@ -578,8 +593,11 @@ global unit Html
 		           bool disableAfterClick = false
 		           SourceCodeLocation location
 		let node = div text, tag:"button", attributes, style, location
-		if disableAfterClick: node.onclick = let success = onClick(.); if not object.isEqualAndSameType(success, false): node.disabled = true; 
-		else                  node.onclick = onClick(.)
+		if disableAfterClick
+			node.disabled = false
+			node.onclick = let success = onClick(.); if not object.isEqualAndSameType(success, false): node.disabled = true
+		else
+			node.onclick = onClick(.)
 		return node
 		
 	// 	global lottie
@@ -666,6 +684,7 @@ global unit Html
 			if attributes.onClick != null:      node.onclick = attributes.onClick
 			if attributes.onRightClick != null: node.oncontextmenu = attributes.onRightClick
 			if attributes.onKeyDown != null:    node.onkeydown = attributes.onKeyDown
+			if attributes.onKeyUp != null:      node.onkeyup = attributes.onKeyUp
 			if attributes.tabIndex:             node.set("tabindex", attributes.tabIndex.toString)
 			
 		node.sourceLocation = sourceLocation
