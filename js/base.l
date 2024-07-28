@@ -2191,7 +2191,7 @@ unit Loca
 		Loca.language = language
 		Loca.locale = locale || Loca.defaultLocaleForLanguage[language]
 		
-	js void format: int id
+	js string format: int id
 		let entry = _strings[Loca.language][id]
 		if(!entry || entry.s.length == 0) return "##########"
 		let strings = entry.s
