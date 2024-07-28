@@ -578,8 +578,11 @@ global unit Html
 		           bool disableAfterClick = false
 		           SourceCodeLocation location
 		let node = div text, tag:"button", attributes, style, location
-		if disableAfterClick: node.onclick = let success = onClick(.); if not object.isEqualAndSameType(success, false): node.disabled = true; 
-		else                  node.onclick = onClick(.)
+		if disableAfterClick
+			node.disabled = false
+			node.onclick = let success = onClick(.); if not object.isEqualAndSameType(success, false): node.disabled = true
+		else
+			node.onclick = onClick(.)
 		return node
 		
 	// 	global lottie
