@@ -533,7 +533,7 @@ transient skipInit global unit graphics
 	// Image: drawText.png
 	global drawText: implicit string text                 // A string or anything that can be converted into a string (for example, an interger or a float)
 		             Vector2 position = {}                // By default, {0,0} is the center, {-960,-540} is the top left, {960,540} is the bottom right
-		             implicit Vector2 size = {}           // The size of the text
+		             implicit Vector2 size = {}           // The font size of the text
 		             Color color = null                   // The color of the text
 		             HorizontalAlignment align = Center   // The horizontal alignment of the text
 		             VerticalAlignment valign = Middle    // The vertical alignment of the text
@@ -595,6 +595,33 @@ transient skipInit global unit graphics
 				if hotkey
 					input.onKeyDown hotkey, by:effectiveClickableBy
 						onClick null
+			
+	// Draw text around a circle
+	// Example: Draw text around a circular video
+	//     drawVideo me, position:pos, shape:Circle, size:radius*2-40
+	//     drawCircularText "Made up by", position:pos, size:30, radius, angle:-.07
+	global drawCircularText: implicit string text                 // A string or anything that can be converted into a string (for example, an interger or a float)
+		                     Vector2 position = {}                // By default, {0,0} is the center, {-960,-540} is the top left, {960,540} is the bottom right
+		                     float size = 0                       // The font size of the text
+		                     Color color = null                   // The color of the text
+		                     Font font = null                     // To use a custom font, just copy a TTF, WOFF or WOFF2 file to the "media" folder
+		                     implicit layer = 0                   // Higher layers are drawn in front of lower layers
+		                     float radius = 100                   // The radius of the circle to draw the text around
+		                     Angle angle = 0                      // The angle of the center of the text in turn (0: top, 0.25: right, 0.5: bottom, -0.25: left)
+		                     float spacing = .2                   // The spacing between the letters of the text
+		                     implicit Player[] visibleFor = null  // Only this player or list of players will see the text
+		                     SourceCodeLocation location
+		Font effectiveFont = font || currentFont
+		int fontSize = math.floor(size || currentFontSize)
+		float totalWidth = graphics.getTextWidth text, fontSize, effectiveFont
+		Angle startAngle = angle - totalWidth/2*spacing/radius
+		float prevWidth
+		for text as letter
+			float width = graphics.getTextWidth text[..i+1], fontSize, effectiveFont
+			float centerOfLetter = (width+prevWidth)/2
+			prevWidth = width
+			Angle angleOfLetter = startAngle + centerOfLetter*spacing/radius
+			drawText text:letter, position+math.getVectorForAngle(angleOfLetter, radius), fontSize, color, effectiveFont, layer, angleOfLetter, visibleFor, location
 
 	// ------------------------------------------------------- Button -------------------------------------------------------
 	

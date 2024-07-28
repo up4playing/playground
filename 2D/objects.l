@@ -241,6 +241,18 @@ Object TextObject
 	override tick
 		if alpha: drawText text, position, size, angle, color, align, valign, font, visibleFor, alpha, layer, maxWidth
 		
+// Draw text around a circle
+Object CircularTextObject
+	string text          // A string or anything that can be converted into a string (for example, an interger or a float)
+	Font font            // The font of the text
+	Color color = White  // The color of the text
+	float radius = 100   // The radius of the circle to draw the text around
+	Angle angle = 0      // The angle of the center of the text in turn (0: top, 0.25: right, 0.5: bottom, -0.25: left)
+	float spacing = .2   // The spacing between the letters of the text
+	
+	override tick
+		if alpha: drawCircularText text, position, size.x, color, font, layer, radius, angle, spacing, visibleFor
+		
 Object ImageObject
 	Image image
 	
