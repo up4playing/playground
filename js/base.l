@@ -160,6 +160,17 @@ immutable struct int
 			result.push(selector(i))
 		return result
 		
+	static js TResult[] enumerate: int from, int to, int step, TResult(int i) selector
+		let result = []
+		if(to > from && step > 0) {
+			for(let i=from; i < to; i += step)
+				result.push(selector(i))
+		} else if(to < from && step < 0) {
+			for(let i=from; i > to; i += step)
+				result.push(selector(i))
+		} 
+		return result
+		
 	inline js TResult[] times: TResult(int i) selector
 		int.enumerate(0, this, selector)
 	
@@ -1988,7 +1999,8 @@ global transient priority low unit System
 		                                int i    // The iteration variable of the for-loop
 		                            ) do         // Select the field or expression to be included in the result
 		                            label int to // The exclusive upper bound to iterate towards
-		int.enumerate(from, to, do)
+		                            nocolon label int step = 1
+		int.enumerate2(from, to, step, do)
 		
 // A collection of mathematical functions and constants
 global skipInit unit math
