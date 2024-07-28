@@ -329,7 +329,7 @@ immutable class string
 	inline js string[] split: string seperator = "," // Separate the string at this character
 		this.split(seperator)
 		
-	string[] splitAndStrip: string seperator = "," // Separate the string at this character
+	string[] splitByLine: string seperator = "\n" // Separate the string at this character
 		string[] result
 		int start
 		while start < this.length
