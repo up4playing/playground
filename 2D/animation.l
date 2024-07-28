@@ -372,6 +372,13 @@ transient global skipInit unit audio
 		else
 			sound.play	
 				
+	global static playSound: Sound sound
+		              nocolon Time at = 0
+		              bool needsToBeCertain = false
+		if needsToBeCertain and not input.isCertain: return
+		if Time.now >= at and Time.now < math.floor at + core.frameTime
+			sound.play
+				
 immutable Animation
 	Time startTime
 	Time duration
