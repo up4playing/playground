@@ -727,7 +727,6 @@ skipInit global unit input
 		inputs.writeString data
 		
 	internal handleObject: int id, string data
-		if !data || core.mode == None || core.frames > core.frame || !localUser || !localUser.collectInputs: return
 		let inputs = localUser.inputs
 		inputs.writeInt32 localUser.inputFrame
 		inputs.writeInt16 cast InputType.Object
@@ -934,14 +933,14 @@ skipInit global unit input
 				if inputType == Json
 					int id = inputs.readInt
 					string valueString = inputs.readString
-					dynamic object = valueString.toJson
+					dynamic object = valueString ? valueString.toJson : null
 					networkData.call id, object
 					if Platform.waitingForInitialData > 0: Platform.waitingForInitialData--
 				else
 				if inputType == Object
 					int id = inputs.readInt
 					string valueString = inputs.readString
-					dynamic object = valueString.toJson
+					dynamic object = valueString ? valueString.toJson : null
 					networkData.call id, object
 					if Platform.waitingForInitialData > 0: Platform.waitingForInitialData--
 				else
