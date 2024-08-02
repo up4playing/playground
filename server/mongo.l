@@ -1,11 +1,11 @@
 unit db
 	private object db
 	
-	js async void connect: string database
+	js async void connect: string database, int port = 27017
 		var mongodb = require('mongodb')
 		var mongoClient = mongodb.MongoClient
 		global.ObjectId = mongodb.ObjectId
-		var mongo = await mongoClient.connect("mongodb://"+(process.env.databaseHost || "0.0.0.0:27099"))
+		var mongo = await mongoClient.connect("mongodb://"+(process.env.databaseHost || "0.0.0.0:"+port))
 		db.db = mongo.db(database);
 		
 	js inline Collection collection: string name
