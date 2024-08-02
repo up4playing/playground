@@ -452,7 +452,7 @@ immutable class string
 	inline js string get: int from = 0
 		this.substring(from)
 		
-	js string capitalizeFirstWord
+	js string capitalize
 		return this.length > 0 ? this[0].toUpperCase() + this.substring(1) : this
 		
 	string capitalizeWords
