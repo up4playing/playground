@@ -160,6 +160,17 @@ immutable struct int
 			result.push(selector(i))
 		return result
 		
+	static js TResult[] enumerate: int from, int to, int step, TResult(int i) selector
+		let result = []
+		if(to > from && step > 0) {
+			for(let i=from; i < to; i += step)
+				result.push(selector(i))
+		} else if(to < from && step < 0) {
+			for(let i=from; i > to; i += step)
+				result.push(selector(i))
+		} 
+		return result
+		
 	inline js TResult[] times: TResult(int i) selector
 		int.enumerate(0, this, selector)
 	
@@ -329,7 +340,7 @@ immutable class string
 	inline js string[] split: string seperator = "," // Separate the string at this character
 		this.split(seperator)
 		
-	string[] splitAndStrip: string seperator = "," // Separate the string at this character
+	string[] splitByLine: string seperator = "\n" // Separate the string at this character
 		string[] result
 		int start
 		while start < this.length
@@ -484,6 +495,9 @@ immutable class string
 		for length
 			token += chars[math.randomInteger chars.length-1]
 		return token
+		
+	inline string backspace
+		(this.length ? this = this[0 to this.length-1] : this)
 		
 // A logical data type that can have the value true or false
 enum bool: false, true
@@ -1585,7 +1599,7 @@ interface object
 		
 	static inline js string toJson(any value) JSON.stringify(value)
 	static inline js string toFormattedJson(any value) JSON.stringify(value, null, "\t")
-	static inline js bool isEqualAndSameType(any a, any b) a === b
+	static inline js bool isEqualAndSameType(any a, any b) (a === b)
 		
 	static internal js string stringify: object subject, int depth = 0 
 		switch(typeof subject)
@@ -1988,7 +2002,8 @@ global transient priority low unit System
 		                                int i    // The iteration variable of the for-loop
 		                            ) do         // Select the field or expression to be included in the result
 		                            label int to // The exclusive upper bound to iterate towards
-		int.enumerate(from, to, do)
+		                            nocolon label int step = 1
+		int.enumerate2(from, to, step, do)
 		
 // A collection of mathematical functions and constants
 global skipInit unit math
@@ -2188,7 +2203,7 @@ unit Loca
 		Loca.language = language
 		Loca.locale = locale || Loca.defaultLocaleForLanguage[language]
 		
-	js void format: int id
+	js string format: int id
 		let entry = _strings[Loca.language][id]
 		if(!entry || entry.s.length == 0) return "##########"
 		let strings = entry.s

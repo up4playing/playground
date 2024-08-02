@@ -241,6 +241,18 @@ Object TextObject
 	override tick
 		if alpha: drawText text, position, size, angle, color, align, valign, font, visibleFor, alpha, layer, maxWidth
 		
+// Draw text around a circle
+Object CircularTextObject
+	string text          // A string or anything that can be converted into a string (for example, an interger or a float)
+	Font font            // The font of the text
+	Color color = White  // The color of the text
+	float radius = 100   // The radius of the circle to draw the text around
+	Angle angle = 0      // The angle of the center of the text in turn (0: top, 0.25: right, 0.5: bottom, -0.25: left)
+	float spacing = .2   // The spacing between the letters of the text
+	
+	override tick
+		if alpha: drawCircularText text, position, size.x, color, font, layer, radius, angle, spacing, visibleFor
+		
 Object ImageObject
 	Image image
 	
@@ -274,19 +286,15 @@ Object VideoObject
 Object Button
 	Image image                  // The image of the button
     text = ""                    // The text of the button
-    Vector2 position = {}        // The position to draw to
     Color textColor = White      // The color of the text
     frame = 0                    // The frame of the image
-	implicit Vector2 size = {}   // The size of the image, use a float to keep the aspect ratio, use a vector to strech the image
     fontSize = 18                // The font size in pixels   
-    clickableMargin = {16,16}        // The margin around the button within which it is clickable
+    clickableMargin = {16,16}    // The margin around the button within which it is clickable
     textOffset = {}              // Draw the text at this offset
-	scaleOnHover = 1.0                   // Scale the button by this factor when the mouse hovers over the button
-	frameOnHover = 1                     // Draw this frame when the mouse hovers over the button
-    showClickableArea = false        // Show the area within which the button is clickable
+	scaleOnHover = 1.0           // Scale the button by this factor when the mouse hovers over the button
+	frameOnHover = 1             // Draw this frame when the mouse hovers over the button
+    showClickableArea = false    // Show the area within which the button is clickable
     implicit Player[] clickableBy = null // Only this user can click the button
-    implicit layer = 0           // Higher layers are drawn in front of lower layers
-    alpha = 1.0                  // The opacity of the button 0: fully transpart, 1: fully visible)
 	enabled = true               // When not enabled, the button can't be clicked and is drawn transparently (50% by default)
 	alphaWhenDisabled = .5       // The opacity of the button will be multiplied with this factor when its disabled
 	Key hotkey                   // This keyboard shortcut will execute the onClick handler
@@ -296,6 +304,22 @@ Object Button
 	override tick
 		if alpha
 			drawButton image, text, position, textColor, frame, size, fontSize, clickableMargin, textOffset, scaleOnHover, frameOnHover, showClickableArea, visibleFor, clickableBy, hotkey, layer, alpha, enabled, alphaWhenDisabled
+			onClick:
+				if removeOnClick: this.removeAtEndOfFrame
+				onClick(touch)
+				
+			
+Object StandardButton
+    text = ""                    // The text of the button
+    implicit Player[] clickableBy = null // Only this user can click the button
+	enabled = true               // When not enabled, the button can't be clicked and is drawn transparently (50% by default)
+	Key hotkey                   // This keyboard shortcut will execute the onClick handler
+    void(Touch touch) onClick    // Execute this code when the user clicks the button
+	bool removeOnClick = false   // Remove the button after the user clicks it
+	
+	override tick
+		if alpha
+			drawStandardButton text, position, visibleFor, clickableBy, hotkey, layer, enabled
 			onClick:
 				if removeOnClick: this.removeAtEndOfFrame
 				onClick(touch)

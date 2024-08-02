@@ -189,6 +189,8 @@ immutable struct DateTime
 	string twoDigitHour   := (this.hour < 10 ? "0"+this.hour : this.hour.toString())
 	string twoDigitMinute := (this.minute < 10 ? "0"+this.minute : this.minute.toString())
 	string twoDigitSecond := (this.second < 10 ? "0"+this.second : this.second.toString())
+		
+	static DateTime now := {Time.now}
 	
 	DateTime: Time time
 		const localTime = time - Time.timezoneOffset
