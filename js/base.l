@@ -543,11 +543,12 @@ class List<T>
 		                  ) do
 		if(this.length > 0) {
 			let _subject = this
-			if(sortBy == 1) _subject = [...this].sort((a,b) => selector(a) - selector(b)); else
-			if(sortBy == 2) _subject = [...this].sort((a,b) => selector(a)?.localeCompare(selector(b)))
-			let it = selector(_subject[0]), i=0;
+			let defaultValue;
+			if(sortBy == 1) {defaultValue = 0; _subject = [...this].sort((a,b) => (selector(a) || 0) - (selector(b) || 0)); } else
+			if(sortBy == 2) {defaultValue = ""; _subject = [...this].sort((a,b) => (selector(a) || "").localeCompare(selector(b) || "")); }
+			let it = selector(_subject[0]) || defaultValue, i=0;
 			for(let _nextIndex=1; _nextIndex<_subject.length; ++_nextIndex) { 
-				let _nextIt = selector(_subject[_nextIndex]);
+				let _nextIt = selector(_subject[_nextIndex]) || defaultValue;
 				if(_nextIt != it) {
 					let items = _subject.slice(i, _nextIndex);
 					do(it, items, i)
