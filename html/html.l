@@ -26,6 +26,9 @@ class Node
 	bool disabled
 	int tabindex
 	string contentEditable
+	dynamic context
+	float width
+	float height
 	
 	string sourceLocation
 		
@@ -39,6 +42,7 @@ class Node
 	inline js void scrollToBottom() this.scrollTo(0, this.scrollHeight)
 	inline js void scrollIntoView() this.scrollIntoView()
 	inline js void on(string eventName, void(dynamic event) listener) this.addEventListener(eventName, listener)
+	inline js dynamic getContext(string type) this.getContext(type)
 		
 	native void(HtmlEvent ev) onclick
 	native void(HtmlEvent ev) oncontextmenu
