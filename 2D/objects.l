@@ -281,7 +281,7 @@ Object VideoObject
 	Player player
 	VideoShape shape
 	override tick
-		if alpha: drawVideo player, position, size, shape
+		if alpha and player: drawVideo player, position, size, shape
 			
 Object Button
 	Image image                  // The image of the button
