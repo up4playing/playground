@@ -209,6 +209,14 @@ immutable struct float
 	// Positiv infinity
 	const inline js float infinity := Number.POSITIVE_INFINITY
 	
+	const inline js float epsilon := Number.EPSILON
+	
+	inline js float operator ** (float a, float b) 
+		Math.pow(a,b)
+		
+	js float operator % (float a, float b)
+		return ((a % b) + b) % b
+		
 	// Can result from failed conversion or operations with undefined or complex result
 	const inline js float notANumber := Number.NaN
 	
@@ -2079,6 +2087,49 @@ global skipInit unit math
 	inline js float exp: float exponent
 		Math.exp(exponent)
 		
+	internal inline js float nativeCos: float angle // The angle in radians
+		Math.cos(angle)
+		
+	internal inline js float nativeTan: float angle // The angle in radians
+		Math.tan(angle)
+		
+	internal inline js float nativeAcos: float angle // The angle in radians
+		Math.acos(angle)
+		
+	internal inline js float nativeAtan2: float y, float x
+		Math.atan2(y,x)
+		
+	// Returns the sine of an angle in turns
+	sin: Angle angle // The angle in turns (one full rotation is 1)
+	    float result = cast(angle - .5 - math.floor(angle))
+	    result *= 16 * (math.abs(result) - .5)
+	    result += .225 * result * (math.abs(result) - 1)
+	    return result
+
+	// Returns the cosine of an angle in turns
+	cos: Angle angle // The angle in turns (one full rotation is 1)
+	    float result = cast(angle - .25 - math.floor(angle + .25))
+	    result *= 16 * (math.abs(result) - .5)
+	    result += .225 * result * (math.abs(result) - 1)
+	    return result
+	
+	// Returns the tangent of an angle in turns
+	tan: Angle angle
+		return sin(angle) / cos(angle)
+		
+	// Returns the inverse tangent in turns
+	Angle atan2: float y, float x
+		float r, angle;
+		float abs_y = math.abs(y) + .00000000001
+		if x < 0.0
+			r = (x + abs_y) / (abs_y - x);
+			angle = .375;
+		else
+			r = (x - abs_y) / (x + abs_y);
+			angle = .125;
+		angle += (.03124211533 * r * r - .1562424076) * r;
+		if y < 0.0: return cast -angle
+		else        return cast angle
 	inline js float log10: float value
 		Math.log10(value)
 		

@@ -29,6 +29,7 @@ transient skipInit unit Platform
 	internal bool engineStarted
 	internal PlatformMode mode
 	internal bool fastForward
+	internal bool isDrawing
 	internal int waitingForInitialData
 	internal int receivedInitialData
 	internal bool logSerialize
