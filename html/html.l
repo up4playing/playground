@@ -1,3 +1,4 @@
+js HTMLElement
 class Node
 	string id // A unique string to indentify a specic element, often used to style a single element
 	
@@ -10,10 +11,24 @@ class Node
 	string tagName
 	Style style
 	string innerHTML
+	string innerText
+	string shadowInnerHtml
 	string value
 	string src
 	Node firstChild
 	Node nextSibling
+	Node parentNode
+	float scrollHeight
+	string href
+	
+	bool muted
+	bool autoplay
+	bool disabled
+	int tabindex
+	string contentEditable
+	dynamic context
+	float width
+	float height
 	
 	string sourceLocation
 		
@@ -21,16 +36,22 @@ class Node
 	inline js void appendChild(Node node) this.appendChild(node)
 	inline js void insertBefore(Node newNode, Node referenceNode) this.insertBefore(newNode, referenceNode)
 	inline js void setSelectionRange(int from, int to) this.setSelectionRange(from, to)
-	inline js void select() this.setSelectionRange(0, this.value.length)
+	inline js void select() this.select()
+	inline js void setCursorPosition(int index) Html.setCursorPosition(this, index)
 	inline js void focus() this.focus()
 	inline js void scrollToBottom() this.scrollTo(0, this.scrollHeight)
 	inline js void scrollIntoView() this.scrollIntoView()
+	inline js void on(string eventName, void(dynamic event) listener) this.addEventListener(eventName, listener)
+	inline js dynamic getContext(string type) this.getContext(type)
 		
 	native void(HtmlEvent ev) onclick
 	native void(HtmlEvent ev) oncontextmenu
 	native void(HtmlEvent ev) onmouseover
 	native void(HtmlEvent ev) onmouseout
 	native void(dynamic ev) onkeydown
+	native void(dynamic ev) onkeyup
+	native void(HtmlEvent ev) oninput
+	native void(HtmlEvent ev) onchange
 	
 	inline js void set(string name, string value) this.setAttribute(name, value)
 	inline js void get(string name) this.getAttribute(name)
@@ -42,9 +63,9 @@ class Node
 		                    Time duration = 1 seconds
 		                    AnimationFill fill = Forwards
 		                    easing = "linear"
-		this.animate([from, to], {@duration:duration, @fill:fill, @easing:easing})
-	
-class HtmlEvent
+		this.animate([Html.expandStyle(from), Html.expandStyle(to)], {@duration:duration, @fill:fill, @easing:easing})
+
+immutable HtmlEvent
 	Node target        // The element that triggered the event
 	Node currentTarget // The element to the event handler is attached to
 	int button         // The mouse button that was pressed to trigger the event
@@ -52,11 +73,130 @@ class HtmlEvent
 	preventDefault     // Prevent the default action (for example, showing the context menu on a right click)
 		
 	inline Vector2 relativeMousePosition() Html.getRelativeMousePosition(this, this.currentTarget)
-	inline js Vector2 mousePosition() new Vector2(this.clientX/Platform_scale, this.clientY/Platform_scale)
+	inline js Vector2 mousePosition() new Vector2(this.clientX/Platform.scale, this.clientY/Platform.scale)
 
+KeyListener
+	Key key
+	void(Key key) do
+		
+enum Key
+	None         =   0
+	Backspace    =   8
+	Tab          =   9
+	Enter        =  13
+	Shift        =  16
+	Ctrl         =  17
+	Alt          =  18
+	Pause        =  19
+	CapsLock     =  20
+	Escape       =  27
+	Space        =  32
+	PageUp       =  33
+	PageDown     =  34
+	End          =  35
+	Home         =  36
+	Left         =  37
+	Up           =  38
+	Right        =  39
+	Down         =  40
+	Insert       =  45
+	Delete       =  46
+	Number0      =  48
+	Number1      =  49
+	Number2      =  50
+	Number3      =  51
+	Number4      =  52
+	Number5      =  53
+	Number6      =  54
+	Number7      =  55
+	Number8      =  56
+	Number9      =  57
+	A            =  65
+	B            =  66
+	C            =  67
+	D            =  68
+	E            =  69
+	F            =  70
+	G            =  71
+	H            =  72
+	I            =  73
+	J            =  74
+	K            =  75
+	L            =  76
+	M            =  77
+	N            =  78
+	O            =  79
+	P            =  80
+	Q            =  81
+	R            =  82
+	S            =  83
+	T            =  84
+	U            =  85
+	V            =  86
+	W            =  87
+	X            =  88
+	Y            =  89
+	Z            =  90
+	LeftMetaKey  =  91
+	RightMetaKey =  92
+	Select       =  93
+	Numpad0      =  96
+	Numpad1      =  97
+	Numpad2      =  98
+	Numpad3      =  99
+	Numpad4      = 100
+	Numpad5      = 101
+	Numpad6      = 102
+	Numpad7      = 103
+	Numpad8      = 104
+	Numpad9      = 105
+	Multiply     = 106
+	Add          = 107
+	Subtract     = 109
+	DecimalPoint = 110
+	Divide       = 111
+	F1           = 112
+	F2           = 113
+	F3           = 114
+	F4           = 115
+	F5           = 116
+	F6           = 117
+	F7           = 118
+	F8           = 119
+	F9           = 120
+	F10          = 121
+	F11          = 122
+	F12          = 123
+	F13          = 124
+	F14          = 125
+	F15          = 126
+	F16          = 127
+	F17          = 128
+	F18          = 129
+	F19          = 130
+	F20          = 131
+	F21          = 132
+	F22          = 133
+	F23          = 134
+	F24          = 135
+	NumLock      = 144
+	ScrollLock   = 145
+	SemiColon    = 186
+	EqualSign    = 187
+	Comma        = 188
+	Dash         = 189
+	Period       = 190
+	ForwardSlash = 191
+	GraveAccent  = 192
+	OpenBracket  = 219
+	BackSlash    = 220
+	CloseBraket  = 221
+	SingleQuote  = 222
+	
 enum Unit
 	Pixels = "px" // Pixels
 	Percent = "%" // Makes the value relative to its parent's value
+	Fraction = "fr" // A fraction of the available space
 	
 	Centimeters = "cm" // Centimeters
 	Millimeters = "mm" // Millimeters
@@ -96,6 +236,7 @@ struct Dimension
 	Unit unit   // The unit of the value (Pixels, Percent, Centimeters, Points, ViewportHeight, ViewportWidth, ...)
 	
 	string toString := unit == Auto ? "auto" : "{value}{unit}"
+	bool toBool := value != 0
 	
 struct Vector2
 	float x // The x coordinate of the vector
@@ -103,6 +244,10 @@ struct Vector2
 	Unit unit = Pixels // The unit of the vector (Pixels, Percent, Centimeters, Points, ViewportHeight, ...)
 	
 	toString := "{x}{unit} {y}{unit}"
+	
+	Vector2 + Vector2 other:   return {x + other.x, y + other.y}
+	Vector2 - Vector2 other:   return {x - other.x, y - other.y}
+	Vector2 * Vector2 other:   return {x * other.x, y * other.y}
 	
 enum AnimationFill
 	None = "none"
@@ -118,6 +263,9 @@ struct float
 		
 	// Makes the value relative to its parent's value
 	inline Dimension percent()     Dimension(this, Percent)
+		
+	// A fraction of the available space
+	inline Dimension fr()          Dimension(this, Fraction)
 		
 	// Font size of the parent (for font-size), font size of the element itself (for other properties)
 	inline Dimension em()          Dimension(this, Em)
@@ -144,42 +292,30 @@ transient float Angle
 	// Returns true if the angle is not zero
 	inline js bool toBool := this
 	
-	inline js Angle operator +  (Angle a, Angle b) a+b
-	inline js Angle operator +  (Angle a, int b) a+b
-	inline js Angle operator +  (Angle a, float b) a+b
+	inline Angle + Angle value
+	inline Angle - Angle value
+	inline float / Angle value
+	inline float * Angle value
 	
-	inline js Angle operator -  (Angle a, Angle b) a-b
-	inline js Angle operator -  (Angle a, int b) a-b
-	inline js Angle operator -  (Angle a, float b) a-b
+	inline Angle += Angle value
+	inline Angle -= Angle value
+	inline Angle /= Angle value
+	inline Angle *= Angle value
+	
+	inline bool == Angle value
+	inline bool != Angle value
+	inline bool < Angle value
+	inline bool <= Angle value
+	inline bool > Angle value
+	inline bool >= Angle value
+	
+	inline js Angle % ensureSingleExecution Angle value
+		((this % value) + value) % value
+		
 	inline js Angle operator -  (Angle a) -a
 	
-	inline js float operator /  (Angle a, Angle b) a/b
-	inline js Angle operator /  (Angle a, int b) a/b
-	inline js Angle operator /  (Angle a, float b) a/b
-	
-	inline js Angle operator *  (Angle a, int b) a*b
-	inline js Angle operator *  (Angle a, float b) a*b
-	inline js Angle operator *  (int a, Angle b) a*b
-	inline js Angle operator *  (float a, Angle b) a*b
-	
-	inline js Angle operator %  (Angle a, int b) a%b
-	inline js Angle operator %  (Angle a, Angle b) a%b
-	
-	inline js bool  operator <  (Angle a, Angle b) a<b
-	inline js bool  operator <= (Angle a, Angle b) a<=b
-	inline js bool  operator >  (Angle a, Angle b) a>b
-	inline js bool  operator >= (Angle a, Angle b) a>=b
-	
-	inline js bool  operator == (Angle a, Angle b) a==b
-	inline js bool  operator == (Angle a, int b) a==b
-	inline js bool  operator == (Angle a, float b) a==b
-	
-	inline js bool  operator != (Angle a, Angle b) a!=b
-	inline js bool  operator != (Angle a, int b) a!=b
-	inline js bool  operator != (Angle a, float b) a!=b
-	
 	inline js float in: AngleUnit unit
-		(unit==1 ? this*Math_TwoPI : unit==2 ? this*360 : unit==3 ? this*400 : this)
+		(unit==1 ? this*Math.TwoPI : unit==2 ? this*360 : unit==3 ? this*400 : this)
 		
 enum AngleUnit
 	turns // Turn (one full rotation is 1)
@@ -279,8 +415,18 @@ enum Display
 	
 	None = "none" // Turns off the display of an element so that it has no effect on layout
 
-class PaddingOrMargin
-	implicit Dimension top, right, bottom, left
+class Padding
+	implicit Dimension top    // The padding on the top of the element
+	implicit Dimension right  // The padding on the right side of the element
+	implicit Dimension bottom // The padding on the bottom of the element
+	implicit Dimension left   // The padding on the left side of the element
+	string toString := "{top} {right} {bottom} {left}"
+	
+class Margin
+	implicit Dimension top    // The margin on the top of the element
+	implicit Dimension right  // The margin on the right side of the element
+	implicit Dimension bottom // The margin on the bottom of the element
+	implicit Dimension left   // The margin on the left side of the element
 	string toString := "{top} {right} {bottom} {left}"
 	
 enum Cursor
@@ -341,6 +487,24 @@ enum TextAlign
 	End = "end" // The same as right if direction is left-to-right and left if direction is right-to-left
 	
 	MatchParent = "match-parent" // Similar to inherit, but the values are calculated according to the parent's direction
+	
+enum TextOverflow
+	Ellipsis = "ellipsis" // Use this to show "..." when text is too long
+	Clip = "clip" // Use the default behavior
+	
+enum Overflow: 
+	Hidden = "hidden" // Content is clipped if necessary to fit the padding box.
+	Scroll = "scroll" // Content is clipped if necessary to fit the padding box and a scrollbar is shown.
+	Visible = "visible" // Content is not clipped, it may be rendered outside the padding box.
+	Auto = "auto" // Use the default behavior, which is visible.
+
+enum WhiteSpace
+	NoWrap = "nowrap" // Collapses white space as for normal and suppresses line breaks (text wrapping).
+	Pre = "pre" // Sequences of white space are preserved. Lines are only broken at newline characters and at <br>.
+	PreWrap = "pre-wrap" // Sequences of white space are preserved. Lines are broken as necessary to fill line boxes.
+	PreLine = "pre-line" // Sequences of white space are collapsed. Lines are broken as necessary to fill line boxes.
+	BreakSpaces = "break-spaces" // Sequences of white space are preserved. Lines can be broken at arbitrary points.
+	Normal = "normal" // Sequences of white space are collapsed. Lines are broken as necessary to fill line boxes.
 	
 enum BorderStyle
 	Solid = "solid" // Displays a single, straight, solid line
@@ -486,8 +650,8 @@ dynamic Style
 	string listStyleImage // An image as the list-item marker
 	string listStylePosition // The position of the list-item marker
 	string listStyleType // The list-item marker type
-	PaddingOrMargin margin // The margins of an element (can have up to four values)
-	PaddingOrMargin inset
+	Margin margin // The margins of an element (can have up to four values)
+	Margin inset // A shorthand for the top, right, bottom, left properties
 	implicit Dimension marginBottom // The bottom margin of an element
 	implicit Dimension marginLeft // The left margin of an element
 	implicit Dimension marginRight // The right margin of an element
@@ -511,10 +675,10 @@ dynamic Style
 	string outlineOffset // Offsets an outline, and draws it beyond the border edge
 	string outlineStyle // The style of the outline around an element
 	implicit Dimension outlineWidth // The width of the outline around an element
-	string overflow // What to do with content that renders outside the element box
-	string overflowX // Specifies what to do with the left/right edges of content rendering outside the element box
-	string overflowY // Specifies what to do with the top/bottom edges of content rendering outside the element box
-	PaddingOrMargin padding // The padding of an element (can have up to four values)
+	Overflow overflow // What to do with content that renders outside the element box
+	Overflow overflowX // Specifies what to do with the left/right edges of content rendering outside the element box
+	Overflow overflowY // Specifies what to do with the top/bottom edges of content rendering outside the element box
+	Padding padding // The padding of an element (can have up to four values)
 	implicit Dimension paddingBottom // The bottom padding of an element
 	implicit Dimension paddingLeft // The left padding of an element
 	implicit Dimension paddingRight // The right padding of an element
@@ -539,7 +703,7 @@ dynamic Style
 	string textDecorationStyle // The style of the line in a text decoration
 	string textIndent // The indentation of the first line of text
 	string textJustify // The justification method used when text-align is "justify"
-	string textOverflow // What should happen when text overflows the containing element
+	TextOverflow textOverflow // What should happen when text overflows the containing element
 	string textShadow // The shadow effect of a text
 	string textTransform // The capitalization of a text
 	implicit Dimension top // The top position of a positioned element
@@ -555,20 +719,20 @@ dynamic Style
 	string userSelect // Whether the text of an element can be selected or not
 	string verticalAlign // The vertical alignment of the content in an element
 	string visibility // Whether an element should be visible
-	string whiteSpace // How to handle tabs, line breaks and whitespace in a text
+	WhiteSpace whiteSpace // How to handle tabs, line breaks and whitespace in a text
 	implicit Dimension width // The width of an element
 	string wordBreak // Line breaking rules for non-CJK scripts
 	string wordSpacing // The spacing between words in a text
 	string wordWrap // Allows long, unbreakable words to be broken and wrap to the next line
 	string widows // The minimum number of lines for an element that must be visible at the top of a page
 	int zIndex // The stack order of a positioned element
+	string gridTemplateColumns // The line names and track sizing functions of the grid columns
 	
 	Vector2 translate // Move the element by this vector
 	implicit Angle rotate // Rotate the element by this angle
 	
 	Vector2 size
-	Vector2 targetSize
-	Vector2 targetTranslate
+	bool overlay
 	
 dynamic Attributes
 	string id // A unique string to indentify a specic element, often used to style a single element
@@ -576,5 +740,7 @@ dynamic Attributes
 	native void(HtmlEvent ev) onClick = null      // Execute this code when the user clicks the HTML element
 	native void(HtmlEvent ev) onRightClick = null // Execute this code when the user clicks the HTML element with the right mouse button
 	native void(dynamic ev) onKeyDown = null      // Execute this code when the user clicks the HTML element with the right mouse button
+	native void(dynamic ev) onKeyUp = null      // Execute this code when the user clicks the HTML element with the right mouse button
+	int tabIndex = 0
 	// bool passClickToParents = false            // Even if this elements handles a click, its parents will also receive the event
 		

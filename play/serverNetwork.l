@@ -1,63 +1,84 @@
 enum NetworkMessageType: Join, JoinResponse, Ping, Pong, Signal, Ice, Tick, Switch, Reload, RequestState, State, Checksum
 
-transient unit ServerNetwork
+transient skipInit unit ServerNetwork
 	private object socket
 	private Buffer sendBuffer = {}
 	int nextConnectionId = 1
+	bool connected
+	Time startToConnectTime = Time.maxValue
+	int retries
 	
+	tick
+		let now = Time.realTime
+		// Reconnect to server: Try to connect again if we aren't connected 5 seconds after starting to connect
+		// We use a central place to reconnect and no intervals, timeouts or reloads to make it easier to reason about
+		if not connected and now > startToConnectTime + 5000
+			core.log "#server WebSocket not connected after {now - startToConnectTime} ms -> Reconnecting"
+			setup
+			retries++
+			
+		// Ping
+		if (core.mode == Ping or core.mode == Connected) and now >= nextPingTime
+			sendBuffer.reset
+			sendBuffer.writeInt8 cast NetworkMessageType.Ping
+			sendBuffer.writeFloat64 now
+			send sendBuffer
+			nextPingTime = now + (core.mode == Ping ? 200 : pongCount < 20 ? 1000 : 30000)
+		
 	js void setup
-		let startTime = Date.now()
-		let socket
-		if(location.href.indexOf("localhost") != -1) socket = new WebSocket("ws://localhost:3112");
-		else                                         socket = new WebSocket("wss://"+location.host+":3112");
-		socket.binaryType = "arraybuffer";
-		socket.onopen = function() {
-			core_log("Websocket open");
-			ServerNetwork_socket = socket
-			ServerNetwork_onConnectedToServer();
-		}
-		socket.onmessage = function(event) {
-			ServerNetwork_onMessageFromServer(new Buffer(event.data, 0, 0, 0));
-		}
-		socket.onclose = function(ev) {
-			core_log("Websocket closed "+ev.code+" "+ev.reason)
-			ServerNetwork_socket = null
-			if(Date.now() - startTime < 30000) {
-				location.href = "/{core_gameId}/{core_roomId}"
-			}
-		}
-		socket.onerror = error => {
-			core_error = "Can't connect to server."
-			core_errorMessage = error.message
-			core_log(error.message)
+		ServerNetwork.startToConnectTime = Date.now()
+		ServerNetwork.connected = false
+		
+		if(ServerNetwork.socket) {
+			core.log("#server Closing Previous Websocket");
+			ServerNetwork.socket.onopen = null
+			ServerNetwork.socket.onclose = null
+			ServerNetwork.socket.onmessage = null
+			ServerNetwork.socket.onerror = null
+			ServerNetwork.socket.close()
 		}
 		
-	// We set the internal user to active when we receive the first signal (offer or answer)
-	// to ensure we hold on to the current snapshot, so we can later rewind to a frame before the new user joined.
-	// This ensured that the user joins on the same frame on all clients
+		core.log("#server Creating Websocket");
+		if(location.href.indexOf("localhost") != -1) ServerNetwork.socket = new WebSocket("ws://localhost:3112");
+		else                                         ServerNetwork.socket = new WebSocket("wss://"+location.host+":3112");
+		ServerNetwork.socket.binaryType = "arraybuffer";
+		
+		ServerNetwork.socket.onopen = () => {
+			core.log("#server Websocket Open");
+			ServerNetwork.connected = true;
+			if(!ServerNetwork.firstConnectionTime)
+				ServerNetwork.firstConnectionTime = Date.now() - ServerNetwork.startToConnectTime;
+			ServerNetwork.onConnectedToServer();
+		}
+		ServerNetwork.socket.onclose = ev => {
+			core.log("#server Websocket Closed "+ev.code+" "+ev.reason);
+			ServerNetwork.connected = false;
+		}
+		ServerNetwork.socket.onerror = ev => {
+			core.log("#server Websocket Error "+ev);
+		}
+		ServerNetwork.socket.onmessage = ev => {
+			ServerNetwork.onMessageFromServer(new Buffer(ev.data, 0, 0, 0));
+		}
+	
 	private getOrCreateUser: int id
-		return input.internalUsers[id] || (input.internalUsers[id] = {id, local:false, active:true})
+		return input.internalUsers[id] || (input.internalUsers[id] = {id, local:false})
 		
+	// Called when we first connec to the server or when we reconnect
 	private onConnectedToServer
-		if input.localUser.id == -1 and !Platform.isStaging
-			// We were in this room before -> connect with the same userId we had before
-			RoomInfo roomInfo = cast Platform.getLocalStorageObject "room"+core.roomId
-			input.localUser.id = roomInfo && roomInfo.time > core.currentTime - 3600000*6 ? roomInfo.userId : -1
-			core.log roomInfo, input.localUser.id
-		
-		core.log "onConnectedToServer as {input.localUser.id} {core.roomId}"
-		sendJoinMessage core.roomString, input.localUser.id, version:Platform.version
+		core.log "#server Connected to Server", input.localUser.id, core.roomId
+		sendJoinMessage core.roomString, input.localUser.id, version:Platform.buildVersion
 		
 	js int bufferedAmount
-		return ServerNetwork_socket.bufferedAmount 
+		return ServerNetwork.socket.bufferedAmount 
 		
 	private js int send: Buffer buffer
 		try {
 			let data = buffer.toByteArray()
-			ServerNetwork_socket.send(data)
+			ServerNetwork.socket.send(data)
 			return data.byteLength
 		} catch(e) { 
-			core_log(e)
+			core.log(e)
 			return 0
 		}
 		
@@ -79,63 +100,69 @@ transient unit ServerNetwork
 		sendBuffer.writeInt16 version
 		send sendBuffer
 		
+		
+	bool alreadyJoinedBefore
+		
 	private onJoinResponse: Buffer buffer
-		let roomId = buffer.readInt32
-		let userId = buffer.readInt32
-		let version = buffer.readInt32
-		let seed = buffer.readString
-		let serverStartTime = buffer.readFloat64
-		let userCount = buffer.readInt16
-		for userCount
-			let id = buffer.readInt32
-			InternalUser user
-			if id == userId: user = input.localUser
-			else             user = {offerByMe:true, connectionId:nextConnectionId++}
-			user.id = id
-			input.internalUsers[id] = user
-			buffer.readBuffer user.inputs
-
-		if roomId != core.roomId
-			core.log "Received room id {roomId}"
-			Platform.pushState "/{core.gameId}/{roomId}"
-			core.roomId = roomId
-			
-		if version != Platform.version
-			alert "You are using an old version of this application. Please refresh your browser."
-			
-		inputsSentPos = input.localUser.inputs.writePos
-		input.localUser.id = userId
-		math.setRandomSeed seed
-		core.serverStartTime = serverStartTime
-		core.mode = Ping
-		for input.internalUsers
-			if . and !.local: PeerNetwork.createOffer .
-		core.storeUserId
+		if alreadyJoinedBefore: return
+		alreadyJoinedBefore = true
 		
-		if userCount <= 1
-			core.log "We are the only user so far -> Make primary user"
-			PeerNetwork.makePrimaryUser
-		else
-			PeerNetwork.makePrimiaryUserIfStateIsNotReceived
-
-		core.log "Joining room {roomId} as user {userId}"
-		
-		// The first person in the room triggers sending an notification with the link to everybody
-		if userCount <= 1 and !Platform.isStaging: http.getDirectly "{Platform.protocolAndHost}:3114/sendGamedayNotification/{core.gameId}/{core.roomId}/hasStarted"
-
-		
-	float nextPingTime, fastestPingPongTime = int.maxValue, lastPingPongTime
-	int pongCount
+		try
+			// Use float64 or string for roomId in future to support 20240603121500
+			int roomId = cast buffer.readFloat64
+			// let roomId = buffer.readInt32
+			let userId = buffer.readInt32
+			let version = buffer.readInt32
+			let seed = buffer.readString
+			let serverStartTime = buffer.readFloat64
+			let userCount = buffer.readInt16
+			for userCount
+				let id = buffer.readInt32
+				InternalUser user
+				if id == userId: user = input.internalUsers[id] ?= input.localUser
+				else             user = input.internalUsers[id] ?= {offerByMe:true, connectionId:nextConnectionId++}
+				user.id = id
+				
+				// We don't send inputs from server any more
+				// buffer.readBuffer user.inputs
+				
+				core.log "#onJoinResponse", id, user.local, user.inputs
+				
+			// TEMP
+			// for input.internalUsers
+			// 	core.log "#onJoinResponse <{.id}>", .local, .inputs
 	
-	ping
-		let now = core.currentTime
-		if (core.mode == Ping or core.mode == Connected) and now >= nextPingTime
-			sendBuffer.reset
-			sendBuffer.writeInt8 cast NetworkMessageType.Ping
-			sendBuffer.writeFloat64 now
-			send sendBuffer
-			nextPingTime = now + (core.mode == Ping ? 200 : pongCount < 20 ? 1000 : 5000)
+			if roomId != core.roomId
+				core.log "#server Received room id {roomId}"
+				Platform.pushState "/{core.gameId}/{roomId}"
+				core.roomId = roomId
+				
+			if version != Platform.buildVersion
+				alert "You are using an old version of this application. Please refresh your browser."
+				
+			inputsSentPos = input.localUser.inputs.writePos
+			input.localUser.id = userId
+			math.setRandomSeed seed
+			PeerNetwork.retries = 0
+			PeerNetwork.dataChannelId = 0
+			core.serverStartTime = serverStartTime
+			core.mode = Ping
+			core.storeUserId
+			core.log "#server Joining room {roomId} as user {userId}"
+	
+			// The first person in the room triggers sending an notification with the link to everybody
+			// if userCount <= 1 and !Platform.isStaging: http.getStringDirectly "{Platform.protocolAndHost}:3114/sendGamedayNotification/{core.gameId}/{core.roomId}/hasStarted"
 			
+			// Create an offer for each user already in the room
+			for input.internalUsers
+				if . and not .local
+					PeerNetwork.initiate .
+		catch 
+			core.onError error
+		
+	float nextPingTime, fastestPingPongTime = int.maxValue
+	int pongCount
+
 	float[] calculatedStartTimes
 	float referenceStartTime
 	float[] pingPongTimes
@@ -156,16 +183,16 @@ transient unit ServerNetwork
 		
 		// Ignore pings that took more than twice as long as the average
 		pongCount++
-		lastPingPongTime = pingPongTime
 		pingPongTimes.add pingPongTime maxLength:30
 		let pingPongTimesAverage = pingPongTimes.average
 		if pingPongTime > 400 or (pingPongTimes.length >= 15 and pingPongTime > pingPongTimesAverage * 2)
-			core.log "ignoring ping-pong", pingPongTimes.length, pingPongTimesAverage
+			core.log "#server ignoring ping-pong", pingPongTimes.length, pingPongTimesAverage
 			return
 			
 		statistics.addInfo "from average", deltaFromAverage
 		// statistics.addInfo "from reference", deltaFromReference
 		
+		// Ajust start time (currently disabled)
 		// calculatedStartTimes.add calculatedStartTime maxLength:20
 		// core.startTime = calculatedStartTimes.average
 			
@@ -177,7 +204,10 @@ transient unit ServerNetwork
 			// For testing
 			core.startTime = referenceStartTime
 			
-			core.log "New fastest pingPongTime", pongCount, now, pingPongTime, timeSinceStart, core.startTime, referenceStartTime
+			core.log "#server New fastest pingPongTime", pongCount, now, pingPongTime, timeSinceStart, core.startTime, referenceStartTime
+			
+		if pongCount >= 5
+			core.startConnected frame:math.floor((now - core.startTime)/core.frameTime)+1
 			
 	sendSignal:	int receiverId, string type, string sdp
 		sendBuffer.reset
@@ -235,8 +265,6 @@ transient unit ServerNetwork
 		sendBuffer.writeFloat64 core.checksums[core.lastChecksumFrame] || 0  // The checksum of the last certain frame
 		send sendBuffer
 		
-		if core.logging: core.sentLog += " #{inputFrame} {inputsSentPos}->{inputs.writePos} {inputs.toRangeString(inputsSentPos, inputs.writePos)}"
-		
 		inputsSentPos = inputs.writePos
 		core.tickMessageSize = sendBuffer.writePos	
 						
@@ -248,8 +276,6 @@ transient unit ServerNetwork
 		sender.inputFrame = buffer.readInt32
 		buffer.readBuffer sender.inputs, prevWritePos
 
-		if core.logging: core.receivedLog += " [{core.currentTime}] <{senderId}> #{sender.inputFrame} {prevWritePos}->{sender.inputs.writePos} {sender.inputs.toRangeString(prevWritePos, sender.inputs.writePos)}"
-	
 	sendSwitch: SendInputsMode mode, int sendInterval
 		sendBuffer.reset
 		sendBuffer.writeInt8 cast NetworkMessageType.Switch
@@ -279,4 +305,3 @@ transient unit ServerNetwork
 		let url = buffer.readString
 		if !newUserId: url += "u{input.localUser.id}"
 		Platform.setLocation url
-			

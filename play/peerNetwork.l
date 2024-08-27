@@ -1,280 +1,528 @@
-transient class Signal
+// Platform.start
+// core.join
+
+// ServerNetwork
+//     setup
+//     onConnectedToServer
+//     sendJoinMessage
+//     onJoinResponse     ->  PeerNetwork.initiate for each user already in the room
+//     ping
+//     onPong
+//     startConnected 
+	
+// PeerNetwork (for each user already in the room)
+//     initiate
+//     setupPeerConnection
+//     setupRemoteMedia
+//     setupDataChannel
+//     onNegotiationNeeded
+//     createOffer
+//     onAnwserReceived
+//     onConnectionStateChange
+	
+// [ ] Test all users connecting at once
+// [ ] Handle situations where a new user isn't connected to all users yet
+//         A users probably shouldn't be able to do anything before they connect all their offers
+//         For example: A+B connect, B+C connect, C does something, A can' rewind
+// [ ] Allow removing users
+// [ ] Save event stream to db
+// [ ] Save snapshots to db
+// [ ] Undo clicks
+// [ ] Save statistics when a connection error occurs
+	
+transient immutable Signal
 	int receiverId
 	string type
 	string sdp
 
-transient class IceMessage
+transient immutable IceMessage
 	int receiverId
 	object iceCandidate
 	
 enum VideoShape: Rectangle, Square, Circle
 enum RelayMode: Never, Auto, Always
 		
-class MediaDeviceInfo
+immutable MediaDeviceInfo
 	string deviceId
 	string groupId
 	string kind
 	string label
 
-class MediaDevices
+immutable MediaDevices
 	MediaDeviceInfo[] audioInput
 	MediaDeviceInfo[] audioOutput
 	MediaDeviceInfo[] videoInput
 	
-transient unit PeerNetwork
+transient skipInit unit PeerNetwork
 	RelayMode relayMode = Auto
 	
 	internal enableVideo = true
 	internal enableAudio = true
 	
 	visible string error
+	int retries
+	int dataChannelId
+	
+	initiate: InternalUser user
+		setupPeerConnection user, offerByMe:true
+		setupRemoteMedia user
+		
+	tick
+		let now = Time.realTime
+		
+		for input.internalUsers as user
+			if . and not .local
+				// Reconnect to peer: Try to connect again if
+				// - we aren't connected 5 seconds after starting to connect
+				// - we are connect, but haven't received a message for 10 seconds
+				// We use a central place to reconnect and no intervals, timeouts or reloads to make it easier to reason about
+				// if (not .connected and now > .startToConnectTime + 5000)
+				// or (    .connected and now > .lastIncomingMessageTime + 10000)
+				// if (not .connected and now > .lastIncomingMessageTime +  8000)
+				// or (    .connected and now > .lastIncomingMessageTime + 12000)
+				if now > .lastIncomingMessageTime + 10000
+				
+				// !!! EVALUATE Wait longer for the 2nd retry
+				// if .connectionState != "connected" and (now > .startToConnectTime + 10000
+				// or (retries == 0 and now > .startToConnectTime + 5000))
+				
+				// !!! EVALUATE Reconned immediately when failed
+				// or .connectionState == "failed"
+					
+					core.log "[{Time.frame}] <{.id}> #problem -------------------------------- State is {.connectionState} after {now-.startToConnectTime} ms, {.connectionTries} retries, last incomming message {now - .lastIncomingMessageTime} ms ago, offerByMe:{.offerByMe} --------------------------------"
+					.startToConnectTime = user.lastIncomingMessageTime = Time.realTime
+					statistics.scheduleSendIn 3 seconds
+					
+					if user.offerByMe
+						retries++
+						if ++user.connectionTries < 3
+							core.log "#peer Restarting ICE (offer by me)"
+							user.peerConnection.restartIce()
+						else
+							core.log "#peer Recreate peer connection (offer by me)"
+							initiate user
+					
+					// !!! EVALUATE Recreate peer channel after a few failed tries
+					// if .connectionTries < 2
+					// 	core.log "#peer The state is {.connectionState} after {now-.startToConnectTime} ms and {.connectionTries} tries -> Restart ICE"
+					// 	setupDataChannel .
+					// 	.peerConnection.restartIce()
+					// else
+					// 	core.log "#peer The state is {.connectionState} after {now-.startToConnectTime} ms and {.connectionTries} tries -> Recreate Peer Connection"
+					// 	setupPeerConnection . offerByMe:true
+					// 	setupDataChannel .
+				
+				// !!! Evaluate: Recreate data channel if all are closed
+				// if .connectionState == "connected" and .dataChannels.length == 0 and now > .startDataChannelTime + 5000
+				// 	core.log "#peer No data channels after {now-.startDataChannelTime} ms -> Recreate data channel"
+				// 	setupDataChannel .
+				
+				// if .connectionState == "connected" and now > .lastIncomingMessageTime + 10000
+				// 	core.log "#peer No data channels after {now-.startDataChannelTime} ms -> Recreate data channel"
+				// 	setupDataChannel .
+				
 	
 	private js object setupPeerConnection: InternalUser user, bool offerByMe
-		let options = {
-			// We use the ice transport policy "relay" to test our turn server
-			iceTransportPolicy: PeerNetwork_relayMode == 2 ? "relay" : "all",
-			iceServers: [],
-			// iceCandidatePoolSize: 10,
+		if(user.peerConnection) {
+			try {
+				core.log(`#peer <${user.id}> Close Previous Peer Connection`)
+				user.peerConnection.onnegotiationneeded = null;
+				user.peerConnection.onsignalingstatechange = null;
+				user.peerConnection.onconnectionstatechange = null;
+				user.peerConnection.onicecandidate = null;
+				user.peerConnection.icecandidateerror = null;
+				user.peerConnection.oniceconnectionstatechange = null;
+				user.peerConnection.onicegatheringstatechange = null;
+				user.peerConnection.close();
+			} catch {}
 		}
-		if(PeerNetwork_relayMode > 0) {
-			// --- Alwyzon (www1) ---
-			// options.iceServers.push({
-			// 	urls: "turn:94.177.8.204:39571",
-			// 	username: "play-user-x8env28gx41odbxzwjyut2oq871987syq8ovyuqp-alwyzon",
-			// 	credential: "qoy91n981vlplabb1873jdcgsouz2qm87qmmakqpc-alwyzon"
-			// });
-			// --- Alphahosting (www2) ---
-			// options.iceServers.push({
-			// 	urls: 'turn:89.22.121.145:39571',
-			// 	username: 'play-user-x8env28gx41odbxzwjyut2oq871987syq8ovyuqp-alphahosting',
-			// 	credential: 'qoy91n981vlplabb1873jdcgsouz2qm87qmmakqpc-alphahosting'
-			// });			
-			// --- Strato-v30 (www3) ---
-			options.iceServers.push({
-				urls: 'turn:85.214.133.53:39571',
-				username: 'play-user-9q2gy75kmlp4qn7tb86pogsmtyp7qqo0n5-strato-v30',
-				credential: '8q76nby32odjamuzbexi6eb2f1k9gc3my99o-strato-v30'
-			});
-			// --- Strato ---
-			// options.iceServers.push({
-			// 	urls: "turn:81.169.197.127",
-			// 	username: "play-user-x8env28gx41odbxzwjyut2hx82jyzdk7qm6d-ok",
-			// 	credential: "9y4vm5vxj3uyqvc8wkyzrm26ygebxutkd52bymr8zsmy6qa8-ok"
-			// });
-		}
-		options.iceServers.push({
-			urls: [
-				"stun:stun1.l.google.com:19302",
-				"stun:stun2.l.google.com:19302",
-			],
-		});
-		let peerConnection = new RTCPeerConnection(options);
-		let connectionId = user.connectionId
-		core_log("<"+user.id+"> setupPeerConnection connectionId:"+connectionId+" relayMode:"+PeerNetwork_relayMode)
-		
-		// Event handlers
-		peerConnection.oniceconnectionstatechange = e => {
-			core_log("<"+user.id+"> oniceconnectionstatechange " + peerConnection.iceConnectionState)
-			if(peerConnection.iceConnectionState == "disconnected") {
-				// Send logfiles to server
-				setTimeout(() => statistics_manuallyTriggerSend(-5, /*clear*/false), 7000);
-			}
-		}
-		peerConnection.onicecandidate = async event => {
-			if (event.candidate)
-				ServerNetwork_sendIce(user.id, JSON.stringify(event.candidate))
-			else
-				core_log("<"+user.id+"> Final ice candidate");
-		}
-		user.peerConnection = peerConnection
-		user.offerByMe = offerByMe
-		return peerConnection
-	
-	js void stopRecreatingDataChannel: InternalUser user
-		if(user.recreateDataChannelInterval) {
-			core_log("<"+user.id+"> stopRecreatingDataChannel connectionId:"+user.connectionId)
-			clearInterval(user.recreateDataChannelInterval)
-			user.recreateDataChannelInterval = null
-		}
-	
-	js void setupDataChannel: InternalUser user
-		// Create reliable data channel
-		// These options would create an unreliable one: {ordered:false, maxRetransmits:0}
-		core_log("<"+user.id+"> setupDataChannel: Creating data channel")
-		let dataChannel = user.peerConnection.createDataChannel("channel")
-		dataChannel.binaryType = "arraybuffer"
-		dataChannel.onopen = e => {
-			user.dataChannel = dataChannel
-			core_log("<"+user.id+"> setupDataChannel: Open data channel")
-			PeerNetwork_stopRecreatingDataChannel(user)
-			PeerNetwork_logConnectionType(user)
-			if(!PeerNetwork_requestedState) {
-				PeerNetwork_requestState(user)
-				PeerNetwork_requestedState = true
-			}
-		}
-		dataChannel.onclosing = e => core_log("<"+user.id+"> Data channel closing")
-		dataChannel.onclose = e => {
-			core_log("<"+user.id+"> setupDataChannel: Close data channel, recreateInterval:"+user.recreateDataChannelInterval)
-			user.dataChannel = null
-			if(!user.recreateDataChannelInterval) {
-				core_log("<"+user.id+"> setupDataChannel: Start recreating interval")
-				user.recreateDataChannelInterval = setInterval(() => PeerNetwork_setupDataChannel(user), 2000)
-			}
-			// Send logfiles to server
-			setTimeout(() => statistics_manuallyTriggerSend(-4, /*clear*/false), 7000);
-		}
-		dataChannel.onerror = e => core_log("<"+user.id+"> DataChannel "+user.id+"error "+e)
-		dataChannel.onmessage = e => PeerNetwork_onMessage(user, new Buffer(e.data, 0, 0, 0))
-	
-	js void createOffer: InternalUser user
 		try {
-			PeerNetwork_setupPeerConnection(user, /*offerByMe*/true)
-			PeerNetwork_setupRemoteMedia(user)
-			PeerNetwork_stopRecreatingDataChannel(user)
-			PeerNetwork_setupDataChannel(user)
+			user.startToConnectTime = user.lastIncomingMessageTime = Date.now();
+			user.offerByMe = offerByMe;
 			
-			// Offer
+			let options = {
+				// We use the ice transport policy "relay" to test our turn server
+				iceTransportPolicy: PeerNetwork.relayMode == 2 ? "relay" : "all",
+				iceServers: [],
+				// iceCandidatePoolSize: 10,
+			}
+			if(PeerNetwork.relayMode > 0) {
+				// OVH turn server
+				options.iceServers.push({
+					urls: 'turn:193.70.81.132:39571',
+					username: 'play-user-x8env28gx41odbxzwjyut2oq871987syq8ovyuqp128djbsjue',
+					credential: 'qoy91n981vlplabb1873jdcgsouz2qm87qmmakqpc2t8hbeyjsyaqkuz'
+				});	
+				
+				// Alphahosting turn server
+				// options.iceServers.push({
+				// 	urls: 'turn:89.22.121.145:39571',
+				// 	username: 'play-user-x8env28gx41odbxzwjyut2oq871987syq8ovyuqp128djbsjue',
+				// 	credential: 'qoy91n981vlplabb1873jdcgsouz2qm87qmmakqpc2t8hbeyjsyaqkuz'
+				// });	
+			}
+			options.iceServers.push({
+				urls: [
+					// OVH stun server
+					// "stun:193.70.81.132:39571",
+					
+					// Google stun server
+					"stun:stun1.l.google.com:19302",
+					"stun:stun2.l.google.com:19302",
+				],
+			});
+			core.log(`#peer <${user.id}> Setup Peer Connection offerByMe: ${offerByMe}`);
+			let peerConnection = user.peerConnection = new RTCPeerConnection(options);
+			
+			// Negotiation
+			peerConnection.onnegotiationneeded = e => {
+				core.log(`#peer <${user.id}> Negotiation Needed`);
+				if(offerByMe) PeerNetwork.createOffer(user);
+			}
+			
+			// Signaling, Connection
+			// peerConnection.onsignalingstatechange = e => {
+			// 	core.log(`#peer <${user.id}> Signaling State Change: ${peerConnection.signalingState}`);
+			// }
+			peerConnection.onconnectionstatechange = e => {
+				core.log(`#peer <${user.id}> Connection State Change: ${peerConnection.connectionState}`);
+				user.connectionState = peerConnection.connectionState;
+				user.connected = peerConnection.connectionState == "connected";
+				if(user.connected) PeerNetwork.onConnected(user);
+				if(peerConnection.connectionState == "disconnected")
+					setTimeout(() => statistics.saveStatistics(), 7000);
+					
+				// !!! EVALUATE Retry right away when connection failed
+				// if(peerConnection.connectionState == "failed" && offerByMe) {
+				// 	core.log(`#peer <${user.id}> Connection Failed -> Restart ICE`);
+				// 	// if(user.dataChannel) user.dataChannel.close();
+				// 	user.startToConnectTime = Date.now();
+				// 	PeerNetwork.setupDataChannel(user);
+				// 	peerConnection.restartIce();
+				// }
+			}
+			
+			// ICE: Candidate, Error, Connection, Gathering
+			let candidateCount = 0
+			peerConnection.onicecandidate = async event => {
+				if (event.candidate) {
+					core.log(`#peer <${user.id}> Gathered Local Ice Candidate ${++candidateCount} -> Send to peer`);
+					ServerNetwork.sendIce(user.id, JSON.stringify(event.candidate));
+				} else {
+					core.log(`#peer <${user.id}> Gathered Local Ice Candidates Complete`);
+				}
+			}
+			peerConnection.icecandidateerror = e => {
+				core.log(`#peer <${user.id}> IDE Candidate Error: ${e.errorText}`);
+			}
+			// peerConnection.oniceconnectionstatechange = e => {
+			// 	core.log(`#peer <${user.id}> ICE Connection State Change: ${peerConnection.iceConnectionState}`);
+			// }
+			// peerConnection.onicegatheringstatechange = e => {
+			// 	core.log(`#peer <${user.id}> ICE Gathering State Change: ${peerConnection.iceGatheringState}`);
+			// }
+			
+			// !!! EVALUATE Create offer right away, because sometimes "negotiationneeded" isn't fired
+			// if(offerByMe) PeerNetwork.createOffer(user);
+			
+			return peerConnection;
+		} 
+		catch(e) {
+			core.log("#peer <"+user.id+"> setupPeerConnection failed " + e.message)
+			console.error(e);
+			core.log(e.stack);
+			return null;
+		}
+
+	private js void setupDataChannel: InternalUser user
+		try {
+			user.startDataChannelTime = Date.now();
+			// !!! EVAL
+			// if(user.dataChannels.length > 0) {
+			// 	core.log("#peer <"+user.id+"> Data Channel We still have open data channels, don't create a new one");
+			// 	return
+			// }
+			
+			core.log("#peer <"+user.id+"> Data Channel Creating");
+			
+			// !!! EVALUATE: List of data channels
+			// if(user.dataChannel) {
+			// 	core.log("#peer <"+user.id+"> Closing previous Data Channel");
+			// 	user.dataChannel.onopen = null;
+			// 	user.dataChannel.onclosing = null;
+			// 	user.dataChannel.onclose = null;
+			// 	user.dataChannel.onerror = null;
+			// 	user.dataChannel.onmessage = null;
+			// 	user.dataChannel.close();
+			// 	user.dataChannel = null;
+			// 	core.log("#peer <"+user.id+"> Closed previous Data Channel");
+			// }
+			// user.dataChannel = null
+			
+			// Close all previous data channels
+			for(let dataChannel of user.dataChannels) {
+				try   { 
+					dataChannel.close();
+					core.log("#peer <"+user.id+"> Data Channel Closing previous channel (id:"+dataChannel._id+")");
+				} catch {}
+			}
+			user.dataChannels.length = 0;
+			
+			// Create reliable data channel
+			// let dataChannel = user.peerConnection.createDataChannel("channel"); // reliable
+			let dataChannel = user.peerConnection.createDataChannel("channel", {ordered:false, maxRetransmits:0}); // unreliable
+			dataChannel.binaryType = "arraybuffer";
+			dataChannel._id = PeerNetwork.dataChannelId++;
+			
+			// Open
+			dataChannel.onopen = e => {
+				user.dataChannels.splice(0,0,dataChannel);
+				core.log("#peer <"+user.id+"> Data Channel Open (id:"+dataChannel._id+", length: "+user.dataChannels.length+")");
+			}
+			
+			// Close, Error
+			dataChannel.onclosing = e => {
+				user.dataChannels.remove();
+				core.log("#peer <"+user.id+"> Data Channel Closing (id:"+dataChannel._id+", length: "+user.dataChannels.length+")");
+			}
+			dataChannel.onclose = e => {
+				user.dataChannels.remove();
+				core.log("#peer <"+user.id+"> Data Channel Close (id:"+dataChannel._id+", length: "+user.dataChannels.length+")");
+			}
+			dataChannel.onerror = e => {
+				core.log("#peer <"+user.id+"> Data Channel Error " + ev.error.message+" (id:"+dataChannel._id+", length: "+user.dataChannels.length+")");
+			}
+			
+			// Message
+			dataChannel.onmessage = e => {
+				// core.log("#data <"+user.id+"> received " + e.data.byteLength + " bytes on channel "+ dataChannel._id);
+				PeerNetwork.onMessage(user, new Buffer(e.data, 0, 0, 0));
+			}
+		} 
+		catch(e) {
+			core.log("#peer <"+user.id+"> setupDataChannel failed " + e.message)
+			console.error(e);
+			core.log(e.stack);
+		}
+		
+	onConnected: InternalUser user
+		user.startDataChannelTime = user.lastIncomingMessageTime = Time.realTime
+		logConnectionType user
+		
+		if user.offerByMe
+			setupDataChannel user
+		
+		if not statistics.connectTime
+			int connectedCount = input.internalUsers.count.offerByMe and .connected
+			int offerCount = input.internalUsers.count.offerByMe
+			core.log "#peer Connected on try {user.connectionTries}, {connectedCount} of {offerCount} my offers are connected"
+			
+			if input.internalUsers.none.offerByMe and not .connected
+				statistics.connectTime = Time.preciseTime - statistics.startTime
+				core.log "#peer All my offers are connected after {statistics.connectTime} ms and {retries} retries"
+			
+	disconnect: InternalUser user
+		user.dataChannels.each.close()
+		if user.peerConnection != null: user.peerConnection.close
+		input.internalUsers[user.id] = null
+		
+	js void setBitrate: InternalUser user, float scaleResolutionDownBy = 1, float maxBitrate
+		try {
+			let senderList = user.peerConnection.getSenders();
+			for(let sender of senderList) {
+				const params = sender.getParameters();
+				console.log(params);
+				if (!params.encodings) {
+					params.encodings = [{ }];
+				}
+				params.encodings[0].scaleResolutionDownBy = scaleResolutionDownBy;
+				params.encodings[0].maxBitrate = maxBitrate;
+				// params.encodings[0].adaptivePtime = true;
+				await sender.setParameters(params);
+			}
+		}
+		catch(e) {
+			core.log("#peer <"+user.id+"> setBitrate failed " + e.message)
+			console.error(e);
+			core.log(e.stack);
+		}
+				
+	private js void createOffer: InternalUser user
+		try {
+			core.log("#peer <"+user.id+"> Sending offer to "+user.id+", waiting for answer. Try:"+user.connectionTries);
 			let peerConnection = user.peerConnection
 			let offer = await peerConnection.createOffer();
 			await peerConnection.setLocalDescription(offer);
-			ServerNetwork_sendSignal(user.id, "offer", peerConnection.localDescription.sdp)
+			ServerNetwork.sendSignal(user.id, "offer", peerConnection.localDescription.sdp)
 			user.receivedAnswer = false
-			core_log("<"+user.id+"> Sent offer to "+user.id+", waiting for answer.");
+
+			// !!! EVALUATE Reconnect using timeout
+			// setTimeout(() => {
+			// 	let state = peerConnection.connectionState 
+			// 	core.log(`#peer <${user.id}> Checking connection state after ${retryIfNotConnectedAfter}: ${state}`);
+			// 	if(state != "connected") {
+			// 		peerConnection.restartIce();
+			// 		PeerNetwork.retries++
+			// 	}
+			// }, retryIfNotConnectedAfter);
 		}
 		catch(e) {
+			core.log("#peer <"+user.id+"> createOffer failed " + e.message)
 			console.error(e);
-			core_log(e.stack);
-		}
-		
-	js void setBitrate: InternalUser user, float scaleResolutionDownBy = 1, float maxBitrate
-		let senderList = user.peerConnection.getSenders();
-		for(let sender of senderList) {
-			const params = sender.getParameters();
-			console.log(params);
-			if (!params.encodings) {
-				params.encodings = [{ }];
-			}
-			params.encodings[0].scaleResolutionDownBy = scaleResolutionDownBy;
-			params.encodings[0].maxBitrate = maxBitrate;
-			// params.encodings[0].adaptivePtime = true;
-			await sender.setParameters(params);
+			core.log(e.stack);
 		}
 		
 	js void onReceivedOffer: InternalUser user, string sdp
 		try {
-			core_log("<"+user.id+"> Received offer, senting answer");
-			PeerNetwork_setupPeerConnection(user, /*offerByMe*/false)
-			PeerNetwork_setupRemoteMedia(user)
-			
-			// When a user reconnects, we receive a new offer and a new data channel,
-			// so we need to stop trying to recreate the old data channel to avoid two open data channels
-			PeerNetwork_stopRecreatingDataChannel(user)
-			
+			core.log("#peer <"+user.id+"> Received offer -> Send answer");
+			PeerNetwork.setupPeerConnection(user, /*offerByMe*/false);
+			PeerNetwork.setupRemoteMedia(user);
+
 			// Data channel
-			user.peerConnection.addEventListener("datachannel", e => {
-				core_log("<"+user.id+"> Data channel received")
-				let dataChannel = e.channel
-				dataChannel.binaryType = "arraybuffer"
-				user.dataChannel = dataChannel
+			user.peerConnection.ondatachannel = e => {
+				core.log("#peer <"+user.id+"> Data Channel Received");
+				let dataChannel = e.channel;
+				dataChannel.binaryType = "arraybuffer";
+				dataChannel._id = PeerNetwork.dataChannelId++;
+				
+				// Open
 				dataChannel.onopen = e => {
-					core_log("<"+user.id+"> Data channel opened")
-					user.dataChannel = dataChannel
-					PeerNetwork_logConnectionType(user)
+					PeerNetwork.logConnectionType(user);
+					user.dataChannels.splice(0,0,dataChannel);
+					core.log("#peer <"+user.id+"> Data Channel Open (id:"+dataChannel._id+", length: "+user.dataChannels.length+")");
 				}
+				
+				// Close, Error
 				dataChannel.onclosing = e => {
-					core_log("<"+user.id+"> Data channel closing")
-					user.dataChannel = null
+					user.dataChannels.remove(dataChannel);
+					core.log("#peer <"+user.id+"> Data Channel Closing (id:"+dataChannel._id+", length: "+user.dataChannels.length+")");
 				}
-				dataChannel.onclose = e => core_log("<"+user.id+"> Data channel close "+e)
-				dataChannel.onerror = e => core_log("<"+user.id+"> Data channel error "+e)
-				dataChannel.onmessage = e => PeerNetwork_onMessage(user, new Buffer(e.data, 0, 0, 0))
-			})
+				dataChannel.onclose = e => {
+					user.dataChannels.remove(dataChannel);
+					core.log("#peer <"+user.id+"> Data Channel Close (id:"+dataChannel._id+", length: "+user.dataChannels.length+")");
+				}
+				dataChannel.onerror = e => {
+					core.log("#peer <"+user.id+"> Data Channel Error "+e.error.message+" (id:"+dataChannel._id+", length: "+user.dataChannels.length+")");
+				}
+				
+				// Message
+				dataChannel.onmessage = e => {
+					// core.log("#data <"+user.id+"> received " + e.data.byteLength + " bytes on channel "+ dataChannel._id);
+					PeerNetwork.onMessage(user, new Buffer(e.data, 0, 0, 0));
+				}
+			}
 						
 			// Answer
-			let peerConnection = user.peerConnection
+			let peerConnection = user.peerConnection;
 			await peerConnection.setRemoteDescription(new RTCSessionDescription({type: "offer", sdp}));
 			let answer = await peerConnection.createAnswer();
 			await peerConnection.setLocalDescription(answer);
-			ServerNetwork_sendSignal(user.id, "answer", peerConnection.localDescription.sdp)
+			ServerNetwork.sendSignal(user.id, "answer", peerConnection.localDescription.sdp);
 		}
 		catch(e) {
+			core.log("#peer <"+user.id+"> onReceivedOffer failed " + e.message)
 			console.error(e)
-			core_log(e.stack);
+			core.log(e.stack);
 		}
 		
 	Buffer sendBuffer = {}
 	
 	sendInputs: int inputFrame
-		for input.internalUsers -> user
-			if user?.dataChannel
-				let inputs = input.localUser.inputs
-				let length = inputs.writePos - user.inputsSentPos
+		for input.internalUsers -> receiver if receiver
+			let inputs = input.localUser.inputs
+			let length = inputs.writePos - receiver.receivedMyInputsUpToPos
+			
+			if receiver.dataChannels
 				sendBuffer.reset
 				sendBuffer.writeInt8 cast NetworkMessageType.Tick
-				sendBuffer.writeInt inputFrame // You got all inputs up to and including this frame
-				sendBuffer.writeInt user.inputsSentPos
-				sendBuffer.writeBuffer inputs, user.inputsSentPos, length
+				sendBuffer.writeInt inputFrame                       // I send inputs up to and including this frame
+				sendBuffer.writeInt receiver.receivedMyInputsUpToPos // I send inputs starting from the last pos you received
+				sendBuffer.writeInt receiver.inputs.writePos         // I received your inputs up to this pos
+				sendBuffer.writeBuffer inputs, receiver.receivedMyInputsUpToPos, length
 				sendBuffer.writeInt core.lastChecksumFrame                           // The last certain frame with inputs from everybody
 				sendBuffer.writeFloat64 core.checksums[core.lastChecksumFrame] || 0  // The checksum of the last certain frame
 				
 				core.tickMessageSize = send ., sendBuffer
-				user.inputsSentPos = inputs.writePos
-				if core.logging: core.sentLog += " <{user.id}> #{inputFrame} {user.inputsSentPos}->{inputs.writePos} {inputs.toRangeString(user.inputsSentPos, inputs.writePos)} ({core.tickMessageSize} bytes)"
+				if core.verbose
+					if receiver.receivedMyInputsUpToPos > inputs.writePos
+						core.log "[{inputFrame}] <{receiver.id}> #send -->> {receiver.receivedMyInputsUpToPos}->{inputs.writePos} id:{receiver.dataChannels[0]._id}"
+					else
+						core.log "[{inputFrame}] <{receiver.id}> #send -->>"
+				
+			// if length
+			// 	core.storeInputsToDB user
+			// core.storeRoomToDB
 			
 	private js int send: InternalUser user, Buffer buffer
+		if(user.dataChannels.length == 0) {
+			core.log("#data <"+user.id+"> Trying to send without dataChannels")
+		}
 		try {
 			let data = buffer.toByteArray()
-			user.dataChannel.send(data)
+			let channel = user.dataChannels[0]
+			channel.send(data)
+			// core.log("#data <"+user.id+"> send " + data.byteLength + " bytes on channel "+ channel._id)
 			return data.byteLength
-		} catch(e) {
+		} 
+		catch(e) {
+			core.log("#peer <"+user.id+"> send failed " + e.message)
 			console.error(e)
-			core_log(e.stack)
+			core.log(e.stack)
 			return 0
 		}
-		
-	// private js void onMessage: InternalUser user, Buffer buffer
-	// 	setTimeout(() => PeerNetwork_onMessageDo(user, buffer), 1000)
-								
+	
 	private onMessage: InternalUser user, Buffer buffer
+		user.lastIncomingMessageTime = Time.realTime
 		NetworkMessageType type = cast buffer.readInt8
 		if type == Tick:         onTick user, buffer; else
-		if type == RequestState: onRequestState user, buffer; else
-		if type == State:        onState user, buffer;  else
-		if type == Ping:         onPing user, buffer;  else
+		if type == Ping:         onPing user, buffer; else
 		if type == Pong:         onPong user, buffer;
 			
 	private onTick: InternalUser sender, Buffer buffer
-		let inputFrame = buffer.readInt
+		let inputFrame = buffer.readInt                     // The sender sent inputs up to and including this frame
+		
 		if inputFrame >= sender.inputFrame
+			let prevInputFrame = sender.inputFrame         
+			let incomingInputsWritePos = buffer.readInt     // The sender sent inputs starting from the last pos I received
+			sender.receivedMyInputsUpToPos = buffer.readInt // The sender received my inputs up to this pos
+			
 			sender.inputFrame = inputFrame
-			let prevWritePos = buffer.readInt
-			buffer.readBuffer sender.inputs, prevWritePos
+			buffer.readBuffer sender.inputs, incomingInputsWritePos
+			
+			if core.verbose
+				if sender.inputs.writePos > incomingInputsWritePos
+					core.log "[{inputFrame}] <{sender.id}> #receive <<-- writePos: {incomingInputsWritePos}->{sender.inputs.writePos}"
+				else
+					core.log "[{inputFrame}] <{sender.id}> #receive <<--"
 			
 			// Checksum
 			int checksumFor = buffer.readInt
 			float checksum = buffer.readFloat64
-			if core.logging: core.checksumLog += " <{sender.id}> #{checksumFor} {checksum}"
+			if core.verbose: core.log "<{sender.id}> #{checksumFor} {checksum}"
 			
 			let myChecksum = core.checksums[checksumFor]
 			if !myChecksum                           core.checksums[checksumFor] = checksum; else
 			if !myChecksum.isApproximately(checksum) core.onWrongChecksum checksumFor, mine:myChecksum theirs:checksum
-			
-			if core.logging: core.receivedLog += " [{core.currentTime}] <{sender.id}> #{inputFrame} {prevWritePos}->{sender.inputs.writePos} {sender.inputs.toRangeString(prevWritePos, sender.inputs.writePos)}"
-		else
-			if core.logging: core.receivedLog += " [{core.currentTime}] <{sender.id}> (ignoring #{inputFrame})"
 		
 	js void onReceivedAnswer: InternalUser user, string sdp
-		await user.peerConnection.setRemoteDescription(new RTCSessionDescription({type: "answer", sdp}));
-		user.receivedAnswer = true
-		core_log("<"+user.id+"> Received answer from "+user.id+".");
-		
+		core.log("#peer <"+user.id+"> Received Answer");
+		try {
+			await user.peerConnection.setRemoteDescription(new RTCSessionDescription({type: "answer", sdp}));
+			user.receivedAnswer = true
+		}
+		catch(e) {
+			core.log("#peer <"+user.id+"> onReceivedAnswer failed " + e.message)
+			core.log(e.stack);
+		}	
+			
 	js void onIce: InternalUser user, string candidate
+		core.log("#peer <"+user.id+"> Received Ice Candidate");
 		try {
 			await user.peerConnection.addIceCandidate(new RTCIceCandidate(JSON.parse(candidate)));
-		} catch(e) {
-			core_log("<"+user.id+"> onIce failed " + e.message)
-			core_log(e.stack);
+		}
+		catch(e) {
+			core.log("#peer <"+user.id+"> onIce failed " + e.message)
+			core.log(e.stack);
 		}
 		
 	private js void logConnectionType: InternalUser user
@@ -286,12 +534,12 @@ transient unit PeerNetwork
 				let candidate = stats.get(candidatePair.localCandidateId);
 				let ip = candidate.ip || candidate.address
 				user.connectionType = candidate.candidateType + " " + ip
-				core_log("<"+user.id+"> #################### connection to "+user.id+": "+user.connectionType)
+				core.log("#connection <"+user.id+"> connection "+user.connectionType)
 			} else {
-				core_log("<"+user.id+"> #################### connection: no candidate pair for "+user.id)
+				core.log("#connection <"+user.id+"> connection: no candidate pair for "+user.id)
 				window.stats = [...stats.values()]
 				console.log(window.stats)
-				try  { core_log(JSON.stringify(window.stats)) }
+				try  { core.log(JSON.stringify(window.stats)) }
 				catch{ }
 			}
 		}, 10000)
@@ -300,7 +548,7 @@ transient unit PeerNetwork
 	
 	ping
 		for input.internalUsers -> user
-			if user?.dataChannel
+			if user and user.dataChannels
 				sendBuffer.reset
 				sendBuffer.writeInt8 cast NetworkMessageType.Ping
 				sendBuffer.writeFloat64 core.currentTime
@@ -318,7 +566,7 @@ transient unit PeerNetwork
 		float pingTime = buffer.readFloat64
 		float pingPongTime = now - pingTime
 		let player = input.players.find.id == user.id
-			statistics.add userIndex:player.index, color:player.color, value:pingPongTime, set:2
+			statistics.add "pingPongTime" userIndex:player.index, color:player.color, value:pingPongTime, set:3, isPerFrame:false
 				
 	// --------------------------------------------- Checksum ---------------------------------------------
 	
@@ -329,13 +577,13 @@ transient unit PeerNetwork
 		sendBuffer.writeFloat64 checksum
 		
 		for input.internalUsers -> user
-			if user?.dataChannel		
+			if user and user.dataChannels
 				send ., sendBuffer
 
 	onChecksum: InternalUser user, Buffer buffer
 		int checksumFor = buffer.readInt
 		float checksum = buffer.readFloat64
-		if core.logging: core.checksumLog += " <{user.id}> #{checksumFor} {checksum}"
+		if core.verbose: core.log "<{user.id}> #{checksumFor} {checksum}"
 		
 		let myChecksum = core.checksums[checksumFor]
 		if !myChecksum
@@ -349,63 +597,65 @@ transient unit PeerNetwork
 	MediaDevices devices = {}
 	string videoInputId, audioInputId, audioOutputId	
 	
-	private js void setupLocalMedia: bool enableVideo, bool enableAudio
-		core_log("setupLocalMedia: start")
-		PeerNetwork_enableVideo = enableVideo
-		PeerNetwork_enableAudio = enableAudio
+	js async void setupLocalMedia: bool enableVideo, bool enableAudio
+		core.log("setupLocalMedia: start")
+		PeerNetwork.enableVideo = enableVideo
+		PeerNetwork.enableAudio = enableAudio
 		if(!enableVideo && !enableAudio) return
 			
 		try {
 			// Create local media stream
-			input_localUser.mediaStream = await navigator.mediaDevices.getUserMedia({
+			input.localUser.mediaStream = await navigator.mediaDevices.getUserMedia({
 				video: {width: 500, height: 375},
 				audio: enableAudio
 			});
-			core_log("setupLocalMedia: getUserMedia done")
+			core.log("setupLocalMedia: getUserMedia done")
 			
 			// Enummerate local devices
 			let devices = await navigator.mediaDevices.enumerateDevices();
-			core_log("setupLocalMedia: enumerateDevices done")
+			core.log("setupLocalMedia: enumerateDevices done")
 			
 			for(let device of devices) {
 				switch(device.kind) {
-					case "videoinput":  PeerNetwork_devices.videoInput.push(device); break;
-					case "audioinput":  PeerNetwork_devices.audioInput.push(device); break;
-					case "audiooutput": PeerNetwork_devices.audioOutput.push(device); break;
+					case "videoinput":  PeerNetwork.devices.videoInput.push(device); break;
+					case "audioinput":  PeerNetwork.devices.audioInput.push(device); break;
+					case "audiooutput": PeerNetwork.devices.audioOutput.push(device); break;
 				}
 			}
-			PeerNetwork_videoInputId = input_localUser.mediaStream.getVideoTracks()[0]?.getSettings().deviceId || PeerNetwork_devices.videoInput[0]?.deviceId
-			PeerNetwork_audioInputId = input_localUser.mediaStream.getAudioTracks()[0]?.getSettings().deviceId || PeerNetwork_devices.audioInput[0]?.deviceId
-			PeerNetwork_audioOutputId = PeerNetwork_devices.audioInput[0]?.deviceId
-			core_log("setupLocalMedia: success")
+			PeerNetwork.videoInputId = input.localUser.mediaStream.getVideoTracks()[0]?.getSettings().deviceId || PeerNetwork.devices.videoInput[0]?.deviceId
+			PeerNetwork.audioInputId = input.localUser.mediaStream.getAudioTracks()[0]?.getSettings().deviceId || PeerNetwork.devices.audioInput[0]?.deviceId
+			PeerNetwork.audioOutputId = PeerNetwork.devices.audioOutput[0]?.deviceId
+			statistics.cameraTime = performance.now() - statistics.startTime
+			core.log("#camera Setup Local Camera and Microphone after "+statistics.cameraTime+" ms")
 			
 		} catch(error) {
-			core_log(error.message)
+			core.log(error.message)
 			if(error.name == "NotAllowedError") {
-				PeerNetwork_error = "To play with friends over a video call, you need to allow access to your webcam."
+				PeerNetwork.error = "To play with friends over a video call, you need to allow access to your webcam."
 			} else {
-				PeerNetwork_error = "Can't access webcam. Please make sure it's not used by another application."
+				PeerNetwork.error = "Can't access webcam. Please make sure it's not used by another application."
 			}
-			core_errorMessage = error.message
+			core.errorMessage = error.message
 			throw error
 		}
 	
 	js void setVideoInput: string videoInputId
-		if(PeerNetwork_videoInputId == videoInputId) return;
-		PeerNetwork_videoInputId = videoInputId;
+		                   Player player
+		if(Platform.fastForward || input.localUser.id != player.id ||  PeerNetwork.videoInputId == videoInputId || !videoInputId) return;
+		PeerNetwork.videoInputId = videoInputId;
 		
 		// Create local media stream
-		input_localUser.mediaStream = await navigator.mediaDevices.getUserMedia({
-			audio: {deviceId: PeerNetwork_audioInputId},
-			video: {deviceId: PeerNetwork_videoInputId},
+		input.localUser.mediaStream = await navigator.mediaDevices.getUserMedia({
+			audio: {deviceId: PeerNetwork.audioInputId},
+			video: {deviceId: PeerNetwork.videoInputId},
 		});
 		
 		// Update video elements and tracks
-		for(let el of input_localUser.videoElements) {
-			el.srcObject = input_localUser.mediaStream;
+		for(let el of input.localUser.videoElements) {
+			el.srcObject = input.localUser.mediaStream;
 		}
-		const [videoTrack] = input_localUser.mediaStream.getVideoTracks();
-		for(let user of input_internalUsers) {
+		const [videoTrack] = input.localUser.mediaStream.getVideoTracks();
+		for(let user of input.internalUsers) {
 			if(user?.peerConnection) {
 				const sender = user.peerConnection.getSenders().find((s) => s.track.kind === videoTrack.kind);
 				sender.replaceTrack(videoTrack);
@@ -413,18 +663,19 @@ transient unit PeerNetwork
 		}
 			
 	js void setAudioInput: string audioInputId
-		if(PeerNetwork_audioInputId == audioInputId) return;
-		PeerNetwork_audioInputId = audioInputId;
+		                   Player player
+		if(Platform.fastForward || input.localUser.id != player.id || PeerNetwork.audioInputId == audioInputId || !audioInputId) return;
+		PeerNetwork.audioInputId = audioInputId;
 		
 		// Create local media stream
-		input_localUser.mediaStream = await navigator.mediaDevices.getUserMedia({
-			audio: {deviceId: PeerNetwork_audioInputId},
-			video: {deviceId: PeerNetwork_videoInputId},
+		input.localUser.mediaStream = await navigator.mediaDevices.getUserMedia({
+			audio: {deviceId: PeerNetwork.audioInputId},
+			video: {deviceId: PeerNetwork.videoInputId},
 		});
 		
 		// Update tracks
-		const [audioTrack] = input_localUser.mediaStream.getAudioTracks();
-		for(let user of input_internalUsers) {
+		const [audioTrack] = input.localUser.mediaStream.getAudioTracks();
+		for(let user of input.internalUsers) {
 			if(user?.peerConnection) {
 				const sender = user.peerConnection.getSenders().find((s) => s.track.kind === audioTrack.kind);
 				sender.replaceTrack(audioTrack);
@@ -432,15 +683,24 @@ transient unit PeerNetwork
 		}
 			
 	js void setAudioOutput: string audioOutputId
-		PeerNetwork_audioOutputId = audioOutputId;
+		                    Player player
+		if(Platform.fastForward || input.localUser.id != player.id || PeerNetwork.audioOutputId == audioOutputId || !audioOutputId) return;
+		PeerNetwork.audioOutputId = audioOutputId;
 		
 		// Update audio elements
-		for(let user of input_internalUsers) {
-			if(user?.audioElement && user.audioElement.setSinkId) {
-				user.audioElement.setSinkId(PeerNetwork_audioOutputId);
+		for(let user of input.internalUsers) {
+			if(user) {
+				if(user.audioElement && user.audioElement.setSinkId) {
+					user.audioElement.setSinkId(PeerNetwork.audioOutputId);
+				}
+				for(let videoElement of user.videoElements) {
+					if(videoElement.setSinkId) {
+						videoElement.setSinkId(PeerNetwork.audioOutputId);
+					}
+				}
 			}
 		}
-		audio_reload();
+		audio.reload();
 		
 	private js void setupRemoteMedia: InternalUser user
 		// Remove old video elements
@@ -448,37 +708,35 @@ transient unit PeerNetwork
 			videoElement.remove()
 		user.videoElements.length = 0
 		
-		if(!PeerNetwork_enableVideo && !PeerNetwork_enableAudio) return
+		if(!PeerNetwork.enableVideo && !PeerNetwork.enableAudio) return
 			
 		// Add local tracks to peer connection
-		for(let track of input_localUser.mediaStream.getTracks())
-			user.peerConnection.addTrack(track, input_localUser.mediaStream);
+		for(let track of input.localUser.mediaStream.getTracks())
+			user.peerConnection.addTrack(track, input.localUser.mediaStream);
 		
 		// Create media stream for remote player
 		user.mediaStream = new MediaStream();
 		
-		// Create audio element so we always hear the remote user, event if no video is shown
-		let audioElement = user.audioElement = document.createElement("audio")
-		audioElement.srcObject = user.mediaStream
-		if(audioElement.setSinkId) audioElement.setSinkId(PeerNetwork_audioOutputId);
-		document.body.appendChild(audioElement);
-		
 		// Add incoming tracks to media stream for remote player
-		user.peerConnection.addEventListener("track", event => {
+		user.peerConnection.ontrack = event => {
+			core.log("#peer <"+user.id+"> Add track");
 			event.streams[0].getTracks().forEach(track => {
 				user.mediaStream.addTrack(track);
 			});
-		});
+		}
+		user.peerConnection.onremovetrack = event => {
+			core.log("#peer <"+user.id+"> Remove track");
+		}
 
 	// --------------------------------------------- Media elements ---------------------------------------------
 	
 	js object createVideoElement: object stream, bool local
 		let el = document.createElement("video")
-		el.style = "border-radius: 500px; object-fit: cover; position:absolute; top:0px; left:0px; z-index:10000; visibility:hidden; "+(local ? "transform: scaleX(-1)" : "")
+		el.style = "border-radius: 500px; object-fit: cover; position:absolute; top:0px; left:0px; z-index:10000; visibility:hidden; pointer-events: none; user-select: none; "+(local ? "transform: scaleX(-1)" : "")
 		el.autoplay = true
 		el.playsinline = true
 		el.controls = false
-		el.muted = true
+		el.muted = local
 		el.srcObject = stream
 		document.body.appendChild(el)
 		return el
@@ -496,88 +754,3 @@ transient unit PeerNetwork
 		
 	js void setAudioMuted: object audioElement, bool muted
 		if(audioElement) audioElement.muted = muted
-		
-	// --------------------------------------------- Send state ---------------------------------------------
-		
-	Buffer snapshotBuffer = {}
-	int[] sendStateQueue
-	bool requestedState
-	int stateTimeout
-	
-	makePrimiaryUserIfStateIsNotReceived
-		requestedState = false
-		stateTimeout = Platform.setTimeout 25 seconds
-			if input.internalUsers.any.receivedAnswer
-				core.log "No state after 25s, but we received answers -> Alert the user to make sure WebRTC connections aren't blocked."
-				alert "Could not connect. Please make sure WebRTC connections aren't block by your router, firewall or a browser extension. If you have a VPN browser extension installed, please check your settings and make sure WebRTC connections aren't blocked."
-			else
-				core.log "No state after 25s -> Make primary user"
-				makePrimaryUser
-	
-	makePrimaryUser
-		let frame = math.floor((core.currentTime - core.startTime)/core.targetFrameTime)+3
-		core.startConnected frame
-	
-	private requestState: InternalUser from
-		sendBuffer.reset
-		sendBuffer.writeInt8 cast NetworkMessageType.RequestState
-		send from, sendBuffer
-		
-	private onRequestState: InternalUser sender, Buffer buffer
-		core.log "Received state request from {sender.id}"
-		sendStateQueue.add sender.id
-		if core.mode == Connected: processSendStateQueue
-	
-	processSendStateQueue
-		if sendStateQueue.length > 0
-			snapshotBuffer.reset
-			Snapshot.serialize snapshotBuffer
-			for sendStateQueue <-
-				let user = input.internalUsers[.]
-				if user?.dataChannel
-					sendState user, snapshotBuffer
-					sendStateQueue.removeAt i
-		
-	private sendState: InternalUser to, Buffer buffer
-		core.log "Sending state to {to.id}"
-		let localUser = input.localUser
-		sendBuffer.reset
-		sendBuffer.writeInt8 cast NetworkMessageType.State
-		sendBuffer.writeInt32 core.frame-1
-		let userCount = input.internalUsers.count . != null
-		sendBuffer.writeInt32 userCount
-		for input.internalUsers if .
-			sendBuffer.writeInt32 .id
-			sendBuffer.writeInt32 .inputs.readPos
-			sendBuffer.writeBool .active
-		to.inputsSentPos = localUser.inputs.readPos
-		sendBuffer.writeBuffer buffer
-		send to, sendBuffer
-		
-	private onState: InternalUser c, Buffer buffer
-		Platform.clearTimeout stateTimeout
-		if core.mode == Connected:
-			core.log "Ignoring received state from {c.id} because we are already connected"
-			return
-			
-		core.log "Received state from {c.id}"
-		let frame = buffer.readInt32
-		let userCount = buffer.readInt32
-		for userCount
-			let id = buffer.readInt32
-			let readPos = buffer.readInt32
-			let active = buffer.readBool
-			let user = input.internalUsers[id]
-				user.inputFrame = frame
-				user.inputs.readPos = user.inputs.writePos = readPos
-				user.active = active
-				
-		for input.internalUsers if .
-			.inputsSentPos = input.localUser.inputs.writePos
-			
-		snapshotBuffer.reset
-		buffer.readBuffer snapshotBuffer
-		Snapshot.deserialize snapshotBuffer
-		math.recreateRandomValues
-		core.startConnected frame+1
-		

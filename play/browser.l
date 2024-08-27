@@ -1,41 +1,63 @@
 transient skipInit unit Platform
 	public inline js string url := location.href
-	public inline js string host := location.host
-	public protocolAndHost := host ? "https://"+host : "http://localhost"
+	public inline js string hostname := location.hostname
+	public protocolAndHost := hostname && hostname != "localhost" ? "https://"+hostname : "http://localhost"
 	public inline js int userAgent := navigator.userAgent.replace(/,/g," ")
-	public inline js float usedMemory := performance.memory.usedJSHeapSize
+	public inline js float usedMemory := (performance.memory ? performance.memory.usedJSHeapSize : 0)
 	
 	js void setTitle: string title
 		document.title = title
 		
-	inline js void setFullscreen: value = true
-		                          Player forPlayer = null
-		if(!Platform_isStaging && !Platform_isDebug && (forPlayer == null || input_localUser?.id == forPlayer.id)) {
+	js async void setFullscreen: value = true
+		                         Player forPlayer = null
+		if(!Platform.isStaging && !Platform.isDebug && !Platform.fastForward && (forPlayer == null || input.localUser?.id == forPlayer.id)) {
 			try {
-				if(value) {
-					document.body.requestFullscreen()
-				} else {
-					document.exitFullscreen()
-				}
-			} catch {
+				if(value) await document.body.requestFullscreen()
+				else      await document.exitFullscreen()
+			} catch(error) {
+				core.onError(error)
 			}
 		}	
 		
 	inline js void preventScrolling
 		window.scrollTo(0,0)
 		
-	inline js void setLocalStorageObject: string key, any value
-		localStorage.setItem(key, JSON.stringify(value))
+	js void setLocalStorageObject: string key
+		                           any value
+		                           void() then = null
+		                           void() else = null
+		try {
+			localStorage.setItem(key, JSON.stringify(value))
+			then?.()
+		} catch(e) {
+			else?.()
+		}
 		
 	js any getLocalStorageObject: string key
-		let str = localStorage.getItem(key)
-		return str ? JSON.parse(str) : null 
+		try {
+			let str = localStorage.getItem(key)
+			return str ? JSON.parse(str) : null 
+		} catch {
+			return null
+		}
+			
+	js void setLocalStorageString: string key
+		                           string value
+		                           void() then = null
+		                           void() else = null
+		try {
+			localStorage.setItem(key, value)
+			then?.()
+		} catch(e) {
+			else?.()
+		}
 		
-	inline js void setLocalStorageString: string key, string value
-		localStorage.setItem(key, value)
-		
-	inline js string getLocalStorageString: string key
-		(localStorage.getItem(key) || "")
+	js string getLocalStorageString: string key
+		try {
+			return localStorage.getItem(key) || ""
+		} catch {
+			return ""
+		}
 		
 	inline js void vibrate: int duration = 100
 		if(navigator.vibrate) navigator.vibrate(duration)
@@ -49,7 +71,7 @@ transient skipInit unit Platform
 		setTimeout(then, time)
 		
 	inline js void copyToClipboard(string text)
-		if(core_isPremiere && input_isCertain) {
+		if(core.isPremiere && input.isCertain) {
 			navigator.clipboard.writeText(text)
 		}
 		
@@ -72,17 +94,17 @@ transient skipInit unit Platform
 		
 	inline js void pushState: string url
 		                      object state = null
-		if(core_isPremiere) history.pushState(state, "", url);
+		if(core.isPremiere) history.pushState(state, "", url);
 		
 	inline js void replaceState: string url
 		                         object state = null
-		if(core_isPremiere) history.replaceState(state, "", url);
+		if(core.isPremiere) history.replaceState(state, "", url);
 		
 	inline js void back
-		if(core_isPremiere) history.back();
+		if(core.isPremiere) history.back();
 		
 	inline js void reload
-		if(!Platform_isDebug) location.reload();
+		if(!Platform.isDebug) location.reload();
 	
 unit file
 	js void saveText: string filename, string text
@@ -151,8 +173,8 @@ HTMLElement
 	tick
 	
 	static js void clear
-		if(HTMLElement_elements) {
-			for(let el of HTMLElement_elements) {
+		if(HTMLElement.elements) {
+			for(let el of HTMLElement.elements) {
 				el.remove()
 			}
 		}
@@ -189,11 +211,11 @@ HTMLElement HTMLInput
 		this.element.onkeyup = e => {
 			let value = this.element.value
 			if(value != prevValue) {
-				input_handleString(this.changeCallbackId, value);
+				input.handleString(this.changeCallbackId, value);
 				prevValue = value;
 			}
 			if(e.keyCode == 13) {
-				input_handleString(this.enterCallbackId, value);
+				input.handleString(this.enterCallbackId, value);
 			}
 		}
 		document.body.appendChild(this.element)
@@ -214,37 +236,128 @@ HTMLElement HTMLInput
 		// this.element.style.height = "{size.y}px"
 		// this.element.style.font = "{fontSize}px OpenSans"
 		
-transient unit IndexedDB
-	private object db
+IndexedDBIndex
+	string name
+	string[] keyPaths
 	
-	js void start: string databaseName, string storeName, int version = 1
+	IndexedDBIndex
+		if not keyPaths: keyPaths.add name
+		
+IndexedDBStore
+	string name
+	IndexedDBIndex[] indices
+	
+	string keyPath = "id"
+	bool autoIncrement = false
+	
+	private dynamic db
+	
+	IndexedDBStore
+		IndexedDB.stores.add this
+		print "Adding store {name} {IndexedDB.stores.length}"
+		
+	js void put: any data, void() then = null, void(Error error) else = null
 		try {
-			core_log("IndexedDB: start");
-			IndexedDB_storeName = storeName;
+			let trans = this.db.transaction(this.name, "readwrite")
+			trans.onerror = e => {
+				core.log("Error in IndexedDB.save: "+trans.error)
+				else?.()
+			}
+			trans.objectStore(this.name).put(data).onsuccess = e => {
+				then?.()
+			}
+		} catch(error) {
+			core.onError(error)
+			else?.(error)
+		}
+		
+	js void get: any id, void(any result) then, void(Error error) else = null
+		try {
+			let trans = this.db.transaction(storeName, "readonly");
+			let req = trans.objectStore(this.name).get(id);
+			req.onsuccess = async e => {
+				let result = req.result;
+				if(result) {
+					then(result);
+				} @else {
+					else?.();
+				}
+			}
+			req.onerror = e => {
+				core.onError(e);
+				else?.();
+			}
+		} catch(e) {
+			core.onError(e);
+			else?.();
+		}
+		
+	js void getAllFromIndex: string index, any query, void(any[] result) then, void(Error error) else = null
+		try {
+			let trans = this.db.transaction(storeName, "readonly");
+			let req = trans.objectStore(this.name).index(index).getAll(query);
+			req.onsuccess = async e => {
+				let result = req.result;
+				if(result) {
+					then(result);
+				} @else {
+					else?.();
+				}
+			}
+			req.onerror = e => {
+				core.onError(e);
+				else?.();
+			}
+		} catch(e) {
+			core.onError(e);
+			else?.();
+		}
+	
+		
+transient skipInit unit IndexedDB
+	internal dynamic db
+	IndexedDBStore[] stores
+	
+	js void start: string databaseName, int version = 1, void() success = null, void(Error error) else = null
+		try {
+			System.print("IndexedDB: start stores:"+IndexedDB.stores.length);
 			var request = indexedDB.open(databaseName, version)
 			request.onupgradeneeded = e => {
-				core_log("IndexedDB: upgradeneeded");
-				IndexedDB_db = e.target.result;
-				if(!IndexedDB_db.objectStoreNames.contains(storeName))
-					IndexedDB_db.createObjectStore(storeName, { keyPath: "id" });
-				core_log("IndexedDB successfully upgraded to version "+version)
+				core.log("IndexedDB: upgradeneeded");
+				IndexedDB.db = e.target.result;
+				for(let store of IndexedDB.stores) {
+					if(!IndexedDB.db.objectStoreNames.contains(store.name)) {
+						let storeObject = IndexedDB.db.createObjectStore(store.name, { keyPath: store.keyPath, autoIncrement: store.autoIncrement });
+						System.print("IndexedDB: created store "+store.name)
+						for(let index of store.indices) {
+							storeObject.createIndex(index.name, index.keyPaths)
+						}
+					}
+				}
+				System.print("IndexedDB: successfully upgraded to version "+version)
 			}
 			request.onsuccess = e => {
-				IndexedDB_db = e.target.result;
-				core_log("IndexedDB: success");
+				System.print("IndexedDB: success");
+				IndexedDB.db = e.target.result;
+				for(let store of IndexedDB.stores) {
+					store.db = IndexedDB.db
+				}
+				success?.();
 			}
 			request.onerror = e => {
-				core_log("IndexedDB: error "+request.error);
+				core.onError(request.error);
+				else?.(request.error);
 			}
-			core_log("IndexedDB: finished");
+			core.log("IndexedDB: finished");
 		} catch(e) {
-			core_log("IndexedDB: exception "+e.message)
+			core.onError(e);
+			else?.(e);
 		}
 		
 	js void open: string storeName, string id, void(object data) then, void() else = null
 		try {
-			let trans = IndexedDB_db.transaction(storeName, "readonly")
-			let req = trans.objectStore(IndexedDB_storeName).get(id)
+			let trans = IndexedDB.db.transaction(storeName, "readonly")
+			let req = trans.objectStore(IndexedDB.storeName).get(id)
 			req.onsuccess = async e => {
 				let result = req.result
 				if(result) {
@@ -254,18 +367,18 @@ transient unit IndexedDB
 				}
 			}
 			req.onerror = e => {
-				core_log("Error in IndexedDB.open: "+req.error)
+				core.log("Error in IndexedDB.open: "+req.error)
 				else?.()
 			}
 		} catch(e) {
-			core_log("Error in IndexedDB.open: "+e.message)
+			core.log("Error in IndexedDB.open: "+e.message)
 			else?.()
 		}
 				
 	js void openBuffer: string storeName, string id, void(Buffer buffer) then, void() else = null
 		try {
-			let trans = IndexedDB_db.transaction(storeName, "readonly")
-			let req = trans.objectStore(IndexedDB_storeName).get(id)
+			let trans = IndexedDB.db.transaction(storeName, "readonly")
+			let req = trans.objectStore(IndexedDB.storeName).get(id)
 			req.onsuccess = async e => {
 				let result = req.result
 				if(result) {
@@ -277,43 +390,43 @@ transient unit IndexedDB
 				}
 			}
 			req.onerror = e => {
-				core_log("Error in IndexedDB.open: "+req.error)
+				core.log("Error in IndexedDB.open: "+req.error)
 				else?.()
 			}
 		} catch(e) {
-			core_log("Error in IndexedDB.open: "+e.message)
+			core.log("Error in IndexedDB.open: "+e.message)
 			else?.()
 		}
 				
 	js void save: string storeName, object data, void() then = null, void() else = null
 		try {
-			let trans = IndexedDB_db.transaction(storeName, "readwrite")
+			let trans = IndexedDB.db.transaction(storeName, "readwrite")
 			trans.onerror = e => {
-				core_log("Error in IndexedDB.save: "+trans.error)
+				core.log("Error in IndexedDB.save: "+trans.error)
 				else?.()
 			}
-			trans.objectStore(IndexedDB_storeName).put(data).onsuccess = e => {
+			trans.objectStore(IndexedDB.storeName).put(data).onsuccess = e => {
 				then?.()
 			}
 		} catch(e) {
-			core_log("Error in IndexedDB.save: "+e.message)
+			core.log("Error in IndexedDB.save: "+e.message)
 			else?.()
 		}
 		
 	js void saveBuffer: string storeName, string id, Buffer buffer, void() then = null, void() else = null
 		try {
-			let trans = IndexedDB_db.transaction(storeName, "readwrite")
+			let trans = IndexedDB.db.transaction(storeName, "readwrite")
 			trans.onerror = e => {
-				core_log("Error in IndexedDB.save: "+trans.error)
+				core.log("Error in IndexedDB.save: "+trans.error)
 				else?.()
 			}
 			let dataView = new DataView(buffer.buffer, 0, buffer.writePos)
 			let data = new Blob([dataView])
-			trans.objectStore(IndexedDB_storeName).put({id, data}).onsuccess = e => {
+			trans.objectStore(IndexedDB.storeName).put({id, data}).onsuccess = e => {
 				then?.()
 			}
 		} catch(e) {
-			core_log("Error in IndexedDB.save: "+e.message)
+			core.log("Error in IndexedDB.save: "+e.message)
 			else?.()
 		}
 

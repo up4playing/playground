@@ -1,32 +1,40 @@
 unit db
 	private object db
 	
-	js async void connect: string database
+	js async void connect: string database, int port = 27017
 		var mongodb = require('mongodb')
 		var mongoClient = mongodb.MongoClient
-		window.ObjectID = mongodb.ObjectID
-		var mongo = await mongoClient.connect("mongodb://0.0.0.0:27099")
-		db_db = mongo.db(database);
+		global.ObjectId = mongodb.ObjectId
+		var mongo = await mongoClient.connect("mongodb://"+(process.env.databaseHost || "0.0.0.0:"+port))
+		db.db = mongo.db(database);
 		
 	js inline Collection collection: string name
-		db_db.collection(name)
+		db.db.collection(name)
 		
 	js inline object ObjectId: string id
-		new ObjectID(id)
+		new ObjectId(id)
 		
-	js inline bool operator==(ObjectID a, string b) a.equals(b)
-	js inline bool operator==(ObjectID a, ObjectID b) a.equals(b)
 
-js ObjectID
-class ObjectID
+js ObjectId
+class ObjectId
 	string id
 	implicit inline js string toString() this.toString()
-	static inline js ObjectID generate() new ObjectID()
+	static inline js ObjectId generate() new ObjectId()
+		
+	js inline bool == ObjectId b: this?.equals(b)
+	js inline bool == string b:   this?.equals(b)
+		
+DatabaseResult
+	bool acknowledged
+	int modifiedCount
+	ObjectId upsertedId
+	int upsertedCount
+	int matchedCount
 
 class Collection
 	string collectionName
 	
-	inline js async string add: any value
+	inline js async DatabaseResult add: any value
 		this.insertOne(value)
 	
 	inline js async any findOne: dynamic query
@@ -56,14 +64,17 @@ class Collection
 	inline js async any find: dynamic query, dynamic sort, dynamic project, int skip = 0, int limit
 		this.find(query).@project(project).@sort(sort).@skip(skip).@limit(limit).toArray()
 	
-	inline js async dynamic set: dynamic query, dynamic value
+	inline js async DatabaseResult set: dynamic query, dynamic value
 		this.updateOne(query,{$set:value})
 	
-	inline js async dynamic setAll: dynamic query, dynamic value
+	inline js async DatabaseResult setMany: dynamic query, dynamic value
 		this.updateMany(query,{$set:value})
 		
-	inline js async dynamic update: dynamic query, dynamic value
+	inline js async DatabaseResult update: dynamic query, dynamic value
 		this.updateOne(query,value)
+		
+	inline js async DatabaseResult updateMany: dynamic query, dynamic value
+		this.updateMany(query,value)
 		
 	inline js async dynamic upsert: dynamic query, dynamic value
 		this.updateOne(query,{$set:value}, {upsert: true})

@@ -1,19 +1,16 @@
 class AStarNode
 	IntVector2 pos
-	f = 0
-	g = 0
-	h = 0
+	combinedCost = 0
+	travelCostSoFar = 0
+	distanceToTarget = 0
 	cost = 1
 	visited = false
-	closed = false
-	AStarNode parent
+	exploredAllNeighbors = false
+	AStarNode previousNode
 
 class BinaryHeap
 	AStarNode[] content
-	
-	scoreFunction: AStarNode node
-		return node.f
-	
+
 	push: AStarNode element
 		// Add the new element to the end of the array.
 		content.add element
@@ -45,7 +42,7 @@ class BinaryHeap
 
 		if i != content.length - 1
 			content[i] = end
-			if scoreFunction(end) < scoreFunction(node)
+			if end.combinedCost < node.combinedCost
 				sinkDown(i)
 			else
 				bubbleUp(i)
@@ -68,7 +65,7 @@ class BinaryHeap
 			let parent = content[parentN]
 			
 			// Swap the elements if the parent is greater.
-			if scoreFunction(element) < scoreFunction(parent)
+			if element.combinedCost < parent.combinedCost
 				content[parentN] = element
 				content[n] = parent
 				
@@ -83,7 +80,7 @@ class BinaryHeap
 		let n = number
 		let length = content.length,
 			element = content[n],
-			elemScore = scoreFunction(element)
+			elemScore = element.combinedCost
 
 		while(true)
 			// Compute the indices of the child elements.
@@ -99,7 +96,7 @@ class BinaryHeap
 				
 				// Look it up and compute its score.
 				let child1 = content[child1N]
-				child1Score = scoreFunction(child1)
+				child1Score = child1.combinedCost
 
 				// If the score is less than our element's, we need to swap.
 				if child1Score < elemScore
@@ -108,7 +105,7 @@ class BinaryHeap
 			// Do the same checks for the other child.
 			if child2N < length
 				let child2 = content[child2N]
-				let child2Score = scoreFunction(child2)
+				let child2Score = child2.combinedCost
 				if child2Score < (swap == -1 ? elemScore : child1Score)
 					swap = child2N
 
@@ -120,7 +117,8 @@ class BinaryHeap
 			else 
 				// Otherwise, we are done.
 				break
-class BoxCollider
+				
+immutable BoxCollider
 	Vector2 position, size
 	Line rightLine, bottomLine, leftLine, topLine
 	bottomRight = true
@@ -160,7 +158,7 @@ class BoxCollider
 				Segment
 			}
  	
-unit game
+unit algorithms
 	// Finds the shortest path between two position using the astar algorithm
 	AStarNode[] findPath: IntVector2 startPos
 		                  IntVector2 endPos
@@ -183,21 +181,21 @@ unit game
 
 		while(openHeap.size() > 0)
 
-			// Grab the lowest f(x) to process next.  Heap keeps this sorted for us.
+			// Grab the node with the lowest combinedCost to process next. Heap keeps this sorted for us.
 			let currentNode = openHeap.pop()
 
 			// End case -- result has been found, return the traced path.
 			if currentNode == end
 				let curr = currentNode
 				AStarNode[] result
-				while(curr.parent)
+				while(curr.previousNode)
 					result.add curr
-					curr = curr.parent
+					curr = curr.previousNode
 				result.add curr
 				return result.reverse()
 
 			// Normal case -- move currentNode from open to closed, process each of its neighbors.
-			currentNode.closed = true
+			currentNode.exploredAllNeighbors = true
 
 			// Find all neighbors for the current node. Optionally find diagonal neighbors as well (false by default).
 			let neighbors = getNeighbors(grid, currentNode.pos.x, currentNode.pos.y)
@@ -205,26 +203,26 @@ unit game
 			for neighbors.length
 				let neighbor = neighbors[i]
 
-				if neighbor.closed
+				if neighbor.exploredAllNeighbors
 					// Not a valid node to process, skip to next neighbor.
 					continue
 
-				// The g score is the shortest distance from start to current node.
+				// The travelCostSoFar score is the shortest distance from start to current node.
 				// We need to check if the path we have arrived at this neighbor is the shortest one we have seen yet.
-				let gScore = currentNode.g + neighbor.cost
+				let travelCostUpToThisNeighbor = currentNode.travelCostSoFar + neighbor.cost
 				let beenVisited = neighbor.visited
 
-				if !beenVisited || gScore < neighbor.g
+				if !beenVisited || travelCostUpToThisNeighbor < neighbor.travelCostSoFar
 
 					// Found an optimal (so far) path to this node.  Take score for node to see how good it is.
 					neighbor.visited = true
-					neighbor.parent = currentNode
-					neighbor.h = neighbor.h || heuristic(neighbor.pos, end.pos)
-					neighbor.g = gScore
-					neighbor.f = neighbor.g + neighbor.h
+					neighbor.previousNode = currentNode
+					neighbor.distanceToTarget = neighbor.distanceToTarget || heuristic(neighbor.pos, end.pos)
+					neighbor.travelCostSoFar = travelCostUpToThisNeighbor
+					neighbor.combinedCost = neighbor.travelCostSoFar + neighbor.distanceToTarget
 
 					if !beenVisited
-						// Pushing to heap will put it in proper place based on the 'f' value.
+						// Pushing to heap will put it in proper place based on the 'combinedCost' value.
 						openHeap.push(neighbor)
 					else
 						// Already seen the node, but since it has been rescored we need to reorder it in the heap
@@ -466,3 +464,199 @@ unit game
 		return targetPosition
 				
 		
+PriorityQueue
+	PathfindingNode[] content
+
+	push: PathfindingNode element
+		// Add the new element to the end of the array.
+		content.add element
+
+		// Allow it to sink down.
+		sinkDown content.length - 1
+		
+	pop
+		// Store the first element so we can return it later.
+		let result = content[0]
+		
+		// Get the element at the end of the array.
+		let end = this.content.pop()
+		
+		// If there are any elements left, put the end element at the
+		// start, and let it bubble up.
+		if content.length > 0
+			content[0] = end
+			bubbleUp(0)
+			
+		return result
+		
+	remove: PathfindingNode node
+		let i = content.indexOf(node)
+
+		// When it is found, the process seen in 'pop' is repeated
+		// to fill up the hole.
+		let end = content.pop()
+
+		if i != content.length - 1
+			content[i] = end
+			if end.combinedCost < node.combinedCost
+				sinkDown(i)
+			else
+				bubbleUp(i)
+	size
+		return content.length
+		
+	rescoreElement: PathfindingNode node
+		sinkDown(content.indexOf(node))
+		
+	sinkDown: int number
+		// Fetch the element that has to be sunk.
+		int n = number
+		let element = content[n]
+
+		// When at 0, an element can not sink any further.
+		while (n > 0)
+			
+			// Compute the parent element's index, and fetch it.
+			let parentN = ((n + 1) shiftRight 1) - 1
+			let parent = content[parentN]
+			
+			// Swap the elements if the parent is greater.
+			if element.combinedCost < parent.combinedCost
+				content[parentN] = element
+				content[n] = parent
+				
+				// Update 'n' to continue at the new position.
+				n = parentN
+			else
+				// Found a parent that is less, no need to sink any further.
+				break
+				
+	bubbleUp: int number
+		// Look up the target element and its score.
+		let n = number
+		let length = content.length,
+			element = content[n],
+			elemScore = element.combinedCost
+
+		while(true)
+			// Compute the indices of the child elements.
+			let child2N = (n + 1) shiftLeft 1
+			let child1N = child2N - 1
+			
+			// This is used to store the new position of the element, if any.
+			int swap = -1
+			float child1Score
+			
+			// If the first child exists (is inside the array)...
+			if child1N < length
+				
+				// Look it up and compute its score.
+				let child1 = content[child1N]
+				child1Score = child1.combinedCost
+
+				// If the score is less than our element's, we need to swap.
+				if child1Score < elemScore
+					swap = child1N
+
+			// Do the same checks for the other child.
+			if child2N < length
+				let child2 = content[child2N]
+				let child2Score = child2.combinedCost
+				if child2Score < (swap == -1 ? elemScore : child1Score)
+					swap = child2N
+
+			// If the element needs to be moved, swap it, and continue.
+			if swap != -1
+				content[n] = content[swap]
+				content[swap] = element
+				n = swap
+			else 
+				// Otherwise, we are done.
+				break
+				
+PathfindingNeighbor
+	PathfindingNode node
+	float cost = 0.0
+				
+PathfindingNode
+	transient static int searchNumber
+		
+	Vector2 location
+	
+	float combinedCost
+	float travelCostSoFar
+	float distanceToTarget      // Use manhatten distance as heuristic to get to target, calculated once per search
+	int visitedInSearchNumber
+	exploredAllNeighbors = false
+	PathfindingNode previousNode
+	
+	PathfindingNeighbor[] neighbors
+	
+	PathfindingNode[] findPathTo: PathfindingNode target
+		int seachNumber = ++PathfindingNode.searchNumber
+		combinedCost = 0
+		travelCostSoFar = 0
+		previousNode = null
+					
+		PriorityQueue openHeap = {}
+		openHeap.push(this)
+
+		while(openHeap.size() > 0)
+
+			// Grab the node with the lowest combinedCost to process next. Heap keeps this sorted for us.
+			let currentNode = openHeap.pop()
+
+			// End case -- result has been found, return the traced path.
+			if currentNode == target
+				let curr = currentNode
+				PathfindingNode[] result
+				while(curr.previousNode)
+					result.add curr
+					curr = curr.previousNode
+				result.add curr
+				return result.reverse()
+
+			// Normal case -- move currentNode from open to closed, process each of its neighbors.
+			currentNode.exploredAllNeighbors = true
+			currentNode.visitedInSearchNumber = seachNumber
+
+			// Find all neighbors for the current node. Optionally find diagonal neighbors as well (false by default).
+			let neighbors = currentNode.neighbors
+
+			for neighbors.length
+				let neighbor = neighbors[i]
+				let neighborNode = neighbor.node
+				let beenVisited = neighborNode.visitedInSearchNumber == seachNumber
+
+				if not beenVisited
+					// neighborNode.combinedCost = 0
+					// neighborNode.travelCostSoFar = 0
+					neighborNode.distanceToTarget = neighborNode.location manhattanDistanceTo target.location
+					neighborNode.visitedInSearchNumber = seachNumber
+					neighborNode.exploredAllNeighbors = false
+					// neighborNode.previousNode = null
+
+				if neighborNode.exploredAllNeighbors
+					// Not a valid node to process, skip to next neighbor.
+					continue
+
+				// The travelCostSoFar score is the shortest distance from start to current node.
+				// We need to check if the path we have arrived at this neighbor is the shortest one we have seen yet.
+				if not neighbor.cost: neighbor.cost = currentNode.location distanceTo neighborNode.location
+				let travelCostUpToThisNeighbor = currentNode.travelCostSoFar + neighbor.cost
+					
+				if not beenVisited || travelCostUpToThisNeighbor < neighborNode.travelCostSoFar
+					// Found an optimal (so far) path to this node.  Take score for node to see how good it is.
+					neighborNode.previousNode = currentNode
+					neighborNode.travelCostSoFar = travelCostUpToThisNeighbor
+					neighborNode.combinedCost = neighborNode.travelCostSoFar + neighborNode.distanceToTarget
+
+					if !beenVisited
+						// Pushing to heap will put it in proper place based on the 'combinedCost' value.
+						openHeap.push(neighborNode)
+					else
+						// Already seen the node, but since it has been rescored we need to reorder it in the heap
+						openHeap.rescoreElement(neighborNode)
+
+		// No result was found - empty array signifies failure to find path.
+		return []

@@ -2,32 +2,32 @@ transient skipInit unit Platform
 	inline js string resourcesPath := process.resourcesPath
 	
 	js void showIcon
-		if(!Platform_isDebug && window.require) {
+		if(!Platform.isDebug && window.require) {
 			const { remote } = require("electron")
 			remote.app.dock?.show()
 		}
 	
 	js void hideIcon
-		if(!Platform_isDebug && window.require) {
+		if(!Platform.isDebug && window.require) {
 			const { remote } = require("electron")
 			remote.app.dock?.hide()
 		}
 	
 	js void show
-		if(!Platform_isDebug && window.require) {
+		if(!Platform.isDebug && window.require) {
 			const { remote } = require("electron")
 			remote.getCurrentWindow().show()
 		}
 	
 	js void hide
-		if(!Platform_isDebug && window.require) {
+		if(!Platform.isDebug && window.require) {
 			const { remote } = require("electron")
 			remote.getCurrentWindow().hide()
 		}
 		
 	js void registerGlobalShotcut: string shortcut
 		                           void() do
-		if(!Platform_isDebug && window.require) {
+		if(!Platform.isDebug && window.require) {
 			const { remote } = require("electron")
 			remote.globalShortcut.unregister(shortcut)
 			remote.globalShortcut.register(shortcut, () => do())
@@ -44,13 +44,22 @@ unit file
 		})
 		
 	js string read: string filename, void(string data) then
+		if(!core.isPremiere || !input.isCertain) return
 		let fs = require("fs")
 		fs.readFile(filename, "utf8", (err, data) => {
 			then(data)
-		})		
+		})
+				
+	js string readLineByLine: string filename, void(string line) processLine, void() then = null
+		if(!core.isPremiere || !input.isCertain) return
+		var lineReader = require('readline').createInterface({
+			input: require('fs').createReadStream(filename)
+		});
+		lineReader.on('line', processLine);
+		if(then != null) lineReader.on('close', then);
 		
 	js string write: string filename, string data, void() then = null
-		if(core_isPremiere && input_isCertain) {
+		if(core.isPremiere && input.isCertain) {
 			require("fs").writeFile(filename, data, "utf8", (err, data) => {
 				then?.()
 			})
@@ -70,16 +79,37 @@ unit file
 		});
 		
 	js string[] showOpenDialog: FileFilter[] filters = null
-		if(!Network_isPremiere || !Input_isCertain) return
+		if(!Network.isPremiere || !Input.isCertain) return
 		const { remote } = require("electron")
 		return remote.dialog.showOpenDialogSync({ filters, properties: ["openFile"] })
 		
 	js string showSaveDialog: FileFilter[] filters = null
-		if(!Network_isPremiere || !Input_isCertain) return
+		if(!Network.isPremiere || !Input.isCertain) return
 		const { remote } = require("electron")
 		return remote.dialog.showSaveDialogSync({ filters, properties: ["createDirectory"] })
+	
+	
+	string[] readCsv: string filename, void(string[] values) processLine, void() then = null
+		read filename
+			for .split("\n")[1..] as line
+				bool inQuotes
+				string value
+				string[] results
+				for line
+					if . == "\""
+						inQuotes = !inQuotes
+					else 
+					if . == ',' and !inQuotes
+						results.add value.trim
+						value = ""
+					else 
+						value += .
+				if results.length
+					results.add value.trim
+					processLine(results)
+			if then != null: then()
 
-struct FileFilter
+immutable struct FileFilter
 	string name
 	string[] extensions
-		
+
