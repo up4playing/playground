@@ -1411,6 +1411,8 @@ transient skipInit global unit graphics
 		if completionSound and Time.now > startTime + duration - timeBeforeCompletionToPlaySound and not completionSound.isPlaying: playSound completionSound
 		if onComplete != null and completion >= 1: onComplete
 
+// --------------------------------------------- Gizmo ---------------------------------------------
+	
 immutable struct GizomInfluence
 	string file
 	int start
@@ -1609,7 +1611,21 @@ skipInit transient unit gizmo
 		if location.file:  stack.add {item, location}
 		if location.right: flattenLocations stack, item, location.right
 		if location.left:  flattenLocations stack, item, location.left
-		
+			
+// --------------------------------------------- Award Screen ---------------------------------------------
+
+awardScreen
+	bool active
+	tick
+		onKeyDown Alt W: active = not active
+		if active
+			let size = {720, 540}
+			forPositions players, grid:{2,2}, delta:size
+				drawVideo . position:pos, size
+				drawText .score, pos * {2.13, 1.8}, font:ByTheWay
+				
+// --------------------------------------------- Display Item ---------------------------------------------
+
 transient immutable DisplayItem
 	float x, y, w, h
 	int layer
