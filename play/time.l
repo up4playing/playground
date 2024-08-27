@@ -13,20 +13,20 @@ skipInit transient float Time
 	// The current frame
 	static inline js int frame := core_frame
 	
-	static Time fromTimeString(string timeString)
-		Time value = 0
-		int colon1 = timeString.indexOf(":")
-		if(colon1 == -1)
-			value += int(timeString)*3600000
-		else
-			value += int(timeString.substring(0, colon1))*3600000
-			int colon2 = timeString.indexOf(":", colon1+1)
-			if(colon2 == -1)
-				value += int(timeString.substring(colon1+1))*60000
-			else
-				value += int(timeString.substring(colon1+1, colon2))*60000
-				value += int(timeString.substring(colon2+1))*1000
-		return value
+	// static Time fromTimeString(string timeString)
+	// 	Time value = 0
+	// 	int colon1 = timeString.indexOf(":")
+	// 	if(colon1 == -1)
+	// 		value += int(timeString)*3600000
+	// 	else
+	// 		value += int(timeString.substring(0, colon1))*3600000
+	// 		int colon2 = timeString.indexOf(":", colon1+1)
+	// 		if(colon2 == -1)
+	// 			value += int(timeString.substring(colon1+1))*60000
+	// 		else
+	// 			value += int(timeString.substring(colon1+1, colon2))*60000
+	// 			value += int(timeString.substring(colon2+1))*1000
+	// 	return value
 		
 	static inline js Time fromIsoString: string isoString
 		new Date(isoString).getTime()

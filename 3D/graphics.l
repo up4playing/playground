@@ -96,6 +96,7 @@ js THREE.Mesh
 Mesh
 	Vector3 position
 	Quaternion quaternion
+	Vector3 scale
 	
 	bool drawnThisFrame
 	
@@ -104,15 +105,13 @@ Mesh
 	inline js void setLayer(int layer) this.frame.layers.set(layer);
 	inline js void set(dynamic value) this.set(value)
 	
+js THREE.Camera	
+class Camera
+	Vector3 position
+	
 Bucket
 	int nextMeshIndex
 	Mesh[] meshes
-	
-js THREE.Quaternion
-Quaternion
-	inline js Quaternion(float x = 0.0, float y = 0.0, float z = 0.0) new THREE.Quaternion().setFromEuler(new THREE.Euler(x*math_TwoPI, y*math_TwoPI, z*math_TwoPI))
-		
-	js Quaternion operator = (Quaternion a, Quaternion b) a.x = b.x; a.y = b.y; a.z = b.z; a.w = b.w; return a
 	
 // Draw on the screen
 transient skipInit global unit graphics
@@ -131,7 +130,8 @@ transient skipInit global unit graphics
 	internal dynamic scene
 	private dynamic canvas
 	private dynamic renderer
-	private dynamic camera
+
+	Camera camera
 	
 	internal js async void setup
 		graphics_canvas = document.getElementById("canvas");
@@ -145,6 +145,7 @@ transient skipInit global unit graphics
 		let posZ = (graphics_referenceSize.y/2) / Math.tan(graphics_fieldOfView * Math.PI / 360)
 		let aspectRatio = graphics_referenceSize.x / graphics_referenceSize.y
 		graphics_camera = new THREE.PerspectiveCamera(graphics_fieldOfView, aspectRatio, 10, 10000)
+		// graphics_camera = new THREE.OrthographicCamera(graphics_referenceSize.x / -2, graphics_referenceSize.x / 2, graphics_referenceSize.y / 2, graphics_referenceSize.y / -2, 1, 10000)
 		graphics_camera.position.set(0, 0, posZ)
 		
 		graphics_renderer = new THREE.WebGLRenderer( { antialias: true, canvas:graphics_canvas } );
@@ -188,7 +189,12 @@ transient skipInit global unit graphics
 		let offsetY = anchor > 1 ? pixelSize.y/2 : 0
 		baseMatrix = {scale,0,0,-scale,offsetX-(statisticsMargin.x/2)*scale,offsetY-(statisticsMargin.y/2)*scale}
 		
-	internal js void startFrame
+	// Vector3 cameraPosition
+		
+	internal startFrame
+		// cameraPosition.x = input.localPlayer?.pointerPosition.x || 0
+		// graphics.camera.position.x = -cameraPosition.x
+		// watch cameraPosition.x
 			
 	internal finishFrame
 		for buckets -> bucket
@@ -316,6 +322,7 @@ transient skipInit global unit graphics
 	global drawImage: Image image
 		              Vector3 position = {}
 		              Quaternion rotation = {}
+		              float scale = 1
 		              implicit Player[] visibleFor = null // Only this player or list of players will see the image
 		              SourceCodeLocation location = null
 		if !isVisibleFor(visibleFor) or !image.texture?.ensureIsAvailable return null
@@ -324,8 +331,9 @@ transient skipInit global unit graphics
 		let bucket = buckets[key] ?= {}
 		let mesh = bucket.meshes[bucket.nextMeshIndex] ?= createPlane(image)
 		mesh.drawnThisFrame = true
-		mesh.position = position
+		mesh.position = position// - cameraPosition
 		mesh.quaternion = rotation
+		mesh.scale.x = mesh.scale.y = mesh.scale.z = scale
 		bucket.nextMeshIndex++
 		return mesh
 		
@@ -353,6 +361,7 @@ transient skipInit global unit graphics
 		             Quaternion rotation = {}                     // The rotation of the text
 		             float size = 0                               // The size of the text
 		             implicit Vector2 containerSize = {1920,1080} // The size of the container
+		             float scale = 1
 		             Color color = null                           // The color of the text
 		             float backgroundOpacity = 0                  // The opacity of the background (0: fully invisible, 1: fully opaque)
 		             Color backgroundColor = null                 // The background color of the text
@@ -370,12 +379,13 @@ transient skipInit global unit graphics
 		mesh.drawnThisFrame = true
 		mesh.position = position
 		mesh.quaternion = rotation
+		mesh.scale.x = mesh.scale.y = mesh.scale.z = scale
 		mesh.set({ textAlign: align, justifyContent: valign, width: containerSize.x, height: containerSize.y, backgroundOpacity, backgroundColor })
 		mesh.setText({content:text, fontSize:size or currentFontSize, fontColor:color or currentColor})
 		mesh.setLayer(backgroundOpacity ? 0 : 1)
 		bucket.nextMeshIndex++
 		return mesh
 
-	global drawPointer: Player player                    // Show the mouse position of this player
-	                	Color color = null               // The color of the pointer. If this is left out, the player color is used
-	                	showPointer = input.showPointers // Choose whether you want to draw the pointers for local players, remote players or both
+	global drawPointer: Player player                  // Show the mouse position of this player
+		                ShowPointersMode mode = Remote // Choose whether you want to draw the pointers for local players, remote players or both
+		                Color color = null             // The color of the pointer. If this is left out, the player color is used
