@@ -12,8 +12,8 @@ class ReferenceSize
 enum TickMode: Interval, AnimationFrame
 	
 skipInit global unit Platform
+	public targetFps = 0
 	public TickMode tickMode = Interval
-	public targetFps = 20
 		
 	Vector2 size, nativeSize
 	float scale
@@ -65,7 +65,7 @@ skipInit global unit Platform
 				{1920}
 				{960 forWidthBelow:600 isMobile:true}
 			]
-			this.targetFps = 20
+			this.targetFps = 0
 			this.tickMode = Interval
 			
 			initMedia
@@ -120,14 +120,16 @@ skipInit global unit Platform
 		if(window._tickInterval) {
 			clearInterval(_tickInterval)
 		}
-		if(Platform.tickMode == 0) {
-			_tickInterval = setInterval(() => Platform.tick(), 1000/Platform.targetFps)
-		} else {
-			window.tick = function() {
-				Platform.tick();
-				window.requestAnimationFrame(window.tick);
+		if(Platform.targetFps) {
+			if(Platform.tickMode == 0) {
+				_tickInterval = setInterval(() => Platform.tick(), 1000/Platform.targetFps)
+			} else {
+				window.tick = function() {
+					Platform.tick();
+					window.requestAnimationFrame(window.tick);
+				}
+				window.tick();
 			}
-			window.tick();
 		}
 		
 	internal inline js void sendErrorToEditor: Error error
