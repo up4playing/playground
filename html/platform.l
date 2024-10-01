@@ -14,6 +14,7 @@ enum TickMode: Interval, AnimationFrame
 skipInit global unit Platform
 	public targetFps = 0
 	public TickMode tickMode = Interval
+	public resetWhenCodeChanged = true
 		
 	Vector2 size, nativeSize
 	float scale
@@ -67,6 +68,7 @@ skipInit global unit Platform
 			]
 			this.targetFps = 0
 			this.tickMode = Interval
+			this.resetWhenCodeChanged = true
 			
 			initMedia
 			initHandlers
@@ -94,6 +96,7 @@ skipInit global unit Platform
 	replay
 		try
 			heartbeat "replay"
+			if resetWhenCodeChanged: Html.reset
 			initMedia
 			initAll
 			Html.updateScale
