@@ -606,10 +606,10 @@ global unit Html
 	//       src="http://dotlottieio.s3-website-us-east-1.amazonaws.com/sample_files/animation-external-image.lottie"
 	//       style="width: 320px;height:320px;"></dotlottie-player>
 	
-	global video: string src                        // The file of the video to display 
-		          expand Attributes attributes = {} // The attributes of the HTML element 
-		          expand Style style = {}           // The css style of the HTML element 
-		          SourceCodeLocation location
+	video: string src                        // The file of the video to display 
+		   expand Attributes attributes = {} // The attributes of the HTML element 
+		   expand Style style = {}           // The css style of the HTML element 
+		   SourceCodeLocation location
 		style.position = Absolute
 		style.zIndex = -1000
 		let element = div tag:"video", attributes, style, location, data:{src}
