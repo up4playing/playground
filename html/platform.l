@@ -894,16 +894,19 @@ global unit Html
 		if focused or focusTabIndex == attributes.tabIndex: node.focus
 	
 	// Automatic Editable Text: Updates the model automatically in with every keystroke
-	global inline void editableText: string model = ""                 // The variable that holds the value. This will be updated when the user changed the text
-		                             expand Attributes attributes = {} // The attributes of the HTML element
-		                             expand Style style = null         // The css style of the HTML element
-		                             dynamic data = {}                 // The data attributes of the element
+	global inline void editableText: string model = ""                          // The variable that holds the value. This will be updated when the user changed the text
+		                             inline void(string value) onChanged = null // Called after the model changed
+		                             expand Attributes attributes = {}          // The attributes of the HTML element
+		                             expand Style style = null                  // The css style of the HTML element
+		                             dynamic data = {}                          // The data attributes of the element
+		                             bool realtime = true                       // Should onChange be called with every keystroke?
 		                             SourceCodeLocation location
 		stored void() changeHandler = currentChangeHandler
 		let node = div attributes, style, data, location
-		node.innerText = model
+		if model != node.innerText: node.innerText = model
 		node.contentEditable = "plaintext-only"
-		node.oninput = model = node.innerText; changeHandler
+		if realtime: node.oninput = model = node.innerText; onChanged(model); changeHandler
+		else         node.onchange = model = node.innerText; onChanged(model); changeHandler
 
 	// Automatic Text Area: Updates the model automatically in with every keystroke
 	global inline void textarea: string model = ""                 // The variable that holds the value. This will be updated when the user changed the text
