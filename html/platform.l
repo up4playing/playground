@@ -320,9 +320,6 @@ skipInit class Image
 	
 	toString := "url({Platform.basePath}{src})"
 	
-skipInit class Sound
-	string src
-	
 skipInit class Font
 	string name
 	string src
@@ -413,9 +410,16 @@ global unit Html
 		}
 	
 	private js void setDataAttributes: Node node, dynamic attributes
-		if(attributes)
-			for(let key in attributes)
-				node.setAttribute(key, attributes[key])
+		if(attributes) {
+			let shadowAttributes = node.shadowAttributes || (node.shadowAttributes = new Map)
+			for(let key in attributes) {
+				let value = attributes[key].toString();
+				if(shadowAttributes.get(key) != value) {
+					node.setAttribute(key, attributes[key]);
+					shadowAttributes.set(key, value);
+				}
+			}
+		}
 		
 	static js Style expandStyle: Style style
 		if(style.size) { 
@@ -621,10 +625,10 @@ global unit Html
 	//       src="http://dotlottieio.s3-website-us-east-1.amazonaws.com/sample_files/animation-external-image.lottie"
 	//       style="width: 320px;height:320px;"></dotlottie-player>
 	
-	global video: string src                        // The file of the video to display 
-		          expand Attributes attributes = {} // The attributes of the HTML element 
-		          expand Style style = {}           // The css style of the HTML element 
-		          SourceCodeLocation location
+	video: string src                        // The file of the video to display 
+		   expand Attributes attributes = {} // The attributes of the HTML element 
+		   expand Style style = {}           // The css style of the HTML element 
+		   SourceCodeLocation location
 		style.position = Absolute
 		style.zIndex = -1000
 		let element = div tag:"video", attributes, style, location, data:{src}
@@ -701,12 +705,15 @@ global unit Html
 			if attributes.onKeyDown != null:    node.onkeydown = attributes.onKeyDown
 			if attributes.onKeyUp != null:      node.onkeyup = attributes.onKeyUp
 			if attributes.tabIndex:             node.set("tabindex", attributes.tabIndex.toString)
+			if attributes.onTouchDown != null:  node.onpointerdown = ev.preventDefault; attributes.onTouchDown(ev)
+			if attributes.onTouchMove != null:  node.onpointermove = ev.preventDefault; attributes.onTouchMove(ev)
+			if attributes.onTouchUp != null:    node.onpointerup = ev.preventDefault; attributes.onTouchUp(ev)
 			
 		node.sourceLocation = sourceLocation
 		if onHover != null
 			Style unHover = getStyleToRevert originalStyle:style, onHover
-			node.onmouseover = setStyle(node, onHover)
-			node.onmouseout  = setStyle(node, unHover)
+			node.onpointerover = setStyle(node, onHover)
+			node.onpointerout  = setStyle(node, unHover)
 		
 		if text != null
 			if node.shadowInnerHtml != text
@@ -905,4 +912,42 @@ global unit Html
 		node.style.overflow = Scroll; node.style.height = 1px; node.style.height = node.scrollHeight px; node.style.overflow = Hidden
 		node.oninput = model = node.value; node.style.overflow = Scroll; node.style.height = 1px; node.style.height = node.scrollHeight px; node.style.overflow = Hidden; changeHandler
 		if focused or focusTabIndex == attributes.tabIndex: node.focus
+
+	// ---------- Canvas ----------
+	
+	dynamic currentContext
+	
+	global canvas: Vector2 size
+		           expand Attributes attributes = {} // The attributes of the HTML element
+		           expand Style style = null         // The css style of the HTML element
+		           void() draw
+		           SourceCodeLocation location
+		if style == null: style = {}
+		style.width = {size.x}
+		style.height = {size.y}
+		let canvas = div tag:"canvas", attributes, style, location
+		canvas.width = size.x
+		canvas.height = size.y 
+		currentContext = canvas.context
+		if currentContext == null: currentContext = canvas.context = canvas.getContext("2d")
+		currentContext.clearRect(0,0,style.width,style.height)
+		draw()
+		return canvas
+		
+	global drawRectangle: Vector2 pos
+		                  Vector2 size
+		                  Color color = Black
+		currentContext.fillStyle = color.hex
+		currentContext.fillRect(pos.x, pos.y, size.x, size.y)
+		
+	global drawText: implicit string text
+		             Vector2 pos
+		             float size = 30
+		             Font font = null
+		             Color color = Black
+		currentContext.fillStyle = color.hex
+		string effectiveFont = font ? font.name : "Open Sans"
+		currentContext.font = "{size}px {effectiveFont}"
+		currentContext.fillText(text, pos.x, pos.y)
+	
 

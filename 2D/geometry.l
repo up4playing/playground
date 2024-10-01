@@ -823,47 +823,6 @@ global skipInit priority low unit math
 	// The ratio of a circle's radius to its diameter
 	const float TwoPI = 6.283185307179586
 	
-	internal inline js float nativeSin: float angle // The angle in radians
-		Math.sin(angle)
-		
-	internal inline js float nativeCos: float angle // The angle in radians
-		Math.cos(angle)
-		
-	internal inline js float nativeTan: float angle // The angle in radians
-		Math.tan(angle)
-		
-	// Returns the sine of an angle in turns
-	sin: Angle angle // The angle in turns (one full rotation is 1)
-	    float result = cast(angle - .5 - math.floor(angle))
-	    result *= 16 * (math.abs(result) - .5)
-	    result += .225 * result * (math.abs(result) - 1)
-	    return result
-
-	// Returns the cosine of an angle in turns
-	cos: Angle angle // The angle in turns (one full rotation is 1)
-	    float result = cast(angle - .25 - math.floor(angle + .25))
-	    result *= 16 * (math.abs(result) - .5)
-	    result += .225 * result * (math.abs(result) - 1)
-	    return result
-	
-	// Returns the tangent of an angle in turns
-	tan: Angle angle
-		return sin(angle) / cos(angle)
-		
-	// Returns the inverse tangent in turns
-	Angle atan2: float y, float x
-		float r, angle;
-		float absx = math.abs(x) + .00000000001
-		if y > 0.0
-			r = (-y + absx) / (+y + absx);
-			angle = .375;
-		else
-			r = (-y - absx) / (-y + absx);
-			angle = .125;
-		angle += (.03124211533 * r * r - .1562424076) * r;
-		if x < 0.0: return cast -angle
-		else        return cast angle
-		
 	moveTowards: Angle value
 		         Angle targetValue
 		         Angle speed = 10

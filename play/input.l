@@ -537,10 +537,10 @@ skipInit global unit input
 			}
 			else
 			// Reload
-			if(ctrlOrCmd && key == "F1") {/*keep room, keep userId, keep master*/ ServerCore.sendReload(false, false, true ); e.preventDefault();} else
-			if(ctrlOrCmd && key == "F2") {/*keep room, keep userId, everybody*/   ServerCore.sendReload(false, false, false); e.preventDefault();} else
-			if(ctrlOrCmd && key == "F3") {/*new  room, keep userId, everybody*/   ServerCore.sendReload(true,  false, false); e.preventDefault();} else
-			if(ctrlOrCmd && key == "F4") {/*new  room, new  userId, everybody*/   ServerCore.sendReload(true,  true,  false);  e.preventDefault();} else
+			if(ctrlOrCmd && key == "F1") {/*keep room, keep userId, keep master*/ ServerNetwork.sendReload(false, false, true ); e.preventDefault();} else
+			if(ctrlOrCmd && key == "F2") {/*keep room, keep userId, everybody*/   ServerNetwork.sendReload(false, false, false); e.preventDefault();} else
+			if(ctrlOrCmd && key == "F3") {/*new  room, keep userId, everybody*/   ServerNetwork.sendReload(true,  false, false); e.preventDefault();} else
+			if(ctrlOrCmd && key == "F4") {/*new  room, new  userId, everybody*/   ServerNetwork.sendReload(true,  true,  false);  e.preventDefault();} else
 			
 			// Switch send interval
 			if(ctrlOrCmd && key == "F5") {core.switchSendInterval( 3); e.preventDefault();} else
