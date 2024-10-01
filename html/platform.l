@@ -408,9 +408,16 @@ global unit Html
 		}
 	
 	private js void setDataAttributes: Node node, dynamic attributes
-		if(attributes)
-			for(let key in attributes)
-				node.setAttribute(key, attributes[key])
+		if(attributes) {
+			let shadowAttributes = node.shadowAttributes || (node.shadowAttributes = new Map)
+			for(let key in attributes) {
+				let value = attributes[key].toString();
+				if(shadowAttributes.get(key) != value) {
+					node.setAttribute(key, attributes[key]);
+					shadowAttributes.set(key, value);
+				}
+			}
+		}
 		
 	static js Style expandStyle: Style style
 		if(style.size) { 
