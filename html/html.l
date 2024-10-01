@@ -294,13 +294,28 @@ struct float
 	// Percentage of the small viewport's height (without the address bar on mobile)
 	inline Dimension svh()         Dimension(this, SmallViewportHeight)
 		
-transient float Angle
+transient immutable float Angle
 	inline js float toFloat() this
 	inline js string toString() this.toString()
 		
 	// Returns true if the angle is not zero
 	inline js bool toBool := this
 	
+	inline js float in: AngleUnit unit
+		(unit==1 ? this*math.TwoPI : unit==2 ? this*360 : unit==3 ? this*400 : this)
+		
+	inline js Angle rotateTowards: Angle value
+		                           Angle speed
+		(this = Angle.rotatedTowards(this, value, speed))
+		
+	static Angle rotatedTowards: Angle value
+		                         Angle target
+		                         Angle speed
+		let delta = (((target - value + .5) % 1) + 1) % 1 - .5
+		let valuePlusDelta = value + delta
+		if delta > 0: value += speed; return value < valuePlusDelta ? value : target
+		else          value -= speed; return value > valuePlusDelta ? value : target
+		
 	inline Angle + Angle value
 	inline Angle - Angle value
 	inline float / Angle value
@@ -318,20 +333,96 @@ transient float Angle
 	inline bool > Angle value
 	inline bool >= Angle value
 	
+	inline js Angle normalize
+		(((this + .5) % 1) + 1) % 1 - .5
+	
 	inline js Angle % ensureSingleExecution Angle value
 		((this % value) + value) % value
 		
 	inline js Angle operator -  (Angle a) -a
 	
-	inline js float in: AngleUnit unit
-		(unit==1 ? this*Math.TwoPI : unit==2 ? this*360 : unit==3 ? this*400 : this)
-		
+	// The remainer after a division by the given value. The sign stays the same.
+	inline js Angle remainder: Angle value
+		(this % value)
+
 enum AngleUnit
 	turns // Turn (one full rotation is 1)
 	rad   // Radians (one full rotation is 2π)
 	deg   // Degrees (one full rotation is 360)
-	grad  // Gradiants (one full rotation is 400)
+	grad  // Gradiants (one full rotation is 400)	
 	
+immutable priority low struct float
+	implicit inline js Angle toAngle() this
+	
+	inline js Angle operator °(float angle) (angle/360)
+	
+	// One full rotation is 1
+	inline js Angle turns := this
+	
+	// One full rotation is 2π (about 6.2832)
+	inline js Angle radians := (this/math.TwoPI)
+		
+	// One full rotation is 360
+	inline js Angle degrees := (this/360)
+		
+	// One full rotation is 400
+	inline js Angle gradians := (this/400)
+
+js Array
+priority low class List<T>
+	inline js T[] sort: Angle(T a, T b) comparer // A function returning 1 if "a" is larger, -1 if "b" is larger, 0 if they are equal
+		this.sort(comparer)
+		
+	T[] orderBy: Angle(T a) expression // First order by this expression
+		return this.sort(expression(a) - expression(b))
+
+global skipInit priority low unit math
+	// Returns the absolute value
+	inline js Angle abs: Angle value // The angle to return the absolute value of
+		Math.abs(value)
+		
+	// Returns the smallest integer greater than or equal to the given value 
+	inline js Angle ceil: Angle value // The angle to round up
+		Math.ceil(value)
+		
+	// Returns the largest integer less than or equal to the given value
+	inline js Angle floor: Angle value // The angle to round down
+		Math.floor(value)
+		
+	// Returns the given value rounded to the nearest integer
+	inline js Angle round: Angle value // The angle to round
+		Math.round(value)
+		
+	// Returns the smallest of the given values
+	inline js Angle min: Angle a // The first angle
+		                 Angle b // The second angle
+		Math.min(a, b)
+		
+	// Returns the largest of the given values
+	inline js Angle max: Angle a // The first angle
+		                 Angle b // The second angle
+		Math.max(a, b)
+	// The ratio of a circle's circumference to its diameter
+	const float PI = 3.141592653589793
+	
+	// The ratio of a circle's radius to its diameter
+	const float TwoPI = 6.283185307179586
+	
+	moveTowards: Angle value
+		         Angle targetValue
+		         Angle speed = 10
+		if targetValue > value: return math.min(value + speed, targetValue) else
+		if targetValue < value: return math.max(value - speed, targetValue)
+			
+global skipInit unit math
+	// Returns the arctangent of the quotient of the given values
+	Angle getAngleForVector: Vector2 vector
+		return math.atan2(vector.y, vector.x)
+		
+	Vector2 getVectorForAngle: Angle angle      // The angle in turns (0: straight up, 1: one full rotation clockwise)
+		                       float radius = 1
+		return new Vector2(math.sin(angle)*radius, -math.cos(angle)*radius)
+
 enum FlexDirection
 	Row = "row" // The flex container's main-axis will be the same as the text direction
 	Column = "column" // The flex container's main-axis will be the same as the block-axis
