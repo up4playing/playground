@@ -315,9 +315,6 @@ skipInit class Image
 	
 	toString := "url({Platform.basePath}{src})"
 	
-skipInit class Sound
-	string src
-	
 skipInit class Font
 	string name
 	string src
@@ -693,12 +690,15 @@ global unit Html
 			if attributes.onKeyDown != null:    node.onkeydown = attributes.onKeyDown
 			if attributes.onKeyUp != null:      node.onkeyup = attributes.onKeyUp
 			if attributes.tabIndex:             node.set("tabindex", attributes.tabIndex.toString)
+			if attributes.onTouchDown != null:  node.onpointerdown = ev.preventDefault; attributes.onTouchDown(ev)
+			if attributes.onTouchMove != null:  node.onpointermove = ev.preventDefault; attributes.onTouchMove(ev)
+			if attributes.onTouchUp != null:    node.onpointerup = ev.preventDefault; attributes.onTouchUp(ev)
 			
 		node.sourceLocation = sourceLocation
 		if onHover != null
 			Style unHover = getStyleToRevert originalStyle:style, onHover
-			node.onmouseover = setStyle(node, onHover)
-			node.onmouseout  = setStyle(node, unHover)
+			node.onpointerover = setStyle(node, onHover)
+			node.onpointerout  = setStyle(node, unHover)
 		
 		if text != null
 			if node.shadowInnerHtml != text

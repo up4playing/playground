@@ -42,8 +42,12 @@ class Node
 		
 	native void(HtmlEvent ev) onclick
 	native void(HtmlEvent ev) oncontextmenu
-	native void(HtmlEvent ev) onmouseover
-	native void(HtmlEvent ev) onmouseout
+	native void(HtmlEvent ev) onpointerdown
+	native void(HtmlEvent ev) onpointermove
+	native void(HtmlEvent ev) onpointerup
+	native void(HtmlEvent ev) onpointerover
+	native void(HtmlEvent ev) onpointerout
+	
 	native void(dynamic ev) onkeydown
 	native void(dynamic ev) onkeyup
 	native void(HtmlEvent ev) oninput
@@ -738,8 +742,11 @@ dynamic Attributes
 	string class // A string to assign a class to one or more elements, often used to style several elements
 	native void(HtmlEvent ev) onClick = null      // Execute this code when the user clicks the HTML element
 	native void(HtmlEvent ev) onRightClick = null // Execute this code when the user clicks the HTML element with the right mouse button
-	native void(dynamic ev) onKeyDown = null      // Execute this code when the user clicks the HTML element with the right mouse button
-	native void(dynamic ev) onKeyUp = null      // Execute this code when the user clicks the HTML element with the right mouse button
+	native void(dynamic ev) onKeyDown = null      // Execute this code when the user presses a key on the keyboard
+	native void(dynamic ev) onKeyUp = null        // Execute this code when the user releases a key on the keyboard
+	native void(HtmlEvent ev) onTouchDown = null  // Execute this code when a touch or click starts
+	native void(HtmlEvent ev) onTouchMove = null  // Execute this code when a touch or clicks moves
+	native void(HtmlEvent ev) onTouchUp = null    // Execute this code when a touch or click ends
+	native void(HtmlEvent ev) onTouchCancel= null // Execute this code when a touch or click is canceled
 	int tabIndex = 0
-	// bool passClickToParents = false            // Even if this elements handles a click, its parents will also receive the event
 		
