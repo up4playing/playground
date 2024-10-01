@@ -28,6 +28,7 @@ class Node
 	string contentEditable
 	
 	string sourceLocation
+	bool hasChildren
 		
 	inline js Node remove() this.remove()
 	inline js void appendChild(Node node) this.appendChild(node)

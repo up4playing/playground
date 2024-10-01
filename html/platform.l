@@ -713,7 +713,8 @@ global unit Html
 				node.innerHTML = text
 				node.shadowInnerHtml = text
 		else
-			node.shadowInnerHtml = null	
+		if children != null or node.hasChildren
+			node.shadowInnerHtml = null
 			let prevParentNode = parentNode
 			parentNode = node
 			currentNode = node.firstChild
@@ -724,6 +725,7 @@ global unit Html
 				currentNode = next
 			parentNode = prevParentNode
 			
+		node.hasChildren = children != null
 		currentNode = nextNode
 		return node
 		
