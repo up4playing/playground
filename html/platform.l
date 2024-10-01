@@ -42,7 +42,11 @@ skipInit global unit Platform
 		Sound.init?.();
 		audio.init();
 		Time.timezoneOffset = new Date().getTimezoneOffset() * 60000
+		window.pocketBase?.setup()
 		app.init?.()
+		
+	private async inline js void initDatabase
+		window.pocketBase?.connect()
 			
 	js void initHandlers
 		window.onresize = e => {
@@ -71,6 +75,7 @@ skipInit global unit Platform
 			this.resetWhenCodeChanged = true
 			
 			initMedia
+			await initDatabase
 			initHandlers
 			openMedia
 				try
@@ -98,6 +103,7 @@ skipInit global unit Platform
 			heartbeat "replay"
 			if resetWhenCodeChanged: Html.reset
 			initMedia
+			await initDatabase
 			initAll
 			Html.updateScale
 			startApp
