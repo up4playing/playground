@@ -509,6 +509,16 @@ global unit Html
 		// 	overlayNode = div style:{position:Fixed top:0 left:0 right:0 bottom:0, backgroundColor:Black, opacity:.5}
 		// 	body.parentNode.appendChild overlayNode
 		
+	script: string src
+		let node = div tag:"script"
+		if !node.src.endsWith(src): node.src = src
+		node.onload = refresh
+		
+	css: string src
+		dynamic node = cast div tag:"link"
+		node.rel = "stylesheet" 
+		if !node.href.endsWith(src): node.href = Platform.basePath + src
+		
 	// Lays outs its children in a horizontal row				
 	global row: expand Attributes attributes = null // The attributes of the HTML element
 		        expand Style style = {}             // The css style of the HTML element
