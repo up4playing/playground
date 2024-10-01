@@ -896,3 +896,41 @@ global unit Html
 		node.oninput = model = node.value; node.style.overflow = Scroll; node.style.height = 1px; node.style.height = node.scrollHeight px; node.style.overflow = Hidden; changeHandler
 		if focused or focusTabIndex == attributes.tabIndex: node.focus
 
+	// ---------- Canvas ----------
+	
+	dynamic currentContext
+	
+	global canvas: Vector2 size
+		           expand Attributes attributes = {} // The attributes of the HTML element
+		           expand Style style = null         // The css style of the HTML element
+		           void() draw
+		           SourceCodeLocation location
+		if style == null: style = {}
+		style.width = {size.x}
+		style.height = {size.y}
+		let canvas = div tag:"canvas", attributes, style, location
+		canvas.width = size.x
+		canvas.height = size.y 
+		currentContext = canvas.context
+		if currentContext == null: currentContext = canvas.context = canvas.getContext("2d")
+		currentContext.clearRect(0,0,style.width,style.height)
+		draw()
+		return canvas
+		
+	global drawRectangle: Vector2 pos
+		                  Vector2 size
+		                  Color color = Black
+		currentContext.fillStyle = color.hex
+		currentContext.fillRect(pos.x, pos.y, size.x, size.y)
+		
+	global drawText: implicit string text
+		             Vector2 pos
+		             float size = 30
+		             Font font = null
+		             Color color = Black
+		currentContext.fillStyle = color.hex
+		string effectiveFont = font ? font.name : "Open Sans"
+		currentContext.font = "{size}px {effectiveFont}"
+		currentContext.fillText(text, pos.x, pos.y)
+	
+

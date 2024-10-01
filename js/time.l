@@ -2,22 +2,22 @@ skipInit transient float Time
 	static int timezoneOffset
 	
 	// (31.12.)
-	inline string dayMonthString(language = Loca.language) new DateTime(this).dayMonthString(language)
+	inline string dayMonthString(language = Loca.language) DateTime.fromTime(this).dayMonthString(language)
 		
 	// (31.12.2000)
-	inline string dayMonthYearString(language = Loca.language) new DateTime(this).dayMonthYearString(language)
+	inline string dayMonthYearString(language = Loca.language) DateTime.fromTime(this).dayMonthYearString(language)
 	
 	// (31 December 2000)
-	inline string dayMonthNameYearString(language = Loca.language) new DateTime(this).dayMonthNameYearString(language)
+	inline string dayMonthNameYearString(language = Loca.language) DateTime.fromTime(this).dayMonthNameYearString(language)
 	
 	// (Monday, December 31)
-	inline string dayOfWeekDayMonthString(language = Loca.language) new DateTime(this).dayOfWeekDayMonthString(language)
+	inline string dayOfWeekDayMonthString(language = Loca.language) DateTime.fromTime(this).dayOfWeekDayMonthString(language)
 	
 	// (Monday)
-	inline string dayOfWeekString(language = Loca.language) new DateTime(this).dayOfWeekString(language)
+	inline string dayOfWeekString(language = Loca.language) DateTime.fromTime(this).dayOfWeekString(language)
 	
 	// (Monday, December 31 at 12:59 pm)
-	inline string dayOfWeekDayMonthAtHourMinuteString(language = Loca.language) new DateTime(this).dayOfWeekDayMonthAtHourMinuteString(language)
+	inline string dayOfWeekDayMonthAtHourMinuteString(language = Loca.language) DateTime.fromTime(this).dayOfWeekDayMonthAtHourMinuteString(language)
 	
 	// (23:59) The time is assumed to be local time, doesn't account for timezone offset
 	inline string hourMinuteString(language = Loca.language) Time.toHourMinuteString(this, language)
@@ -45,7 +45,7 @@ skipInit transient float Time
 	inline js string invariantDayMonthYearHourMinuteSecondString() new Date(this).invariantDayMonthYearHourMinuteSecondString()
 			
 	// (20001231235959+02:00)
-	inline js string compactString() new DateTime(this).compactString()
+	inline js string compactString() DateTime.fromTime(this).compactString()
 		
 	// (7 weeks)
 	inline string minutesHoursDaysOrWeeksString(showWeeksAfterDays = 31) toMinutesHoursDaysOrWeeksString(this, showWeeksAfterDays)
@@ -176,6 +176,7 @@ immutable struct DateTime
 	const daysInMonthCommon = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
 	const daysInMonthLeap = [31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
 
+	Time time
 	int year
 	int month
 	int day
@@ -190,9 +191,10 @@ immutable struct DateTime
 	string twoDigitMinute := (this.minute < 10 ? "0"+this.minute : this.minute.toString())
 	string twoDigitSecond := (this.second < 10 ? "0"+this.second : this.second.toString())
 		
-	static DateTime now := {Time.now}
+	static DateTime now := DateTime.fromTime(Time.now)
 	
-	DateTime: Time time
+	static DateTime fromTime: Time time
+		if not time: return {0, 1970, 1, 1, 4, 0, 0, 0}
 		const localTime = time - Time.timezoneOffset
 		const daysSinceEpoch = math.floor(localTime / 86400000)
 		
@@ -213,14 +215,51 @@ immutable struct DateTime
 		while daysLeft >= daysInMonth[currentMonth]
 			daysLeft -= daysInMonth[currentMonth]
 			currentMonth++
-			
-		this.day = daysLeft + 1
-		this.month = currentMonth + 1
-		this.year = currentYear
-		this.dayOfWeek = (daysSinceEpoch + 4) % 7; // January 1, 1970 was a Thursday
-		this.hour = math.floor (localTime % 86400000) / 3600000
-		this.minute = math.floor (localTime % 3600000) / 60000
-		this.second = math.floor (localTime % 60000) / 1000
+		
+		return {
+			time
+			day: daysLeft + 1
+			month: currentMonth + 1
+			year: currentYear
+			dayOfWeek: (daysSinceEpoch + 4) % 7 // January 1, 1970 was a Thursday
+			hour: math.floor (localTime % 86400000) / 3600000
+			minute: math.floor (localTime % 3600000) / 60000
+			second: math.floor (localTime % 60000) / 1000
+		}
+		
+	static DateTime fromValues: int year
+		                        int month
+		                        int day
+		                        int hour
+		                        int minute
+		                        int second
+		const daysInMonth = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+		
+		// Calculate the number of days since the epoch for full years
+		let days = 0;
+		for 1970 to year
+		    days += (. % 4 == 0 && . % 100 != 0) || (. % 400 == 0) ? 366 : 365;
+		
+		// Add days for the months of the current year
+		for month - 1
+		    days += daysInMonth[.]
+		
+		// Add a day if the current year is a leap year and month is after February
+		if (month > 2 && (year % 4 == 0 && year % 100 != 0) || (year % 400 == 0))
+		    days += 1;
+		
+		// Add the days for the current month
+		days += day - 1; // subtract 1 because we want "full days" before the current day
+		
+		// Convert the full days to milliseconds
+		let milliseconds = days * 24 * 60 * 60 * 1000;
+		
+		// Add hours, minutes, and seconds in milliseconds
+		milliseconds += hour * 60 * 60 * 1000;
+		milliseconds += minute * 60 * 1000;
+		milliseconds += second * 1000;
+		
+		return {time: Time.timezoneOffset + milliseconds, year, month, day, dayOfWeek: (days + 4) % 7, hour, minute, second}
 		
 	// (31.12.)
 	dayMonthString: language = Loca.language

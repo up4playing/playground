@@ -209,6 +209,14 @@ immutable struct float
 	// Positiv infinity
 	const inline js float infinity := Number.POSITIVE_INFINITY
 	
+	const inline js float epsilon := Number.EPSILON
+	
+	inline js float operator ** (float a, float b) 
+		Math.pow(a,b)
+		
+	js float operator % (float a, float b)
+		return ((a % b) + b) % b
+		
 	// Can result from failed conversion or operations with undefined or complex result
 	const inline js float notANumber := Number.NaN
 	
@@ -543,11 +551,12 @@ class List<T>
 		                  ) do
 		if(this.length > 0) {
 			let _subject = this
-			if(sortBy == 1) _subject = [...this].sort((a,b) => selector(a) - selector(b)); else
-			if(sortBy == 2) _subject = [...this].sort((a,b) => selector(a)?.localeCompare(selector(b)))
-			let it = selector(_subject[0]), i=0;
+			let defaultValue;
+			if(sortBy == 1) {defaultValue = 0; _subject = [...this].sort((a,b) => (selector(a) || 0) - (selector(b) || 0)); } else
+			if(sortBy == 2) {defaultValue = ""; _subject = [...this].sort((a,b) => (selector(a) || "").localeCompare(selector(b) || "")); }
+			let it = selector(_subject[0]) || defaultValue, i=0;
 			for(let _nextIndex=1; _nextIndex<_subject.length; ++_nextIndex) { 
-				let _nextIt = selector(_subject[_nextIndex]);
+				let _nextIt = selector(_subject[_nextIndex]) || defaultValue;
 				if(_nextIt != it) {
 					let items = _subject.slice(i, _nextIndex);
 					do(it, items, i)
@@ -2078,6 +2087,49 @@ global skipInit unit math
 	inline js float exp: float exponent
 		Math.exp(exponent)
 		
+	internal inline js float nativeCos: float angle // The angle in radians
+		Math.cos(angle)
+		
+	internal inline js float nativeTan: float angle // The angle in radians
+		Math.tan(angle)
+		
+	internal inline js float nativeAcos: float angle // The angle in radians
+		Math.acos(angle)
+		
+	internal inline js float nativeAtan2: float y, float x
+		Math.atan2(y,x)
+		
+	// Returns the sine of an angle in turns
+	sin: Angle angle // The angle in turns (one full rotation is 1)
+	    float result = cast(angle - .5 - math.floor(angle))
+	    result *= 16 * (math.abs(result) - .5)
+	    result += .225 * result * (math.abs(result) - 1)
+	    return result
+
+	// Returns the cosine of an angle in turns
+	cos: Angle angle // The angle in turns (one full rotation is 1)
+	    float result = cast(angle - .25 - math.floor(angle + .25))
+	    result *= 16 * (math.abs(result) - .5)
+	    result += .225 * result * (math.abs(result) - 1)
+	    return result
+	
+	// Returns the tangent of an angle in turns
+	tan: Angle angle
+		return sin(angle) / cos(angle)
+		
+	// Returns the inverse tangent in turns
+	Angle atan2: float y, float x
+		float r, angle;
+		float abs_y = math.abs(y) + .00000000001
+		if x < 0.0
+			r = (x + abs_y) / (abs_y - x);
+			angle = .375;
+		else
+			r = (x - abs_y) / (x + abs_y);
+			angle = .125;
+		angle += (.03124211533 * r * r - .1562424076) * r;
+		if y < 0.0: return cast -angle
+		else        return cast angle
 	inline js float log10: float value
 		Math.log10(value)
 		

@@ -44,6 +44,25 @@ immutable Color
 		
 	Color withAlpha: float alpha
 		return {hex[1..7]+componentToHex(math.floor(alpha*255))}
+		
+	// Interpolates to another color
+	Color interpolateTo: Color target
+		                 float progress
+		if progress <= 0: return this
+		if progress >= 1: return target
+		let iprogress = 1 - progress
+		return {
+			math.floor(red   * iprogress + target.red   * progress)
+			math.floor(green * iprogress + target.green * progress)
+			math.floor(blue  * iprogress + target.blue  * progress)
+		}
+		
+	// Animate the color to a target vector over a given period of time
+	inline animateTo: Color target        // The target color to animate to
+		              Time delay = 0      // The delay before the animation starts
+		              Time duration = 300 // The duration of the animation
+		fx.interpolate this, target, delay, duration, this = .
+
 	
 // A texture that can be loaded into video memory
 immutable Texture
@@ -1392,6 +1411,8 @@ transient skipInit global unit graphics
 		if completionSound and Time.now > startTime + duration - timeBeforeCompletionToPlaySound and not completionSound.isPlaying: playSound completionSound
 		if onComplete != null and completion >= 1: onComplete
 
+// --------------------------------------------- Gizmo ---------------------------------------------
+	
 immutable struct GizomInfluence
 	string file
 	int start
@@ -1590,7 +1611,21 @@ skipInit transient unit gizmo
 		if location.file:  stack.add {item, location}
 		if location.right: flattenLocations stack, item, location.right
 		if location.left:  flattenLocations stack, item, location.left
-		
+			
+// --------------------------------------------- Award Screen ---------------------------------------------
+
+awardScreen
+	bool active
+	tick
+		onKeyDown Alt W: active = not active
+		if active
+			let size = {720, 540}
+			forPositions players, grid:{2,2}, delta:size
+				drawVideo . position:pos, size
+				drawText .score, pos * {2.13, 1.8}, font:ByTheWay
+				
+// --------------------------------------------- Display Item ---------------------------------------------
+
 transient immutable DisplayItem
 	float x, y, w, h
 	int layer

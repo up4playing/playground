@@ -99,11 +99,12 @@ unit lobby
 				let text = not .isReadyInLobby ? "START" : Loca.language == German ? "Ich bin bereit" : "I'm ready"
 				drawStandardButton text, pos+{0,halfVideoHeight+90}, accentColor:.color, enabled:!.isReadyInLobby, clickableBy:player
 					if enableFullscreen: Platform.setFullscreen true forPlayer:touch.by
-					input.playersById[touch.by.id].isReadyInLobby = true
-					if players.all.isReadyInLobby
-					and players.length withinInclusively Platform.supportedUserCount
-						fields.clear
-						restart
+					// input.playersById[touch.by.id].isReadyInLobby = true
+					touch.by.isReadyInLobby = true
+					
+				if players.length.withinInclusively(Platform.supportedUserCount) and players.all(.isReadyInLobby)
+					fields.clear
+					restart
 						
 				Vector2 closePos = pos+{videoWidth/2-15,-halfVideoHeight-25}
 				let state = input.internalUsers[player.id]?.connectionState
