@@ -244,6 +244,9 @@ struct Vector2
 	Vector2 + Vector2 other:   return {x + other.x, y + other.y}
 	Vector2 - Vector2 other:   return {x - other.x, y - other.y}
 	Vector2 * Vector2 other:   return {x * other.x, y * other.y}
+		
+	// The length of the vector
+	length := math.sqrt(x * x + y * y)
 	
 enum AnimationFill
 	None = "none"
