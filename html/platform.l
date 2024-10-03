@@ -534,6 +534,9 @@ global unit Html
 		node.rel = "stylesheet" 
 		if !node.href.endsWith(src): node.href = Platform.basePath + src
 		
+	style: string text
+		return div tag:"style" text
+		
 	// Lays outs its children in a horizontal row				
 	global row: expand Attributes attributes = null // The attributes of the HTML element
 		        expand Style style = {}             // The css style of the HTML element
@@ -895,11 +898,11 @@ global unit Html
 			
 	fileInput: string accept = "image/*"
 		       string capture = "environment"
-		       void() onChange = null
+		       void(Node node) onChange = null
 		       expand Style style = null
 		       SourceCodeLocation location
 		let node = div tag:"input", data:{type:"file" accept capture}, style, location
-		node.onchange = onChange
+		node.onchange = onChange(node)
 		return node
 	
 	// Automatic Editable Text: Updates the model automatically in with every keystroke
