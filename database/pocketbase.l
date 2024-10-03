@@ -49,5 +49,5 @@ Collection<T>
 		}
 		let newItem = await pocketBase.pb.collection(this.name).create(formData);
 		item.id = newItem.id;
-		System.print(JSON.stringify(newItem))
+		item[fileFieldName] = newItem[fileFieldName]
 		return newItem;
