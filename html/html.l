@@ -63,6 +63,7 @@ class Node
 	inline js void get(string name) this.getAttribute(name)
 	
 	static inline js Node create(string tagName = "div") document.createElement(tagName);
+	inline js void click() this.click()
 	
 	inline js void animate: Style from
 		                    Style to

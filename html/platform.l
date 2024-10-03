@@ -892,6 +892,15 @@ global unit Html
 		if realtime: node.oninput = onChange(node.value); changeHandler
 		else         node.onchange = onChange(node.value); changeHandler
 		if focused or focusTabIndex == attributes.tabIndex: node.focus
+			
+	fileInput: string accept = "image/*"
+		       string capture = "environment"
+		       void() onChange = null
+		       expand Style style = null
+		       SourceCodeLocation location
+		let node = div tag:"input", data:{type:"file" accept capture}, style, location
+		node.onchange = onChange
+		return node
 	
 	// Automatic Editable Text: Updates the model automatically in with every keystroke
 	global inline void editableText: string model = ""                          // The variable that holds the value. This will be updated when the user changed the text
