@@ -42,15 +42,15 @@ skipInit global unit Platform
 		Sound.init?.();
 		audio.init();
 		Time.timezoneOffset = new Date().getTimezoneOffset() * 60000
-		window.pocketBase?.setup()
+		if(typeof(pocketBase) != "undefined") pocketBase.setup()
 		app.init?.()
 		
 	private async inline js void initDatabase
-		window.pocketBase?.connect()
+		if(typeof(pocketBase) != "undefined") await pocketBase.connect()
 			
 	js void initHandlers
 		window.onresize = e => {
-			Html.updateScale();
+			Html.resize();
 			Html.refresh();
 		}
 		document.onkeydown = e => {
@@ -60,7 +60,7 @@ skipInit global unit Platform
 			}
 		}
 	
-	start: bool isDebug
+	async start: bool isDebug
 		try
 			this.nextHeartbeatTime = 0
 			heartbeat "start"
@@ -75,7 +75,7 @@ skipInit global unit Platform
 			this.resetWhenCodeChanged = true
 			
 			initMedia
-			await initDatabase
+			initDatabase
 			initHandlers
 			openMedia
 				try
@@ -98,14 +98,14 @@ skipInit global unit Platform
 	js void initAll
 		init()
 		
-	replay
+	async replay
 		try
 			heartbeat "replay"
 			if resetWhenCodeChanged: Html.reset
 			initMedia
-			await initDatabase
+			initDatabase
 			initAll
-			Html.updateScale
+			Html.resize
 			startApp
 			refresh
 		catch
@@ -162,7 +162,7 @@ skipInit global unit Platform
 	toggleSmallScreen
 		isMobile = !isMobile;
 		setLocalStorageString("isMobile", isMobile ? "true" : "false")
-		Html.updateScale
+		Html.resize
 		refresh
 
 	inline js void setLocalStorageString: string key, string value
@@ -377,7 +377,7 @@ global unit Html
 			document.body.nextSibling.remove()
 		document.body.innerHTML = ""
 	
-	internal js void updateScale
+	internal js void resize
 		let body = document.body
 		if(Platform.referenceSizes?.length > 0) {
 			let screenWidth = localStorage.getItem("isMobile") == "true" ? 0 : screen.width
