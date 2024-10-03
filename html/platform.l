@@ -911,14 +911,17 @@ global unit Html
 		                             expand Attributes attributes = {}          // The attributes of the HTML element
 		                             expand Style style = null                  // The css style of the HTML element
 		                             dynamic data = {}                          // The data attributes of the element
-		                             bool realtime = true                       // Should onChange be called with every keystroke?
+		                             bool realtime = false                      // Should onChange be called with every keystroke?
 		                             SourceCodeLocation location
 		stored void() changeHandler = currentChangeHandler
 		let node = div attributes, style, data, location
 		if model != node.innerText: node.innerText = model
 		node.contentEditable = "plaintext-only"
-		if realtime: node.oninput = model = node.innerText; onChanged(model); changeHandler
-		else         node.onchange = model = node.innerText; onChanged(model); changeHandler
+		let prevModel = model
+		if realtime
+			node.oninput = model = node.innerText; onChanged(model); changeHandler
+		else         
+			node.onblur = model = node.innerText; if model != prevModel: onChanged(model); changeHandler
 
 	// Automatic Text Area: Updates the model automatically in with every keystroke
 	global inline void textarea: string model = ""                 // The variable that holds the value. This will be updated when the user changed the text

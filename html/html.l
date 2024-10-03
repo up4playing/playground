@@ -58,6 +58,7 @@ class Node
 	native void(HtmlEvent ev) oninput
 	native void(HtmlEvent ev) onchange
 	native void(HtmlEvent ev) onload
+	native void(HtmlEvent ev) onblur
 	
 	inline js void set(string name, string value) this.setAttribute(name, value)
 	inline js void get(string name) this.getAttribute(name)
