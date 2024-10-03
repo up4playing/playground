@@ -29,7 +29,7 @@ immutable struct int
 	// The smallest possible integer value
 	const minValue = -2147483648
 	
-	// Indicates that the variable isn't defined at all, useful for importet data (e.g  from JSON)
+	// Indicates that the variable isn't defined at all, useful for imported data (e.g. from JSON)
 	const inline js int undefined := undefined
 	
 	// The remainer after a division by the given value. The sign stays the same.
@@ -203,7 +203,7 @@ immutable struct float
 	// The smallest possible floating point value
 	const inline js float minValue := -Number.MAX_VALUE
 	
-	// Indicates that the variable isn't defined at all, useful for importet data (e.g  from JSON)
+	// Indicates that the variable isn't defined at all, useful for imported data (e.g. from JSON)
 	const inline js int undefined := undefined
 	
 	// Positiv infinity
@@ -343,6 +343,9 @@ immutable class string
 	inline Time toTime() Time.fromTimeString(this)
 		
 	inline js int parseInt(int radix) parseInt(this, radix)
+	
+	// Indicates that the variable isn't defined at all, useful for imported data (e.g. from JSON)
+	const inline js string undefined := undefined
 	
 	// Splits the string at the given character into a list of substrings
 	inline js string[] split: string seperator = "," // Separate the string at this character
