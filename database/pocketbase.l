@@ -32,3 +32,22 @@ Collection<T>
 		
 	async inline js void remove: T item
 		return pocketBase.pb.collection(this.name).delete(item.id)
+		
+	async js void upload: T item, string fileFieldName = "image", Node fileInput
+		const formData = new FormData();
+		for(let key in item) {
+			if(key != fileFieldName) {
+				let value = item[key];
+				let type = typeof(value);
+				if(type != "function" && type != "undefined") {
+					formData.append(key, value);
+				}
+			}
+		}
+		for(let file of fileInput.files) {
+			formData.append(fileFieldName, file);
+		}
+		let newItem = await pocketBase.pb.collection(this.name).create(formData);
+		item.id = newItem.id;
+		System.print(JSON.stringify(newItem))
+		return newItem;
