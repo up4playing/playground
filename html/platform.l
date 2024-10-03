@@ -48,18 +48,6 @@ skipInit global unit Platform
 	private async inline js void initDatabase
 		if(typeof(pocketBase) != "undefined") await pocketBase.connect()
 			
-	js void initHandlers
-		window.onresize = e => {
-			Html.resize();
-			Html.refresh();
-		}
-		document.onkeydown = e => {
-			let key = e.key
-			if(key == "F10") { 
-				Platform.toggleSmallScreen();
-			}
-		}
-	
 	async start: bool isDebug
 		try
 			this.nextHeartbeatTime = 0
@@ -76,7 +64,6 @@ skipInit global unit Platform
 			
 			initMedia
 			initDatabase
-			initHandlers
 			openMedia
 				try
 					stop
@@ -355,7 +342,14 @@ global unit Html
 		initHandlers
 	
 	js void initHandlers
+		window.onresize = e => {
+			Html.resize();
+			Html.refresh();
+		}
 		document.onkeydown = ev => {
+			if(ev.key == "F10") { 
+				Platform.toggleSmallScreen();
+			}
 			for(let listener of Html.keyDownListeners) {
 				if(ev.keyCode == listener.key) {
 					listener.do.invoke(ev.keyCode)
