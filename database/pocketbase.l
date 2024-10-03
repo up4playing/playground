@@ -28,12 +28,12 @@ Collection<T>
 		anyItem.id = newRecord.id
 		
 	async inline js void update: T item
-		return pocketBase.pb.collection(this.name).update(item.id, item)
+		pocketBase.pb.collection(this.name).update(item.id, item)
 		
 	async inline js void remove: T item
-		return pocketBase.pb.collection(this.name).delete(item.id)
+		pocketBase.pb.collection(this.name).delete(item.id)
 		
-	async js void upload: T item, string fileFieldName = "image", Node fileInput
+	async js void upload: T item, string fileFieldName = "image", File[] files
 		const formData = new FormData();
 		for(let key in item) {
 			if(key != fileFieldName) {
@@ -44,7 +44,7 @@ Collection<T>
 				}
 			}
 		}
-		for(let file of fileInput.files) {
+		for(let file of files) {
 			formData.append(fileFieldName, file);
 		}
 		let newItem = await pocketBase.pb.collection(this.name).create(formData);

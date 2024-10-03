@@ -32,6 +32,7 @@ class Node
 	
 	string sourceLocation
 	bool hasChildren
+	File[] files
 		
 	inline js Node remove() this.remove()
 	inline js void appendChild(Node node) this.appendChild(node)
@@ -72,6 +73,8 @@ class Node
 		                    AnimationFill fill = Forwards
 		                    easing = "linear"
 		this.animate([Html.expandStyle(from), Html.expandStyle(to)], {@duration:duration, @fill:fill, @easing:easing})
+		
+File
 
 immutable HtmlEvent
 	Node target        // The element that triggered the event
