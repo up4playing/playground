@@ -587,7 +587,7 @@ global unit Html
 		        dynamic data = null               // The data attributes of the element
 		        SourceCodeLocation location
 		let node = div tag:"img", attributes, style, data, location
-		node.src = src.startsWith("http") ? src : Platform.basePath + src
+		node.src = src.startsWith("http:") or src.startsWith("data:") ? src : Platform.basePath + src
 		return node
 
 	global link: string text = null
@@ -904,6 +904,13 @@ global unit Html
 		let node = div tag:"input", data:{type:"file" accept capture}, style, location
 		node.onchange = onChange(node)
 		return node
+		
+	js Promise<string> getDataUrlForFile: File file
+		return new Promise((resolve, reject) => {
+			const reader = new FileReader();
+			reader.onload = e => resolve(e.target.result);
+			reader.readAsDataURL(file);	
+		})
 	
 	// Automatic Editable Text: Updates the model automatically in with every keystroke
 	global inline void editableText: string model = ""                          // The variable that holds the value. This will be updated when the user changed the text
