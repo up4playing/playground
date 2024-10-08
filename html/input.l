@@ -115,15 +115,67 @@ enum Key
 KeyListener
 	Key key
 	void(Key key) do
+	
+// Phase of a touch or a click
+enum TouchPhase: Still, Down, Move, Up
 		
+enum TouchType: Left, Middle, Right, Touch, Pen
+
+// A touch or a click
+class Touch
+	int id
+	TouchPhase phase
+	TouchType type
+	Vector2 position
+	
 unit input
 	KeyListener[] keyDownListeners
 	void(Vector2 position, Vector2 delta, bool isPinch)[] scrollListeners
+	void(Touch touch)[] touchDownListeners, touchMoveListeners, touchUpListeners
+	Touch[] touches
 	
 	init
 		initHandlers
 	
 	js void initHandlers
+		document.body.onpointerdown = e => {
+			let id = e.pointerId;
+			let touch = new Touch(id, 1, input.getTouchType(e.pointerType, e.button), new Vector2(e.pageX/Platform.scale, e.pageY/Platform.scale, "px"));
+			input.touches.push(touch);
+			for(let listener of input.touchDownListeners)
+				listener.invoke(touch);
+			e.preventDefault();
+			e.stopPropagation();
+		}
+		document.body.onpointermove = e => {
+			let id = e.pointerId;
+			let touch = input.touches.find(a => a.id == id);
+			if(touch) {
+				touch.position.x = e.pageX/Platform.scale;
+				touch.position.y = e.pageY/Platform.scale;
+				for(let listener of input.touchMoveListeners)
+					listener.invoke(touch);
+			}
+			e.preventDefault();
+			e.stopPropagation();
+		}
+		document.body.onpointerup = e => {
+			let id = e.pointerId;
+			let index = input.touches.indexWhere(a => a.id == id, 0);
+			if(index != -1) {
+				let touch = input.touches[index];
+				input.touches.splice(index, 1);
+				for(let listener of input.touchUpListeners)
+					listener.invoke(touch);
+			}
+			e.preventDefault();
+			e.stopPropagation();
+		}
+		window.oncontextmenu = e => {
+			e.preventDefault();
+			e.stopPropagation();
+			return false;
+		}
 		document.onkeydown = ev => {
 			if(ev.key == "F10") { 
 				Platform.toggleSmallScreen();
@@ -151,13 +203,30 @@ unit input
 			}, {passive: false})
 		}
 		
+	internal TouchType getTouchType: string pointerType, int button,
+		if pointerType == "mouse": return cast button.limit(0..2)
+		if pointerType == "touch": return Touch
+			                       return Pen
+			
 	clear
 		keyDownListeners.clear	
-		scrollListeners.clear	
+		scrollListeners.clear
+		touchDownListeners.clear	
+		touchMoveListeners.clear
+		touchUpListeners.clear
 	
 	onKeyDown: Key key
 		       stored void(Key key) do
 		keyDownListeners.add {key, do}
+		
+	onTouchDown: stored void(Touch touch) do
+		touchDownListeners.add do
+		
+	onTouchMove: stored void(Touch touch) do
+		touchMoveListeners.add do
+		
+	onTouchUp: stored void(Touch touch) do
+		touchUpListeners.add do
 		
 	onScroll: stored void(Vector2 position, Vector2 delta, bool isPinch) do
 		scrollListeners.add do

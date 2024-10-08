@@ -351,6 +351,7 @@ global unit Html
 		while(document.body.nextSibling) 
 			document.body.nextSibling.remove()
 		document.body.innerHTML = ""
+		input.clear
 	
 	internal js void resize
 		let body = document.body
@@ -382,12 +383,14 @@ global unit Html
 			body.style.marginBottom = `${-pullUp}px`
 			body.style.marginRight = `${-pullLeft}px`
 			body.className = Platform.isMobile ? "mobile" : ""
+			body.style.touchAction = "none"
 		} else {
 			Platform.isMobile = localStorage.getItem("isMobile") == "true"
 			Platform.scale = Platform.isDebug ? Platform.debugScale : 1
 			body.style.zoom = Platform.scale
 			body.style.font = "32px OpenSans"
 			body.className = Platform.isMobile ? "mobile" : ""
+			body.style.touchAction = "none"
 		}
 	
 	private js void setDataAttributes: Node node, dynamic attributes
@@ -483,7 +486,6 @@ global unit Html
 		parentNode = documentBody
 		currentNode = parentNode.firstChild
 		currentOverlay = documentBody.nextSibling
-		input.clear
 		app.render
 		while currentNode
 			let next = currentNode.nextSibling
