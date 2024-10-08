@@ -559,11 +559,16 @@ global unit Html
 	global img: string src                        // The file of the image to display
 		        expand Attributes attributes = {} // The attributes of the HTML element
 		        expand Style style = null         // The css style of the HTML element
-		        dynamic data = null               // The data attributes of the element
 		        SourceCodeLocation location
-		let node = div tag:"img", attributes, style, data, location
-		node.src = src.startsWith("http:") or src.startsWith("data:") ? src : Platform.basePath + src
-		return node
+		return div tag:"img", attributes, style, data:{src:src.startsWith("http") or src.startsWith("data:") ? src : Platform.basePath + src}, key:src, location
+		
+	global img: string src                        // The file of the image to display
+		        expand Attributes attributes = {} // The attributes of the HTML element
+		        expand Style style = null         // The css style of the HTML element
+		        dynamic data                      // The data attributes of the element
+		        SourceCodeLocation location
+		data.src = src.startsWith("http") or src.startsWith("data:") ? src : Platform.basePath + src
+		return div tag:"img", attributes, style, data, key:src, location
 
 	global link: string text = null
 		         string href = "#"
@@ -663,20 +668,42 @@ global unit Html
 		        dynamic data = {}                 // The data attributes of the element
 		        Style onHover = null              // Apply this css style to the element when the user moves their mouse over the element
 		        void() children = null            // The children of the element
+		        string key = null                 // A unique identifier used to find the node that should be reused
 		        SourceCodeLocation location
 		Node node, nextNode
 		string sourceLocation = location?.toString
 		
-		if !currentNode or (currentNode.tagName?.toLowerCase != tag or currentNode.sourceLocation != sourceLocation)
-			node = Node.create tag
-			nextNode = currentNode
-			if nextNode: parentNode.insertBefore node, nextNode
-			else         parentNode.appendChild node
-			nodesCreated++
-		else
-			node = currentNode
-			nextNode = currentNode.nextSibling
-			nodesUpdated++
+		if key
+			// If a key is specified, we store all nodes in a map on the parent object
+			if not parentNode.childrenByKey: parentNode.childrenByKey = {}
+			node = parentNode.childrenByKey[key]
+			if not node
+				// Create new node (with key)
+				node = Node.create tag
+				parentNode.childrenByKey[key] = node
+				nextNode = currentNode
+				if nextNode: parentNode.insertBefore node, nextNode
+				else         parentNode.appendChild node
+				nodesCreated++
+			else
+				// Resuse existing node (with key)
+				nextNode = currentNode ? currentNode.nextSibling : null
+				nodesUpdated++
+			node.used = true
+			
+		else	
+			if !currentNode or (currentNode.tagName?.toLowerCase != tag or currentNode.sourceLocation != sourceLocation)
+				// Create new node
+				node = Node.create tag
+				nextNode = currentNode
+				if nextNode: parentNode.insertBefore node, nextNode
+				else         parentNode.appendChild node
+				nodesCreated++
+			else
+				// Resuse existing node
+				node = currentNode
+				nextNode = currentNode.nextSibling
+				nodesUpdated++
 		
 		setStyle node, style
 		setDataAttributes node, data
@@ -709,11 +736,24 @@ global unit Html
 			let prevParentNode = parentNode
 			parentNode = node
 			currentNode = node.firstChild
+			if parentNode.childrenByKey
+				for parentNode.childrenByKey
+					.used = false
 			children()
-			while currentNode
-				let next = currentNode.nextSibling
-				currentNode.remove
-				currentNode = next
+			
+			// Remove all children that are no longer used
+			if parentNode.childrenByKey
+				// If the children have keys, removed all nodes that are not marked as "used"
+				for parentNode.childrenByKey
+					if not .used
+						.remove
+						parentNode.childrenByKey.remove key
+			else
+				// If the chidren don't have keys, remove all remaining nodes, that haven't been reused
+				while currentNode
+					let next = currentNode.nextSibling
+					currentNode.remove
+					currentNode = next
 			parentNode = prevParentNode
 			
 		node.hasChildren = children != null
