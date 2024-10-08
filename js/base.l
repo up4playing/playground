@@ -1576,7 +1576,7 @@ class Map<TKey, TValue>
 		this.set(key, this.get(key)-1)
 		
 	// Remove the item assosiated with the given key
-	inline js void delete: TKey key  // The key of the item to remove from the map
+	inline js void remove: TKey key  // The key of the item to remove from the map
 		this.delete(key)
 		
 	// Remove all items from the map
