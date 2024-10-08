@@ -158,6 +158,16 @@ struct Vector2
 	
 	// A vector with each coordinate rounded down to an integer value
 	ceil := Vector2(math.ceil(x), math.ceil(y))
+		
+	// A vector with the sign of each coordinate flipped
+	inverse := Vector2(-x, -y)
+		
+	// The distance to another vector
+	distanceTo: Vector2 value // The second vector
+		let x = x - value.x
+		let y = y - value.y
+		return math.sqrt(x*x + y*y)
+
 	
 enum AnimationFill
 	None = "none"
