@@ -830,7 +830,7 @@ global unit Html
 	int focusTabIndex = 0
 	
 	// Automatic Text Input: Updates the model automatically in with every keystroke
-	global inline void input: string model = ""                 // The variable that holds the value. This will be updated when the user changed the text
+	global inline void field: string model = ""                 // The variable that holds the value. This will be updated when the user changed the text
 		                      bool focused = false              // Whether the cursor should be placed in the field
 		                      expand Attributes attributes = {} // The attributes of the HTML element
 		                      expand Style style = null         // The css style of the HTML element
@@ -843,7 +843,7 @@ global unit Html
 		if focused: node.focus
 		
 	// Automatic Text Input: Updates the model automatically in with every keystroke
-	global inline void input: string model = ""                 // The variable that holds the value. This will be updated when the user changed the text
+	global inline void field: string model = ""                 // The variable that holds the value. This will be updated when the user changed the text
 		                      bool focused = false              // Whether the cursor should be placed in the field
 		                      inline void() onEnter = null      // Called when the user presses the enter key
 		                      expand Attributes attributes = {} // The attributes of the HTML element
@@ -857,7 +857,7 @@ global unit Html
 		if focused or focusTabIndex == attributes.tabIndex: node.focus
 		
 	// Manual Text Input: If you specify a onChange handler, the model won't be updated automatically
-	global inline void input: string model = ""                  // The variable that holds the value. This will be updated when the user changed the text
+	global inline void field: string model = ""                  // The variable that holds the value. This will be updated when the user changed the text
 		                      bool focused = false               // Whether the cursor should be placed in the field
 		                      inline void(string value) onChange // If you specify a onChange handler, the model won't be updated automatically
 		                      expand Attributes attributes = {}  // The attributes of the HTML element
