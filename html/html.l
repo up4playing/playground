@@ -141,9 +141,19 @@ struct Vector2
 	Vector2 + Vector2 other:   return {x + other.x, y + other.y}
 	Vector2 - Vector2 other:   return {x - other.x, y - other.y}
 	Vector2 * Vector2 other:   return {x * other.x, y * other.y}
+	Vector2 / Vector2 other:   return {x / other.x, y / other.y}
+	
+	Vector2 * float other:     return {x * other, y * other}
+	Vector2 / float other:     return {x / other, y / other}
 		
 	// The length of the vector
 	length := math.sqrt(x * x + y * y)
+		
+	// A vector with each coordinate rounded down to an integer value
+	floor := Vector2(math.floor(x), math.floor(y))
+	
+	// A vector with each coordinate rounded down to an integer value
+	ceil := Vector2(math.ceil(x), math.ceil(y))
 	
 enum AnimationFill
 	None = "none"
