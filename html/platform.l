@@ -346,26 +346,7 @@ global unit Html
 			Html.resize();
 			Html.refresh();
 		}
-		document.onkeydown = ev => {
-			if(ev.key == "F10") { 
-				Platform.toggleSmallScreen();
-			}
-			for(let listener of Html.keyDownListeners) {
-				if(ev.keyCode == listener.key) {
-					listener.do.invoke(ev.keyCode)
-					ev.preventDefault();
-					ev.stopPropagation();
-					return false;
-				}
-			}
-		}
 
-	KeyListener[] keyDownListeners
-	
-	global onKeyDown: Key key
-		              stored void(Key key) do
-		keyDownListeners.add {key, do}
-	
 	internal js void reset
 		while(document.body.nextSibling) 
 			document.body.nextSibling.remove()
@@ -502,7 +483,7 @@ global unit Html
 		parentNode = documentBody
 		currentNode = parentNode.firstChild
 		currentOverlay = documentBody.nextSibling
-		keyDownListeners.clear
+		input.clear
 		app.render
 		while currentNode
 			let next = currentNode.nextSibling
