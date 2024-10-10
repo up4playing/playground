@@ -142,6 +142,11 @@ struct Vector2
 	
 	toString := "{x}{unit} {y}{unit}"
 	
+	// Creates a copy of the vector with the same values
+	Vector2 clone() := {x, y, unit}
+		
+	Vector2 assign Vector2 other: x = other.x; y = other.y; unit = other.unit; return this
+		
 	Vector2 + Vector2 other:   return {x + other.x, y + other.y}
 	Vector2 - Vector2 other:   return {x - other.x, y - other.y}
 	Vector2 * Vector2 other:   return {x * other.x, y * other.y}
