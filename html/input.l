@@ -138,48 +138,6 @@ unit input
 		initHandlers
 	
 	js void initHandlers
-		// window.addEventListener("touchstart", ev => {
-		// 	System.print("touch DOWN "+ev.touches.length);
-		// 	for(let touch of ev.touches) {
-		// 		touch.type = 3
-		// 		touch.position = new Vector2(touch.pageX/Platform.scale, touch.pageY/Platform.scale, "px")
-		// 	}
-		// 	for(let listener of input.touchDownListeners)
-		// 		listener.invoke(ev, ev.touches);
-		// 	ev.preventDefault();
-		// 	ev.stopPropagation();
-		// }, {passive: false});
-		
-		// window.addEventListener("touchmove", ev => {
-		// 	System.print("touch MOVE "+ev.touches.length);
-		// 	for(let touch of ev.touches) {
-		// 		touch.type = 3
-		// 		touch.position = new Vector2(touch.pageX/Platform.scale, touch.pageY/Platform.scale, "px")
-		// 	}
-		// 	for(let listener of input.touchMoveListeners)
-		// 		listener.invoke(ev, ev.touches);
-		// 	ev.preventDefault();
-		// 	ev.stopPropagation();
-		// }, {passive: false});
-		
-		// window.addEventListener("touchend", ev => {
-		// 	System.print("touch END "+ev.touches.length);
-		// 	for(let touch of ev.touches) {
-		// 		touch.type = 3
-		// 		touch.position = new Vector2(touch.pageX/Platform.scale, touch.pageY/Platform.scale, "px")
-		// 	}
-		// 	for(let listener of input.touchUpListeners)
-		// 		listener.invoke(ev, ev.touches);
-		// 	ev.preventDefault();
-		// 	ev.stopPropagation();
-		// }, {passive: false});
-		
-		// window.addEventListener("touchcancel", ev => {
-		// 	System.print("touch CANCEL "+ev.touches.length);
-		// 	ev.preventDefault();
-		// 	ev.stopPropagation();
-		// }, {passive: false});
-		
 		document.body.onpointerdown = ev => {
 			document.body.setPointerCapture(ev.pointerId);
 			let id = ev.pointerId;
@@ -228,11 +186,11 @@ unit input
 					listener.invoke(touch, input.touches, ev);
 			}
 		}
-		window.oncontextmenu = ev => {
-			// ev.preventDefault();
-			// ev.stopPropagation();
-			// return false;
-		}
+		// window.oncontextmenu = ev => {
+		// 	ev.preventDefault();
+		// 	ev.stopPropagation();
+		// 	return false;
+		// }
 		document.onkeydown = ev => {
 			if(ev.key == "F10") { 
 				Platform.toggleSmallScreen();
