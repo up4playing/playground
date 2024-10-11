@@ -187,6 +187,7 @@ enum Unit
 	DynamicViewportHeight = "dvh" // 1% of the dynamic viewport's height (with the address bar on mobile if visible)
 		
 	Auto = "auto"
+	None = "none"
 	
 struct Dimension
 	global const Dimension auto = {unit:Auto} // Automatically adjust the value to distribute the space evenly
@@ -202,8 +203,24 @@ struct Vector2
 	float y // The y coordinate of the vector
 	Unit unit = Pixels // The unit of the vector (Pixels, Percent, Centimeters, Points, ViewportHeight, ...)
 	
+	// Used to specify that the vector is not set or invalid
+	static inline Vector2 none() Vector2(float.infinity, float.infinity, None)
+	
+	// {float.minValue, float.minValue}
+	static inline Vector2 minValue() Vector2(float.minValue, float.minValue, Pixels)
+	
+	// {float.maxValue, float.maxValue}
+	static inline Vector2 maxValue() Vector2(float.maxValue, float.maxValue, Pixels)
+	
+	// {0,0}
+	static inline Vector2 zero() Vector2(0, 0, Pixels)
+		
+	// A string representation of the vector
 	toString := "{x}{unit} {y}{unit}"
 	
+	// Returns true if the vector is not equal to Vector2.none
+	bool toBool := (x != float.infinity || y != float.infinity)
+		
 	// Creates a copy of the vector with the same values
 	Vector2 clone() := {x, y, unit}
 		
