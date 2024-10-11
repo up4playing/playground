@@ -718,9 +718,9 @@ global unit Html
 			if attributes.onKeyDown != null:    node.onkeydown = attributes.onKeyDown
 			if attributes.onKeyUp != null:      node.onkeyup = attributes.onKeyUp
 			if attributes.tabIndex:             node.set("tabindex", attributes.tabIndex.toString)
-			if attributes.onTouchDown != null:  node.onpointerdown = ev.preventDefault; attributes.onTouchDown(ev)
-			if attributes.onTouchMove != null:  node.onpointermove = ev.preventDefault; attributes.onTouchMove(ev)
-			if attributes.onTouchUp != null:    node.onpointerup = ev.preventDefault; attributes.onTouchUp(ev)
+			// if attributes.onTouchDown != null:  node.onpointerdown = ev.preventDefault; attributes.onTouchDown(ev)
+			// if attributes.onTouchMove != null:  node.onpointermove = ev.preventDefault; attributes.onTouchMove(ev)
+			// if attributes.onTouchUp != null:    node.onpointerup = ev.preventDefault; attributes.onTouchUp(ev)
 			
 		node.sourceLocation = sourceLocation
 		if onHover != null

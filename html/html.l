@@ -52,11 +52,12 @@ class Node
 		
 	native void(HtmlEvent ev) onclick
 	native void(HtmlEvent ev) oncontextmenu
-	native void(HtmlEvent ev) onpointerdown
-	native void(HtmlEvent ev) onpointermove
-	native void(HtmlEvent ev) onpointerup
-	native void(HtmlEvent ev) onpointerover
-	native void(HtmlEvent ev) onpointerout
+	native void(PointerEvent ev) onpointerdown
+	native void(PointerEvent ev) onpointermove
+	native void(PointerEvent ev) onpointerup
+	native void(PointerEvent ev) onpointerover
+	native void(PointerEvent ev) onpointerout
+	native void(PointerEvent ev) onpointercancel
 	
 	native void(dynamic ev) onkeydown
 	native void(dynamic ev) onkeyup
@@ -78,7 +79,55 @@ class Node
 		                    easing = "linear"
 		this.animate([Html.expandStyle(from), Html.expandStyle(to)], {@duration:duration, @fill:fill, @easing:easing})
 		
+	Touch[] touches
+	
+	onTouchDown: void(Touch touch, Touch[] touches) do
+		this.onpointerdown = {
+			if this.touches == null: this.touches = []
+			Touch touch = {phase:Down, id:ev.pointerId, type:input.getTouchType(ev.pointerType, ev.button), position:new Vector2(ev.pageX/Platform.scale, ev.pageY/Platform.scale, Pixels)}
+			this.touches.add touch
+			do(touch, touches)
+		}
+	
+	onTouchMove: void(Touch touch, Touch[] touches) do
+		this.onpointermove = {
+			if this.touches == null: this.touches = []
+			Touch touch = this.touches.find.id == ev.pointerId
+			if touch
+				touch.phase = Move
+				touch.position.x = ev.pageX/Platform.scale
+				touch.position.y = ev.pageY/Platform.scale
+				do(touch, touches)
+		}
+	
+	onTouchUp: void(Touch touch, Touch[] touches) do
+		this.onpointerup = {
+			if this.touches == null: this.touches = []
+			int index = this.touches.indexWhere.id == ev.pointerId
+			if index != -1
+				let touch = this.touches[index]
+				touch.phase = Up
+				this.touches.removeAt(index)
+				do(touch, touches)
+		}
+		
 File
+	
+enum lowercase string PointerType: Mouse, Pen, Touch
+	
+immutable PointerEvent
+	Node target             // The element that triggered the event
+	Node currentTarget      // The element to the event handler is attached to
+	int pointerId           // A unique identifier for the pointer causing the event (for example, a finger)
+	PointerType pointerType // Mouse, Pen, or Touch
+	int button              // The mouse button that was pressed to trigger the event
+	stopPropagation         // Mark the event as handled and prevent its parent elements from receiving the event
+	preventDefault          // Prevent the default action (for example, showing the context menu on a right click)
+	int pageX               // The X coordinate of the pointer relative to the whole document
+	int pageY               // The Y coordinate of the pointer relative to the whole document
+	
+	// The position of the pointer relative to the whole document
+	inline js Vector2 position() new Vector2(this.pageX/Platform.scale, this.pageY/Platform.scale)
 
 immutable HtmlEvent
 	Node target        // The element that triggered the event
@@ -753,13 +802,15 @@ dynamic Style
 dynamic Attributes
 	string id // A unique string to indentify a specic element, often used to style a single element
 	string class // A string to assign a class to one or more elements, often used to style several elements
-	native void(HtmlEvent ev) onClick = null      // Execute this code when the user clicks the HTML element
-	native void(HtmlEvent ev) onRightClick = null // Execute this code when the user clicks the HTML element with the right mouse button
-	native void(dynamic ev) onKeyDown = null      // Execute this code when the user presses a key on the keyboard
-	native void(dynamic ev) onKeyUp = null        // Execute this code when the user releases a key on the keyboard
-	native void(HtmlEvent ev) onTouchDown = null  // Execute this code when a touch or click starts
-	native void(HtmlEvent ev) onTouchMove = null  // Execute this code when a touch or clicks moves
-	native void(HtmlEvent ev) onTouchUp = null    // Execute this code when a touch or click ends
-	native void(HtmlEvent ev) onTouchCancel= null // Execute this code when a touch or click is canceled
+	native void(HtmlEvent ev) onClick = null         // Execute this code when the user clicks the HTML element
+	native void(HtmlEvent ev) onRightClick = null    // Execute this code when the user clicks the HTML element with the right mouse button
+	native void(dynamic ev) onKeyDown = null         // Execute this code when the user presses a key on the keyboard
+	native void(dynamic ev) onKeyUp = null           // Execute this code when the user releases a key on the keyboard
+	
+	// native void(PointerEvent ev) onTouchDown = null  // Execute this code when a touch or click starts
+	// native void(PointerEvent ev) onTouchMove = null  // Execute this code when a touch or clicks moves
+	// native void(PointerEvent ev) onTouchUp = null    // Execute this code when a touch or click ends
+	// native void(PointerEvent ev) onTouchCancel= null // Execute this code when a touch or click is canceled
+	
 	int tabIndex = 0
 		
