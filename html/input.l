@@ -131,50 +131,107 @@ class Touch
 unit input
 	KeyListener[] keyDownListeners
 	void(Vector2 position, Vector2 delta, bool isPinch)[] scrollListeners
-	void(Touch touch)[] touchDownListeners, touchMoveListeners, touchUpListeners
+	void(HtmlEvent event, Touch[] touches)[] touchDownListeners, touchMoveListeners, touchUpListeners
 	Touch[] touches
 	
 	init
 		initHandlers
 	
 	js void initHandlers
-		document.body.onpointerdown = e => {
-			let id = e.pointerId;
-			let touch = new Touch(id, 1, input.getTouchType(e.pointerType, e.button), new Vector2(e.pageX/Platform.scale, e.pageY/Platform.scale, "px"));
+		// window.addEventListener("touchstart", ev => {
+		// 	System.print("touch DOWN "+ev.touches.length);
+		// 	for(let touch of ev.touches) {
+		// 		touch.type = 3
+		// 		touch.position = new Vector2(touch.pageX/Platform.scale, touch.pageY/Platform.scale, "px")
+		// 	}
+		// 	for(let listener of input.touchDownListeners)
+		// 		listener.invoke(ev, ev.touches);
+		// 	ev.preventDefault();
+		// 	ev.stopPropagation();
+		// }, {passive: false});
+		
+		// window.addEventListener("touchmove", ev => {
+		// 	System.print("touch MOVE "+ev.touches.length);
+		// 	for(let touch of ev.touches) {
+		// 		touch.type = 3
+		// 		touch.position = new Vector2(touch.pageX/Platform.scale, touch.pageY/Platform.scale, "px")
+		// 	}
+		// 	for(let listener of input.touchMoveListeners)
+		// 		listener.invoke(ev, ev.touches);
+		// 	ev.preventDefault();
+		// 	ev.stopPropagation();
+		// }, {passive: false});
+		
+		// window.addEventListener("touchend", ev => {
+		// 	System.print("touch END "+ev.touches.length);
+		// 	for(let touch of ev.touches) {
+		// 		touch.type = 3
+		// 		touch.position = new Vector2(touch.pageX/Platform.scale, touch.pageY/Platform.scale, "px")
+		// 	}
+		// 	for(let listener of input.touchUpListeners)
+		// 		listener.invoke(ev, ev.touches);
+		// 	ev.preventDefault();
+		// 	ev.stopPropagation();
+		// }, {passive: false});
+		
+		// window.addEventListener("touchcancel", ev => {
+		// 	System.print("touch CANCEL "+ev.touches.length);
+		// 	ev.preventDefault();
+		// 	ev.stopPropagation();
+		// }, {passive: false});
+		
+		document.body.onpointerdown = ev => {
+			document.body.setPointerCapture(ev.pointerId);
+			let id = ev.pointerId;
+			let touch = new Touch(id, 1, input.getTouchType(ev.pointerType, ev.button), new Vector2(ev.pageX/Platform.scale, ev.pageY/Platform.scale, "px"));
 			input.touches.push(touch);
 			for(let listener of input.touchDownListeners)
-				listener.invoke(touch);
-			e.preventDefault();
-			e.stopPropagation();
+				listener.invoke(touch, input.touches, ev);
 		}
-		document.body.onpointermove = e => {
-			let id = e.pointerId;
+		document.body.onpointermove = ev => {
+			let id = ev.pointerId;
 			let touch = input.touches.find(a => a.id == id);
 			if(touch) {
-				touch.position.x = e.pageX/Platform.scale;
-				touch.position.y = e.pageY/Platform.scale;
+				touch.position.x = ev.pageX/Platform.scale;
+				touch.position.y = ev.pageY/Platform.scale;
 				for(let listener of input.touchMoveListeners)
-					listener.invoke(touch);
+					listener.invoke(touch, input.touches, ev);
 			}
-			e.preventDefault();
-			e.stopPropagation();
 		}
-		document.body.onpointerup = e => {
-			let id = e.pointerId;
+		document.body.onpointerup = ev => {
+			let id = ev.pointerId;
 			let index = input.touches.indexWhere(a => a.id == id, 0);
 			if(index != -1) {
 				let touch = input.touches[index];
 				input.touches.splice(index, 1);
 				for(let listener of input.touchUpListeners)
-					listener.invoke(touch);
+					listener.invoke(touch, input.touches, ev);
 			}
-			e.preventDefault();
-			e.stopPropagation();
 		}
-		window.oncontextmenu = e => {
-			e.preventDefault();
-			e.stopPropagation();
-			return false;
+		document.body.onpointerleave = ev => {
+			let id = ev.pointerId;
+			let index = input.touches.indexWhere(a => a.id == id, 0);
+			if(index != -1) {
+				let touch = input.touches[index];
+				input.touches.splice(index, 1);
+				for(let listener of input.touchUpListeners)
+					listener.invoke(touch, input.touches, ev);
+			}
+		}
+		document.body.onpointercancel = ev => {
+			let id = ev.pointerId;
+			let index = input.touches.indexWhere(a => a.id == id, 0);
+			if(index != -1) {
+				let touch = input.touches[index];
+				input.touches.splice(index, 1);
+				for(let listener of input.touchUpListeners)
+					listener.invoke(touch, input.touches, ev);
+			}
+		}
+		window.oncontextmenu = ev => {
+			// ev.preventDefault();
+			// ev.stopPropagation();
+			// return false;
 		}
 		document.onkeydown = ev => {
 			if(ev.key == "F10") { 
@@ -189,19 +246,19 @@ unit input
 				}
 			}
 		}
-		if(!window._isWheelHandlerSet) {
-			window._isWheelHandlerSet = true
-			window.addEventListener('wheel', e => {
-				if(input.scrollListeners.length > 0) {
-					e.preventDefault();
-					e.stopPropagation();
-					for(let listener of input.scrollListeners) {
-						listener.invoke(new Vector2(e.clientX/Platform.scale, e.clientY/Platform.scale), new Vector2(-e.deltaX, e.deltaY), e.ctrlKey);
-					}
-					return false;			
+		
+		if(window._handlersInitialized) return
+		window._handlersInitialized = true
+		window.addEventListener('wheel', ev => {
+			if(input.scrollListeners.length > 0) {
+				ev.preventDefault();
+				ev.stopPropagation();
+				for(let listener of input.scrollListeners) {
+					listener.invoke(new Vector2(ev.clientX/Platform.scale, ev.clientY/Platform.scale, "px"), new Vector2(-ev.deltaX, ev.deltaY, "px"), ev.ctrlKey);
 				}
-			}, {passive: false})
-		}
+				return false;			
+			}
+		}, {passive: false})
 		
 	internal TouchType getTouchType: string pointerType, int button,
 		if pointerType == "mouse": return cast button.limit(0..2)
@@ -219,13 +276,13 @@ unit input
 		       stored void(Key key) do
 		keyDownListeners.add {key, do}
 		
-	onTouchDown: stored void(Touch touch) do
+	onTouchDown: stored void(HtmlEvent event, Touch[] touches) do
 		touchDownListeners.add do
 		
-	onTouchMove: stored void(Touch touch) do
+	onTouchMove: stored void(HtmlEvent event, Touch[] touches) do
 		touchMoveListeners.add do
 		
-	onTouchUp: stored void(Touch touch) do
+	onTouchUp: stored void(HtmlEvent event, Touch[] touches) do
 		touchUpListeners.add do
 		
 	onScroll: stored void(Vector2 position, Vector2 delta, bool isPinch) do
