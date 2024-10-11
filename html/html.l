@@ -813,8 +813,10 @@ dynamic Style
 	bool overlay
 	
 dynamic Attributes
-	string id // A unique string to indentify a specic element, often used to style a single element
+	string id    // A unique string to indentify a specic element, often used to style a single element
 	string class // A string to assign a class to one or more elements, often used to style several elements
+	string key   // A unique identifier used to find the node that should be reused
+	
 	native void(HtmlEvent ev) onClick = null         // Execute this code when the user clicks the HTML element
 	native void(HtmlEvent ev) onRightClick = null    // Execute this code when the user clicks the HTML element with the right mouse button
 	native void(dynamic ev) onKeyDown = null         // Execute this code when the user presses a key on the keyboard

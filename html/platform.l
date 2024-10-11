@@ -562,7 +562,7 @@ global unit Html
 		        expand Attributes attributes = {} // The attributes of the HTML element
 		        expand Style style = null         // The css style of the HTML element
 		        SourceCodeLocation location
-		return div tag:"img", attributes, style, data:{src:src.startsWith("http") or src.startsWith("data:") ? src : Platform.basePath + src}, key:src, location
+		return div tag:"img", attributes, style, data:{src:src.startsWith("http") or src.startsWith("data:") ? src : Platform.basePath + src}, location
 		
 	global img: string src                        // The file of the image to display
 		        expand Attributes attributes = {} // The attributes of the HTML element
@@ -570,7 +570,7 @@ global unit Html
 		        dynamic data                      // The data attributes of the element
 		        SourceCodeLocation location
 		data.src = src.startsWith("http") or src.startsWith("data:") ? src : Platform.basePath + src
-		return div tag:"img", attributes, style, data, key:src, location
+		return div tag:"img", attributes, style, data, location
 
 	global link: string text = null
 		         string href = "#"
@@ -670,10 +670,10 @@ global unit Html
 		        dynamic data = {}                 // The data attributes of the element
 		        Style onHover = null              // Apply this css style to the element when the user moves their mouse over the element
 		        void() children = null            // The children of the element
-		        string key = null                 // A unique identifier used to find the node that should be reused
 		        SourceCodeLocation location
 		Node node, nextNode
 		string sourceLocation = location?.toString
+		string key = attributes?.key
 		
 		if key
 			// If a key is specified, we store all nodes in a map on the parent object
