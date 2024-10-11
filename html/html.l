@@ -115,6 +115,13 @@ class Node
 				do(touch, touches, this)
 		}
 		
+	js void onScroll: void(Vector2 position, Vector2 delta, bool isPinch) do
+		this.onwheel = ev => {
+			ev.preventDefault();
+			ev.stopPropagation();
+			do(new Vector2(ev.clientX/Platform.scale, ev.clientY/Platform.scale, "px"), new Vector2(-ev.deltaX, ev.deltaY, "px"), ev.ctrlKey);
+		}
+		
 	inline js void captureTouch(Touch touch) this.setPointerCapture(touch.id)
 		
 File

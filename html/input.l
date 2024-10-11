@@ -131,7 +131,7 @@ class Touch
 	
 unit input
 	KeyListener[] keyDownListeners
-	void(Vector2 position, Vector2 delta, bool isPinch)[] scrollListeners
+	// void(Vector2 position, Vector2 delta, bool isPinch)[] scrollListeners
 	
 	init
 		initHandlers
@@ -151,27 +151,27 @@ unit input
 			}
 		}
 		
-		if(window._handlersInitialized) return
-		window._handlersInitialized = true
-		window.addEventListener('wheel', ev => {
-			if(input.scrollListeners.length > 0) {
-				ev.preventDefault();
-				ev.stopPropagation();
-				for(let listener of input.scrollListeners) {
-					listener.invoke(new Vector2(ev.clientX/Platform.scale, ev.clientY/Platform.scale, "px"), new Vector2(-ev.deltaX, ev.deltaY, "px"), ev.ctrlKey);
-				}
-				return false;			
-			}
-		}, {passive: false})
+		// if(window._handlersInitialized) return
+		// window._handlersInitialized = true
+		// window.addEventListener('wheel', ev => {
+		// 	if(input.scrollListeners.length > 0) {
+		// 		ev.preventDefault();
+		// 		ev.stopPropagation();
+		// 		for(let listener of input.scrollListeners) {
+		// 			listener.invoke(new Vector2(ev.clientX/Platform.scale, ev.clientY/Platform.scale, "px"), new Vector2(-ev.deltaX, ev.deltaY, "px"), ev.ctrlKey);
+		// 		}
+		// 		return false;			
+		// 	}
+		// }, {passive: false})
 
 	clear
 		keyDownListeners.clear
-		scrollListeners.clear
+		// scrollListeners.clear
 	
 	onKeyDown: Key key
 		       stored void(Key key) do
 		keyDownListeners.add {key, do}
 		
-	onScroll: stored void(Vector2 position, Vector2 delta, bool isPinch) do
-		scrollListeners.add do
+	// onScroll: stored void(Vector2 position, Vector2 delta, bool isPinch) do
+	// 	scrollListeners.add do
 	
