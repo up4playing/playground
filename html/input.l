@@ -127,70 +127,16 @@ class Touch
 	TouchPhase phase
 	TouchType type
 	Vector2 position
+	string touchedId
 	
 unit input
 	KeyListener[] keyDownListeners
 	void(Vector2 position, Vector2 delta, bool isPinch)[] scrollListeners
-	void(HtmlEvent event, Touch[] touches)[] touchDownListeners, touchMoveListeners, touchUpListeners
-	Touch[] touches
 	
 	init
 		initHandlers
-	
+		
 	js void initHandlers
-		document.body.onpointerdown = ev => {
-			document.body.setPointerCapture(ev.pointerId);
-			let id = ev.pointerId;
-			let touch = new Touch(id, 1, input.getTouchType(ev.pointerType, ev.button), new Vector2(ev.pageX/Platform.scale, ev.pageY/Platform.scale, "px"));
-			input.touches.push(touch);
-			for(let listener of input.touchDownListeners)
-				listener.invoke(touch, input.touches, ev);
-		}
-		document.body.onpointermove = ev => {
-			let id = ev.pointerId;
-			let touch = input.touches.find(a => a.id == id);
-			if(touch) {
-				touch.position.x = ev.pageX/Platform.scale;
-				touch.position.y = ev.pageY/Platform.scale;
-				for(let listener of input.touchMoveListeners)
-					listener.invoke(touch, input.touches, ev);
-			}
-		}
-		document.body.onpointerup = ev => {
-			let id = ev.pointerId;
-			let index = input.touches.indexWhere(a => a.id == id, 0);
-			if(index != -1) {
-				let touch = input.touches[index];
-				input.touches.splice(index, 1);
-				for(let listener of input.touchUpListeners)
-					listener.invoke(touch, input.touches, ev);
-			}
-		}
-		document.body.onpointerleave = ev => {
-			let id = ev.pointerId;
-			let index = input.touches.indexWhere(a => a.id == id, 0);
-			if(index != -1) {
-				let touch = input.touches[index];
-				input.touches.splice(index, 1);
-				for(let listener of input.touchUpListeners)
-					listener.invoke(touch, input.touches, ev);
-			}
-		}
-		document.body.onpointercancel = ev => {
-			let id = ev.pointerId;
-			let index = input.touches.indexWhere(a => a.id == id, 0);
-			if(index != -1) {
-				let touch = input.touches[index];
-				input.touches.splice(index, 1);
-				for(let listener of input.touchUpListeners)
-					listener.invoke(touch, input.touches, ev);
-			}
-		}
-		// window.oncontextmenu = ev => {
-		// 	ev.preventDefault();
-		// 	ev.stopPropagation();
-		// 	return false;
-		// }
 		document.onkeydown = ev => {
 			if(ev.key == "F10") { 
 				Platform.toggleSmallScreen();
@@ -217,31 +163,14 @@ unit input
 				return false;			
 			}
 		}, {passive: false})
-		
-	internal TouchType getTouchType: string pointerType, int button,
-		if pointerType == "mouse": return cast button.limit(0..2)
-		if pointerType == "touch": return Touch
-			                       return Pen
-			
+
 	clear
-		keyDownListeners.clear	
+		keyDownListeners.clear
 		scrollListeners.clear
-		touchDownListeners.clear	
-		touchMoveListeners.clear
-		touchUpListeners.clear
 	
 	onKeyDown: Key key
 		       stored void(Key key) do
 		keyDownListeners.add {key, do}
-		
-	onTouchDown: stored void(HtmlEvent event, Touch[] touches) do
-		touchDownListeners.add do
-		
-	onTouchMove: stored void(HtmlEvent event, Touch[] touches) do
-		touchMoveListeners.add do
-		
-	onTouchUp: stored void(HtmlEvent event, Touch[] touches) do
-		touchUpListeners.add do
 		
 	onScroll: stored void(Vector2 position, Vector2 delta, bool isPinch) do
 		scrollListeners.add do

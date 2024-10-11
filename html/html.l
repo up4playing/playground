@@ -81,15 +81,19 @@ class Node
 		
 	Touch[] touches
 	
-	onTouchDown: void(Touch touch, Touch[] touches) do
+	onTouchDown: void(Touch touch, Touch[] touches, Node node) do
 		this.onpointerdown = {
 			if this.touches == null: this.touches = []
-			Touch touch = {phase:Down, id:ev.pointerId, type:input.getTouchType(ev.pointerType, ev.button), position:new Vector2(ev.pageX/Platform.scale, ev.pageY/Platform.scale, Pixels)}
+			TouchType type
+			if ev.pointerType == Mouse: type = cast ev.button.limit(0..2); else
+			if ev.pointerType == Touch: type = Touch; else
+				                        type = Pen
+			Touch touch = {phase:Down, id:ev.pointerId, type, position:new Vector2(ev.pageX/Platform.scale, ev.pageY/Platform.scale, Pixels)}
 			this.touches.add touch
-			do(touch, touches)
+			do(touch, touches, this)
 		}
 	
-	onTouchMove: void(Touch touch, Touch[] touches) do
+	onTouchMove: void(Touch touch, Touch[] touches, Node node) do
 		this.onpointermove = {
 			if this.touches == null: this.touches = []
 			Touch touch = this.touches.find.id == ev.pointerId
@@ -97,10 +101,10 @@ class Node
 				touch.phase = Move
 				touch.position.x = ev.pageX/Platform.scale
 				touch.position.y = ev.pageY/Platform.scale
-				do(touch, touches)
+				do(touch, touches, this)
 		}
 	
-	onTouchUp: void(Touch touch, Touch[] touches) do
+	onTouchUp: void(Touch touch, Touch[] touches, Node node) do
 		this.onpointerup = {
 			if this.touches == null: this.touches = []
 			int index = this.touches.indexWhere.id == ev.pointerId
@@ -108,8 +112,10 @@ class Node
 				let touch = this.touches[index]
 				touch.phase = Up
 				this.touches.removeAt(index)
-				do(touch, touches)
+				do(touch, touches, this)
 		}
+		
+	inline js void captureTouch(Touch touch) this.setPointerCapture(touch.id)
 		
 File
 	
