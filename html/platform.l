@@ -398,6 +398,17 @@ global unit Html
 			body.style.touchAction = "none"
 		}
 	
+	enableScrolling: bool value
+		let style = documentBody.style
+		if value
+			style.overflow = Visible
+			style.position = Static
+		else
+			style.overflow = Hidden
+			style.position = Fixed
+			style.top = {0}
+			style.bottom = {0}
+
 	private js void setDataAttributes: Node node, dynamic attributes
 		if(attributes) {
 			let shadowAttributes = node.shadowAttributes || (node.shadowAttributes = new Map)
