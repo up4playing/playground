@@ -337,6 +337,11 @@ global unit Html
 	inline js void scrollTo(float x, float y) window.scrollTo(x,y)
 	inline js Node get(string id) document.getElementById(id)
 	private inline js Node documentBody() document.body
+	js Node getNodeAt(float x, float y) 
+		let node = document.elementFromPoint(x, y)
+		while(!node.id && node.parentElement)
+			node = node.parentElement
+		return node
 	
 	init
 		initHandlers

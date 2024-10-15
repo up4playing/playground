@@ -111,6 +111,10 @@ class Node
 			if index != -1
 				let touch = this.touches[index]
 				touch.phase = Up
+				touch.position.x = ev.pageX/Platform.scale
+				touch.position.y = ev.pageY/Platform.scale
+				Node touchedNode = Html.getNodeAt(ev.pageX, ev.pageY)
+				touch.touchedId = touchedNode ? touchedNode.id : ""
 				this.touches.removeAt(index)
 				do(touch, touches, this)
 		}
