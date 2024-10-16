@@ -337,6 +337,7 @@ global unit Html
 	inline js void scrollTo(float x, float y) window.scrollTo(x,y)
 	inline js Node get(string id) document.getElementById(id)
 	private inline js Node documentBody() document.body
+	
 	js Node getNodeAt(float x, float y) 
 		let node = document.elementFromPoint(x, y)
 		while(!node.id && node.parentElement)
@@ -727,16 +728,15 @@ global unit Html
 		setDataAttributes node, data
 		
 		if attributes != null
-			if attributes.id != null:           node.id = attributes.id
-			if attributes.class != null:        node.class = attributes.class
+			if attributes.id and attributes.id != node.id:           node.id = attributes.id
+			if attributes.class and attributes.class != node.class:  node.class = attributes.class
+			if attributes.title and attributes.title != node.title:  node.title = attributes.title
+			
 			if attributes.onClick != null:      node.onclick = attributes.onClick
 			if attributes.onRightClick != null: node.oncontextmenu = attributes.onRightClick
 			if attributes.onKeyDown != null:    node.onkeydown = attributes.onKeyDown
 			if attributes.onKeyUp != null:      node.onkeyup = attributes.onKeyUp
 			if attributes.tabIndex:             node.set("tabindex", attributes.tabIndex.toString)
-			// if attributes.onTouchDown != null:  node.onpointerdown = ev.preventDefault; attributes.onTouchDown(ev)
-			// if attributes.onTouchMove != null:  node.onpointermove = ev.preventDefault; attributes.onTouchMove(ev)
-			// if attributes.onTouchUp != null:    node.onpointerup = ev.preventDefault; attributes.onTouchUp(ev)
 			
 		node.sourceLocation = sourceLocation
 		if onHover != null
