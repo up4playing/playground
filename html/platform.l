@@ -12,8 +12,9 @@ class ReferenceSize
 enum TickMode: Interval, AnimationFrame
 	
 skipInit global unit Platform
+	public targetFps = 0
 	public TickMode tickMode = Interval
-	public targetFps = 20
+	public resetWhenCodeChanged = true
 		
 	Vector2 size, nativeSize
 	float scale
@@ -41,21 +42,13 @@ skipInit global unit Platform
 		Sound.init?.();
 		audio.init();
 		Time.timezoneOffset = new Date().getTimezoneOffset() * 60000
+		if(typeof(pocketBase) != "undefined") pocketBase.setup()
 		app.init?.()
+		
+	private async inline js void initDatabase
+		if(typeof(pocketBase) != "undefined") await pocketBase.connect()
 			
-	js void initHandlers
-		window.onresize = e => {
-			Html.updateScale();
-			Html.refresh();
-		}
-		document.onkeydown = e => {
-			let key = e.key
-			if(key == "F10") { 
-				Platform.toggleSmallScreen();
-			}
-		}
-	
-	start: bool isDebug
+	async start: bool isDebug
 		try
 			this.nextHeartbeatTime = 0
 			heartbeat "start"
@@ -65,11 +58,12 @@ skipInit global unit Platform
 				{1920}
 				{960 forWidthBelow:600 isMobile:true}
 			]
-			this.targetFps = 20
+			this.targetFps = 0
 			this.tickMode = Interval
+			this.resetWhenCodeChanged = true
 			
 			initMedia
-			initHandlers
+			initDatabase
 			openMedia
 				try
 					stop
@@ -91,12 +85,14 @@ skipInit global unit Platform
 	js void initAll
 		init()
 		
-	replay
+	async replay
 		try
 			heartbeat "replay"
+			if resetWhenCodeChanged: Html.reset
 			initMedia
+			initDatabase
 			initAll
-			Html.updateScale
+			Html.resize
 			startApp
 			refresh
 		catch
@@ -120,14 +116,16 @@ skipInit global unit Platform
 		if(window._tickInterval) {
 			clearInterval(_tickInterval)
 		}
-		if(Platform.tickMode == 0) {
-			_tickInterval = setInterval(() => Platform.tick(), 1000/Platform.targetFps)
-		} else {
-			window.tick = function() {
-				Platform.tick();
-				window.requestAnimationFrame(window.tick);
+		if(Platform.targetFps) {
+			if(Platform.tickMode == 0) {
+				_tickInterval = setInterval(() => Platform.tick(), 1000/Platform.targetFps)
+			} else {
+				window.tick = function() {
+					Platform.tick();
+					window.requestAnimationFrame(window.tick);
+				}
+				window.tick();
 			}
-			window.tick();
 		}
 		
 	internal inline js void sendErrorToEditor: Error error
@@ -151,7 +149,7 @@ skipInit global unit Platform
 	toggleSmallScreen
 		isMobile = !isMobile;
 		setLocalStorageString("isMobile", isMobile ? "true" : "false")
-		Html.updateScale
+		Html.resize
 		refresh
 
 	inline js void setLocalStorageString: string key, string value
@@ -248,9 +246,9 @@ global transient unit System
 	// Prints a message to the console
 	global js void print: logstring text // The text, variables or expressions to print
 		                  SourceCodeLocation location
-		if(location && Platform.isDebug) {
+		if(Platform.isDebug) {
 			var stringValue = typeof text === "string" ? text : JSON.stringify(text);
-			if(stringValue) _sendToEditor({type:"log", value:stringValue, location:location.start, file:location.file});
+			if(stringValue) _sendToEditor({type:"log", value:stringValue, location:location?.start, file:location?.file});
 		} else {
 			console.log(text)
 		}
@@ -315,9 +313,6 @@ skipInit class Image
 	
 	toString := "url({Platform.basePath}{src})"
 	
-skipInit class Sound
-	string src
-	
 skipInit class Font
 	string name
 	string src
@@ -343,33 +338,28 @@ global unit Html
 	inline js Node get(string id) document.getElementById(id)
 	private inline js Node documentBody() document.body
 	
+	js Node getNodeAt(float x, float y) 
+		let node = document.elementFromPoint(x, y)
+		while(!node.id && node.parentElement)
+			node = node.parentElement
+		return node
+	
 	init
 		initHandlers
 	
 	js void initHandlers
-		document.onkeydown = ev => {
-			for(let listener of Html.keyDownListeners) {
-				if(ev.keyCode == listener.key) {
-					listener.do.invoke(ev.keyCode)
-					ev.preventDefault();
-					ev.stopPropagation();
-					return false;
-				}
-			}
+		window.onresize = e => {
+			Html.resize();
+			Html.refresh();
 		}
 
-	KeyListener[] keyDownListeners
-	
-	global onKeyDown: Key key
-		              stored void(Key key) do
-		keyDownListeners.add {key, do}
-	
 	internal js void reset
 		while(document.body.nextSibling) 
 			document.body.nextSibling.remove()
 		document.body.innerHTML = ""
+		input.clear
 	
-	internal js void updateScale
+	internal js void resize
 		let body = document.body
 		if(Platform.referenceSizes?.length > 0) {
 			let screenWidth = localStorage.getItem("isMobile") == "true" ? 0 : screen.width
@@ -399,18 +389,38 @@ global unit Html
 			body.style.marginBottom = `${-pullUp}px`
 			body.style.marginRight = `${-pullLeft}px`
 			body.className = Platform.isMobile ? "mobile" : ""
+			body.style.touchAction = "none"
 		} else {
 			Platform.isMobile = localStorage.getItem("isMobile") == "true"
 			Platform.scale = Platform.isDebug ? Platform.debugScale : 1
 			body.style.zoom = Platform.scale
 			body.style.font = "32px OpenSans"
 			body.className = Platform.isMobile ? "mobile" : ""
+			body.style.touchAction = "none"
 		}
 	
+	enableScrolling: bool value
+		let style = documentBody.style
+		if value
+			style.overflow = Visible
+			style.position = Static
+		else
+			style.overflow = Hidden
+			style.position = Fixed
+			style.top = {0}
+			style.bottom = {0}
+
 	private js void setDataAttributes: Node node, dynamic attributes
-		if(attributes)
-			for(let key in attributes)
-				node.setAttribute(key, attributes[key])
+		if(attributes) {
+			let shadowAttributes = node.shadowAttributes || (node.shadowAttributes = new Map)
+			for(let key in attributes) {
+				let value = attributes[key].toString();
+				if(shadowAttributes.get(key) != value) {
+					node.setAttribute(key, attributes[key]);
+					shadowAttributes.set(key, value);
+				}
+			}
+		}
 		
 	static js Style expandStyle: Style style
 		if(style.size) { 
@@ -493,7 +503,6 @@ global unit Html
 		parentNode = documentBody
 		currentNode = parentNode.firstChild
 		currentOverlay = documentBody.nextSibling
-		keyDownListeners.clear
 		app.render
 		while currentNode
 			let next = currentNode.nextSibling
@@ -508,6 +517,19 @@ global unit Html
 		// if not overlayNode
 		// 	overlayNode = div style:{position:Fixed top:0 left:0 right:0 bottom:0, backgroundColor:Black, opacity:.5}
 		// 	body.parentNode.appendChild overlayNode
+		
+	script: string src
+		let node = div tag:"script"
+		if !node.src.endsWith(src): node.src = src
+		node.onload = refresh
+		
+	css: string src
+		dynamic node = cast div tag:"link"
+		node.rel = "stylesheet" 
+		if !node.href.endsWith(src): node.href = Platform.basePath + src
+		
+	style: string text
+		return div tag:"style" text
 		
 	// Lays outs its children in a horizontal row				
 	global row: expand Attributes attributes = null // The attributes of the HTML element
@@ -556,11 +578,16 @@ global unit Html
 	global img: string src                        // The file of the image to display
 		        expand Attributes attributes = {} // The attributes of the HTML element
 		        expand Style style = null         // The css style of the HTML element
-		        dynamic data = null               // The data attributes of the element
 		        SourceCodeLocation location
-		let node = div tag:"img", attributes, style, data, location
-		node.src = src.startsWith("http") ? src : Platform.basePath + src
-		return node
+		return div tag:"img", attributes, style, data:{src:src.startsWith("http") or src.startsWith("data:") ? src : Platform.basePath + src}, location
+		
+	global img: string src                        // The file of the image to display
+		        expand Attributes attributes = {} // The attributes of the HTML element
+		        expand Style style = null         // The css style of the HTML element
+		        dynamic data                      // The data attributes of the element
+		        SourceCodeLocation location
+		data.src = src.startsWith("http") or src.startsWith("data:") ? src : Platform.basePath + src
+		return div tag:"img", attributes, style, data, location
 
 	global link: string text = null
 		         string href = "#"
@@ -606,10 +633,10 @@ global unit Html
 	//       src="http://dotlottieio.s3-website-us-east-1.amazonaws.com/sample_files/animation-external-image.lottie"
 	//       style="width: 320px;height:320px;"></dotlottie-player>
 	
-	global video: string src                        // The file of the video to display 
-		          expand Attributes attributes = {} // The attributes of the HTML element 
-		          expand Style style = {}           // The css style of the HTML element 
-		          SourceCodeLocation location
+	video: string src                        // The file of the video to display 
+		   expand Attributes attributes = {} // The attributes of the HTML element 
+		   expand Style style = {}           // The css style of the HTML element 
+		   SourceCodeLocation location
 		style.position = Absolute
 		style.zIndex = -1000
 		let element = div tag:"video", attributes, style, location, data:{src}
@@ -663,24 +690,48 @@ global unit Html
 		        SourceCodeLocation location
 		Node node, nextNode
 		string sourceLocation = location?.toString
+		string key = attributes?.key
 		
-		if !currentNode or (currentNode.tagName?.toLowerCase != tag or currentNode.sourceLocation != sourceLocation)
-			node = Node.create tag
-			nextNode = currentNode
-			if nextNode: parentNode.insertBefore node, nextNode
-			else         parentNode.appendChild node
-			nodesCreated++
-		else
-			node = currentNode
-			nextNode = currentNode.nextSibling
-			nodesUpdated++
+		if key
+			// If a key is specified, we store all nodes in a map on the parent object
+			if not parentNode.childrenByKey: parentNode.childrenByKey = {}
+			node = parentNode.childrenByKey[key]
+			if not node
+				// Create new node (with key)
+				node = Node.create tag
+				parentNode.childrenByKey[key] = node
+				nextNode = currentNode
+				if nextNode: parentNode.insertBefore node, nextNode
+				else         parentNode.appendChild node
+				nodesCreated++
+			else
+				// Resuse existing node (with key)
+				nextNode = currentNode ? currentNode.nextSibling : null
+				nodesUpdated++
+			node.used = true
+			
+		else	
+			if !currentNode or (currentNode.tagName?.toLowerCase != tag or currentNode.sourceLocation != sourceLocation)
+				// Create new node
+				node = Node.create tag
+				nextNode = currentNode
+				if nextNode: parentNode.insertBefore node, nextNode
+				else         parentNode.appendChild node
+				nodesCreated++
+			else
+				// Resuse existing node
+				node = currentNode
+				nextNode = currentNode.nextSibling
+				nodesUpdated++
 		
 		setStyle node, style
 		setDataAttributes node, data
 		
 		if attributes != null
-			if attributes.id != null:           node.id = attributes.id
-			if attributes.class != null:        node.class = attributes.class
+			if attributes.id and attributes.id != node.id:           node.id = attributes.id
+			if attributes.class and attributes.class != node.class:  node.class = attributes.class
+			if attributes.title and attributes.title != node.title:  node.title = attributes.title
+			
 			if attributes.onClick != null:      node.onclick = attributes.onClick
 			if attributes.onRightClick != null: node.oncontextmenu = attributes.onRightClick
 			if attributes.onKeyDown != null:    node.onkeydown = attributes.onKeyDown
@@ -690,25 +741,40 @@ global unit Html
 		node.sourceLocation = sourceLocation
 		if onHover != null
 			Style unHover = getStyleToRevert originalStyle:style, onHover
-			node.onmouseover = setStyle(node, onHover)
-			node.onmouseout  = setStyle(node, unHover)
+			node.onpointerover = setStyle(node, onHover)
+			node.onpointerout  = setStyle(node, unHover)
 		
 		if text != null
 			if node.shadowInnerHtml != text
 				node.innerHTML = text
 				node.shadowInnerHtml = text
 		else
-			node.shadowInnerHtml = null	
+		if children != null or node.hasChildren
+			node.shadowInnerHtml = null
 			let prevParentNode = parentNode
 			parentNode = node
 			currentNode = node.firstChild
+			if parentNode.childrenByKey
+				for parentNode.childrenByKey
+					.used = false
 			children()
-			while currentNode
-				let next = currentNode.nextSibling
-				currentNode.remove
-				currentNode = next
+			
+			// Remove all children that are no longer used
+			if parentNode.childrenByKey
+				// If the children have keys, removed all nodes that are not marked as "used"
+				for parentNode.childrenByKey
+					if not .used
+						.remove
+						parentNode.childrenByKey.remove key
+			else
+				// If the chidren don't have keys, remove all remaining nodes, that haven't been reused
+				while currentNode
+					let next = currentNode.nextSibling
+					currentNode.remove
+					currentNode = next
 			parentNode = prevParentNode
 			
+		node.hasChildren = children != null
 		currentNode = nextNode
 		return node
 		
@@ -822,7 +888,7 @@ global unit Html
 	int focusTabIndex = 0
 	
 	// Automatic Text Input: Updates the model automatically in with every keystroke
-	global inline void input: string model = ""                 // The variable that holds the value. This will be updated when the user changed the text
+	global inline void field: string model = ""                 // The variable that holds the value. This will be updated when the user changed the text
 		                      bool focused = false              // Whether the cursor should be placed in the field
 		                      expand Attributes attributes = {} // The attributes of the HTML element
 		                      expand Style style = null         // The css style of the HTML element
@@ -835,7 +901,7 @@ global unit Html
 		if focused: node.focus
 		
 	// Automatic Text Input: Updates the model automatically in with every keystroke
-	global inline void input: string model = ""                 // The variable that holds the value. This will be updated when the user changed the text
+	global inline void field: string model = ""                 // The variable that holds the value. This will be updated when the user changed the text
 		                      bool focused = false              // Whether the cursor should be placed in the field
 		                      inline void() onEnter = null      // Called when the user presses the enter key
 		                      expand Attributes attributes = {} // The attributes of the HTML element
@@ -849,7 +915,7 @@ global unit Html
 		if focused or focusTabIndex == attributes.tabIndex: node.focus
 		
 	// Manual Text Input: If you specify a onChange handler, the model won't be updated automatically
-	global inline void input: string model = ""                  // The variable that holds the value. This will be updated when the user changed the text
+	global inline void field: string model = ""                  // The variable that holds the value. This will be updated when the user changed the text
 		                      bool focused = false               // Whether the cursor should be placed in the field
 		                      inline void(string value) onChange // If you specify a onChange handler, the model won't be updated automatically
 		                      expand Attributes attributes = {}  // The attributes of the HTML element
@@ -862,18 +928,41 @@ global unit Html
 		if realtime: node.oninput = onChange(node.value); changeHandler
 		else         node.onchange = onChange(node.value); changeHandler
 		if focused or focusTabIndex == attributes.tabIndex: node.focus
+			
+	fileInput: string accept = "image/*"
+		       string capture = "environment"
+		       void(Node node) onChange = null
+		       expand Style style = null
+		       SourceCodeLocation location
+		let node = div tag:"input", data:{type:"file" accept capture}, style, location
+		node.onchange = onChange(node)
+		return node
+		
+	js Promise<string> getDataUrlForFile: File file
+		return new Promise((resolve, reject) => {
+			const reader = new FileReader();
+			reader.onload = e => resolve(e.target.result);
+			reader.readAsDataURL(file);	
+		})
 	
 	// Automatic Editable Text: Updates the model automatically in with every keystroke
-	global inline void editableText: string model = ""                 // The variable that holds the value. This will be updated when the user changed the text
-		                             expand Attributes attributes = {} // The attributes of the HTML element
-		                             expand Style style = null         // The css style of the HTML element
-		                             dynamic data = {}                 // The data attributes of the element
+	global inline void editableText: string model = ""                          // The variable that holds the value. This will be updated when the user changed the text
+		                             inline void(string value) onChanged = null // Called after the model changed
+		                             expand Attributes attributes = {}          // The attributes of the HTML element
+		                             expand Style style = null                  // The css style of the HTML element
+		                             dynamic data = {}                          // The data attributes of the element
+		                             bool realtime = false                      // Should onChange be called with every keystroke?
 		                             SourceCodeLocation location
 		stored void() changeHandler = currentChangeHandler
 		let node = div attributes, style, data, location
-		node.innerText = model
+		if model != node.innerText: node.innerText = model
 		node.contentEditable = "plaintext-only"
-		node.oninput = model = node.innerText; changeHandler
+		let prevModel = model
+		if realtime
+			node.oninput = model = node.innerText; onChanged(model); changeHandler
+		else         
+			node.onblur = model = node.innerText; if model != prevModel: onChanged(model); changeHandler
+		if focusTabIndex == attributes.tabIndex: node.focus
 
 	// Automatic Text Area: Updates the model automatically in with every keystroke
 	global inline void textarea: string model = ""                 // The variable that holds the value. This will be updated when the user changed the text

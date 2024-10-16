@@ -29,7 +29,7 @@ immutable struct int
 	// The smallest possible integer value
 	const minValue = -2147483648
 	
-	// Indicates that the variable isn't defined at all, useful for importet data (e.g  from JSON)
+	// Indicates that the variable isn't defined at all, useful for imported data (e.g. from JSON)
 	const inline js int undefined := undefined
 	
 	// The remainer after a division by the given value. The sign stays the same.
@@ -203,7 +203,7 @@ immutable struct float
 	// The smallest possible floating point value
 	const inline js float minValue := -Number.MAX_VALUE
 	
-	// Indicates that the variable isn't defined at all, useful for importet data (e.g  from JSON)
+	// Indicates that the variable isn't defined at all, useful for imported data (e.g. from JSON)
 	const inline js int undefined := undefined
 	
 	// Positiv infinity
@@ -343,6 +343,9 @@ immutable class string
 	inline Time toTime() Time.fromTimeString(this)
 		
 	inline js int parseInt(int radix) parseInt(this, radix)
+	
+	// Indicates that the variable isn't defined at all, useful for imported data (e.g. from JSON)
+	const inline js string undefined := undefined
 	
 	// Splits the string at the given character into a list of substrings
 	inline js string[] split: string seperator = "," // Separate the string at this character
@@ -1573,7 +1576,7 @@ class Map<TKey, TValue>
 		this.set(key, this.get(key)-1)
 		
 	// Remove the item assosiated with the given key
-	inline js void delete: TKey key  // The key of the item to remove from the map
+	inline js void remove: TKey key  // The key of the item to remove from the map
 		this.delete(key)
 		
 	// Remove all items from the map
@@ -2028,13 +2031,17 @@ global skipInit unit math
 	inline js float sign: float value
 		Math.sign(value)
 		
-	// Returns the smallest integer greater than or equal to the given value 
-	inline js int ceil: float value // The value to round up
-		Math.ceil(value)
+	// Returns the positive square root of the given value
+	inline js float sqrt: float value // The value to return the square root of
+		Math.sqrt(value)
 		
-	// Returns the smallest integer greater than or equal to the given value 
-	inline js Time ceil: Time value // The value to round up
-		Math.ceil(value)
+	moveTowards: float value
+		         float targetValue
+		         float speed = 1
+		if targetValue > value: return math.min(value + speed, targetValue) else
+		if targetValue < value: return math.max(value - speed, targetValue)
+		
+	// ------------------------------------------------------- floor, ceil, round -------------------------------------------------------
 		
 	// Returns the largest integer less than or equal to the given value
 	inline js int floor: float value // The value to round down
@@ -2044,6 +2051,15 @@ global skipInit unit math
 	inline js Time floor: Time value // The value to round down
 		Math.floor(value)
 		
+	
+	// Returns the smallest integer greater than or equal to the given value 
+	inline js int ceil: float value // The value to round up
+		Math.ceil(value)
+		
+	// Returns the smallest integer greater than or equal to the given value 
+	inline js Time ceil: Time value // The value to round up
+		Math.ceil(value)
+		
 	// Returns the given value rounded to the nearest integer
 	inline js int round: float value // The value to round
 		Math.round(value)
@@ -2052,6 +2068,8 @@ global skipInit unit math
 	inline js Time round: Time value // The angle to round
 		Math.round(value)
 		
+	// ------------------------------------------------------- min, max -------------------------------------------------------
+	
 	inline js int min: int a // The first value
 		               int b // The second value
 		Math.min(a, b)
@@ -2076,29 +2094,38 @@ global skipInit unit math
 		                Time b // The second time
 		Math.max(a, b)
 		
-	// Returns the positive square root of the given value
-	inline js float sqrt: float value // The value to return the square root of
-		Math.sqrt(value)
+	// ------------------------------------------------------- Trigonometry in radians -------------------------------------------------------
+	
+	// Returns the sine of an angle in radians
+	internal inline js float radianSin: float angle // The angle in radians
+		Math.sin(angle)
 		
-	inline js float pow: float base
-		                 float exponent
-		Math.pow(base, exponent)
-		
-	inline js float exp: float exponent
-		Math.exp(exponent)
-		
-	internal inline js float nativeCos: float angle // The angle in radians
+	// Returns the cosine of an angle in radians
+	internal inline js float radianCos: float angle // The angle in radians
 		Math.cos(angle)
 		
-	internal inline js float nativeTan: float angle // The angle in radians
+	// Returns the tangent of an angle in radians
+	internal inline js float radianTan: float angle // The angle in radians
 		Math.tan(angle)
 		
-	internal inline js float nativeAcos: float angle // The angle in radians
-		Math.acos(angle)
+	// Returns the inverse sine in radians
+	internal inline js float radianAsin: float value
+		Math.asin(value)
 		
-	internal inline js float nativeAtan2: float y, float x
+	// Returns the inverse cosine in radians
+	internal inline js float radianAcos: float value
+		Math.acos(value)
+		
+	// Returns the inverse tangent in radians
+	internal inline js float radianAtan: float value
+		Math.atan(value)
+		
+	// Returns the inverse tangent in radians
+	internal inline js float radianAtan2: float y, float x
 		Math.atan2(y,x)
 		
+	// ------------------------------------------------------- Trigonometry in turns -------------------------------------------------------
+	
 	// Returns the sine of an angle in turns
 	sin: Angle angle // The angle in turns (one full rotation is 1)
 	    float result = cast(angle - .5 - math.floor(angle))
@@ -2130,9 +2157,32 @@ global skipInit unit math
 		angle += (.03124211533 * r * r - .1562424076) * r;
 		if y < 0.0: return cast -angle
 		else        return cast angle
+		
+	// ------------------------------------------------------- log, pow, exp -------------------------------------------------------
+	
+	// e raised to which power resuls in the given value?
+	inline js float log: float value
+		Math.log(value)
+		
+	// 2 raised to which power resuls in the given value?
+	inline js float log2: float value
+		Math.log2(value)
+		
+	// 10 raised to which power resuls in the given value?
 	inline js float log10: float value
 		Math.log10(value)
 		
+	// Return the given base raised to the power of the given exponent
+	inline js float pow: float base
+		                 float exponent
+		Math.pow(base, exponent)
+		
+	// Returns e raised to the power of a given number
+	inline js float exp: float exponent
+		Math.exp(exponent)
+		
+	// ------------------------------------------------------- Bit shifts -------------------------------------------------------
+	
 	inline js int shiftLeft: int value
 		                     int count
 		(value << count)
@@ -2140,13 +2190,9 @@ global skipInit unit math
 	inline js int shiftRight: int value
 		                      int count
 		(value >> count)
-		
-	moveTowards: float value
-		         float targetValue
-		         float speed = 1
-		if targetValue > value: return math.min(value + speed, targetValue) else
-		if targetValue < value: return math.max(value - speed, targetValue)
 			
+	// ------------------------------------------------------- Limit -------------------------------------------------------
+	
 	limit: int value
 		   int min
 		   int max
