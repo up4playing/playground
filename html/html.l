@@ -636,6 +636,10 @@ class BoxShadow
 	
 	toString := "{inset ? "inset ":""}{offset.x}{offset.unit} {offset.y}{offset.unit} {blur} {spread} {color}"
 	
+enum lowercase string PointerEvents
+	None // On its own, it doesn't trigger pointer event, but its subtree could by setting pointerEvents 
+	Auto // The element behaves as it would if the pointerEvents property were not specified
+	
 dynamic Style
 	AlignItems alignItems // Align the individual items along the cross axis
 	AlignContent alignContent // When wrapping, align the whole content along the cross axis
@@ -827,6 +831,7 @@ dynamic Style
 	string widows // The minimum number of lines for an element that must be visible at the top of a page
 	int zIndex // The stack order of a positioned element
 	string gridTemplateColumns // The line names and track sizing functions of the grid columns
+	PointerEvents pointerEvents
 	
 	Vector2 translate // Move the element by this vector
 	implicit Angle rotate // Rotate the element by this angle
