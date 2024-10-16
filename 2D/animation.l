@@ -100,7 +100,42 @@ global unit fx
 				
 	global defer: stored void() do
 		add DelayAnimation startTime:Time.now, do
+		
+struct float
+	// Animate the float to a target value over a given period of time	
+	inline animateTo: float target        // The target value to animate to
+		              Time delay = 0      // The delay before the animation starts
+		              Time duration = 300 // The duration of the animation
+		fx.interpolate this, target, delay, duration, this = .
 	
+	// Animate the float to a target value over a given period of time	
+	inline animateTo: float target        // The target value to animate to
+		              Time delay = 0      // The delay before the animation starts
+		              Time duration = 300 // The duration of the animation
+		              EaseFunction ease   // The easing function to apply
+		fx.interpolate this, target, delay, duration, ease, this = .
+		
+struct Vector2
+	// Animate the vector to a target vector over a given period of time
+	inline animateTo: Vector2 target      // The target vector to animate to
+		              Time delay = 0      // The delay before the animation starts
+		              Time duration = 300 // The duration of the animation
+		fx.interpolate this, target, delay, duration, this.x = .x; this.y = .y
+
+	// Animate the vector to a target vector over a given period of time
+	inline animateTo: Vector2 target      // The target vector to animate to
+		              Time delay = 0      // The delay before the animation starts
+		              Time duration = 300 // The duration of the animation
+		              EaseFunction ease   // The easing function to apply
+		fx.interpolate this, target, delay, duration, ease, this.x = .x; this.y = .y
+		
+Color
+	// Animate the color to a target vector over a given period of time
+	inline animateTo: Color target        // The target color to animate to
+		              Time delay = 0      // The delay before the animation starts
+		              Time duration = 300 // The duration of the animation
+		fx.interpolate this, target, delay, duration, this = .
+
 transient global skipInit unit audio
 	global playSound: Sound sound
 		              Time delay = 0

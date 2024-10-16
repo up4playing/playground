@@ -67,19 +67,6 @@ struct float
 		                        EaseFunction ease // The easing function to apply (e.g InQuad, OutBack, ...)
 		math.map(progress, from:0, to:1, start:this, target, ease)
 	
-	// Animate the float to a target value over a given period of time	
-	inline animateTo: float target        // The target value to animate to
-		              Time delay = 0      // The delay before the animation starts
-		              Time duration = 300 // The duration of the animation
-		fx.interpolate this, target, delay, duration, this = .
-	
-	// Animate the float to a target value over a given period of time	
-	inline animateTo: float target        // The target value to animate to
-		              Time delay = 0      // The delay before the animation starts
-		              Time duration = 300 // The duration of the animation
-		              EaseFunction ease   // The easing function to apply
-		fx.interpolate this, target, delay, duration, ease, this = .
-
 struct Vector2
 	// Interpolates to another vector
 	interpolateTo: Vector2 target  // The target position to interpolate to
@@ -142,18 +129,18 @@ struct Vector2
 		let factor = ease.function((progress-from) / (to-from))
 		return new Vector2(x + (target.x-x)*factor, y + (target.y-y)*factor)
 		
-	// Animate the vector to a target vector over a given period of time
-	inline animateTo: Vector2 target      // The target vector to animate to
-		              Time delay = 0      // The delay before the animation starts
-		              Time duration = 300 // The duration of the animation
-		fx.interpolate this, target, delay, duration, this.x = .x; this.y = .y
-
-	// Animate the vector to a target vector over a given period of time
-	inline animateTo: Vector2 target      // The target vector to animate to
-		              Time delay = 0      // The delay before the animation starts
-		              Time duration = 300 // The duration of the animation
-		              EaseFunction ease   // The easing function to apply
-		fx.interpolate this, target, delay, duration, ease, this.x = .x; this.y = .y
+Color
+	// Interpolates to another color
+	Color interpolateTo: Color target
+		                 float progress
+		if progress <= 0: return this
+		if progress >= 1: return target
+		let iprogress = 1 - progress
+		return {
+			math.floor(red   * iprogress + target.red   * progress)
+			math.floor(green * iprogress + target.green * progress)
+			math.floor(blue  * iprogress + target.blue  * progress)
+		}
 
 global skipInit unit math
 	// Maps a value from an input range to an output range
