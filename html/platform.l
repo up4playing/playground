@@ -241,7 +241,7 @@ skipInit global unit Platform
 	js async Vector2 getCurrentPosition: enableHighAccuracy = true
 		return new Promise((resolve, reject) => {
 			navigator.geolocation.getCurrentPosition(pos => {
-				resolve(new Vector2(pos.coords.longitude, pos.coords.latitude, "geolocation"))
+				resolve(new Vector2(pos.coords.longitude, pos.coords.latitude, "geo"))
 			}, error => {
 				reject(error)
 			}, {enableHighAccuracy})
