@@ -33,7 +33,7 @@ Collection<T>
 	async inline js void remove: T item
 		pocketBase.pb.collection(this.name).delete(item.id)
 		
-	async js void upload: T item, string fileFieldName = "image", File[] files
+	async js void upload: T item, string fileFieldName = "images", File[] files
 		const formData = new FormData();
 		for(let key in item) {
 			if(key != fileFieldName) {
