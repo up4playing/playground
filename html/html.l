@@ -770,7 +770,7 @@ dynamic Style
 	float opacity // The opacity level for an element
 	string order // The order of the flexible item, relative to the rest
 	string orphans // The minimum number of lines that must be left at the bottom before a page-break
-	string outline // All the outline properties in one declaration
+	Border outline // All the outline properties in one declaration
 	Color outlineColor // The color of the outline around a element
 	string outlineOffset // Offsets an outline, and draws it beyond the border edge
 	string outlineStyle // The style of the outline around an element
