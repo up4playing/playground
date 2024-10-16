@@ -204,6 +204,10 @@ skipInit global unit Platform
 	global inline js int clearInterval: int handle
 		clearInterval(handle)
 		
+	js object stack
+		try      { _ }
+		catch(e) { return e.stack }
+		
 	inline js void debugger() debugger
 	
 	global js void onNavigate: void(string url) do
