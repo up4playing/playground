@@ -5,6 +5,12 @@ http
 		let result = await (await fetch(url)).json()
 		do(result)
 		
+	js async any get: string url
+		return (await fetch(url)).json()
+		
+	js async any getText: string url
+		return (await fetch(url)).text()
+		
 	js void getFile: string url
 		             void(dynamic result) do = null
 		let result = await (await fetch("file://"+url)).json()
