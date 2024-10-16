@@ -47,7 +47,12 @@ Collection<T>
 		for(let file of files) {
 			formData.append(fileFieldName, file);
 		}
-		let newItem = await pocketBase.pb.collection(this.name).create(formData);
-		item.id = newItem.id;
+		let newItem
+		if(item.id) {
+			newItem = await pocketBase.pb.collection(this.name).update(item.id, formData)
+		} else {
+			newItem = await pocketBase.pb.collection(this.name).create(formData);
+			item.id = newItem.id;
+		}
 		item[fileFieldName] = newItem[fileFieldName]
 		return newItem;
