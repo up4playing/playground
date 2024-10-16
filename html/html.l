@@ -191,6 +191,8 @@ enum Unit
 	DynamicViewportWidth = "dvw" // 1% of the dynamic viewport's width (with the address bar on mobile if visible)
 	DynamicViewportHeight = "dvh" // 1% of the dynamic viewport's height (with the address bar on mobile if visible)
 		
+	GeoLocation = "geolocation" // A geographic location on earth (x:longitude, y:latitude)
+	
 	Auto = "auto"
 	None = "none"
 	
