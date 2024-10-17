@@ -847,10 +847,10 @@ dynamic Attributes
 	string key   // A unique identifier used to find the node that should be reused
 	string title
 	
-	native void(HtmlEvent ev) onClick = null         // Execute this code when the user clicks the HTML element
-	native void(HtmlEvent ev) onRightClick = null    // Execute this code when the user clicks the HTML element with the right mouse button
-	native void(dynamic ev) onKeyDown = null         // Execute this code when the user presses a key on the keyboard
-	native void(dynamic ev) onKeyUp = null           // Execute this code when the user releases a key on the keyboard
+	native void() onClick = null             // Execute this code when the user clicks the HTML element
+	native void() onRightClick = null        // Execute this code when the user clicks the HTML element with the right mouse button
+	native void(dynamic ev) onKeyDown = null // Execute this code when the user presses a key on the keyboard
+	native void(dynamic ev) onKeyUp = null   // Execute this code when the user releases a key on the keyboard
 	
 	// native void(PointerEvent ev) onTouchDown = null  // Execute this code when a touch or click starts
 	// native void(PointerEvent ev) onTouchMove = null  // Execute this code when a touch or clicks moves
