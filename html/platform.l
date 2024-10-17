@@ -191,6 +191,9 @@ skipInit global unit Platform
 		                  void() do
 		setTimeout(do, time)
 		
+	global inline js async void delay: Time time
+		new Promise(resolve => setTimeout(resolve, time))
+		
 	inline js void onBlur: void() do
 		window.onblur = do
 		
