@@ -326,8 +326,9 @@ class Color
 skipInit class Image
 	string previewSrc
 	string src
+	string basePath = Platform.basePath
 	
-	toString := "url({Platform.basePath}{src})"
+	toString := "url({basePath}{src})"
 	
 skipInit class Font
 	string name
