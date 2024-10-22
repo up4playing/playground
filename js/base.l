@@ -1606,6 +1606,8 @@ interface any
 
 // The base class for all classes
 interface object
+	static inline js any undefined() undefined
+	
 	inline js bool toBool() (this != null)
 	// inline js string toString() object_stringify(this, 3)
 		
