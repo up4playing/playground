@@ -200,11 +200,14 @@ class DirEntry
 	bool isDirectory()
 				
 unit File
-	js async void save: string file, string data
-		require('fs').promises.writeFile(file, data, "utf8")
+	js async void write: string file, string data, string encoding = null
+		require('fs').promises.writeFile(file, data, encoding)
 
-	js async string open: string file
-		return require('fs').promises.readFile(file)
+	js async string read: string file, string encoding = null
+		return require('fs').promises.readFile(file, encoding)
+		
+	js async bool delete: string file
+		return require('fs').promises.rm(file)
 		
 	js async DirEntry[] listEntries: string path, bool recursive
 		return require('fs').promises.readdir(path, {recursive: recursive, withFileTypes: true})
@@ -212,11 +215,14 @@ unit File
 	js async dynamic getInfo: string file
 		return require('fs').promises.stat(file)
 		
-	js void createDirectory: string file
-		return require('fs').mkdirSync(file)
+	js void createDirectory: string file, bool recursive = true
+		return require('fs').mkdirSync(file, {recursive})
 		
 	js bool exists: string filename
 		return require('fs').existsSync(filename)
+		
+	js string getDirectoryName: string file
+		return require('path').dirname(file)
 
 		
 unit websocket
