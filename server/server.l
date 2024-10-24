@@ -192,16 +192,32 @@ class Response
 	inline js void sendText(string result, int code = 200, filename = "") this.writeHead(code, {'Content-Type': http.contentTypeMap[filename.getExtension()] || "text/plain; charset=utf-8"}); response.end(result);
 	inline js void send(ensureSingleExecution any result, int code = 200) if(result) { if(typeof result == "string") {this.writeHead(code, {"Content-Type": "text/plain; charset=utf-8"}); response.end(result);} else {this.writeHead(code, {"Content-Type": "application/json; charset=utf-8"}); response.end(JSON.stringify(result)); }}
 	inline js void redirect(string url, int code = 302) this.writeHead(code, {Location: url}); response.end();
-		
+	
+class DirEntry
+	string parentPath
+	string name
+	bool isFile()
+	bool isDirectory()
+				
 unit File
-	js void save: string file, string data, void() success
-		require('fs').writeFile(file, data, "utf8", () => success())
+	js async void save: string file, string data
+		require('fs').promises.writeFile(file, data, "utf8")
 
-	js void open: string file, void(string fileContent) then, void(string error) else
-		require('fs').readFile(file, (error, fileContent) => {
-			if(error) else(error)
-			else      then(fileContent)
-		})
+	js async string open: string file
+		return require('fs').promises.readFile(file)
+		
+	js async DirEntry[] listEntries: string path, bool recursive
+		return require('fs').promises.readdir(path, {recursive: recursive, withFileTypes: true})
+
+	js async dynamic getInfo: string file
+		return require('fs').promises.stat(file)
+		
+	js void createDirectory: string file
+		return require('fs').mkdirSync(file)
+		
+	js bool exists: string filename
+		return require('fs').existsSync(filename)
+
 		
 unit websocket
 	js void startWebsocketServer: int port
