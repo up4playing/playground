@@ -663,8 +663,16 @@ global unit Html
 	global iframe: string src                        // The url of the content to display
 		           expand Attributes attributes = {} // The attributes of the HTML element
 		           expand Style style = null         // The css style of the HTML element
-		           dynamic data = null               // The data attributes of the element
+		           dynamic data = {}                 // The data attributes of the element
+		           int frameborder = 0
+		           string allow = ""
+		           string referrerpolicy = ""
+		           bool allowfullscreen = true
 		           SourceCodeLocation location
+		data.frameborder = frameborder
+		data.allow = allow
+		data.referrerpolicy = referrerpolicy
+		data.allowfullscreen = allowfullscreen
 		let node = div tag:"iframe", attributes, style, data, location
 		if node.src != src: node.src = src
 		return node
