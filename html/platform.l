@@ -989,6 +989,27 @@ global unit Html
 			node.onblur = model = node.innerText; if model != prevModel: onChanged(model); changeHandler
 		if focusTabIndex == attributes.tabIndex: node.focus
 
+	// Automatic Editable Text: Updates the model automatically in with every keystroke
+	global inline void editableText: string model = ""                          // The variable that holds the value. This will be updated when the user changed the text
+		                             inline void(string value) onChanged = null // Called after the model changed
+		                             inline void() onClick = null
+		                             expand Attributes attributes = {}          // The attributes of the HTML element
+		                             expand Style style = null                  // The css style of the HTML element
+		                             dynamic data = {}                          // The data attributes of the element
+		                             bool realtime = false                      // Should onChange be called with every keystroke?
+		                             SourceCodeLocation location
+		stored void() changeHandler = currentChangeHandler
+		let node = div attributes, style, data, location
+		if model != node.innerText: node.innerText = model
+		node.onclick = onClick
+		node.contentEditable = "plaintext-only"
+		let prevModel = model
+		if realtime
+			node.oninput = model = node.innerText; onChanged(model); changeHandler
+		else         
+			node.onblur = model = node.innerText; if model != prevModel: onChanged(model); changeHandler
+		if focusTabIndex == attributes.tabIndex: node.focus
+
 	// Automatic Text Area: Updates the model automatically in with every keystroke
 	global inline void textarea: string model = ""                 // The variable that holds the value. This will be updated when the user changed the text
 		                         bool focused = false              // Whether the cursor should be placed in the field
