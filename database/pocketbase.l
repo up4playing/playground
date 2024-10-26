@@ -23,12 +23,15 @@ Collection<T>
 		return pocketBase.pb.collection(this.name).getFullList()
 		
 	async T add: T item
-		any newRecord = pocketBase.pb.collection(this.name).create(item)
+		any newRecord = await pocketBase.pb.collection(this.name).create(item)
 		any anyItem = cast item
 		anyItem.id = newRecord.id
 		
-	async inline js void update: T item
+	async inline js T update: T item
 		pocketBase.pb.collection(this.name).update(item.id, item)
+		
+	async inline js T update: string id, dynamic item
+		pocketBase.pb.collection(this.name).update(id, item)
 		
 	async inline js void remove: T item
 		pocketBase.pb.collection(this.name).delete(item.id)
