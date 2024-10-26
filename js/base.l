@@ -21,7 +21,7 @@ immutable struct int
 		Math.pow(this, value)
 		
 	inline js int % ensureSingleExecution int value
-		((this % value) + value) % value
+		(((this % value) + value) % value)
 		
 	// The largest possible integer value
 	const maxValue = 2147483647
@@ -195,7 +195,7 @@ immutable struct float
 		Math.pow(this, value)
 		
 	inline js float % ensureSingleExecution float value
-		((this % value) + value) % value
+		(((this % value) + value) % value)
 		
 	// The largest possible floating point value
 	const inline js float maxValue := Number.MAX_VALUE
