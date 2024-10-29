@@ -253,6 +253,11 @@ struct Vector2
 	// A vector with the sign of each coordinate flipped
 	inverse := Vector2(-x, -y)
 		
+	// A vector that points in the same direction, but has a length of 1
+	normalized
+		let len = math.sqrt(x * x + y * y)
+		return len != 0 ? Vector2(x / len, y / len) : Vector2(0, 0)
+		
 	// The distance to another vector
 	distanceTo: Vector2 value // The second vector
 		let x = x - value.x
