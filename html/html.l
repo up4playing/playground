@@ -130,6 +130,12 @@ class Node
 	inline js void captureTouch(Touch touch) this.setPointerCapture(touch.id)
 		
 File
+	Time lastModified
+	string lastModifiedDate
+	string name
+	string path
+	int size
+	string type
 	
 enum lowercase string PointerType: Mouse, Pen, Touch
 	
