@@ -259,6 +259,7 @@ MenuItem
 	string type = null
 	string role = null
 	MenuItem[] submenu = null
+	bool checked
 	
 global transient unit System
 	// Prints a message to the console
