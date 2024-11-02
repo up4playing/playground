@@ -67,6 +67,8 @@ skipInit global unit Platform
 			openMedia
 				try
 					stop
+					// We need to call resize again after the first refresh to prevent unwanted scrolling
+					Html.resize
 					startTickInterval
 				catch 
 					sendErrorToEditor .
