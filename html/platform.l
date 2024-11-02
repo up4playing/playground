@@ -959,10 +959,13 @@ global unit Html
 			
 	fileInput: string accept = "image/*"
 		       string capture = "environment"
+		       bool multiple = false
 		       void(Node node) onChange = null
 		       expand Style style = null
 		       SourceCodeLocation location
-		let node = div tag:"input", data:{type:"file" accept capture}, style, location
+		dynamic data = {type:"file" accept capture}
+		if multiple: data.multiple = true
+		let node = div tag:"input", data, style, location
 		node.onchange = onChange(node)
 		return node
 		
