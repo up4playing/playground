@@ -130,6 +130,12 @@ class Node
 	inline js void captureTouch(Touch touch) this.setPointerCapture(touch.id)
 		
 File
+	Time lastModified
+	string lastModifiedDate
+	string name
+	string path
+	int size
+	string type
 	
 enum lowercase string PointerType: Mouse, Pen, Touch
 	
@@ -252,6 +258,11 @@ struct Vector2
 		
 	// A vector with the sign of each coordinate flipped
 	inverse := Vector2(-x, -y)
+		
+	// A vector that points in the same direction, but has a length of 1
+	normalized
+		let len = math.sqrt(x * x + y * y)
+		return len != 0 ? Vector2(x / len, y / len) : Vector2(0, 0)
 		
 	// The distance to another vector
 	distanceTo: Vector2 value // The second vector

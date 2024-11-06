@@ -21,7 +21,7 @@ immutable struct int
 		Math.pow(this, value)
 		
 	inline js int % ensureSingleExecution int value
-		((this % value) + value) % value
+		(((this % value) + value) % value)
 		
 	// The largest possible integer value
 	const maxValue = 2147483647
@@ -195,7 +195,7 @@ immutable struct float
 		Math.pow(this, value)
 		
 	inline js float % ensureSingleExecution float value
-		((this % value) + value) % value
+		(((this % value) + value) % value)
 		
 	// The largest possible floating point value
 	const inline js float maxValue := Number.MAX_VALUE
@@ -1011,14 +1011,30 @@ class List<T>
 	inline js T find: bool(T a) condition // The condition to check
 		this.find(condition)
 		
+	inline js T find: backwards bool(T a) condition // The condition to check
+		this.findLast,(condition)
+		
 	inline js T find: bool(T a) condition // The condition to check
 		              int startIndex      // Start searching at this index
 		Array.findStartingAtIndex(this, condition, startIndex)
+		
+	inline js T find: backwards bool(T a) condition // The condition to check
+		              int startIndex                // Start searching at this index
+		Array.findLastStartingAtIndex(this, condition, startIndex)
 		
 	private static T findStartingAtIndex: T[] list            // The list to search
 		                                  bool(T a) condition // The condition to check
 		                                  int startIndex = 0  // Start searching at this index
 		for startIndex to list.length
+			let it = list[.]
+			if condition(it)
+				return it
+		return null
+	
+	private static T findLastStartingAtIndex: T[] list            // The list to search
+		                                      bool(T a) condition // The condition to check
+		                                      int startIndex = 0  // Start searching at this index
+		for startIndex+1 backwards
 			let it = list[.]
 			if condition(it)
 				return it
@@ -1040,17 +1056,6 @@ class List<T>
 			if condition(this[.])
 				return true
 		return false
-		
-	// Find the last item in the list the meets the given condition
-	// Example: Find a player with a specific id
-	//     app
-	//         getLastActivePlayer
-	//             return players.findLast.active
-	T findLast: bool(T a) condition // The condition to check
-		for this <-
-			if condition(.)
-				return .
-		return null
 		
 	// Find the index of the item the meets the given condition
 	int indexWhere: bool(T a) condition // The condition to check

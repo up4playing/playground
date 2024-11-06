@@ -67,6 +67,8 @@ skipInit global unit Platform
 			openMedia
 				try
 					stop
+					// We need to call resize again after the first refresh to prevent unwanted scrolling
+					Html.resize
 					startTickInterval
 				catch 
 					sendErrorToEditor .
@@ -257,6 +259,7 @@ MenuItem
 	string type = null
 	string role = null
 	MenuItem[] submenu = null
+	bool checked
 	
 global transient unit System
 	// Prints a message to the console
@@ -515,7 +518,7 @@ global unit Html
 	int nodesUpdated
 	
 	global void refresh
-		Time.startTimer
+		// Time.startTimer
 		nodesCreated = nodesUpdated = 0
 		parentNode = documentBody
 		currentNode = parentNode.firstChild
@@ -530,7 +533,7 @@ global unit Html
 			currentOverlay.remove
 			currentOverlay = next
 		focusTabIndex = int.minValue
-		Time.printTimer "refresh: {nodesCreated} created, {nodesUpdated} updated"
+		// Time.printTimer "refresh: {nodesCreated} created, {nodesUpdated} updated"
 		// if not overlayNode
 		// 	overlayNode = div style:{position:Fixed top:0 left:0 right:0 bottom:0, backgroundColor:Black, opacity:.5}
 		// 	body.parentNode.appendChild overlayNode
@@ -663,8 +666,16 @@ global unit Html
 	global iframe: string src                        // The url of the content to display
 		           expand Attributes attributes = {} // The attributes of the HTML element
 		           expand Style style = null         // The css style of the HTML element
-		           dynamic data = null               // The data attributes of the element
+		           dynamic data = {}                 // The data attributes of the element
+		           int frameborder = 0
+		           string allow = ""
+		           string referrerpolicy = ""
+		           bool allowfullscreen = true
 		           SourceCodeLocation location
+		data.frameborder = frameborder
+		data.allow = allow
+		data.referrerpolicy = referrerpolicy
+		data.allowfullscreen = allowfullscreen
 		let node = div tag:"iframe", attributes, style, data, location
 		if node.src != src: node.src = src
 		return node
@@ -948,10 +959,13 @@ global unit Html
 			
 	fileInput: string accept = "image/*"
 		       string capture = "environment"
+		       bool multiple = false
 		       void(Node node) onChange = null
 		       expand Style style = null
 		       SourceCodeLocation location
-		let node = div tag:"input", data:{type:"file" accept capture}, style, location
+		dynamic data = {type:"file" accept capture}
+		if multiple: data.multiple = true
+		let node = div tag:"input", data, style, location
 		node.onchange = onChange(node)
 		return node
 		
