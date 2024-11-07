@@ -123,11 +123,15 @@ enum TouchType: Left, Middle, Right, Touch, Pen
 
 // A touch or a click
 class Touch
-	int id
-	TouchPhase phase
-	TouchType type
-	Vector2 position
-	string touchedId
+	int id            // A unique identifier for the pointer causing the event (for example, a finger)
+	TouchPhase phase  // Still, Down, Move, Up
+	TouchType type    // Left, Middle, Right, Touch, Pen
+	Vector2 position  // The position of the touch reletive to the page
+	string touchedId  // The id of the touched html node
+	bool shiftKey     // Is the shift key down?
+	bool altKey       // Is the alt key down?
+	bool ctrlKey      // Is the control key down?
+	bool metaKey      // Is the meta key ("Command" on Mac, "Windows" on Windows) down?
 	
 unit input
 	KeyListener[] keyDownListeners

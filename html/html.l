@@ -90,6 +90,10 @@ class Node
 			if ev.pointerType == Touch: type = Touch; else
 				                        type = Pen
 			Touch touch = {phase:Down, id:ev.pointerId, type, position:new Vector2(ev.pageX/Platform.scale, ev.pageY/Platform.scale, Pixels)}
+			touch.shiftKey = ev.shiftKey
+			touch.ctrlKey = ev.ctrlKey
+			touch.altKey = ev.altKey
+			touch.metaKey = ev.metaKey
 			this.touches.add touch
 			do(touch, touches, this)
 		}
@@ -114,6 +118,10 @@ class Node
 				touch.phase = Up
 				touch.position.x = ev.pageX/Platform.scale
 				touch.position.y = ev.pageY/Platform.scale
+				touch.shiftKey = ev.shiftKey
+				touch.ctrlKey = ev.ctrlKey
+				touch.altKey = ev.altKey
+				touch.metaKey = ev.metaKey
 				Node touchedNode = Html.getNodeAt(ev.pageX, ev.pageY)
 				touch.touchedId = touchedNode ? touchedNode.id : ""
 				this.touches.removeAt(index)
@@ -149,6 +157,10 @@ immutable PointerEvent
 	preventDefault          // Prevent the default action (for example, showing the context menu on a right click)
 	int pageX               // The X coordinate of the pointer relative to the whole document
 	int pageY               // The Y coordinate of the pointer relative to the whole document
+	bool shiftKey           // Is the shift key down?
+	bool altKey             // Is the alt key down?
+	bool ctrlKey            // Is the control key down?
+	bool metaKey            // Is the meta key ("Command" on Mac, "Windows" on Windows) down?
 	
 	// The position of the pointer relative to the whole document
 	inline js Vector2 position() new Vector2(this.pageX/Platform.scale, this.pageY/Platform.scale)

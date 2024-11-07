@@ -355,7 +355,7 @@ global unit Html
 	inline js Vector2 scrollPosition() new Vector2(window.pageXOffset, window.pageYOffset/Platform.scale)
 	inline js void scrollTo(float x, float y) window.scrollTo(x,y)
 	inline js Node get(string id) document.getElementById(id)
-	private inline js Node documentBody() document.body
+	inline js Node documentBody() document.body
 	
 	js Node getNodeAt(float x, float y) 
 		let node = document.elementFromPoint(x, y)
