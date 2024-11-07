@@ -150,8 +150,7 @@ skipInit immutable Font
 		if(!window._fontCache) _fontCache = {}
 		let font = _fontCache[this.file]
 		if(!font) {
-			// let font = new FontFace(this.name, "url("+_basePath+this.file+")");
-			let font = new FontFace(this.name, "url("+this.file+")");
+			let font = new FontFace(this.name, "url("+_basePath+this.file+")");
 			await font.load();
 			document.fonts.add(font);
 			_fontCache[this.file] = font;
