@@ -59,3 +59,20 @@ Collection<T>
 		}
 		item[fileFieldName] = newItem[fileFieldName]
 		return newItem;
+		
+	async js void uploadFromUrls: T item, string fileFieldName = "images", string[] urls
+		const formData = new FormData();
+		for(let url of urls) {
+			const response = await fetch(url);
+			const imageBlob = await response.blob();
+			formData.append('images', imageBlob, 'moved-image.jpg');
+		}
+		if(item.id) {
+			newItem = await pocketBase.pb.collection(this.name).update(item.id, formData)
+		} else {
+			newItem = await pocketBase.pb.collection(this.name).create(formData);
+			item.id = newItem.id;
+		}
+		item[fileFieldName] = newItem[fileFieldName]
+		return newItem;
+
