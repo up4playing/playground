@@ -60,8 +60,8 @@ class Node
 	native void(PointerEvent ev) onpointerout
 	native void(PointerEvent ev) onpointercancel
 	
-	native void(dynamic ev) onkeydown
-	native void(dynamic ev) onkeyup
+	native void(HtmlKeyboardEvent ev) onkeydown
+	native void(HtmlKeyboardEvent ev) onkeyup
 	native void(HtmlEvent ev) oninput
 	native void(HtmlEvent ev) onchange
 	native void(HtmlEvent ev) onload
@@ -174,6 +174,13 @@ immutable HtmlEvent
 		
 	inline Vector2 relativeTouchPosition() Html.getRelativeMousePosition(this, this.currentTarget)
 	inline js Vector2 touchPosition() new Vector2(this.clientX/Platform.scale, this.clientY/Platform.scale)
+
+immutable HtmlKeyboardEvent
+	Key keyCode        // A system and implementation dependent numerical code identifying the unmodified pressed key
+	Node target        // The element that triggered the event
+	Node currentTarget // The element to the event handler is attached to
+	stopPropagation    // Mark the event as handled and prevent its parent elements from receiving the event
+	preventDefault     // Prevent the default action (for example, showing the context menu on a right click)
 
 enum Unit
 	Pixels = "px" // Pixels
@@ -870,10 +877,10 @@ dynamic Attributes
 	string key   // A unique identifier used to find the node that should be reused
 	string title
 	
-	native void() onClick = null             // Execute this code when the user clicks the HTML element
-	native void() onRightClick = null        // Execute this code when the user clicks the HTML element with the right mouse button
-	native void(dynamic ev) onKeyDown = null // Execute this code when the user presses a key on the keyboard
-	native void(dynamic ev) onKeyUp = null   // Execute this code when the user releases a key on the keyboard
+	native void() onClick = null                       // Execute this code when the user clicks the HTML element
+	native void() onRightClick = null                  // Execute this code when the user clicks the HTML element with the right mouse button
+	native void(HtmlKeyboardEvent ev) onKeyDown = null // Execute this code when the user presses a key on the keyboard
+	native void(HtmlKeyboardEvent ev) onKeyUp = null   // Execute this code when the user releases a key on the keyboard
 	
 	// native void(PointerEvent ev) onTouchDown = null  // Execute this code when a touch or click starts
 	// native void(PointerEvent ev) onTouchMove = null  // Execute this code when a touch or clicks moves

@@ -942,7 +942,7 @@ global unit Html
 		let node = div tag:"input", attributes, style, location
 		node.value = model
 		node.oninput = model = node.value; changeHandler
-		node.onkeydown = if(ev.key == "Enter") onEnter()
+		node.onkeydown = if(ev.keyCode == Enter) onEnter()
 		if focused or focusTabIndex == attributes.tabIndex: node.focus
 		
 	// Manual Text Input: If you specify a onChange handler, the model won't be updated automatically
