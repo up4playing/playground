@@ -189,12 +189,15 @@ skipInit global unit Platform
 	inline js void copyToClipboard: string text
 		navigator.clipboard.writeText(text)
 		
-	global inline js void delay: Time time
-		                  void() do
+	global inline js int delay: Time time
+		                        void() do
 		setTimeout(do, time)
 		
 	global inline js async void delay: Time time
 		new Promise(resolve => setTimeout(resolve, time))
+		
+	global inline js int clearDelay: int handle
+		clearTimeout(handle)
 		
 	inline js void onBlur: void() do
 		window.onblur = do
