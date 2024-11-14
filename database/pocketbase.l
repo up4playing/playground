@@ -30,6 +30,10 @@ Collection<T>
 	async inline js T update: T item
 		pocketBase.pb.collection(this.name).update(item.id, item)
 		
+	async js T addOrUpdate: T item
+		if(!item.id) return this.add(item)
+		else         return pocketBase.pb.collection(this.name).update(item.id, item)
+		
 	async inline js T update: string id, dynamic item
 		pocketBase.pb.collection(this.name).update(id, item)
 		
