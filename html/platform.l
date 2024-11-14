@@ -221,8 +221,8 @@ skipInit global unit Platform
 	global js void onNavigate: void(string url) do
 		window.onpopstate = e => do(location.pathname)
 		
-	global js void onPaste: void(string data) do
-		document.onpaste = e => do(e.clipboardData.getData("text"))
+	global js void onPaste: void(DateTransfer data) do
+		document.onpaste = e => do(e.clipboardData)
 		
 	inline js void blur() document.activeElement.blur()
 	
@@ -257,6 +257,21 @@ skipInit global unit Platform
 				reject(error)
 			}, {enableHighAccuracy})
 		})
+		
+enum lowercase string DataTransferItemKind: String, File
+		
+interface DataTransferItem
+	DataTransferItemKind kind // The kind of drag item, string or file
+	string type               // The data item's type, typically a MIME type
+	
+	inline js async string getAsString
+		new Promise(resolve => this.getAsString(a => resolve(a)))
+		
+	inline js File getAsFile
+		this.getAsFile()
+		
+interface DateTransfer
+	DataTransferItem[] items
 	
 MenuItem
 	string label
@@ -605,14 +620,14 @@ global unit Html
 		        expand Attributes attributes = {} // The attributes of the HTML element
 		        expand Style style = null         // The css style of the HTML element
 		        SourceCodeLocation location
-		return div tag:"img", attributes, style, data:{src:src.startsWith("http") or src.startsWith("data:") ? src : Platform.basePath + src}, location
+		return div tag:"img", attributes, style, data:{src:src.startsWith("http") or src.startsWith("data:") or src.startsWith("blob:") ? src : Platform.basePath + src}, location
 		
 	global img: string src                        // The file of the image to display
 		        expand Attributes attributes = {} // The attributes of the HTML element
 		        expand Style style = null         // The css style of the HTML element
 		        dynamic data                      // The data attributes of the element
 		        SourceCodeLocation location
-		data.src = src.startsWith("http") or src.startsWith("data:") ? src : Platform.basePath + src
+		data.src = src.startsWith("http") or src.startsWith("data:") or src.startsWith("blob:") ? src : Platform.basePath + src
 		return div tag:"img", attributes, style, data, location
 
 	global link: string text = null

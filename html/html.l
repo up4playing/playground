@@ -137,13 +137,15 @@ class Node
 		
 	inline js void captureTouch(Touch touch) this.setPointerCapture(touch.id)
 		
-File
+interface File
 	Time lastModified
 	string lastModifiedDate
 	string name
 	string path
 	int size
 	string type
+	
+	inline js string objectUrl() URL.createObjectURL(this)
 	
 enum lowercase string PointerType: Mouse, Pen, Touch
 	
