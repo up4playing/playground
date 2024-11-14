@@ -38,15 +38,6 @@ Collection<T>
 		
 	async js void upload: T item, string fileFieldName = "images", File[] files
 		const formData = new FormData();
-		for(let key in item) {
-			if(key != fileFieldName) {
-				let value = item[key];
-				let type = typeof(value);
-				if(type != "function" && type != "undefined") {
-					formData.append(key, value);
-				}
-			}
-		}
 		for(let file of files) {
 			formData.append(fileFieldName, file);
 		}
@@ -54,6 +45,15 @@ Collection<T>
 		if(item.id) {
 			newItem = await pocketBase.pb.collection(this.name).update(item.id, formData)
 		} else {
+			for(let key in item) {
+				if(key != fileFieldName) {
+					let value = item[key];
+					let type = typeof(value);
+					if(type != "function" && type != "undefined") {
+						formData.append(key, value);
+					}
+				}
+			}
 			newItem = await pocketBase.pb.collection(this.name).create(formData);
 			item.id = newItem.id;
 		}
@@ -70,6 +70,15 @@ Collection<T>
 		if(item.id) {
 			newItem = await pocketBase.pb.collection(this.name).update(item.id, formData)
 		} else {
+			for(let key in item) {
+				if(key != fileFieldName) {
+					let value = item[key];
+					let type = typeof(value);
+					if(type != "function" && type != "undefined") {
+						formData.append(key, value);
+					}
+				}
+			}
 			newItem = await pocketBase.pb.collection(this.name).create(formData);
 			item.id = newItem.id;
 		}
