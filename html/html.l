@@ -255,6 +255,8 @@ struct Vector2
 		
 	// Creates a copy of the vector with the same values
 	Vector2 clone() := {x, y, unit}
+	
+	inline js Vector2 assignReference(Vector2 value) (this = value)
 		
 	Vector2 assign Vector2 other: x = other.x; y = other.y; unit = other.unit; return this
 		
