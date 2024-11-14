@@ -221,6 +221,9 @@ skipInit global unit Platform
 	global js void onNavigate: void(string url) do
 		window.onpopstate = e => do(location.pathname)
 		
+	global js void onPaste: void(string data) do
+		document.onpaste = e => do(e.clipboardData.getData("text"))
+		
 	inline js void blur() document.activeElement.blur()
 	
 	js void setMenu: MenuItem[] menuTemplate
