@@ -407,6 +407,7 @@ immutable class string
 		                  string to
 		                  int start = 0
 		let index = this.indexOf(from, start)
+		if(index == -1) return ""
 		let startIndex = index + from.length
 		let endIndex = this.indexOf(to, startIndex)
 		if(endIndex == -1) return this.substring(startIndex)
