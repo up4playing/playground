@@ -2043,6 +2043,10 @@ global skipInit unit math
 	inline js float sqrt: float value // The value to return the square root of
 		Math.sqrt(value)
 		
+	inline js float hypot: float a
+		                   float b
+		Math.hypot(a, b)
+		
 	moveTowards: float value
 		         float targetValue
 		         float speed = 1
