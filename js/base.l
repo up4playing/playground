@@ -400,8 +400,8 @@ immutable class string
 	js string getAfter: string value
 		                int start = 0
 		let index = this.indexOf(value)
-		if(index != -1) return this.substring(index+1)
-		else            return ""
+		if(index == -1) return ""
+		return this.substring(index+value.length)
 		
 	js string getBetween: string from
 		                  string to
