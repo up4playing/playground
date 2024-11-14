@@ -979,6 +979,7 @@ global unit Html
 	// Automatic Editable Text: Updates the model automatically in with every keystroke
 	global inline void editableText: string model = ""                          // The variable that holds the value. This will be updated when the user changed the text
 		                             inline void(string value) onChanged = null // Called after the model changed
+		                             int tabIndex = -1
 		                             expand Attributes attributes = {}          // The attributes of the HTML element
 		                             expand Style style = null                  // The css style of the HTML element
 		                             dynamic data = {}                          // The data attributes of the element
@@ -993,12 +994,13 @@ global unit Html
 			node.oninput = model = node.innerText; onChanged(model); changeHandler
 		else         
 			node.onblur = model = node.innerText; if model != prevModel: onChanged(model); changeHandler
-		if focusTabIndex == attributes.tabIndex: node.focus
+		if focusTabIndex == tabIndex: node.focus
 
 	// Automatic Editable Text: Updates the model automatically in with every keystroke
 	global inline void editableText: string model = ""                          // The variable that holds the value. This will be updated when the user changed the text
 		                             inline void(string value) onChanged = null // Called after the model changed
 		                             inline void() onClick = null
+		                             int tabIndex = -1
 		                             expand Attributes attributes = {}          // The attributes of the HTML element
 		                             expand Style style = null                  // The css style of the HTML element
 		                             dynamic data = {}                          // The data attributes of the element
@@ -1014,7 +1016,7 @@ global unit Html
 			node.oninput = model = node.innerText; onChanged(model); changeHandler
 		else         
 			node.onblur = model = node.innerText; if model != prevModel: onChanged(model); changeHandler
-		if focusTabIndex == attributes.tabIndex: node.focus
+		if focusTabIndex == tabIndex: node.focus
 
 	// Automatic Text Area: Updates the model automatically in with every keystroke
 	global inline void textarea: string model = ""                 // The variable that holds the value. This will be updated when the user changed the text
