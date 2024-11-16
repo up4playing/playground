@@ -159,6 +159,13 @@ skipInit global unit Platform
 			_sendStringToEditor("~");
 		}
 		
+	js string generateObjectId
+		const timestamp = Math.floor(new Date().getTime() / 1000).toString(16);
+		const machineIdentifier = Math.floor(Math.random() * 0xFFFFFF).toString(16).padStart(6, '0');
+		const processIdentifier = Math.floor(Math.random() * 0xFFFF).toString(16).padStart(4, '0');
+		const counter = Math.floor(Math.random() * 0xFFFFFF).toString(16).padStart(6, '0');
+		return (timestamp + machineIdentifier + processIdentifier + counter).toLowerCase();
+		
 	toggleSmallScreen
 		isMobile = !isMobile;
 		setLocalStorageString("isMobile", isMobile ? "true" : "false")
