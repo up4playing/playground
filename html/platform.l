@@ -1048,7 +1048,7 @@ global unit Html
 			node.oninput = model = node.innerText; onChanged(model); changeHandler
 		else         
 			node.onblur = model = node.innerText; if model != prevModel: onChanged(model); changeHandler
-		if focusTabIndex == tabIndex: node.focus
+		if focusTabIndex == tabIndex: delay 100: node.focus
 
 	// Automatic Editable Text: Updates the model automatically in with every keystroke
 	global inline void editableText: string model = ""                          // The variable that holds the value. This will be updated when the user changed the text
@@ -1070,7 +1070,7 @@ global unit Html
 			node.oninput = model = node.innerText; onChanged(model); changeHandler
 		else         
 			node.onblur = model = node.innerText; if model != prevModel: onChanged(model); changeHandler
-		if focusTabIndex == tabIndex: node.focus
+		if focusTabIndex == tabIndex: delay 100: node.focus
 
 	// Automatic Text Area: Updates the model automatically in with every keystroke
 	global inline void textarea: string model = ""                 // The variable that holds the value. This will be updated when the user changed the text
