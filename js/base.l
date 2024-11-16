@@ -21,7 +21,7 @@ immutable struct int
 		Math.pow(this, value)
 		
 	inline js int % ensureSingleExecution int value
-		((this % value) + value) % value
+		(((this % value) + value) % value)
 		
 	// The largest possible integer value
 	const maxValue = 2147483647
@@ -29,7 +29,7 @@ immutable struct int
 	// The smallest possible integer value
 	const minValue = -2147483648
 	
-	// Indicates that the variable isn't defined at all, useful for importet data (e.g  from JSON)
+	// Indicates that the variable isn't defined at all, useful for imported data (e.g. from JSON)
 	const inline js int undefined := undefined
 	
 	// The remainer after a division by the given value. The sign stays the same.
@@ -195,7 +195,7 @@ immutable struct float
 		Math.pow(this, value)
 		
 	inline js float % ensureSingleExecution float value
-		((this % value) + value) % value
+		(((this % value) + value) % value)
 		
 	// The largest possible floating point value
 	const inline js float maxValue := Number.MAX_VALUE
@@ -203,7 +203,7 @@ immutable struct float
 	// The smallest possible floating point value
 	const inline js float minValue := -Number.MAX_VALUE
 	
-	// Indicates that the variable isn't defined at all, useful for importet data (e.g  from JSON)
+	// Indicates that the variable isn't defined at all, useful for imported data (e.g. from JSON)
 	const inline js int undefined := undefined
 	
 	// Positiv infinity
@@ -344,6 +344,9 @@ immutable class string
 		
 	inline js int parseInt(int radix) parseInt(this, radix)
 	
+	// Indicates that the variable isn't defined at all, useful for imported data (e.g. from JSON)
+	const inline js string undefined := undefined
+	
 	// Splits the string at the given character into a list of substrings
 	inline js string[] split: string seperator = "," // Separate the string at this character
 		this.split(seperator)
@@ -372,6 +375,7 @@ immutable class string
 	inline js bool endsWith(string str) this.endsWith(str)
 		
 	inline js int indexOf(string str) this.indexOf(str)
+	inline js int lastIndexOf(string str) this.lastIndexOf(str)
 	inline js int indexOf(string str, int startPos) this.indexOf(str, startPos)
 		
 	inline js bool contains(string str) (this.indexOf(str) != -1)
@@ -396,13 +400,14 @@ immutable class string
 	js string getAfter: string value
 		                int start = 0
 		let index = this.indexOf(value)
-		if(index != -1) return this.substring(index+1)
-		else            return ""
+		if(index == -1) return ""
+		return this.substring(index+value.length)
 		
 	js string getBetween: string from
 		                  string to
 		                  int start = 0
 		let index = this.indexOf(from, start)
+		if(index == -1) return ""
 		let startIndex = index + from.length
 		let endIndex = this.indexOf(to, startIndex)
 		if(endIndex == -1) return this.substring(startIndex)
@@ -1007,14 +1012,30 @@ class List<T>
 	inline js T find: bool(T a) condition // The condition to check
 		this.find(condition)
 		
+	inline js T find: backwards bool(T a) condition // The condition to check
+		this.findLast,(condition)
+		
 	inline js T find: bool(T a) condition // The condition to check
 		              int startIndex      // Start searching at this index
 		Array.findStartingAtIndex(this, condition, startIndex)
+		
+	inline js T find: backwards bool(T a) condition // The condition to check
+		              int startIndex                // Start searching at this index
+		Array.findLastStartingAtIndex(this, condition, startIndex)
 		
 	private static T findStartingAtIndex: T[] list            // The list to search
 		                                  bool(T a) condition // The condition to check
 		                                  int startIndex = 0  // Start searching at this index
 		for startIndex to list.length
+			let it = list[.]
+			if condition(it)
+				return it
+		return null
+	
+	private static T findLastStartingAtIndex: T[] list            // The list to search
+		                                      bool(T a) condition // The condition to check
+		                                      int startIndex = 0  // Start searching at this index
+		for startIndex+1 backwards
 			let it = list[.]
 			if condition(it)
 				return it
@@ -1036,17 +1057,6 @@ class List<T>
 			if condition(this[.])
 				return true
 		return false
-		
-	// Find the last item in the list the meets the given condition
-	// Example: Find a player with a specific id
-	//     app
-	//         getLastActivePlayer
-	//             return players.findLast.active
-	T findLast: bool(T a) condition // The condition to check
-		for this <-
-			if condition(.)
-				return .
-		return null
 		
 	// Find the index of the item the meets the given condition
 	int indexWhere: bool(T a) condition // The condition to check
@@ -1573,7 +1583,7 @@ class Map<TKey, TValue>
 		this.set(key, this.get(key)-1)
 		
 	// Remove the item assosiated with the given key
-	inline js void delete: TKey key  // The key of the item to remove from the map
+	inline js void remove: TKey key  // The key of the item to remove from the map
 		this.delete(key)
 		
 	// Remove all items from the map
@@ -1603,6 +1613,8 @@ interface any
 
 // The base class for all classes
 interface object
+	static inline js any undefined() undefined
+	
 	inline js bool toBool() (this != null)
 	// inline js string toString() object_stringify(this, 3)
 		
@@ -2028,13 +2040,21 @@ global skipInit unit math
 	inline js float sign: float value
 		Math.sign(value)
 		
-	// Returns the smallest integer greater than or equal to the given value 
-	inline js int ceil: float value // The value to round up
-		Math.ceil(value)
+	// Returns the positive square root of the given value
+	inline js float sqrt: float value // The value to return the square root of
+		Math.sqrt(value)
 		
-	// Returns the smallest integer greater than or equal to the given value 
-	inline js Time ceil: Time value // The value to round up
-		Math.ceil(value)
+	inline js float hypot: float a
+		                   float b
+		Math.hypot(a, b)
+		
+	moveTowards: float value
+		         float targetValue
+		         float speed = 1
+		if targetValue > value: return math.min(value + speed, targetValue) else
+		if targetValue < value: return math.max(value - speed, targetValue)
+		
+	// ------------------------------------------------------- floor, ceil, round -------------------------------------------------------
 		
 	// Returns the largest integer less than or equal to the given value
 	inline js int floor: float value // The value to round down
@@ -2044,6 +2064,15 @@ global skipInit unit math
 	inline js Time floor: Time value // The value to round down
 		Math.floor(value)
 		
+	
+	// Returns the smallest integer greater than or equal to the given value 
+	inline js int ceil: float value // The value to round up
+		Math.ceil(value)
+		
+	// Returns the smallest integer greater than or equal to the given value 
+	inline js Time ceil: Time value // The value to round up
+		Math.ceil(value)
+		
 	// Returns the given value rounded to the nearest integer
 	inline js int round: float value // The value to round
 		Math.round(value)
@@ -2052,6 +2081,8 @@ global skipInit unit math
 	inline js Time round: Time value // The angle to round
 		Math.round(value)
 		
+	// ------------------------------------------------------- min, max -------------------------------------------------------
+	
 	inline js int min: int a // The first value
 		               int b // The second value
 		Math.min(a, b)
@@ -2076,50 +2107,60 @@ global skipInit unit math
 		                Time b // The second time
 		Math.max(a, b)
 		
-	// Returns the positive square root of the given value
-	inline js float sqrt: float value // The value to return the square root of
-		Math.sqrt(value)
+	// ------------------------------------------------------- Trigonometry in radians -------------------------------------------------------
+	
+	// Returns the sine of an angle in radians
+	internal inline js float radianSin: float angle // The angle in radians
+		Math.sin(angle)
 		
-	inline js float pow: float base
-		                 float exponent
-		Math.pow(base, exponent)
-		
-	inline js float exp: float exponent
-		Math.exp(exponent)
-		
-	internal inline js float nativeCos: float angle // The angle in radians
+	// Returns the cosine of an angle in radians
+	internal inline js float radianCos: float angle // The angle in radians
 		Math.cos(angle)
 		
-	internal inline js float nativeTan: float angle // The angle in radians
+	// Returns the tangent of an angle in radians
+	internal inline js float radianTan: float angle // The angle in radians
 		Math.tan(angle)
 		
-	internal inline js float nativeAcos: float angle // The angle in radians
-		Math.acos(angle)
+	// Returns the inverse sine in radians
+	internal inline js float radianAsin: float value
+		Math.asin(value)
 		
-	internal inline js float nativeAtan2: float y, float x
+	// Returns the inverse cosine in radians
+	internal inline js float radianAcos: float value
+		Math.acos(value)
+		
+	// Returns the inverse tangent in radians
+	internal inline js float radianAtan: float value
+		Math.atan(value)
+		
+	// Returns the inverse tangent in radians
+	internal inline js float radianAtan2: float y, float x
 		Math.atan2(y,x)
 		
+	// ------------------------------------------------------- Trigonometry in turns -------------------------------------------------------
+	
 	// Returns the sine of an angle in turns
-	sin: Angle angle // The angle in turns (one full rotation is 1)
+	sin: implicit Angle angle // The angle in turns (one full rotation is 1)
 	    float result = cast(angle - .5 - math.floor(angle))
 	    result *= 16 * (math.abs(result) - .5)
 	    result += .225 * result * (math.abs(result) - 1)
 	    return result
 
 	// Returns the cosine of an angle in turns
-	cos: Angle angle // The angle in turns (one full rotation is 1)
+	cos: implicit Angle angle // The angle in turns (one full rotation is 1)
 	    float result = cast(angle - .25 - math.floor(angle + .25))
 	    result *= 16 * (math.abs(result) - .5)
 	    result += .225 * result * (math.abs(result) - 1)
 	    return result
 	
 	// Returns the tangent of an angle in turns
-	tan: Angle angle
+	tan: implicit Angle angle
 		return sin(angle) / cos(angle)
 		
 	// Returns the inverse tangent in turns
 	Angle atan2: float y, float x
-		float r, angle;
+		float r
+		Angle angle
 		float abs_y = math.abs(y) + .00000000001
 		if x < 0.0
 			r = (x + abs_y) / (abs_y - x);
@@ -2128,11 +2169,34 @@ global skipInit unit math
 			r = (x - abs_y) / (x + abs_y);
 			angle = .125;
 		angle += (.03124211533 * r * r - .1562424076) * r;
-		if y < 0.0: return cast -angle
-		else        return cast angle
+		if y < 0.0: return -angle
+		else        return angle
+		
+	// ------------------------------------------------------- log, pow, exp -------------------------------------------------------
+	
+	// e raised to which power resuls in the given value?
+	inline js float log: float value
+		Math.log(value)
+		
+	// 2 raised to which power resuls in the given value?
+	inline js float log2: float value
+		Math.log2(value)
+		
+	// 10 raised to which power resuls in the given value?
 	inline js float log10: float value
 		Math.log10(value)
 		
+	// Return the given base raised to the power of the given exponent
+	inline js float pow: float base
+		                 float exponent
+		Math.pow(base, exponent)
+		
+	// Returns e raised to the power of a given number
+	inline js float exp: float exponent
+		Math.exp(exponent)
+		
+	// ------------------------------------------------------- Bit shifts -------------------------------------------------------
+	
 	inline js int shiftLeft: int value
 		                     int count
 		(value << count)
@@ -2140,13 +2204,9 @@ global skipInit unit math
 	inline js int shiftRight: int value
 		                      int count
 		(value >> count)
-		
-	moveTowards: float value
-		         float targetValue
-		         float speed = 1
-		if targetValue > value: return math.min(value + speed, targetValue) else
-		if targetValue < value: return math.max(value - speed, targetValue)
 			
+	// ------------------------------------------------------- Limit -------------------------------------------------------
+	
 	limit: int value
 		   int min
 		   int max

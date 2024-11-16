@@ -44,26 +44,7 @@ immutable Color
 		
 	Color withAlpha: float alpha
 		return {hex[1..7]+componentToHex(math.floor(alpha*255))}
-		
-	// Interpolates to another color
-	Color interpolateTo: Color target
-		                 float progress
-		if progress <= 0: return this
-		if progress >= 1: return target
-		let iprogress = 1 - progress
-		return {
-			math.floor(red   * iprogress + target.red   * progress)
-			math.floor(green * iprogress + target.green * progress)
-			math.floor(blue  * iprogress + target.blue  * progress)
-		}
-		
-	// Animate the color to a target vector over a given period of time
-	inline animateTo: Color target        // The target color to animate to
-		              Time delay = 0      // The delay before the animation starts
-		              Time duration = 300 // The duration of the animation
-		fx.interpolate this, target, delay, duration, this = .
 
-	
 // A texture that can be loaded into video memory
 immutable Texture
 	string file
@@ -169,8 +150,7 @@ skipInit immutable Font
 		if(!window._fontCache) _fontCache = {}
 		let font = _fontCache[this.file]
 		if(!font) {
-			// let font = new FontFace(this.name, "url("+_basePath+this.file+")");
-			let font = new FontFace(this.name, "url("+this.file+")");
+			let font = new FontFace(this.name, "url("+_basePath+this.file+")");
 			await font.load();
 			document.fonts.add(font);
 			_fontCache[this.file] = font;
