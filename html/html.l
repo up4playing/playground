@@ -82,7 +82,7 @@ class Node
 		
 	Touch[] touches
 	
-	onTouchDown: void(Touch touch, Touch[] touches, Node node) do
+	onTouchDown: void(Touch touch, Touch[] touches, Node node, PointerEvent event) do
 		this.onpointerdown = {
 			if this.touches == null: this.touches = []
 			TouchType type
@@ -95,10 +95,10 @@ class Node
 			touch.altKey = ev.altKey
 			touch.metaKey = ev.metaKey
 			this.touches.add touch
-			do(touch, touches, this)
+			do(touch, touches, this, ev)
 		}
 	
-	onTouchMove: void(Touch touch, Touch[] touches, Node node) do
+	onTouchMove: void(Touch touch, Touch[] touches, Node node, PointerEvent event) do
 		this.onpointermove = {
 			if this.touches == null: this.touches = []
 			Touch touch = this.touches.find.id == ev.pointerId
@@ -106,10 +106,10 @@ class Node
 				touch.phase = Move
 				touch.position.x = ev.pageX/Platform.scale
 				touch.position.y = ev.pageY/Platform.scale
-				do(touch, touches, this)
+				do(touch, touches, this, ev)
 		}
 	
-	onTouchUp: void(Touch touch, Touch[] touches, Node node) do
+	onTouchUp: void(Touch touch, Touch[] touches, Node node, PointerEvent event) do
 		this.onpointerup = {
 			if this.touches == null: this.touches = []
 			int index = this.touches.indexWhere.id == ev.pointerId
@@ -125,7 +125,18 @@ class Node
 				Node touchedNode = Html.getNodeAt(ev.pageX, ev.pageY)
 				touch.touchedId = touchedNode ? touchedNode.id : ""
 				this.touches.removeAt(index)
-				do(touch, touches, this)
+				do(touch, touches, this, ev)
+		}
+		
+	onTouchCancel: void(Touch touch, Touch[] touches, Node node, PointerEvent event) do
+		this.onpointercancel = {
+			if this.touches == null: this.touches = []
+			int index = this.touches.indexWhere.id == ev.pointerId
+			if index != -1
+				let touch = this.touches[index]
+				touch.phase = Canceled
+				this.touches.removeAt(index)
+				do(touch, touches, this, ev)
 		}
 		
 	js void onScroll: void(Vector2 position, Vector2 delta, bool isPinch) do
