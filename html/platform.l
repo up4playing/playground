@@ -582,7 +582,7 @@ global unit Html
 		parentNode = documentBody
 		currentNode = parentNode.firstChild
 		currentOverlay = documentBody.nextSibling
-		app.render
+		app.draw
 		while currentNode
 			let next = currentNode.nextSibling
 			currentNode.remove
