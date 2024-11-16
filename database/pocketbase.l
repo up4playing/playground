@@ -34,8 +34,8 @@ Collection<T>
 		if(!item.id) return this.add(item)
 		else         return pocketBase.pb.collection(this.name).update(item.id, item)
 		
-	async inline js T update: string id, dynamic item
-		pocketBase.pb.collection(this.name).update(id, item)
+	async inline js T update: string id, dynamic update
+		pocketBase.pb.collection(this.name).@update(id, update)
 		
 	async inline js void remove: T item
 		pocketBase.pb.collection(this.name).delete(item.id)
