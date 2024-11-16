@@ -220,14 +220,19 @@ enum Unit
 		
 	GeoLocation = "geo" // A geographic location on earth (x:longitude, y:latitude)
 	
+	Turns = "turn"    // Turns (one full rotation is 1)
+	Radians = "rad"   // Radians (one full rotation is 2π)
+	Degrees = "deg"   // Degrees (one full rotation is 360)
+	Gradians = "grad" // Gradiants (one full rotation is 400)
+	
 	Auto = "auto"
 	None = "none"
 	
 struct Dimension
 	global const Dimension auto = {unit:Auto} // Automatically adjust the value to distribute the space evenly
 		
-	float value // The value in the specified unit
-	Unit unit   // The unit of the value (Pixels, Percent, Centimeters, Points, ViewportHeight, ViewportWidth, ...)
+	float value        // The value in the specified unit
+	Unit unit = Pixels // The unit of the value (Pixels, Percent, Centimeters, Points, ViewportHeight, ViewportWidth, ...)
 	
 	string toString := unit == Auto ? "auto" : "{value}{unit}"
 	bool toBool := value != 0
@@ -330,79 +335,82 @@ struct float
 	// Percentage of the small viewport's height (without the address bar on mobile)
 	inline Dimension svh()         Dimension(this, SmallViewportHeight)
 		
-transient immutable float Angle
-	inline js float toFloat() this
-	inline js string toString() this.toString()
-		
+struct Angle
+	float value       // The value in the specified unit
+	Unit unit = Turns // The unit of the value (Turns, Degrees, Gradians, or Radians)
+	
+	float toFloat()   return this.value
+	string toString() return "{this.value}{this.unit}"
+	
 	// Returns true if the angle is not zero
-	inline js bool toBool := this
+	inline js bool toBool := this.value
 	
-	inline js float in: AngleUnit unit
-		(unit==1 ? this*math.TwoPI : unit==2 ? this*360 : unit==3 ? this*400 : this)
-		
-	inline js Angle rotateTowards: Angle value
-		                           Angle speed
-		(this = Angle.rotatedTowards(this, value, speed))
-		
-	static Angle rotatedTowards: Angle value
-		                         Angle target
-		                         Angle speed
-		let delta = (((target - value + .5) % 1) + 1) % 1 - .5
-		let valuePlusDelta = value + delta
-		if delta > 0: value += speed; return value < valuePlusDelta ? value : target
-		else          value -= speed; return value > valuePlusDelta ? value : target
-		
-	inline Angle + Angle value
-	inline Angle - Angle value
-	inline float / Angle value
-	inline float * Angle value
-	
-	inline Angle += Angle value
-	inline Angle -= Angle value
-	inline Angle /= Angle value
-	inline Angle *= Angle value
-	
-	inline bool == Angle value
-	inline bool != Angle value
-	inline bool < Angle value
-	inline bool <= Angle value
-	inline bool > Angle value
-	inline bool >= Angle value
-	
-	inline js Angle normalize
-		(((this + .5) % 1) + 1) % 1 - .5
-	
-	inline js Angle % ensureSingleExecution Angle value
-		((this % value) + value) % value
-		
-	inline js Angle operator -  (Angle a) -a
-	
-	// The remainer after a division by the given value. The sign stays the same.
-	inline js Angle remainder: Angle value
-		(this % value)
+	Angle assign Angle other: value = other.value; unit = other.unit; return this
+	Angle assign float other: value = other; return this
 
-enum AngleUnit
-	turns // Turn (one full rotation is 1)
-	rad   // Radians (one full rotation is 2π)
-	deg   // Degrees (one full rotation is 360)
-	grad  // Gradiants (one full rotation is 400)	
+	Angle + Angle other:   return {value + other.value, unit}
+	Angle - Angle other:   return {value - other.value, unit}
+	Angle * Angle other:   return {value * other.value, unit}
+	Angle / Angle other:   return {value / other.value, unit}
+	
+	Angle + float other:   return {value + other, unit}
+	Angle - float other:   return {value - other, unit}
+	Angle * float other:   return {value * other, unit}
+	Angle / float other:   return {value / other, unit}
+
+	Angle += Angle other:  value += other.value; return this
+	Angle -= Angle other:  value -= other.value; return this
+		
+	Angle += float other:  value += other; return this
+	Angle -= float other:  value -= other; return this
+		
+	bool >  Angle other:   return value >  other.value
+	bool >= Angle other:   return value >= other.value
+	bool <  Angle other:   return value <  other.value
+	bool <= Angle other:   return value <= other.value
+	
+	Angle operator - (Angle a) Angle(-a.value, a.unit)
+	
+	// inline js Angle rotateTowards: Angle value
+	// 	                           Angle speed
+	// 	(this = Angle.rotatedTowards(this, value, speed))
+		
+	// static Angle rotatedTowards: Angle value
+	// 	                         Angle target
+	// 	                         Angle speed
+	// 	let delta = (((target - value + .5) % 1) + 1) % 1 - .5
+	// 	let valuePlusDelta = value + delta
+	// 	if delta > 0: value += speed; return value < valuePlusDelta ? value : target
+	// 	else          value -= speed; return value > valuePlusDelta ? value : target
+		
+	// inline js Angle normalize
+	// 	(((this + .5) % 1) + 1) % 1 - .5
+	
+	// inline js Angle % ensureSingleExecution Angle value
+	// 	((this % value) + value) % value
+		
+	// inline js Angle operator -  (Angle a) -a
+	
+	// // The remainer after a division by the given value. The sign stays the same.
+	// inline js Angle remainder: Angle value
+	// 	(this % value)
 	
 immutable priority low struct float
-	implicit inline js Angle toAngle() this
-	
-	inline js Angle operator °(float angle) (angle/360)
+	inline Dimension toAngle() Angle(this, Turns)
+
+	inline Angle operator °(float value) Angle(value, Degrees)
 	
 	// One full rotation is 1
-	inline js Angle turns := this
+	inline Angle turns := Angle(this, Turns)
 	
 	// One full rotation is 2π (about 6.2832)
-	inline js Angle radians := (this/math.TwoPI)
+	inline Angle radians := Angle(this, Radians)
 		
 	// One full rotation is 360
-	inline js Angle degrees := (this/360)
+	inline Angle degrees := Angle(this, Degrees)
 		
 	// One full rotation is 400
-	inline js Angle gradians := (this/400)
+	inline Angle gradians := Angle(this, Gradians)
 
 js Array
 priority low class List<T>
@@ -446,7 +454,7 @@ global skipInit priority low unit math
 	
 	moveTowards: Angle value
 		         Angle targetValue
-		         Angle speed = 10
+		         Angle speed = {.1 Turns}
 		if targetValue > value: return math.min(value + speed, targetValue) else
 		if targetValue < value: return math.max(value - speed, targetValue)
 			

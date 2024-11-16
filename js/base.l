@@ -2140,26 +2140,27 @@ global skipInit unit math
 	// ------------------------------------------------------- Trigonometry in turns -------------------------------------------------------
 	
 	// Returns the sine of an angle in turns
-	sin: Angle angle // The angle in turns (one full rotation is 1)
+	sin: implicit Angle angle // The angle in turns (one full rotation is 1)
 	    float result = cast(angle - .5 - math.floor(angle))
 	    result *= 16 * (math.abs(result) - .5)
 	    result += .225 * result * (math.abs(result) - 1)
 	    return result
 
 	// Returns the cosine of an angle in turns
-	cos: Angle angle // The angle in turns (one full rotation is 1)
+	cos: implicit Angle angle // The angle in turns (one full rotation is 1)
 	    float result = cast(angle - .25 - math.floor(angle + .25))
 	    result *= 16 * (math.abs(result) - .5)
 	    result += .225 * result * (math.abs(result) - 1)
 	    return result
 	
 	// Returns the tangent of an angle in turns
-	tan: Angle angle
+	tan: implicit Angle angle
 		return sin(angle) / cos(angle)
 		
 	// Returns the inverse tangent in turns
 	Angle atan2: float y, float x
-		float r, angle;
+		float r
+		Angle angle
 		float abs_y = math.abs(y) + .00000000001
 		if x < 0.0
 			r = (x + abs_y) / (abs_y - x);
@@ -2168,8 +2169,8 @@ global skipInit unit math
 			r = (x - abs_y) / (x + abs_y);
 			angle = .125;
 		angle += (.03124211533 * r * r - .1562424076) * r;
-		if y < 0.0: return cast -angle
-		else        return cast angle
+		if y < 0.0: return -angle
+		else        return angle
 		
 	// ------------------------------------------------------- log, pow, exp -------------------------------------------------------
 	
