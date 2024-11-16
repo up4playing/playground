@@ -218,8 +218,8 @@ skipInit global unit Platform
 		window.onfocus = do
 		
 	global inline js int interval: Time time
-		                           void(int handle) do
-		var handle = setInterval(do, time)
+		                           void() do
+		setInterval(do, time)
 		
 	global inline js int clearInterval: int handle
 		clearInterval(handle)
