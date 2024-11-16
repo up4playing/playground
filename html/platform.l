@@ -249,14 +249,31 @@ skipInit global unit Platform
 			remote.getCurrentWindow().setMenu(menu)
 		}
 		
-	js async Vector2 getCurrentPosition: enableHighAccuracy = true
+	js async Vector2 getCurrentLocation: enableHighAccuracy = true
+		                                 maximumAge = 5000
+		                                 timeout = 3000
 		return new Promise((resolve, reject) => {
 			navigator.geolocation.getCurrentPosition(pos => {
 				resolve(new Vector2(pos.coords.longitude, pos.coords.latitude, "geo"))
 			}, error => {
 				reject(error)
-			}, {enableHighAccuracy})
+			}, {maximumAge, timeout, enableHighAccuracy})
 		})
+		
+	js void onDeviceOrientation: void(Angle angle) do
+		window.ondeviceorientationabsolute = e => do(new Angle(1 - (e.alpha || 0)/360, "turn"))
+		
+	js void onCurrentLocation: void(Vector2 location) do
+		                       void(string error) else = null
+		                       enableHighAccuracy = true
+		                       maximumAge = 5000
+		                       timeout = 3000
+		navigator.geolocation.watchPosition(pos => {
+			do(new Vector2(pos.coords.longitude, pos.coords.latitude, "geo"))
+		}, e => {
+			do(new Vector2(Number.POSITIVE_INFINITY, Number.POSITIVE_INFINITY, "geo"))
+			else?.(e.message)
+		}, {maximumAge, timeout, enableHighAccuracy})
 		
 enum lowercase string DataTransferItemKind: String, File
 		
