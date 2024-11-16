@@ -628,8 +628,9 @@ global unit Html
 		        bool visible = true
 		        SourceCodeLocation location
 		if not visible: return
+		if data == null: data = {}
+		data.src = Platform.basePath + image.src
 		let node = div tag:"img", attributes, style, data, location
-		node.src = Platform.basePath + image.src
 		node.onclick = onClick
 		return node
 
@@ -644,6 +645,7 @@ global unit Html
 		        expand Style style = null         // The css style of the HTML element
 		        dynamic data                      // The data attributes of the element
 		        SourceCodeLocation location
+		if data == null: data = {}
 		data.src = src.startsWith("http") or src.startsWith("data:") or src.startsWith("blob:") ? src : Platform.basePath + src
 		return div tag:"img", attributes, style, data, location
 
