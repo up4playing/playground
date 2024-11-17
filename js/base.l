@@ -503,13 +503,6 @@ immutable class string
 				result += .
 		return result
 		
-	static generateRandomToken: int length = 16
-		string chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
-		string token
-		for length
-			token += chars[math.randomInteger chars.length-1]
-		return token
-		
 	inline string backspace
 		(this.length ? this = this[0 to this.length-1] : this)
 		
@@ -2241,7 +2234,15 @@ global skipInit unit math
 		   float min
 		if value < min: return min
 			            return value
+	
+	// ------------------------------------------------------- Random -------------------------------------------------------
 			
+	static randomString: int length = 16
+		string chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+		string token
+		for length: token += chars[math.randomInteger chars.length-1]
+		return token
+
 struct Average
 	float total
 	int count
