@@ -10,6 +10,9 @@ skipInit pocketBase
 		const PocketBase = (await import("./lib/pocketbase.es.mjs")).default
 		if(pocketBase.pb) pocketBase.pb.realtime.unsubscribe();
 		pocketBase.pb = new PocketBase(pocketBase.url);
+		
+	inline js void autoCancellation: value = true
+		pocketBase.pb.@autoCancellation(value);
 	
 Collection<T>
 	string name
