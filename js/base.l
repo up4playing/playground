@@ -393,13 +393,14 @@ immutable class string
 		
 	js string getUntil: string value
 		                int start = 0
-		let index = this.indexOf(value)
-		if(index != -1) return this.substring(start, index)
-		else            return this
+		let index = this.indexOf(value, start)
+		if(index != -1) return this.substring(start, index);
+		if(start > 0)   return this.substring(start);
+		                return this
 		
 	js string getAfter: string value
 		                int start = 0
-		let index = this.indexOf(value)
+		let index = this.indexOf(value, start)
 		if(index == -1) return ""
 		return this.substring(index+value.length)
 		
