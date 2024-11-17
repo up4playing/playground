@@ -378,7 +378,7 @@ immutable class string
 	inline js int lastIndexOf(string str) this.lastIndexOf(str)
 	inline js int indexOf(string str, int startPos) this.indexOf(str, startPos)
 		
-	inline js bool contains(string str) (this.indexOf(str) != -1)
+	inline js bool contains(string str) this.includes(str)
 		
 	inline js int getCharCodeAt(int index) this.charCodeAt(index)
 		
