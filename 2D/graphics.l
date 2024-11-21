@@ -207,6 +207,10 @@ skipInit immutable Image
 	Vector2 size
 	ImageFrame[] frames
 	
+enum DrawingOrder
+	ItemsDrawnFirstWillBeInFront   // Move items to the front of the list to draw them in front
+	ItemsDrawnFirstWillBeInTheBack // Move items to the back of the list to draw them in front
+		
 enum ScaleMode: Auto, FixedWidth, FixedHeight, None
 enum AnchorMode: TopLeft, TopCenter, Center
 enum HorizontalAlignment: Left, Center, Right
@@ -223,6 +227,7 @@ transient skipInit global unit graphics
 	private const alignmentFactor = [0, .5, 1]
 	
 	public Vector2 referenceSize = {1920, 1080}
+	public DrawingOrder drawingOrder = ItemsDrawnFirstWillBeInFront
 	public ScaleMode scaleMode = Auto, effectiveScaleMode
 	public AnchorMode anchor = Center
 	public bool showSafeArea = true
@@ -308,7 +313,10 @@ transient skipInit global unit graphics
 		core.displayItems = items.length
 		gizmo.tick
 		items.sort b.layer - a.layer
-		items.each <- .draw
+		if drawingOrder == ItemsDrawnFirstWillBeInFront
+			items.each <- .draw
+		else
+			items.each -> .draw
 		resetTransform
 		
 	private js void resetTransform
