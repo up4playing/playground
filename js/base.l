@@ -21,13 +21,16 @@ immutable struct int
 		Math.pow(this, value)
 		
 	inline js int % ensureSingleExecution int value
-		((this % value) + value) % value
+		(((this % value) + value) % value)
 		
 	// The largest possible integer value
 	const maxValue = 2147483647
 	
 	// The smallest possible integer value
 	const minValue = -2147483648
+	
+	// Indicates that the variable isn't defined at all, useful for imported data (e.g. from JSON)
+	const inline js int undefined := undefined
 	
 	// The remainer after a division by the given value. The sign stays the same.
 	inline js int remainder: int value // The value to divide by
@@ -157,6 +160,17 @@ immutable struct int
 			result.push(selector(i))
 		return result
 		
+	static js TResult[] enumerate: int from, int to, int step, TResult(int i) selector
+		let result = []
+		if(to > from && step > 0) {
+			for(let i=from; i < to; i += step)
+				result.push(selector(i))
+		} else if(to < from && step < 0) {
+			for(let i=from; i > to; i += step)
+				result.push(selector(i))
+		} 
+		return result
+		
 	inline js TResult[] times: TResult(int i) selector
 		int.enumerate(0, this, selector)
 	
@@ -181,7 +195,7 @@ immutable struct float
 		Math.pow(this, value)
 		
 	inline js float % ensureSingleExecution float value
-		((this % value) + value) % value
+		(((this % value) + value) % value)
 		
 	// The largest possible floating point value
 	const inline js float maxValue := Number.MAX_VALUE
@@ -189,8 +203,21 @@ immutable struct float
 	// The smallest possible floating point value
 	const inline js float minValue := -Number.MAX_VALUE
 	
+	// Indicates that the variable isn't defined at all, useful for imported data (e.g. from JSON)
+	const inline js int undefined := undefined
+	
+	// Positiv infinity
 	const inline js float infinity := Number.POSITIVE_INFINITY
 	
+	const inline js float epsilon := Number.EPSILON
+	
+	inline js float operator ** (float a, float b) 
+		Math.pow(a,b)
+		
+	js float operator % (float a, float b)
+		return ((a % b) + b) % b
+		
+	// Can result from failed conversion or operations with undefined or complex result
 	const inline js float notANumber := Number.NaN
 	
 	// The remainer after a division by the given value. The sign stays the same.
@@ -235,10 +262,10 @@ immutable struct float
 		
 	inline js float limit: float from
 		                   float to
-		(this < from ? from : this > to ? to : this)
+		(this < from ? from : this < to ? this : to)
 		
 	inline js float limit: float to
-		(this > to ? to : this)
+		(this < to ? this : to)
 	
 	inline js float limit: float from
 		(this < from ? from : this)
@@ -317,9 +344,22 @@ immutable class string
 		
 	inline js int parseInt(int radix) parseInt(this, radix)
 	
+	// Indicates that the variable isn't defined at all, useful for imported data (e.g. from JSON)
+	const inline js string undefined := undefined
+	
 	// Splits the string at the given character into a list of substrings
 	inline js string[] split: string seperator = "," // Separate the string at this character
 		this.split(seperator)
+		
+	string[] splitByLine: string seperator = "\n" // Separate the string at this character
+		string[] result
+		int start
+		while start < this.length
+			int end = this.indexOf(seperator, start)
+			if end == -1: break
+			if end > start+1: result.add this[start to end]
+			start = end+1
+		return result
 		
 	// Splits the string and return a list with the selected field or expression for each item
 	inline js TValue[] splitToList: TValue(string it) selector // Selects a field or expression for each item
@@ -335,9 +375,10 @@ immutable class string
 	inline js bool endsWith(string str) this.endsWith(str)
 		
 	inline js int indexOf(string str) this.indexOf(str)
+	inline js int lastIndexOf(string str) this.lastIndexOf(str)
 	inline js int indexOf(string str, int startPos) this.indexOf(str, startPos)
 		
-	inline js bool contains(string str) (this.indexOf(str) != -1)
+	inline js bool contains(string str) this.includes(str)
 		
 	inline js int getCharCodeAt(int index) this.charCodeAt(index)
 		
@@ -352,20 +393,30 @@ immutable class string
 		
 	js string getUntil: string value
 		                int start = 0
-		let index = this.indexOf(value)
-		if(index != -1) return this.substring(start, index)
-		else            return this
+		let index = this.indexOf(value, start)
+		if(index != -1) return this.substring(start, index);
+		if(start > 0)   return this.substring(start);
+		                return this
 		
 	js string getAfter: string value
 		                int start = 0
-		let index = this.indexOf(value)
-		if(index != -1) return this.substring(index+1)
-		else            return ""
+		let index = this.indexOf(value, start)
+		if(index == -1) return ""
+		return this.substring(index+value.length)
 		
 	js string getBetween: string from
 		                  string to
 		                  int start = 0
 		let index = this.indexOf(from, start)
+		if(index == -1) return ""
+		let startIndex = index + from.length
+		let endIndex = this.indexOf(to, startIndex)
+		if(endIndex == -1) return this.substring(startIndex)
+		return this.substring(startIndex, endIndex)
+		
+	js string getBetweenLast: string from
+		                      string to
+		let index = this.lastIndexOf(from)
 		let startIndex = index + from.length
 		let endIndex = this.indexOf(to, startIndex)
 		if(endIndex == -1) return this.substring(startIndex)
@@ -381,6 +432,21 @@ immutable class string
 	js string trimQuotes
 		return this.substring(this[0] == '"' ? 1 : 0, this[this.length-1] == '"' ? this.length-1 : this.length)
 		
+	js string trimTabs
+		let lines = this.split("\n")
+		if(lines.length < 2) return this
+		let firstLine = lines[1]
+		let tabs=0;
+		while(tabs < firstLine.length-1 && firstLine[tabs] == "\t") tabs++;
+		let result = ""
+		for(let i=1; i<lines.length; i++) {
+			let line = lines[i]
+			if(line.length > tabs) {
+				result += lines[i].substring(tabs) + "\n"
+			}
+		}
+		return result
+	
 	js string getExtension
 		let dot = this.lastIndexOf(".")
 		if(dot != -1) return this.substring(dot+1)
@@ -390,7 +456,7 @@ immutable class string
 		this.split("").join(String.fromCharCode(charCode))
 		
 	inline js string replace: string value
-		                      nocolon string with
+		                      nocolon implicit string with
 		(this = this.replace(new RegExp(value, "g"), with))
 		
 	js string replaced: string value
@@ -411,7 +477,7 @@ immutable class string
 	inline js string get: int from = 0
 		this.substring(from)
 		
-	js string capitalizeFirstWord
+	js string capitalize
 		return this.length > 0 ? this[0].toUpperCase() + this.substring(1) : this
 		
 	string capitalizeWords
@@ -437,17 +503,14 @@ immutable class string
 				result += .
 		return result
 		
-	static generateRandomToken: int length = 16
-		string chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
-		string token
-		for length
-			token += chars[math.randomInteger chars.length-1]
-		return token
+	inline string backspace
+		(this.length ? this = this[0 to this.length-1] : this)
 		
 // A logical data type that can have the value true or false
 enum bool: false, true
 		
 enum SortingOrder: Ascending, Descending
+enum EachDistinctSortBy: DoNotSort = 0, SortByInteger = 1, SortByString = 2
 	
 // A data container that grows in size as needed
 js Array
@@ -479,15 +542,20 @@ class List<T>
 		for(let _subject=[...this], i=_subject.length-1; i>=0; --i) do(_subject[i], i)
 			
 	js void eachDistinct: TKey(T it) selector
-		                         void(
-		                             TKey it,
-		                             T[] items,
-		                             int i
-		                         ) do
+		                  EachDistinctSortBy sortBy = SortByInteger
+		                  void(
+		                      TKey it,
+		                      T[] items,
+		                      int i
+		                  ) do
 		if(this.length > 0) {
-			let _subject = this.sort((a,b) => selector(a) - selector(b))
-			for(let _nextIndex=1, it = selector(_subject[0]), i=0; _nextIndex<_subject.length; ++_nextIndex) { 
-				let _nextIt = selector(_subject[_nextIndex]);
+			let _subject = this
+			let defaultValue;
+			if(sortBy == 1) {defaultValue = 0; _subject = [...this].sort((a,b) => (selector(a) || 0) - (selector(b) || 0)); } else
+			if(sortBy == 2) {defaultValue = ""; _subject = [...this].sort((a,b) => (selector(a) || "").localeCompare(selector(b) || "")); }
+			let it = selector(_subject[0]) || defaultValue, i=0;
+			for(let _nextIndex=1; _nextIndex<_subject.length; ++_nextIndex) { 
+				let _nextIt = selector(_subject[_nextIndex]) || defaultValue;
 				if(_nextIt != it) {
 					let items = _subject.slice(i, _nextIndex);
 					do(it, items, i)
@@ -495,6 +563,8 @@ class List<T>
 					i = _nextIndex;
 				}
 			}
+			let items = _subject.slice(i, _subject.length);
+			do(it, items, i)
 		}
 			
 	// Add an item to the end of the list
@@ -541,6 +611,11 @@ class List<T>
 	inline js void insert: T item    // The item to insert
 		                   index = 0 // Insert the item at this index
 		this.splice(index, 0, item)
+		
+	// Insert an item at a given index
+	inline js void insert: T item    // The item to insert
+		                   T after
+		this.splice(this.indexOf(after)+1, 0, item)
 		
 	// Remove an item from the list
 	// Example: Remove the current player instrance from the list of playeres when they died
@@ -663,6 +738,18 @@ class List<T>
 	inline js bool contains: T item // Check if the list contains this item
 		this.includes(item)
 		
+	bool containsAny: T[] list
+		for list
+			if this contains .
+				return true
+		return false
+		
+	bool containsNone: T[] list
+		for list
+			if this contains .
+				return false
+		return true
+		
 	// The index of an item in the list
 	inline js int indexOf: T item // Get the index of this item
 		this.indexOf(item)
@@ -721,11 +808,8 @@ class List<T>
 	// Example: Print and remove "Apple" from the list
 	//     let fruits = ["Apple", "Lemon", "Orange"]
 	//     print fruits.popFirst
-	js T popFirst
-		if(this.length == 0) return null
-		let firstItem = this[0]
-		this.splice(0, 1)
-		return firstItem
+	inline js T popFirst
+		this.shift()
 	
 	// Gets the number of items in the list
 	inline js int length() this.length
@@ -762,6 +846,7 @@ class List<T>
 	
 	// Remove a random item from the list and return it
 	T popRandom()
+		if length == 0: return null
 		int index = math.randomInteger(length)
 		T item = get(index)
 		this.removeAt(index)
@@ -869,6 +954,10 @@ class List<T>
 		         label nocolon string(T it) thenBy // Then order by this expression
 		return this.sort(expression(a) - expression(b) || thenBy(a) compareTo thenBy(b))
 		
+	T[] orderBy: string(T it) expression           // First order by this expression
+		         label nocolon float(T it) thenBy // Then order by this expression
+		return this.sort(expression(a) compareTo expression(b) || thenBy(a) - thenBy(b))
+		
 	T[] orderBy: string(T a) expression // First order by this expression
 		return this.sort(expression(a) compareTo expression(b))
 		
@@ -917,14 +1006,30 @@ class List<T>
 	inline js T find: bool(T a) condition // The condition to check
 		this.find(condition)
 		
+	inline js T find: backwards bool(T a) condition // The condition to check
+		this.findLast,(condition)
+		
 	inline js T find: bool(T a) condition // The condition to check
 		              int startIndex      // Start searching at this index
 		Array.findStartingAtIndex(this, condition, startIndex)
+		
+	inline js T find: backwards bool(T a) condition // The condition to check
+		              int startIndex                // Start searching at this index
+		Array.findLastStartingAtIndex(this, condition, startIndex)
 		
 	private static T findStartingAtIndex: T[] list            // The list to search
 		                                  bool(T a) condition // The condition to check
 		                                  int startIndex = 0  // Start searching at this index
 		for startIndex to list.length
+			let it = list[.]
+			if condition(it)
+				return it
+		return null
+	
+	private static T findLastStartingAtIndex: T[] list            // The list to search
+		                                      bool(T a) condition // The condition to check
+		                                      int startIndex = 0  // Start searching at this index
+		for startIndex+1 backwards
 			let it = list[.]
 			if condition(it)
 				return it
@@ -946,17 +1051,6 @@ class List<T>
 			if condition(this[.])
 				return true
 		return false
-		
-	// Find the last item in the list the meets the given condition
-	// Example: Find a player with a specific id
-	//     app
-	//         getLastActivePlayer
-	//             return players.findLast.active
-	T findLast: bool(T a) condition // The condition to check
-		for this <-
-			if condition(.)
-				return .
-		return null
 		
 	// Find the index of the item the meets the given condition
 	int indexWhere: bool(T a) condition // The condition to check
@@ -984,6 +1078,13 @@ class List<T>
 		
 	inline js T[] where: bool(T a) condition // The condition to check
 		this.filter(condition)
+		
+	T[] except: T item 
+		T[] result
+		for this 
+			if . != item
+				result.add .
+		return result
 		
 	inline js T[] take: int count
 		this.slice(0, count)
@@ -1467,8 +1568,16 @@ class Map<TKey, TValue>
 		                       TValue value
 		(this.get(key) || this.setAndReturn(key, value))
 		
+	// Add 1 to item of the map
+	inline js T incrementItem: TKey key
+		this.set(key, this.get(key)+1)
+		
+	// Subtract 1 to item of the map
+	inline js T decrementItem: TKey key
+		this.set(key, this.get(key)-1)
+		
 	// Remove the item assosiated with the given key
-	inline js void delete: TKey key  // The key of the item to remove from the map
+	inline js void remove: TKey key  // The key of the item to remove from the map
 		this.delete(key)
 		
 	// Remove all items from the map
@@ -1498,11 +1607,14 @@ interface any
 
 // The base class for all classes
 interface object
+	static inline js any undefined() undefined
+	
 	inline js bool toBool() (this != null)
 	// inline js string toString() object_stringify(this, 3)
 		
 	static inline js string toJson(any value) JSON.stringify(value)
 	static inline js string toFormattedJson(any value) JSON.stringify(value, null, "\t")
+	static inline js bool isEqualAndSameType(any a, any b) (a === b)
 		
 	static internal js string stringify: object subject, int depth = 0 
 		switch(typeof subject)
@@ -1615,7 +1727,7 @@ global transient priority unit System
 		                         inline void() do        // Do this while to condition is true
 		while(condition) do()
 			
-	global inline js void loop: void() do
+	global inline js void loop: inline void() do
 		for(;;) do()
 	
 	global inline js void do: inline void() do            // Do this while to condition is true
@@ -1827,11 +1939,6 @@ global transient priority unit System
 	// js void log: any value
 	// 	console.log(value)
 	
-	// Prints a message to the console
-	global js void print: logstring text // The text, variables or expressions to print
-		                  SourceCodeLocation location
-		(location ? log(text, location.start, location.file) : log(text))
-		
 	js void log: any value
 		console.log(value)
 	
@@ -1910,7 +2017,8 @@ global transient priority low unit System
 		                                int i    // The iteration variable of the for-loop
 		                            ) do         // Select the field or expression to be included in the result
 		                            label int to // The exclusive upper bound to iterate towards
-		int.enumerate(from, to, do)
+		                            nocolon label int step = 1
+		int.enumerate2(from, to, step, do)
 		
 // A collection of mathematical functions and constants
 global skipInit unit math
@@ -1926,13 +2034,21 @@ global skipInit unit math
 	inline js float sign: float value
 		Math.sign(value)
 		
-	// Returns the smallest integer greater than or equal to the given value 
-	inline js int ceil: float value // The value to round up
-		Math.ceil(value)
+	// Returns the positive square root of the given value
+	inline js float sqrt: float value // The value to return the square root of
+		Math.sqrt(value)
 		
-	// Returns the smallest integer greater than or equal to the given value 
-	inline js Time ceil: Time value // The value to round up
-		Math.ceil(value)
+	inline js float hypot: float a
+		                   float b
+		Math.hypot(a, b)
+		
+	moveTowards: float value
+		         float targetValue
+		         float speed = 1
+		if targetValue > value: return math.min(value + speed, targetValue) else
+		if targetValue < value: return math.max(value - speed, targetValue)
+		
+	// ------------------------------------------------------- floor, ceil, round -------------------------------------------------------
 		
 	// Returns the largest integer less than or equal to the given value
 	inline js int floor: float value // The value to round down
@@ -1942,6 +2058,15 @@ global skipInit unit math
 	inline js Time floor: Time value // The value to round down
 		Math.floor(value)
 		
+	
+	// Returns the smallest integer greater than or equal to the given value 
+	inline js int ceil: float value // The value to round up
+		Math.ceil(value)
+		
+	// Returns the smallest integer greater than or equal to the given value 
+	inline js Time ceil: Time value // The value to round up
+		Math.ceil(value)
+		
 	// Returns the given value rounded to the nearest integer
 	inline js int round: float value // The value to round
 		Math.round(value)
@@ -1950,6 +2075,8 @@ global skipInit unit math
 	inline js Time round: Time value // The angle to round
 		Math.round(value)
 		
+	// ------------------------------------------------------- min, max -------------------------------------------------------
+	
 	inline js int min: int a // The first value
 		               int b // The second value
 		Math.min(a, b)
@@ -1974,20 +2101,96 @@ global skipInit unit math
 		                Time b // The second time
 		Math.max(a, b)
 		
-	// Returns the positive square root of the given value
-	inline js float sqrt: float value // The value to return the square root of
-		Math.sqrt(value)
+	// ------------------------------------------------------- Trigonometry in radians -------------------------------------------------------
+	
+	// Returns the sine of an angle in radians
+	internal inline js float radianSin: float angle // The angle in radians
+		Math.sin(angle)
 		
+	// Returns the cosine of an angle in radians
+	internal inline js float radianCos: float angle // The angle in radians
+		Math.cos(angle)
+		
+	// Returns the tangent of an angle in radians
+	internal inline js float radianTan: float angle // The angle in radians
+		Math.tan(angle)
+		
+	// Returns the inverse sine in radians
+	internal inline js float radianAsin: float value
+		Math.asin(value)
+		
+	// Returns the inverse cosine in radians
+	internal inline js float radianAcos: float value
+		Math.acos(value)
+		
+	// Returns the inverse tangent in radians
+	internal inline js float radianAtan: float value
+		Math.atan(value)
+		
+	// Returns the inverse tangent in radians
+	internal inline js float radianAtan2: float y, float x
+		Math.atan2(y,x)
+		
+	// ------------------------------------------------------- Trigonometry in turns -------------------------------------------------------
+	
+	// Returns the sine of an angle in turns
+	sin: implicit Angle angle // The angle in turns (one full rotation is 1)
+	    float result = cast(angle - .5 - math.floor(angle))
+	    result *= 16 * (math.abs(result) - .5)
+	    result += .225 * result * (math.abs(result) - 1)
+	    return result
+
+	// Returns the cosine of an angle in turns
+	cos: implicit Angle angle // The angle in turns (one full rotation is 1)
+	    float result = cast(angle - .25 - math.floor(angle + .25))
+	    result *= 16 * (math.abs(result) - .5)
+	    result += .225 * result * (math.abs(result) - 1)
+	    return result
+	
+	// Returns the tangent of an angle in turns
+	tan: implicit Angle angle
+		return sin(angle) / cos(angle)
+		
+	// Returns the inverse tangent in turns
+	Angle atan2: float y, float x
+		float r
+		Angle angle
+		float abs_y = math.abs(y) + .00000000001
+		if x < 0.0
+			r = (x + abs_y) / (abs_y - x);
+			angle = .375;
+		else
+			r = (x - abs_y) / (x + abs_y);
+			angle = .125;
+		angle += (.03124211533 * r * r - .1562424076) * r;
+		if y < 0.0: return -angle
+		else        return angle
+		
+	// ------------------------------------------------------- log, pow, exp -------------------------------------------------------
+	
+	// e raised to which power resuls in the given value?
+	inline js float log: float value
+		Math.log(value)
+		
+	// 2 raised to which power resuls in the given value?
+	inline js float log2: float value
+		Math.log2(value)
+		
+	// 10 raised to which power resuls in the given value?
+	inline js float log10: float value
+		Math.log10(value)
+		
+	// Return the given base raised to the power of the given exponent
 	inline js float pow: float base
 		                 float exponent
 		Math.pow(base, exponent)
 		
+	// Returns e raised to the power of a given number
 	inline js float exp: float exponent
 		Math.exp(exponent)
 		
-	inline js float log10: float value
-		Math.log10(value)
-		
+	// ------------------------------------------------------- Bit shifts -------------------------------------------------------
+	
 	inline js int shiftLeft: int value
 		                     int count
 		(value << count)
@@ -1995,13 +2198,9 @@ global skipInit unit math
 	inline js int shiftRight: int value
 		                      int count
 		(value >> count)
-		
-	moveTowards: float value
-		         float targetValue
-		         float speed = 1
-		if targetValue > value: return math.min(value + speed, targetValue) else
-		if targetValue < value: return math.max(value - speed, targetValue)
 			
+	// ------------------------------------------------------- Limit -------------------------------------------------------
+	
 	limit: int value
 		   int min
 		   int max
@@ -2035,7 +2234,15 @@ global skipInit unit math
 		   float min
 		if value < min: return min
 			            return value
+	
+	// ------------------------------------------------------- Random -------------------------------------------------------
 			
+	static randomString: int length = 16
+		string chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+		string token
+		for length: token += chars[math.randomInteger chars.length-1]
+		return token
+
 struct Average
 	float total
 	int count
@@ -2110,7 +2317,7 @@ unit Loca
 		Loca.language = language
 		Loca.locale = locale || Loca.defaultLocaleForLanguage[language]
 		
-	js void format: int id
+	js string format: int id
 		let entry = _strings[Loca.language][id]
 		if(!entry || entry.s.length == 0) return "##########"
 		let strings = entry.s

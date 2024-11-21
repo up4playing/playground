@@ -1,40 +1,40 @@
 unit db
 	private object db
 	
-	js async void connect: string database
+	js async void connect: string database, int port = 27017
 		var mongodb = require('mongodb')
 		var mongoClient = mongodb.MongoClient
-		window.ObjectID = mongodb.ObjectID
-		var mongo = await mongoClient.connect("mongodb://"+(process.env.databaseHost || "0.0.0.0:27099"))
+		global.ObjectId = mongodb.ObjectId
+		var mongo = await mongoClient.connect("mongodb://"+(process.env.databaseHost || "0.0.0.0:"+port))
 		db.db = mongo.db(database);
 		
 	js inline Collection collection: string name
 		db.db.collection(name)
 		
 	js inline object ObjectId: string id
-		new ObjectID(id)
+		new ObjectId(id)
 		
 
-js ObjectID
-class ObjectID
+js ObjectId
+class ObjectId
 	string id
 	implicit inline js string toString() this.toString()
-	static inline js ObjectID generate() new ObjectID()
+	static inline js ObjectId generate() new ObjectId()
 		
+	js inline bool == ObjectId b: this?.equals(b)
 	js inline bool == string b:   this?.equals(b)
-	js inline bool == ObjectID b: this?.equals(b)
 		
 DatabaseResult
 	bool acknowledged
 	int modifiedCount
-	ObjectID upsertedId
+	ObjectId upsertedId
 	int upsertedCount
 	int matchedCount
 
 class Collection
 	string collectionName
 	
-	inline js async string add: any value
+	inline js async DatabaseResult add: any value
 		this.insertOne(value)
 	
 	inline js async any findOne: dynamic query

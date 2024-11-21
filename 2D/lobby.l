@@ -51,25 +51,28 @@ unit lobby
 		editNames = false
 		players.each.isReadyInLobby = false
 		audio.stop
+		
+	int counter
 	
 	tick
 		tickSettings
 		if Platform.isStaging: drawText "Version:{Platform.buildVersion}", size:20, position:{-940, 520}, align:Left
-		if PeerNetwork.error or core.errorMessage
+		if (PeerNetwork.error or core.errorMessage) and Platform.isStaging
 			drawText PeerNetwork.error, size:40
 			drawText core.errorMessage, size:14, position:{0,40}
 			return
 		
 		// Control show names
 		onKeyDown by host
-			let alt = pressedBy.keysCurrentlyDown.contains Alt
-			if key == A and alt
+			let cmd = pressedBy.keysCurrentlyDown.contains LeftMetaKey
+			if key == E and cmd
 				setupFields newHost:pressedBy
-			else
-			if key == Y and alt
+				
+			if not host: return
+			if key == Right
 				showName players[showNameIndex++ % players.length]
 			else
-			if key == Tab and alt
+			if key == Tab and cmd
 				showNameIndex = (showNameIndex+1) % players.length
 			else
 			if key == Enter or key == Tab or key == Right
@@ -83,7 +86,12 @@ unit lobby
 			float offset = -videoWidth*(count-1)/2
 			float halfVideoHeight = videoWidth*3/8
 			
-			for players -> player, playerIndex
+			for players as player, playerIndex
+				Vector2 pos = {offset+videoWidth*.index, 0}
+				onTouchDown position:pos size:{videoWidth, videoWidth*3/4}
+					cyclePlayer player
+					
+			for players as player, playerIndex
 				Vector2 pos = {offset+videoWidth*.index, 0}
 				drawVideo ., pos, videoWidth
 				
@@ -91,11 +99,20 @@ unit lobby
 				let text = not .isReadyInLobby ? "START" : Loca.language == German ? "Ich bin bereit" : "I'm ready"
 				drawStandardButton text, pos+{0,halfVideoHeight+90}, accentColor:.color, enabled:!.isReadyInLobby, clickableBy:player
 					if enableFullscreen: Platform.setFullscreen true forPlayer:touch.by
-					input.playersById[touch.by.id].isReadyInLobby = true
-					if players.all.isReadyInLobby
-					and players.length withinInclusively Platform.supportedUserCount
-						fields.clear
-						restart
+					// input.playersById[touch.by.id].isReadyInLobby = true
+					touch.by.isReadyInLobby = true
+					
+				if players.length.withinInclusively(Platform.supportedUserCount) and players.all(.isReadyInLobby)
+					fields.clear
+					restart
+						
+				Vector2 closePos = pos+{videoWidth/2-15,-halfVideoHeight-25}
+				let state = input.internalUsers[player.id]?.connectionState
+				if state && state != "connected"
+					drawText state, size:80, color:state == "failed" ? Red : Yellow, position:pos+{0, -halfVideoHeight-40}
+					drawText "x", size:50, color:#808080, position:closePos
+				onTouchDown closePos, size:{32,32}
+					input.removePlayer player
 				
 				let field = fields.find.player == player
 					// Set field position
@@ -107,26 +124,24 @@ unit lobby
 						// Suggestions
 						for nameSuggestions -> name
 							drawButton name, position:pos+{-150+100*(i%4),halfVideoHeight+150+20*math.floor(i/4)}, textSize:14, textColor:#808080, textColorOnHover:White, visibleFor:host
-								fields[playerIndex].text = player.name = name
+								fields[playerIndex].text = name
+								setPlayerName player, name
 								
 						// Circle indicating the first player name to show
 						if showNameIndex == playerIndex
 							drawCircle field.position+{0,60}, size:20, visibleFor:host
 
-		// Place points with a click for testing
+		// For testing, display to coordinates when we click the screen
 		if core.drawPointsForTesting
 			onTouchDown: points.add .position.clone
-				points.each drawCircle ., size:50
+			points.each drawText text:. position:. size:30; drawCircle . outlineColor:White size:200
+			drawText ++counter, {0, -480}, size:100
 		
 		// Switch language
 		if Loca.supportedLanguages.length > 1
 			forPositions Loca.supportedLanguages, end:{930,-510}, delta:{40}
 				drawImage Flag[i], pos, frame:Loca.language == cast(i) ? 1 : 0
 					Loca.setLanguage cast(i)
-			
-		// Connecting text
-		if core.mode == Ping
-			drawText "Connecting...", size:32
 		
 	setupFields: Player newHost
 		input.host = newHost
@@ -158,9 +173,23 @@ unit lobby
 		playSound LobbyImpact
 		
 	createField: Player player, implicit Player[] visibleFor = null
-		let field = LobbyTextField(text:player.name, player, visibleFor, editableBy:host, color:White, size:100, font:ByTheWay, angle:-.01, onChanged:player.name = .)
+		let field = LobbyTextField(text:player.name, player, visibleFor, editableBy:host, color:White, size:100, font:ByTheWay, angle:-.01, onChanged:setPlayerName player, .)
 		fields.add field
 		return field
+		
+	setPlayerName: Player player, string name
+		player.name = name.capitalizeWords
+		let user = input.internalUsers[player.id]
+			user.name = player.name
+		if player.id == input.localUser.id
+			core.account.name = player.name
+			Platform.setLocalStorageObject("user", core.account)
+	
+	cyclePlayer: Player player
+		watch "Cycle color {player.index}"
+		players.moveToBack player
+		input.updatePlayers
+		player.colorPreferences = [player.index]
 	
 	tickSettings
 		for players -> player

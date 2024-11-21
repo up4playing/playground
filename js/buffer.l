@@ -268,6 +268,23 @@ transient class Buffer
 			
 		this.writePos = writePos
 		
+	// Insert a raw array buffer at the writePos without writing its length
+	js void insertArrayBuffer: any sourceArrayBuffer
+		let length = sourceArrayBuffer.byteLength
+		
+		// Expand if neccessary
+		if(this.writePos+length > this.buffer.byteLength)
+			this.expandBuffer(this.writePos+length)
+			
+		// Write bytes
+		let readPos = 0
+		let writePos = this.writePos
+		let sourceDataView = new DataView(sourceArrayBuffer)
+		while(readPos < readPosEnd)
+			this.dataView.setUint8(writePos++, sourceDataView.getUint8(readPos++))
+			
+		this.writePos = writePos
+		
 	js void copyFromBuffer: Buffer source
 		let readPos = 0
 		let length = source.writePos
@@ -395,6 +412,10 @@ transient class Buffer
 	
 	js object toByteArray
 		return new Uint8Array(this.buffer, 0, this.writePos)
+		
+	inline js dynamic subArrayBuffer: int from
+		                              int to
+		this.buffer.slice(from, to)
 		
 	reset
 		this.writePos = 0

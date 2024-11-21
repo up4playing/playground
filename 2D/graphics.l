@@ -44,7 +44,7 @@ immutable Color
 		
 	Color withAlpha: float alpha
 		return {hex[1..7]+componentToHex(math.floor(alpha*255))}
-	
+
 // A texture that can be loaded into video memory
 immutable Texture
 	string file
@@ -150,8 +150,7 @@ skipInit immutable Font
 		if(!window._fontCache) _fontCache = {}
 		let font = _fontCache[this.file]
 		if(!font) {
-			// let font = new FontFace(this.name, "url("+_basePath+this.file+")");
-			let font = new FontFace(this.name, "url("+this.file+")");
+			let font = new FontFace(this.name, "url("+_basePath+this.file+")");
 			await font.load();
 			document.fonts.add(font);
 			_fontCache[this.file] = font;
@@ -219,9 +218,20 @@ enum FontStyle: Normal, Bold
 immutable ClippingPath: Vector2[] points; bool show
 		
 // Draw on the screen
+// Screen space
+// - has always the reference size (1920 x 1080 by default) on all platforms
+// - the origin is in the middle of the screen
+//
+//          Top              → x
+//     Left  +  Right      ↓ 
+//         Bottom          y
+//
+// Pixel space
+// - the size in the screen size in pixels of the target platform
+// - the origin in the top left corner
 transient skipInit global unit graphics
 	private object canvas
-	internal object context
+	internal dynamic context
 	internal Matrix2D baseMatrix, totalMatrix, localMatrix
 	internal DisplayItem[] items		
 	private const alignmentFactor = [0, .5, 1]
@@ -230,10 +240,13 @@ transient skipInit global unit graphics
 	public DrawingOrder drawingOrder = ItemsDrawnFirstWillBeInFront
 	public ScaleMode scaleMode = Auto, effectiveScaleMode
 	public AnchorMode anchor = Center
-	public bool showSafeArea = true
-	visible Vector2 pixelSize
-	visible Vector2 size
-	visible float pixelRatio
+	
+	public Color topAndBottomMarginColor = null // If the screen is higher than the reference, show a letterbox in this color
+	public Color leftAndRightMarginColor = null // If the screen is wider than the reference, show a letterbox in this color
+	
+	private Vector2 pixelSize
+	private Vector2 size
+	internal float pixelRatio
 	
 	async setup: Vector2 referenceSize
 		this.referenceSize = referenceSize
@@ -267,12 +280,10 @@ transient skipInit global unit graphics
 			effectiveScaleMode = scaleMode
 			
 		if effectiveScaleMode == FixedWidth
-			effectiveScaleMode = scaleMode
 			scale = ratio.x
 			size = {referenceSize.x, pixelSize.y/scale}
 		else
 		if effectiveScaleMode == FixedHeight
-			effectiveScaleMode = scaleMode
 			scale = ratio.y; 
 			size = {pixelSize.x/scale, referenceSize.y}
 			
@@ -302,7 +313,7 @@ transient skipInit global unit graphics
 		for input.internalUsers if .
 			.videoElementIndex = 0
 		drawItems
-		drawSafeArea
+		drawMargins
 		for input.internalUsers -> user if .
 			for user.videoElementIndex to user.videoElements.length
 				PeerNetwork.removeVideoElement user.videoElements[.]
@@ -323,7 +334,7 @@ transient skipInit global unit graphics
 		graphics.context.resetTransform()
 		graphics.context.globalAlpha = 1
 				
-	private isVisibleFor: Player[] visibleFor
+	internal isVisibleFor: Player[] visibleFor
 		if(Platform.fastForward) return false
 		// Use currentlyVisibleFor when visibleFor is null or [null]
 		let effectiveVisibleFor = visibleFor and (visibleFor.length != 1 or visibleFor[0]) ? visibleFor : currentlyVisibleFor
@@ -333,20 +344,25 @@ transient skipInit global unit graphics
 		Player[] effectiveVisibleBy = visibleFor or currentlyVisibleFor
 		return effectiveVisibleBy and clickableBy
 		     ? effectiveVisibleBy intersectWith clickableBy 
-		     : effectiveVisibleBy or clickableBy
+		     : effectiveVisibleBy or clickableBy or players
 			
-	internal js void drawSafeArea
-		graphics.resetTransform()
-		graphics.context.fillStyle = "#404040"
-		if(graphics.showSafeArea) {
-			if(graphics.effectiveScaleMode == 1) {
-				// Fixed width
+	internal js void drawMargins
+		if(graphics.effectiveScaleMode == 1) {
+			if(graphics.topAndBottomMarginColor) {
+				// Top and Bottom Letterbox
+				graphics.resetTransform()
+				graphics.context.fillStyle = graphics.topAndBottomMarginColor.hex
 				let ratio = graphics.pixelSize.x / graphics.referenceSize.x
 				let margin = (graphics.pixelSize.y-graphics.referenceSize.y*ratio)/2
 				graphics.context.fillRect(0,0,graphics.pixelSize.x, margin)
 				graphics.context.fillRect(0,graphics.pixelSize.y-margin,graphics.pixelSize.x, margin)
-			} else if(graphics.effectiveScaleMode == 2) {
-				// Fixed height
+			}
+		} else 
+		if(graphics.effectiveScaleMode == 2) {
+			if(graphics.leftAndRightMarginColor) {
+				// Left and Right Letterbox
+				graphics.resetTransform()
+				graphics.context.fillStyle = graphics.leftAndRightMarginColor.hex
 				let ratio = graphics.pixelSize.y / graphics.referenceSize.y
 				let margin = (graphics.pixelSize.x-graphics.referenceSize.x*ratio)/2
 				graphics.context.fillRect(0, 0, margin, graphics.pixelSize.y)
@@ -506,12 +522,12 @@ transient skipInit global unit graphics
 			
 		// Handle click (only visible buttons are clickable)
 		let effectiveClickableBy = getClickableBy(visibleFor, clickableBy)
-		if size.x == 0 and size.y == 0: size = image.size; else
-		if size.y == 0: size.y = size.x * image.size.y / image.size.x
-		input.onTouchDown position, size + clickableMargin, by:effectiveClickableBy, showClickableArea, do:onClick
-		if hotkey
-			input.onKeyDown hotkey, by:effectiveClickableBy
-				onClick null
+			if size.x == 0 and size.y == 0: size = image.size; else
+			if size.y == 0: size.y = size.x * image.size.y / image.size.x
+			input.onTouchDown position, size + clickableMargin, by:effectiveClickableBy, showClickableArea, do:onClick
+			if hotkey
+				input.onKeyDown hotkey, by:effectiveClickableBy
+					onClick null
 		
 	// ------------------------------------------------------- Text -------------------------------------------------------
 	
@@ -522,84 +538,98 @@ transient skipInit global unit graphics
 	//             if winner == me
 	//                 drawText "You've won!", size:100, color:Black, font:OpenSans, visibleFor:me
 	// Image: drawText.png
-	global js void drawText: implicit string text                // A string or anything that can be converted into a string (for example, an interger or a float)
-		                     Vector2 position = {}               // By default, {0,0} is the center, {-960,-540} is the top left, {960,540} is the bottom right
-		                     implicit Vector2 size = {}          // The size of the text
-		                     Color color = null                  // The color of the text
-		                     HorizontalAlignment align = Center  // The horizontal alignment of the text
-		                     VerticalAlignment valign = Middle   // The vertical alignment of the text
-		                     FontStyle style = Normal            // Whether the text should be bold or normal style
-		                     Font font = null                    // To use a custom font, just copy a TTF, WOFF or WOFF2 file to the "media" folder
-		                     Color outlineColor = null           // The color of the outline around the text
-		                     outlineWidth = 0                    // The width of the outline around the text in pixels
-		                     implicit Player[] visibleFor = null // Only this player or list of players will see the text
-		                     implicit layer = 0                  // Higher layers are drawn in front of lower layers
-		                     alpha = 1.0                         // The opacity of the text (0: fully transparent, 1: fully visible)
-		                     SourceCodeLocation location
-		if(graphics.isVisibleFor(visibleFor)) {
-			let effectiveFont = font || graphics.currentFont
-			let fontSize = size.y || size.x || graphics.currentFontSize
-			let contextFont = (style ? "bold ":"")+fontSize+"px "+effectiveFont.name;
-			graphics.context.font = contextFont
-			let textSize = graphics.context.measureText(text)
-			let sizeX = textSize.width
-			let sizeY = fontSize*effectiveFont.actualHeightFactor
-			graphics.items.push(new DisplayText(
-				graphics.totalMatrix, 
-				position.x - graphics.alignmentFactor[ align]*sizeX,
-				position.y - graphics.alignmentFactor[valign]*sizeY,
-				sizeX, sizeY, 
-				layer, alpha, graphics.currentClippingPath, text, 
-				location, position.location, size.location,
-				(color || graphics.currentColor).hex, 
-				outlineColor ? outlineColor.hex : null,
-				outlineWidth || graphics.currentLineWidth,
-				effectiveFont.offset.y*sizeY,
-				contextFont
-			))
-		}
+	global drawText: implicit string text                 // A string or anything that can be converted into a string (for example, an interger or a float)
+		             Vector2 position = {}                // By default, {0,0} is the center, {-960,-540} is the top left, {960,540} is the bottom right
+		             implicit Vector2 size = {}           // The font size of the text
+		             Color color = null                   // The color of the text
+		             HorizontalAlignment align = Center   // The horizontal alignment of the text
+		             VerticalAlignment valign = Middle    // The vertical alignment of the text
+		             FontStyle style = Normal             // Whether the text should be bold or normal style
+		             Font font = null                     // To use a custom font, just copy a TTF, WOFF or WOFF2 file to the "media" folder
+		             Color outlineColor = null            // The color of the outline around the text
+		             outlineWidth = 0                     // The width of the outline around the text in pixels
+		             implicit layer = 0                   // Higher layers are drawn in front of lower layers
+		             alpha = 1.0                          // The opacity of the text (0: fully transparent, 1: fully visible)
+		             Angle angle = 0.0                    // Rotate the image by this angle in turns (0: no rotation, 1: one full rotation)
+		             float maxWidth = 0
+		             implicit Player[] visibleFor = null  // Only this player or list of players will see the text
+		             implicit Player[] clickableBy = null // Only this player or list of players can touch or click the text
+		             clickableMargin = Vector2(16,16)     // The margin around the text within which it is clickable
+		             showClickableArea = false            // Highlight the clickable area for debugging
+		             hotkey = Key.None                    // This keyboard shortcut will execute the onClick handler
+		             void(Touch touch) onClick = null     // Execute this code when the user touches or clicks the text or presses the hotkey
+		             SourceCodeLocation location
 		
-	global js void drawText: implicit string text                // A string or anything that can be converted into a string (for example, an interger or a float)
-		                     Vector2 position = {}               // By default, {0,0} is the center, {-960,-540} is the top left, {960,540} is the bottom right
-		                     implicit Vector2 size = {}          // The size of the text
-		                     Color color = null                  // The color of the text
-		                     Angle angle = 0.0                   // Rotate the image by this angle in turns (0: no rotation, 1: one full rotation)
-		                     HorizontalAlignment align = Center  // The horizontal alignment of the text
-		                     VerticalAlignment valign = Middle   // The vertical alignment of the text
-		                     FontStyle style = Normal            // Whether the text should be bold or normal style
-		                     Font font = null                    // To use a custom font, just copy a TTF, WOFF or WOFF2 file to the "media" folder
-		                     Color outlineColor = null           // The color of the outline around the text
-		                     outlineWidth = 0                    // The width of the outline around the text in pixels
-		                     implicit Player[] visibleFor = null // Only this player or list of players will see the text
-		                     implicit layer = 0                  // Higher layers are drawn in front of lower layers
-		                     alpha = 1.0                         // The opacity of the text (0: fully transparent, 1: fully visible)
-		                     SourceCodeLocation location
-		if(graphics.isVisibleFor(visibleFor)) {
-			let effectiveFont = font || graphics.currentFont
-			let fontSize = size.y || size.x || graphics.currentFontSize
-			let contextFont = (style ? "bold ":"")+fontSize+"px "+effectiveFont.name;
-			graphics.context.font = contextFont
-			let textSize = graphics.context.measureText(text)
-			let sizeX = textSize.width
-			let sizeY = fontSize*effectiveFont.actualHeightFactor
-			let matrix = graphics.totalMatrix.clone()
-			matrix.move(position)
-			matrix.rotate(angle)
-			graphics.items.push(new DisplayText(
-				matrix, 
-				-graphics.alignmentFactor[ align]*sizeX,
-				-graphics.alignmentFactor[valign]*sizeY,
-				sizeX, sizeY, 
-				layer, alpha, graphics.currentClippingPath, text, 
-				location, position.location, size.location,
-				(color || graphics.currentColor).hex, 
-				outlineColor ? outlineColor.hex : null,
-				outlineWidth || graphics.currentLineWidth,
-				effectiveFont.offset.y*sizeY,
-				contextFont
-			))
-		}
+		bool isVisible = isVisibleFor(visibleFor)
+		Font effectiveFont = font || currentFont
+		int fontSize = math.floor(size.y || size.x || currentFontSize)
+		float sizeX, sizeY
 		
+		if isVisible or onClick != null
+			sizeX = getTextWidth(text, {x:fontSize}, effectiveFont, style)
+			if maxWidth > 0
+				if sizeX > maxWidth
+					fontSize = math.floor(fontSize * maxWidth/sizeX)
+					sizeX = getTextWidth(text, {x:fontSize}, effectiveFont, style)
+					while sizeX > maxWidth
+						sizeX = getTextWidth(text, {x:--fontSize}, effectiveFont, style)
+			sizeY = fontSize*effectiveFont.actualHeightFactor
+		
+		if isVisible
+			Matrix2D matrix
+			float x, y
+			if not angle: matrix = totalMatrix; x = position.x; y = position.y
+			else          matrix = totalMatrix.clone().move(position).rotate(angle); x = 0; y = 0
+			items.add new DisplayText(
+				matrix,
+				x - alignmentFactor[ align]*sizeX,
+				y - alignmentFactor[valign]*sizeY,
+				sizeX, sizeY, 
+				layer, alpha, currentClippingPath, text, 
+				location, position.location, size.location,
+				(color || currentColor).hex, 
+				outlineColor ? outlineColor.hex : null,
+				outlineWidth || currentLineWidth,
+				effectiveFont.offset.y*sizeY,
+				(style ? "bold ":"")+fontSize+"px "+effectiveFont.name
+			)
+		
+		if onClick != null
+			// Handle click (only visible buttons are clickable)
+			let effectiveClickableBy = getClickableBy(visibleFor, clickableBy)
+				Vector2 effectiveSize = {sizeX + clickableMargin.x, sizeY + clickableMargin.y}
+				input.onTouchDown position, size:effectiveSize, by:effectiveClickableBy, showClickableArea, do:onClick
+				if hotkey
+					input.onKeyDown hotkey, by:effectiveClickableBy
+						onClick null
+			
+	// Draw text around a circle
+	// Example: Draw text around a circular video
+	//     drawVideo me, position:pos, shape:Circle, size:radius*2-40
+	//     drawCircularText "Made up by", position:pos, size:30, radius, angle:-.07
+	global drawCircularText: implicit string text                 // A string or anything that can be converted into a string (for example, an interger or a float)
+		                     Vector2 position = {}                // By default, {0,0} is the center, {-960,-540} is the top left, {960,540} is the bottom right
+		                     float size = 0                       // The font size of the text
+		                     Color color = null                   // The color of the text
+		                     Font font = null                     // To use a custom font, just copy a TTF, WOFF or WOFF2 file to the "media" folder
+		                     implicit layer = 0                   // Higher layers are drawn in front of lower layers
+		                     float radius = 100                   // The radius of the circle to draw the text around
+		                     Angle angle = 0                      // The angle of the center of the text in turn (0: top, 0.25: right, 0.5: bottom, -0.25: left)
+		                     float spacing = .2                   // The spacing between the letters of the text
+		                     implicit Player[] visibleFor = null  // Only this player or list of players will see the text
+		                     SourceCodeLocation location
+		Font effectiveFont = font || currentFont
+		int fontSize = math.floor(size || currentFontSize)
+		float totalWidth = graphics.getTextWidth text, fontSize, effectiveFont
+		Angle startAngle = angle - totalWidth/2*spacing/radius
+		float prevWidth
+		for text as letter
+			float width = graphics.getTextWidth text[..i+1], fontSize, effectiveFont
+			float centerOfLetter = (width+prevWidth)/2
+			prevWidth = width
+			Angle angleOfLetter = startAngle + centerOfLetter*spacing/radius
+			drawText text:letter, position+math.getVectorForAngle(angleOfLetter, radius), fontSize, color, effectiveFont, layer, angleOfLetter, visibleFor, location
+
 	// ------------------------------------------------------- Button -------------------------------------------------------
 	
 	// Draw a button made up of an image and a text and execute code when its touched or clicked
@@ -638,7 +668,7 @@ transient skipInit global unit graphics
 		float scale = 1.0
 		Vector2 effectiveSize = image ? getEffectiveSize(image.size, size) : {getTextWidth(text, size:textSize), textSize}
 		let effectiveClickableBy = getClickableBy(visibleFor, clickableBy)
-		if enabled and onClick != null
+		if enabled and effectiveClickableBy and onClick != null
 			// Handle click (only visible buttons are clickable)
 			Vector2 sizeWithMargin = effectiveSize + clickableMargin
 			bool switchFrameOnHover = frameOnHover != -1 and frame == -1 and (image?.frames.length > frameOnHover or accentImage?.frames.length > frameOnHover)
@@ -909,8 +939,8 @@ transient skipInit global unit graphics
 		                ShowPointersMode mode = Remote // Choose whether you want to draw the pointers for local players, remote players or both
 		                Color color = null             // The color of the pointer. If this is left out, the player color is used
 		if mode == LocalAndRemote
-		or (player == input.localPlayer and mode == Local)
-		or (player != input.localPlayer and mode == Remote)
+		or (player.id == input.localUser.id and mode == Local)
+		or (player.id != input.localUser.id and mode == Remote)
 			if !color: color = player.color
 			for player.touches
 				drawImage finger, .smoothPosition+{11,32}, frame:.isDown ? 1 : 0, layer:int.maxValue
@@ -1351,6 +1381,26 @@ transient skipInit global unit graphics
 		code(imageData.data)
 		graphics.context.putImageData(imageData, 0, 0)
 		
+	// --------------------------------------------- Timer ---------------------------------------------
+	
+	drawTimer: Time startTime, Time duration, Sound completionSound = null, Time timeBeforeCompletionToPlaySound = 4000, void() onComplete = null
+		const width = 8
+		const margin1 = 8
+		const margin2 = margin1 - width/2
+		let completion = (Time.now - startTime) / duration
+		let time = (1 - completion) * 6000
+		
+		drawLine {   0        , -540+margin1} to {math.map(time, 0..960, 0, -960+margin2), -540+margin1}, width
+		drawLine {-960+margin1, -540+margin2} to {-960+margin1, math.map(time, 960..960+1080, -540+margin2, 540-margin2)}, width
+		drawLine {-960+margin2,  540-margin1} to {math.map(time, 960+1080..960+1080+1920, -960+margin2, 960-margin2), 540-margin1}, width
+		drawLine { 960-margin1,  540-margin2} to { 960-margin1, math.map(time, 960+1080+1920..960+1080+1920+1080, 540-margin2, -540+margin2)}, width
+		drawLine { 960-margin2, -540+margin1} to {math.map(time, 960+1080+1920+1080..960+1080+1920+1080+960, 960-margin2, 0), -540+margin1}, width
+		
+		if completionSound and Time.now > startTime + duration - timeBeforeCompletionToPlaySound and not completionSound.isPlaying: playSound completionSound
+		if onComplete != null and completion >= 1: onComplete
+
+// --------------------------------------------- Gizmo ---------------------------------------------
+	
 immutable struct GizomInfluence
 	string file
 	int start
@@ -1467,7 +1517,7 @@ skipInit transient unit gizmo
 				// Collect all items and locations the mouse pointer is over
 				GizmoOverItem[] overItems
 				for graphics.items -> item
-					if pixelPos.isInsidePoygon item.poly
+					if pixelPos.isInsidePolygon item.poly
 						if item.positionLocation: flattenLocations overItems, item, item.positionLocation; else
 						if item.location:         overItems.add {item, item.location}
 									
@@ -1549,7 +1599,21 @@ skipInit transient unit gizmo
 		if location.file:  stack.add {item, location}
 		if location.right: flattenLocations stack, item, location.right
 		if location.left:  flattenLocations stack, item, location.left
-		
+			
+// --------------------------------------------- Award Screen ---------------------------------------------
+
+awardScreen
+	bool active
+	tick
+		onKeyDown Alt W: active = not active
+		if active
+			let size = {720, 540}
+			forPositions players, grid:{2,2}, delta:size
+				drawVideo . position:pos, size
+				drawText .score, pos * {2.13, 1.8}, font:ByTheWay
+				
+// --------------------------------------------- Display Item ---------------------------------------------
+
 transient immutable DisplayItem
 	float x, y, w, h
 	int layer
@@ -1604,7 +1668,7 @@ transient DisplayItem DisplayImage
 		graphics.context.globalAlpha = this.alpha
 		if(this.clippingPath) this.startClipping()
 			
-		if(this.color.hex == "#ffffff" || this.color.hex == "#ffffffff") {
+		if(this.color.hex == "#ffffff" || this.color.hex == "#ffffffff" || this.color == null) {
 			try{ graphics.context.drawImage(this.htmlImage, this.sx, this.sy, this.sw, this.sh, this.x, this.y, this.w, this.h) }
 			catch(e) { log("DisplayImage: "+e.message) }
 		} else {

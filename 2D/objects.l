@@ -13,11 +13,14 @@ unit Framework
 				
 	clearAtEndOfFrame
 		for objects
-			if not .locked: toBeRemoved.add .
+			if not .locked
+				.hide
+				toBeRemoved.add .
 		
 	removeWhere: bool(Object value) condition
 		for objects -> obj
 			if condition obj
+				obj.hide
 				toBeRemoved.add obj
 				
 	tick
@@ -69,6 +72,7 @@ transient global unit graphics
 		
 enum Side: Front, Back
 		
+// Bug: Place the cursor in the following lines to get a "can't be a constructor parameter" error
 class Object
 	Vector2 position
 	implicit Vector2 size
@@ -92,46 +96,49 @@ class Object
 	removeAtEndOfFrame
 		Framework.toBeRemoved.add this
 		
+	hide() alpha = 0.0
+	show() alpha = 1.0
+		
 	moveToFront() siblings.moveToFront this
 	moveToBack()  siblings.moveToBack this
 		
-	moveTo: Vector2 pos
-		    Time duration = 1000
-		    Time delay = 0
-		Vector2 startPosition = position
+	// moveTo: Vector2 pos
+	// 	    Time duration = 1000
+	// 	    Time delay = 0
+	// 	Vector2 startPosition = position
 		
-		// When chaining serveral move animations together, continue where the last one left off
-		MoveAnimation moveAnimation = cast fx.animations.findLast.type == MoveAnimation and .object == this
-			startPosition = moveAnimation.startValue + moveAnimation.delta
+	// 	// When chaining serveral move animations together, continue where the last one left off
+	// 	MoveAnimation moveAnimation = cast fx.animations.find backwards .type == MoveAnimation and .object == this
+	// 		startPosition = moveAnimation.startValue + moveAnimation.delta
 
-		let delta = pos - startPosition
-		fx.add MoveAnimation startTime:fx.endOfPrevAnimation(this)+delay, duration, this, startPosition, delta
-		return this
+	// 	let delta = pos - startPosition
+	// 	fx.add MoveAnimation startTime:fx.endOfPrevAnimation(this)+delay, duration, this, startPosition, delta
+	// 	return this
 		
-	moveAndScaleTo: Vector2 position
-		            implicit Vector2 size
-		            Time duration = 1000
-		            Time delay = 0
-		Vector2 startPosition = this.position
-		Vector2 startSize = this.size
-		Vector2 endSize = size.y ? size : {size.x, size.x * startSize.y/startSize.x}
+	// moveAndScaleTo: Vector2 position
+	// 	            implicit Vector2 size
+	// 	            Time duration = 1000
+	// 	            Time delay = 0
+	// 	Vector2 startPosition = this.position
+	// 	Vector2 startSize = this.size
+	// 	Vector2 endSize = size.y ? size : {size.x, size.x * startSize.y/startSize.x}
 		
-		// When chaining serveral move animations together, continue where the last one left off
-		MoveAnimation moveAnimation = cast fx.animations.findLast.type == MoveAnimation and .object == this
-			startPosition = moveAnimation.startValue + moveAnimation.delta
+	// 	// When chaining serveral move animations together, continue where the last one left off
+	// 	MoveAnimation moveAnimation = cast fx.animations.find backwards .type == MoveAnimation and .object == this
+	// 		startPosition = moveAnimation.startValue + moveAnimation.delta
 
-		let startTime = fx.endOfPrevAnimation(this)+delay
-		fx.add MoveAnimation startTime, duration, this, startPosition, delta:position - startPosition
-		fx.add ScaleAnimation startTime, duration, this, startSize, delta:endSize - startSize
-		return this
+	// 	let startTime = fx.endOfPrevAnimation(this)+delay
+	// 	fx.add MoveAnimation startTime, duration, this, startPosition, delta:position - startPosition
+	// 	fx.add ScaleAnimation startTime, duration, this, startSize, delta:endSize - startSize
+	// 	return this
 		
-	moveTo: Vector2 pos
-		    float speed = 1
-		    Time delay = 0
-		let delta = pos - position
-		let duration = math.floor(delta.length / speed)
-		fx.add MoveAnimation startTime:fx.endOfPrevAnimation(this)+delay, duration, this, startValue:position, delta
-		return this
+	// moveTo: Vector2 pos
+	// 	    float speed = 1
+	// 	    Time delay = 0
+	// 	let delta = pos - position
+	// 	let duration = math.floor(delta.length / speed)
+	// 	fx.add MoveAnimation startTime:fx.endOfPrevAnimation(this)+delay, duration, this, startValue:position, delta
+	// 	return this
 		
 	fadeIn: Time duration = 100
 		    Time delay = 0
@@ -139,20 +146,20 @@ class Object
 		fx.add FadeAnimation startTime:fx.endOfPrevAnimation(this)+delay, duration, this, startValue:0, delta:1
 		return this
 		
-	fadeOut: Time duration = 100
-		     Time delay = -100
-		     bool removeWhenDone = true
-		float startValue = alpha
+	// fadeOut: Time duration = 100
+	// 	     Time delay = -100
+	// 	     bool removeWhenDone = true
+	// 	float startValue = alpha
 		
-		// When chaining serveral fade animations together, continue where the last one left off
-		// If the last fade animation is already a fade out, don't do anything
-		FadeAnimation lastFadeAnimation = cast fx.animations.findLast.type == FadeAnimation and .object == this
-			if lastFadeAnimation.startValue + lastFadeAnimation.delta <= 0: 
-				return
-			startValue = lastFadeAnimation.startValue + lastFadeAnimation.delta
+	// 	// When chaining serveral fade animations together, continue where the last one left off
+	// 	// If the last fade animation is already a fade out, don't do anything
+	// 	FadeAnimation lastFadeAnimation = cast fx.animations.find backwards .type == FadeAnimation and .object == this
+	// 		if lastFadeAnimation.startValue + lastFadeAnimation.delta <= 0: 
+	// 			return
+	// 		startValue = lastFadeAnimation.startValue + lastFadeAnimation.delta
 				
-		fx.add FadeAnimation startTime:fx.endOfPrevAnimation(this)+delay, duration, this, startValue, delta:-startValue, removeWhenDone
-		return this
+	// 	fx.add FadeAnimation startTime:fx.endOfPrevAnimation(this)+delay, duration, this, startValue, delta:-startValue, removeWhenDone
+	// 	return this
 		
 	scaleTo: implicit Vector2 size
 		     Time duration = 1000
@@ -196,12 +203,12 @@ class Object
 Object RectangleObject
 	Color color = White
 	override tick
-		drawRectangle position, size, color, visibleFor, layer, alpha
+		if alpha: drawRectangle position, size, color, visibleFor, layer, alpha
 
 Object CircleObject
 	Color color = White
 	override tick
-		drawCircle position, size, color:color, visibleFor, layer
+		if alpha: drawCircle position, size, color:color, visibleFor, layer
 
 global transient unit System
 	global visualize: Vector2 position = {}
@@ -229,9 +236,22 @@ Object TextObject
 	Color color = White
 	HorizontalAlignment align = Center // The horizontal alignment of the text
 	VerticalAlignment valign = Middle  // The vertical alignment of the text
+	float maxWidth
 	
 	override tick
-		drawText text, position, size, angle, color, align, valign, font, visibleFor, alpha, layer
+		if alpha: drawText text, position, size, angle, color, align, valign, font, visibleFor, alpha, layer, maxWidth
+		
+// Draw text around a circle
+Object CircularTextObject
+	string text          // A string or anything that can be converted into a string (for example, an interger or a float)
+	Font font            // The font of the text
+	Color color = White  // The color of the text
+	float radius = 100   // The radius of the circle to draw the text around
+	Angle angle = 0      // The angle of the center of the text in turn (0: top, 0.25: right, 0.5: bottom, -0.25: left)
+	float spacing = .2   // The spacing between the letters of the text
+	
+	override tick
+		if alpha: drawCircularText text, position, size.x, color, font, layer, radius, angle, spacing, visibleFor
 		
 Object ImageObject
 	Image image
@@ -240,7 +260,7 @@ Object ImageObject
 		if size.x == 0 and size.y == 0: size = image.size
 	
 	override tick
-		drawImage image, position, size, angle, alpha, visibleFor, layer
+		if alpha: drawImage image, position, size, angle, alpha, visibleFor, layer
 		
 Object Effect
 	Image image
@@ -252,7 +272,7 @@ Object Effect
 	
 	override tick
 		var frame = math.floor((Time.frame - startFrame) * math.max(framesPerSecond, 0) / core.targetFps)
-		if frame < image.frames.length
+		if alpha and frame < image.frames.length
 			drawImage image, position, size, alpha, visibleFor, layer, frame, location
 		else
 			Framework.objects.remove this
@@ -261,24 +281,20 @@ Object VideoObject
 	Player player
 	VideoShape shape
 	override tick
-		drawVideo player, position, size, shape
+		if alpha and player: drawVideo player, position, size, shape
 			
 Object Button
 	Image image                  // The image of the button
     text = ""                    // The text of the button
-    Vector2 position = {}        // The position to draw to
     Color textColor = White      // The color of the text
     frame = 0                    // The frame of the image
-	implicit Vector2 size = {}   // The size of the image, use a float to keep the aspect ratio, use a vector to strech the image
     fontSize = 18                // The font size in pixels   
-    clickableMargin = {16,16}        // The margin around the button within which it is clickable
+    clickableMargin = {16,16}    // The margin around the button within which it is clickable
     textOffset = {}              // Draw the text at this offset
-	scaleOnHover = 1.0                   // Scale the button by this factor when the mouse hovers over the button
-	frameOnHover = 1                     // Draw this frame when the mouse hovers over the button
-    showClickableArea = false        // Show the area within which the button is clickable
+	scaleOnHover = 1.0           // Scale the button by this factor when the mouse hovers over the button
+	frameOnHover = 1             // Draw this frame when the mouse hovers over the button
+    showClickableArea = false    // Show the area within which the button is clickable
     implicit Player[] clickableBy = null // Only this user can click the button
-    implicit layer = 0           // Higher layers are drawn in front of lower layers
-    alpha = 1.0                  // The opacity of the button 0: fully transpart, 1: fully visible)
 	enabled = true               // When not enabled, the button can't be clicked and is drawn transparently (50% by default)
 	alphaWhenDisabled = .5       // The opacity of the button will be multiplied with this factor when its disabled
 	Key hotkey                   // This keyboard shortcut will execute the onClick handler
@@ -286,10 +302,27 @@ Object Button
 	bool removeOnClick = false   // Remove the button after the user clicks it
 	
 	override tick
-		drawButton image, text, position, textColor, frame, size, fontSize, clickableMargin, textOffset, scaleOnHover, frameOnHover, showClickableArea, visibleFor, clickableBy, hotkey, layer, alpha, enabled, alphaWhenDisabled
-		onClick:
-			if removeOnClick: this.removeAtEndOfFrame
-			onClick(touch)
+		if alpha
+			drawButton image, text, position, textColor, frame, size, fontSize, clickableMargin, textOffset, scaleOnHover, frameOnHover, showClickableArea, visibleFor, clickableBy, hotkey, layer, alpha, enabled, alphaWhenDisabled
+			onClick:
+				if removeOnClick: this.removeAtEndOfFrame
+				onClick(touch)
+				
+			
+Object StandardButton
+    text = ""                    // The text of the button
+    implicit Player[] clickableBy = null // Only this user can click the button
+	enabled = true               // When not enabled, the button can't be clicked and is drawn transparently (50% by default)
+	Key hotkey                   // This keyboard shortcut will execute the onClick handler
+    void(Touch touch) onClick    // Execute this code when the user clicks the button
+	bool removeOnClick = false   // Remove the button after the user clicks it
+	
+	override tick
+		if alpha
+			drawStandardButton text, position, visibleFor, clickableBy, hotkey, layer, enabled
+			onClick:
+				if removeOnClick: this.removeAtEndOfFrame
+				onClick(touch)
 
 struct Particle
 	Vector2 pos, speed
@@ -343,11 +376,14 @@ Object ParticleSystem
 		for particles <-
 			graphics.move .pos
 				graphics.rotate .angle
-					drawImage image, frame:.frame
+					drawImage image, frame:.frame, visibleFor
 			.pos += .speed
 			.speed.y += gravity
 			.angle += .rotationSpeed
-			if .pos.y > graphics.size.y/2
+			
+			// Delete the particle when it leaves the botom edge of the screen
+			// We add 10% of margin because the actual screen size might be heigher than the reference size
+			if .pos.y > graphics.referenceSize.y*.55
 				particles.removeAt i
 		
 		if particles.length == 0	
@@ -393,8 +429,9 @@ Object Menu
 				onTouchDownAny
 					active = false
 				
-		drawImage Menu, position, location, layer
-			active = true
+		if alpha and not awardScreen.active
+			drawImage Menu, position, location, layer
+				active = true
 		
 enum MenuItemType: Button, Check, Radio
 		

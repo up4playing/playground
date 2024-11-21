@@ -9,8 +9,11 @@ class Node
 	inline js string class(string value) this.className = value
 	
 	string tagName
+	string title
 	Style style
 	string innerHTML
+	string innerText
+	string shadowInnerHtml
 	string value
 	string src
 	Node firstChild
@@ -21,30 +24,54 @@ class Node
 	
 	bool muted
 	bool autoplay
+	bool disabled
+	int tabindex
+	string contentEditable
+	dynamic context
+	float width
+	float height
 	
 	string sourceLocation
+	bool hasChildren
+	File[] files
+	bool complete // Is the resouce completely loaded?
+	
+	Node[string] childrenByKey
+	bool used
 		
 	inline js Node remove() this.remove()
 	inline js void appendChild(Node node) this.appendChild(node)
 	inline js void insertBefore(Node newNode, Node referenceNode) this.insertBefore(newNode, referenceNode)
 	inline js void setSelectionRange(int from, int to) this.setSelectionRange(from, to)
-	inline js void select() this.setSelectionRange(0, this.value.length)
+	inline js void select() this.select()
+	inline js void setCursorPosition(int index) Html.setCursorPosition(this, index)
 	inline js void focus() this.focus()
 	inline js void scrollToBottom() this.scrollTo(0, this.scrollHeight)
 	inline js void scrollIntoView() this.scrollIntoView()
+	inline js void on(string eventName, void(dynamic event) listener) this.addEventListener(eventName, listener)
+	inline js dynamic getContext(string type) this.getContext(type)
 		
 	native void(HtmlEvent ev) onclick
 	native void(HtmlEvent ev) oncontextmenu
-	native void(HtmlEvent ev) onmouseover
-	native void(HtmlEvent ev) onmouseout
-	native void(dynamic ev) onkeydown
+	native void(PointerEvent ev) onpointerdown
+	native void(PointerEvent ev) onpointermove
+	native void(PointerEvent ev) onpointerup
+	native void(PointerEvent ev) onpointerover
+	native void(PointerEvent ev) onpointerout
+	native void(PointerEvent ev) onpointercancel
+	
+	native void(HtmlKeyboardEvent ev) onkeydown
+	native void(HtmlKeyboardEvent ev) onkeyup
 	native void(HtmlEvent ev) oninput
 	native void(HtmlEvent ev) onchange
+	native void(HtmlEvent ev) onload
+	native void(HtmlEvent ev) onblur
 	
 	inline js void set(string name, string value) this.setAttribute(name, value)
 	inline js void get(string name) this.getAttribute(name)
 	
 	static inline js Node create(string tagName = "div") document.createElement(tagName);
+	inline js void click() this.click()
 	
 	inline js void animate: Style from
 		                    Style to
@@ -52,7 +79,105 @@ class Node
 		                    AnimationFill fill = Forwards
 		                    easing = "linear"
 		this.animate([Html.expandStyle(from), Html.expandStyle(to)], {@duration:duration, @fill:fill, @easing:easing})
+		
+	Touch[] touches
 	
+	onTouchDown: void(Touch touch, Touch[] touches, Node node, PointerEvent event) do
+		this.onpointerdown = {
+			if this.touches == null: this.touches = []
+			TouchType type
+			if ev.pointerType == Mouse: type = cast ev.button.limit(0..2); else
+			if ev.pointerType == Touch: type = Touch; else
+				                        type = Pen
+			Touch touch = {phase:Down, id:ev.pointerId, type, position:new Vector2(ev.pageX/Platform.scale, ev.pageY/Platform.scale, Pixels)}
+			touch.shiftKey = ev.shiftKey
+			touch.ctrlKey = ev.ctrlKey
+			touch.altKey = ev.altKey
+			touch.metaKey = ev.metaKey
+			this.touches.add touch
+			do(touch, touches, this, ev)
+		}
+	
+	onTouchMove: void(Touch touch, Touch[] touches, Node node, PointerEvent event) do
+		this.onpointermove = {
+			if this.touches == null: this.touches = []
+			Touch touch = this.touches.find.id == ev.pointerId
+			if touch
+				touch.phase = Move
+				touch.position.x = ev.pageX/Platform.scale
+				touch.position.y = ev.pageY/Platform.scale
+				do(touch, touches, this, ev)
+		}
+	
+	onTouchUp: void(Touch touch, Touch[] touches, Node node, PointerEvent event) do
+		this.onpointerup = {
+			if this.touches == null: this.touches = []
+			int index = this.touches.indexWhere.id == ev.pointerId
+			if index != -1
+				let touch = this.touches[index]
+				touch.phase = Up
+				touch.position.x = ev.pageX/Platform.scale
+				touch.position.y = ev.pageY/Platform.scale
+				touch.shiftKey = ev.shiftKey
+				touch.ctrlKey = ev.ctrlKey
+				touch.altKey = ev.altKey
+				touch.metaKey = ev.metaKey
+				Node touchedNode = Html.getNodeAt(ev.pageX, ev.pageY)
+				touch.touchedId = touchedNode ? touchedNode.id : ""
+				this.touches.removeAt(index)
+				do(touch, touches, this, ev)
+		}
+		
+	onTouchCancel: void(Touch touch, Touch[] touches, Node node, PointerEvent event) do
+		this.onpointercancel = {
+			if this.touches == null: this.touches = []
+			int index = this.touches.indexWhere.id == ev.pointerId
+			if index != -1
+				let touch = this.touches[index]
+				touch.phase = Canceled
+				this.touches.removeAt(index)
+				do(touch, touches, this, ev)
+		}
+		
+	js void onScroll: void(Vector2 position, Vector2 delta, bool isPinch) do
+		this.onwheel = ev => {
+			ev.preventDefault();
+			ev.stopPropagation();
+			do(new Vector2(ev.clientX/Platform.scale, ev.clientY/Platform.scale, "px"), new Vector2(-ev.deltaX, ev.deltaY, "px"), ev.ctrlKey);
+		}
+		
+	inline js void captureTouch(Touch touch) this.setPointerCapture(touch.id)
+		
+interface File
+	Time lastModified
+	string lastModifiedDate
+	string name
+	string path
+	int size
+	string type
+	
+	inline js string objectUrl() URL.createObjectURL(this)
+	
+enum lowercase string PointerType: Mouse, Pen, Touch
+	
+immutable PointerEvent
+	Node target             // The element that triggered the event
+	Node currentTarget      // The element to the event handler is attached to
+	int pointerId           // A unique identifier for the pointer causing the event (for example, a finger)
+	PointerType pointerType // Mouse, Pen, or Touch
+	int button              // The mouse button that was pressed to trigger the event
+	stopPropagation         // Mark the event as handled and prevent its parent elements from receiving the event
+	preventDefault          // Prevent the default action (for example, showing the context menu on a right click)
+	int pageX               // The X coordinate of the pointer relative to the whole document
+	int pageY               // The Y coordinate of the pointer relative to the whole document
+	bool shiftKey           // Is the shift key down?
+	bool altKey             // Is the alt key down?
+	bool ctrlKey            // Is the control key down?
+	bool metaKey            // Is the meta key ("Command" on Mac, "Windows" on Windows) down?
+	
+	// The position of the pointer relative to the whole document
+	inline js Vector2 position() new Vector2(this.pageX/Platform.scale, this.pageY/Platform.scale)
+
 immutable HtmlEvent
 	Node target        // The element that triggered the event
 	Node currentTarget // The element to the event handler is attached to
@@ -60,12 +185,20 @@ immutable HtmlEvent
 	stopPropagation    // Mark the event as handled and prevent its parent elements from receiving the event
 	preventDefault     // Prevent the default action (for example, showing the context menu on a right click)
 		
-	inline Vector2 relativeMousePosition() Html.getRelativeMousePosition(this, this.currentTarget)
-	inline js Vector2 mousePosition() new Vector2(this.clientX/Platform.scale, this.clientY/Platform.scale)
+	inline Vector2 relativeTouchPosition() Html.getRelativeMousePosition(this, this.currentTarget)
+	inline js Vector2 touchPosition() new Vector2(this.clientX/Platform.scale, this.clientY/Platform.scale)
+
+immutable HtmlKeyboardEvent
+	Key keyCode        // A system and implementation dependent numerical code identifying the unmodified pressed key
+	Node target        // The element that triggered the event
+	Node currentTarget // The element to the event handler is attached to
+	stopPropagation    // Mark the event as handled and prevent its parent elements from receiving the event
+	preventDefault     // Prevent the default action (for example, showing the context menu on a right click)
 
 enum Unit
 	Pixels = "px" // Pixels
 	Percent = "%" // Makes the value relative to its parent's value
+	Fraction = "fr" // A fraction of the available space
 	
 	Centimeters = "cm" // Centimeters
 	Millimeters = "mm" // Millimeters
@@ -96,26 +229,86 @@ enum Unit
 	DynamicViewportWidth = "dvw" // 1% of the dynamic viewport's width (with the address bar on mobile if visible)
 	DynamicViewportHeight = "dvh" // 1% of the dynamic viewport's height (with the address bar on mobile if visible)
 		
+	GeoLocation = "geo" // A geographic location on earth (x:longitude, y:latitude)
+	
+	Turns = "turn"    // Turns (one full rotation is 1)
+	Radians = "rad"   // Radians (one full rotation is 2π)
+	Degrees = "deg"   // Degrees (one full rotation is 360)
+	Gradians = "grad" // Gradiants (one full rotation is 400)
+	
 	Auto = "auto"
+	None = "none"
 	
 struct Dimension
 	global const Dimension auto = {unit:Auto} // Automatically adjust the value to distribute the space evenly
 		
-	float value // The value in the specified unit
-	Unit unit   // The unit of the value (Pixels, Percent, Centimeters, Points, ViewportHeight, ViewportWidth, ...)
+	float value        // The value in the specified unit
+	Unit unit = Pixels // The unit of the value (Pixels, Percent, Centimeters, Points, ViewportHeight, ViewportWidth, ...)
 	
 	string toString := unit == Auto ? "auto" : "{value}{unit}"
+	bool toBool := value != 0
 	
 struct Vector2
 	float x // The x coordinate of the vector
 	float y // The y coordinate of the vector
 	Unit unit = Pixels // The unit of the vector (Pixels, Percent, Centimeters, Points, ViewportHeight, ...)
 	
+	// Used to specify that the vector is not set or invalid
+	static inline Vector2 none() Vector2(float.infinity, float.infinity, None)
+	
+	// {float.minValue, float.minValue}
+	static inline Vector2 minValue() Vector2(float.minValue, float.minValue, Pixels)
+	
+	// {float.maxValue, float.maxValue}
+	static inline Vector2 maxValue() Vector2(float.maxValue, float.maxValue, Pixels)
+	
+	// {0,0}
+	static inline Vector2 zero() Vector2(0, 0, Pixels)
+		
+	// A string representation of the vector
 	toString := "{x}{unit} {y}{unit}"
 	
+	// Returns true if the vector is not equal to Vector2.none
+	bool toBool := (x != float.infinity || y != float.infinity)
+		
+	// Creates a copy of the vector with the same values
+	Vector2 clone() := {x, y, unit}
+	
+	inline js Vector2 assignReference(Vector2 value) (this = value)
+		
+	Vector2 assign Vector2 other: x = other.x; y = other.y; unit = other.unit; return this
+		
 	Vector2 + Vector2 other:   return {x + other.x, y + other.y}
 	Vector2 - Vector2 other:   return {x - other.x, y - other.y}
 	Vector2 * Vector2 other:   return {x * other.x, y * other.y}
+	Vector2 / Vector2 other:   return {x / other.x, y / other.y}
+	
+	Vector2 * float other:     return {x * other, y * other}
+	Vector2 / float other:     return {x / other, y / other}
+		
+	// The length of the vector
+	length := math.sqrt(x * x + y * y)
+		
+	// A vector with each coordinate rounded down to an integer value
+	floor := Vector2(math.floor(x), math.floor(y))
+	
+	// A vector with each coordinate rounded down to an integer value
+	ceil := Vector2(math.ceil(x), math.ceil(y))
+		
+	// A vector with the sign of each coordinate flipped
+	inverse := Vector2(-x, -y)
+		
+	// A vector that points in the same direction, but has a length of 1
+	normalized
+		let len = math.sqrt(x * x + y * y)
+		return len != 0 ? Vector2(x / len, y / len) : Vector2(0, 0)
+		
+	// The distance to another vector
+	distanceTo: Vector2 value // The second vector
+		let x = x - value.x
+		let y = y - value.y
+		return math.sqrt(x*x + y*y)
+
 	
 enum AnimationFill
 	None = "none"
@@ -131,6 +324,9 @@ struct float
 		
 	// Makes the value relative to its parent's value
 	inline Dimension percent()     Dimension(this, Percent)
+		
+	// A fraction of the available space
+	inline Dimension fr()          Dimension(this, Fraction)
 		
 	// Font size of the parent (for font-size), font size of the element itself (for other properties)
 	inline Dimension em()          Dimension(this, Em)
@@ -150,44 +346,138 @@ struct float
 	// Percentage of the small viewport's height (without the address bar on mobile)
 	inline Dimension svh()         Dimension(this, SmallViewportHeight)
 		
-transient float Angle
-	inline js float toFloat() this
-	inline js string toString() this.toString()
-		
+struct Angle
+	float value       // The value in the specified unit
+	Unit unit = Turns // The unit of the value (Turns, Degrees, Gradians, or Radians)
+	
+	float toFloat()   return this.value
+	string toString() return "{this.value}{this.unit}"
+	
 	// Returns true if the angle is not zero
-	inline js bool toBool := this
+	inline js bool toBool := this.value
 	
-	inline Angle + Angle value
-	inline Angle - Angle value
-	inline float / Angle value
-	inline float * Angle value
+	Angle assign Angle other: value = other.value; unit = other.unit; return this
+	Angle assign float other: value = other; return this
+
+	Angle + Angle other:   return {value + other.value, unit}
+	Angle - Angle other:   return {value - other.value, unit}
+	Angle * Angle other:   return {value * other.value, unit}
+	Angle / Angle other:   return {value / other.value, unit}
 	
-	inline Angle += Angle value
-	inline Angle -= Angle value
-	inline Angle /= Angle value
-	inline Angle *= Angle value
-	
-	inline bool == Angle value
-	inline bool != Angle value
-	inline bool < Angle value
-	inline bool <= Angle value
-	inline bool > Angle value
-	inline bool >= Angle value
-	
-	inline js Angle % ensureSingleExecution Angle value
-		((this % value) + value) % value
+	Angle + float other:   return {value + other, unit}
+	Angle - float other:   return {value - other, unit}
+	Angle * float other:   return {value * other, unit}
+	Angle / float other:   return {value / other, unit}
+
+	Angle += Angle other:  value += other.value; return this
+	Angle -= Angle other:  value -= other.value; return this
 		
-	inline js Angle operator -  (Angle a) -a
-	
-	inline js float in: AngleUnit unit
-		(unit==1 ? this*Math.TwoPI : unit==2 ? this*360 : unit==3 ? this*400 : this)
+	Angle += float other:  value += other; return this
+	Angle -= float other:  value -= other; return this
 		
-enum AngleUnit
-	turns // Turn (one full rotation is 1)
-	rad   // Radians (one full rotation is 2π)
-	deg   // Degrees (one full rotation is 360)
-	grad  // Gradiants (one full rotation is 400)
+	bool >  Angle other:   return value >  other.value
+	bool >= Angle other:   return value >= other.value
+	bool <  Angle other:   return value <  other.value
+	bool <= Angle other:   return value <= other.value
 	
+	Angle operator - (Angle a) Angle(-a.value, a.unit)
+	
+	// inline js Angle rotateTowards: Angle value
+	// 	                           Angle speed
+	// 	(this = Angle.rotatedTowards(this, value, speed))
+		
+	// static Angle rotatedTowards: Angle value
+	// 	                         Angle target
+	// 	                         Angle speed
+	// 	let delta = (((target - value + .5) % 1) + 1) % 1 - .5
+	// 	let valuePlusDelta = value + delta
+	// 	if delta > 0: value += speed; return value < valuePlusDelta ? value : target
+	// 	else          value -= speed; return value > valuePlusDelta ? value : target
+		
+	// inline js Angle normalize
+	// 	(((this + .5) % 1) + 1) % 1 - .5
+	
+	// inline js Angle % ensureSingleExecution Angle value
+	// 	((this % value) + value) % value
+		
+	// inline js Angle operator -  (Angle a) -a
+	
+	// // The remainer after a division by the given value. The sign stays the same.
+	// inline js Angle remainder: Angle value
+	// 	(this % value)
+	
+immutable priority low struct float
+	inline Dimension toAngle() Angle(this, Turns)
+
+	inline Angle operator °(float value) Angle(value, Degrees)
+	
+	// One full rotation is 1
+	inline Angle turns := Angle(this, Turns)
+	
+	// One full rotation is 2π (about 6.2832)
+	inline Angle radians := Angle(this, Radians)
+		
+	// One full rotation is 360
+	inline Angle degrees := Angle(this, Degrees)
+		
+	// One full rotation is 400
+	inline Angle gradians := Angle(this, Gradians)
+
+js Array
+priority low class List<T>
+	inline js T[] sort: Angle(T a, T b) comparer // A function returning 1 if "a" is larger, -1 if "b" is larger, 0 if they are equal
+		this.sort(comparer)
+		
+	T[] orderBy: Angle(T a) expression // First order by this expression
+		return this.sort(expression(a) - expression(b))
+
+global skipInit priority low unit math
+	// Returns the absolute value
+	inline js Angle abs: Angle value // The angle to return the absolute value of
+		Math.abs(value)
+		
+	// Returns the smallest integer greater than or equal to the given value 
+	inline js Angle ceil: Angle value // The angle to round up
+		Math.ceil(value)
+		
+	// Returns the largest integer less than or equal to the given value
+	inline js Angle floor: Angle value // The angle to round down
+		Math.floor(value)
+		
+	// Returns the given value rounded to the nearest integer
+	inline js Angle round: Angle value // The angle to round
+		Math.round(value)
+		
+	// Returns the smallest of the given values
+	inline js Angle min: Angle a // The first angle
+		                 Angle b // The second angle
+		Math.min(a, b)
+		
+	// Returns the largest of the given values
+	inline js Angle max: Angle a // The first angle
+		                 Angle b // The second angle
+		Math.max(a, b)
+	// The ratio of a circle's circumference to its diameter
+	const float PI = 3.141592653589793
+	
+	// The ratio of a circle's radius to its diameter
+	const float TwoPI = 6.283185307179586
+	
+	moveTowards: Angle value
+		         Angle targetValue
+		         Angle speed = {.1 Turns}
+		if targetValue > value: return math.min(value + speed, targetValue) else
+		if targetValue < value: return math.max(value - speed, targetValue)
+			
+global skipInit unit math
+	// Returns the arctangent of the quotient of the given values
+	Angle getAngleForVector: Vector2 vector
+		return math.atan2(vector.y, vector.x)
+		
+	Vector2 getVectorForAngle: Angle angle      // The angle in turns (0: straight up, 1: one full rotation clockwise)
+		                       float radius = 1
+		return new Vector2(math.sin(angle)*radius, -math.cos(angle)*radius)
+
 enum FlexDirection
 	Row = "row" // The flex container's main-axis will be the same as the text direction
 	Column = "column" // The flex container's main-axis will be the same as the block-axis
@@ -401,6 +691,10 @@ class BoxShadow
 	
 	toString := "{inset ? "inset ":""}{offset.x}{offset.unit} {offset.y}{offset.unit} {blur} {spread} {color}"
 	
+enum lowercase string PointerEvents
+	None // On its own, it doesn't trigger pointer event, but its subtree could by setting pointerEvents 
+	Auto // The element behaves as it would if the pointerEvents property were not specified
+	
 dynamic Style
 	AlignItems alignItems // Align the individual items along the cross axis
 	AlignContent alignContent // When wrapping, align the whole content along the cross axis
@@ -535,14 +829,14 @@ dynamic Style
 	float opacity // The opacity level for an element
 	string order // The order of the flexible item, relative to the rest
 	string orphans // The minimum number of lines that must be left at the bottom before a page-break
-	string outline // All the outline properties in one declaration
+	Border outline // All the outline properties in one declaration
 	Color outlineColor // The color of the outline around a element
 	string outlineOffset // Offsets an outline, and draws it beyond the border edge
 	string outlineStyle // The style of the outline around an element
 	implicit Dimension outlineWidth // The width of the outline around an element
 	Overflow overflow // What to do with content that renders outside the element box
-	string overflowX // Specifies what to do with the left/right edges of content rendering outside the element box
-	string overflowY // Specifies what to do with the top/bottom edges of content rendering outside the element box
+	Overflow overflowX // Specifies what to do with the left/right edges of content rendering outside the element box
+	Overflow overflowY // Specifies what to do with the top/bottom edges of content rendering outside the element box
 	Padding padding // The padding of an element (can have up to four values)
 	implicit Dimension paddingBottom // The bottom padding of an element
 	implicit Dimension paddingLeft // The left padding of an element
@@ -591,6 +885,8 @@ dynamic Style
 	string wordWrap // Allows long, unbreakable words to be broken and wrap to the next line
 	string widows // The minimum number of lines for an element that must be visible at the top of a page
 	int zIndex // The stack order of a positioned element
+	string gridTemplateColumns // The line names and track sizing functions of the grid columns
+	PointerEvents pointerEvents
 	
 	Vector2 translate // Move the element by this vector
 	implicit Angle rotate // Rotate the element by this angle
@@ -599,10 +895,20 @@ dynamic Style
 	bool overlay
 	
 dynamic Attributes
-	string id // A unique string to indentify a specic element, often used to style a single element
+	string id    // A unique string to indentify a specic element, often used to style a single element
 	string class // A string to assign a class to one or more elements, often used to style several elements
-	native void(HtmlEvent ev) onClick = null      // Execute this code when the user clicks the HTML element
-	native void(HtmlEvent ev) onRightClick = null // Execute this code when the user clicks the HTML element with the right mouse button
-	native void(dynamic ev) onKeyDown = null      // Execute this code when the user clicks the HTML element with the right mouse button
-	// bool passClickToParents = false            // Even if this elements handles a click, its parents will also receive the event
+	string key   // A unique identifier used to find the node that should be reused
+	string title
+	
+	native void() onClick = null                       // Execute this code when the user clicks the HTML element
+	native void() onRightClick = null                  // Execute this code when the user clicks the HTML element with the right mouse button
+	native void(HtmlKeyboardEvent ev) onKeyDown = null // Execute this code when the user presses a key on the keyboard
+	native void(HtmlKeyboardEvent ev) onKeyUp = null   // Execute this code when the user releases a key on the keyboard
+	
+	// native void(PointerEvent ev) onTouchDown = null  // Execute this code when a touch or click starts
+	// native void(PointerEvent ev) onTouchMove = null  // Execute this code when a touch or clicks moves
+	// native void(PointerEvent ev) onTouchUp = null    // Execute this code when a touch or click ends
+	// native void(PointerEvent ev) onTouchCancel= null // Execute this code when a touch or click is canceled
+	
+	int tabIndex = 0
 		

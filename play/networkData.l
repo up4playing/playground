@@ -9,8 +9,16 @@ networkData
 		return id
 				
 storage
-	inline js void set: string key, object value
-		localStorage.setItem(key, JSON.stringify(value))
+	inline js void set: string key, nocolon Player of, object value
+		if(input.internalUsers[of.id]?.local) {
+			localStorage.setItem(key, JSON.stringify(value));
+		}
+		
+	get: string key, nocolon Player of, stored void(any data) do
+		let id = networkData.addCallback do
+		if core.isPremiere and input.isCertain and input.internalUsers[of.id]?.local
+			let data = getStringDirectly(key)
+			input.handleObject id, data
 		
 	internal inline js string getStringDirectly: string key
 		(localStorage.getItem(key) || "")
@@ -23,11 +31,6 @@ storage
 		} catch {
 			return {}
 		}
-		
-	get: string key, stored void(any data) do
-		let id = networkData.addCallback do
-		let data = getStringDirectly(key)
-		input.handleObject id, data
 		
 http
 	inline js string encodeURIComponent(string str) encodeURIComponent(str)
@@ -75,9 +78,14 @@ http
 	internal js async dynamic getJsonDirectly: string url, dynamic options
 		return await (await fetch(url, options)).json()
 		
-	internal js void postDirectly: string url, any body, void(any result) code
-		let data = await (await fetch(url, {method:"POST", body:JSON.stringify(body)})).text()
-		code(data)
+	internal js void postDirectly: string url, any body, void(any result) code, void() else
+		try {
+			let data = await (await fetch(url, {method:"POST", body:JSON.stringify(body)})).text();
+			code(data);
+		} catch(e) {
+			core.log(e.stack.toString());
+			else();
+		}
 		
 	// Perform an http post request
 	js void post: string url

@@ -1,12 +1,1272 @@
-js THREE.Vector3
 struct Vector3
+	private isVector3 = true
+	
 	float x // The x-coordinate of the vector
 	float y // The y-coordinate of the vector
 	float z // The z-coordinate of the vector
 	
 	Vector3 operator = (Vector3 a, Vector3 b) a.x = b.x; a.y = b.y; a.z = b.z; return a
 	
+	Vector3 operator + (Vector3 a, Vector3 b) return { a.x + b.x, a.y + b.y, a.z + b.z }
+	Vector3 operator - (Vector3 a, Vector3 b) return { a.x - b.x, a.y - b.y, a.z - b.z }
+	
+	Vector3 operator * (Vector3 a, Vector3 b) return { a.x * b.x, a.y * b.y, a.z * b.z }
+	Vector3 operator * (Vector3 a, float b) return { a.x * b, a.y * b, a.z * b }
+	
 	inline js Vector3 operator *= (Vector3 a, Quaternion b) a.applyQuaternion(b)
+		
+	Vector3 operator += (Vector3 a, Vector3 b) a.x += b.x; a.y += b.y; a.z += b.z; return a
+		
+	js void set: float x
+		         float y
+		         float z
+		if ( z === undefined ) z = this.z; // sprite.scale.set(x,y)
+		this.x = x;
+		this.y = y;
+		this.z = z;
+		return this;
+
+	setScalar: float scalar
+		this.x = scalar;
+		this.y = scalar;
+		this.z = scalar;
+		return this;
+
+	setX(float x) this.x = x; return this;
+	setX(float y) this.x = y; return this;
+	setX(float z) this.x = z; return this;
+
+
+	setComponent: int index
+		          float value
+		switch index
+			0: this.x = value; break;
+			1: this.y = value; break;
+			2: this.z = value; break;
+		return this;
+
+	getComponent: int index
+		switch index
+			0: return this.x;
+			1: return this.y;
+			2: return this.z;
+
+	copy: Vector3 v
+		this.x = v.x;
+		this.y = v.y;
+		this.z = v.z;
+		return this;
+
+	add: Vector3 v
+		this.x += v.x;
+		this.y += v.y;
+		this.z += v.z;
+		return this;
+
+	addScalar: float s
+		this.x += s;
+		this.y += s;
+		this.z += s;
+		return this;
+
+	addVectors: Vector3 a, Vector3 b
+		this.x = a.x + b.x;
+		this.y = a.y + b.y;
+		this.z = a.z + b.z;
+		return this;
+
+	addScaledVector: Vector3 v
+		             float s
+		this.x += v.x * s;
+		this.y += v.y * s;
+		this.z += v.z * s;
+		return this;
+
+	sub: Vector3 v
+		this.x -= v.x;
+		this.y -= v.y;
+		this.z -= v.z;
+		return this;
+
+	subScalar: float s
+		this.x -= s;
+		this.y -= s;
+		this.z -= s;
+		return this;
+
+	subVectors: Vector3 a
+		        Vector3 b
+		this.x = a.x - b.x;
+		this.y = a.y - b.y;
+		this.z = a.z - b.z;
+		return this;
+
+	multiply: Vector3 v
+		this.x *= v.x;
+		this.y *= v.y;
+		this.z *= v.z;
+		return this;
+
+	multiplyScalar: float scalar
+		this.x *= scalar;
+		this.y *= scalar;
+		this.z *= scalar;
+		return this;
+
+	multiplyVectors: Vector3 a
+		             Vector3 b
+		this.x = a.x * b.x;
+		this.y = a.y * b.y;
+		this.z = a.z * b.z;
+		return this;
+
+	// Moves the vector towards the given target by the given distance	
+	moveTowards: Vector3 targetPosition // The target to move towards
+		         float speed = 1        // The distance to move by
+		let delta = targetPosition - this
+		if delta.x != 0 or delta.y != 0 or delta.z != 0
+			delta = delta.normalized * speed
+			if delta.x > 0: x = math.min(x + delta.x, targetPosition.x)
+			else            x = math.max(x + delta.x, targetPosition.x)
+			if delta.y > 0: y = math.min(y + delta.y, targetPosition.y)
+			else            y = math.max(y + delta.y, targetPosition.y)
+			if delta.z > 0: z = math.min(z + delta.z, targetPosition.z)
+			else            z = math.max(z + delta.z, targetPosition.z)
+			
+	// applyEuler( euler ) {
+
+	// 	return this.applyQuaternion( _quaternion$4.setFromEuler( euler ) );
+
+	// }
+
+	// applyAxisAngle( axis, angle ) {
+
+	// 	return this.applyQuaternion( _quaternion$4.setFromAxisAngle( axis, angle ) );
+
+	// }
+
+	// applyMatrix3( m ) {
+
+	// 	const x = this.x, y = this.y, z = this.z;
+	// 	const e = m.elements;
+
+	// 	this.x = e[ 0 ] * x + e[ 3 ] * y + e[ 6 ] * z;
+	// 	this.y = e[ 1 ] * x + e[ 4 ] * y + e[ 7 ] * z;
+	// 	this.z = e[ 2 ] * x + e[ 5 ] * y + e[ 8 ] * z;
+
+	// 	return this;
+
+	// }
+
+	// applyNormalMatrix( m ) {
+
+	// 	return this.applyMatrix3( m ).normalize();
+
+	// }
+
+	// applyMatrix4( m ) {
+
+	// 	const x = this.x, y = this.y, z = this.z;
+	// 	const e = m.elements;
+
+	// 	const w = 1 / ( e[ 3 ] * x + e[ 7 ] * y + e[ 11 ] * z + e[ 15 ] );
+
+	// 	this.x = ( e[ 0 ] * x + e[ 4 ] * y + e[ 8 ] * z + e[ 12 ] ) * w;
+	// 	this.y = ( e[ 1 ] * x + e[ 5 ] * y + e[ 9 ] * z + e[ 13 ] ) * w;
+	// 	this.z = ( e[ 2 ] * x + e[ 6 ] * y + e[ 10 ] * z + e[ 14 ] ) * w;
+
+	// 	return this;
+
+	// }
+
+	applyQuaternion: Quaternion q
+		const x = this.x, y = this.y, z = this.z;
+		const qx = q.x, qy = q.y, qz = q.z, qw = q.w;
+		
+		// calculate quat * vector
+		const ix = qw * x + qy * z - qz * y;
+		const iy = qw * y + qz * x - qx * z;
+		const iz = qw * z + qx * y - qy * x;
+		const iw = - qx * x - qy * y - qz * z;
+
+		// calculate result * inverse quat
+		this.x = ix * qw + iw * - qx + iy * - qz - iz * - qy;
+		this.y = iy * qw + iw * - qy + iz * - qx - ix * - qz;
+		this.z = iz * qw + iw * - qz + ix * - qy - iy * - qx;
+
+		return this;
+
+	// project( camera ) {
+
+	// 	return this.applyMatrix4( camera.matrixWorldInverse ).applyMatrix4( camera.projectionMatrix );
+
+	// }
+
+	// unproject( camera ) {
+
+	// 	return this.applyMatrix4( camera.projectionMatrixInverse ).applyMatrix4( camera.matrixWorld );
+
+	// }
+
+	// transformDirection( m ) {
+
+	// 	// input: THREE.Matrix4 affine matrix
+	// 	// vector interpreted as a direction
+
+	// 	const x = this.x, y = this.y, z = this.z;
+	// 	const e = m.elements;
+
+	// 	this.x = e[ 0 ] * x + e[ 4 ] * y + e[ 8 ] * z;
+	// 	this.y = e[ 1 ] * x + e[ 5 ] * y + e[ 9 ] * z;
+	// 	this.z = e[ 2 ] * x + e[ 6 ] * y + e[ 10 ] * z;
+
+	// 	return this.normalize();
+
+	// }
+
+	// divide( v ) {
+
+	// 	this.x /= v.x;
+	// 	this.y /= v.y;
+	// 	this.z /= v.z;
+
+	// 	return this;
+
+	// }
+
+	// divideScalar( scalar ) {
+
+	// 	return this.multiplyScalar( 1 / scalar );
+
+	// }
+
+	// min( v ) {
+
+	// 	this.x = Math.min( this.x, v.x );
+	// 	this.y = Math.min( this.y, v.y );
+	// 	this.z = Math.min( this.z, v.z );
+
+	// 	return this;
+
+	// }
+
+	// max( v ) {
+
+	// 	this.x = Math.max( this.x, v.x );
+	// 	this.y = Math.max( this.y, v.y );
+	// 	this.z = Math.max( this.z, v.z );
+
+	// 	return this;
+
+	// }
+
+	// clamp( min, max ) {
+
+	// 	// assumes min < max, componentwise
+
+	// 	this.x = Math.max( min.x, Math.min( max.x, this.x ) );
+	// 	this.y = Math.max( min.y, Math.min( max.y, this.y ) );
+	// 	this.z = Math.max( min.z, Math.min( max.z, this.z ) );
+
+	// 	return this;
+
+	// }
+
+	// clampScalar( minVal, maxVal ) {
+
+	// 	this.x = Math.max( minVal, Math.min( maxVal, this.x ) );
+	// 	this.y = Math.max( minVal, Math.min( maxVal, this.y ) );
+	// 	this.z = Math.max( minVal, Math.min( maxVal, this.z ) );
+
+	// 	return this;
+
+	// }
+
+	// clampLength( min, max ) {
+
+	// 	const length = this.length();
+
+	// 	return this.divideScalar( length || 1 ).multiplyScalar( Math.max( min, Math.min( max, length ) ) );
+
+	// }
+
+	// floor() {
+
+	// 	this.x = Math.floor( this.x );
+	// 	this.y = Math.floor( this.y );
+	// 	this.z = Math.floor( this.z );
+
+	// 	return this;
+
+	// }
+
+	// ceil() {
+
+	// 	this.x = Math.ceil( this.x );
+	// 	this.y = Math.ceil( this.y );
+	// 	this.z = Math.ceil( this.z );
+
+	// 	return this;
+
+	// }
+
+	// round() {
+
+	// 	this.x = Math.round( this.x );
+	// 	this.y = Math.round( this.y );
+	// 	this.z = Math.round( this.z );
+
+	// 	return this;
+
+	// }
+
+	// roundToZero() {
+
+	// 	this.x = ( this.x < 0 ) ? Math.ceil( this.x ) : Math.floor( this.x );
+	// 	this.y = ( this.y < 0 ) ? Math.ceil( this.y ) : Math.floor( this.y );
+	// 	this.z = ( this.z < 0 ) ? Math.ceil( this.z ) : Math.floor( this.z );
+
+	// 	return this;
+
+	// }
+
+	// negate() {
+
+	// 	this.x = - this.x;
+	// 	this.y = - this.y;
+	// 	this.z = - this.z;
+
+	// 	return this;
+
+	// }
+
+	dot: Vector3 v
+		return this.x * v.x + this.y * v.y + this.z * v.z;
+
+	// // TODO lengthSquared?
+
+	lengthSq
+		return this.x * this.x + this.y * this.y + this.z * this.z;
+
+	length
+		return math.sqrt( this.x * this.x + this.y * this.y + this.z * this.z );
+
+	manhattanLength
+		return math.abs( this.x ) + math.abs( this.y ) + math.abs( this.z );
+
+	normalize
+		let length = math.sqrt( x * x + y * y + z * z )
+			x /= length
+			y /= length
+			z /= length
+		
+	normalized
+		let length = math.sqrt( x * x + y * y + z * z )
+		return length != 0 ? Vector3( x / length, y / length, z / length ) : Vector3( 0, 0, 0 )
+
+	// setLength( length ) {
+
+	// 	return this.normalize().multiplyScalar( length );
+
+	// }
+
+	// lerp( v, alpha ) {
+
+	// 	this.x += ( v.x - this.x ) * alpha;
+	// 	this.y += ( v.y - this.y ) * alpha;
+	// 	this.z += ( v.z - this.z ) * alpha;
+
+	// 	return this;
+
+	// }
+
+	// lerpVectors( v1, v2, alpha ) {
+
+	// 	this.x = v1.x + ( v2.x - v1.x ) * alpha;
+	// 	this.y = v1.y + ( v2.y - v1.y ) * alpha;
+	// 	this.z = v1.z + ( v2.z - v1.z ) * alpha;
+
+	// 	return this;
+
+	// }
+
+	// cross( v ) {
+
+	// 	return this.crossVectors( this, v );
+
+	// }
+
+	// crossVectors( a, b ) {
+
+	// 	const ax = a.x, ay = a.y, az = a.z;
+	// 	const bx = b.x, by = b.y, bz = b.z;
+
+	// 	this.x = ay * bz - az * by;
+	// 	this.y = az * bx - ax * bz;
+	// 	this.z = ax * by - ay * bx;
+
+	// 	return this;
+
+	// }
+
+	// projectOnVector( v ) {
+
+	// 	const denominator = v.lengthSq();
+
+	// 	if ( denominator === 0 ) return this.set( 0, 0, 0 );
+
+	// 	const scalar = v.dot( this ) / denominator;
+
+	// 	return this.copy( v ).multiplyScalar( scalar );
+
+	// }
+
+	// projectOnPlane( planeNormal ) {
+
+	// 	_vector$b.copy( this ).projectOnVector( planeNormal );
+
+	// 	return this.sub( _vector$b );
+
+	// }
+
+	// reflect( normal ) {
+
+	// 	// reflect incident vector off plane orthogonal to normal
+	// 	// normal is assumed to have unit length
+
+	// 	return this.sub( _vector$b.copy( normal ).multiplyScalar( 2 * this.dot( normal ) ) );
+
+	// }
+
+	angleTo: Vector3 v
+		const denominator = math.sqrt( this.lengthSq() * v.lengthSq() )
+		if denominator == 0: return math.PI / 2
+		const theta = this.dot( v ) / denominator
+		return math.nativeAcos( math.limit( theta, - 1, 1 ) )
+		
+	// distanceTo( v ) {
+
+	// 	return Math.sqrt( this.distanceToSquared( v ) );
+
+	// }
+
+	// distanceToSquared( v ) {
+
+	// 	const dx = this.x - v.x, dy = this.y - v.y, dz = this.z - v.z;
+
+	// 	return dx * dx + dy * dy + dz * dz;
+
+	// }
+
+	// manhattanDistanceTo( v ) {
+
+	// 	return Math.abs( this.x - v.x ) + Math.abs( this.y - v.y ) + Math.abs( this.z - v.z );
+
+	// }
+
+	// setFromSpherical( s ) {
+
+	// 	return this.setFromSphericalCoords( s.radius, s.phi, s.theta );
+
+	// }
+
+	// setFromSphericalCoords( radius, phi, theta ) {
+
+	// 	const sinPhiRadius = Math.sin( phi ) * radius;
+
+	// 	this.x = sinPhiRadius * Math.sin( theta );
+	// 	this.y = Math.cos( phi ) * radius;
+	// 	this.z = sinPhiRadius * Math.cos( theta );
+
+	// 	return this;
+
+	// }
+
+	// setFromCylindrical( c ) {
+
+	// 	return this.setFromCylindricalCoords( c.radius, c.theta, c.y );
+
+	// }
+
+	// setFromCylindricalCoords( radius, theta, y ) {
+
+	// 	this.x = radius * Math.sin( theta );
+	// 	this.y = y;
+	// 	this.z = radius * Math.cos( theta );
+
+	// 	return this;
+
+	// }
+
+	// setFromMatrixPosition( m ) {
+
+	// 	const e = m.elements;
+
+	// 	this.x = e[ 12 ];
+	// 	this.y = e[ 13 ];
+	// 	this.z = e[ 14 ];
+
+	// 	return this;
+
+	// }
+
+	// setFromMatrixScale( m ) {
+
+	// 	const sx = this.setFromMatrixColumn( m, 0 ).length();
+	// 	const sy = this.setFromMatrixColumn( m, 1 ).length();
+	// 	const sz = this.setFromMatrixColumn( m, 2 ).length();
+
+	// 	this.x = sx;
+	// 	this.y = sy;
+	// 	this.z = sz;
+
+	// 	return this;
+
+	// }
+
+	// setFromMatrixColumn( m, index ) {
+
+	// 	return this.fromArray( m.elements, index * 4 );
+
+	// }
+
+	// setFromMatrix3Column( m, index ) {
+
+	// 	return this.fromArray( m.elements, index * 3 );
+
+	// }
+
+	// setFromEuler( e ) {
+
+	// 	this.x = e._x;
+	// 	this.y = e._y;
+	// 	this.z = e._z;
+
+	// 	return this;
+
+	// }
+
+	// setFromColor( c ) {
+
+	// 	this.x = c.r;
+	// 	this.y = c.g;
+	// 	this.z = c.b;
+
+	// 	return this;
+
+	// }
+
+	// equals( v ) {
+
+	// 	return ( ( v.x === this.x ) && ( v.y === this.y ) && ( v.z === this.z ) );
+
+	// }
+
+	// fromArray( array, offset = 0 ) {
+
+	// 	this.x = array[ offset ];
+	// 	this.y = array[ offset + 1 ];
+	// 	this.z = array[ offset + 2 ];
+
+	// 	return this;
+
+	// }
+
+	// toArray( array = [], offset = 0 ) {
+
+	// 	array[ offset ] = this.x;
+	// 	array[ offset + 1 ] = this.y;
+	// 	array[ offset + 2 ] = this.z;
+
+	// 	return array;
+
+	// }
+
+	// fromBufferAttribute( attribute, index ) {
+
+	// 	this.x = attribute.getX( index );
+	// 	this.y = attribute.getY( index );
+	// 	this.z = attribute.getZ( index );
+
+	// 	return this;
+
+	// }
+
+	// random() {
+
+	// 	this.x = Math.random();
+	// 	this.y = Math.random();
+	// 	this.z = Math.random();
+
+	// 	return this;
+
+	// }
+
+	// randomDirection() {
+
+	// 	// Derived from https://mathworld.wolfram.com/SpherePointPicking.html
+
+	// 	const u = ( Math.random() - 0.5 ) * 2;
+	// 	const t = Math.random() * Math.PI * 2;
+	// 	const f = Math.sqrt( 1 - u ** 2 );
+
+	// 	this.x = f * Math.cos( t );
+	// 	this.y = f * Math.sin( t );
+	// 	this.z = u;
+
+	// 	return this;
+
+	// }
+
+	// *[ Symbol.iterator ]() {
+
+	// 	yield this.x;
+	// 	yield this.y;
+	// 	yield this.z;
+
+	// }
+	
+enum EulerOrder: XYZ = "XYZ", YXZ = "YXZ", ZXY = "ZXY", ZYX = "ZYX", YZX = "YZX", XZY = "XZY"
+	
+js THREE.Euler
+Euler
+	float _x
+	float _y
+	float _z
+	EulerOrder _order
+	
+struct Quaternion
+	const identity = {0,0,0,1}
+	
+	float x = 0.0
+	float y = 0.0
+	float z = 0.0
+	float w = 1.0
+	
+	// void() _onChangeCallback
+	
+	
+	Quaternion(float x, float y, float z) {}.setFromEuler(new Euler(x*math.TwoPI, y*math.TwoPI, z*math.TwoPI))
+		
+	Quaternion
+
+	// static Quaternion fromEuler(float x, float y, float z) {}.setFromEuler(new Euler(x*math.TwoPI, y*math.TwoPI, z*math.TwoPI))
+	
+	static Quaternion fromEuler(float x, float y, float z) 
+		return {}.setFromEuler(new Euler(x, y, z))
+		
+	// Quaternion
+		
+	Quaternion operator = (Quaternion a, Quaternion b) a.x = b.x; a.y = b.y; a.z = b.z; a.w = b.w; return a
+
+	// static slerpFlat( dst, dstOffset, src0, srcOffset0, src1, srcOffset1, t ) {
+
+	// 	// fuzz-free, array-based Quaternion SLERP operation
+
+	// 	let x0 = src0[ srcOffset0 + 0 ],
+	// 		y0 = src0[ srcOffset0 + 1 ],
+	// 		z0 = src0[ srcOffset0 + 2 ],
+	// 		w0 = src0[ srcOffset0 + 3 ];
+
+	// 	const x1 = src1[ srcOffset1 + 0 ],
+	// 		y1 = src1[ srcOffset1 + 1 ],
+	// 		z1 = src1[ srcOffset1 + 2 ],
+	// 		w1 = src1[ srcOffset1 + 3 ];
+
+	// 	if ( t === 0 ) {
+
+	// 		dst[ dstOffset + 0 ] = x0;
+	// 		dst[ dstOffset + 1 ] = y0;
+	// 		dst[ dstOffset + 2 ] = z0;
+	// 		dst[ dstOffset + 3 ] = w0;
+	// 		return;
+
+	// 	}
+
+	// 	if ( t === 1 ) {
+
+	// 		dst[ dstOffset + 0 ] = x1;
+	// 		dst[ dstOffset + 1 ] = y1;
+	// 		dst[ dstOffset + 2 ] = z1;
+	// 		dst[ dstOffset + 3 ] = w1;
+	// 		return;
+
+	// 	}
+
+	// 	if ( w0 !== w1 || x0 !== x1 || y0 !== y1 || z0 !== z1 ) {
+
+	// 		let s = 1 - t;
+	// 		const cos = x0 * x1 + y0 * y1 + z0 * z1 + w0 * w1,
+	// 			dir = ( cos >= 0 ? 1 : - 1 ),
+	// 			sqrSin = 1 - cos * cos;
+
+	// 		// Skip the Slerp for tiny steps to avoid numeric problems:
+	// 		if ( sqrSin > Number.EPSILON ) {
+
+	// 			const sin = Math.sqrt( sqrSin ),
+	// 				len = Math.atan2( sin, cos * dir );
+
+	// 			s = Math.sin( s * len ) / sin;
+	// 			t = Math.sin( t * len ) / sin;
+
+	// 		}
+
+	// 		const tDir = t * dir;
+
+	// 		x0 = x0 * s + x1 * tDir;
+	// 		y0 = y0 * s + y1 * tDir;
+	// 		z0 = z0 * s + z1 * tDir;
+	// 		w0 = w0 * s + w1 * tDir;
+
+	// 		// Normalize in case we just did a lerp:
+	// 		if ( s === 1 - t ) {
+
+	// 			const f = 1 / Math.sqrt( x0 * x0 + y0 * y0 + z0 * z0 + w0 * w0 );
+
+	// 			x0 *= f;
+	// 			y0 *= f;
+	// 			z0 *= f;
+	// 			w0 *= f;
+
+	// 		}
+
+	// 	}
+
+	// 	dst[ dstOffset ] = x0;
+	// 	dst[ dstOffset + 1 ] = y0;
+	// 	dst[ dstOffset + 2 ] = z0;
+	// 	dst[ dstOffset + 3 ] = w0;
+
+	// }
+
+	// static multiplyQuaternionsFlat( dst, dstOffset, src0, srcOffset0, src1, srcOffset1 ) {
+
+	// 	const x0 = src0[ srcOffset0 ];
+	// 	const y0 = src0[ srcOffset0 + 1 ];
+	// 	const z0 = src0[ srcOffset0 + 2 ];
+	// 	const w0 = src0[ srcOffset0 + 3 ];
+
+	// 	const x1 = src1[ srcOffset1 ];
+	// 	const y1 = src1[ srcOffset1 + 1 ];
+	// 	const z1 = src1[ srcOffset1 + 2 ];
+	// 	const w1 = src1[ srcOffset1 + 3 ];
+
+	// 	dst[ dstOffset ] = x0 * w1 + w0 * x1 + y0 * z1 - z0 * y1;
+	// 	dst[ dstOffset + 1 ] = y0 * w1 + w0 * y1 + z0 * x1 - x0 * z1;
+	// 	dst[ dstOffset + 2 ] = z0 * w1 + w0 * z1 + x0 * y1 - y0 * x1;
+	// 	dst[ dstOffset + 3 ] = w0 * w1 - x0 * x1 - y0 * y1 - z0 * z1;
+
+	// 	return dst;
+
+	// }
+
+	// get x() {
+
+	// 	return this._x;
+
+	// }
+
+	// set x( value ) {
+
+	// 	this._x = value;
+	// 	this._onChangeCallback();
+
+	// }
+
+	// get y() {
+
+	// 	return this._y;
+
+	// }
+
+	// set y( value ) {
+
+	// 	this._y = value;
+	// 	this._onChangeCallback();
+
+	// }
+
+	// get z() {
+
+	// 	return this._z;
+
+	// }
+
+	// set z( value ) {
+
+	// 	this._z = value;
+	// 	this._onChangeCallback();
+
+	// }
+
+	// get w() {
+
+	// 	return this._w;
+
+	// }
+
+	// set w( value ) {
+
+	// 	this._w = value;
+	// 	this._onChangeCallback();
+
+	// }
+
+	// set( x, y, z, w ) {
+
+	// 	this._x = x;
+	// 	this._y = y;
+	// 	this._z = z;
+	// 	this._w = w;
+
+	// 	this._onChangeCallback();
+
+	// 	return this;
+
+	// }
+
+	// clone() {
+
+	// 	return new this.constructor( this._x, this._y, this._z, this._w );
+
+	// }
+
+	copy: Quaternion quaternion
+
+		this.x = quaternion.x;
+		this.y = quaternion.y;
+		this.z = quaternion.z;
+		this.w = quaternion.w;
+
+		// this._onChangeCallback();
+
+		return this;
+
+	setFromEuler: Euler euler
+		          update = false
+
+		const x = euler._x, y = euler._y, z = euler._z, order = euler._order;
+
+		// http://www.mathworks.com/matlabcentral/fileexchange/
+		// 	20696-function-to-convert-between-dcm-euler-angles-quaternions-and-euler-vectors/
+		//	content/SpinCalc.m
+		const c1 = math.nativeCos( x / 2 );
+		const c2 = math.nativeCos( y / 2 );
+		const c3 = math.nativeCos( z / 2 );
+
+		const s1 = math.nativeSin( x / 2 );
+		const s2 = math.nativeSin( y / 2 );
+		const s3 = math.nativeSin( z / 2 );
+
+		switch order
+
+			XYZ
+				this.x = s1 * c2 * c3 + c1 * s2 * s3;
+				this.y = c1 * s2 * c3 - s1 * c2 * s3;
+				this.z = c1 * c2 * s3 + s1 * s2 * c3;
+				this.w = c1 * c2 * c3 - s1 * s2 * s3;
+
+			YXZ
+				this.x = s1 * c2 * c3 + c1 * s2 * s3;
+				this.y = c1 * s2 * c3 - s1 * c2 * s3;
+				this.z = c1 * c2 * s3 - s1 * s2 * c3;
+				this.w = c1 * c2 * c3 + s1 * s2 * s3;
+
+			ZXY
+				this.x = s1 * c2 * c3 - c1 * s2 * s3;
+				this.y = c1 * s2 * c3 + s1 * c2 * s3;
+				this.z = c1 * c2 * s3 + s1 * s2 * c3;
+				this.w = c1 * c2 * c3 - s1 * s2 * s3;
+
+			ZYX
+				this.x = s1 * c2 * c3 - c1 * s2 * s3;
+				this.y = c1 * s2 * c3 + s1 * c2 * s3;
+				this.z = c1 * c2 * s3 - s1 * s2 * c3;
+				this.w = c1 * c2 * c3 + s1 * s2 * s3;
+
+			YZX
+				this.x = s1 * c2 * c3 + c1 * s2 * s3;
+				this.y = c1 * s2 * c3 + s1 * c2 * s3;
+				this.z = c1 * c2 * s3 - s1 * s2 * c3;
+				this.w = c1 * c2 * c3 - s1 * s2 * s3;
+
+			XZY
+				this.x = s1 * c2 * c3 - c1 * s2 * s3;
+				this.y = c1 * s2 * c3 - s1 * c2 * s3;
+				this.z = c1 * c2 * s3 + s1 * s2 * c3;
+				this.w = c1 * c2 * c3 + s1 * s2 * s3;
+
+		// if update != false: this._onChangeCallback()
+		return this
+
+	// setFromAxisAngle( axis, angle ) {
+
+	// 	// http://www.euclideanspace.com/maths/geometry/rotations/conversions/angleToQuaternion/index.htm
+
+	// 	// assumes axis is normalized
+
+	// 	const halfAngle = angle / 2, s = Math.sin( halfAngle );
+
+	// 	this._x = axis.x * s;
+	// 	this._y = axis.y * s;
+	// 	this._z = axis.z * s;
+	// 	this._w = Math.cos( halfAngle );
+
+	// 	this._onChangeCallback();
+
+	// 	return this;
+
+	// }
+
+	// setFromRotationMatrix( m ) {
+
+	// 	// http://www.euclideanspace.com/maths/geometry/rotations/conversions/matrixToQuaternion/index.htm
+
+	// 	// assumes the upper 3x3 of m is a pure rotation matrix (i.e, unscaled)
+
+	// 	const te = m.elements,
+
+	// 		m11 = te[ 0 ], m12 = te[ 4 ], m13 = te[ 8 ],
+	// 		m21 = te[ 1 ], m22 = te[ 5 ], m23 = te[ 9 ],
+	// 		m31 = te[ 2 ], m32 = te[ 6 ], m33 = te[ 10 ],
+
+	// 		trace = m11 + m22 + m33;
+
+	// 	if ( trace > 0 ) {
+
+	// 		const s = 0.5 / Math.sqrt( trace + 1.0 );
+
+	// 		this._w = 0.25 / s;
+	// 		this._x = ( m32 - m23 ) * s;
+	// 		this._y = ( m13 - m31 ) * s;
+	// 		this._z = ( m21 - m12 ) * s;
+
+	// 	} else if ( m11 > m22 && m11 > m33 ) {
+
+	// 		const s = 2.0 * Math.sqrt( 1.0 + m11 - m22 - m33 );
+
+	// 		this._w = ( m32 - m23 ) / s;
+	// 		this._x = 0.25 * s;
+	// 		this._y = ( m12 + m21 ) / s;
+	// 		this._z = ( m13 + m31 ) / s;
+
+	// 	} else if ( m22 > m33 ) {
+
+	// 		const s = 2.0 * Math.sqrt( 1.0 + m22 - m11 - m33 );
+
+	// 		this._w = ( m13 - m31 ) / s;
+	// 		this._x = ( m12 + m21 ) / s;
+	// 		this._y = 0.25 * s;
+	// 		this._z = ( m23 + m32 ) / s;
+
+	// 	} else {
+
+	// 		const s = 2.0 * Math.sqrt( 1.0 + m33 - m11 - m22 );
+
+	// 		this._w = ( m21 - m12 ) / s;
+	// 		this._x = ( m13 + m31 ) / s;
+	// 		this._y = ( m23 + m32 ) / s;
+	// 		this._z = 0.25 * s;
+
+	// 	}
+
+	// 	this._onChangeCallback();
+
+	// 	return this;
+
+	// }
+
+	// setFromUnitVectors( vFrom, vTo ) {
+
+	// 	// assumes direction vectors vFrom and vTo are normalized
+
+	// 	let r = vFrom.dot( vTo ) + 1;
+
+	// 	if ( r < Number.EPSILON ) {
+
+	// 		// vFrom and vTo point in opposite directions
+
+	// 		r = 0;
+
+	// 		if ( Math.abs( vFrom.x ) > Math.abs( vFrom.z ) ) {
+
+	// 			this._x = - vFrom.y;
+	// 			this._y = vFrom.x;
+	// 			this._z = 0;
+	// 			this._w = r;
+
+	// 		} else {
+
+	// 			this._x = 0;
+	// 			this._y = - vFrom.z;
+	// 			this._z = vFrom.y;
+	// 			this._w = r;
+
+	// 		}
+
+	// 	} else {
+
+	// 		// crossVectors( vFrom, vTo ); // inlined to avoid cyclic dependency on Vector3
+
+	// 		this._x = vFrom.y * vTo.z - vFrom.z * vTo.y;
+	// 		this._y = vFrom.z * vTo.x - vFrom.x * vTo.z;
+	// 		this._z = vFrom.x * vTo.y - vFrom.y * vTo.x;
+	// 		this._w = r;
+
+	// 	}
+
+	// 	return this.normalize();
+
+	// }
+
+	angleTo: Quaternion q
+		return 2 * math.nativeAcos( math.abs( math.limit( this.dot( q ), - 1, 1 ) ) );
+
+	rotateTowards: Quaternion q
+		           float speed
+		const angle = this.angleTo(q)
+		if angle == 0: return this
+		const t = math.min( 1, speed / angle )
+		this.slerp(q, t)
+		return this
+
+	// identity() {
+
+	// 	return this.set( 0, 0, 0, 1 );
+
+	// }
+
+	// invert() {
+
+	// 	// quaternion is assumed to have unit length
+
+	// 	return this.conjugate();
+
+	// }
+
+	// conjugate() {
+
+	// 	this._x *= - 1;
+	// 	this._y *= - 1;
+	// 	this._z *= - 1;
+
+	// 	this._onChangeCallback();
+
+	// 	return this;
+
+	// }
+
+	dot: Quaternion v
+		return this.x * v.x + this.y * v.y + this.z * v.z + this.w * v.w;
+
+	// lengthSq() {
+
+	// 	return this._x * this._x + this._y * this._y + this._z * this._z + this._w * this._w;
+
+	// }
+
+	length
+		return math.sqrt( this.x * this.x + this.y * this.y + this.z * this.z + this.w * this.w );
+
+	normalize
+		let l = this.length
+		if l == 0
+			this.x = 0;
+			this.y = 0;
+			this.z = 0;
+			this.w = 1;
+		else
+			l = 1 / l;
+			this.x = this.x * l;
+			this.y = this.y * l;
+			this.z = this.z * l;
+			this.w = this.w * l;
+
+		// this._onChangeCallback();
+		return this;
+
+	// multiply( q ) {
+
+	// 	return this.multiplyQuaternions( this, q );
+
+	// }
+
+	// premultiply( q ) {
+
+	// 	return this.multiplyQuaternions( q, this );
+
+	// }
+
+	// multiplyQuaternions( a, b ) {
+
+	// 	// from http://www.euclideanspace.com/maths/algebra/realNormedAlgebra/quaternions/code/index.htm
+
+	// 	const qax = a._x, qay = a._y, qaz = a._z, qaw = a._w;
+	// 	const qbx = b._x, qby = b._y, qbz = b._z, qbw = b._w;
+
+	// 	this._x = qax * qbw + qaw * qbx + qay * qbz - qaz * qby;
+	// 	this._y = qay * qbw + qaw * qby + qaz * qbx - qax * qbz;
+	// 	this._z = qaz * qbw + qaw * qbz + qax * qby - qay * qbx;
+	// 	this._w = qaw * qbw - qax * qbx - qay * qby - qaz * qbz;
+
+	// 	this._onChangeCallback();
+
+	// 	return this;
+
+	// }
+
+	slerp: Quaternion qb
+		   float t
+
+		if ( t == 0 ) return this;
+		if ( t == 1 ) return this.copy( qb );
+
+		const x = this.x, y = this.y, z = this.z, w = this.w;
+
+		// http://www.euclideanspace.com/maths/algebra/realNormedAlgebra/quaternions/slerp/
+
+		let cosHalfTheta = w * qb.w + x * qb.x + y * qb.y + z * qb.z;
+
+		if cosHalfTheta < 0
+			this.w = - qb.w;
+			this.x = - qb.x;
+			this.y = - qb.y;
+			this.z = - qb.z;
+			cosHalfTheta = - cosHalfTheta;
+		else
+			this.copy( qb );
+
+		if cosHalfTheta >= 1.0
+			this.w = w;
+			this.x = x;
+			this.y = y;
+			this.z = z;
+			return this;
+
+		const sqrSinHalfTheta = 1.0 - cosHalfTheta * cosHalfTheta;
+
+		if sqrSinHalfTheta <= float.epsilon
+
+			const s = 1 - t;
+			this.w = s * w + t * this.w;
+			this.x = s * x + t * this.x;
+			this.y = s * y + t * this.y;
+			this.z = s * z + t * this.z;
+
+			this.normalize();
+			// this._onChangeCallback();
+
+			return this;
+
+		const sinHalfTheta = math.sqrt( sqrSinHalfTheta );
+		const halfTheta = math.nativeAtan2( sinHalfTheta, cosHalfTheta );
+		const ratioA = math.nativeSin( ( 1 - t ) * halfTheta ) / sinHalfTheta,
+		      ratioB = math.nativeSin( t * halfTheta ) / sinHalfTheta
+
+		this.w = ( w * ratioA + this.w * ratioB );
+		this.x = ( x * ratioA + this.x * ratioB );
+		this.y = ( y * ratioA + this.y * ratioB );
+		this.z = ( z * ratioA + this.z * ratioB );
+
+		// this._onChangeCallback();
+
+		return this;
+
+	// slerpQuaternions( qa, qb, t ) {
+
+	// 	return this.copy( qa ).slerp( qb, t );
+
+	// }
+
+	// random() {
+
+	// 	// Derived from http://planning.cs.uiuc.edu/node198.html
+	// 	// Note, this source uses w, x, y, z ordering,
+	// 	// so we swap the order below.
+
+	// 	const u1 = Math.random();
+	// 	const sqrt1u1 = Math.sqrt( 1 - u1 );
+	// 	const sqrtu1 = Math.sqrt( u1 );
+
+	// 	const u2 = 2 * Math.PI * Math.random();
+
+	// 	const u3 = 2 * Math.PI * Math.random();
+
+	// 	return this.set(
+	// 		sqrt1u1 * Math.cos( u2 ),
+	// 		sqrtu1 * Math.sin( u3 ),
+	// 		sqrtu1 * Math.cos( u3 ),
+	// 		sqrt1u1 * Math.sin( u2 ),
+	// 	);
+
+	// }
+
+	// equals( quaternion ) {
+
+	// 	return ( quaternion._x === this._x ) && ( quaternion._y === this._y ) && ( quaternion._z === this._z ) && ( quaternion._w === this._w );
+
+	// }
+
+	// fromArray( array, offset = 0 ) {
+
+	// 	this._x = array[ offset ];
+	// 	this._y = array[ offset + 1 ];
+	// 	this._z = array[ offset + 2 ];
+	// 	this._w = array[ offset + 3 ];
+
+	// 	this._onChangeCallback();
+
+	// 	return this;
+
+	// }
+
+	// toArray( array = [], offset = 0 ) {
+
+	// 	array[ offset ] = this._x;
+	// 	array[ offset + 1 ] = this._y;
+	// 	array[ offset + 2 ] = this._z;
+	// 	array[ offset + 3 ] = this._w;
+
+	// 	return array;
+
+	// }
+
+	// fromBufferAttribute( attribute, index ) {
+
+	// 	this._x = attribute.getX( index );
+	// 	this._y = attribute.getY( index );
+	// 	this._z = attribute.getZ( index );
+	// 	this._w = attribute.getW( index );
+
+	// 	return this;
+
+	// }
+
+	// toJSON() {
+
+	// 	return this.toArray();
+
+	// }
+
+	// _onChange( callback ) {
+
+	// 	this._onChangeCallback = callback;
+
+	// 	return this;
+
+	// }
+
+	// _onChangeCallback() {}
+
+	// *[ Symbol.iterator ]() {
+
+	// 	yield this._x;
+	// 	yield this._y;
+	// 	yield this._z;
+	// 	yield this._w;
+
+	// }
+
 	
 // A 2D vector comprised of an x and y coordinate
 struct Vector2
@@ -41,6 +1301,9 @@ struct Vector2
 	
 	Vector2 operator + (Vector2 a, Vector2 b) return {a.x+b.x, a.y+b.y, a.location || b.location ? new SourceCodeLocation(null, 0, 0, a.location, b.location) : null}
 	Vector2 operator - (Vector2 a, Vector2 b) return {a.x-b.x, a.y-b.y, a.location || b.location ? new SourceCodeLocation(null, 0, 0, a.location, b.location) : null}
+	
+	Vector2 operator + (Vector2 a, Vector3 b) return {a.x+b.x, a.y+b.y, a.location}
+	Vector2 operator - (Vector2 a, Vector3 b) return {a.x-b.x, a.y-b.y, a.location}
 	
 	Vector2 operator * (Vector2 a, Vector2 b) return {a.x*b.x, a.y*b.y, a.location || b.location ? new SourceCodeLocation(null, 0, 0, a.location, b.location) : null}
 	Vector2 operator * (Vector2 a, float b)   return {a.x*b, a.y*b, a.location}
@@ -117,6 +1380,17 @@ struct Vector2
 		
 	// A vector with the absolute value of each coordinate
 	abs := Vector2(math.abs(x), math.abs(y))
+		
+	within: Vector2 position
+		    Vector2 size
+		float hx = size.x / 2
+		float hy = size.y / 2
+		return x >= position.x - hx && x < position.x + hx && y >= position.y - hy && y < position.y + hy
+		
+	within: Vector2 size
+		float hx = size.x / 2
+		float hy = size.y / 2
+		return x >= -hx && x < hx && y >= -hy && y < hy
 		
 	// The larger of the two coordinates
 	max := x > y ? x : y

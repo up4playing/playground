@@ -2,8 +2,12 @@ skipInit unit Platform
 	visible bool isDebug
 	inline js int version := _buildVersion
 		
-	inline js void initPlatform() Platform.init()
-	inline js void initApplication() init()
+	inline js void initPlatform
+		Platform.init()
+		Time.timezoneOffset = new Date().getTimezoneOffset() * 60000
+		
+	inline js void initApplication
+		init()
 		
 	start: bool isDebug
 		initPlatform
@@ -28,6 +32,20 @@ skipInit unit Platform
 	inline js string getEnvironmentVariable: string key
 		process.env[key]
 		
+	public inline js string encodeURIComponent(string value) encodeURIComponent(value)
+	public inline js string decodeURIComponent(string value) decodeURIComponent(value)
+		
+global transient unit System
+	// Prints a message to the console
+	global js void print: logstring text // The text, variables or expressions to print
+		                  SourceCodeLocation location
+		if(location && Platform.isDebug) {
+			var stringValue = typeof text === "string" ? text : JSON.stringify(text);
+			if(stringValue) _sendToEditor({type:"log", value:stringValue, location:location.start, file:location.file});
+		} else {
+			console.log(text)
+		}
+
 global skipInit unit math
 	// Generates a random integer
 	global js int randomInteger: int min // The inclusive lower bound of the random integer
@@ -53,7 +71,11 @@ global skipInit unit math
 		return 'xxxx-xxxx-xxx-xxxx'.replace(/[x]/g, (c) => {  
 			return math.floor(math.random() * 16).toString(16);  
 		}); 
-		
+
+skipInit transient float Time
+	// The number of milliseconds elapsed since January 1, 1970
+	static inline js Time now := Date.now()
+	
 transient float Angle
 	inline js float toFloat() this
 	inline js string toString() this.toString()
@@ -111,60 +133,54 @@ global unit http
 			"":"text/plain; charset=utf-8",
 		}
 	
-	js void startHttpsServer: port = 3100, string keypath = "", void() success = null
-		
+	js void startHttpsServer: port = 3100, string certPath = "", string keyPath = "", void(string[] path, dynamic body, Request request, Response response) onRequest = null
 		const fs = require('fs');
 		const startTime = new Date();
-		function onRequest(request, response) {
+		function handleRequest(request, response) {
 			var body = "";
 			request.on("data", a => body += a)
 			request.on("end", async () => {
-				response.setHeader('Access-Control-Allow-Origin', '*');
-				response.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS, PUT, DELETE");
-				// response.writeHead(200)//, {'Content-Type': 'text/plain'});
-				var path = request.url.split("/");
-				var procedureName = path[1];
-				
-				// log(request.method+" "+procedureName)
-				// log("window "+ window)
-				// log("global "+global)
-				// var handler = global["app."+procedureName]
-				// log("app."+procedureName+" -> "+handler)
-				// if(handler) {
-				// 	let result = await handler(body ? JSON.parse(body) : null)
-				// 	response.writeHead(200, {'Content-Type': "application/json; charset=utf-8"}); 
-				// 	response.end(result ? JSON.stringify(result) : "");
-				// 	return
-				// }
-				
-				handler = http.handlerMap.get(request.method+procedureName)
-				if(handler) {
-					// For named handlers, the procedure name isn't included in the path
-					path.splice(0,2);
-				} else {
-					// For wildcard handlers, we pass the procedure name as path[0]
-					handler = http.handlerMap.get(request.method+"*")
-					path.splice(0,1);
-				}
-				if(handler) {
-					handler(path, body ? JSON.parse(body) : null, request, response);
-				} else {
-					response.end("Server v"+_buildVersion+" up since "+startTime);
+				try {
+					response.setHeader('Access-Control-Allow-Origin', '*');
+					response.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS, PUT, DELETE");
+					var path = request.url.substring(1).split("/");
+					await onRequest(path, body ? JSON.parse(body) : null, request, response);
+
+					if(!response.writableEnded) {
+						var procedureName = path[0];
+						handler = http.handlerMap.get(request.method+procedureName)
+						if(handler) {
+							// For named handlers, the procedure name isn't included in the path
+							path.splice(0,1);
+						} else {
+							// For wildcard handlers, we pass the procedure name as path[0]
+							handler = http.handlerMap.get(request.method+"*")
+						}
+						
+						if(handler) {
+							await handler(path, body ? JSON.parse(body) : null, request, response);
+						} else {
+							response.end("Server v"+_buildVersion+" up since "+startTime);
+						}
+					}
+				} catch(e) {
+					console.error(e)
+					if(Platform.isDebug) _sendErrorToEditor(e);
+					response.end(`{error:"${e.message}"}`)
 				}
 			})
 		}
 		if(window.server) server.close();
-		if(keypath && !Platform.isDebug) {
+		if(certPath && keyPath && !Platform.isDebug) {
 			window.server = require('https').createServer({
-				cert: fs.readFileSync("/etc/letsencrypt/live/"+keypath+"/fullchain.pem"),
-				key: fs.readFileSync("/etc/letsencrypt/live/"+keypath+"/privkey.pem")
-			}, onRequest)
+				cert: fs.readFileSync(certPath),
+				key: fs.readFileSync(keyPath)
+			}, handleRequest)
 		} else {
-			window.server = require('http').createServer({}, onRequest)
+			window.server = require('http').createServer({}, handleRequest)
 		}
 
 		server.listen(port)
-		success()
 		
 	js void on:string path, HttpMethod method = Get, void(string[] path, dynamic body, Request request, Response response) handler
 		http.handlerMap.set(http.methodName[method]+path, handler)
@@ -174,18 +190,40 @@ class Request
 		
 class Response
 	inline js void sendText(string result, int code = 200, filename = "") this.writeHead(code, {'Content-Type': http.contentTypeMap[filename.getExtension()] || "text/plain; charset=utf-8"}); response.end(result);
-	inline js void send(any result, int code = 200, filename = "") this.writeHead(code, {'Content-Type': "application/json; charset=utf-8"}); response.end(JSON.stringify(result));
+	inline js void send(ensureSingleExecution any result, int code = 200) if(result) { if(typeof result == "string") {this.writeHead(code, {"Content-Type": "text/plain; charset=utf-8"}); response.end(result);} else {this.writeHead(code, {"Content-Type": "application/json; charset=utf-8"}); response.end(JSON.stringify(result)); }}
 	inline js void redirect(string url, int code = 302) this.writeHead(code, {Location: url}); response.end();
-		
+	
+class DirEntry
+	string parentPath
+	string name
+	bool isFile()
+	bool isDirectory()
+				
 unit File
-	js void save: string file, string data, void() success
-		require('fs').writeFile(file, data, "utf8", () => success())
+	js async void write: string file, string data, string encoding = null
+		require('fs').promises.writeFile(file, data, encoding)
 
-	js void open: string file, void(string fileContent) then, void(string error) else
-		require('fs').readFile(file, (error, fileContent) => {
-			if(error) else(error)
-			else      then(fileContent)
-		})
+	js async string read: string file, string encoding = null
+		return require('fs').promises.readFile(file, encoding)
+		
+	js async bool delete: string file
+		return require('fs').promises.rm(file)
+		
+	js async DirEntry[] listEntries: string path, bool recursive
+		return require('fs').promises.readdir(path, {recursive: recursive, withFileTypes: true})
+
+	js async dynamic getInfo: string file
+		return require('fs').promises.stat(file)
+		
+	js void createDirectory: string file, bool recursive = true
+		return require('fs').mkdirSync(file, {recursive})
+		
+	js bool exists: string filename
+		return require('fs').existsSync(filename)
+		
+	js string getDirectoryName: string file
+		return require('path').dirname(file)
+
 		
 unit websocket
 	js void startWebsocketServer: int port
@@ -249,5 +287,3 @@ class Connection
 	inline js object data := this.data
 	inline js void data(object value) this.data = value
 	inline js void close() this.close()
-
-
