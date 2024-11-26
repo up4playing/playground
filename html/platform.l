@@ -148,6 +148,13 @@ skipInit global unit Platform
 			_sendStringToEditor("~");
 		}
 		
+	js string generateObjectId
+		const timestamp = Math.floor(new Date().getTime() / 1000).toString(16);
+		const machineIdentifier = Math.floor(Math.random() * 0xFFFFFF).toString(16).padStart(6, '0');
+		const processIdentifier = Math.floor(Math.random() * 0xFFFF).toString(16).padStart(4, '0');
+		const counter = Math.floor(Math.random() * 0xFFFFFF).toString(16).padStart(6, '0');
+		return (timestamp + machineIdentifier + processIdentifier + counter).toLowerCase();
+		
 	toggleSmallScreen
 		isMobile = !isMobile;
 		setLocalStorageString("isMobile", isMobile ? "true" : "false")
@@ -189,12 +196,15 @@ skipInit global unit Platform
 	inline js void copyToClipboard: string text
 		navigator.clipboard.writeText(text)
 		
-	global inline js void delay: Time time
-		                  void() do
+	global inline js int delay: Time time
+		                        void() do
 		setTimeout(do, time)
 		
 	global inline js async void delay: Time time
 		new Promise(resolve => setTimeout(resolve, time))
+		
+	global inline js int clearDelay: int handle
+		clearTimeout(handle)
 		
 	inline js void onBlur: void() do
 		window.onblur = do
@@ -203,8 +213,8 @@ skipInit global unit Platform
 		window.onfocus = do
 		
 	global inline js int interval: Time time
-		                           void(int handle) do
-		var handle = setInterval(do, time)
+		                           void() do
+		setInterval(do, time)
 		
 	global inline js int clearInterval: int handle
 		clearInterval(handle)
@@ -217,6 +227,9 @@ skipInit global unit Platform
 	
 	global js void onNavigate: void(string url) do
 		window.onpopstate = e => do(location.pathname)
+		
+	global js void onPaste: void(DateTransfer data) do
+		document.onpaste = e => do(e.clipboardData)
 		
 	inline js void blur() document.activeElement.blur()
 	
@@ -243,14 +256,60 @@ skipInit global unit Platform
 			remote.getCurrentWindow().setMenu(menu)
 		}
 		
-	js async Vector2 getCurrentPosition: enableHighAccuracy = true
+	js async Vector2 getCurrentLocation: enableHighAccuracy = true
+		                                 maximumAge = 5000
+		                                 timeout = 3000
 		return new Promise((resolve, reject) => {
 			navigator.geolocation.getCurrentPosition(pos => {
 				resolve(new Vector2(pos.coords.longitude, pos.coords.latitude, "geo"))
 			}, error => {
 				reject(error)
-			}, {enableHighAccuracy})
+			}, {maximumAge, timeout, enableHighAccuracy})
 		})
+		
+	js async void onDeviceOrientation: void(Angle angle) do
+		                               void(string error) else = null
+		if(window.ondeviceorientationabsolute !== undefined) {
+			window.ondeviceorientationabsolute = e => do(new Angle(1 - (e.alpha || 0)/360, "turn"));
+		} else {
+			try {
+				let response = await DeviceOrientationEvent.requestPermission();
+				if (response == "granted") {
+					window.ondeviceorientation = e => do(new Angle(1 - (e.webkitCompassHeading || e.alpha || 0)/360, "turn"));
+				} else {
+					else?.(response);
+				}
+			} catch(e) {
+				else?.(e.message);
+			}
+		}
+		
+	js void onCurrentLocation: void(Vector2 location) do
+		                       void(string error) else = null
+		                       enableHighAccuracy = true
+		                       maximumAge = 5000
+		                       timeout = 5000
+		navigator.geolocation.watchPosition(pos => {
+			do(new Vector2(pos.coords.longitude, pos.coords.latitude, "geo"))
+		}, e => {
+			do(new Vector2(Number.POSITIVE_INFINITY, Number.POSITIVE_INFINITY, "geo"))
+			else?.(e.message)
+		}, {maximumAge, timeout, enableHighAccuracy})
+		
+enum lowercase string DataTransferItemKind: String, File
+		
+interface DataTransferItem
+	DataTransferItemKind kind // The kind of drag item, string or file
+	string type               // The data item's type, typically a MIME type
+	
+	inline js async string getAsString
+		new Promise(resolve => this.getAsString(a => resolve(a)))
+		
+	inline js File getAsFile
+		this.getAsFile()
+		
+interface DateTransfer
+	DataTransferItem[] items
 	
 MenuItem
 	string label
@@ -265,11 +324,10 @@ global transient unit System
 	// Prints a message to the console
 	global js void print: logstring text // The text, variables or expressions to print
 		                  SourceCodeLocation location
+		console.log(text)
 		if(Platform.isDebug) {
 			var stringValue = typeof text === "string" ? text : JSON.stringify(text);
 			if(stringValue) _sendToEditor({type:"log", value:stringValue, location:location?.start, file:location?.file});
-		} else {
-			console.log(text)
 		}
 	
 global skipInit unit math
@@ -523,7 +581,7 @@ global unit Html
 		parentNode = documentBody
 		currentNode = parentNode.firstChild
 		currentOverlay = documentBody.nextSibling
-		app.render
+		app.draw
 		while currentNode
 			let next = currentNode.nextSibling
 			currentNode.remove
@@ -590,8 +648,9 @@ global unit Html
 		        bool visible = true
 		        SourceCodeLocation location
 		if not visible: return
+		if data == null: data = {}
+		data.src = Platform.basePath + image.src
 		let node = div tag:"img", attributes, style, data, location
-		node.src = Platform.basePath + image.src
 		node.onclick = onClick
 		return node
 
@@ -599,14 +658,15 @@ global unit Html
 		        expand Attributes attributes = {} // The attributes of the HTML element
 		        expand Style style = null         // The css style of the HTML element
 		        SourceCodeLocation location
-		return div tag:"img", attributes, style, data:{src:src.startsWith("http") or src.startsWith("data:") ? src : Platform.basePath + src}, location
+		return div tag:"img", attributes, style, data:{src:src.startsWith("http") or src.startsWith("data:") or src.startsWith("blob:") ? src : Platform.basePath + src}, location
 		
 	global img: string src                        // The file of the image to display
 		        expand Attributes attributes = {} // The attributes of the HTML element
 		        expand Style style = null         // The css style of the HTML element
 		        dynamic data                      // The data attributes of the element
 		        SourceCodeLocation location
-		data.src = src.startsWith("http") or src.startsWith("data:") ? src : Platform.basePath + src
+		if data == null: data = {}
+		data.src = src.startsWith("http") or src.startsWith("data:") or src.startsWith("blob:") ? src : Platform.basePath + src
 		return div tag:"img", attributes, style, data, location
 
 	global link: string text = null
@@ -939,7 +999,7 @@ global unit Html
 		let node = div tag:"input", attributes, style, location
 		node.value = model
 		node.oninput = model = node.value; changeHandler
-		node.onkeydown = if(ev.key == "Enter") onEnter()
+		node.onkeydown = if(ev.keyCode == Enter) onEnter()
 		if focused or focusTabIndex == attributes.tabIndex: node.focus
 		
 	// Manual Text Input: If you specify a onChange handler, the model won't be updated automatically
@@ -979,6 +1039,7 @@ global unit Html
 	// Automatic Editable Text: Updates the model automatically in with every keystroke
 	global inline void editableText: string model = ""                          // The variable that holds the value. This will be updated when the user changed the text
 		                             inline void(string value) onChanged = null // Called after the model changed
+		                             int tabIndex = -1
 		                             expand Attributes attributes = {}          // The attributes of the HTML element
 		                             expand Style style = null                  // The css style of the HTML element
 		                             dynamic data = {}                          // The data attributes of the element
@@ -993,12 +1054,13 @@ global unit Html
 			node.oninput = model = node.innerText; onChanged(model); changeHandler
 		else         
 			node.onblur = model = node.innerText; if model != prevModel: onChanged(model); changeHandler
-		if focusTabIndex == attributes.tabIndex: node.focus
+		if focusTabIndex == tabIndex: delay 100: node.focus
 
 	// Automatic Editable Text: Updates the model automatically in with every keystroke
 	global inline void editableText: string model = ""                          // The variable that holds the value. This will be updated when the user changed the text
 		                             inline void(string value) onChanged = null // Called after the model changed
 		                             inline void() onClick = null
+		                             int tabIndex = -1
 		                             expand Attributes attributes = {}          // The attributes of the HTML element
 		                             expand Style style = null                  // The css style of the HTML element
 		                             dynamic data = {}                          // The data attributes of the element
@@ -1014,7 +1076,7 @@ global unit Html
 			node.oninput = model = node.innerText; onChanged(model); changeHandler
 		else         
 			node.onblur = model = node.innerText; if model != prevModel: onChanged(model); changeHandler
-		if focusTabIndex == attributes.tabIndex: node.focus
+		if focusTabIndex == tabIndex: delay 100: node.focus
 
 	// Automatic Text Area: Updates the model automatically in with every keystroke
 	global inline void textarea: string model = ""                 // The variable that holds the value. This will be updated when the user changed the text

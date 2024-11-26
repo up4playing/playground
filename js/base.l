@@ -378,7 +378,7 @@ immutable class string
 	inline js int lastIndexOf(string str) this.lastIndexOf(str)
 	inline js int indexOf(string str, int startPos) this.indexOf(str, startPos)
 		
-	inline js bool contains(string str) (this.indexOf(str) != -1)
+	inline js bool contains(string str) this.includes(str)
 		
 	inline js int getCharCodeAt(int index) this.charCodeAt(index)
 		
@@ -393,20 +393,22 @@ immutable class string
 		
 	js string getUntil: string value
 		                int start = 0
-		let index = this.indexOf(value)
-		if(index != -1) return this.substring(start, index)
-		else            return this
+		let index = this.indexOf(value, start)
+		if(index != -1) return this.substring(start, index);
+		if(start > 0)   return this.substring(start);
+		                return this
 		
 	js string getAfter: string value
 		                int start = 0
-		let index = this.indexOf(value)
-		if(index != -1) return this.substring(index+1)
-		else            return ""
+		let index = this.indexOf(value, start)
+		if(index == -1) return ""
+		return this.substring(index+value.length)
 		
 	js string getBetween: string from
 		                  string to
 		                  int start = 0
 		let index = this.indexOf(from, start)
+		if(index == -1) return ""
 		let startIndex = index + from.length
 		let endIndex = this.indexOf(to, startIndex)
 		if(endIndex == -1) return this.substring(startIndex)
@@ -500,13 +502,6 @@ immutable class string
 			if "0" <= . <= "9"
 				result += .
 		return result
-		
-	static generateRandomToken: int length = 16
-		string chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
-		string token
-		for length
-			token += chars[math.randomInteger chars.length-1]
-		return token
 		
 	inline string backspace
 		(this.length ? this = this[0 to this.length-1] : this)
@@ -2043,6 +2038,10 @@ global skipInit unit math
 	inline js float sqrt: float value // The value to return the square root of
 		Math.sqrt(value)
 		
+	inline js float hypot: float a
+		                   float b
+		Math.hypot(a, b)
+		
 	moveTowards: float value
 		         float targetValue
 		         float speed = 1
@@ -2135,26 +2134,27 @@ global skipInit unit math
 	// ------------------------------------------------------- Trigonometry in turns -------------------------------------------------------
 	
 	// Returns the sine of an angle in turns
-	sin: Angle angle // The angle in turns (one full rotation is 1)
+	sin: implicit Angle angle // The angle in turns (one full rotation is 1)
 	    float result = cast(angle - .5 - math.floor(angle))
 	    result *= 16 * (math.abs(result) - .5)
 	    result += .225 * result * (math.abs(result) - 1)
 	    return result
 
 	// Returns the cosine of an angle in turns
-	cos: Angle angle // The angle in turns (one full rotation is 1)
+	cos: implicit Angle angle // The angle in turns (one full rotation is 1)
 	    float result = cast(angle - .25 - math.floor(angle + .25))
 	    result *= 16 * (math.abs(result) - .5)
 	    result += .225 * result * (math.abs(result) - 1)
 	    return result
 	
 	// Returns the tangent of an angle in turns
-	tan: Angle angle
+	tan: implicit Angle angle
 		return sin(angle) / cos(angle)
 		
 	// Returns the inverse tangent in turns
 	Angle atan2: float y, float x
-		float r, angle;
+		float r
+		Angle angle
 		float abs_y = math.abs(y) + .00000000001
 		if x < 0.0
 			r = (x + abs_y) / (abs_y - x);
@@ -2163,8 +2163,8 @@ global skipInit unit math
 			r = (x - abs_y) / (x + abs_y);
 			angle = .125;
 		angle += (.03124211533 * r * r - .1562424076) * r;
-		if y < 0.0: return cast -angle
-		else        return cast angle
+		if y < 0.0: return -angle
+		else        return angle
 		
 	// ------------------------------------------------------- log, pow, exp -------------------------------------------------------
 	
@@ -2234,7 +2234,15 @@ global skipInit unit math
 		   float min
 		if value < min: return min
 			            return value
+	
+	// ------------------------------------------------------- Random -------------------------------------------------------
 			
+	static randomString: int length = 16
+		string chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+		string token
+		for length: token += chars[math.randomInteger chars.length-1]
+		return token
+
 struct Average
 	float total
 	int count

@@ -21,8 +21,10 @@ skipInit class Sound
 		// Recreate audio if it was lost during serialization
 		if(!this.nextAudioElement) this.preloadForNextPlayback();
 			
+		audio.playingSounds.push(this);
 		this.audioElement = this.nextAudioElement;
 		this.audioElement.volume = audio.volume;
+		this.audioElement.onended = () => audio.playingSounds.remove(this);
 		this.audioElement.play();
 		this.preloadForNextPlayback()
 		
@@ -40,6 +42,12 @@ transient global skipInit unit audio
 	const float[] volumeLevels = [0, 0.0001, 0.0002, 0.0005, 0.001, 0.002, 0.005, .01, .02, .04, .08, .16, .32, .64, 1]
 	int volumeLevel = 14
 	float volume = volumeLevels[volumeLevel]
+	Sound[] playingSounds
 	
 	global playSound: Sound sound
 		sound.play
+	
+	stop
+		playingSounds.each.stop
+		playingSounds.clear
+	

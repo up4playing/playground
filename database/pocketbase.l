@@ -10,6 +10,9 @@ skipInit pocketBase
 		const PocketBase = (await import("./lib/pocketbase.es.mjs")).default
 		if(pocketBase.pb) pocketBase.pb.realtime.unsubscribe();
 		pocketBase.pb = new PocketBase(pocketBase.url);
+		
+	inline js void autoCancellation: value = true
+		pocketBase.pb.@autoCancellation(value);
 	
 Collection<T>
 	string name
@@ -30,23 +33,18 @@ Collection<T>
 	async inline js T update: T item
 		pocketBase.pb.collection(this.name).update(item.id, item)
 		
-	async inline js T update: string id, dynamic item
-		pocketBase.pb.collection(this.name).update(id, item)
+	async js T addOrUpdate: T item
+		if(!item.id) return this.add(item)
+		else         return pocketBase.pb.collection(this.name).update(item.id, item)
+		
+	async inline js T update: string id, dynamic update
+		pocketBase.pb.collection(this.name).@update(id, update)
 		
 	async inline js void remove: T item
 		pocketBase.pb.collection(this.name).delete(item.id)
 		
 	async js void upload: T item, string fileFieldName = "images", File[] files
 		const formData = new FormData();
-		for(let key in item) {
-			if(key != fileFieldName) {
-				let value = item[key];
-				let type = typeof(value);
-				if(type != "function" && type != "undefined") {
-					formData.append(key, value);
-				}
-			}
-		}
 		for(let file of files) {
 			formData.append(fileFieldName, file);
 		}
@@ -54,6 +52,15 @@ Collection<T>
 		if(item.id) {
 			newItem = await pocketBase.pb.collection(this.name).update(item.id, formData)
 		} else {
+			for(let key in item) {
+				if(key != fileFieldName) {
+					let value = item[key];
+					let type = typeof(value);
+					if(type != "function" && type != "undefined") {
+						formData.append(key, value);
+					}
+				}
+			}
 			newItem = await pocketBase.pb.collection(this.name).create(formData);
 			item.id = newItem.id;
 		}
@@ -70,6 +77,15 @@ Collection<T>
 		if(item.id) {
 			newItem = await pocketBase.pb.collection(this.name).update(item.id, formData)
 		} else {
+			for(let key in item) {
+				if(key != fileFieldName) {
+					let value = item[key];
+					let type = typeof(value);
+					if(type != "function" && type != "undefined") {
+						formData.append(key, value);
+					}
+				}
+			}
 			newItem = await pocketBase.pb.collection(this.name).create(formData);
 			item.id = newItem.id;
 		}

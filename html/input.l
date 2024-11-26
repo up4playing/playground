@@ -117,7 +117,7 @@ KeyListener
 	void(Key key) do
 	
 // Phase of a touch or a click
-enum TouchPhase: Still, Down, Move, Up
+enum TouchPhase: Still, Down, Move, Up, Canceled
 		
 enum TouchType: Left, Middle, Right, Touch, Pen
 
