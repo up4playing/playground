@@ -1007,7 +1007,7 @@ class List<T>
 		this.find(condition)
 		
 	inline js T find: backwards bool(T a) condition // The condition to check
-		this.findLast,(condition)
+		this.findLast(condition)
 		
 	inline js T find: bool(T a) condition // The condition to check
 		              int startIndex      // Start searching at this index
