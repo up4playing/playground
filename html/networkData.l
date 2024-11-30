@@ -1,15 +1,18 @@
 http
 	// Perform an http get request
-	js void get: string url
-		         void(dynamic result) do = null
-		let result = await (await fetch(url)).json()
-		do(result)
-		
 	js async any get: string url
 		return (await fetch(url)).json()
 		
 	js async any getText: string url
 		return (await fetch(url)).text()
+		
+	js async any getArrayBuffer: string url
+		return (await fetch(url)).arrayBuffer()
+		
+	js void get: string url
+		         void(dynamic result) do = null
+		let result = await (await fetch(url)).json()
+		do(result)
 		
 	js void getFile: string url
 		             void(dynamic result) do = null
