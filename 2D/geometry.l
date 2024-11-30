@@ -130,6 +130,8 @@ struct Vector2
 	bool >  float length: return math.sqrt(x*x + y*y) >  length
 	bool >= float length: return math.sqrt(x*x + y*y) >= length
 		
+	Vector2 operator - (Vector2 a) return {-a.x, -a.y, a.location}
+	
 	// bool operator == (Vector2 a, Vector2 b) return a.x == b.x && a.y == b.y
 	// bool operator != (Vector2 a, Vector2 b) return a.x != b.x || a.y != b.y
 	
