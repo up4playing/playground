@@ -1,36 +1,214 @@
-Connect at the same time and play game (3 players)
+Connect 3 players one after another
 	position rows
-	open delay:0 https://up4playing.com/{id}/{time}x0
-	open delay:0 https://up4playing.com/{id}/{time}x1
-	open delay:0 https://up4playing.com/{id}/{time}x2
+	open https://up4playing.com/{id}/{time}x0
+	open delay:3000 https://up4playing.com/{id}/{time}x1
+	open delay:3000 https://up4playing.com/{id}/{time}x2
+	waitUntil delay:2500 tries:50 input.players.length is 3
 	
-	waitFor delay:2500 tries:50 input.players.length == 3
+	click delay:100 window:0 x:-800 y:-400
+	click delay:100 window:0 x:-600 y:-400
+	click delay:100 window:0 x:-400 y:-400
+	click delay:100 window:0 x:-200 y:-400
+	click delay:100 window:0 x:   0 y:-400
+	click delay:100 window:0 x: 200 y:-400
+	click delay:100 window:0 x: 400 y:-400
+	click delay:100 window:0 x: 600 y:-400
+	click delay:100 window:0 x: 800 y:-400
+	
+	waitUntil delay:500 tries:10 lobby.points.length is 9
+	
+	log label:connectTime statistics.connectTime.toFixed(0)
+	log label:retries     PeerNetwork.retries
+	repeat
+	
+Connect 3 players at the same time
+	position rows
+	open https://up4playing.com/{id}/{time}x0
+	open https://up4playing.com/{id}/{time}x1
+	open https://up4playing.com/{id}/{time}x2
+	waitUntil delay:2500 tries:50 input.players.length is 3
+	
+	click delay:100 window:0 x:-800 y:-400
+	click delay:100 window:0 x:-600 y:-400
+	click delay:100 window:0 x:-400 y:-400
+	click delay:100 window:0 x:-200 y:-400
+	click delay:100 window:0 x:   0 y:-400
+	click delay:100 window:0 x: 200 y:-400
+	click delay:100 window:0 x: 400 y:-400
+	click delay:100 window:0 x: 600 y:-400
+	click delay:100 window:0 x: 800 y:-400
+	
+	waitUntil delay:500 tries:10 lobby.points.length is 9
+	
+	log label:connectTime statistics.connectTime.toFixed(0)
+	log label:retries     PeerNetwork.retries
+	repeat
+	
+Store to Database Test
+	open https://up4playing.com/{id}/{time}x0
+	open delay:500 https://up4playing.com/{id}/{time}x1
+	
+Bad connections: Choose "20% Loss" in settings
+	position rows
+	open https://up4playing.com/{id}/{time}
+	open https://up4playing.com/{id}/{time}
+	open https://up4playing.com/{id}/{time}
+	waitUntil delay:2500 tries:50 input.players.length is 3
+	limiter on
+	
+	click delay:2000 window:0 x:-800 y:-400
+	click delay:2000 window:0 x:-600 y:-400
+	click delay:2000 window:0 x:-400 y:-400
+	click delay:2000 window:0 x:-200 y:-400
+	click delay:2000 window:0 x:   0 y:-400
+	click delay:2000 window:0 x: 200 y:-400
+	click delay:2000 window:0 x: 400 y:-400
+	click delay:2000 window:0 x: 600 y:-400
+	click delay:2000 window:0 x: 800 y:-400
+	
+	click delay:2000 window:0 x:-800 y:400
+	click delay:2000 window:0 x:-600 y:400
+	click delay:2000 window:0 x:-400 y:400
+	click delay:2000 window:0 x:-200 y:400
+	click delay:2000 window:0 x:   0 y:400
+	click delay:2000 window:0 x: 200 y:400
+	click delay:2000 window:0 x: 400 y:400
+	click delay:2000 window:0 x: 600 y:400
+	click delay:2000 window:0 x: 800 y:400
+	
+	limiter off
+	waitUntil delay:2500 tries:50 lobby.points.length is 18
+	
+	log label:connectTime statistics.connectTime.toFixed(0)
+	log PeerNetwork.retries
+	log ServerNetwork.retries
+	log ServerNetwork.firstConnectionTime
+	repeat
+	
+Reconnect (20 seconds offline): Choose "100% Loss" in settings
+	position rows
+	open delay:0    https://up4playing.com/{id}/{time}x0
+	open delay:3000 https://up4playing.com/{id}/{time}x1
+	open delay:3000 https://up4playing.com/{id}/{time}x2
+	waitUntil delay:2500 tries:30 input.players.length is 3
+	
+	limiter delay:1000 on
+	limiter delay:20000 off
+	waitUntil delay:2500 tries:30 core.connectionStates() is "connected, connected"
+	delay 1000
+	
+	click delay:0   window:0 x:-500 y:-400
+	click delay:500 window:1 x:   0 y:-400
+	click delay:500 window:2 x: 500 y:-400
+	waitUntil delay:2500 tries:50 lobby.points.length is 3
+
+	click delay:0   window:0 x:-500 y:400
+	click delay:500 window:1 x:   0 y:400
+	click delay:500 window:2 x: 500 y:400
+	waitUntil delay:2500 tries:50 lobby.points.length is 6
+	
+	log label:connectTime statistics.connectTime.toFixed(0)
+	log PeerNetwork.retries
+	log ServerNetwork.retries
+	log ServerNetwork.firstConnectionTime
+	repeat
+	
+Play Test (2 players)
+	open https://up4playing.com/{id}/{time}x0
+	open delay:2000 https://up4playing.com/{id}/{time}x1
+	assert delay:10000 input.players.length == 2
+	
+	click delay:0    window:0 x:-400 y:-400
+	click delay:1000 window:1 x: 500 y:-400
+	waitUntil delay:2500 tries:50 lobby.points.length is 2
+
+	click delay:0    window:0 x:-400 y:400
+	click delay:1000 window:1 x: 500 y:400
+	waitUntil delay:2500 tries:50 lobby.points.length is 4
+
+Play Test (3 players)
+	open https://up4playing.com/{id}/{time}x0
+	open https://up4playing.com/{id}/{time}x1
+	open https://up4playing.com/{id}/{time}x2
+	assert delay:10000 input.players.length == 3
+	
+Play Test (4 players)
+	open https://up4playing.com/{id}/{time}x0
+	open https://up4playing.com/{id}/{time}x1
+	open https://up4playing.com/{id}/{time}x2
+	open https://up4playing.com/{id}/{time}x3
+	assert delay:10000 input.players.length == 4
+	
+Connect and play game (3 players)
+	position rows
+	open https://up4playing.com/{id}/{time}x0
+	open https://up4playing.com/{id}/{time}x1
+	open https://up4playing.com/{id}/{time}x2
+	
+	waitUntil delay:2500 tries:50 input.players.length is 3
 	
 	click window:0 x:-400 y:-400
 	click window:1 x: 500 y:-400
 	click window:2 x:   0 y: 450
 	
 	delay 2000
-	assert lobby.points[0].x == -400
-	assert lobby.points[1].x ==  500
-	assert lobby.points[2].y ==  450
+	assert lobby.points[0].x is -400
+	assert lobby.points[1].x is  500
+	assert lobby.points[2].y is  450
 	
 	click window:0 x:-637 y:334
 	click window:1 x:8 y:336
 	click window:2 x:644 y:330
-	click window:0 x:6 y:0
-	click window:1 x:6 y:0
-	click window:2 x:6 y:0
-	click window:0 x:6 y:0
-	click window:1 x:6 y:0
-	click window:2 x:6 y:0
-	click window:1 x:6 y:0
+	click window:0 x:-300 y:0
+	click window:1 x:300 y:0
+	click window:2 x:-300 y:300
+	click window:2 x:300 y:300
 	
 	delay 2000
-	assert app.clicks == 7
+	assert input.players[0].score is 1
+	assert input.players[1].score is 1
+	assert input.players[2].score is 2
 	
-	log statistics.connectTime
+	log label:connectTime statistics.connectTime.toFixed(0)
 	log PeerNetwork.retries
+	log ServerNetwork.retries
+	log ServerNetwork.firstConnectionTime
+	repeat
+	
+Connect at the same time and play game (3 players)
+	position rows
+	open delay:0 https://up4playing.com/{id}/{time}x0
+	open delay:0 https://up4playing.com/{id}/{time}x1
+	open delay:0 https://up4playing.com/{id}/{time}x2
+	
+	waitUntil delay:2500 tries:50 input.players.length is 3
+	
+	click window:0 x:-400 y:-400
+	click window:1 x: 500 y:-400
+	click window:2 x:   0 y: 450
+	
+	delay 2000
+	assert lobby.points[0].x is -400
+	assert lobby.points[1].x is  500
+	assert lobby.points[2].y is  450
+	
+	click window:0 x:-637 y:334
+	click window:1 x:8 y:336
+	click window:2 x:644 y:330
+	click window:0 x:-300 y:0
+	click window:1 x:300 y:0
+	click window:2 x:-300 y:300
+	click window:2 x:300 y:300
+	
+	delay 2000
+	assert input.players[0].score is 1
+	assert input.players[1].score is 1
+	assert input.players[2].score is 2
+	
+	log label:connectTime statistics.connectTime.toFixed(0)
+	log PeerNetwork.retries
+	log ServerNetwork.retries
+	log ServerNetwork.firstConnectionTime
 	repeat
 
 Connect with delay and spawn points (3 players)
@@ -72,19 +250,37 @@ Connect with delay and spawn points (3 players)
 	log PeerNetwork.retries
 	repeat
 	
-Connect with delay (3 players)
-	open https://up4playing.com/{id}/{time}x0
+Reconnect after being offline for 10 seconds (2 players)
+	open delay:0 https://up4playing.com/{id}/{time}x0
 	open delay:3000 https://up4playing.com/{id}/{time}x1
-	open delay:3000 https://up4playing.com/{id}/{time}x2
-	assert delay:3000 input.players.length == 3
+	waitUntil delay:2500 tries:30 input.players.length is 2
+	
+	network delay: 1000 off
+	network delay:10000 on
+	delay 12500
+	waitUntil delay:2500 tries:30 core.connectionStates() is "connected"
+	delay 1000
+	
+	click window:0 x:-400 y:-400
+	click window:1 x: 500 y:-400
+	
+	delay 3000
+	assert lobby.points[0].x is -400
+	assert lobby.points[1].x is  500
+	
+	log label:connectTime statistics.connectTime.toFixed(0)
+	log PeerNetwork.retries
+	log ServerNetwork.retries
+	log ServerNetwork.firstConnectionTime
 	repeat
 	
-Connect (3 players)
+Alphahosting Staging/Latest
+	open https://www2.up4playing.com/{id}/staging
+	open delay:2000 https://www2.up4playing.com/{id}/latest
+
+Connect (2 players)
 	open https://up4playing.com/{id}/{time}x0
-	open https://up4playing.com/{id}/{time}x1
-	open https://up4playing.com/{id}/{time}x2
-	assert delay:5000 input.players.length == 3
-	repeat
+	open delay:1000 https://up4playing.com/{id}/{time}x1
 	
 Connect with delay and spawn points (2 players)
 	open https://up4playing.com/{id}/{time}x0
@@ -106,13 +302,6 @@ Connect with delay and spawn points (2 players)
 	save if:error value:core.logs to:logs/{time}-{window}.txt
 	repeat
 	
-Play Test (4 players)
-	open https://up4playing.com/{id}/{time}x0
-	open https://up4playing.com/{id}/{time}x1
-	open https://up4playing.com/{id}/{time}x2
-	open https://up4playing.com/{id}/{time}x3
-	assert delay:10000 input.players.length == 4
-
 Connect Test
 	open windows:4 https://up4playing.com/{id}/{time}
 	assert delay:15000 input.players.length == 4

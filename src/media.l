@@ -1,5 +1,5 @@
 class Image
-	const Texture atlas = {"atlas-v39.png", size:{2048,2048}}
+	const Texture atlas = {"atlas-v44.png", size:{2048,2048}}
 	global const Image VideoScreen = {"lib/core/play/media/VideoScreen0.png", atlas, {442,442}, [{x1:1,y1:1,x2:441,y2:331,w:440,h:330},{x1:1,y1:333,x2:441,y2:773,w:440,h:440}]}
 	global const Image LargeButton = {"lib/core/play/media/LargeButton.png", atlas, {425,63}, [{x1:443,y1:1,x2:866,y2:62,w:423,h:61}]}
 	global const Image LargeButtonAccent = {"lib/core/play/media/LargeButtonAccent1.png", atlas, {425,63}, [{x1:443,y1:127,x2:865,y2:188,w:422,h:61},{x1:443,y1:64,x2:866,y2:125,w:423,h:61}]}

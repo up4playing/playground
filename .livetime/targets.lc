@@ -14,7 +14,7 @@ Common
 	Upload: Yes
 	Username: dev
 	PrivateKey: ~/.ssh/id_rsa_up4playing_dev
-	TargetPath: /srv/play/{id}/
+	RemotePath: /srv/play/{id}/
 	
 Editor
 	Debug: Yes
