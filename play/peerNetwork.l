@@ -19,17 +19,7 @@
 //     createOffer
 //     onAnwserReceived
 //     onConnectionStateChange
-	
-// [ ] Test all users connecting at once
-// [ ] Handle situations where a new user isn't connected to all users yet
-//         A users probably shouldn't be able to do anything before they connect all their offers
-//         For example: A+B connect, B+C connect, C does something, A can' rewind
-// [ ] Allow removing users
-// [ ] Save event stream to db
-// [ ] Save snapshots to db
-// [ ] Undo clicks
-// [ ] Save statistics when a connection error occurs
-	
+
 transient immutable Signal
 	int receiverId
 	string type
