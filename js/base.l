@@ -1007,7 +1007,7 @@ class List<T>
 		this.find(condition)
 		
 	inline js T find: backwards bool(T a) condition // The condition to check
-		this.findLast,(condition)
+		this.findLast(condition)
 		
 	inline js T find: bool(T a) condition // The condition to check
 		              int startIndex      // Start searching at this index
@@ -1592,6 +1592,28 @@ class Map<TKey, TValue>
 				this.delete(pair[0]);
 			}
 		}
+
+// A data container that stores unique values of a given type
+js Set
+class Set<T>
+	// Return a boolean indicating whether an element with the specified value exists in this set
+	inline js bool get: T value // The value to check
+		this.has(value)
+	
+	// Add a new element to this set, if there isn't already an element with the same value
+	inline js void add: T value // The value to add
+		this.add(value)
+
+	// Remove a value from the set
+	inline js void remove: T value // The value to remove
+		this.delete(value)
+		
+	// Remove all items from the set
+	inline js void clear
+		this.clear()
+		
+	// Return the number of items in the set
+	inline js int length() this.size
 
 // Specifies that a function doesn't return a value
 immutable struct void

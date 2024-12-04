@@ -34,6 +34,7 @@ skipInit global unit Platform
 	public inline js string referrer := document.referrer
 	public inline js string encodeURIComponent(string value) encodeURIComponent(value)
 	public inline js string decodeURIComponent(string value) decodeURIComponent(value)
+	public inline js dynamic networkInformation() navigator.connection
 
 	private inline js void initMedia
 		this.electron = window?.process?.versions?.electron
