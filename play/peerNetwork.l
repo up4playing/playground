@@ -19,17 +19,7 @@
 //     createOffer
 //     onAnwserReceived
 //     onConnectionStateChange
-	
-// [ ] Test all users connecting at once
-// [ ] Handle situations where a new user isn't connected to all users yet
-//         A users probably shouldn't be able to do anything before they connect all their offers
-//         For example: A+B connect, B+C connect, C does something, A can' rewind
-// [ ] Allow removing users
-// [ ] Save event stream to db
-// [ ] Save snapshots to db
-// [ ] Undo clicks
-// [ ] Save statistics when a connection error occurs
-	
+
 transient immutable Signal
 	int receiverId
 	string type
@@ -427,32 +417,6 @@ transient skipInit unit PeerNetwork
 		
 	Buffer sendBuffer = {}
 	
-	sendInputs: int inputFrame
-		for input.internalUsers -> receiver if receiver
-			let inputs = input.localUser.inputs
-			let length = inputs.writePos - receiver.receivedMyInputsUpToPos
-			
-			if receiver.dataChannels
-				sendBuffer.reset
-				sendBuffer.writeInt8 cast NetworkMessageType.Tick
-				sendBuffer.writeInt inputFrame                       // I send inputs up to and including this frame
-				sendBuffer.writeInt receiver.receivedMyInputsUpToPos // I send inputs starting from the last pos you received
-				sendBuffer.writeInt receiver.inputs.writePos         // I received your inputs up to this pos
-				sendBuffer.writeBuffer inputs, receiver.receivedMyInputsUpToPos, length
-				sendBuffer.writeInt core.lastChecksumFrame                           // The last certain frame with inputs from everybody
-				sendBuffer.writeFloat64 core.checksums[core.lastChecksumFrame] || 0  // The checksum of the last certain frame
-				
-				core.tickMessageSize = send ., sendBuffer
-				if core.verbose
-					if receiver.receivedMyInputsUpToPos > inputs.writePos
-						core.log "[{inputFrame}] <{receiver.id}> #send -->> {receiver.receivedMyInputsUpToPos}->{inputs.writePos} id:{receiver.dataChannels[0]._id}"
-					else
-						core.log "[{inputFrame}] <{receiver.id}> #send -->>"
-				
-			// if length
-			// 	core.storeInputsToDB user
-			// core.storeRoomToDB
-			
 	private js int send: InternalUser user, Buffer buffer
 		if(user.dataChannels.length == 0) {
 			core.log("#data <"+user.id+"> Trying to send without dataChannels")
@@ -477,6 +441,33 @@ transient skipInit unit PeerNetwork
 		if type == Tick:         onTick user, buffer; else
 		if type == Ping:         onPing user, buffer; else
 		if type == Pong:         onPong user, buffer;
+			
+	sendInputs: int inputFrame
+		for input.internalUsers -> receiver if receiver
+			let inputs = input.localUser.inputs
+			let length = inputs.writePos - receiver.receivedMyInputsUpToPos
+			
+			if receiver.dataChannels
+				sendBuffer.reset
+				sendBuffer.writeInt8 cast NetworkMessageType.Tick
+				sendBuffer.writeInt inputFrame                       // I send inputs up to and including this frame
+				sendBuffer.writeInt receiver.receivedMyInputsUpToPos // I send inputs starting from the last pos you received
+				sendBuffer.writeInt receiver.inputs.writePos         // I received your inputs up to this pos
+				sendBuffer.writeBuffer inputs, receiver.receivedMyInputsUpToPos, length
+				sendBuffer.writeInt core.lastChecksumFrame                           // The last certain frame with inputs from everybody
+				sendBuffer.writeFloat64 core.checksums[core.lastChecksumFrame] || 0  // The checksum of the last certain frame
+				
+				core.tickMessageSize = send ., sendBuffer
+				if core.verbose
+					if receiver.receivedMyInputsUpToPos > inputs.writePos
+						core.log "[{inputFrame}] <{receiver.id}> #send -->> {receiver.receivedMyInputsUpToPos}->{inputs.writePos} id:{receiver.dataChannels[0]._id}"
+					else
+						core.log "[{inputFrame}] <{receiver.id}> #send -->>"
+				
+			if length
+				print "Sending inputs", inputs.writePos, receiver.receivedMyInputsUpToPos, length
+				core.storeInputsToDB input.localUser
+			core.storeRoomToDB
 			
 	private onTick: InternalUser sender, Buffer buffer
 		let inputFrame = buffer.readInt                     // The sender sent inputs up to and including this frame
