@@ -102,6 +102,8 @@ transient float Angle
 	inline bool > Angle value
 	inline bool >= Angle value
 	
+	inline js Angle operator - (Angle a) -a
+	
 	inline js Angle % ensureSingleExecution Angle value
 		((this % value) + value) % value
 	
