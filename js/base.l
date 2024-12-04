@@ -313,6 +313,8 @@ immutable struct float
 	
 	// Weeks	
 	inline js Time weeks := (this*604800000)
+		
+	implicit inline js Angle toAngle() this
 	
 // A sequence of characters
 js String
@@ -2136,14 +2138,14 @@ global skipInit unit math
 	
 	// Returns the sine of an angle in turns
 	sin: Angle angle // The angle in turns (one full rotation is 1)
-	    float result = cast(angle - .5 - math.floor(angle))
+	    float result = cast(angle - .5 - math.floor(angle.toFloat()))
 	    result *= 16 * (math.abs(result) - .5)
 	    result += .225 * result * (math.abs(result) - 1)
 	    return result
 
 	// Returns the cosine of an angle in turns
 	cos: Angle angle // The angle in turns (one full rotation is 1)
-	    float result = cast(angle - .25 - math.floor(angle + .25))
+	    float result = cast(angle - .25 - math.floor(angle.toFloat() + .25))
 	    result *= 16 * (math.abs(result) - .5)
 	    result += .225 * result * (math.abs(result) - 1)
 	    return result

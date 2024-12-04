@@ -85,6 +85,8 @@ transient float Angle
 	
 	inline Angle + Angle value
 	inline Angle - Angle value
+	inline Angle - float value
+	inline Angle + float value
 	inline float / Angle value
 	inline float * Angle value
 	
