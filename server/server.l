@@ -231,7 +231,8 @@ unit File
 		
 unit websocket
 	js void startWebsocketServer: int port
-		                          string keypath = ""
+		                          string certPath = ""
+		                          string keyPath = "", 
 		                          void(string[] path, WebsocketHttpResponse response) onGet
 		                          void() onStart
 		                          void(Connection connection) onOpen
@@ -240,10 +241,10 @@ unit websocket
 		const uWS = require('uWebSockets.js')
 		const app =  process.platform == "win32" || process.platform == "darwin" ? uWS.App() :
 			uWS.SSLApp({
-				key_file_name: "/etc/letsencrypt/live/"+keypath+"/privkey.pem",
-				cert_file_name: "/etc/letsencrypt/live/"+keypath+"/fullchain.pem",
+				key_file_name: certPath,
+				cert_file_name: keyPath,
 			})
-		app.ws('/*'/**/, {
+		app.ws("/*", {
 			compression: uWS.SHARED_COMPRESSOR,
 			maxPayloadLength: 16 * 1024 * 1024,
 			idleTimeout: 0,
@@ -260,7 +261,7 @@ unit websocket
 			close: (ws, code, message) => {
 				onClose(ws, code);
 			}
-		}).any('/*' /**/, (response, request) => {
+		}).any("/*", (response, request) => {
 			let path = request.getUrl().split("/");
 			path.splice(0,1);
 			onGet(path, response);
