@@ -85,6 +85,8 @@ transient float Angle
 	
 	inline Angle + Angle value
 	inline Angle - Angle value
+	inline Angle - float value
+	inline Angle + float value
 	inline float / Angle value
 	inline float * Angle value
 	
@@ -99,6 +101,8 @@ transient float Angle
 	inline bool <= Angle value
 	inline bool > Angle value
 	inline bool >= Angle value
+	
+	inline js Angle operator - (Angle a) -a
 	
 	inline js Angle % ensureSingleExecution Angle value
 		((this % value) + value) % value
@@ -224,10 +228,12 @@ unit File
 	js string getDirectoryName: string file
 		return require('path').dirname(file)
 
-		
+// Uses:    https://github.com/uNetworking/uWebSockets.js
+// Install: npm install uNetworking/uWebSockets.js#v20.51.0
 unit websocket
 	js void startWebsocketServer: int port
-		                          string keypath = ""
+		                          string certPath = ""
+		                          string keyPath = "", 
 		                          void(string[] path, WebsocketHttpResponse response) onGet
 		                          void() onStart
 		                          void(Connection connection) onOpen
@@ -236,10 +242,10 @@ unit websocket
 		const uWS = require('uWebSockets.js')
 		const app =  process.platform == "win32" || process.platform == "darwin" ? uWS.App() :
 			uWS.SSLApp({
-				key_file_name: "/etc/letsencrypt/live/"+keypath+"/privkey.pem",
-				cert_file_name: "/etc/letsencrypt/live/"+keypath+"/fullchain.pem",
+				key_file_name: keyPath,
+				cert_file_name: certPath,
 			})
-		app.ws('/*'/**/, {
+		app.ws("/*", {
 			compression: uWS.SHARED_COMPRESSOR,
 			maxPayloadLength: 16 * 1024 * 1024,
 			idleTimeout: 0,
@@ -256,7 +262,7 @@ unit websocket
 			close: (ws, code, message) => {
 				onClose(ws, code);
 			}
-		}).any('/*' /**/, (response, request) => {
+		}).any("/*", (response, request) => {
 			let path = request.getUrl().split("/");
 			path.splice(0,1);
 			onGet(path, response);
