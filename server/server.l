@@ -242,8 +242,8 @@ unit websocket
 		const uWS = require('uWebSockets.js')
 		const app =  process.platform == "win32" || process.platform == "darwin" ? uWS.App() :
 			uWS.SSLApp({
-				key_file_name: certPath,
-				cert_file_name: keyPath,
+				key_file_name: keyPath,
+				cert_file_name: certPath,
 			})
 		app.ws("/*", {
 			compression: uWS.SHARED_COMPRESSOR,
