@@ -75,7 +75,10 @@ global skipInit unit math
 skipInit transient float Time
 	// The number of milliseconds elapsed since January 1, 1970
 	static inline js Time now := Date.now()
-	
+		
+struct float
+	implicit inline js Angle toAngle() this
+
 transient float Angle
 	inline js float toFloat() this
 	inline js string toString() this.toString()
