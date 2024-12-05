@@ -12,7 +12,8 @@ transient class InternalUser
 	int inputFrame = -1         // We received all inputs from this player up to and including this frame
 	int receivedMyInputsUpToPos // We received all inputs from this player up to this pos
 	int[] lastTouchMoveIndex
-	Buffer inputs = {}       // The stream of inputs of this user
+	Buffer inputs = {}          // The stream of inputs of this user
+	int storedInputsUpTo
 	
 	// List of inputs filled by parseInput and used by onTouchDown, onWheel, onKeyDown, ...
 	visible Touch[] downTouches, movingTouches, upTouches
