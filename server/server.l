@@ -228,7 +228,8 @@ unit File
 	js string getDirectoryName: string file
 		return require('path').dirname(file)
 
-		
+// Uses:    https://github.com/uNetworking/uWebSockets.js
+// Install: npm install uNetworking/uWebSockets.js#v20.51.0
 unit websocket
 	js void startWebsocketServer: int port
 		                          string certPath = ""
