@@ -72,6 +72,9 @@ global skipInit unit math
 			return math.floor(math.random() * 16).toString(16);  
 		}); 
 
+	inline js Angle floor: Angle value // The value to round down
+		Math.floor(value)
+	
 skipInit transient float Time
 	// The number of milliseconds elapsed since January 1, 1970
 	static inline js Time now := Date.now()

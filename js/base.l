@@ -2080,9 +2080,6 @@ global skipInit unit math
 	inline js Time floor: Time value // The value to round down
 		Math.floor(value)
 		
-	inline js Angle floor: Angle value // The value to round down
-		Math.floor(value)
-	
 	// Returns the smallest integer greater than or equal to the given value 
 	inline js int ceil: float value // The value to round up
 		Math.ceil(value)
