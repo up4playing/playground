@@ -127,6 +127,7 @@ enum HttpMethod: Get, Post, Put, Delete
 global unit http
 	object handlerMap = null
 	object contentTypeMap = null
+	dynamic http
 	private methodName = ["GET", "POST", "PUT", "DELETE"]
 	
 	init
@@ -194,6 +195,20 @@ global unit http
 		
 	js void on:string path, HttpMethod method = Get, void(string[] path, dynamic body, Request request, Response response) handler
 		http.handlerMap.set(http.methodName[method]+path, handler)
+		
+	js void request: string url
+		             dynamic body
+		             string method = "POST"
+		             dynamic headers = null
+		             void(string value) onData
+		             void() onEnd
+		if(!http.http) http.http = require('https');
+		let request = http.http.request(url, {method, headers}, res => {
+			res.on('data', chunk => onData(chunk.toString()));
+			res.on('end', () => onEnd());
+		});
+		request.write(JSON.stringify(body));
+		request.end();
 	
 class Request
 	inline js string ip() this. .connection.remoteAddress
@@ -202,6 +217,10 @@ class Response
 	inline js void sendText(string result, int code = 200, filename = "") this.writeHead(code, {'Content-Type': http.contentTypeMap[filename.getExtension()] || "text/plain; charset=utf-8"}); response.end(result);
 	inline js void send(ensureSingleExecution any result, int code = 200) if(result) { if(typeof result == "string") {this.writeHead(code, {"Content-Type": "text/plain; charset=utf-8"}); response.end(result);} else {this.writeHead(code, {"Content-Type": "application/json; charset=utf-8"}); response.end(JSON.stringify(result)); }}
 	inline js void redirect(string url, int code = 302) this.writeHead(code, {Location: url}); response.end();
+		
+	inline js void writeHead(int code = 200, dynamic value) this.writeHead(code, value)
+	inline js void write(string value) this.write(value)
+	inline js void end() this.end()
 	
 class DirEntry
 	string parentPath
