@@ -1774,7 +1774,7 @@ transient DisplayItem DisplayText
 			graphics.context.fillText(this.name, this.x, this.y - this.offsetY)
 		} else {
 			// Multiple lines
-			let y = this.y - this.offsetY
+			let y = this.y
 			for(let line of this.lines) {
 				if(this.outlineColor) {
 					graphics.context.lineWidth = this.outlineWidth
