@@ -1,7 +1,7 @@
 transient skipInit unit Platform
 	public inline js string url := location.href
 	public inline js string hostname := location.hostname
-	public protocolAndHost := hostname && hostname != "localhost" ? "https://"+hostname : "http://localhost"
+	public protocolAndHost := hostname && hostname != "127.0.0.1" ? "https://"+hostname : "http://127.0.0.1"
 	public inline js int userAgent := navigator.userAgent.replace(/,/g," ")
 	public inline js float usedMemory := (performance.memory ? performance.memory.usedJSHeapSize : 0)
 	
