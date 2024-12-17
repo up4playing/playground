@@ -807,14 +807,16 @@ global transient unit System
 	// Reset all variables to their initial value and restart the app
 	global inline restart() core.restart
 		
+	global inline refresh()
+		
 	// Prints a message to the console
 	global js void print: logstring text // The text, variables or expressions to print
 		                  SourceCodeLocation location
 		// (location ? log(text, location.start, location.file) : log(text))
 		core.log(text);
-		if(location && Platform.isDebug) {
+		if(Platform.isDebug) {
 			var stringValue = typeof text === "string" ? text : JSON.stringify(text);
-			if(stringValue) _sendToEditor({type:"log", value:stringValue, location:location.start, file:location.file});
+			if(stringValue) _sendToEditor({type:"log", value:stringValue, location:location ? location.start : 0, file:location ? location.file: ""});
 		}
 
 class StatisticsGraph
