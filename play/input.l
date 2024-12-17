@@ -934,14 +934,14 @@ skipInit global unit input
 				if inputType == Json
 					int id = inputs.readInt
 					string valueString = inputs.readString
-					dynamic object = valueString ? valueString.toJson : null
+					dynamic object = valueString ? valueString.parseJson : null
 					networkData.call id, object
 					if Platform.waitingForInitialData > 0: Platform.waitingForInitialData--
 				else
 				if inputType == Object
 					int id = inputs.readInt
 					string valueString = inputs.readString
-					dynamic object = valueString ? valueString.toJson : null
+					dynamic object = valueString ? valueString.parseJson : null
 					networkData.call id, object
 					if Platform.waitingForInitialData > 0: Platform.waitingForInitialData--
 				else
