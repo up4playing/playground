@@ -150,36 +150,51 @@ global unit http
 		function handleRequest(request, response) {
 			var body = "";
 			request.on("data", a => body += a)
-			request.on("end", async () => {
-				try {
-					response.setHeader('Access-Control-Allow-Origin', '*');
-					response.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS, PUT, DELETE");
-					var path = request.url.substring(1).split("/");
-					await onRequest(path, body ? JSON.parse(body) : null, request, response);
-
-					if(!response.writableEnded) {
-						var procedureName = path[0];
-						handler = http.handlerMap.get(request.method+procedureName)
-						if(handler) {
-							// For named handlers, the procedure name isn't included in the path
-							path.splice(0,1);
-						} else {
-							// For wildcard handlers, we pass the procedure name as path[0]
-							handler = http.handlerMap.get(request.method+"*")
-						}
-						
-						if(handler) {
-							await handler(path, body ? JSON.parse(body) : null, request, response);
-						} else {
-							response.end("Server v"+_buildVersion+" up since "+startTime);
-						}
+			if(http.handlerMap.size == 0) {
+				request.on("end", async () => {
+					try {
+						response.setHeader('Access-Control-Allow-Origin', '*');
+						response.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS, PUT, DELETE");
+						var path = request.url.substring(1).split("/");
+						onRequest(path, body ? JSON.parse(body) : null, request, response);
+					} catch(e) {
+						console.error(e)
+						if(Platform.isDebug) _sendErrorToEditor(e);
+						response.end(`{error:"${e.message}"}`)
 					}
-				} catch(e) {
-					console.error(e)
-					if(Platform.isDebug) _sendErrorToEditor(e);
-					response.end(`{error:"${e.message}"}`)
-				}
-			})
+				})
+			} else {
+				request.on("end", async () => {
+					try {
+						response.setHeader('Access-Control-Allow-Origin', '*');
+						response.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS, PUT, DELETE");
+						var path = request.url.substring(1).split("/");
+						await onRequest(path, body ? JSON.parse(body) : null, request, response);
+	
+						if(!response.writableEnded) {
+							var procedureName = path[0];
+							handler = http.handlerMap.get(request.method+procedureName)
+							if(handler) {
+								// For named handlers, the procedure name isn't included in the path
+								path.splice(0,1);
+							} else {
+								// For wildcard handlers, we pass the procedure name as path[0]
+								handler = http.handlerMap.get(request.method+"*")
+							}
+							
+							if(handler) {
+								await handler(path, body ? JSON.parse(body) : null, request, response);
+							} else {
+								response.end("Server v"+_buildVersion+" up since "+startTime);
+							}
+						}
+					} catch(e) {
+						console.error(e)
+						if(Platform.isDebug) _sendErrorToEditor(e);
+						response.end(`{error:"${e.message}"}`)
+					}
+				})
+			}
 		}
 		if(window.server) server.close();
 		if(certPath && keyPath && !Platform.isDebug) {
