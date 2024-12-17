@@ -68,6 +68,28 @@ http
 			}
 		}
 		
+	js void postStreamDirectly: string url
+		                        dynamic body
+		                        void(string result) onData
+		                        void() onEnd = null
+		if(!core.isPremiere || !input.isCertain) return
+		try {
+			let response = await fetch(url, {method:"POST", body:JSON.stringify(body)})
+			const reader = response.body.getReader();
+			const decoder = new TextDecoder();
+			for(;;) {
+				const { value, done } = await reader.read();
+				if (value) {
+					const chunk = decoder.decode(value, { stream: true });
+					onData(chunk);
+				}
+				if(done) break;
+			}
+			onEnd?.();
+		} catch (error) {
+			console.error('Error during fetch or stream processing:', error);
+		}
+		
 	internal js async string getStringDirectly string url
 		return await (await fetch(url)).text()
 		
