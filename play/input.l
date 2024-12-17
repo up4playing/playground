@@ -1307,13 +1307,21 @@ skipInit global unit input
 		                Cursor cursor = Auto                // Change the mouse cursor image when hovering over this area
 		                bool showClickableArea = false      // Highlight the area for debugging
 		                bool markAsHandled = true           // Mark the touch as handled so it won't trigger more touch events
+		                HorizontalAlignment align = Center  // The horizontal alignment of the touch area
+		                VerticalAlignment valign = Middle   // The vertical alignment of the touch area
 		                void(Touch touch) do                // Do this for each mouse that is hovering over the given area
+		if not active: return
+		let sizeX = size.x
+		let sizeY = size.y || size.x
+		let x = align == Left ? position.x : align  == Center ? position.x-sizeX/2 : position.x-sizeX
+		let y = valign == Top ? position.y : valign == Middle ? position.y-sizeY/2 : position.y-sizeY
 		Vector2[] poly = [
-			{ position.x-size.x/2, position.y-size.y/2 }.transform(graphics.localMatrix),
-			{ position.x+size.x/2, position.y-size.y/2 }.transform(graphics.localMatrix),
-			{ position.x+size.x/2, position.y+size.y/2 }.transform(graphics.localMatrix),
-			{ position.x-size.x/2, position.y+size.y/2 }.transform(graphics.localMatrix),
+			{ x,         y         }.transform(graphics.localMatrix),
+			{ x + sizeX, y         }.transform(graphics.localMatrix),
+			{ x + sizeX, y + sizeY }.transform(graphics.localMatrix),
+			{ x,         y + sizeY }.transform(graphics.localMatrix),
 		]
+		
 		for getTargetedPlayers(by) -> player
 			for player.touches -> touch
 				if touch.referencePosition.isInsidePolygon(poly)

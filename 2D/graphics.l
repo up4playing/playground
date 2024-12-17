@@ -44,6 +44,8 @@ immutable Color
 		
 	Color withAlpha: float alpha
 		return {hex[1..7]+componentToHex(math.floor(alpha*255))}
+		
+enum TextOverflow: Visible, Hidden, Scale, Wrap
 
 // A texture that can be loaded into video memory
 immutable Texture
@@ -551,12 +553,14 @@ transient skipInit global unit graphics
 		             implicit layer = 0                   // Higher layers are drawn in front of lower layers
 		             alpha = 1.0                          // The opacity of the text (0: fully transparent, 1: fully visible)
 		             Angle angle = 0.0                    // Rotate the image by this angle in turns (0: no rotation, 1: one full rotation)
-		             float maxWidth = 0
 		             implicit Player[] visibleFor = null  // Only this player or list of players will see the text
 		             implicit Player[] clickableBy = null // Only this player or list of players can touch or click the text
 		             clickableMargin = Vector2(16,16)     // The margin around the text within which it is clickable
 		             showClickableArea = false            // Highlight the clickable area for debugging
 		             hotkey = Key.None                    // This keyboard shortcut will execute the onClick handler
+		             overflow = TextOverflow.Hidden       // Should text that exceeds the max width be hidden or wrapped?
+		             float maxWidth = 0                   // The maximum width of line when overflow is set 'Scale', 'Hidden' or 'Wrap'
+		             float lineHeight = 0                 // The height of each line when overflow is set to 'Wrap'
 		             void(Touch touch) onClick = null     // Execute this code when the user touches or clicks the text or presses the hotkey
 		             SourceCodeLocation location
 		
@@ -564,15 +568,59 @@ transient skipInit global unit graphics
 		Font effectiveFont = font || currentFont
 		int fontSize = math.floor(size.y || size.x || currentFontSize)
 		float sizeX, sizeY
+		string[] lines = null
+		float effectiveLineHeight = lineHeight || fontSize*1.5
 		
-		if isVisible or onClick != null
-			sizeX = getTextWidth(text, {x:fontSize}, effectiveFont, style)
-			if maxWidth > 0
-				if sizeX > maxWidth
-					fontSize = math.floor(fontSize * maxWidth/sizeX)
-					sizeX = getTextWidth(text, {x:fontSize}, effectiveFont, style)
-					while sizeX > maxWidth
-						sizeX = getTextWidth(text, {x:--fontSize}, effectiveFont, style)
+		if overflow == Wrap and maxWidth
+			// Split text into words
+			string word
+			string[] words
+			for text.length
+				let c = text[.]
+				if c == " "
+					if word: words.add word
+					word = ""
+				else
+				if c == "\n"
+					if word: words.add word + "\n"
+					word = ""
+				else
+					word += c
+			if word: words.add word
+				
+			// Layout lines
+			let spaceWidth = getTextWidth(" ", {x:fontSize}, effectiveFont, style)
+			lines = []
+			float totalWidth
+			string line
+			for words as word
+				float wordWidth = getTextWidth(word, {x:fontSize}, effectiveFont, style)
+				if totalWidth + wordWidth > maxWidth
+					lines.add line
+					line = word + " "
+					totalWidth = wordWidth + spaceWidth
+				else
+					line += word + " "
+					totalWidth += wordWidth + spaceWidth
+					
+				if word[word.length-1] == "\n"
+					lines.add line
+					line = ""
+					totalWidth = 0
+					
+			if line: lines.add line
+			sizeY = lines.length * effectiveLineHeight
+				
+		else
+			if isVisible or onClick != null
+				sizeX = getTextWidth(text, {x:fontSize}, effectiveFont, style)
+				if overflow == Scale and maxWidth
+					if sizeX > maxWidth
+						fontSize = math.floor(fontSize * maxWidth/sizeX)
+						sizeX = getTextWidth(text, {x:fontSize}, effectiveFont, style)
+						while sizeX > maxWidth
+							sizeX = getTextWidth(text, {x:--fontSize}, effectiveFont, style)
+							
 			sizeY = fontSize*effectiveFont.actualHeightFactor
 		
 		if isVisible
@@ -591,7 +639,9 @@ transient skipInit global unit graphics
 				outlineColor ? outlineColor.hex : null,
 				outlineWidth || currentLineWidth,
 				effectiveFont.offset.y*sizeY,
-				(style ? "bold ":"")+fontSize+"px "+effectiveFont.name
+				(style ? "bold ":"")+fontSize+"px "+effectiveFont.name,
+				lines,
+				effectiveLineHeight
 			)
 		
 		if onClick != null
@@ -602,6 +652,8 @@ transient skipInit global unit graphics
 				if hotkey
 					input.onKeyDown hotkey, by:effectiveClickableBy
 						onClick null
+						
+		return sizeY
 			
 	// Draw text around a circle
 	// Example: Draw text around a circular video
@@ -1702,20 +1754,38 @@ transient DisplayItem DisplayText
 	float outlineWidth
 	float offsetY
 	string font
+	string[] lines = null
+	float lineHeight
+	
 	js void draw
 		if(this.alpha == 0) return
 		graphics.context.setTransform(this.m0, this.m1, this.m2, this.m3, this.m4, this.m5)
 		graphics.context.globalAlpha = this.alpha
 		if(this.clippingPath) this.startClipping()
-			
 		graphics.context.font = this.font
-		if(this.outlineColor) {
-			graphics.context.lineWidth = this.outlineWidth
-			graphics.context.strokeStyle = this.outlineColor
-			graphics.context.strokeText(this.name, this.x, this.y)
+		if(!this.lines) {
+			// Single line
+			if(this.outlineColor) {
+				graphics.context.lineWidth = this.outlineWidth
+				graphics.context.strokeStyle = this.outlineColor
+				graphics.context.strokeText(this.name, this.x, this.y)
+			}
+			graphics.context.fillStyle = this.fillStyle
+			graphics.context.fillText(this.name, this.x, this.y - this.offsetY)
+		} else {
+			// Multiple lines
+			let y = this.y - this.offsetY
+			for(let line of this.lines) {
+				if(this.outlineColor) {
+					graphics.context.lineWidth = this.outlineWidth
+					graphics.context.strokeStyle = this.outlineColor
+					graphics.context.strokeText(line, this.x, y)
+				}
+				graphics.context.fillStyle = this.fillStyle
+				graphics.context.fillText(line, this.x, y)
+				y += this.lineHeight
+			}
 		}
-		graphics.context.fillStyle = this.fillStyle
-		graphics.context.fillText(this.name, this.x, this.y - this.offsetY)
 		
 		if(this.clippingPath) this.endClipping()
 		
