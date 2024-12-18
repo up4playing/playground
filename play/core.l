@@ -5,6 +5,7 @@ enum SendInputsMode: None, Peer, Server
 transient skipInit unit core
 	int eventStreamVersion = 2
 	int sendInterval = 1
+	bool enabledMilestones = true
 	int milestoneInterval = 1800
 	int smoothStrength = 90
 	bool smoothTouchPosition = true
@@ -191,7 +192,7 @@ transient skipInit unit core
 			reset
 		else
 		if targetFrame < frame
-			let milestoneIndex = math.floor(targetFrame/milestoneInterval) - 1
+			let milestoneIndex = enabledMilestones ? math.floor(targetFrame/milestoneInterval) - 1 : -1
 			if 0 <= milestoneIndex < milestones.length
 				let milestone = milestones[milestoneIndex]
 				frame = (milestoneIndex+1) * milestoneInterval
@@ -503,7 +504,7 @@ transient skipInit unit core
 			
 	// This is called at the beginning of each step
 	private checkSaveState
-		if input.isCertain and frame > 0 and frame % milestoneInterval == 0
+		if enabledMilestones and input.isCertain and frame > 0 and frame % milestoneInterval == 0
 			Buffer buffer = {}
 			saveState buffer
 			int milestoneIndex = math.floor(frame / milestoneInterval) - 1
