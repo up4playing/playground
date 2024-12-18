@@ -1,4 +1,4 @@
-skipInit pocketBase
+skipInit transient pocketBase
 	string url
 	dynamic pb
 	
