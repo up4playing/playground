@@ -35,6 +35,9 @@ Collection<T>
 	async T[] getFullList
 		return pocketBase.pb.collection(this.name).getFullList()
 		
+	async inline js T get: string id
+		pocketBase.pb.collection(this.name).getOne(id)
+		
 	async T add: T item
 		any newRecord = await pocketBase.pb.collection(this.name).create(item)
 		any anyItem = cast item

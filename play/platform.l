@@ -69,8 +69,12 @@ transient skipInit unit Platform
 				graphics.onResize();
 				if(Platform.mode < 3/*Pause,Manipulator,Slide*/ && Platform.engineStarted) core.tick(/*draw*/true);
 			}
+		if(typeof(pocketBase) != "undefined") pocketBase.setup();
 		if(app.init) app.init();
-		
+			
+	private async inline js void initDatabase
+		if(typeof(pocketBase) != "undefined") await pocketBase.connect()
+
 	// This is called when the application starts for the first time	
 	private start: bool isDebug, float referenceSizeX, float referenceSizeY, int userCount, bool simulateConnection
 		try
@@ -80,10 +84,11 @@ transient skipInit unit Platform
 			
 			initMedia
 			initPlatform
-			statistics.startTime = now
 			this.engineStarted = false
 			this.isDebug = isDebug
 			this.userCount = userCount
+			initDatabase
+			statistics.startTime = now
 			core.simulateConnection = simulateConnection
 			showDebugInfo = getLocalStorageObject("showDebugInfo") == "true"
 		
