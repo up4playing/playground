@@ -156,6 +156,56 @@ enum TimeUnit
 	hours        // Hours
 	days         // Days
 	
+string PlainTimeString
+	static PlainTimeString now := cast DateTime.fromTime(Time.now - Time.timezoneOffset, outputTimezone:0).isoString
+	
+	inline js bool toBool := this
+	inline string toString() this
+	
+	// (31.12.)
+	inline string dayMonthString: language = Loca.language
+		DateTime.fromTimeString(this).dayOfWeekDayMonthYearHourMinuteString()
+		
+	// (31.12.2000)
+	inline string dayMonthYearString: language = Loca.language
+		DateTime.fromTimeString(this).dayMonthYearString
+		
+	// (31 December 2000)
+	inline string dayMonthNameYearString: language = Loca.language
+		DateTime.fromTimeString(this).dayMonthNameYearString
+		
+	// (31 Dec)
+	inline string dayShortMonthNameString: language = Loca.language
+		DateTime.fromTimeString(this).dayShortMonthNameString
+		
+	// (31 December 2000)
+	inline string dayOfWeekDayMonthNameYearString: language = Loca.language
+		DateTime.fromTimeString(this).dayOfWeekDayMonthNameYearString
+		
+	// (Monday, December 31)
+	inline string dayOfWeekDayMonthString: language = Loca.language
+		DateTime.fromTimeString(this).dayOfWeekDayMonthString
+		
+	// (Monday)
+	inline string dayOfWeekString: language = Loca.language
+		DateTime.fromTimeString(this).dayOfWeekString
+		
+	// (Monday)
+	inline string dayOfWeekShortString: language = Loca.language
+		DateTime.fromTimeString(this).dayOfWeekShortString
+		
+	// (12:59 pm)
+	inline string hourMinuteString: language = Loca.language
+		DateTime.fromTimeString(this).hourMinuteString
+		
+	// (Monday, December 31 at 12:59 pm)
+	inline string dayOfWeekDayMonthAtHourMinuteString: language = Loca.language
+		DateTime.fromTimeString(this).dayOfWeekDayMonthAtHourMinuteString
+		
+	// (Monday, 31 December 2000, 12:59 pm)
+	inline string dayOfWeekDayMonthYearHourMinuteString: language = Loca.language
+		DateTime.fromTimeString(this).dayOfWeekDayMonthYearHourMinuteString
+		
 // Calculate dates using pure math for better performance without using the Date class
 immutable class DateTime
 	const dayNames = [
