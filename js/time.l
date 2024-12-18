@@ -157,7 +157,7 @@ enum TimeUnit
 	days         // Days
 	
 // Calculate dates using pure math for better performance without using the Date class
-immutable struct DateTime
+immutable class DateTime
 	const dayNames = [
 		["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
 		["Sonntag", "Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag"]
@@ -169,6 +169,10 @@ immutable struct DateTime
 	const monthNames = [
 		["","January","February","March","April","May","June","July","August","September","October","November","December"]
 		["","Januar", "Februar", "März", "April", "Mai", "Juni", "Juli", "August", "September", "Oktober", "November", "Dezember"]
+	]
+	const shortMonthNames = [
+		["","Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"]
+		["","Jan", "Feb", "Mär", "Apr", "Mai", "Jun", "Jul", "Aug", "Sep", "Okt", "Nov", "Dez"]
 	]
 	const atString = [" at ", " um "]
 	const timeSuffixString = ["", " Uhr"]
@@ -184,6 +188,7 @@ immutable struct DateTime
 	int hour
 	int minute
 	int second
+	int timezoneOffset
 	
 	string twoDigitDay    := (this.day < 10 ? "0"+this.day : this.day.toString())
 	string twoDigitMonth  := (this.month < 10 ? "0"+this.month : this.month.toString())
@@ -193,10 +198,15 @@ immutable struct DateTime
 		
 	static DateTime now := DateTime.fromTime(Time.now)
 	
+	static DateTime fromTimeInSeconds: float timeInSeconds
+		                               int outputTimezone = Time.timezoneOffset
+		return fromTime(timeInSeconds*1000, outputTimezone)
+		
 	static DateTime fromTime: Time time
+		                      int outputTimezone = Time.timezoneOffset
 		if not time: return {0, 1970, 1, 1, 4, 0, 0, 0}
-		const localTime = time - Time.timezoneOffset
-		const daysSinceEpoch = math.floor(localTime / 86400000)
+		const outputTime = time - outputTimezone
+		const daysSinceEpoch = math.floor(outputTime / 86400000)
 		
 		// Year
 		let currentYear = 1970;
@@ -222,9 +232,10 @@ immutable struct DateTime
 			month: currentMonth + 1
 			year: currentYear
 			dayOfWeek: (daysSinceEpoch + 4) % 7 // January 1, 1970 was a Thursday
-			hour: math.floor (localTime % 86400000) / 3600000
-			minute: math.floor (localTime % 3600000) / 60000
-			second: math.floor (localTime % 60000) / 1000
+			hour: math.floor (outputTime % 86400000) / 3600000
+			minute: math.floor (outputTime % 3600000) / 60000
+			second: math.floor (outputTime % 60000) / 1000
+			timezoneOffset: outputTimezone
 		}
 		
 	static DateTime fromValues: int year
@@ -232,7 +243,10 @@ immutable struct DateTime
 		                        int day
 		                        int hour
 		                        int minute
-		                        int second
+		                        int second = 0
+		                        int milliseconds = 0
+		                        int inputTimezone = Time.timezoneOffset
+		                        int outputTimezone = Time.timezoneOffset
 		const daysInMonth = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
 		
 		// Calculate the number of days since the epoch for full years
@@ -252,14 +266,17 @@ immutable struct DateTime
 		days += day - 1; // subtract 1 because we want "full days" before the current day
 		
 		// Convert the full days to milliseconds
-		let milliseconds = days * 24 * 60 * 60 * 1000;
+		milliseconds += days * 24 * 60 * 60 * 1000;
 		
 		// Add hours, minutes, and seconds in milliseconds
 		milliseconds += hour * 60 * 60 * 1000;
 		milliseconds += minute * 60 * 1000;
 		milliseconds += second * 1000;
 		
-		return {time: Time.timezoneOffset + milliseconds, year, month, day, dayOfWeek: (days + 4) % 7, hour, minute, second}
+		if inputTimezone == outputTimezone
+			return {time: milliseconds + inputTimezone, year, month, day, dayOfWeek: (days + 4) % 7, hour, minute, second, timezoneOffset:outputTimezone}
+		else
+			return DateTime.fromTime(milliseconds + inputTimezone, outputTimezone)
 		
 	// (31.12.)
 	dayMonthString: language = Loca.language
@@ -275,6 +292,14 @@ immutable struct DateTime
 	dayMonthNameYearString: language = Loca.language
 		return "{day} {monthNames[language][month]} {year}"
 		
+	// (31 Dec)
+	dayShortMonthNameString: language = Loca.language
+		return "{day} {shortMonthNames[language][month]}"
+		
+	// (31 December 2000)
+	dayOfWeekDayMonthNameYearString: language = Loca.language
+		return "{dayNames[language][dayOfWeek]}, {day} {monthNames[language][month]} {year}"
+		
 	// (Monday, December 31)
 	dayOfWeekDayMonthString: language = Loca.language
 		if language == German return "{dayNames[language][dayOfWeek]}, {day}. {monthNames[language][month]}"
@@ -284,18 +309,81 @@ immutable struct DateTime
 	dayOfWeekString: language = Loca.language
 		return dayNames[language][dayOfWeek]
 		
+	// (Monday)
+	dayOfWeekShortString: language = Loca.language
+		return shortDayNames[language][dayOfWeek]
+		
 	// (12:59 pm)
 	hourMinuteString: language = Loca.language
-		if language == English: return ""+((hour-1)%12+1)+":"+(minute < 10 ? "0":"")+minute+(hour < 12 ? " am":" pm")
-		else                    return ""+hour+":"+(minute < 10 ? "0":"")+minute
+		if language == German: return ""+hour+":"+(minute < 10 ? "0":"")+minute+" Uhr"
+		else                   return ""+((hour-1)%12+1)+":"+(minute < 10 ? "0":"")+minute+(hour < 12 ? " am":" pm")
 		
 	// (Monday, December 31 at 12:59 pm)
 	dayOfWeekDayMonthAtHourMinuteString: language = Loca.language
 		return dayOfWeekDayMonthString(language) + atString[language] + hourMinuteString(language) + timeSuffixString[language]
 		
+	// (Monday, 31 December 2000, 12:59 pm)
+	dayOfWeekDayMonthYearHourMinuteString: language = Loca.language
+		return dayOfWeekDayMonthNameYearString(language) + ", " + hourMinuteString(language)
+		
 	// (20001231235959+02:00)
 	compactString
 		return "{year}{twoDigitMonth}{twoDigitDay}T{twoDigitHour}{twoDigitMinute}{twoDigitSecond}+02:00"
+
+	static DateTime fromTimeString: PlainTimeString timeString
+		return fromIsoString(cast timeString, outputTimezone:0)
+	
+	// With Milliseconds		
+	//            1  1  1  2   2. 2
+	// 0    5  8  1  4  7  0   4  7           	
+	// 2024-10-17 15:23:30.504+02:00
+	// 2024-10-17 15:23:30.504Z
+	// 
+	// Without Milliseconds
+	//            1  1  1  2  2
+	// 0    5  8  1  4  7  0  3
+	// 2024-10-17 15:23:30+02:00
+	// 2024-10-17 15:23:30Z
+	static DateTime fromIsoString: string str
+		                           int outputTimezone = Time.timezoneOffset
+		if not str or str.length < 19: return null
+		let hasMilliseconds = str[19] == "."
+		let timezoneIndex = hasMilliseconds ? 24 : 20
+		let timezoneSign = str[timezoneIndex-1]
+		return DateTime.fromValues(
+			year:   cast str[ 0.. 4]
+			month:  cast str[ 5.. 7]
+			day:    cast str[ 8..10]
+			hour:   cast str[11..13]
+			minute: cast str[14..16]
+			second: cast str[17..19]
+			milliseconds: hasMilliseconds ? cast str[20..23] : 0
+			inputTimezone: timezoneSign == "Z" ? 0 : (cast str[timezoneIndex..timezoneIndex+2])*3600000*(timezoneSign == "-" ? 1:-1)
+			outputTimezone
+		)	
+				
+				
+	implicit PlainTimeString toPlainTimeString
+		let tzo = 0
+		let tzoHours = math.floor(math.abs(tzo) / 60)
+		let tzoMinutes = math.abs(tzo) % 60
+		return cast "{year}-{twoDigitMonth}-{twoDigitDay}T{twoDigitHour}:{twoDigitMinute}:{twoDigitSecond}{tzo >= 0 ? "+" : "-"}{tzoHours < 10 ? "0"+tzoHours : tzoHours.toString}:{tzoMinutes < 10 ? "0"+tzoMinutes : tzoMinutes.toString}"
+	
+	string isoString
+		let tzo = -timezoneOffset / 60000
+		let tzoHours = math.floor(math.abs(tzo) / 60)
+		let tzoMinutes = math.abs(tzo) % 60
+		return "{year}-{twoDigitMonth}-{twoDigitDay}T{twoDigitHour}:{twoDigitMinute}:{twoDigitSecond}{tzo >= 0 ? "+" : "-"}{tzoHours < 10 ? "0"+tzoHours : tzoHours.toString}:{tzoMinutes < 10 ? "0"+tzoMinutes : tzoMinutes.toString}"
+		
+		// return year +
+		// 	"-" + pad(this.getMonth() + 1) +
+		// 	"-" + pad(this.getDate()) +
+		// 	"T" + pad(this.getHours()) +
+		// 	":" + pad(this.getMinutes()) +
+		// 	":" + pad(this.getSeconds()) +
+		// 	dif + pad(Math.floor(Math.abs(tzo) / 60)) +
+		// 	":" + pad(Math.abs(tzo) % 60);
+		
 		
 // Calculate dates using the JavaScript Date class
 js(Date) transient class Date
