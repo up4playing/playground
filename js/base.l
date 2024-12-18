@@ -339,7 +339,7 @@ immutable class string
 	inline js string toString() this
 	inline js int toInt := parseInt(this)
 	inline js int toFloat := parseFloat(this)
-	inline js dynamic toJson() JSON.parse(this)
+	inline js dynamic parseJson() JSON.parse(this)
 	inline Time toTime() Time.fromTimeString(this)
 	inline PlainTimeString toPlainTimeString := this
 		
@@ -2081,7 +2081,6 @@ global skipInit unit math
 	inline js Time floor: Time value // The value to round down
 		Math.floor(value)
 		
-	
 	// Returns the smallest integer greater than or equal to the given value 
 	inline js int ceil: float value // The value to round up
 		Math.ceil(value)

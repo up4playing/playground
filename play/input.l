@@ -12,7 +12,8 @@ transient class InternalUser
 	int inputFrame = -1         // We received all inputs from this player up to and including this frame
 	int receivedMyInputsUpToPos // We received all inputs from this player up to this pos
 	int[] lastTouchMoveIndex
-	Buffer inputs = {}       // The stream of inputs of this user
+	Buffer inputs = {}          // The stream of inputs of this user
+	int storedInputsUpTo
 	
 	// List of inputs filled by parseInput and used by onTouchDown, onWheel, onKeyDown, ...
 	visible Touch[] downTouches, movingTouches, upTouches
@@ -933,14 +934,14 @@ skipInit global unit input
 				if inputType == Json
 					int id = inputs.readInt
 					string valueString = inputs.readString
-					dynamic object = valueString ? valueString.toJson : null
+					dynamic object = valueString ? valueString.parseJson : null
 					networkData.call id, object
 					if Platform.waitingForInitialData > 0: Platform.waitingForInitialData--
 				else
 				if inputType == Object
 					int id = inputs.readInt
 					string valueString = inputs.readString
-					dynamic object = valueString ? valueString.toJson : null
+					dynamic object = valueString ? valueString.parseJson : null
 					networkData.call id, object
 					if Platform.waitingForInitialData > 0: Platform.waitingForInitialData--
 				else
@@ -1306,13 +1307,21 @@ skipInit global unit input
 		                Cursor cursor = Auto                // Change the mouse cursor image when hovering over this area
 		                bool showClickableArea = false      // Highlight the area for debugging
 		                bool markAsHandled = true           // Mark the touch as handled so it won't trigger more touch events
+		                HorizontalAlignment align = Center  // The horizontal alignment of the touch area
+		                VerticalAlignment valign = Middle   // The vertical alignment of the touch area
 		                void(Touch touch) do                // Do this for each mouse that is hovering over the given area
+		if not active: return
+		let sizeX = size.x
+		let sizeY = size.y || size.x
+		let x = align == Left ? position.x : align  == Center ? position.x-sizeX/2 : position.x-sizeX
+		let y = valign == Top ? position.y : valign == Middle ? position.y-sizeY/2 : position.y-sizeY
 		Vector2[] poly = [
-			{ position.x-size.x/2, position.y-size.y/2 }.transform(graphics.localMatrix),
-			{ position.x+size.x/2, position.y-size.y/2 }.transform(graphics.localMatrix),
-			{ position.x+size.x/2, position.y+size.y/2 }.transform(graphics.localMatrix),
-			{ position.x-size.x/2, position.y+size.y/2 }.transform(graphics.localMatrix),
+			{ x,         y         }.transform(graphics.localMatrix),
+			{ x + sizeX, y         }.transform(graphics.localMatrix),
+			{ x + sizeX, y + sizeY }.transform(graphics.localMatrix),
+			{ x,         y + sizeY }.transform(graphics.localMatrix),
 		]
+		
 		for getTargetedPlayers(by) -> player
 			for player.touches -> touch
 				if touch.referencePosition.isInsidePolygon(poly)

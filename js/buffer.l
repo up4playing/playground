@@ -280,9 +280,8 @@ transient class Buffer
 		let readPos = 0
 		let writePos = this.writePos
 		let sourceDataView = new DataView(sourceArrayBuffer)
-		while(readPos < readPosEnd)
+		while(readPos < length)
 			this.dataView.setUint8(writePos++, sourceDataView.getUint8(readPos++))
-			
 		this.writePos = writePos
 		
 	js void copyFromBuffer: Buffer source

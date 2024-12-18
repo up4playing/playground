@@ -19,17 +19,7 @@
 //     createOffer
 //     onAnwserReceived
 //     onConnectionStateChange
-	
-// [ ] Test all users connecting at once
-// [ ] Handle situations where a new user isn't connected to all users yet
-//         A users probably shouldn't be able to do anything before they connect all their offers
-//         For example: A+B connect, B+C connect, C does something, A can' rewind
-// [ ] Allow removing users
-// [ ] Save event stream to db
-// [ ] Save snapshots to db
-// [ ] Undo clicks
-// [ ] Save statistics when a connection error occurs
-	
+
 transient immutable Signal
 	int receiverId
 	string type
@@ -453,11 +443,11 @@ transient skipInit unit PeerNetwork
 		if type == Pong:         onPong user, buffer;
 			
 	sendInputs: int inputFrame
+		let inputs = input.localUser.inputs
 		for input.internalUsers -> receiver if receiver
-			let inputs = input.localUser.inputs
 			let length = inputs.writePos - receiver.receivedMyInputsUpToPos
 			
-			if receiver.dataChannels
+			if not receiver.local and receiver.dataChannels
 				sendBuffer.reset
 				sendBuffer.writeInt8 cast NetworkMessageType.Tick
 				sendBuffer.writeInt inputFrame                       // I send inputs up to and including this frame
@@ -468,17 +458,15 @@ transient skipInit unit PeerNetwork
 				sendBuffer.writeFloat64 core.checksums[core.lastChecksumFrame] || 0  // The checksum of the last certain frame
 				
 				core.tickMessageSize = send ., sendBuffer
+				
 				if core.verbose
 					if receiver.receivedMyInputsUpToPos > inputs.writePos
 						core.log "[{inputFrame}] <{receiver.id}> #send -->> {receiver.receivedMyInputsUpToPos}->{inputs.writePos} id:{receiver.dataChannels[0]._id}"
 					else
 						core.log "[{inputFrame}] <{receiver.id}> #send -->>"
 				
-			if length
-				print "Sending inputs", inputs.writePos, receiver.receivedMyInputsUpToPos, length
-				core.storeInputsToDB input.localUser
-			core.storeRoomToDB
-			
+				core.log "[{inputFrame}] <{receiver.id}> #send -->> The other <{receiver.id}> received up to {receiver.receivedMyInputsUpToPos} and I'm <{input.localUser.id}> sending {length} bytes, from {receiver.receivedMyInputsUpToPos} to {inputs.writePos}"
+		
 	private onTick: InternalUser sender, Buffer buffer
 		let inputFrame = buffer.readInt                     // The sender sent inputs up to and including this frame
 		
@@ -488,7 +476,9 @@ transient skipInit unit PeerNetwork
 			sender.receivedMyInputsUpToPos = buffer.readInt // The sender received my inputs up to this pos
 			
 			sender.inputFrame = inputFrame
-			buffer.readBuffer sender.inputs, incomingInputsWritePos
+			let length = buffer.readBuffer sender.inputs, incomingInputsWritePos
+			
+			core.log "[{inputFrame}] <{sender.id}> #receive <<-- I <{input.localUser.id}> received {length} bytes, up to {sender.inputs.writePos} from {sender.id}"
 			
 			if core.verbose
 				if sender.inputs.writePos > incomingInputsWritePos
@@ -504,6 +494,9 @@ transient skipInit unit PeerNetwork
 			let myChecksum = core.checksums[checksumFor]
 			if !myChecksum                           core.checksums[checksumFor] = checksum; else
 			if !myChecksum.isApproximately(checksum) core.onWrongChecksum checksumFor, mine:myChecksum theirs:checksum
+				
+			// Store incoming inputs
+			if length: core.storeInputsToDB sender
 		
 	js void onReceivedAnswer: InternalUser user, string sdp
 		core.log("#peer <"+user.id+"> Received Answer");

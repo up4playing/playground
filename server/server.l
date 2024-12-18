@@ -72,10 +72,16 @@ global skipInit unit math
 			return math.floor(math.random() * 16).toString(16);  
 		}); 
 
+	inline js Angle floor: Angle value // The value to round down
+		Math.floor(value)
+	
 skipInit transient float Time
 	// The number of milliseconds elapsed since January 1, 1970
 	static inline js Time now := Date.now()
-	
+		
+struct float
+	implicit inline js Angle toAngle() this
+
 transient float Angle
 	inline js float toFloat() this
 	inline js string toString() this.toString()
@@ -85,6 +91,8 @@ transient float Angle
 	
 	inline Angle + Angle value
 	inline Angle - Angle value
+	inline Angle - float value
+	inline Angle + float value
 	inline float / Angle value
 	inline float * Angle value
 	
@@ -99,6 +107,8 @@ transient float Angle
 	inline bool <= Angle value
 	inline bool > Angle value
 	inline bool >= Angle value
+	
+	inline js Angle operator - (Angle a) -a
 	
 	inline js Angle % ensureSingleExecution Angle value
 		((this % value) + value) % value
@@ -117,6 +127,7 @@ enum HttpMethod: Get, Post, Put, Delete
 global unit http
 	object handlerMap = null
 	object contentTypeMap = null
+	dynamic http
 	private methodName = ["GET", "POST", "PUT", "DELETE"]
 	
 	init
@@ -139,36 +150,51 @@ global unit http
 		function handleRequest(request, response) {
 			var body = "";
 			request.on("data", a => body += a)
-			request.on("end", async () => {
-				try {
-					response.setHeader('Access-Control-Allow-Origin', '*');
-					response.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS, PUT, DELETE");
-					var path = request.url.substring(1).split("/");
-					await onRequest(path, body ? JSON.parse(body) : null, request, response);
-
-					if(!response.writableEnded) {
-						var procedureName = path[0];
-						handler = http.handlerMap.get(request.method+procedureName)
-						if(handler) {
-							// For named handlers, the procedure name isn't included in the path
-							path.splice(0,1);
-						} else {
-							// For wildcard handlers, we pass the procedure name as path[0]
-							handler = http.handlerMap.get(request.method+"*")
-						}
-						
-						if(handler) {
-							await handler(path, body ? JSON.parse(body) : null, request, response);
-						} else {
-							response.end("Server v"+_buildVersion+" up since "+startTime);
-						}
+			if(http.handlerMap.size == 0) {
+				request.on("end", async () => {
+					try {
+						response.setHeader('Access-Control-Allow-Origin', '*');
+						response.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS, PUT, DELETE");
+						var path = request.url.substring(1).split("/");
+						onRequest(path, body ? JSON.parse(body) : null, request, response);
+					} catch(e) {
+						console.error(e)
+						if(Platform.isDebug) _sendErrorToEditor(e);
+						response.end(`{error:"${e.message}"}`)
 					}
-				} catch(e) {
-					console.error(e)
-					if(Platform.isDebug) _sendErrorToEditor(e);
-					response.end(`{error:"${e.message}"}`)
-				}
-			})
+				})
+			} else {
+				request.on("end", async () => {
+					try {
+						response.setHeader('Access-Control-Allow-Origin', '*');
+						response.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS, PUT, DELETE");
+						var path = request.url.substring(1).split("/");
+						await onRequest(path, body ? JSON.parse(body) : null, request, response);
+	
+						if(!response.writableEnded) {
+							var procedureName = path[0];
+							handler = http.handlerMap.get(request.method+procedureName)
+							if(handler) {
+								// For named handlers, the procedure name isn't included in the path
+								path.splice(0,1);
+							} else {
+								// For wildcard handlers, we pass the procedure name as path[0]
+								handler = http.handlerMap.get(request.method+"*")
+							}
+							
+							if(handler) {
+								await handler(path, body ? JSON.parse(body) : null, request, response);
+							} else {
+								response.end("Server v"+_buildVersion+" up since "+startTime);
+							}
+						}
+					} catch(e) {
+						console.error(e)
+						if(Platform.isDebug) _sendErrorToEditor(e);
+						response.end(`{error:"${e.message}"}`)
+					}
+				})
+			}
 		}
 		if(window.server) server.close();
 		if(certPath && keyPath && !Platform.isDebug) {
@@ -184,6 +210,20 @@ global unit http
 		
 	js void on:string path, HttpMethod method = Get, void(string[] path, dynamic body, Request request, Response response) handler
 		http.handlerMap.set(http.methodName[method]+path, handler)
+		
+	js void request: string url
+		             dynamic body
+		             string method = "POST"
+		             dynamic headers = null
+		             void(string value) onData
+		             void() onEnd
+		if(!http.http) http.http = require('https');
+		let request = http.http.request(url, {method, headers}, res => {
+			res.on('data', chunk => onData(chunk.toString()));
+			res.on('end', () => onEnd());
+		});
+		request.write(JSON.stringify(body));
+		request.end();
 	
 class Request
 	inline js string ip() this. .connection.remoteAddress
@@ -192,6 +232,10 @@ class Response
 	inline js void sendText(string result, int code = 200, filename = "") this.writeHead(code, {'Content-Type': http.contentTypeMap[filename.getExtension()] || "text/plain; charset=utf-8"}); response.end(result);
 	inline js void send(ensureSingleExecution any result, int code = 200) if(result) { if(typeof result == "string") {this.writeHead(code, {"Content-Type": "text/plain; charset=utf-8"}); response.end(result);} else {this.writeHead(code, {"Content-Type": "application/json; charset=utf-8"}); response.end(JSON.stringify(result)); }}
 	inline js void redirect(string url, int code = 302) this.writeHead(code, {Location: url}); response.end();
+		
+	inline js void writeHead(int code = 200, dynamic value) this.writeHead(code, value)
+	inline js void write(string value) this.write(value)
+	inline js void end() this.end()
 	
 class DirEntry
 	string parentPath
@@ -224,10 +268,12 @@ unit File
 	js string getDirectoryName: string file
 		return require('path').dirname(file)
 
-		
+// Uses:    https://github.com/uNetworking/uWebSockets.js
+// Install: npm install uNetworking/uWebSockets.js#v20.51.0
 unit websocket
 	js void startWebsocketServer: int port
-		                          string keypath = ""
+		                          string certPath = ""
+		                          string keyPath = "", 
 		                          void(string[] path, WebsocketHttpResponse response) onGet
 		                          void() onStart
 		                          void(Connection connection) onOpen
@@ -236,10 +282,10 @@ unit websocket
 		const uWS = require('uWebSockets.js')
 		const app =  process.platform == "win32" || process.platform == "darwin" ? uWS.App() :
 			uWS.SSLApp({
-				key_file_name: "/etc/letsencrypt/live/"+keypath+"/privkey.pem",
-				cert_file_name: "/etc/letsencrypt/live/"+keypath+"/fullchain.pem",
+				key_file_name: keyPath,
+				cert_file_name: certPath,
 			})
-		app.ws('/*'/**/, {
+		app.ws("/*", {
 			compression: uWS.SHARED_COMPRESSOR,
 			maxPayloadLength: 16 * 1024 * 1024,
 			idleTimeout: 0,
@@ -256,7 +302,7 @@ unit websocket
 			close: (ws, code, message) => {
 				onClose(ws, code);
 			}
-		}).any('/*' /**/, (response, request) => {
+		}).any("/*", (response, request) => {
 			let path = request.getUrl().split("/");
 			path.splice(0,1);
 			onGet(path, response);

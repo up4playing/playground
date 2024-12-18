@@ -44,30 +44,26 @@ transient skipInit unit core
 	IndexedDBStore inputStore = {"input", indices:[{"roomId"}]}
 	IndexedDBStore roomStore  = {"room"}
 	
-	initDatabase
-		IndexedDB.start "up4playing", version:2
-
 	startConnected: int frame
 		if mode == Connected: return
-				
-		let user = input.localUser
-		user.startInputFrame 0
-		
+			
 		account = Platform.getLocalStorageObject("user") or {}
 		if not account._id
 			account._id = generateObjectId
 			Platform.setLocalStorageObject("user", account)
-			
-		input.handleJoin frame, account
-		user.collectInputs = true
-		log "startConnected", joinFrame
+				
+		log "startConnected", joinFrame, this.frame, this.frames
+		if this.frames == 0
+			log "handleJoin", frame
+			input.localUser.startInputFrame 0
+			input.handleJoin frame, account
 		
-		this.frame = 0
 		mode = Connected
+		input.localUser.collectInputs = true
 		snapshotFrame = -1
 		nextSnapshotFrame = 0
 		checkSaveState
-		log "Start", user.id, frame, startTime, serverStartTime
+		log "Start", input.localUser.id, frame, startTime, serverStartTime
 		
 	js string generateObjectId
 		const timestamp = Math.floor(new Date().getTime() / 1000).toString(16);
@@ -80,7 +76,6 @@ transient skipInit unit core
 		mode = Local
 		input.internalUsers.clear
 		math.setRandomSeed math.generateRandomSeed 
-		// initDatabase
 		stop
 		
 	// Clear all inputs and reset the application to the first frame
@@ -269,7 +264,13 @@ transient skipInit unit core
 						if user?.local: user.startInputFrame frame+1
 				step fastForward:false, draw:frame == targetFrame-1
 				collectStatistics
+				
 				lastNetworkFrame = now
+				
+			// Store local inputs
+			if IndexedDB.isReady
+				core.storeInputsToDB input.localUser
+				core.storeRoomToDB
 				
 		lastAnimationFrame = now
 		if Platform.mode == Play and frame >= frames: Platform.record()
@@ -611,46 +612,47 @@ transient skipInit unit core
 	
 	storeInputsToDB: InternalUser user
 		let inputs = user.inputs
-		// let chunkStart = math.floor(inputs.writePos / chunkSize) * chunkSize
-		let start = inputs.writePos - (inputs.writePos % chunkSize)
-		let id = "{roomId}-{user.id}-{start}"
-		inputStore.put {id, roomId, userId:user.id, start, inputs:inputs.subArrayBuffer(start to inputs.writePos)}
-			print "storeInputsLocally", roomId, user.id, start, inputs.writePos
-		else
-			print "failed"
-			
-	openFromDB: int roomId, void() then, void() else
-		roomStore.get roomId
-			int targetFrame = .frame
-			frames = .frames
-			let randomSeed = .randomSeed
-			startInLobby = .startInLobby
-			Platform.isStaging =.isStaging
-			let localUserId = .localUserId
-			
-			inputStore.getAllFromIndex "roomId", roomId
-				result.orderBy.start
-				for result
-					int userId = .userId
-					int start = .start
-					any inputs = .inputs
-					let user = input.internalUsers[.userId] ?= {id:.userId, local:.userId == localUserId, collectInputs:true}
-					user.inputs.insertArrayBuffer .inputs
-					
-				// Replay
-				for input.internalUsers if .
-					.startInputFrame frames
-				math.setRandomSeed randomSeed
-				
-				Platform.sendClearTimeline
-				goToFrame targetFrame, replayFromStart:true
-				Platform.sendFrame(targetFrame, frames)
-				then
-				
+		if inputs.writePos > user.storedInputsUpTo
+			// let chunkStart = math.floor(inputs.writePos / chunkSize) * chunkSize
+			let start = inputs.writePos - (inputs.writePos % chunkSize)
+			let id = "{roomId}-{user.id}-{start}"
+			print "[{frame}] <{user.id}> Storing inputs {id} ({start} to {inputs.writePos})"
+			inputStore.put {id, roomId, userId:user.id, start, inputs:inputs.subArrayBuffer(start to inputs.writePos)}
+				print "[{frame}] <{user.id}> Storing inputs successful"
 			else
-				else
-		else
-			else
+				print "[{frame}] <{user.id}> Storing inputs failed"
+			user.storedInputsUpTo = inputs.writePos
+			
+	openFromDB
+		await IndexedDB.start Platform.isStaging ? "up4playing-{localUserId}" : "up4playing", version:2
+		
+		let room = await roomStore.get roomId
+		int targetFrame = room.frame - 1
+		frames = room.frames
+		let randomSeed = room.randomSeed
+		startInLobby = room.startInLobby
+		Platform.isStaging = room.isStaging
+		localUserId = room.localUserId
+		
+		print "#database opening from db {object.toJson room}"
+		let result = await inputStore.getAllFromIndex "roomId", roomId
+		result.orderBy.start
+		for result
+			int userId = .userId
+			int start = .start
+			any inputs = .inputs
+			let user = input.internalUsers[.userId] ?= {id:.userId, local:.userId == localUserId, collectInputs:true}
+			if user.local
+				input.localUser = user
+			user.inputs.insertArrayBuffer .inputs
+			print "#database", userId, start, inputs.toString()
+		print "#database", input.localUser.inputs.toString
+			
+		// Replay
+		for input.internalUsers if .
+			.startInputFrame frames
+		math.setRandomSeed randomSeed
+		replay 0 to targetFrame
 	
 	openState
 		file.openBinary
@@ -708,6 +710,7 @@ transient skipInit unit core
 	string roomString
 	int roomId
 	string gameId
+	int localUserId
 	
 	join: string gameId, string roomString, int userId
 		statistics.scheduleSendIn 30 seconds
@@ -720,8 +723,13 @@ transient skipInit unit core
 		this.gameId = gameId
 		this.roomString = roomString
 		this.roomId = cast roomString
-		input.localUser = {userId, local:true, connected:true, connectionId:0}
-		// initDatabase
+		this.localUserId = userId
+		this.frame = 0
+		this.frames = 0
+		try
+			await openFromDB
+		catch 
+			input.localUser = {this.localUserId, local:true, connected:true, connectionId:0}
 		await PeerNetwork.setupLocalMedia 
 			enableVideo:not Platform.isStaging || core.enableVideoForStaging
 			enableAudio:not Platform.isStaging || core.enableAudioForStaging
@@ -799,14 +807,16 @@ global transient unit System
 	// Reset all variables to their initial value and restart the app
 	global inline restart() core.restart
 		
+	global inline refresh()
+		
 	// Prints a message to the console
 	global js void print: logstring text // The text, variables or expressions to print
 		                  SourceCodeLocation location
 		// (location ? log(text, location.start, location.file) : log(text))
 		core.log(text);
-		if(location && Platform.isDebug) {
+		if(Platform.isDebug) {
 			var stringValue = typeof text === "string" ? text : JSON.stringify(text);
-			if(stringValue) _sendToEditor({type:"log", value:stringValue, location:location.start, file:location.file});
+			if(stringValue) _sendToEditor({type:"log", value:stringValue, location:location ? location.start : 0, file:location ? location.file: ""});
 		}
 
 class StatisticsGraph
