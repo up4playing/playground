@@ -13,7 +13,17 @@ skipInit pocketBase
 		
 	inline js void autoCancellation: value = true
 		pocketBase.pb.@autoCancellation(value);
+
+interface File
+	Time lastModified
+	string lastModifiedDate
+	string name
+	string path
+	int size
+	string type
 	
+	inline js string objectUrl() URL.createObjectURL(this)
+
 Collection<T>
 	string name
 	
