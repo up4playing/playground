@@ -458,11 +458,11 @@ immutable class string
 		
 	inline js string replace: string value
 		                      nocolon implicit string with
-		(this = this.replace(new RegExp(value, "g"), with))
+		(this = this.replaceAll(value, with))
 		
 	js string replaced: string value
 		                nocolon string with
-		return this.replace(new RegExp(value, "g"), $with)
+		return this.replaceAll(value, $with)
 		
 	inline js string padEnd: int targetLength
 		                     string padString = " "
