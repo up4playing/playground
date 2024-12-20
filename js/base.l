@@ -281,7 +281,7 @@ immutable struct float
 		(Math.abs(this - value) < epsilon)
 		
 	inline js float moveTowards: float value
-		                         float speed
+		                         float speed = 1
 		(this < value ? (this + speed < value ? (this += speed) : (this = value)) : (this - speed > value ? (this -= speed) : (this = value)))
 		
 	inline js float moveTowardsAndEaseOut: float value
