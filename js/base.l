@@ -1581,6 +1581,10 @@ class Map<TKey, TValue>
 	inline js void remove: TKey key  // The key of the item to remove from the map
 		this.delete(key)
 		
+	// Does the map have an item with a specific key?
+	inline js bool has: TKey key // The key of the item to check
+		this.has(key)
+		
 	// Remove all items from the map
 	inline js void clear
 		this.clear()
