@@ -1,12 +1,16 @@
-skipInit transient pocketBase
+// skipInit transient pocketBase
+// 	string url
+// 	dynamic pb
+	
+// 	setup
+// 		url = ""
+	
+transient pocketBase
 	string url
 	dynamic pb
 	
-	setup
-		url = ""
-	
 	async js void connect
-		if(!pocketBase.url) pocketBase.url = location.host && !Platform.isDebug ? location.origin : "http://localhost:8090"
+		if(!pocketBase.url) pocketBase.url = window.location && window.location.host && !Platform.isDebug ? location.origin : "http://localhost:8090"
 		const PocketBase = (await import("./lib/pocketbase.es.mjs")).default
 		if(pocketBase.pb) pocketBase.pb.realtime.unsubscribe();
 		pocketBase.pb = new PocketBase(pocketBase.url);
@@ -14,7 +18,7 @@ skipInit transient pocketBase
 	inline js void autoCancellation: value = true
 		pocketBase.pb.@autoCancellation(value);
 
-interface File
+class PocketBaseFileUpload
 	Time lastModified
 	string lastModifiedDate
 	string name
@@ -56,7 +60,7 @@ Collection<T>
 	async inline js void remove: T item
 		pocketBase.pb.collection(this.name).delete(item.id)
 		
-	async js void upload: T item, string fileFieldName = "images", File[] files
+	async js void upload: T item, string fileFieldName = "images", PocketBaseFileUpload[] files
 		const formData = new FormData();
 		for(let file of files) {
 			formData.append(fileFieldName, file);
