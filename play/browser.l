@@ -41,15 +41,13 @@ transient skipInit unit Platform
 			return null
 		}
 			
-	js void setLocalStorageString: string key
+	js bool setLocalStorageString: string key
 		                           string value
-		                           void() then = null
-		                           void() else = null
 		try {
 			localStorage.setItem(key, value)
-			then?.()
+			return true
 		} catch(e) {
-			else?.()
+			return false
 		}
 		
 	js string getLocalStorageString: string key

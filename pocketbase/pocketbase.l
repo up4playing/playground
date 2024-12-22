@@ -30,14 +30,35 @@ class PocketBaseFileUpload
 
 Collection<T>
 	string name
+	T[] items = []
 	
+	// Find an item the meets the given condition
+	// Example: Find a player with a specific id
+	//     app
+	//         getPlayerById: int id
+	//             return players.find.id == id
+	inline js T find: bool(T a) condition // The condition to check
+		this.items.find(condition)
+		
+	inline js T[] where: bool(T a) condition // The condition to check
+		this.items.filter(condition)
+		
 	async inline js void subscribe: string topic
 		                            any options = {}
 		                            void(any e) do
 		pocketBase.pb.collection(this.name).subscribe(topic, do, options)
 		
 	async T[] getFullList
-		return pocketBase.pb.collection(this.name).getFullList()
+		items = cast await pocketBase.pb.collection(this.name).getFullList()
+		return items
+		
+	async T[] fetch: string filter = null
+		             string sort = null
+		             string expand = null
+		             int page = 1
+		             int perPage = 1000
+		items = cast ((await pocketBase.pb.collection(this.name).getList(page, perPage, {filter})).items)
+		return items
 		
 	async inline js T get: string id
 		pocketBase.pb.collection(this.name).getOne(id)
@@ -50,7 +71,7 @@ Collection<T>
 	async inline js T update: T item
 		pocketBase.pb.collection(this.name).update(item.id, item)
 		
-	async js T addOrUpdate: T item
+	async js T save: T item
 		if(!item.id) return this.add(item)
 		else         return pocketBase.pb.collection(this.name).update(item.id, item)
 		
