@@ -140,10 +140,11 @@ transient skipInit unit Platform
 		
 	// This is called after every code change to replay all inputs with the new code
 	// Since the const cache is cleared when the code changes, we reinitialize the media
-	private replay
+	private async replay
 		try
 			heartbeat "replay"
 			initMedia
+			initDatabase
 			openMedia
 				goToCurrentFrame
 		catch

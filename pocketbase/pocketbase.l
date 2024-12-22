@@ -8,7 +8,7 @@
 transient skipInit pocketBase
 	string url
 	dynamic pb
-	
+		
 	async js void connect
 		if(!pocketBase.url) pocketBase.url = window.location && window.location.host && !Platform.isDebug ? location.origin : "http://localhost:8090"
 		const PocketBase = (await import("./lib/pocketbase.es.mjs")).default
@@ -17,6 +17,20 @@ transient skipInit pocketBase
 		
 	inline js void autoCancellation: value = true
 		pocketBase.pb.@autoCancellation(value);
+		
+	inline js void onAuthChanged: inline void(any user) code
+		pocketBase.pb.authStore.onChange((token, record) => code(record))
+		
+	js void authRefresh()
+		try {
+			await pocketBase.pb.collection("users").authRefresh();
+		} catch(e) {
+			console.log(e);
+		}
+	
+	async dynamic authWithPassword: string email
+		                            string password
+		return await pocketBase.pb.collection("users").authWithPassword(email, password)
 
 class PocketBaseFileUpload
 	Time lastModified
