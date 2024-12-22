@@ -5,7 +5,7 @@
 // 	setup
 // 		url = ""
 	
-transient pocketBase
+transient skipInit pocketBase
 	string url
 	dynamic pb
 	
