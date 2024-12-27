@@ -403,7 +403,7 @@ transient skipInit global unit graphics
 				align == 0  ? position.x : align  == 1 ? position.x-sizeX*.5 : position.x-sizeX,
 				valign == 0 ? position.y : valign == 1 ? position.y-sizeY*.5 : position.y-sizeY,
 				sizeX, sizeY,
-				layer, alpha, graphics.currentClippingPath, image.file,
+				layer, alpha * graphics.currentAlpha, graphics.currentClippingPath, image.file,
 				location, position.location, size.location,
 				image.texture.imageOrCanvas,
 				f.x1, f.y1, f.w, f.h,
@@ -448,7 +448,7 @@ transient skipInit global unit graphics
 					-sizeX/2,
 					-sizeY/2,
 					sizeX, sizeY,
-					layer, alpha, graphics.currentClippingPath, image.file, 
+					layer, alpha * graphics.currentAlpha, graphics.currentClippingPath, image.file, 
 					location, position.location, size.location,
 					image.texture.imageOrCanvas,
 					f.x1, f.y1, f.w, f.h,
@@ -633,7 +633,7 @@ transient skipInit global unit graphics
 				x - alignmentFactor[ align]*sizeX,
 				y - alignmentFactor[valign]*sizeY,
 				sizeX, sizeY, 
-				layer, alpha, currentClippingPath, text, 
+				layer, alpha * graphics.currentAlpha, currentClippingPath, text, 
 				location, position.location, size.location,
 				(color || currentColor).hex, 
 				outlineColor ? outlineColor.hex : null,
@@ -774,7 +774,7 @@ transient skipInit global unit graphics
 				align == 0  ? position.x : align  == 1 ? position.x-sizeX*.5 : position.x-sizeX,
 				valign == 0 ? position.y : valign == 1 ? position.y-sizeY*.5 : position.y-sizeY,
 				sizeX, sizeY,
-				layer, alpha, graphics.currentClippingPath, "Rectangle", 
+				layer, alpha * graphics.currentAlpha, graphics.currentClippingPath, "Rectangle", 
 				location, position.location, size.location,
 				color || !outlineColor ? (color || graphics.currentColor).hex : null,
 				outlineColor ? outlineColor.hex : null,
@@ -807,7 +807,7 @@ transient skipInit global unit graphics
 				align == 0  ? position.x : align  == 1 ? position.x-sizeX*.5 : position.x-sizeX,
 				valign == 0 ? position.y : valign == 1 ? position.y-sizeY*.5 : position.y-sizeY,
 				sizeX, sizeY,
-				layer, alpha, graphics.currentClippingPath, "RoundedRectangle", 
+				layer, alpha * graphics.currentAlpha, graphics.currentClippingPath, "RoundedRectangle", 
 				location, position.location, size.location,
 				radius,
 				color || !outlineColor ? (color || graphics.currentColor).hex : null,
@@ -853,7 +853,7 @@ transient skipInit global unit graphics
 				position.x - sizeX/2, 
 				position.y - sizeY/2, 
 				sizeX, sizeY,
-				layer, alpha, graphics.currentClippingPath, "Circle", 
+				layer, alpha * graphics.currentAlpha, graphics.currentClippingPath, "Circle", 
 				location, position.location, size.location,
 				startAngle, angle,
 				direction == 1,
@@ -883,7 +883,7 @@ transient skipInit global unit graphics
 				graphics.totalMatrix,
 				from.x, from.y,
 				to.x - from.x, to.y - from.y,
-				layer, alpha, graphics.currentClippingPath, "Line", 
+				layer, alpha * graphics.currentAlpha, graphics.currentClippingPath, "Line", 
 				location, from.location, null,
 				to,
 				(color || graphics.currentColor).hex,
@@ -910,7 +910,7 @@ transient skipInit global unit graphics
 				graphics.totalMatrix,
 				position.x, position.y,
 				0, 0,
-				layer, alpha, graphics.currentClippingPath, "Line", 
+				layer, alpha * graphics.currentAlpha, graphics.currentClippingPath, "Line", 
 				location, position.location, null,
 				points,
 				null, // no fill color, because we want to draw a line instead of a polygon
@@ -942,7 +942,7 @@ transient skipInit global unit graphics
 				graphics.totalMatrix,
 				position.x, position.y,
 				0, 0,
-				layer, alpha, graphics.currentClippingPath, "Polygon", 
+				layer, alpha * graphics.currentAlpha, graphics.currentClippingPath, "Polygon", 
 				location, position.location, null,
 				points,
 				color || !outlineColor ? (color || graphics.currentColor).hex : null,
@@ -1027,7 +1027,7 @@ transient skipInit global unit graphics
 				position.x - sizeX/2,
 				position.y - sizeY/2,
 				sizeX, sizeY,
-				layer, alpha, graphics.currentClippingPath, texture.file,
+				layer, alpha * graphics.currentAlpha, graphics.currentClippingPath, texture.file,
 				location, position.location, size.location,
 				texture.imageOrCanvas,
 				0, 0, texture.size.x, texture.size.y,
@@ -1060,7 +1060,7 @@ transient skipInit global unit graphics
 				position.x - sizeX/2,
 				position.y - sizeY/2,
 				sizeX, sizeY,
-				layer, alpha, graphics.currentClippingPath, texture.file, 
+				layer, alpha * graphics.currentAlpha, graphics.currentClippingPath, texture.file, 
 				location, position.location, size.location,
 				texture.imageOrCanvas,
 				sourcePosition.x+texture.size.x/2-sourceSize.x/2,
@@ -1325,6 +1325,23 @@ transient skipInit global unit graphics
 		currentLineWidth = prev
 		return currentLineWidth
 	private currentLineWidth = 8
+	
+	// ------------------------------------------------------- Alpha -------------------------------------------------------
+	
+	// The default line width for all drawing operations
+	alpha
+		return currentAlpha
+	alpha: float alpha
+		currentAlpha = alpha
+		return currentAlpha
+	alpha: float alpha
+		   void() code
+		let prev = currentAlpha
+		currentAlpha = alpha
+		code()
+		currentAlpha = prev
+		return currentAlpha
+	private float currentAlpha = 1.0
 	
 	// ------------------------------------------------------- Measure text -------------------------------------------------------
 	
