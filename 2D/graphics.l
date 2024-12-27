@@ -247,7 +247,7 @@ transient skipInit global unit graphics
 	public Color leftAndRightMarginColor = null // If the screen is wider than the reference, show a letterbox in this color
 	
 	private Vector2 pixelSize
-	private Vector2 size
+	internal Vector2 size
 	internal float pixelRatio
 	
 	async setup: Vector2 referenceSize
