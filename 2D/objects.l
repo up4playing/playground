@@ -102,43 +102,43 @@ class Object
 	moveToFront() siblings.moveToFront this
 	moveToBack()  siblings.moveToBack this
 		
-	// moveTo: Vector2 pos
-	// 	    Time duration = 1000
-	// 	    Time delay = 0
-	// 	Vector2 startPosition = position
+	moveTo: Vector2 pos
+		    Time duration = 1000
+		    Time delay = 0
+		Vector2 startPosition = position
 		
-	// 	// When chaining serveral move animations together, continue where the last one left off
-	// 	MoveAnimation moveAnimation = cast fx.animations.find backwards .type == MoveAnimation and .object == this
-	// 		startPosition = moveAnimation.startValue + moveAnimation.delta
+		// When chaining serveral move animations together, continue where the last one left off
+		MoveAnimation moveAnimation = cast fx.animations.find backwards .type == MoveAnimation and .object == this
+			startPosition = moveAnimation.startValue + moveAnimation.delta
 
-	// 	let delta = pos - startPosition
-	// 	fx.add MoveAnimation startTime:fx.endOfPrevAnimation(this)+delay, duration, this, startPosition, delta
-	// 	return this
+		let delta = pos - startPosition
+		fx.add MoveAnimation startTime:fx.endOfPrevAnimation(this)+delay, duration, this, startPosition, delta
+		return this
 		
-	// moveAndScaleTo: Vector2 position
-	// 	            implicit Vector2 size
-	// 	            Time duration = 1000
-	// 	            Time delay = 0
-	// 	Vector2 startPosition = this.position
-	// 	Vector2 startSize = this.size
-	// 	Vector2 endSize = size.y ? size : {size.x, size.x * startSize.y/startSize.x}
+	moveAndScaleTo: Vector2 position
+		            implicit Vector2 size
+		            Time duration = 1000
+		            Time delay = 0
+		Vector2 startPosition = this.position
+		Vector2 startSize = this.size
+		Vector2 endSize = size.y ? size : {size.x, size.x * startSize.y/startSize.x}
 		
-	// 	// When chaining serveral move animations together, continue where the last one left off
-	// 	MoveAnimation moveAnimation = cast fx.animations.find backwards .type == MoveAnimation and .object == this
-	// 		startPosition = moveAnimation.startValue + moveAnimation.delta
+		// When chaining serveral move animations together, continue where the last one left off
+		MoveAnimation moveAnimation = cast fx.animations.find backwards .type == MoveAnimation and .object == this
+			startPosition = moveAnimation.startValue + moveAnimation.delta
 
-	// 	let startTime = fx.endOfPrevAnimation(this)+delay
-	// 	fx.add MoveAnimation startTime, duration, this, startPosition, delta:position - startPosition
-	// 	fx.add ScaleAnimation startTime, duration, this, startSize, delta:endSize - startSize
-	// 	return this
+		let startTime = fx.endOfPrevAnimation(this)+delay
+		fx.add MoveAnimation startTime, duration, this, startPosition, delta:position - startPosition
+		fx.add ScaleAnimation startTime, duration, this, startSize, delta:endSize - startSize
+		return this
 		
-	// moveTo: Vector2 pos
-	// 	    float speed = 1
-	// 	    Time delay = 0
-	// 	let delta = pos - position
-	// 	let duration = math.floor(delta.length / speed)
-	// 	fx.add MoveAnimation startTime:fx.endOfPrevAnimation(this)+delay, duration, this, startValue:position, delta
-	// 	return this
+	moveTo: Vector2 pos
+		    float speed = 1
+		    Time delay = 0
+		let delta = pos - position
+		let duration = math.floor(delta.length / speed)
+		fx.add MoveAnimation startTime:fx.endOfPrevAnimation(this)+delay, duration, this, startValue:position, delta
+		return this
 		
 	fadeIn: Time duration = 100
 		    Time delay = 0
