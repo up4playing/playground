@@ -31,6 +31,7 @@ transient speech
 		
 	js void say: string value
 		if(core.isPremiere && input.isCertain) {
+			speechSynthesis.cancel();
 			const utterance = new SpeechSynthesisUtterance(value);
 			utterance.voice = speech.voice;
 			speechSynthesis.speak(utterance);
