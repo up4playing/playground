@@ -588,7 +588,7 @@ skipInit global unit input
 				e.preventDefault();
 				e.stopPropagation();
 				if(e.button == 0 && Platform.mode == 0) Platform.record();
-				input.handleWheelEvent(e.pageX, e.pageY, -e.deltaX, -e.deltaY, e.ctrlKey)
+				input.handleWheelEvent(e.pageX, e.pageY, e.deltaX, e.deltaY, e.ctrlKey)
 				return false;			
 			}, {passive: false})
 		}
