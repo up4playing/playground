@@ -1597,6 +1597,8 @@ class Map<TKey, TValue>
 // A data container that stores unique values of a given type
 js Set
 class Set<T>
+	inline js Set(T[] list) new Set(list)
+	
 	// Return a boolean indicating whether an element with the specified value exists in this set
 	inline js bool get: T value // The value to check
 		this.has(value)
@@ -1608,6 +1610,10 @@ class Set<T>
 	// Remove a value from the set
 	inline js void remove: T value // The value to remove
 		this.delete(value)
+		
+	// Is a certain value in the set?
+	inline js bool has: T value // The value to check
+		this.has(value)
 		
 	// Remove all items from the set
 	inline js void clear
