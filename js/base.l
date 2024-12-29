@@ -1613,6 +1613,8 @@ class Set<T>
 	inline js void remove: T value // The value to remove
 		this.delete(value)
 		
+	inline js T[] toList() [...this]
+		
 	// Remove all items from the set
 	inline js void clear
 		this.clear()

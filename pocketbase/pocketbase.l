@@ -46,6 +46,9 @@ Collection<T>
 	string name
 	T[] items = []
 	
+	// Gets the number of items in the list
+	inline js int length() this.items.length
+	
 	// Find an item the meets the given condition
 	// Example: Find a player with a specific id
 	//     app
