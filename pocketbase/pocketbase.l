@@ -46,26 +46,12 @@ Collection<T>
 	string name
 	T[] items = []
 	
-	// Gets the number of items in the list
-	inline js int length() this.items.length
-	
-	// Find an item the meets the given condition
-	// Example: Find a player with a specific id
-	//     app
-	//         getPlayerById: int id
-	//             return players.find.id == id
-	inline js T find: bool(T a) condition // The condition to check
-		this.items.find(condition)
-		
-	inline js T[] where: bool(T a) condition // The condition to check
-		this.items.filter(condition)
-		
 	async inline js void subscribe: string topic
 		                            any options = {}
 		                            void(any e) do
 		pocketBase.pb.collection(this.name).subscribe(topic, do, options)
 		
-	async T[] getFullList
+	async T[] fetchAll
 		items = cast await pocketBase.pb.collection(this.name).getFullList()
 		return items
 		
@@ -147,3 +133,30 @@ Collection<T>
 		item[fileFieldName] = newItem[fileFieldName]
 		return newItem;
 
+	// ------------------------------------------------------- List -------------------------------------------------------
+	
+	// Gets the number of items in the list
+	inline js int length() this.items.length
+	
+	// Find an item the meets the given condition
+	// Example: Find a player with a specific id
+	//     app
+	//         getPlayerById: int id
+	//             return players.find.id == id
+	inline js T find: bool(T a) condition // The condition to check
+		this.items.find(condition)
+		
+	inline js T[] where: bool(T a) condition // The condition to check
+		this.items.filter(condition)
+		
+	inline shuffle() this.items.shuffle
+	
+	// Get a new list that is a subset of this list
+	inline js T[] get: int from = 0 // Return a new list starting from this index, a negative index will start from the end of the list
+		               int to       // Return a new list up to (but not including) this index, a negative index is counted from the end
+		this.items.slice(from, to)
+	
+	// Get a new list that is a subset of this list
+	inline js T[] get: int from // Return a new list starting from this index, a negative index will start from the end of the list
+		this.items.slice(from)
+	
