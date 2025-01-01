@@ -270,10 +270,10 @@ immutable struct float
 	inline js float limit: float from
 		(this < from ? from : this)
 	
-	inline js float max: float value
+	inline js float atMost: float value
 		(this > value ? value : this)
 	
-	inline js float min: float value
+	inline js float atLeast: float value
 		(this < value ? value : this)
 	
 	inline js bool isApproximately: float value
