@@ -1,6 +1,6 @@
 skipInit unit Platform
 	visible bool isDebug
-	inline js int version := _buildVersion
+	public inline js int buildVersion := _buildVersion
 		
 	inline js void initPlatform
 		Platform.init()
