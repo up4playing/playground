@@ -2183,15 +2183,15 @@ global skipInit unit math
 	Angle atan2: float y, float x
 		float r
 		Angle angle
-		float abs_y = math.abs(y) + .00000000001
-		if x < 0.0
-			r = (x + abs_y) / (abs_y - x);
+		float abs_x = math.abs(x) + .00000000001
+		if y > 0.0
+			r = (abs_x - y) / (abs_x + y);
 			angle = .375;
 		else
-			r = (x - abs_y) / (x + abs_y);
+			r = (-abs_x - y) / (abs_x - y);
 			angle = .125;
 		angle += (.03124211533 * r * r - .1562424076) * r;
-		if y < 0.0: return -angle
+		if x < 0.0: return -angle
 		else        return angle
 		
 	// ------------------------------------------------------- log, pow, exp -------------------------------------------------------
