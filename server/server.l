@@ -149,19 +149,19 @@ global unit http
 			"":"text/plain; charset=utf-8",
 		}
 	
-	js void startHttpsServer: port = 3100, string certPath = "", string keyPath = "", void(string[] path, dynamic body, Request request, Response response) onRequest = null
+	js void startHttpsServer: port = 3100, string certPath = "", string keyPath = "", void(string[] path, string bodyText, dynamic body, Request request, Response response) onRequest = null
 		const fs = require('fs');
 		const startTime = new Date();
 		function handleRequest(request, response) {
-			var body = "";
-			request.on("data", a => body += a)
+			var bodyText = "";
+			request.on("data", a => bodyText += a)
 			if(http.handlerMap.size == 0) {
 				request.on("end", async () => {
 					try {
 						response.setHeader('Access-Control-Allow-Origin', '*');
 						response.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS, PUT, DELETE");
 						var path = request.url.substring(1).split("/");
-						onRequest(path, body ? JSON.parse(body) : null, request, response);
+						onRequest(path, bodyText, bodyText ? JSON.parse(bodyText) : null, request, response);
 					} catch(e) {
 						console.error(e)
 						if(Platform.isDebug) _sendErrorToEditor(e);
@@ -174,7 +174,7 @@ global unit http
 						response.setHeader('Access-Control-Allow-Origin', '*');
 						response.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS, PUT, DELETE");
 						var path = request.url.substring(1).split("/");
-						await onRequest(path, body ? JSON.parse(body) : null, request, response);
+						await onRequest(path, bodyText, bodyText ? JSON.parse(bodyText) : null, request, response);
 	
 						if(!response.writableEnded) {
 							var procedureName = path[0];
@@ -188,7 +188,7 @@ global unit http
 							}
 							
 							if(handler) {
-								await handler(path, body ? JSON.parse(body) : null, request, response);
+								await handler(path, bodyText ? JSON.parse(bodyText) : null, request, response);
 							} else {
 								response.end("Server v"+_buildVersion+" up since "+startTime);
 							}
