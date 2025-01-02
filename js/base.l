@@ -2332,10 +2332,12 @@ enum Language: English, German, Spanish, French, Italian, Portuguese, Japanese, 
 
 unit Loca
 	private const string[] defaultLocaleForLanguage = ["en-001", "de-DE", "es-ES", "fr-FR", "it-IT", "pt-PT", "ja-JP", "zh-Hans-CN", "ko-KR", "nl-NL", "tr-TR", "pl-PL", "ru-RU", "hi-IN", "ar-001", "bn-BD", "ur-IN", "id-ID"]
+	private const string[] languageNames = ["English", "German", "Spanish", "French", "Italian", "Portuguese", "Japanese", "Chinese", "Korean", "Dutch", "Turkish", "Polish", "Russian", "Hindi", "Arabic", "Bengali", "Urdu", "Indonesian", "Invariant"]
 	
 	visible Language[] supportedLanguages = [English, German]
 	visible Language language = English
 	visible string locale = defaultLocaleForLanguage[language]
+	string languageName := languageNames[language]
 	
 	init
 		setLanguage English
