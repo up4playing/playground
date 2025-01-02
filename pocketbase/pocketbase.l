@@ -8,6 +8,10 @@
 transient skipInit pocketBase
 	string url
 	dynamic pb
+	
+	async void connect: string url
+		pocketBase.url = url
+		await connect
 		
 	async js void connect
 		if(!pocketBase.url) pocketBase.url = window.location && window.location.host && !Platform.isDebug ? location.origin : "http://localhost:8090"
