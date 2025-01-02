@@ -1,6 +1,6 @@
 skipInit unit Platform
 	visible bool isDebug
-	inline js int version := _buildVersion
+	public inline js int buildVersion := _buildVersion
 		
 	inline js void initPlatform
 		Platform.init()
@@ -8,12 +8,17 @@ skipInit unit Platform
 		
 	inline js void initApplication
 		init()
+			
+	private async inline js void initDatabase
+		if(typeof(pocketBase) != "undefined") await pocketBase.connect()
 		
-	start: bool isDebug
+	async start: bool isDebug
 		initPlatform
 		this.isDebug = isDebug
 		sendEvaluateFinished
 		initApplication
+		initDatabase
+		app.start
 		
 	replay
 		initApplication

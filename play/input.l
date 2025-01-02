@@ -185,6 +185,7 @@ enum Key
 	Enter        =  13
 	Shift        =  16
 	Ctrl         =  17
+	CmdOrCtrl    =  17
 	Alt          =  18
 	Pause        =  19
 	CapsLock     =  20
@@ -588,7 +589,7 @@ skipInit global unit input
 				e.preventDefault();
 				e.stopPropagation();
 				if(e.button == 0 && Platform.mode == 0) Platform.record();
-				input.handleWheelEvent(e.pageX, e.pageY, -e.deltaX, -e.deltaY, e.ctrlKey)
+				input.handleWheelEvent(e.pageX, e.pageY, e.deltaX, e.deltaY, e.ctrlKey)
 				return false;			
 			}, {passive: false})
 		}
@@ -1588,28 +1589,60 @@ skipInit global unit input
 	global onKeyDown: Key modifier 
 		              Key key                             // The key that will trigger the event
 		              implicit nocolon Player[] by = null // Only consider keys pressed by this player or list of players
-		              void(Key key, Player pressedBy) do  // Do this for each key that is pressed
-		for getTargetedPlayers(by) -> player
-			if player.keysCurrentlyDown.contains modifier
-				for internalUsers[.id].downKeys
-					if . == key
-						do key, player
+		              void(Key key, Player pressedBy, bool cmdOrCtrl, bool alt, bool shift) do  // Do this for each key that is pressed
+		for getTargetedPlayers(by) as player
+			for internalUsers[.id].downKeys
+				if . == key
+					bool actualCmdOrCtrl, actualShift, actualAlt
+					for player.keysCurrentlyDown
+						switch .
+							LeftMetaKey:  actualCmdOrCtrl = true
+							RightMetaKey: actualCmdOrCtrl = true
+							Ctrl:         actualCmdOrCtrl = true
+							Alt:          actualAlt = true
+							Shift:        actualShift = true
+								
+					if (modifier == CmdOrCtrl and actualCmdOrCtrl and !actualShift and !actualAlt)  
+					or (modifier == Shift     and actualShift and !actualCmdOrCtrl and !actualAlt)
+					or (modifier == Alt       and actualAlt and !actualCmdOrCtrl and !actualShift)
+						do key, player, actualCmdOrCtrl, actualAlt, actualShift
 				
 	// Do something when a player presses a key
 	global onKeyDown: Key key                             // The key that will trigger the event
+		              bool cmdOrCtrl = false
+		              bool alt = false
+		              bool shift = false
 		              implicit nocolon Player[] by = null // Only consider keys pressed by this player or list of players
-		              void(Key key, Player pressedBy) do  // Do this for each key that is pressed
-		for getTargetedPlayers(by) -> player
+		              void(Key key, Player pressedBy, bool cmdOrCtrl, bool alt, bool shift) do  // Do this for each key that is pressed
+		for getTargetedPlayers(by) as player
 			for internalUsers[.id].downKeys
 				if . == key
-					do key, player
+					bool actualCmdOrCtrl, actualShift, actualAlt
+					for player.keysCurrentlyDown
+						switch .
+							LeftMetaKey:  actualCmdOrCtrl = true
+							RightMetaKey: actualCmdOrCtrl = true
+							Ctrl:         actualCmdOrCtrl = true
+							Alt:          actualAlt = true
+							Shift:        actualShift = true
+								
+					if actualCmdOrCtrl == cmdOrCtrl and actualShift == shift and actualAlt == alt
+						do key, player, actualCmdOrCtrl, actualAlt, actualShift
 				
 	// Do something when a player presses a key
 	global onKeyDown: implicit nocolon Player[] by = null // Only consider keys pressed by this player or list of players
-		              void(Key key, Player pressedBy) do  // Do this for each key that is pressed
-		for getTargetedPlayers(by) -> player
-			for internalUsers[.id].downKeys -> key
-					do key, player
+		              void(Key key, Player pressedBy, bool cmdOrCtrl, bool alt, bool shift) do  // Do this for each key that is pressed
+		for getTargetedPlayers(by) as player
+			for internalUsers[.id].downKeys as key
+				bool actualCmdOrCtrl, actualShift, actualAlt
+				for player.keysCurrentlyDown
+					switch .
+						LeftMetaKey:  actualCmdOrCtrl = true
+						RightMetaKey: actualCmdOrCtrl = true
+						Ctrl:         actualCmdOrCtrl = true
+						Alt:          actualAlt = true
+						Shift:        actualShift = true
+				do key, player, actualCmdOrCtrl, actualAlt, actualShift
 				
 	// Do something when a player releases a key
 	global onKeyUp: implicit nocolon Player[] by = null // Only consider keys released by this player or list of players

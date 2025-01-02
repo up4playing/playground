@@ -270,10 +270,10 @@ immutable struct float
 	inline js float limit: float from
 		(this < from ? from : this)
 	
-	inline js float max: float value
+	inline js float atMost: float value
 		(this > value ? value : this)
 	
-	inline js float min: float value
+	inline js float atLeast: float value
 		(this < value ? value : this)
 	
 	inline js bool isApproximately: float value
@@ -281,7 +281,7 @@ immutable struct float
 		(Math.abs(this - value) < epsilon)
 		
 	inline js float moveTowards: float value
-		                         float speed
+		                         float speed = 1
 		(this < value ? (this + speed < value ? (this += speed) : (this = value)) : (this - speed > value ? (this -= speed) : (this = value)))
 		
 	inline js float moveTowardsAndEaseOut: float value
@@ -1581,6 +1581,10 @@ class Map<TKey, TValue>
 	inline js void remove: TKey key  // The key of the item to remove from the map
 		this.delete(key)
 		
+	// Does the map have an item with a specific key?
+	inline js bool has: TKey key // The key of the item to check
+		this.has(key)
+		
 	// Remove all items from the map
 	inline js void clear
 		this.clear()
@@ -1614,6 +1618,7 @@ class Set<T>
 	// Is a certain value in the set?
 	inline js bool has: T value // The value to check
 		this.has(value)
+	inline js T[] toList() [...this]
 		
 	// Remove all items from the set
 	inline js void clear
@@ -2183,15 +2188,15 @@ global skipInit unit math
 	Angle atan2: float y, float x
 		float r
 		Angle angle
-		float abs_y = math.abs(y) + .00000000001
-		if x < 0.0
-			r = (x + abs_y) / (abs_y - x);
+		float abs_x = math.abs(x) + .00000000001
+		if y > 0.0
+			r = (abs_x - y) / (abs_x + y);
 			angle = .375;
 		else
-			r = (x - abs_y) / (x + abs_y);
+			r = (-abs_x - y) / (abs_x - y);
 			angle = .125;
 		angle += (.03124211533 * r * r - .1562424076) * r;
-		if y < 0.0: return -angle
+		if x < 0.0: return -angle
 		else        return angle
 		
 	// ------------------------------------------------------- log, pow, exp -------------------------------------------------------
@@ -2328,7 +2333,7 @@ immutable Range
 	inline js bool containsInclusively: int value
 		(value >= this.from && value <= this.from)
 
-enum Language: English, German, Spanish, Frensh, Italian, Portuguese, Japanese, Chinese, Korean, Dutch, Turkish, Polish, Russian, Hindi, Arabic, Bengali, Urdu, Indonesian, Invariant = 1000
+enum Language: English, German, Spanish, French, Italian, Portuguese, Japanese, Chinese, Korean, Dutch, Turkish, Polish, Russian, Hindi, Arabic, Bengali, Urdu, Indonesian, Invariant = 1000
 
 unit Loca
 	private const string[] defaultLocaleForLanguage = ["en-001", "de-DE", "es-ES", "fr-FR", "it-IT", "pt-PT", "ja-JP", "zh-Hans-CN", "ko-KR", "nl-NL", "tr-TR", "pl-PL", "ru-RU", "hi-IN", "ar-001", "bn-BD", "ur-IN", "id-ID"]

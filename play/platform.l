@@ -53,6 +53,7 @@ transient skipInit unit Platform
 		Loca.init();
 		ServerNetwork.init();
 		PeerNetwork.init();
+		if(typeof(pocketBase) != "undefined") pocketBase.init();
 		core.log("Loading...")
 		Platform.isMobile = false;
 		Platform.isBrowser = !window.require;
@@ -69,7 +70,6 @@ transient skipInit unit Platform
 				graphics.onResize();
 				if(Platform.mode < 3/*Pause,Manipulator,Slide*/ && Platform.engineStarted) core.tick(/*draw*/true);
 			}
-		if(typeof(pocketBase) != "undefined") pocketBase.setup();
 		if(app.init) app.init();
 			
 	private async inline js void initDatabase
@@ -140,10 +140,11 @@ transient skipInit unit Platform
 		
 	// This is called after every code change to replay all inputs with the new code
 	// Since the const cache is cleared when the code changes, we reinitialize the media
-	private replay
+	private async replay
 		try
 			heartbeat "replay"
 			initMedia
+			initDatabase
 			openMedia
 				goToCurrentFrame
 		catch

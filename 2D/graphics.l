@@ -45,7 +45,7 @@ immutable Color
 	Color withAlpha: float alpha
 		return {hex[1..7]+componentToHex(math.floor(alpha*255))}
 		
-enum TextOverflow: Visible, Hidden, Scale, Wrap
+enum TextOverflow: Visible, Wrap, Scale, WrapAndScale
 
 // A texture that can be loaded into video memory
 immutable Texture
@@ -247,7 +247,7 @@ transient skipInit global unit graphics
 	public Color leftAndRightMarginColor = null // If the screen is wider than the reference, show a letterbox in this color
 	
 	private Vector2 pixelSize
-	private Vector2 size
+	internal Vector2 size
 	internal float pixelRatio
 	
 	async setup: Vector2 referenceSize
@@ -403,7 +403,7 @@ transient skipInit global unit graphics
 				align == 0  ? position.x : align  == 1 ? position.x-sizeX*.5 : position.x-sizeX,
 				valign == 0 ? position.y : valign == 1 ? position.y-sizeY*.5 : position.y-sizeY,
 				sizeX, sizeY,
-				layer, alpha, graphics.currentClippingPath, image.file,
+				layer, alpha * graphics.currentAlpha, graphics.currentClippingPath, image.file,
 				location, position.location, size.location,
 				image.texture.imageOrCanvas,
 				f.x1, f.y1, f.w, f.h,
@@ -448,7 +448,7 @@ transient skipInit global unit graphics
 					-sizeX/2,
 					-sizeY/2,
 					sizeX, sizeY,
-					layer, alpha, graphics.currentClippingPath, image.file, 
+					layer, alpha * graphics.currentAlpha, graphics.currentClippingPath, image.file, 
 					location, position.location, size.location,
 					image.texture.imageOrCanvas,
 					f.x1, f.y1, f.w, f.h,
@@ -558,7 +558,7 @@ transient skipInit global unit graphics
 		             clickableMargin = Vector2(16,16)     // The margin around the text within which it is clickable
 		             showClickableArea = false            // Highlight the clickable area for debugging
 		             hotkey = Key.None                    // This keyboard shortcut will execute the onClick handler
-		             overflow = TextOverflow.Hidden       // Should text that exceeds the max width be hidden or wrapped?
+		             overflow = TextOverflow.Scale        // Should text that exceeds the max width be hidden or wrapped?
 		             float maxWidth = 0                   // The maximum width of line when overflow is set 'Scale', 'Hidden' or 'Wrap'
 		             float lineHeight = 0                 // The height of each line when overflow is set to 'Wrap'
 		             void(Touch touch) onClick = null     // Execute this code when the user touches or clicks the text or presses the hotkey
@@ -569,9 +569,11 @@ transient skipInit global unit graphics
 		int fontSize = math.floor(size.y || size.x || currentFontSize)
 		float sizeX, sizeY
 		string[] lines = null
-		float effectiveLineHeight = lineHeight || fontSize*1.5
+		float[] lineOffsets = null
+		float effectiveLineHeight
+		float offsetX, offsetY
 		
-		if overflow == Wrap and maxWidth
+		if (overflow == Wrap or overflow == WrapAndScale) and maxWidth
 			// Split text into words
 			string word
 			string[] words
@@ -596,9 +598,17 @@ transient skipInit global unit graphics
 			for words as word
 				float wordWidth = getTextWidth(word, {x:fontSize}, effectiveFont, style)
 				if totalWidth + wordWidth > maxWidth
-					lines.add line
-					line = word + " "
-					totalWidth = wordWidth + spaceWidth
+					if line
+						// Finish the line and start a new line with the current word
+						lines.add line
+						line = word + " "
+						totalWidth = wordWidth + spaceWidth
+					else
+						// A single word is already too wide for the line
+						// Create a line with this word start a new empty line
+						lines.add word
+						line = ""
+						totalWidth = 0
 				else
 					line += word + " "
 					totalWidth += wordWidth + spaceWidth
@@ -609,20 +619,49 @@ transient skipInit global unit graphics
 					totalWidth = 0
 					
 			if line: lines.add line
-			sizeY = lines.length * effectiveLineHeight
+			
+			// Calculate offset for each line and find widest line
+			string widestLine
+			sizeX = -1
+			lineOffsets = []
+			float factor = -alignmentFactor[align]
+			for lines
+				float lineSizeX = getTextWidth(. size:fontSize)
+				lineOffsets.add lineSizeX * factor
+				if lineSizeX > sizeX
+					sizeX = lineSizeX
+					widestLine = .
+					
+			if overflow == WrapAndScale and sizeX > maxWidth
+				// Scale
+				fontSize = math.floor(fontSize * maxWidth/sizeX)
+				sizeX = getTextWidth(widestLine, {x:fontSize}, effectiveFont, style)
+				while sizeX > maxWidth
+					sizeX = getTextWidth(widestLine, {x:--fontSize}, effectiveFont, style)
+					
+				for lines
+					lineOffsets[i] = getTextWidth(. size:fontSize)*factor
 				
+			effectiveLineHeight = effectiveLineHeight || fontSize*1.3
+			sizeY = lines.length * effectiveLineHeight - (effectiveLineHeight - fontSize * effectiveFont.actualHeightFactor)
+							
 		else
 			if isVisible or onClick != null
 				sizeX = getTextWidth(text, {x:fontSize}, effectiveFont, style)
+				
 				if overflow == Scale and maxWidth
+					// Scale
 					if sizeX > maxWidth
 						fontSize = math.floor(fontSize * maxWidth/sizeX)
 						sizeX = getTextWidth(text, {x:fontSize}, effectiveFont, style)
 						while sizeX > maxWidth
 							sizeX = getTextWidth(text, {x:--fontSize}, effectiveFont, style)
-							
-			sizeY = fontSize*effectiveFont.actualHeightFactor
-		
+			
+			effectiveLineHeight = effectiveLineHeight || fontSize*1.5			
+			sizeY = fontSize * effectiveFont.actualHeightFactor
+			offsetX = -alignmentFactor[ align]*sizeX
+		offsetY = -alignmentFactor[valign]*sizeY
+			
 		if isVisible
 			Matrix2D matrix
 			float x, y
@@ -630,10 +669,10 @@ transient skipInit global unit graphics
 			else          matrix = totalMatrix.clone().move(position).rotate(angle); x = 0; y = 0
 			items.add new DisplayText(
 				matrix,
-				x - alignmentFactor[ align]*sizeX,
-				y - alignmentFactor[valign]*sizeY,
+				x + offsetX,
+				y + offsetY,
 				sizeX, sizeY, 
-				layer, alpha, currentClippingPath, text, 
+				layer, alpha * graphics.currentAlpha, currentClippingPath, text, 
 				location, position.location, size.location,
 				(color || currentColor).hex, 
 				outlineColor ? outlineColor.hex : null,
@@ -641,6 +680,7 @@ transient skipInit global unit graphics
 				effectiveFont.offset.y*sizeY,
 				(style ? "bold ":"")+fontSize+"px "+effectiveFont.name,
 				lines,
+				lineOffsets,
 				effectiveLineHeight
 			)
 		
@@ -774,7 +814,7 @@ transient skipInit global unit graphics
 				align == 0  ? position.x : align  == 1 ? position.x-sizeX*.5 : position.x-sizeX,
 				valign == 0 ? position.y : valign == 1 ? position.y-sizeY*.5 : position.y-sizeY,
 				sizeX, sizeY,
-				layer, alpha, graphics.currentClippingPath, "Rectangle", 
+				layer, alpha * graphics.currentAlpha, graphics.currentClippingPath, "Rectangle", 
 				location, position.location, size.location,
 				color || !outlineColor ? (color || graphics.currentColor).hex : null,
 				outlineColor ? outlineColor.hex : null,
@@ -807,7 +847,7 @@ transient skipInit global unit graphics
 				align == 0  ? position.x : align  == 1 ? position.x-sizeX*.5 : position.x-sizeX,
 				valign == 0 ? position.y : valign == 1 ? position.y-sizeY*.5 : position.y-sizeY,
 				sizeX, sizeY,
-				layer, alpha, graphics.currentClippingPath, "RoundedRectangle", 
+				layer, alpha * graphics.currentAlpha, graphics.currentClippingPath, "RoundedRectangle", 
 				location, position.location, size.location,
 				radius,
 				color || !outlineColor ? (color || graphics.currentColor).hex : null,
@@ -853,7 +893,7 @@ transient skipInit global unit graphics
 				position.x - sizeX/2, 
 				position.y - sizeY/2, 
 				sizeX, sizeY,
-				layer, alpha, graphics.currentClippingPath, "Circle", 
+				layer, alpha * graphics.currentAlpha, graphics.currentClippingPath, "Circle", 
 				location, position.location, size.location,
 				startAngle, angle,
 				direction == 1,
@@ -883,7 +923,7 @@ transient skipInit global unit graphics
 				graphics.totalMatrix,
 				from.x, from.y,
 				to.x - from.x, to.y - from.y,
-				layer, alpha, graphics.currentClippingPath, "Line", 
+				layer, alpha * graphics.currentAlpha, graphics.currentClippingPath, "Line", 
 				location, from.location, null,
 				to,
 				(color || graphics.currentColor).hex,
@@ -910,7 +950,7 @@ transient skipInit global unit graphics
 				graphics.totalMatrix,
 				position.x, position.y,
 				0, 0,
-				layer, alpha, graphics.currentClippingPath, "Line", 
+				layer, alpha * graphics.currentAlpha, graphics.currentClippingPath, "Line", 
 				location, position.location, null,
 				points,
 				null, // no fill color, because we want to draw a line instead of a polygon
@@ -942,7 +982,7 @@ transient skipInit global unit graphics
 				graphics.totalMatrix,
 				position.x, position.y,
 				0, 0,
-				layer, alpha, graphics.currentClippingPath, "Polygon", 
+				layer, alpha * graphics.currentAlpha, graphics.currentClippingPath, "Polygon", 
 				location, position.location, null,
 				points,
 				color || !outlineColor ? (color || graphics.currentColor).hex : null,
@@ -1027,7 +1067,7 @@ transient skipInit global unit graphics
 				position.x - sizeX/2,
 				position.y - sizeY/2,
 				sizeX, sizeY,
-				layer, alpha, graphics.currentClippingPath, texture.file,
+				layer, alpha * graphics.currentAlpha, graphics.currentClippingPath, texture.file,
 				location, position.location, size.location,
 				texture.imageOrCanvas,
 				0, 0, texture.size.x, texture.size.y,
@@ -1060,7 +1100,7 @@ transient skipInit global unit graphics
 				position.x - sizeX/2,
 				position.y - sizeY/2,
 				sizeX, sizeY,
-				layer, alpha, graphics.currentClippingPath, texture.file, 
+				layer, alpha * graphics.currentAlpha, graphics.currentClippingPath, texture.file, 
 				location, position.location, size.location,
 				texture.imageOrCanvas,
 				sourcePosition.x+texture.size.x/2-sourceSize.x/2,
@@ -1325,6 +1365,23 @@ transient skipInit global unit graphics
 		currentLineWidth = prev
 		return currentLineWidth
 	private currentLineWidth = 8
+	
+	// ------------------------------------------------------- Alpha -------------------------------------------------------
+	
+	// The default line width for all drawing operations
+	alpha
+		return currentAlpha
+	alpha: float alpha
+		currentAlpha = alpha
+		return currentAlpha
+	alpha: float alpha
+		   void() code
+		let prev = currentAlpha
+		currentAlpha = alpha
+		code()
+		currentAlpha = prev
+		return currentAlpha
+	private float currentAlpha = 1.0
 	
 	// ------------------------------------------------------- Measure text -------------------------------------------------------
 	
@@ -1755,6 +1812,7 @@ transient DisplayItem DisplayText
 	float offsetY
 	string font
 	string[] lines = null
+	float[] lineOffsets = null
 	float lineHeight
 	
 	js void draw
@@ -1775,14 +1833,16 @@ transient DisplayItem DisplayText
 		} else {
 			// Multiple lines
 			let y = this.y
-			for(let line of this.lines) {
+			for(let i=0; i<this.lines.length; i++) {
+				let line = this.lines[i];
+				let offset = this.lineOffsets[i];
 				if(this.outlineColor) {
 					graphics.context.lineWidth = this.outlineWidth
 					graphics.context.strokeStyle = this.outlineColor
-					graphics.context.strokeText(line, this.x, y)
+					graphics.context.strokeText(line, this.x + offset, y)
 				}
 				graphics.context.fillStyle = this.fillStyle
-				graphics.context.fillText(line, this.x, y)
+				graphics.context.fillText(line, this.x + offset, y)
 				y += this.lineHeight
 			}
 		}
