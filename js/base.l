@@ -340,8 +340,6 @@ immutable class string
 	inline js int toInt := parseInt(this)
 	inline js int toFloat := parseFloat(this)
 	inline js dynamic parseJson() JSON.parse(this)
-	inline Time toTime() Time.fromTimeString(this)
-	inline PlainTimeString toPlainTimeString := this
 		
 	inline js int parseInt(int radix) parseInt(this, radix)
 	

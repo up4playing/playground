@@ -156,8 +156,8 @@ enum TimeUnit
 	hours        // Hours
 	days         // Days
 	
-string PlainTimeString
-	static PlainTimeString now := cast DateTime.fromTime(Time.now - Time.timezoneOffset, outputTimezone:0).isoString
+string TimeString
+	static TimeString now := cast DateTime.fromTime(Time.now - Time.timezoneOffset).toTimeString
 	
 	inline js bool toBool := this
 	inline string toString() this
@@ -205,6 +205,61 @@ string PlainTimeString
 	// (Monday, 31 December 2000, 12:59 pm)
 	inline string dayOfWeekDayMonthYearHourMinuteString: language = Loca.language
 		DateTime.fromTimeString(this).dayOfWeekDayMonthYearHourMinuteString
+	
+string PlainTimeString
+	static PlainTimeString now := DateTime.fromTime(Time.now - Time.timezoneOffset, outputTimezone:0).toPlainTimeString
+	
+	inline js bool toBool := this
+	inline string toString() this
+	
+	// (31.12.)
+	inline string dayMonthString: language = Loca.language
+		DateTime.fromTimeString(this).dayOfWeekDayMonthYearHourMinuteString()
+		
+	// (31.12.2000)
+	inline string dayMonthYearString: language = Loca.language
+		DateTime.fromTimeString(this).dayMonthYearString
+		
+	// (31 December 2000)
+	inline string dayMonthNameYearString: language = Loca.language
+		DateTime.fromTimeString(this).dayMonthNameYearString
+		
+	// (31 Dec)
+	inline string dayShortMonthNameString: language = Loca.language
+		DateTime.fromTimeString(this).dayShortMonthNameString
+		
+	// (31 December 2000)
+	inline string dayOfWeekDayMonthNameYearString: language = Loca.language
+		DateTime.fromTimeString(this).dayOfWeekDayMonthNameYearString
+		
+	// (Monday, December 31)
+	inline string dayOfWeekDayMonthString: language = Loca.language
+		DateTime.fromTimeString(this).dayOfWeekDayMonthString
+		
+	// (Monday)
+	inline string dayOfWeekString: language = Loca.language
+		DateTime.fromTimeString(this).dayOfWeekString
+		
+	// (Monday)
+	inline string dayOfWeekShortString: language = Loca.language
+		DateTime.fromTimeString(this).dayOfWeekShortString
+		
+	// (12:59 pm)
+	inline string hourMinuteString: language = Loca.language
+		DateTime.fromTimeString(this).hourMinuteString
+		
+	// (Monday, December 31 at 12:59 pm)
+	inline string dayOfWeekDayMonthAtHourMinuteString: language = Loca.language
+		DateTime.fromTimeString(this).dayOfWeekDayMonthAtHourMinuteString
+		
+	// (Monday, 31 December 2000, 12:59 pm)
+	inline string dayOfWeekDayMonthYearHourMinuteString: language = Loca.language
+		DateTime.fromTimeString(this).dayOfWeekDayMonthYearHourMinuteString
+		
+class string
+	inline Time toTime() Time.fromTimeString(this)
+	inline PlainTimeString toPlainTimeString := this
+	inline TimeString toTimeString := this
 		
 // Calculate dates using pure math for better performance without using the Date class
 immutable class DateTime
@@ -380,6 +435,9 @@ immutable class DateTime
 	compactString
 		return "{year}{twoDigitMonth}{twoDigitDay}T{twoDigitHour}{twoDigitMinute}{twoDigitSecond}+02:00"
 
+	static DateTime fromTimeString: TimeString timeString
+		return fromIsoString(cast timeString)
+	
 	static DateTime fromTimeString: PlainTimeString timeString
 		return fromIsoString(cast timeString, outputTimezone:0)
 	
@@ -419,11 +477,11 @@ immutable class DateTime
 		let tzoMinutes = math.abs(tzo) % 60
 		return cast "{year}-{twoDigitMonth}-{twoDigitDay}T{twoDigitHour}:{twoDigitMinute}:{twoDigitSecond}{tzo >= 0 ? "+" : "-"}{tzoHours < 10 ? "0"+tzoHours : tzoHours.toString}:{tzoMinutes < 10 ? "0"+tzoMinutes : tzoMinutes.toString}"
 	
-	string isoString
+	implicit TimeString toTimeString
 		let tzo = -timezoneOffset / 60000
 		let tzoHours = math.floor(math.abs(tzo) / 60)
 		let tzoMinutes = math.abs(tzo) % 60
-		return "{year}-{twoDigitMonth}-{twoDigitDay}T{twoDigitHour}:{twoDigitMinute}:{twoDigitSecond}{tzo >= 0 ? "+" : "-"}{tzoHours < 10 ? "0"+tzoHours : tzoHours.toString}:{tzoMinutes < 10 ? "0"+tzoMinutes : tzoMinutes.toString}"
+		return cast "{year}-{twoDigitMonth}-{twoDigitDay}T{twoDigitHour}:{twoDigitMinute}:{twoDigitSecond}{tzo >= 0 ? "+" : "-"}{tzoHours < 10 ? "0"+tzoHours : tzoHours.toString}:{tzoMinutes < 10 ? "0"+tzoMinutes : tzoMinutes.toString}"
 		
 		// return year +
 		// 	"-" + pad(this.getMonth() + 1) +
