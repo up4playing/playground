@@ -1599,6 +1599,7 @@ class Map<TKey, TValue>
 // A data container that stores unique values of a given type
 js Set
 class Set<T>
+	inline js Set() new Set()
 	inline js Set(T[] list) new Set(list)
 	
 	// Return a boolean indicating whether an element with the specified value exists in this set
