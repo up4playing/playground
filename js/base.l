@@ -1769,6 +1769,9 @@ global transient priority unit System
 		@do do() 
 		@while(while)
 		
+	global inline js Promise<T> promise: void(void(T a) resolve) resolve
+		new Promise(resolve)
+		
 	inline js void doNotSerialize: any object
 		_constCache.push(object)
 	
