@@ -270,10 +270,10 @@ immutable struct float
 	inline js float limit: float from
 		(this < from ? from : this)
 	
-	inline js float max: float value
+	inline js float atMost: float value
 		(this > value ? value : this)
 	
-	inline js float min: float value
+	inline js float atLeast: float value
 		(this < value ? value : this)
 	
 	inline js bool isApproximately: float value
@@ -340,8 +340,6 @@ immutable class string
 	inline js int toInt := parseInt(this)
 	inline js int toFloat := parseFloat(this)
 	inline js dynamic parseJson() JSON.parse(this)
-	inline Time toTime() Time.fromTimeString(this)
-	inline PlainTimeString toPlainTimeString := this
 		
 	inline js int parseInt(int radix) parseInt(this, radix)
 	
@@ -1601,6 +1599,8 @@ class Map<TKey, TValue>
 // A data container that stores unique values of a given type
 js Set
 class Set<T>
+	inline js Set(T[] list) new Set(list)
+	
 	// Return a boolean indicating whether an element with the specified value exists in this set
 	inline js bool get: T value // The value to check
 		this.has(value)
@@ -1613,6 +1613,9 @@ class Set<T>
 	inline js void remove: T value // The value to remove
 		this.delete(value)
 		
+	// Is a certain value in the set?
+	inline js bool has: T value // The value to check
+		this.has(value)
 	inline js T[] toList() [...this]
 		
 	// Remove all items from the set
@@ -1763,6 +1766,9 @@ global transient priority unit System
 		                      nocolon implicit bool while // The condition to check
 		@do do() 
 		@while(while)
+		
+	global inline js Promise<T> promise: void(void(T a) resolve) resolve
+		new Promise(resolve)
 		
 	inline js void doNotSerialize: any object
 		_constCache.push(object)
@@ -2183,15 +2189,15 @@ global skipInit unit math
 	Angle atan2: float y, float x
 		float r
 		Angle angle
-		float abs_y = math.abs(y) + .00000000001
-		if x < 0.0
-			r = (x + abs_y) / (abs_y - x);
+		float abs_x = math.abs(x) + .00000000001
+		if y > 0.0
+			r = (abs_x - y) / (abs_x + y);
 			angle = .375;
 		else
-			r = (x - abs_y) / (x + abs_y);
+			r = (-abs_x - y) / (abs_x - y);
 			angle = .125;
 		angle += (.03124211533 * r * r - .1562424076) * r;
-		if y < 0.0: return -angle
+		if x < 0.0: return -angle
 		else        return angle
 		
 	// ------------------------------------------------------- log, pow, exp -------------------------------------------------------
@@ -2328,14 +2334,16 @@ immutable Range
 	inline js bool containsInclusively: int value
 		(value >= this.from && value <= this.from)
 
-enum Language: English, German, Spanish, Frensh, Italian, Portuguese, Japanese, Chinese, Korean, Dutch, Turkish, Polish, Russian, Hindi, Arabic, Bengali, Urdu, Indonesian, Invariant = 1000
+enum Language: English, German, Spanish, French, Italian, Portuguese, Japanese, Chinese, Korean, Dutch, Turkish, Polish, Russian, Hindi, Arabic, Bengali, Urdu, Indonesian, Invariant = 1000
 
 unit Loca
 	private const string[] defaultLocaleForLanguage = ["en-001", "de-DE", "es-ES", "fr-FR", "it-IT", "pt-PT", "ja-JP", "zh-Hans-CN", "ko-KR", "nl-NL", "tr-TR", "pl-PL", "ru-RU", "hi-IN", "ar-001", "bn-BD", "ur-IN", "id-ID"]
+	private const string[] languageNames = ["English", "German", "Spanish", "French", "Italian", "Portuguese", "Japanese", "Chinese", "Korean", "Dutch", "Turkish", "Polish", "Russian", "Hindi", "Arabic", "Bengali", "Urdu", "Indonesian", "Invariant"]
 	
 	visible Language[] supportedLanguages = [English, German]
 	visible Language language = English
 	visible string locale = defaultLocaleForLanguage[language]
+	string languageName := languageNames[language]
 	
 	init
 		setLanguage English

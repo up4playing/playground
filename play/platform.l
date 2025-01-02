@@ -40,6 +40,7 @@ transient skipInit unit Platform
 		$Image.init?.();
 		Font.init?.();
 		Sound.init?.();
+		Time.timezoneOffset = new Date().getTimezoneOffset() * 60000
 		
 	private js void initPlatform
 		statistics.init();
