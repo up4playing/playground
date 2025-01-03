@@ -9,6 +9,7 @@ transient speech
 	int voiceIndex
 	SpeechSynthesisVoice[] voices
 	SpeechSynthesisVoice voice
+	float rate = .7
 	
 	private inline js SpeechSynthesisVoice[] getVoices() speechSynthesis.getVoices()
 		
@@ -34,5 +35,6 @@ transient speech
 			speechSynthesis.cancel();
 			const utterance = new SpeechSynthesisUtterance(value);
 			utterance.voice = speech.voice;
+			utterance.rate = speech.rate;
 			speechSynthesis.speak(utterance);
 		}
