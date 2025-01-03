@@ -64,7 +64,7 @@ Collection<T>
 		             string expand = null
 		             int page = 1
 		             int perPage = 1000
-		items = cast ((await pocketBase.pb.collection(this.name).getList(page, perPage, {filter})).items)
+		items = cast ((await pocketBase.pb.collection(this.name).getList(page, perPage, {filter, sort, expand})).items)
 		return items
 		
 	async inline js T get: string id
@@ -163,4 +163,11 @@ Collection<T>
 	// Get a new list that is a subset of this list
 	inline js T[] get: int from // Return a new list starting from this index, a negative index will start from the end of the list
 		this.items.slice(from)
-	
+		
+	// Remove a random item from the list and return it
+	T popRandom()
+		if length == 0: return null
+		int index = math.randomInteger(length)
+		T item = items[index]
+		items.removeAt(index)
+		return item
