@@ -1,21 +1,14 @@
-// skipInit transient pocketBase
-// 	string url
-// 	dynamic pb
-	
-// 	setup
-// 		url = ""
-	
 transient skipInit pocketBase
-	string url
+	string url, libUrl
 	dynamic pb
 	
 	async void connect: string url
-		pocketBase.url = url
+		pocketBase.url = pocketBase.libUrl = url
 		await connect
 		
 	async js void connect
 		if(!pocketBase.url) pocketBase.url = window.location && window.location.host && !Platform.isDebug ? location.origin : "http://localhost:8090"
-		const PocketBase = (await import("./lib/pocketbase.es.mjs")).default
+		const PocketBase = (await import((pocketBase.libUrl || ".")+"/lib/pocketbase.es.mjs")).default
 		if(pocketBase.pb) pocketBase.pb.realtime.unsubscribe();
 		pocketBase.pb = new PocketBase(pocketBase.url);
 		
