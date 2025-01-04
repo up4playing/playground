@@ -70,18 +70,21 @@ http
 		
 	js void postStreamDirectly: string url
 		                        dynamic body
-		                        void(string result) onData
+		                        void(string result, void() cancel) onData
 		                        void() onEnd = null
 		if(!core.isPremiere || !input.isCertain) return
 		try {
 			let response = await fetch(url, {method:"POST", body:JSON.stringify(body)})
-			const reader = response.body.getReader();
-			const decoder = new TextDecoder();
+			let reader = response.body.getReader();
+			let decoder = new TextDecoder();
+			let cancelled = false
+			function cancel() { cancelled = true; }
 			for(;;) {
 				const { value, done } = await reader.read();
 				if (value) {
-					const chunk = decoder.decode(value, { stream: true });
-					onData(chunk);
+					let chunk = decoder.decode(value, { stream: true });
+					onData(chunk, cancel);
+					if(cancelled) return;
 				}
 				if(done) break;
 			}
