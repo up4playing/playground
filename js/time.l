@@ -257,9 +257,8 @@ string PlainTimeString
 		DateTime.fromTimeString(this).dayOfWeekDayMonthYearHourMinuteString
 		
 class string
-	inline Time toTime() Time.fromTimeString(this)
-	inline PlainTimeString toPlainTimeString := this
-	inline TimeString toTimeString := this
+	implicit inline PlainTimeString toPlainTimeString := this
+	implicit inline TimeString toTimeString := this
 		
 // Calculate dates using pure math for better performance without using the Date class
 immutable class DateTime
