@@ -10,7 +10,7 @@ skipInit unit Platform
 		init()
 			
 	private async inline js void initDatabase
-		if(typeof(pocketBase) != "undefined") await pocketBase.connect()
+		if(typeof(pocketBase) != "undefined") await pocketBase.connect2()
 		
 	async start: bool isDebug
 		initPlatform
