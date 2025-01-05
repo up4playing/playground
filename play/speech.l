@@ -10,6 +10,7 @@ transient speech
 	SpeechSynthesisVoice[] voices
 	SpeechSynthesisVoice voice
 	float rate = 1
+	string lastWord = ""
 	
 	private inline js SpeechSynthesisVoice[] getVoices() speechSynthesis.getVoices()
 		
@@ -21,6 +22,10 @@ transient speech
 		speechSynthesis.addEventListener("voiceschanged", () => speech.setupVoice(language, voicePreferences));
 		speech.setupVoice(language, voicePreferences);
 		speech.rate = rate;
+		document.onclick = e => {
+			speech.say(speech.lastWord);
+			document.onclick = null;
+		}
 	
 	private setupVoice: string language, string[] voicePreferences
 		voices = getVoices.where.lang?.startsWith(language)
@@ -33,6 +38,7 @@ transient speech
 		
 	js void say: string value
 		if(core.isPremiere && input.isCertain) {
+			speech.lastWord = value;
 			speechSynthesis.cancel();
 			const utterance = new SpeechSynthesisUtterance(value);
 			utterance.voice = speech.voice;
