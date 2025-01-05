@@ -642,7 +642,7 @@ transient skipInit global unit graphics
 				for lines
 					lineOffsets[i] = getTextWidth(. size:fontSize)*factor
 				
-			effectiveLineHeight = effectiveLineHeight || fontSize*1.3
+			effectiveLineHeight = lineHeight || fontSize*1.3
 			sizeY = lines.length * effectiveLineHeight - (effectiveLineHeight - fontSize * effectiveFont.actualHeightFactor)
 							
 		else
