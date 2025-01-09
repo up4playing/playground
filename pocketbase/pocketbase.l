@@ -24,6 +24,11 @@ transient skipInit pocketBase
 		} catch(e) {
 			console.log(e);
 		}
+		
+	inline js dynamic get: string collectionName
+		await pocketBase.pb.collection(collectionName).getFirstListItem("")
+		
+	// (await pocketBase.pb.collection(collectionName).getList(1,1)).items[0]
 	
 	async dynamic authWithPassword: string email
 		                            string password
