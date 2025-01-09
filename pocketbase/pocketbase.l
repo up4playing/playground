@@ -42,6 +42,7 @@ class PocketBaseFileUpload
 Collection<T>
 	string name
 	T[] items = []
+	int totalItems
 	
 	async inline js void subscribe: string topic
 		                            any options = {}
@@ -57,7 +58,9 @@ Collection<T>
 		             string expand = null
 		             int page = 1
 		             int perPage = 1000
-		items = cast ((await pocketBase.pb.collection(this.name).getList(page, perPage, {filter, sort, expand})).items)
+		let result = await pocketBase.pb.collection(this.name).getList(page, perPage, {filter, sort, expand})
+		items = cast result.items
+		totalItems = result.totalItems
 		return items
 		
 	async inline js T get: string id
