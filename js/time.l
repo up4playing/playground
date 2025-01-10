@@ -157,7 +157,7 @@ enum TimeUnit
 	days         // Days
 	
 string TimeString
-	static TimeString now := cast DateTime.fromTime(Time.now - Time.timezoneOffset).toTimeString
+	static TimeString now := cast DateTime.fromTime(Time.now, outputTimezone:0).toTimeString
 	
 	inline js bool toBool := this
 	inline string toString() this
@@ -467,30 +467,13 @@ immutable class DateTime
 			milliseconds: hasMilliseconds ? cast str[20..23] : 0
 			inputTimezone: timezoneSign == "Z" ? 0 : (cast str[timezoneIndex..timezoneIndex+2])*3600000*(timezoneSign == "-" ? 1:-1)
 			outputTimezone
-		)	
-				
-				
+		)
+		
 	implicit PlainTimeString toPlainTimeString
-		let tzo = 0
-		let tzoHours = math.floor(math.abs(tzo) / 60)
-		let tzoMinutes = math.abs(tzo) % 60
-		return cast "{year}-{twoDigitMonth}-{twoDigitDay}T{twoDigitHour}:{twoDigitMinute}:{twoDigitSecond}{tzo >= 0 ? "+" : "-"}{tzoHours < 10 ? "0"+tzoHours : tzoHours.toString}:{tzoMinutes < 10 ? "0"+tzoMinutes : tzoMinutes.toString}"
+		return cast "{year}-{twoDigitMonth}-{twoDigitDay} {twoDigitHour}:{twoDigitMinute}:{twoDigitSecond}"
 	
 	implicit TimeString toTimeString
-		let tzo = -timezoneOffset / 60000
-		let tzoHours = math.floor(math.abs(tzo) / 60)
-		let tzoMinutes = math.abs(tzo) % 60
-		return cast "{year}-{twoDigitMonth}-{twoDigitDay}T{twoDigitHour}:{twoDigitMinute}:{twoDigitSecond}{tzo >= 0 ? "+" : "-"}{tzoHours < 10 ? "0"+tzoHours : tzoHours.toString}:{tzoMinutes < 10 ? "0"+tzoMinutes : tzoMinutes.toString}"
-		
-		// return year +
-		// 	"-" + pad(this.getMonth() + 1) +
-		// 	"-" + pad(this.getDate()) +
-		// 	"T" + pad(this.getHours()) +
-		// 	":" + pad(this.getMinutes()) +
-		// 	":" + pad(this.getSeconds()) +
-		// 	dif + pad(Math.floor(Math.abs(tzo) / 60)) +
-		// 	":" + pad(Math.abs(tzo) % 60);
-		
+		return cast "{year}-{twoDigitMonth}-{twoDigitDay} {twoDigitHour}:{twoDigitMinute}:{twoDigitSecond}"
 		
 // Calculate dates using the JavaScript Date class
 js(Date) transient class Date
