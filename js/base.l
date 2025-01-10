@@ -1583,6 +1583,13 @@ class Map<TKey, TValue>
 		                       TValue value
 		(this.get(key) || this.setAndReturn(key, value))
 		
+	// Add a value to an item of the list
+	js T addToItem: TKey key // The key of the item to add to the map
+		            TValue value   // The item to add to the map
+		let item = this.get(key)
+		if(item) this.set(key, item + value)
+		else     this.set(key, value)
+		
 	// Add 1 to item of the map
 	inline js T incrementItem: TKey key
 		this.set(key, this.get(key)+1)

@@ -44,11 +44,10 @@ global transient unit System
 	// Prints a message to the console
 	global js void print: logstring text // The text, variables or expressions to print
 		                  SourceCodeLocation location
-		if(location && Platform.isDebug) {
+		console.log(text)
+		if(Platform.isDebug) {
 			var stringValue = typeof text === "string" ? text : JSON.stringify(text);
-			if(stringValue) _sendToEditor({type:"log", value:stringValue, location:location.start, file:location.file});
-		} else {
-			console.log(text)
+			if(stringValue) _sendToEditor({type:"log", value:stringValue, location:location ? location.start : 0, file:location ? location.file: ""});
 		}
 
 global skipInit unit math
