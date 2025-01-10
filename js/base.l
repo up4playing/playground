@@ -96,10 +96,17 @@ immutable struct int
 		                 int to   // The inclusive maximum value
 		(this < from ? from : this > to ? to : this)
 		
+	inline js float limit: float from // The inclusive minimum value
+		                   float to   // The inclusive maximum value
+		(this < from ? from : this > to ? to : this)
+		
 	// Make sure the value never exceets a maximum value
 	// Example: Make sure the card count never exceets a maximum value of 5
 	//     cardCount = cardCount limit ..5
 	inline js int limit: int to
+		(this > to ? to : this)
+	
+	inline js float limit: float to
 		(this > to ? to : this)
 	
 	// Make sure the value never falls below a minimum value
@@ -108,17 +115,26 @@ immutable struct int
 	inline js int limit: int from
 		(this < from ? from : this)
 	
-	// Make sure the value never exceets a maximum value
-	// Example: Make sure the card count never exceets a maximum value of 5
-	//     cardCount = cardCount max 5
-	inline js int max: int value
-		(this > value ? value : this)
+	inline js float limit: float from
+		(this < from ? from : this)
 	
 	// Make sure the value never falls below a minimum value
 	// Example: Make sure the score never fall below 0
-	//     score = score min 0
-	inline js int min: int value
+	//     score = score atLeast 0
+	inline js int atLeast: int value
 		(this < value ? value : this)
+	
+	inline js float atLeast: float value
+		(this < value ? value : this)
+	
+	// Make sure the value never exceets a maximum value
+	// Example: Make sure the card count never exceets a maximum value of 5
+	//     cardCount = cardCount atMost 5
+	inline js int atMost: int value
+		(this > value ? value : this)
+	
+	inline js float atMost: float value
+		(this > value ? value : this)
 	
 	inline js int setIfLarger: int newValue
 		(this = Math.max(newValue, this))
@@ -270,11 +286,11 @@ immutable struct float
 	inline js float limit: float from
 		(this < from ? from : this)
 	
-	inline js float atMost: float value
-		(this > value ? value : this)
-	
 	inline js float atLeast: float value
 		(this < value ? value : this)
+	
+	inline js float atMost: float value
+		(this > value ? value : this)
 	
 	inline js bool isApproximately: float value
 		                            float epsilon = 0.00001
@@ -2312,7 +2328,7 @@ struct RollingList
 		if values.length == 0: return 0.0
 		float total
 		for values: total += .
-		return total / (values.length max length)
+		return total / (values.length atMost length)
 	
 	max
 		if values.length == 0: return 0.0

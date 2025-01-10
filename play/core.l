@@ -422,7 +422,7 @@ transient skipInit unit core
 		// Cleanup
 		for input.internalUsers if .
 			.clearEvent
-		players.each.clearEvents
+		players.each.postprocessEvents
 		
 		// Advance frame
 		frame++

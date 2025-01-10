@@ -24,6 +24,11 @@ transient skipInit pocketBase
 		} catch(e) {
 			console.log(e);
 		}
+		
+	inline js dynamic get: string collectionName
+		await pocketBase.pb.collection(collectionName).getFirstListItem("")
+		
+	// (await pocketBase.pb.collection(collectionName).getList(1,1)).items[0]
 	
 	async dynamic authWithPassword: string email
 		                            string password
@@ -42,6 +47,7 @@ class PocketBaseFileUpload
 Collection<T>
 	string name
 	T[] items = []
+	int totalItems
 	
 	async inline js void subscribe: string topic
 		                            any options = {}
@@ -57,7 +63,9 @@ Collection<T>
 		             string expand = null
 		             int page = 1
 		             int perPage = 1000
-		items = cast ((await pocketBase.pb.collection(this.name).getList(page, perPage, {filter, sort, expand})).items)
+		let result = await pocketBase.pb.collection(this.name).getList(page, perPage, {filter, sort, expand})
+		items = cast result.items
+		totalItems = result.totalItems
 		return items
 		
 	async inline js T get: string id
