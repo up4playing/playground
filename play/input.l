@@ -122,16 +122,24 @@ priority class Player
 	// The current player instance, equivalent to "this"
 	inline js Player me() this
 	
-	internal clearEvents
+	// Called in core.step at the end of each step
+	// onTouchMove is commonly used to check what the pointer is hovering over and highlight it.
+	// Since on touch screens we often don't get a touchMove event when the user touches something, we can set 
+	// triggeredOnTouchDown to "true" to ensure we always get a touchMove event right before the touchDown.
+	// This is why isDown is only set to true *after* the events are handled in tick.
+	// This way, onTouchMove can check isDown, determine what we are hovering over and onTouchDown can then act on it.
+	internal postprocessEvents
 		bool hasTouch = touches.any.type == Touch
 		for touches backwards
-			if .phase == Up
-				if .type >= Touch or (hasTouch and .type != Touch): touches.removeAt i
-				else                                                .phase = Still
-				downTouches.remove .
-			else
-			if .phase == Down
-				.phase = Still
+			switch .phase
+				Down
+					.phase = Still
+					.isDown = true
+				Up
+					if .type >= Touch or (hasTouch and .type != Touch): touches.removeAt i
+					else                                                .phase = Still
+					downTouches.remove .
+					.isDown = false
 				
 UserAccount
 	string _id
@@ -820,14 +828,13 @@ skipInit global unit input
 							touch.referencePosition = referencePos
 							touch.referenceStartPosition = referencePos
 							touch.type = type
-							touch.isDown = true
 							// When we touch down, we start a new touch and reset the "handled" flag
 							// This flag is preserved throughout "TouchMove" and "TouchUp", so if we mark the touch
 							// as handled at any point, the flags stays set to "true" until we touch down again
 							touch.handled = false
 							if isSmoothPosition: touch.smoothPosition = referencePos
 						else
-							touch = {id, player, cast inputType, type, referencePos, referencePos, referencePos, isDown:true}
+							touch = {id, player, cast inputType, type, referencePos, referencePos, referencePos}
 							player.touches.add touch
 								
 						player.downTouches.ensure touch
@@ -858,7 +865,6 @@ skipInit global unit input
 							touch.phase = cast inputType
 							touch.referencePosition = referencePos
 							touch.type = type
-							touch.isDown = false
 							if isSmoothPosition: touch.smoothPosition = referencePos
 						else
 							touch = {id, player, cast inputType, type, referencePos, referenceStartPosition:Vector2.none, referencePos, isDown:false}
@@ -1339,6 +1345,9 @@ skipInit global unit input
 	// ---------------------------------------------- Touch Move ----------------------------------------------
 	
 	// Do something when a touch or click moves
+	// onTouchMove is commonly used to check what the pointer is hovering over and highlight it.
+	// Since on touch screens we often don't get a touchMove event when the user touches something, we can set 
+	// triggeredOnTouchDown to "true" to ensure we always get a touchMove event right before the touchDown.
 	// Example: The players can drag PuzzlePieces around with support for multi-touch and multiple players
 	//     PuzzlePiece
 	//         private Vector2 pos
@@ -1356,7 +1365,7 @@ skipInit global unit input
 	//             onTouchUp moveTouch
 	//                 moveTouch = null
 	global onTouchMove: Touch touch                 // Only consider this particular touch or click
-		                triggeredOnTouchDown = true // Also trigger this event right after the player touches or clicks before moving
+		                triggeredOnTouchDown = true // Ensure we also get a touchMove before the touchDown event on touch screens
 		                void(Touch touch) do        // Do this for each touch or click
 		if not touch or not active: return
 		let touchId = touch.id
@@ -1376,11 +1385,16 @@ skipInit global unit input
 	//             onTouchMove by me
 	//                 print "Touch moved to {touch.position}"
 	global onTouchMove: implicit nocolon Player[] by = null // Only consider touches or clicks by this player or list of players
+		                triggeredOnTouchDown = true         // Ensure we also get a touchMove before the touchDown event on touch screens
 		                void(Touch touch) do                // Do this for each touch or click
 		if not active: return
 		for getTargetedPlayers(by)
-			for internalUsers[.id].movingTouches
-				do .
+			let user = internalUsers[.id]
+				if triggeredOnTouchDown
+					for user.downTouches
+						do .
+				for user.movingTouches
+					do .
 					
 	// ---------------------------------------------- Touch Up ----------------------------------------------
 	
