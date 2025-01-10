@@ -584,7 +584,7 @@ transient skipInit global unit graphics
 					word = ""
 				else
 				if c == "\n"
-					if word: words.add word + "\n"
+					words.add word + "\n"
 					word = ""
 				else
 					word += c
