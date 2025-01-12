@@ -218,7 +218,17 @@ enum HorizontalAlignment: Left, Center, Right
 enum VerticalAlignment: Top, Middle, Bottom
 enum FontStyle: Normal, Bold
 immutable ClippingPath: Vector2[] points; bool show
-		
+	
+TextHighlight
+	string from
+	string to
+	Color color
+	Color backgroundColor
+	float cornerRadius
+	Vector2 padding
+	Vector2 margin
+	bool wrap = true
+	
 // Draw on the screen
 // Screen space
 // - has always the reference size (1920 x 1080 by default) on all platforms
@@ -682,6 +692,177 @@ transient skipInit global unit graphics
 				lines,
 				lineOffsets,
 				effectiveLineHeight
+			)
+		
+		if onClick != null
+			// Handle click (only visible buttons are clickable)
+			let effectiveClickableBy = getClickableBy(visibleFor, clickableBy)
+				Vector2 effectiveSize = {sizeX + clickableMargin.x, sizeY + clickableMargin.y}
+				input.onTouchDown position, size:effectiveSize, by:effectiveClickableBy, showClickableArea, do:onClick
+				if hotkey
+					input.onKeyDown hotkey, by:effectiveClickableBy
+						onClick null
+						
+		return sizeY
+		
+	// Draw text with segments highlighted which are surrounded by given characters
+	// Example:
+	//     drawTextWithHighlight "Kate se «da vuelta».", position:{0,0}, highlights:[
+	//         { "«"  to: "»"  color:White, backgroundColor:app.primaryColor, padding:{12,3}, cornerRadius:12 }
+	//         { "\"" to: "\"" color:White, backgroundColor:app.helpingColor, padding:{12,3}, cornerRadius:12 }
+	//     ]
+	global float drawTextWithHighlight: implicit string text                 // A string or anything that can be converted into a string (for example, an interger or a float)
+		                                Vector2 position = {}                // By default, {0,0} is the center, {-960,-540} is the top left, {960,540} is the bottom right
+		                                TextHighlight[] highlights = []      // Sepecifies which characters surround a sections and how it should be highlighted
+		                                implicit Vector2 size = {}           // The font size of the text
+		                                Color color = null                   // The color of the text
+		                                HorizontalAlignment align = Center   // The horizontal alignment of the text
+		                                VerticalAlignment valign = Middle    // The vertical alignment of the text
+		                                FontStyle style = Normal             // Whether the text should be bold or normal style
+		                                Font font = null                     // To use a custom font, just copy a TTF, WOFF or WOFF2 file to the "media" folder
+		                                Color outlineColor = null            // The color of the outline around the text
+		                                outlineWidth = 0                     // The width of the outline around the text in pixels
+		                                implicit layer = 0                   // Higher layers are drawn in front of lower layers
+		                                alpha = 1.0                          // The opacity of the text (0: fully transparent, 1: fully visible)
+		                                Angle angle = 0.0                    // Rotate the image by this angle in turns (0: no rotation, 1: one full rotation)
+		                                implicit Player[] visibleFor = null  // Only this player or list of players will see the text
+		                                implicit Player[] clickableBy = null // Only this player or list of players can touch or click the text
+		                                clickableMargin = Vector2(16,16)     // The margin around the text within which it is clickable
+		                                showClickableArea = false            // Highlight the clickable area for debugging
+		                                hotkey = Key.None                    // This keyboard shortcut will execute the onClick handler
+		                                overflow = TextOverflow.Scale        // Should text that exceeds the max width be hidden or wrapped?
+		                                float maxWidth = float.maxValue      // The maximum width of line when overflow is set 'Scale', 'Hidden' or 'Wrap'
+		                                float lineHeight = 0                 // The height of each line when overflow is set to 'Wrap'
+		                                void(Touch touch) onClick = null     // Execute this code when the user touches or clicks the text or presses the hotkey
+		                                SourceCodeLocation location
+		bool isVisible = isVisibleFor(visibleFor)
+		Font effectiveFont = font || currentFont
+		int fontSize = math.floor(size.y || size.x || currentFontSize)
+		float sizeX, sizeY
+		float effectiveLineHeight = lineHeight or fontSize*1.3
+		float offsetX, offsetY
+	
+		// Split text into words
+		string word
+		string[] words
+		for text.length
+			let c = text[.]
+			if c == " "
+				if word: words.add word
+				word = ""
+			else
+			if c == "\n"
+				words.add word + "\n"
+				word = ""
+			else
+				word += c
+		if word: words.add word
+			
+		// Layout lines
+		let spaceWidth = getTextWidth(" ", {x:fontSize}, effectiveFont, style)
+		TextSegment segment = {}
+		TextSegment[] segments = [ segment ]
+		TextHighlight highlight
+		
+		for words as word
+			string suffix, prefix
+			float suffixWidth, prefixWidth
+			TextHighlight startHighlight, endHighlight
+			int startIndex
+			float expectedSegmentWidth = segment.size.x
+			
+			if not highlight
+				// Find highlight start character
+				for highlights
+					startIndex = word.indexOf .from
+					if startIndex != -1
+						startHighlight = .
+						if startIndex > 0
+							prefix = word[..startIndex]
+							prefixWidth = getTextWidth(prefix size:fontSize, effectiveFont, style)
+							expectedSegmentWidth += prefixWidth
+						word = word[startIndex+1..]
+						expectedSegmentWidth += .margin.x + .padding.x*2
+						break
+						
+			if highlight or startHighlight
+				// Find highlight end character
+				for highlights
+					int endIndex = word.indexOf .to, startIndex+1
+					if endIndex != -1
+						endHighlight = .
+						if endIndex < word.length-1
+							suffix = word[endIndex+1..]
+							suffixWidth = getTextWidth(suffix size:fontSize, effectiveFont, style)
+							expectedSegmentWidth += suffixWidth
+						word = word[..endIndex]
+						break
+		
+			// Measure current word
+			float wordWidth = getTextWidth(word, size:fontSize, effectiveFont, style)
+			
+			// Is there something in the current line?
+			if segment.text or segment.position.x > 0
+				expectedSegmentWidth += spaceWidth
+				if highlight: expectedSegmentWidth += highlight.margin.x
+				
+				// Check if the current word still fits in the line
+				if segment.position.x + expectedSegmentWidth + wordWidth > maxWidth
+					if highlight == null or highlight.wrap
+						segments.add segment = {position:{0, segment.position.y}, highlight, size:highlight ? highlight.padding*2 : {}}
+					segment.position.x = 0
+					segment.position.y += effectiveLineHeight
+			
+			// Space between words
+			if segment.text or segment.position.x > 0
+				segment.text += " "
+				segment.size.x += spaceWidth
+		
+			// Start highlight
+			if startHighlight
+				if prefix
+					segment.text += prefix
+					segment.size.x += prefixWidth
+				highlight = startHighlight
+				segments.add segment = { position:{segment.position.x + segment.size.x + highlight.margin.x, segment.position.y}, highlight, size:highlight.padding*2 }
+				
+			// Add word
+			segment.text += word
+			segment.size.x += wordWidth
+				
+			// End highlight
+			if endHighlight
+				segments.add segment = { position:{segment.position.x + segment.size.x + highlight.margin.x, segment.position.y} }
+				highlight = null
+				if suffix
+					segment.text += suffix
+					segment.size.x += suffixWidth
+					
+			if segment.text[segment.text.length-1] == "\n"
+				segments.add segment = {position:{0, segment.position.y + effectiveLineHeight}, highlight, size:highlight ? highlight.padding*2 : {}}
+
+		segments.each.size.y = fontSize
+		sizeY = segments ? segments.last.position.y + fontSize : 0
+		offsetY = -alignmentFactor[valign]*sizeY
+			
+		if isVisible
+			Matrix2D matrix
+			float x, y
+			if not angle: matrix = totalMatrix; x = position.x; y = position.y
+			else          matrix = totalMatrix.clone().move(position).rotate(angle); x = 0; y = 0
+			items.add new DisplayTextWithHighlights(
+				matrix,
+				x + offsetX,
+				y + offsetY,
+				sizeX, sizeY, 
+				layer, alpha * graphics.currentAlpha, currentClippingPath, text, 
+				location, position.location, size.location,
+				(color || currentColor).hex, 
+				outlineColor ? outlineColor.hex : null,
+				outlineWidth || currentLineWidth,
+				effectiveFont.offset.y*sizeY,
+				(style ? "bold ":"")+fontSize+"px "+effectiveFont.name,
+				segments
 			)
 		
 		if onClick != null
@@ -1390,6 +1571,7 @@ transient skipInit global unit graphics
 		                        implicit Vector2 size = {}  // The font size of the text
 		                        Font font = null            // The font of the text
 		                        FontStyle style = Normal    // Whether the text should be bold or normal style
+		if(!text) return 0
 		let effectiveFont = font || graphics.currentFont
 		let fontSize = size.y || size.x || graphics.currentFontSize
 		graphics.context.font =  (style ? "bold ":"")+fontSize+"px "+effectiveFont.name;
@@ -1848,7 +2030,76 @@ transient DisplayItem DisplayText
 		}
 		
 		if(this.clippingPath) this.endClipping()
+
+TextSegment
+	string text
+	TextHighlight highlight
+	Vector2 position
+	Vector2 size
 		
+transient DisplayItem DisplayTextWithHighlights
+	string fillStyle, outlineColor
+	float outlineWidth
+	float offsetY
+	string font
+	TextSegment[] segments = null
+	
+	js void draw
+		if(this.alpha == 0) return
+		graphics.context.setTransform(this.m0, this.m1, this.m2, this.m3, this.m4, this.m5)
+		graphics.context.globalAlpha = this.alpha
+		if(this.clippingPath) this.startClipping()
+		graphics.context.font = this.font
+		let y = this.y
+		for(let i=0; i<this.segments.length; i++) {
+			let segment = this.segments[i];
+			if(this.outlineColor) {
+				graphics.context.lineWidth = this.outlineWidth
+				graphics.context.strokeStyle = this.outlineColor
+				graphics.context.strokeText(line, this.x + offset, y)
+			}
+			let highlight = segment.highlight
+			if(highlight) {
+				if(highlight.backgroundColor) {
+					// Background rectangle
+					graphics.context.fillStyle = highlight.backgroundColor.hex
+					
+					let x = this.x + segment.position.x
+					let y = this.y + segment.position.y - highlight.padding.y
+					let width = segment.size.x
+					let height = segment.size.y + highlight.padding.y*2
+					let radius = highlight.cornerRadius
+					
+					if(radius) {
+						// Rounded corners
+						graphics.context.beginPath();
+						graphics.context.moveTo(x + radius, y);
+						graphics.context.lineTo(x + width - radius, y);
+						graphics.context.quadraticCurveTo(x + width, y, x + width, y + radius);
+						graphics.context.lineTo(x + width, y + height - radius);
+						graphics.context.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+						graphics.context.lineTo(x + radius, y + height);
+						graphics.context.quadraticCurveTo(x, y + height, x, y + height - radius);
+						graphics.context.lineTo(x, y + radius);
+						graphics.context.quadraticCurveTo(x, y, x + radius, y);
+						graphics.context.closePath();
+						graphics.context.fill();
+					} else {
+						graphics.context.fillRect(x, y, width, height)
+					}
+				}
+			}
+			if(highlight) {
+				graphics.context.fillStyle = highlight.color ? highlight.color.hex : this.fillStyle
+				graphics.context.fillText(segment.text, this.x + segment.position.x + highlight.padding.x, this.y + segment.position.y)
+			} else {
+				graphics.context.fillStyle = this.fillStyle
+				graphics.context.fillText(segment.text, this.x + segment.position.x, this.y + segment.position.y)
+			}
+		}
+		
+		if(this.clippingPath) this.endClipping()
+
 transient DisplayItem DisplayRectangle
 	string color, outlineColor
 	float outlineWidth
