@@ -521,6 +521,10 @@ immutable class string
 	inline string backspace
 		(this.length ? this = this[0 to this.length-1] : this)
 		
+	bool isLetter
+		return this.toLowerCase != this.toUpperCase
+		
+		
 // A logical data type that can have the value true or false
 enum bool: false, true
 		
