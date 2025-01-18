@@ -102,8 +102,11 @@ http
 		
 	internal js async dynamic getJsonDirectly: string url, dynamic options
 		return await (await fetch(url, options)).json()
+	
+	internal js async string postDirectly: string url, any body
+		return (await fetch(url, {method:"POST", body:JSON.stringify(body)})).text()	
 		
-	internal js void postDirectly: string url, any body, void(any result) code, void() else
+	internal js void postDirectly: string url, any body, void(any result) code, void() else = null
 		try {
 			let data = await (await fetch(url, {method:"POST", body:JSON.stringify(body)})).text();
 			code(data);
