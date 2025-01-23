@@ -68,6 +68,13 @@ Collection<T>
 		totalItems = result.totalItems
 		return items
 		
+	async T fetchOne: string filter = ""
+		              string sort = null
+		              string expand = null
+		// return await pocketBase.pb.collection(this.name).getFirstListItem(filter, {sort, expand})
+		let result = await pocketBase.pb.collection(this.name).getList(1, 1, {filter, sort, expand})
+		return result.items[0]
+		
 	async inline js T get: string id
 		pocketBase.pb.collection(this.name).getOne(id)
 		
