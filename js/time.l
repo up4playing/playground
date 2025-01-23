@@ -158,6 +158,7 @@ enum TimeUnit
 	
 string TimeString
 	static TimeString now := cast DateTime.fromTime(Time.now, outputTimezone:0).toTimeString
+	static TimeString fromTime(Time value) := cast DateTime.fromTime(value, outputTimezone:0).toTimeString
 	
 	inline js bool toBool := this
 	inline string toString() this

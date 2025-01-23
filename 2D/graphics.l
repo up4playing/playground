@@ -841,6 +841,19 @@ transient skipInit global unit graphics
 			if segment.text[segment.text.length-1] == "\n"
 				segments.add segment = {position:{0, segment.position.y + effectiveLineHeight}, highlight, size:highlight ? highlight.padding*2 : {}}
 
+		// Align
+		float factor = alignmentFactor[align]
+		int lineStartIndex
+		float lineWidth
+		for segments.length + 1 as index
+			let s = segments[index]
+			if not s or segment.position.x == 0
+				for lineStartIndex to index
+					segments[.].position.x -= lineWidth * factor
+				lineStartIndex = index
+			if index < segments.length
+				lineWidth += s.size.x
+				
 		segments.each.size.y = fontSize
 		sizeY = segments ? segments.last.position.y + fontSize : 0
 		offsetY = -alignmentFactor[valign]*sizeY
