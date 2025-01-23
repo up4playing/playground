@@ -478,6 +478,10 @@ immutable class string
 		                nocolon string with
 		return this.replaceAll(value, $with)
 		
+	inline js string padStart: int targetLength
+		                       string padString = " "
+		this.padStart(targetLength, padString)
+		
 	inline js string padEnd: int targetLength
 		                     string padString = " "
 		this.padEnd(targetLength, padString)
