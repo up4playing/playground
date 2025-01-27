@@ -215,6 +215,21 @@ global unit http
 	js void on:string path, HttpMethod method = Get, void(string[] path, dynamic body, Request request, Response response) handler
 		http.handlerMap.set(http.methodName[method]+path, handler)
 		
+	js async string request: string url
+		                     dynamic body
+		                     string method = "POST"
+		                     dynamic headers = null
+		return new Promise((resolve, reject) => {
+			if(!http.http) http.http = require('https');
+			let result = ""
+			let request = http.http.request(url, {method, headers}, res => {
+				res.on('data', chunk => { result += chunk.toString() });
+				res.on('end', () => { resolve(result) });
+			});
+			request.write(JSON.stringify(body));
+			request.end();
+		})
+		
 	js void request: string url
 		             dynamic body
 		             string method = "POST"
@@ -251,7 +266,7 @@ unit File
 	js async void write: string file, string data, string encoding = null
 		require('fs').promises.writeFile(file, data, encoding)
 
-	js async string read: string file, string encoding = null
+	js async string read: string file, string encoding = "utf8"
 		return require('fs').promises.readFile(file, encoding)
 		
 	js async bool delete: string file
