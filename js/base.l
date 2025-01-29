@@ -390,8 +390,10 @@ immutable class string
 	inline js bool endsWith(string str) this.endsWith(str)
 		
 	inline js int indexOf(string str) this.indexOf(str)
-	inline js int lastIndexOf(string str) this.lastIndexOf(str)
 	inline js int indexOf(string str, int startPos) this.indexOf(str, startPos)
+		
+	inline js int lastIndexOf(string str) this.lastIndexOf(str)
+	inline js int lastIndexOf(string str, int startPos) this.lastIndexOf(str, startPos)
 		
 	inline js bool contains(string str) this.includes(str)
 		
