@@ -234,11 +234,11 @@ global unit http
 		             dynamic body
 		             string method = "POST"
 		             dynamic headers = null
-		             void(string value) onData
+		             void(string value, int statusCode) onData
 		             void() onEnd
 		if(!http.http) http.http = require('https');
 		let request = http.http.request(url, {method, headers}, res => {
-			res.on('data', chunk => onData(chunk.toString()));
+			res.on('data', chunk => onData(chunk.toString(), res.statusCode));
 			res.on('end', () => onEnd());
 		});
 		request.write(JSON.stringify(body));
