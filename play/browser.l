@@ -91,11 +91,11 @@ transient skipInit unit Platform
 		clearTimeout(id)
 		
 	inline js void pushState: string url
-		                      object state = null
+		                      dynamic state = null
 		if(core.isPremiere) history.pushState(state, "", url);
 		
 	inline js void replaceState: string url
-		                         object state = null
+		                         dynamic state = null
 		if(core.isPremiere) history.replaceState(state, "", url);
 		
 	inline js void back
