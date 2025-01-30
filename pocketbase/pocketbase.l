@@ -78,7 +78,7 @@ Collection<T>
 	async inline js T get: string id
 		pocketBase.pb.collection(this.name).getOne(id)
 		
-	async string add: dynamic item
+	async string add: any item
 		any newRecord = await pocketBase.pb.collection(this.name).create(item)
 		item.id = newRecord.id
 		return newRecord.id
