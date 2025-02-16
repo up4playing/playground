@@ -10,6 +10,9 @@ skipInit immutable Sound
 		audio.sounds.add this
 	
 	js void open
+		// TEMP: Disabled for testing
+		return true
+		
 		return new Promise((resolve, reject) => {
 			this.nextAudioElement = new Audio();
 			this.nextAudioElement.oncanplaythrough = () => resolve();
