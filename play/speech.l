@@ -74,5 +74,8 @@ transient speech
 			speechSynthesis.speak(utterance);	
 		}
 		
-	js void stop
-		speechSynthesis.cancel();
+	js inline void stop
+		speechSynthesis.cancel()
+		
+	js inline bool isSpeaking
+		speechSynthesis.speaking
