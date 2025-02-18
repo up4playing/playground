@@ -170,7 +170,7 @@ unit lobby
 		// Effect(image:NukeCone, position:field.position+{0,-150}, size:1000)
 		field.effect = Effect(image:Nuke, size:1000)
 		field.particleSystem = ParticleSystem(image:Spark, bursts:1, gravity:.5, minSpeed:10 maxSpeed:20, angleSpread:.5)
-		playSound LobbyImpact
+		// playSound LobbyImpact
 		
 	createField: Player player, implicit Player[] visibleFor = null
 		let field = LobbyTextField(text:player.name, player, visibleFor, editableBy:host, color:White, size:100, font:ByTheWay, angle:-.01, onChanged:setPlayerName player, .)
