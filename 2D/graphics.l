@@ -150,7 +150,7 @@ skipInit immutable Font
 	
 	js void open
 		// TEMP: Disabled for testing
-		return true
+		// return true
 		
 		if(!window._fontCache) _fontCache = {}
 		let font = _fontCache[this.file]
