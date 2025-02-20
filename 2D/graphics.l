@@ -384,7 +384,7 @@ transient skipInit global unit graphics
 		
 	// ------------------------------------------------------- Image -------------------------------------------------------
 	
-	// Draw an image. Place a PNG file in the "media" folder and it will automatically be imported.
+	// Draw an image. Place a PNG file in the media folder and it will automatically be imported.
 	// 
 	// Example: We place an image called "Idle.png" in the "media" folder. Then, we draw this image at the position {0,0}, scale it to a width of 32 pixels. Only the current player instance will see the image.
 	// ```
