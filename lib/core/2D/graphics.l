@@ -149,9 +149,6 @@ skipInit immutable Font
 	actualHeightFactor = .76
 	
 	js void open
-		// TEMP: Disabled for testing
-		// return true
-		
 		if(!window._fontCache) _fontCache = {}
 		let font = _fontCache[this.file]
 		if(!font) {
