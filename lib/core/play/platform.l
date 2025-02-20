@@ -69,7 +69,7 @@ transient skipInit unit Platform
 		if(!Platform.isMobile) 
 			window.onresize = e => { 
 				graphics.onResize();
-				if(Platform.mode < 3/*Pause,Manipulator,Slide*/ && Platform.engineStarted) core.tick(/*draw*/true);
+				if(Platform.mode < 3/*Pause,Manipulator,Slide*/ && Platform.engineStarted) Platform.goToCurrentFrame();
 			}
 		if(app.init) app.init();
 			
