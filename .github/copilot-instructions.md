@@ -1,7 +1,3 @@
----
-description: LiveTime Programming Language Example
-globs: *.l
----
 # We use the LiveTime programming language. LiveTime uses indentation with tabs to indicate a block of code. Always use tabs for indentation, never spaces.
 # Example app implementing the board game "Go" in the LiveTime programming language
 
