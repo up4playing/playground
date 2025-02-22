@@ -1226,17 +1226,17 @@ skipInit global unit input
 		                bool markAsHandled = true           // Mark the touch as handled so it won't trigger more touch events
 		                void(Touch touch) do                // Do this for each touch or click
 		if not active: return
-		let referencePosition = position.getTransformed(graphics.localMatrix)
+		let referencePosition = position.transformed(graphics.localMatrix)
 		let referenceRadius = radius * graphics.localMatrix.scaleVector.x
-		for getTargetedPlayers(by) -> player
-			for internalUsers[player.id].downTouches -> touch
+		for getTargetedPlayers(by) as player
+			for internalUsers[player.id].downTouches as touch
 				if !touch.handled and (player.enableTouch or touch.type != Touch)
 				and (touch.referencePosition distanceTo referencePosition) <= referenceRadius
 					do touch
 					if markAsHandled: touch.handled = true
 						
 			if cursor != Auto
-				for localUser.movingTouches -> touch
+				for localUser.movingTouches as touch
 					if !touch.handled && (touch.referencePosition distanceTo position) <= radius
 						this.cursor = cursor
 				

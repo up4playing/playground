@@ -1684,13 +1684,13 @@ transient skipInit global unit graphics
 	// ------------------------------------------------------- Position -------------------------------------------------------
 	
 	getAbsolutPosition: Vector2 position
-		return position.getTransformed(localMatrix)
+		return position.transformed(localMatrix)
 		
 	getRelativePosition: Vector2 position
 		return position.getRelativeTo(localMatrix)
 		
 	getPixelPosition: Vector2 position
-		return position.getTransformed(totalMatrix) / pixelRatio
+		return position.transformed(totalMatrix) / pixelRatio
 		
 	getPixelSize: Vector2 size
 		return size * {totalMatrix.m0, totalMatrix.m3} / pixelRatio
