@@ -43,7 +43,6 @@ skipInit global unit Platform
 		Sound.init?.();
 		audio.init();
 		Time.timezoneOffset = new Date().getTimezoneOffset() * 60000
-		if(typeof(pocketBase) != "undefined") pocketBase.setup()
 		app.init?.()
 		
 	private async inline js void initDatabase

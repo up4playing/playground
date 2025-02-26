@@ -2367,6 +2367,16 @@ immutable Range
 	
 	inline js bool containsInclusively: int value
 		(value >= this.from && value <= this.from)
+		
+class File
+	Time lastModified
+	string lastModifiedDate
+	string name
+	string path
+	int size
+	string type
+	
+	inline js string objectUrl() URL.createObjectURL(this)
 
 enum Language: English, German, Spanish, French, Italian, Portuguese, Japanese, Chinese, Korean, Dutch, Turkish, Polish, Russian, Hindi, Arabic, Bengali, Urdu, Indonesian, Invariant = 1000
 
