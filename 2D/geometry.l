@@ -156,27 +156,47 @@ struct Vector2
 	// The length of the vector
 	length := math.sqrt(x * x + y * y)
 		
+	// The sign of each coordinate
 	sign := Vector2(math.sign(x), math.sign(y))
 		
+	// The square of the length of the vector
 	lengthSquared := x * x + y * y
 		
-	// A vector that is orthogonal to the existing vector
-	orthogonal := Vector2(x:-y, y:x)
+	// Make the vector orthogonal to the existing vector
+	orthogonal
+		x = -y
+		y = x
+		return this
 		
-	// A vector with the sign of each coordinate flipped
-	inverse := Vector2(-x, -y)
+	// Flip the sign of each coordinate
+	invert
+		x = -x
+		y = -y
+		return this
 		
-	// A vector with each coordinate rounded to the closest integer value
-	rounded := IntVector2(math.round(x), math.round(y))
+	// Round each coordinate to the closest integer value
+	round 
+		x = math.round(x)
+		y = math.round(y)
+		return this
 	
-	// A vector with each coordinate rounded down to an integer value
-	floor := IntVector2(math.floor(x), math.floor(y))
+	// Round each coordinate down to an integer value
+	floor
+		x = math.floor(x)
+		y = math.floor(y)
+		return this
 		
-	// A vector with each coordinate rounded up to an integer value
-	ceil := IntVector2(math.ceil(x), math.ceil(y))
+	// Round each coordinate up to an integer value
+	ceil
+		x = math.ceil(x)
+		y = math.ceil(y)
+		return this
 		
-	// A vector with the absolute value of each coordinate
-	abs := Vector2(math.abs(x), math.abs(y))
+	// Make each coordinate positive
+	abs
+		x = math.abs(x)
+		y = math.abs(y)
+		return this
 		
 	// The larger of the two coordinates
 	max := x > y ? x : y
@@ -197,6 +217,7 @@ struct Vector2
 		this.y += y
 		return this
 		
+	// Rotate the vector by a given angle
 	rotate: Angle angle // The angle in turns (one full rotation is 1)
 		let x = this.x, y = this.y
 		let sn = math.sin(angle)
@@ -219,10 +240,14 @@ struct Vector2
 	angleTo: Vector2 value // The second vector
 		return math.getAngleForVector(value - this)
 
-	// A vector that points in the same direction, but has a length of 1
-	normalized
+	// Ensure the vector has a length of 1
+	normalize
 		let len = math.sqrt(x * x + y * y)
-		return len != 0 ? Vector2(x / len, y / len) : Vector2(0, 0)
+		if len != 0: x = x / len; y = y / len
+		return this
+
+	// A vector that points in the same direction, but has a length of 1
+	normalized := this.clone.normalize
 	
 	// Moves the vector towards the given target by the given distance	
 	moveTowards: Vector2 targetPosition // The target to move towards
@@ -230,7 +255,7 @@ struct Vector2
 		         void() onReachedTarget = null
 		let delta = targetPosition - this
 		if delta.x != 0 || delta.y != 0
-			delta = delta.normalized * speed
+			delta = delta.normalize * speed
 			if delta.x > 0: x = math.min(x + delta.x, targetPosition.x)
 			else            x = math.max(x + delta.x, targetPosition.x)
 			if delta.y > 0: y = math.min(y + delta.y, targetPosition.y)
@@ -246,12 +271,9 @@ struct Vector2
 		y = matrix.m1 * ax + matrix.m3 * ay + matrix.m5
 		return this
 		
-	// A vector that is transformed by a given matrix
-	getTransformed: Matrix2D matrix // The matrix to transform the vector by
-		return Vector2(
-			matrix.m0 * x + matrix.m2 * y + matrix.m4,
-			matrix.m1 * x + matrix.m3 * y + matrix.m5
-		)
+	// Return a new vector that is transformed by a given matrix
+	transformed: Matrix2D matrix // The matrix to transform the vector by
+		return this.clone.transform(matrix)
 
 	// A vector that is transformed by the inverse of the given matrix
 	getRelativeTo: Matrix2D matrix // The vector will be transformed by the inverse of this matrix
