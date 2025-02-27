@@ -43,7 +43,6 @@ skipInit global unit Platform
 		Sound.init?.();
 		audio.init();
 		Time.timezoneOffset = new Date().getTimezoneOffset() * 60000
-		if(typeof(pocketBase) != "undefined") pocketBase.setup()
 		app.init?.()
 		
 	private async inline js void initDatabase
@@ -80,7 +79,7 @@ skipInit global unit Platform
 			sendFinished
 		
 	js void openMedia: void() success
-		let font = new FontFace('OpenSans', 'url(OpenSans.woff2)');
+		let font = new FontFace('OpenSans', `url(${_basePath}OpenSans.woff2)`);
 		await font.load();
 		document.fonts.add(font);
 		success()
@@ -822,6 +821,7 @@ global unit Html
 			if attributes.title and attributes.title != node.title:  node.title = attributes.title
 			
 			if attributes.onClick != null:      node.onclick = attributes.onClick
+			if attributes.onLeftClick != null:  node.onclick = attributes.onLeftClick
 			if attributes.onRightClick != null: node.oncontextmenu = attributes.onRightClick
 			if attributes.onKeyDown != null:    node.onkeydown = attributes.onKeyDown
 			if attributes.onKeyUp != null:      node.onkeyup = attributes.onKeyUp

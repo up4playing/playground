@@ -384,7 +384,11 @@ transient skipInit global unit graphics
 		
 	// ------------------------------------------------------- Image -------------------------------------------------------
 	
+<<<<<<< HEAD
 	// Draw an image. Place a PNG file in the "media" folder and it will automatically be imported.
+=======
+	// Draw an image. Place a PNG file in the media folder and it will automatically be imported.
+>>>>>>> f185f2f2ac5e0c302ec76676ea93452571478abc
 	// 
 	// Example: We place an image called "Idle.png" in the "media" folder. Then, we draw this image at the position {0,0}, scale it to a width of 32 pixels. Only the current player instance will see the image.
 	// ```
@@ -1684,13 +1688,13 @@ transient skipInit global unit graphics
 	// ------------------------------------------------------- Position -------------------------------------------------------
 	
 	getAbsolutPosition: Vector2 position
-		return position.getTransformed(localMatrix)
+		return position.transformed(localMatrix)
 		
 	getRelativePosition: Vector2 position
 		return position.getRelativeTo(localMatrix)
 		
 	getPixelPosition: Vector2 position
-		return position.getTransformed(totalMatrix) / pixelRatio
+		return position.transformed(totalMatrix) / pixelRatio
 		
 	getPixelSize: Vector2 size
 		return size * {totalMatrix.m0, totalMatrix.m3} / pixelRatio

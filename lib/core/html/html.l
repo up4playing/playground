@@ -891,7 +891,8 @@ dynamic Attributes
 	string title
 	
 	native void() onClick = null                       // Execute this code when the user clicks the HTML element
-	native void() onRightClick = null                  // Execute this code when the user clicks the HTML element with the right mouse button
+	native void(HtmlEvent ev) onLeftClick = null       // Execute this code when the user clicks the HTML element
+	native void(HtmlEvent ev) onRightClick = null      // Execute this code when the user clicks the HTML element with the right mouse button
 	native void(HtmlKeyboardEvent ev) onKeyDown = null // Execute this code when the user presses a key on the keyboard
 	native void(HtmlKeyboardEvent ev) onKeyUp = null   // Execute this code when the user releases a key on the keyboard
 	
