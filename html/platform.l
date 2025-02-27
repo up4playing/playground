@@ -79,7 +79,7 @@ skipInit global unit Platform
 			sendFinished
 		
 	js void openMedia: void() success
-		let font = new FontFace('OpenSans', 'url(OpenSans.woff2)');
+		let font = new FontFace('OpenSans', `url(${_basePath}OpenSans.woff2)`);
 		await font.load();
 		document.fonts.add(font);
 		success()
