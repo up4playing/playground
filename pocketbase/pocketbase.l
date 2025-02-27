@@ -35,16 +35,6 @@ transient skipInit pocketBase
 		                            string password
 		return await pocketBase.pb.collection("users").authWithPassword(email, password)
 
-class PocketBaseFileUpload
-	Time lastModified
-	string lastModifiedDate
-	string name
-	string path
-	int size
-	string type
-	
-	inline js string objectUrl() URL.createObjectURL(this)
-
 Collection<T>
 	string name
 	T[] items = []
@@ -97,7 +87,7 @@ Collection<T>
 	async inline js void remove: T item
 		pocketBase.pb.collection(this.name).delete(item.id)
 		
-	async js void upload: T item, string fileFieldName = "images", PocketBaseFileUpload[] files
+	async js void upload: T item, string fileFieldName = "images", File[] files
 		const formData = new FormData();
 		for(let file of files) {
 			formData.append(fileFieldName, file);
