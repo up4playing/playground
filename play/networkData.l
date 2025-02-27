@@ -68,6 +68,31 @@ http
 			}
 		}
 		
+	js void postStreamDirectly: string url
+		                        dynamic body
+		                        void(string result, void() cancel) onData
+		                        void() onEnd = null
+		if(!core.isPremiere || !input.isCertain) return
+		try {
+			let response = await fetch(url, {method:"POST", body:JSON.stringify(body)})
+			let reader = response.body.getReader();
+			let decoder = new TextDecoder();
+			let cancelled = false
+			function cancel() { cancelled = true; }
+			for(;;) {
+				const { value, done } = await reader.read();
+				if (value) {
+					let chunk = decoder.decode(value, { stream: true });
+					onData(chunk, cancel);
+					if(cancelled) return;
+				}
+				if(done) break;
+			}
+			onEnd?.();
+		} catch (error) {
+			console.error('Error during fetch or stream processing:', error);
+		}
+		
 	internal js async string getStringDirectly string url
 		return await (await fetch(url)).text()
 		
@@ -77,8 +102,11 @@ http
 		
 	internal js async dynamic getJsonDirectly: string url, dynamic options
 		return await (await fetch(url, options)).json()
+	
+	internal js async string postDirectly: string url, any body
+		return (await fetch(url, {method:"POST", body:JSON.stringify(body)})).text()	
 		
-	internal js void postDirectly: string url, any body, void(any result) code, void() else
+	internal js void postDirectly: string url, any body, void(any result) code, void() else = null
 		try {
 			let data = await (await fetch(url, {method:"POST", body:JSON.stringify(body)})).text();
 			code(data);

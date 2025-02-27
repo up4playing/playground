@@ -16,7 +16,7 @@ skipInit transient unit statistics
 			float prevY = 0
 			for len
 				let value = s.values[s.values.length-1-i]
-				Vector2 pos = {startPos.x - i, startPos.y - (value/maxValue).max(1)*height + graphIndex}
+				Vector2 pos = {startPos.x - i, startPos.y - (value/maxValue).atMost(1)*height + graphIndex}
 				if i: drawRectangle pos, size:{4, prevY-pos.y+4}, color:s.color, valign:Top
 				prevY = pos.y
 			graphIndex++

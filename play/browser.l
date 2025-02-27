@@ -1,7 +1,7 @@
 transient skipInit unit Platform
 	public inline js string url := location.href
 	public inline js string hostname := location.hostname
-	public protocolAndHost := hostname && hostname != "localhost" ? "https://"+hostname : "http://localhost"
+	public protocolAndHost := hostname && hostname != "127.0.0.1" ? "https://"+hostname : "http://127.0.0.1"
 	public inline js int userAgent := navigator.userAgent.replace(/,/g," ")
 	public inline js float usedMemory := (performance.memory ? performance.memory.usedJSHeapSize : 0)
 	
@@ -41,15 +41,13 @@ transient skipInit unit Platform
 			return null
 		}
 			
-	js void setLocalStorageString: string key
+	js bool setLocalStorageString: string key
 		                           string value
-		                           void() then = null
-		                           void() else = null
 		try {
 			localStorage.setItem(key, value)
-			then?.()
+			return true
 		} catch(e) {
-			else?.()
+			return false
 		}
 		
 	js string getLocalStorageString: string key
@@ -93,11 +91,11 @@ transient skipInit unit Platform
 		clearTimeout(id)
 		
 	inline js void pushState: string url
-		                      object state = null
+		                      dynamic state = null
 		if(core.isPremiere) history.pushState(state, "", url);
 		
 	inline js void replaceState: string url
-		                         object state = null
+		                         dynamic state = null
 		if(core.isPremiere) history.replaceState(state, "", url);
 		
 	inline js void back

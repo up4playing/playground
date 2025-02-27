@@ -44,6 +44,8 @@ immutable Color
 		
 	Color withAlpha: float alpha
 		return {hex[1..7]+componentToHex(math.floor(alpha*255))}
+		
+enum TextOverflow: Visible, Wrap, Scale, WrapAndScale
 
 // A texture that can be loaded into video memory
 immutable Texture
@@ -216,7 +218,17 @@ enum HorizontalAlignment: Left, Center, Right
 enum VerticalAlignment: Top, Middle, Bottom
 enum FontStyle: Normal, Bold
 immutable ClippingPath: Vector2[] points; bool show
-		
+	
+TextHighlight
+	string from
+	string to
+	Color color
+	Color backgroundColor
+	float cornerRadius
+	Vector2 padding
+	Vector2 margin
+	bool wrap = true
+	
 // Draw on the screen
 // Screen space
 // - has always the reference size (1920 x 1080 by default) on all platforms
@@ -245,7 +257,7 @@ transient skipInit global unit graphics
 	public Color leftAndRightMarginColor = null // If the screen is wider than the reference, show a letterbox in this color
 	
 	private Vector2 pixelSize
-	private Vector2 size
+	internal Vector2 size
 	internal float pixelRatio
 	
 	async setup: Vector2 referenceSize
@@ -372,11 +384,14 @@ transient skipInit global unit graphics
 		
 	// ------------------------------------------------------- Image -------------------------------------------------------
 	
-	// Draw an image. Place a PNG file in the "media" folder and it will automatically be imported
+	// Draw an image. Place a PNG file in the media folder and it will automatically be imported.
+	// 
 	// Example: We place an image called "Idle.png" in the "media" folder. Then, we draw this image at the position {0,0}, scale it to a width of 32 pixels. Only the current player instance will see the image.
+	// ```
 	//     Player
 	//         tick
 	//             drawImage Idle, position:{0,0}, size:32, frame:0, visibleFor:me
+	// ```
 	// Image: drawImage0.png
 	global js void drawImage: Image image                         // The image to draw. PNG images in the "media" folder will automatically show up here
 		                      Vector2 position = {}               // By default, {0,0} is the center, {-960,-540} is the top left, {960,540} is the bottom right
@@ -401,7 +416,7 @@ transient skipInit global unit graphics
 				align == 0  ? position.x : align  == 1 ? position.x-sizeX*.5 : position.x-sizeX,
 				valign == 0 ? position.y : valign == 1 ? position.y-sizeY*.5 : position.y-sizeY,
 				sizeX, sizeY,
-				layer, alpha, graphics.currentClippingPath, image.file,
+				layer, alpha * graphics.currentAlpha, graphics.currentClippingPath, image.file,
 				location, position.location, size.location,
 				image.texture.imageOrCanvas,
 				f.x1, f.y1, f.w, f.h,
@@ -409,11 +424,14 @@ transient skipInit global unit graphics
 			))
 		}
 	
-	// Draw an image and rotate it or flip it vertially or horizontally
+	// Draw an image and rotate it or flip it vertially or horizontally.
+	//
 	// Example: Draw the image "Idle" at the position {0,0} and rotate it by 45 degrees.
+	// ```
 	//     Player
 	//         tick
 	//             drawImage Idle, position:{0,0}, angle:45°
+	// ```
 	// Image: drawImage1.png
 	global js void drawImage: Image image                         // The image to draw. PNG images in the "media" folder will automatically show up here
 		                      Vector2 position = {}               // By default, {0,0} is the center, {-960,-540} is the top left, {960,540} is the bottom right
@@ -446,7 +464,7 @@ transient skipInit global unit graphics
 					-sizeX/2,
 					-sizeY/2,
 					sizeX, sizeY,
-					layer, alpha, graphics.currentClippingPath, image.file, 
+					layer, alpha * graphics.currentAlpha, graphics.currentClippingPath, image.file, 
 					location, position.location, size.location,
 					image.texture.imageOrCanvas,
 					f.x1, f.y1, f.w, f.h,
@@ -455,11 +473,14 @@ transient skipInit global unit graphics
 			}
 		}
 
-	// Animate of sequence of images with a given number of frames per second
+	// Animate of sequence of images with a given number of frames per second.
+	//
 	// Example: We place a sequence of images called "Walk0.png", "Walk1.png", "Walk2.png", etc... in the "media" folder. Then, we play this sequence with 10 frames per second.
+	// ```
 	//     Player
 	//         tick
 	//             drawImage Walk, position:{0,0}, framesPerSecond:10
+	// ```
 	// Image: drawImage2.gif
 	global void drawImage: Image image                         // The image to draw. PNG images in the "media" folder will automatically show up here
 		                   Vector2 position = {}               // By default, {0,0} is the center, {-960,-540} is the top left, {960,540} is the bottom right
@@ -473,11 +494,14 @@ transient skipInit global unit graphics
 		var frame = math.floor(core.frame * math.max(framesPerSecond, 0) / core.targetFps) % image.frames.length;
 		drawImage image, position, frame, size, visibleFor, layer, alpha, color, location
 	
-	// Draw an image, animate it and flip it horizontally or vertically
+	// Draw an image, animate it and flip it horizontally or vertically.
+	//
 	// Example: We place a sequence of images called "Walk0.png", "Walk1.png", "Walk2.png", etc... in the "media" folder. Then, we play this sequence with 10 frames per second and flip each frame horizontally.
+	// ```
 	//     Player
 	//         tick
 	//             drawImage Walk, position:{0,0}, framesPerSecond:10, flipX:true
+	// ```
 	// Image: drawImage3.gif
 	global void drawImage: Image image                          // The image to draw. PNG images in the "media" folder will automatically show up here
 		                   Vector2 position = {}                // By default, {0,0} is the center, {-960,-540} is the top left, {960,540} is the bottom right
@@ -494,12 +518,15 @@ transient skipInit global unit graphics
 		var frame = math.floor(core.frame * math.max(framesPerSecond, 0) / core.targetFps) % image.frames.length;
 		drawImage image, position, frame, size, angle, flipX, flipY, visibleFor, layer, alpha, color, location
 	
-	// Draw an image and execute code when the player touches or clicks the image
+	// Draw an image and execute code when the player touches or clicks the image.
+	//
 	// Example: If the current player instance clicks the image or 16 pixels around it, we print the exact position that was clicked. If other players will click the image, nothing will happen.
+	// ```
 	//     Player
 	//         tick
 	//             drawImage Idle, position:{0,0}, clickableMargin:{16,16}, clickableBy:me
 	//                 print "The image was clicked at {touch.position}"
+	// ```
 	// Image: drawImage0.png
 	global void drawImage: Image image                          // The image to draw. PNG images in the "media" folder will automatically show up here
 		                   Vector2 position = {}                // By default, {0,0} is the center, {-960,-540} is the top left, {960,540} is the bottom right
@@ -531,12 +558,15 @@ transient skipInit global unit graphics
 		
 	// ------------------------------------------------------- Text -------------------------------------------------------
 	
-	// Draw text on the screen
+	// Draw text on the screen.
+	//
 	// Example: If the current player instance is the winner, we show "You've won!" to the current player instance. To use a custom font, just copy a TTF, WOFF or WOFF2 file to the "media" folder and it will automatically be imported.
+	// ```
 	//     Player
 	//         tick
 	//             if winner == me
 	//                 drawText "You've won!", size:100, color:Black, font:OpenSans, visibleFor:me
+	// ```
 	// Image: drawText.png
 	global drawText: implicit string text                 // A string or anything that can be converted into a string (for example, an interger or a float)
 		             Vector2 position = {}                // By default, {0,0} is the center, {-960,-540} is the top left, {960,540} is the bottom right
@@ -551,12 +581,14 @@ transient skipInit global unit graphics
 		             implicit layer = 0                   // Higher layers are drawn in front of lower layers
 		             alpha = 1.0                          // The opacity of the text (0: fully transparent, 1: fully visible)
 		             Angle angle = 0.0                    // Rotate the image by this angle in turns (0: no rotation, 1: one full rotation)
-		             float maxWidth = 0
 		             implicit Player[] visibleFor = null  // Only this player or list of players will see the text
 		             implicit Player[] clickableBy = null // Only this player or list of players can touch or click the text
 		             clickableMargin = Vector2(16,16)     // The margin around the text within which it is clickable
 		             showClickableArea = false            // Highlight the clickable area for debugging
 		             hotkey = Key.None                    // This keyboard shortcut will execute the onClick handler
+		             overflow = TextOverflow.Scale        // Should text that exceeds the max width be hidden or wrapped?
+		             float maxWidth = 0                   // The maximum width of line when overflow is set 'Scale', 'Hidden' or 'Wrap'
+		             float lineHeight = 0                 // The height of each line when overflow is set to 'Wrap'
 		             void(Touch touch) onClick = null     // Execute this code when the user touches or clicks the text or presses the hotkey
 		             SourceCodeLocation location
 		
@@ -564,17 +596,100 @@ transient skipInit global unit graphics
 		Font effectiveFont = font || currentFont
 		int fontSize = math.floor(size.y || size.x || currentFontSize)
 		float sizeX, sizeY
+		string[] lines = null
+		float[] lineOffsets = null
+		float effectiveLineHeight
+		float offsetX, offsetY
 		
-		if isVisible or onClick != null
-			sizeX = getTextWidth(text, {x:fontSize}, effectiveFont, style)
-			if maxWidth > 0
-				if sizeX > maxWidth
-					fontSize = math.floor(fontSize * maxWidth/sizeX)
-					sizeX = getTextWidth(text, {x:fontSize}, effectiveFont, style)
-					while sizeX > maxWidth
-						sizeX = getTextWidth(text, {x:--fontSize}, effectiveFont, style)
-			sizeY = fontSize*effectiveFont.actualHeightFactor
-		
+		if (overflow == Wrap or overflow == WrapAndScale) and maxWidth
+			// Split text into words
+			string word
+			string[] words
+			for text.length
+				let c = text[.]
+				if c == " "
+					if word: words.add word
+					word = ""
+				else
+				if c == "\n"
+					words.add word + "\n"
+					word = ""
+				else
+					word += c
+			if word: words.add word
+				
+			// Layout lines
+			let spaceWidth = getTextWidth(" ", {x:fontSize}, effectiveFont, style)
+			lines = []
+			float totalWidth
+			string line
+			for words as word
+				float wordWidth = getTextWidth(word, {x:fontSize}, effectiveFont, style)
+				if totalWidth + wordWidth > maxWidth
+					if line
+						// Finish the line and start a new line with the current word
+						lines.add line
+						line = word + " "
+						totalWidth = wordWidth + spaceWidth
+					else
+						// A single word is already too wide for the line
+						// Create a line with this word start a new empty line
+						lines.add word
+						line = ""
+						totalWidth = 0
+				else
+					line += word + " "
+					totalWidth += wordWidth + spaceWidth
+					
+				if word[word.length-1] == "\n"
+					lines.add line
+					line = ""
+					totalWidth = 0
+					
+			if line: lines.add line
+			
+			// Calculate offset for each line and find widest line
+			string widestLine
+			sizeX = -1
+			lineOffsets = []
+			float factor = -alignmentFactor[align]
+			for lines
+				float lineSizeX = getTextWidth(. size:fontSize)
+				lineOffsets.add lineSizeX * factor
+				if lineSizeX > sizeX
+					sizeX = lineSizeX
+					widestLine = .
+					
+			if overflow == WrapAndScale and sizeX > maxWidth
+				// Scale
+				fontSize = math.floor(fontSize * maxWidth/sizeX)
+				sizeX = getTextWidth(widestLine, {x:fontSize}, effectiveFont, style)
+				while sizeX > maxWidth
+					sizeX = getTextWidth(widestLine, {x:--fontSize}, effectiveFont, style)
+					
+				for lines
+					lineOffsets[i] = getTextWidth(. size:fontSize)*factor
+				
+			effectiveLineHeight = lineHeight || fontSize*1.3
+			sizeY = lines.length * effectiveLineHeight - (effectiveLineHeight - fontSize * effectiveFont.actualHeightFactor)
+							
+		else
+			if isVisible or onClick != null
+				sizeX = getTextWidth(text, {x:fontSize}, effectiveFont, style)
+				
+				if overflow == Scale and maxWidth
+					// Scale
+					if sizeX > maxWidth
+						fontSize = math.floor(fontSize * maxWidth/sizeX)
+						sizeX = getTextWidth(text, {x:fontSize}, effectiveFont, style)
+						while sizeX > maxWidth
+							sizeX = getTextWidth(text, {x:--fontSize}, effectiveFont, style)
+			
+			effectiveLineHeight = effectiveLineHeight || fontSize*1.5			
+			sizeY = fontSize * effectiveFont.actualHeightFactor
+			offsetX = -alignmentFactor[ align]*sizeX
+		offsetY = -alignmentFactor[valign]*sizeY
+			
 		if isVisible
 			Matrix2D matrix
 			float x, y
@@ -582,16 +697,19 @@ transient skipInit global unit graphics
 			else          matrix = totalMatrix.clone().move(position).rotate(angle); x = 0; y = 0
 			items.add new DisplayText(
 				matrix,
-				x - alignmentFactor[ align]*sizeX,
-				y - alignmentFactor[valign]*sizeY,
+				x + offsetX,
+				y + offsetY,
 				sizeX, sizeY, 
-				layer, alpha, currentClippingPath, text, 
+				layer, alpha * graphics.currentAlpha, currentClippingPath, text, 
 				location, position.location, size.location,
 				(color || currentColor).hex, 
 				outlineColor ? outlineColor.hex : null,
 				outlineWidth || currentLineWidth,
 				effectiveFont.offset.y*sizeY,
-				(style ? "bold ":"")+fontSize+"px "+effectiveFont.name
+				(style ? "bold ":"")+fontSize+"px "+effectiveFont.name,
+				lines,
+				lineOffsets,
+				effectiveLineHeight
 			)
 		
 		if onClick != null
@@ -602,11 +720,203 @@ transient skipInit global unit graphics
 				if hotkey
 					input.onKeyDown hotkey, by:effectiveClickableBy
 						onClick null
+						
+		return sizeY
+		
+	// Draw text with segments highlighted which are surrounded by given characters.
+	//
+	// Example:
+	// ```
+	//     drawTextWithHighlight "Kate se «da vuelta».", position:{0,0}, highlights:[
+	//         { "«"  to: "»"  color:White, backgroundColor:app.primaryColor, padding:{12,3}, cornerRadius:12 }
+	//         { "\"" to: "\"" color:White, backgroundColor:app.helpingColor, padding:{12,3}, cornerRadius:12 }
+	//     ]
+	// ```
+	global float drawTextWithHighlight: implicit string text                 // A string or anything that can be converted into a string (for example, an interger or a float)
+		                                Vector2 position = {}                // By default, {0,0} is the center, {-960,-540} is the top left, {960,540} is the bottom right
+		                                TextHighlight[] highlights = []      // Sepecifies which characters surround a sections and how it should be highlighted
+		                                implicit Vector2 size = {}           // The font size of the text
+		                                Color color = null                   // The color of the text
+		                                HorizontalAlignment align = Center   // The horizontal alignment of the text
+		                                VerticalAlignment valign = Middle    // The vertical alignment of the text
+		                                FontStyle style = Normal             // Whether the text should be bold or normal style
+		                                Font font = null                     // To use a custom font, just copy a TTF, WOFF or WOFF2 file to the "media" folder
+		                                Color outlineColor = null            // The color of the outline around the text
+		                                outlineWidth = 0                     // The width of the outline around the text in pixels
+		                                implicit layer = 0                   // Higher layers are drawn in front of lower layers
+		                                alpha = 1.0                          // The opacity of the text (0: fully transparent, 1: fully visible)
+		                                Angle angle = 0.0                    // Rotate the image by this angle in turns (0: no rotation, 1: one full rotation)
+		                                implicit Player[] visibleFor = null  // Only this player or list of players will see the text
+		                                implicit Player[] clickableBy = null // Only this player or list of players can touch or click the text
+		                                clickableMargin = Vector2(16,16)     // The margin around the text within which it is clickable
+		                                showClickableArea = false            // Highlight the clickable area for debugging
+		                                hotkey = Key.None                    // This keyboard shortcut will execute the onClick handler
+		                                overflow = TextOverflow.Scale        // Should text that exceeds the max width be hidden or wrapped?
+		                                float maxWidth = float.maxValue      // The maximum width of line when overflow is set 'Scale', 'Hidden' or 'Wrap'
+		                                float lineHeight = 0                 // The height of each line when overflow is set to 'Wrap'
+		                                void(Touch touch) onClick = null     // Execute this code when the user touches or clicks the text or presses the hotkey
+		                                SourceCodeLocation location
+		bool isVisible = isVisibleFor(visibleFor)
+		Font effectiveFont = font || currentFont
+		int fontSize = math.floor(size.y || size.x || currentFontSize)
+		float sizeX, sizeY
+		float effectiveLineHeight = lineHeight or fontSize*1.3
+		float offsetX, offsetY
+	
+		// Split text into words
+		string word
+		string[] words
+		for text.length
+			let c = text[.]
+			if c == " "
+				if word: words.add word
+				word = ""
+			else
+			if c == "\n"
+				words.add word + "\n"
+				word = ""
+			else
+				word += c
+		if word: words.add word
 			
-	// Draw text around a circle
+		// Layout lines
+		let spaceWidth = getTextWidth(" ", {x:fontSize}, effectiveFont, style)
+		TextSegment segment = {}
+		TextSegment[] segments = [ segment ]
+		TextHighlight highlight
+		
+		for words as word
+			string suffix, prefix
+			float suffixWidth, prefixWidth
+			TextHighlight startHighlight, endHighlight
+			int startIndex
+			float expectedSegmentWidth = segment.size.x
+			
+			if not highlight
+				// Find highlight start character
+				for highlights
+					startIndex = word.indexOf .from
+					if startIndex != -1
+						startHighlight = .
+						if startIndex > 0
+							prefix = word[..startIndex]
+							prefixWidth = getTextWidth(prefix size:fontSize, effectiveFont, style)
+							expectedSegmentWidth += prefixWidth
+						word = word[startIndex+1..]
+						expectedSegmentWidth += .margin.x + .padding.x*2
+						break
+						
+			if highlight or startHighlight
+				// Find highlight end character
+				for highlights
+					int endIndex = word.indexOf .to, startIndex+1
+					if endIndex != -1
+						endHighlight = .
+						if endIndex < word.length-1
+							suffix = word[endIndex+1..]
+							suffixWidth = getTextWidth(suffix size:fontSize, effectiveFont, style)
+							expectedSegmentWidth += suffixWidth
+						word = word[..endIndex]
+						break
+		
+			// Measure current word
+			float wordWidth = getTextWidth(word, size:fontSize, effectiveFont, style)
+			
+			// Is there something in the current line?
+			if segment.text or segment.position.x > 0
+				expectedSegmentWidth += spaceWidth
+				if highlight: expectedSegmentWidth += highlight.margin.x
+				
+				// Check if the current word still fits in the line
+				if segment.position.x + expectedSegmentWidth + wordWidth > maxWidth
+					if highlight == null or highlight.wrap
+						segments.add segment = {position:{0, segment.position.y}, highlight, size:highlight ? highlight.padding*2 : {}}
+					segment.position.x = 0
+					segment.position.y += effectiveLineHeight
+			
+			// Space between words
+			if segment.text or segment.position.x > 0
+				segment.text += " "
+				segment.size.x += spaceWidth
+		
+			// Start highlight
+			if startHighlight
+				if prefix
+					segment.text += prefix
+					segment.size.x += prefixWidth
+				highlight = startHighlight
+				segments.add segment = { position:{segment.position.x + segment.size.x + highlight.margin.x, segment.position.y}, highlight, size:highlight.padding*2 }
+				
+			// Add word
+			segment.text += word
+			segment.size.x += wordWidth
+				
+			// End highlight
+			if endHighlight
+				segments.add segment = { position:{segment.position.x + segment.size.x + highlight.margin.x, segment.position.y} }
+				highlight = null
+				if suffix
+					segment.text += suffix
+					segment.size.x += suffixWidth
+					
+			if segment.text[segment.text.length-1] == "\n"
+				segments.add segment = {position:{0, segment.position.y + effectiveLineHeight}, highlight, size:highlight ? highlight.padding*2 : {}}
+
+		// Align
+		float factor = alignmentFactor[align]
+		int lineStartIndex
+		float lineWidth
+		for segments.length + 1 as index
+			let s = segments[index]
+			if not s or segment.position.x == 0
+				for lineStartIndex to index
+					segments[.].position.x -= lineWidth * factor
+				lineStartIndex = index
+			if index < segments.length
+				lineWidth += s.size.x
+				
+		segments.each.size.y = fontSize
+		sizeY = segments ? segments.last.position.y + fontSize : 0
+		offsetY = -alignmentFactor[valign]*sizeY
+			
+		if isVisible
+			Matrix2D matrix
+			float x, y
+			if not angle: matrix = totalMatrix; x = position.x; y = position.y
+			else          matrix = totalMatrix.clone().move(position).rotate(angle); x = 0; y = 0
+			items.add new DisplayTextWithHighlights(
+				matrix,
+				x + offsetX,
+				y + offsetY,
+				sizeX, sizeY, 
+				layer, alpha * graphics.currentAlpha, currentClippingPath, text, 
+				location, position.location, size.location,
+				(color || currentColor).hex, 
+				outlineColor ? outlineColor.hex : null,
+				outlineWidth || currentLineWidth,
+				effectiveFont.offset.y*sizeY,
+				(style ? "bold ":"")+fontSize+"px "+effectiveFont.name,
+				segments
+			)
+		
+		if onClick != null
+			// Handle click (only visible buttons are clickable)
+			let effectiveClickableBy = getClickableBy(visibleFor, clickableBy)
+				Vector2 effectiveSize = {sizeX + clickableMargin.x, sizeY + clickableMargin.y}
+				input.onTouchDown position, size:effectiveSize, by:effectiveClickableBy, showClickableArea, do:onClick
+				if hotkey
+					input.onKeyDown hotkey, by:effectiveClickableBy
+						onClick null
+						
+		return sizeY
+			
+	// Draw text around a circle.
+	// 
 	// Example: Draw text around a circular video
+	// ```
 	//     drawVideo me, position:pos, shape:Circle, size:radius*2-40
 	//     drawCircularText "Made up by", position:pos, size:30, radius, angle:-.07
+	// ```
 	global drawCircularText: implicit string text                 // A string or anything that can be converted into a string (for example, an interger or a float)
 		                     Vector2 position = {}                // By default, {0,0} is the center, {-960,-540} is the top left, {960,540} is the bottom right
 		                     float size = 0                       // The font size of the text
@@ -632,14 +942,17 @@ transient skipInit global unit graphics
 
 	// ------------------------------------------------------- Button -------------------------------------------------------
 	
-	// Draw a button made up of an image and a text and execute code when its touched or clicked
+	// Draw a button made up of an image and a text and execute code when its touched or clicked.
+	//
 	// Example: If the current player instance touches or clicks the image or 16 pixels around it, we print the exact position that was touched. If other players will touch the image, nothing will happen.
+	// ```
 	//     Player
 	//         bool done
 	//         tick
 	//             if not done
 	//                 drawButton "I'm done", image:Button, visibleFor:me
 	//                     done = true
+	// ```
 	// Image: drawButton.png
 	global void drawButton: Image image = null                   // The image of the button. PNG images in the "media" folder will automatically show up here
 		                    text = ""                            // The text of the button
@@ -697,11 +1010,14 @@ transient skipInit global unit graphics
 			
 	// ------------------------------------------------------- Rectangle -------------------------------------------------------
 	
-	// Draw a rectangle on the screen
+	// Draw a rectangle on the screen.
+	//
 	// Example: Draw a white rectangle with a black outline that is 8 pixels wide.
+	// ```
 	//     app
 	//         tick
 	//             drawRectangle size:{500,100}, color:White, outlineColor:Black, outlineWidth:8
+	// ```
 	// Image: drawRectangle.png
 	global js void drawRectangle: position = Vector2()                // By default, {0,0} is the center, {-960,-540} is the top left, {960,540} is the bottom right
 		                          implicit size = Vector2(256,256)    // The size of the rectangle, use a float to draw a square, use a vector to draw a rectangle
@@ -722,7 +1038,7 @@ transient skipInit global unit graphics
 				align == 0  ? position.x : align  == 1 ? position.x-sizeX*.5 : position.x-sizeX,
 				valign == 0 ? position.y : valign == 1 ? position.y-sizeY*.5 : position.y-sizeY,
 				sizeX, sizeY,
-				layer, alpha, graphics.currentClippingPath, "Rectangle", 
+				layer, alpha * graphics.currentAlpha, graphics.currentClippingPath, "Rectangle", 
 				location, position.location, size.location,
 				color || !outlineColor ? (color || graphics.currentColor).hex : null,
 				outlineColor ? outlineColor.hex : null,
@@ -730,11 +1046,14 @@ transient skipInit global unit graphics
 			))
 		}
 		
-	// Draw a rectangle with rounded corners on the screen
+	// Draw a rectangle with rounded corners on the screen.
+	//
 	// Example: Draw a rounded rectangle at {500,100} with a black outline that is 8 pixels wide and has a corner radius of 20 pixels.
+	// ```
 	//     app
 	//         tick
 	//             drawRoundedRectangle size:{500,100}, outlineColor:Black, outlineWidth:8, radius:20
+	// ```
 	// Image: drawRoundedRectangle.png
 	global js void drawRoundedRectangle: position = Vector2()                // By default, {0,0} is the center, {-960,-540} is the top left, {960,540} is the bottom right
 		                                 implicit size = Vector2(256,256)    // The size of the rectangle, use a float to draw a square, use a vector to draw a rectangle
@@ -755,7 +1074,7 @@ transient skipInit global unit graphics
 				align == 0  ? position.x : align  == 1 ? position.x-sizeX*.5 : position.x-sizeX,
 				valign == 0 ? position.y : valign == 1 ? position.y-sizeY*.5 : position.y-sizeY,
 				sizeX, sizeY,
-				layer, alpha, graphics.currentClippingPath, "RoundedRectangle", 
+				layer, alpha * graphics.currentAlpha, graphics.currentClippingPath, "RoundedRectangle", 
 				location, position.location, size.location,
 				radius,
 				color || !outlineColor ? (color || graphics.currentColor).hex : null,
@@ -766,21 +1085,30 @@ transient skipInit global unit graphics
 		
 	// ------------------------------------------------------- Circle -------------------------------------------------------
 	
-	// Draw a circle on the screen
+	// Draw a circle on the screen.
+	//
 	// Example: Draw a white circle with a blue outline and a diameter of 150 pixels.
+	// ```
 	//     app
 	//         tick
 	//             drawCircle color:White, outlineColor:#118ab2, outlineWidth:12, size:150
+	// ```
 	// Image: drawCircle0.png
+	// 
 	// Example: Draw a white circle with a blue outline and a width of 200 pixels and a height of 100 pixels.
+	// ```
 	//     app
 	//         tick
 	//             drawCircle color:White, outlineColor:#118ab2, outlineWidth:12, size:{200, 100}
+	// ```
 	// Image: drawCircle1.png
+	//
 	// Example: Draw an arc of 180 degrees (half a circle) starting at an angle of 0 degrees.
+	// ```
 	//     app
 	//         tick
 	//             drawCircle outlineColor:#118ab2, outlineWidth:24, size:100, startAngle:0°, angle:180°
+	// ```
 	// Image: drawCircle2.png
 	global js void drawCircle: position = Vector2()                    // By default, {0,0} is the center, {-960,-540} is the top left, {960,540} is the bottom right
 		                       implicit Vector2 size = {256,256}       // The size of the circle, use a float to draw a circle, use a vector draw an ellipse
@@ -801,7 +1129,7 @@ transient skipInit global unit graphics
 				position.x - sizeX/2, 
 				position.y - sizeY/2, 
 				sizeX, sizeY,
-				layer, alpha, graphics.currentClippingPath, "Circle", 
+				layer, alpha * graphics.currentAlpha, graphics.currentClippingPath, "Circle", 
 				location, position.location, size.location,
 				startAngle, angle,
 				direction == 1,
@@ -813,11 +1141,14 @@ transient skipInit global unit graphics
 		
 	// ------------------------------------------------------- Line -------------------------------------------------------
 	
-	// Draw a line on the screen
+	// Draw a line on the screen.
+	//
 	// Example: Draw a blue line from {-100,0} to {100,0}
+	// ```
 	//     app
 	//         tick
 	//             drawLine {-100,0} to {100,0} color:Blue
+	// ```
 	// Image: drawLine.png
 	global js void drawLine: Vector2 from                        // The point to start the line from
 		                     nocolon Vector2 to                  // The point to draw the line to
@@ -831,7 +1162,7 @@ transient skipInit global unit graphics
 				graphics.totalMatrix,
 				from.x, from.y,
 				to.x - from.x, to.y - from.y,
-				layer, alpha, graphics.currentClippingPath, "Line", 
+				layer, alpha * graphics.currentAlpha, graphics.currentClippingPath, "Line", 
 				location, from.location, null,
 				to,
 				(color || graphics.currentColor).hex,
@@ -839,11 +1170,14 @@ transient skipInit global unit graphics
 			))
 		}
 		
-	// Draw a continuous stroke of lines on the screen
+	// Draw a continuous stroke of lines on the screen.
+	//
 	// Example: Draw a blue stroke of lines through {-50,0}, {0,50} and {100,-50} with a width of 32 pixels
+	// ```
 	//     app
 	//         tick
 	//             drawLines [{-50,0}, {0,50}, {100,-50}] color:Blue width:32
+	// ```
 	// Image: drawLines.png
 	global js void drawLines: Vector2[] points                    // A list of points for the line
 		                      Vector2 position = {}               // The position all points are relative to 
@@ -858,7 +1192,7 @@ transient skipInit global unit graphics
 				graphics.totalMatrix,
 				position.x, position.y,
 				0, 0,
-				layer, alpha, graphics.currentClippingPath, "Line", 
+				layer, alpha * graphics.currentAlpha, graphics.currentClippingPath, "Line", 
 				location, position.location, null,
 				points,
 				null, // no fill color, because we want to draw a line instead of a polygon
@@ -870,11 +1204,14 @@ transient skipInit global unit graphics
 		
 	// ------------------------------------------------------- Polygon -------------------------------------------------------
 	
-	// Draw a polygon on the screen
+	// Draw a polygon on the screen.
+	//
 	// Example: Draw a white polygon with the corners {-50,50}, {0,-50} and {50,50} and a blue outline
+	// ```
 	//     app
 	//         tick
 	//             drawPolygon [{-50,50}, {0,-50}, {50,50}] color:White outlineColor:Blue
+	// ```
 	// Image: drawPolygon.png
 	global js void drawPolygon: Vector2[] points                    // A list of points for the polygon
 		                        Vector2 position = {0,0}            // The position all polygon points are relative to
@@ -890,7 +1227,7 @@ transient skipInit global unit graphics
 				graphics.totalMatrix,
 				position.x, position.y,
 				0, 0,
-				layer, alpha, graphics.currentClippingPath, "Polygon", 
+				layer, alpha * graphics.currentAlpha, graphics.currentClippingPath, "Polygon", 
 				location, position.location, null,
 				points,
 				color || !outlineColor ? (color || graphics.currentColor).hex : null,
@@ -902,11 +1239,14 @@ transient skipInit global unit graphics
 		
 	// ------------------------------------------------------- Video -------------------------------------------------------
 	
-	// Draw the video feed showing the given player on the screen
+	// Draw the video feed showing the given player on the screen.
+	//
 	// Example: Draw the video feed for the current player instance with a width of 200 pixels
+	// ```
 	//     Player
 	//         tick
 	//             drawVideo me, size:200
+	// ```
 	// Image: drawVideo.png
 	global drawVideo: Player player                       // Draw the video showing this player
 		              Vector2 position = {}               // By default, {0,0} is the center, {-960,-540} is the top left, {960,540} is the bottom right
@@ -929,11 +1269,14 @@ transient skipInit global unit graphics
 				
 	// ------------------------------------------------------- Pointer -------------------------------------------------------
 	
-	// Draw a pointer at the mouse position of the given player on the screen
+	// Draw a pointer at the mouse position of the given player on the screen.
+	//
 	// Example: Draw a pointer at the mouce position of the current player instance
+	// ```
 	//     Player
 	//         tick
 	//             drawPointer me
+	// ```
 	// Image: drawPointer.png
 	global drawPointer: Player player                  // Show the mouse position of this player
 		                ShowPointersMode mode = Remote // Choose whether you want to draw the pointers for local players, remote players or both
@@ -953,11 +1296,14 @@ transient skipInit global unit graphics
 	// ------------------------------------------------------- Texture -------------------------------------------------------
 	
 	// Draw a texture which you can dynamically load from anywhere
+	//
 	// Example: Dynamically load the file "Character.png" from the assets folder and draw it on the screen with a width of 100 pixels.
+	// ```
 	//     app
 	//         Texture character = {"Character.png"}
 	//         tick
 	//             drawTexture character, size:100
+	// ```
 	// Image: drawTexture0.png
 	global js void drawTexture: Texture texture                     // The texture to draw
 		                        Vector2 position = {}               // By default, {0,0} is the center, {-960,-540} is the top left, {960,540} is the bottom right
@@ -975,7 +1321,7 @@ transient skipInit global unit graphics
 				position.x - sizeX/2,
 				position.y - sizeY/2,
 				sizeX, sizeY,
-				layer, alpha, graphics.currentClippingPath, texture.file,
+				layer, alpha * graphics.currentAlpha, graphics.currentClippingPath, texture.file,
 				location, position.location, size.location,
 				texture.imageOrCanvas,
 				0, 0, texture.size.x, texture.size.y,
@@ -983,12 +1329,15 @@ transient skipInit global unit graphics
 			))
 		}
 
-	// Draw part of a texture which you can dynamically load from anywhere
+	// Draw part of a texture which you can dynamically load from anywhere.
+	// 
 	// Example: Dynamically load the file "Character.png" from the assets folder, take a part of this texture with a size of {16,32} centered around {8,0} and draw it on the screen with a size of {100,200}. 
+	// ```
 	//     app
 	//         Texture character = {"Character.png"}
 	//         tick
 	//             drawTexture character, sourcePosition:{8,0}, sourceSize:{16,32}, size:{100,200}
+	// ```
 	// Image: drawTexture1.png
 	global js void drawTexture: Texture texture                     // The texture to draw
 		                        Vector2 position = {}               // The target position to draw to
@@ -1008,7 +1357,7 @@ transient skipInit global unit graphics
 				position.x - sizeX/2,
 				position.y - sizeY/2,
 				sizeX, sizeY,
-				layer, alpha, graphics.currentClippingPath, texture.file, 
+				layer, alpha * graphics.currentAlpha, graphics.currentClippingPath, texture.file, 
 				location, position.location, size.location,
 				texture.imageOrCanvas,
 				sourcePosition.x+texture.size.x/2-sourceSize.x/2,
@@ -1021,11 +1370,14 @@ transient skipInit global unit graphics
 		
 	// ------------------------------------------------------- Clear -------------------------------------------------------
 	
-	// Clear all pixels within a rectangle
+	// Clear all pixels within a rectangle.
+	//
 	// Example: Clear all pixels within a rectangle with a width of 100 pixels and a height of 100 pixels
+	// ```
 	//     app
 	//         tick
 	//             clearRectangle position:{0,0} size:{100,100}
+	// ```
 	// Image: clearRectangle.png
 	global js void clearRectangle: position = Vector2()                // By default, {0,0} is the center, {-960,-540} is the top left, {960,540} is the bottom right
 		                           implicit size = Vector2(256,256)    // The size of the rectangle, use a float to clear a square, use a vector to clear a rectangle
@@ -1049,13 +1401,16 @@ transient skipInit global unit graphics
 		
 	// ------------------------------------------------------- Transform -------------------------------------------------------
 
-	// Move all drawing operations in a block of code by a given vector
+	// Move all drawing operations in a block of code by a given vector.
+	//
 	// Example: Move an image and a text 500 pixels to the right
+	// ```
 	//     app
 	//         tick
 	//             graphics.move {500,0}
 	//                 drawText "OK"
 	//                 drawImage Button
+	// ```
 	// Image: graphicsMove.png
 	move: Vector2 distance // The distance to move
 		  void() code      // All drawing operations within this block will be moved
@@ -1067,13 +1422,16 @@ transient skipInit global unit graphics
 		localMatrix.m0 = a0; localMatrix.m1 = a1; localMatrix.m2 = a2; localMatrix.m3 = a3; localMatrix.m4 = a4; localMatrix.m5 = a5 
 		totalMatrix.m0 = b0; totalMatrix.m1 = b1; totalMatrix.m2 = b2; totalMatrix.m3 = b3; totalMatrix.m4 = b4; totalMatrix.m5 = b5 
 							
-	// Rotate all drawing operations in a block of code by a given angle				
+	// Rotate all drawing operations in a block of code by a given angle
+	//			
 	// Example: Rotate an image and a text by 20 degrees.
+	// ```
 	//     app
 	//         tick
 	//             graphics.rotate 20°
 	//                 drawText "OK"
 	//                 drawImage Button
+	// ```
 	// Image: graphicsRotate.png
 	rotate: Angle angle  // The angle in turns (0: no rotation, 1: one full rotation)
 		    void() code  // All drawing operations within this block of code will be rotated
@@ -1086,13 +1444,16 @@ transient skipInit global unit graphics
 		localMatrix.m0 = a0; localMatrix.m1 = a1; localMatrix.m2 = a2; localMatrix.m3 = a3; localMatrix.m4 = a4; localMatrix.m5 = a5 
 		totalMatrix.m0 = b0; totalMatrix.m1 = b1; totalMatrix.m2 = b2; totalMatrix.m3 = b3; totalMatrix.m4 = b4; totalMatrix.m5 = b5 
 	
-	// Scale all drawing operations in a block of code by a given factor
+	// Scale all drawing operations in a block of code by a given factor.
+	//
 	// Example: Scale an image and a text by to twice their original size.
+	// ```
 	//     app
 	//         tick
 	//             graphics.scale 2
 	//                 drawText "OK"
 	//                 drawImage Button
+	// ```
 	// Image: graphicsScale.png
 	scale: float factor // The factor to scale by
 		   void() code  // All drawing operations within this block of code will be scaled
@@ -1105,13 +1466,16 @@ transient skipInit global unit graphics
 		localMatrix.m0 = a0; localMatrix.m1 = a1; localMatrix.m2 = a2; localMatrix.m3 = a3; localMatrix.m4 = a4; localMatrix.m5 = a5 
 		totalMatrix.m0 = b0; totalMatrix.m1 = b1; totalMatrix.m2 = b2; totalMatrix.m3 = b3; totalMatrix.m4 = b4; totalMatrix.m5 = b5 
 	
-	// Move, rotate and scale all drawing operations in a block of code
+	// Move, rotate and scale all drawing operations in a block of code.
+	//
 	// Example: Move an image an a text 500 pixels to the right, rotate them by 90 degrees and scale them to half their original size.
+	// ```
 	//     app
 	//         tick
 	//             graphics.transform move:{500,0} rotate:90° scale:.5
 	//                 drawText "OK"
 	//                 drawImage Button
+	// ```
 	// Image: graphicsTransform.png
 	transform: Vector2 move = Vector2.none  // The distance to move
 		       Angle rotate = 0             // The angle in turns (0: no rotation, 1: one full rotation)
@@ -1132,13 +1496,16 @@ transient skipInit global unit graphics
 		localMatrix.m0 = a0; localMatrix.m1 = a1; localMatrix.m2 = a2; localMatrix.m3 = a3; localMatrix.m4 = a4; localMatrix.m5 = a5 
 		totalMatrix.m0 = b0; totalMatrix.m1 = b1; totalMatrix.m2 = b2; totalMatrix.m3 = b3; totalMatrix.m4 = b4; totalMatrix.m5 = b5 
 	
-	// Apply a matrix to all drawing operations in a block of code
+	// Apply a matrix to all drawing operations in a block of code.
+	//
 	// Example: Apply the matrix {1 .3 .7 1 0 0} to a text and an image
+	// ```
 	//     app
 	//         tick
 	//             graphics.applyMatrix {1 .3 .7 1 0 0}
 	//                 drawText "OK"
 	//                 drawImage Button
+	// ```
 	// Image: graphicsApplyMatrix.png
 	applyMatrix: Matrix2D matrix // The matrix to apply
 		         void() code     // The matrix will be applied to all drawing operation within this block of code
@@ -1152,22 +1519,28 @@ transient skipInit global unit graphics
 	
 	// ------------------------------------------------------- Clip -------------------------------------------------------
 	
-	// For all drawing operations in a block of code, only pixels inside a given polygon are drawn
+	// For all drawing operations in a block of code, only pixels inside a given polygon are drawn.
+	//
 	// Example: Draw three circles and clip all of them within the polygon with the corners {0,-80}, {-100,80}, {100,80}
+	// ```
 	//     app
 	//         tick
 	//             graphics.clip points:[{0,-80}, {-100,80}, {100,80}]
 	//                 drawCircle {   0, -80}, size:150, color:Blue
 	//                 drawCircle {-100,  80}, size:150, color:Blue
 	//                 drawCircle { 100,  80}, size:150, color:Blue
+	// ```
 	// Image: graphicsClip0.png
+	//
 	// Example: Draw three circles and clip two of them within the polygon with the corners {0,-80}, {-100,80}, {100,80}
+	// ```
 	//     app
 	//         tick
 	//             graphics.clip points:[{0,-80}, {-100,80}, {100,80}]
 	//                 drawCircle {   0, -80}, size:150, color:Blue
 	//                 drawCircle {-100,  80}, size:150, color:Blue
 	//             drawCircle { 100,  80}, size:150, color:Blue
+	// ```
 	// Image: graphicsClip1.png
 	clip: Vector2[] points      // A list of points that define the clipping area
 		  Vector2 position = {} // The position all points are relative to 
@@ -1183,13 +1556,16 @@ transient skipInit global unit graphics
 		
 	// ------------------------------------------------------- Visibility -------------------------------------------------------
 	
-	// All drawing operations in a block of code will only be visible to certain players
+	// All drawing operations in a block of code will only be visible to certain players.
+	//
 	// Example: Draw a button that is only visible to the current player instance
+	// ```
 	//     Player
 	//         tick
 	//             visibleFor me
 	//                 drawText "OK"
 	//                 drawImage Button
+	// ```
 	// Image: graphicsVisibleFor.png
 	visibleFor: implicit Player[] player // Only this player or list of players will see the drawing operations
 		        void() code              // All drawing operations in this block of code will only be visible to the given players
@@ -1274,6 +1650,23 @@ transient skipInit global unit graphics
 		return currentLineWidth
 	private currentLineWidth = 8
 	
+	// ------------------------------------------------------- Alpha -------------------------------------------------------
+	
+	// The default line width for all drawing operations
+	alpha
+		return currentAlpha
+	alpha: float alpha
+		currentAlpha = alpha
+		return currentAlpha
+	alpha: float alpha
+		   void() code
+		let prev = currentAlpha
+		currentAlpha = alpha
+		code()
+		currentAlpha = prev
+		return currentAlpha
+	private float currentAlpha = 1.0
+	
 	// ------------------------------------------------------- Measure text -------------------------------------------------------
 	
 	// Measures the width of a string in pixels
@@ -1281,6 +1674,7 @@ transient skipInit global unit graphics
 		                        implicit Vector2 size = {}  // The font size of the text
 		                        Font font = null            // The font of the text
 		                        FontStyle style = Normal    // Whether the text should be bold or normal style
+		if(!text) return 0
 		let effectiveFont = font || graphics.currentFont
 		let fontSize = size.y || size.x || graphics.currentFontSize
 		graphics.context.font =  (style ? "bold ":"")+fontSize+"px "+effectiveFont.name;
@@ -1290,13 +1684,13 @@ transient skipInit global unit graphics
 	// ------------------------------------------------------- Position -------------------------------------------------------
 	
 	getAbsolutPosition: Vector2 position
-		return position.getTransformed(localMatrix)
+		return position.transformed(localMatrix)
 		
 	getRelativePosition: Vector2 position
 		return position.getRelativeTo(localMatrix)
 		
 	getPixelPosition: Vector2 position
-		return position.getTransformed(totalMatrix) / pixelRatio
+		return position.transformed(totalMatrix) / pixelRatio
 		
 	getPixelSize: Vector2 size
 		return size * {totalMatrix.m0, totalMatrix.m3} / pixelRatio
@@ -1702,23 +2096,113 @@ transient DisplayItem DisplayText
 	float outlineWidth
 	float offsetY
 	string font
+	string[] lines = null
+	float[] lineOffsets = null
+	float lineHeight
+	
 	js void draw
 		if(this.alpha == 0) return
 		graphics.context.setTransform(this.m0, this.m1, this.m2, this.m3, this.m4, this.m5)
 		graphics.context.globalAlpha = this.alpha
 		if(this.clippingPath) this.startClipping()
-			
 		graphics.context.font = this.font
-		if(this.outlineColor) {
-			graphics.context.lineWidth = this.outlineWidth
-			graphics.context.strokeStyle = this.outlineColor
-			graphics.context.strokeText(this.name, this.x, this.y)
+		if(!this.lines) {
+			// Single line
+			if(this.outlineColor) {
+				graphics.context.lineWidth = this.outlineWidth
+				graphics.context.strokeStyle = this.outlineColor
+				graphics.context.strokeText(this.name, this.x, this.y)
+			}
+			graphics.context.fillStyle = this.fillStyle
+			graphics.context.fillText(this.name, this.x, this.y - this.offsetY)
+		} else {
+			// Multiple lines
+			let y = this.y
+			for(let i=0; i<this.lines.length; i++) {
+				let line = this.lines[i];
+				let offset = this.lineOffsets[i];
+				if(this.outlineColor) {
+					graphics.context.lineWidth = this.outlineWidth
+					graphics.context.strokeStyle = this.outlineColor
+					graphics.context.strokeText(line, this.x + offset, y)
+				}
+				graphics.context.fillStyle = this.fillStyle
+				graphics.context.fillText(line, this.x + offset, y)
+				y += this.lineHeight
+			}
 		}
-		graphics.context.fillStyle = this.fillStyle
-		graphics.context.fillText(this.name, this.x, this.y - this.offsetY)
 		
 		if(this.clippingPath) this.endClipping()
+
+TextSegment
+	string text
+	TextHighlight highlight
+	Vector2 position
+	Vector2 size
 		
+transient DisplayItem DisplayTextWithHighlights
+	string fillStyle, outlineColor
+	float outlineWidth
+	float offsetY
+	string font
+	TextSegment[] segments = null
+	
+	js void draw
+		if(this.alpha == 0) return
+		graphics.context.setTransform(this.m0, this.m1, this.m2, this.m3, this.m4, this.m5)
+		graphics.context.globalAlpha = this.alpha
+		if(this.clippingPath) this.startClipping()
+		graphics.context.font = this.font
+		let y = this.y
+		for(let i=0; i<this.segments.length; i++) {
+			let segment = this.segments[i];
+			if(this.outlineColor) {
+				graphics.context.lineWidth = this.outlineWidth
+				graphics.context.strokeStyle = this.outlineColor
+				graphics.context.strokeText(line, this.x + offset, y)
+			}
+			let highlight = segment.highlight
+			if(highlight) {
+				if(highlight.backgroundColor) {
+					// Background rectangle
+					graphics.context.fillStyle = highlight.backgroundColor.hex
+					
+					let x = this.x + segment.position.x
+					let y = this.y + segment.position.y - highlight.padding.y
+					let width = segment.size.x
+					let height = segment.size.y + highlight.padding.y*2
+					let radius = highlight.cornerRadius
+					
+					if(radius) {
+						// Rounded corners
+						graphics.context.beginPath();
+						graphics.context.moveTo(x + radius, y);
+						graphics.context.lineTo(x + width - radius, y);
+						graphics.context.quadraticCurveTo(x + width, y, x + width, y + radius);
+						graphics.context.lineTo(x + width, y + height - radius);
+						graphics.context.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+						graphics.context.lineTo(x + radius, y + height);
+						graphics.context.quadraticCurveTo(x, y + height, x, y + height - radius);
+						graphics.context.lineTo(x, y + radius);
+						graphics.context.quadraticCurveTo(x, y, x + radius, y);
+						graphics.context.closePath();
+						graphics.context.fill();
+					} else {
+						graphics.context.fillRect(x, y, width, height)
+					}
+				}
+			}
+			if(highlight) {
+				graphics.context.fillStyle = highlight.color ? highlight.color.hex : this.fillStyle
+				graphics.context.fillText(segment.text, this.x + segment.position.x + highlight.padding.x, this.y + segment.position.y)
+			} else {
+				graphics.context.fillStyle = this.fillStyle
+				graphics.context.fillText(segment.text, this.x + segment.position.x, this.y + segment.position.y)
+			}
+		}
+		
+		if(this.clippingPath) this.endClipping()
+
 transient DisplayItem DisplayRectangle
 	string color, outlineColor
 	float outlineWidth

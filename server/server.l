@@ -1,6 +1,6 @@
 skipInit unit Platform
 	visible bool isDebug
-	inline js int version := _buildVersion
+	public inline js int buildVersion := _buildVersion
 		
 	inline js void initPlatform
 		Platform.init()
@@ -8,12 +8,17 @@ skipInit unit Platform
 		
 	inline js void initApplication
 		init()
+			
+	private async inline js void initDatabase
+		if(typeof(pocketBase) != "undefined") await pocketBase.connect2()
 		
-	start: bool isDebug
+	async start: bool isDebug
 		initPlatform
 		this.isDebug = isDebug
 		sendEvaluateFinished
 		initApplication
+		initDatabase
+		app.start
 		
 	replay
 		initApplication
@@ -39,11 +44,10 @@ global transient unit System
 	// Prints a message to the console
 	global js void print: logstring text // The text, variables or expressions to print
 		                  SourceCodeLocation location
-		if(location && Platform.isDebug) {
+		console.log(text)
+		if(Platform.isDebug) {
 			var stringValue = typeof text === "string" ? text : JSON.stringify(text);
-			if(stringValue) _sendToEditor({type:"log", value:stringValue, location:location.start, file:location.file});
-		} else {
-			console.log(text)
+			if(stringValue) _sendToEditor({type:"log", value:stringValue, location:location ? location.start : 0, file:location ? location.file: ""});
 		}
 
 global skipInit unit math
@@ -127,6 +131,7 @@ enum HttpMethod: Get, Post, Put, Delete
 global unit http
 	object handlerMap = null
 	object contentTypeMap = null
+	dynamic http
 	private methodName = ["GET", "POST", "PUT", "DELETE"]
 	
 	init
@@ -143,42 +148,57 @@ global unit http
 			"":"text/plain; charset=utf-8",
 		}
 	
-	js void startHttpsServer: port = 3100, string certPath = "", string keyPath = "", void(string[] path, dynamic body, Request request, Response response) onRequest = null
+	js void startHttpsServer: port = 3100, string certPath = "", string keyPath = "", void(string[] path, string bodyText, dynamic body, Request request, Response response) onRequest = null
 		const fs = require('fs');
 		const startTime = new Date();
 		function handleRequest(request, response) {
-			var body = "";
-			request.on("data", a => body += a)
-			request.on("end", async () => {
-				try {
-					response.setHeader('Access-Control-Allow-Origin', '*');
-					response.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS, PUT, DELETE");
-					var path = request.url.substring(1).split("/");
-					await onRequest(path, body ? JSON.parse(body) : null, request, response);
-
-					if(!response.writableEnded) {
-						var procedureName = path[0];
-						handler = http.handlerMap.get(request.method+procedureName)
-						if(handler) {
-							// For named handlers, the procedure name isn't included in the path
-							path.splice(0,1);
-						} else {
-							// For wildcard handlers, we pass the procedure name as path[0]
-							handler = http.handlerMap.get(request.method+"*")
-						}
-						
-						if(handler) {
-							await handler(path, body ? JSON.parse(body) : null, request, response);
-						} else {
-							response.end("Server v"+_buildVersion+" up since "+startTime);
-						}
+			var bodyText = "";
+			request.on("data", a => bodyText += a)
+			if(http.handlerMap.size == 0) {
+				request.on("end", async () => {
+					try {
+						response.setHeader('Access-Control-Allow-Origin', '*');
+						response.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS, PUT, DELETE");
+						var path = request.url.substring(1).split("/");
+						onRequest(path, bodyText, bodyText ? JSON.parse(bodyText) : null, request, response);
+					} catch(e) {
+						console.error(e)
+						if(Platform.isDebug) _sendErrorToEditor(e);
+						response.end(`{error:"${e.message}"}`)
 					}
-				} catch(e) {
-					console.error(e)
-					if(Platform.isDebug) _sendErrorToEditor(e);
-					response.end(`{error:"${e.message}"}`)
-				}
-			})
+				})
+			} else {
+				request.on("end", async () => {
+					try {
+						response.setHeader('Access-Control-Allow-Origin', '*');
+						response.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS, PUT, DELETE");
+						var path = request.url.substring(1).split("/");
+						await onRequest(path, bodyText, bodyText ? JSON.parse(bodyText) : null, request, response);
+	
+						if(!response.writableEnded) {
+							var procedureName = path[0];
+							handler = http.handlerMap.get(request.method+procedureName)
+							if(handler) {
+								// For named handlers, the procedure name isn't included in the path
+								path.splice(0,1);
+							} else {
+								// For wildcard handlers, we pass the procedure name as path[0]
+								handler = http.handlerMap.get(request.method+"*")
+							}
+							
+							if(handler) {
+								await handler(path, bodyText ? JSON.parse(bodyText) : null, request, response);
+							} else {
+								response.end("Server v"+_buildVersion+" up since "+startTime);
+							}
+						}
+					} catch(e) {
+						console.error(e)
+						if(Platform.isDebug) _sendErrorToEditor(e);
+						response.end(`{error:"${e.message}"}`)
+					}
+				})
+			}
 		}
 		if(window.server) server.close();
 		if(certPath && keyPath && !Platform.isDebug) {
@@ -194,6 +214,35 @@ global unit http
 		
 	js void on:string path, HttpMethod method = Get, void(string[] path, dynamic body, Request request, Response response) handler
 		http.handlerMap.set(http.methodName[method]+path, handler)
+		
+	js async string request: string url
+		                     dynamic body
+		                     string method = "POST"
+		                     dynamic headers = null
+		return new Promise((resolve, reject) => {
+			if(!http.http) http.http = require('https');
+			let result = ""
+			let request = http.http.request(url, {method, headers}, res => {
+				res.on('data', chunk => { result += chunk.toString() });
+				res.on('end', () => { resolve(result) });
+			});
+			request.write(JSON.stringify(body));
+			request.end();
+		})
+		
+	js void request: string url
+		             dynamic body
+		             string method = "POST"
+		             dynamic headers = null
+		             void(string value, int statusCode) onData
+		             void() onEnd
+		if(!http.http) http.http = require('https');
+		let request = http.http.request(url, {method, headers}, res => {
+			res.on('data', chunk => onData(chunk.toString(), res.statusCode));
+			res.on('end', () => onEnd());
+		});
+		request.write(JSON.stringify(body));
+		request.end();
 	
 class Request
 	inline js string ip() this. .connection.remoteAddress
@@ -202,6 +251,10 @@ class Response
 	inline js void sendText(string result, int code = 200, filename = "") this.writeHead(code, {'Content-Type': http.contentTypeMap[filename.getExtension()] || "text/plain; charset=utf-8"}); response.end(result);
 	inline js void send(ensureSingleExecution any result, int code = 200) if(result) { if(typeof result == "string") {this.writeHead(code, {"Content-Type": "text/plain; charset=utf-8"}); response.end(result);} else {this.writeHead(code, {"Content-Type": "application/json; charset=utf-8"}); response.end(JSON.stringify(result)); }}
 	inline js void redirect(string url, int code = 302) this.writeHead(code, {Location: url}); response.end();
+		
+	inline js void writeHead(int code = 200, dynamic value) this.writeHead(code, value)
+	inline js void write(string value) this.write(value)
+	inline js void end() this.end()
 	
 class DirEntry
 	string parentPath
@@ -213,7 +266,7 @@ unit File
 	js async void write: string file, string data, string encoding = null
 		require('fs').promises.writeFile(file, data, encoding)
 
-	js async string read: string file, string encoding = null
+	js async string read: string file, string encoding = "utf8"
 		return require('fs').promises.readFile(file, encoding)
 		
 	js async bool delete: string file

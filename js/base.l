@@ -96,10 +96,17 @@ immutable struct int
 		                 int to   // The inclusive maximum value
 		(this < from ? from : this > to ? to : this)
 		
+	inline js float limit: float from // The inclusive minimum value
+		                   float to   // The inclusive maximum value
+		(this < from ? from : this > to ? to : this)
+		
 	// Make sure the value never exceets a maximum value
 	// Example: Make sure the card count never exceets a maximum value of 5
 	//     cardCount = cardCount limit ..5
 	inline js int limit: int to
+		(this > to ? to : this)
+	
+	inline js float limit: float to
 		(this > to ? to : this)
 	
 	// Make sure the value never falls below a minimum value
@@ -108,17 +115,26 @@ immutable struct int
 	inline js int limit: int from
 		(this < from ? from : this)
 	
-	// Make sure the value never exceets a maximum value
-	// Example: Make sure the card count never exceets a maximum value of 5
-	//     cardCount = cardCount max 5
-	inline js int max: int value
-		(this > value ? value : this)
+	inline js float limit: float from
+		(this < from ? from : this)
 	
 	// Make sure the value never falls below a minimum value
 	// Example: Make sure the score never fall below 0
-	//     score = score min 0
-	inline js int min: int value
+	//     score = score atLeast 0
+	inline js int atLeast: int value
 		(this < value ? value : this)
+	
+	inline js float atLeast: float value
+		(this < value ? value : this)
+	
+	// Make sure the value never exceets a maximum value
+	// Example: Make sure the card count never exceets a maximum value of 5
+	//     cardCount = cardCount atMost 5
+	inline js int atMost: int value
+		(this > value ? value : this)
+	
+	inline js float atMost: float value
+		(this > value ? value : this)
 	
 	inline js int setIfLarger: int newValue
 		(this = Math.max(newValue, this))
@@ -270,18 +286,18 @@ immutable struct float
 	inline js float limit: float from
 		(this < from ? from : this)
 	
-	inline js float max: float value
-		(this > value ? value : this)
-	
-	inline js float min: float value
+	inline js float atLeast: float value
 		(this < value ? value : this)
+	
+	inline js float atMost: float value
+		(this > value ? value : this)
 	
 	inline js bool isApproximately: float value
 		                            float epsilon = 0.00001
 		(Math.abs(this - value) < epsilon)
 		
 	inline js float moveTowards: float value
-		                         float speed
+		                         float speed = 1
 		(this < value ? (this + speed < value ? (this += speed) : (this = value)) : (this - speed > value ? (this -= speed) : (this = value)))
 		
 	inline js float moveTowardsAndEaseOut: float value
@@ -339,8 +355,7 @@ immutable class string
 	inline js string toString() this
 	inline js int toInt := parseInt(this)
 	inline js int toFloat := parseFloat(this)
-	inline js dynamic toJson() JSON.parse(this)
-	inline Time toTime() Time.fromTimeString(this)
+	inline js dynamic parseJson() JSON.parse(this)
 		
 	inline js int parseInt(int radix) parseInt(this, radix)
 	
@@ -375,8 +390,10 @@ immutable class string
 	inline js bool endsWith(string str) this.endsWith(str)
 		
 	inline js int indexOf(string str) this.indexOf(str)
-	inline js int lastIndexOf(string str) this.lastIndexOf(str)
 	inline js int indexOf(string str, int startPos) this.indexOf(str, startPos)
+		
+	inline js int lastIndexOf(string str) this.lastIndexOf(str)
+	inline js int lastIndexOf(string str, int startPos) this.lastIndexOf(str, startPos)
 		
 	inline js bool contains(string str) this.includes(str)
 		
@@ -457,11 +474,15 @@ immutable class string
 		
 	inline js string replace: string value
 		                      nocolon implicit string with
-		(this = this.replace(new RegExp(value, "g"), with))
+		(this = this.replaceAll(value, with))
 		
 	js string replaced: string value
 		                nocolon string with
-		return this.replace(new RegExp(value, "g"), $with)
+		return this.replaceAll(value, $with)
+		
+	inline js string padStart: int targetLength
+		                       string padString = " "
+		this.padStart(targetLength, padString)
 		
 	inline js string padEnd: int targetLength
 		                     string padString = " "
@@ -505,6 +526,10 @@ immutable class string
 		
 	inline string backspace
 		(this.length ? this = this[0 to this.length-1] : this)
+		
+	bool isLetter
+		return this.toLowerCase != this.toUpperCase
+		
 		
 // A logical data type that can have the value true or false
 enum bool: false, true
@@ -1568,6 +1593,13 @@ class Map<TKey, TValue>
 		                       TValue value
 		(this.get(key) || this.setAndReturn(key, value))
 		
+	// Add a value to an item of the list
+	js T addToItem: TKey key // The key of the item to add to the map
+		            TValue value   // The item to add to the map
+		let item = this.get(key)
+		if(item) this.set(key, item + value)
+		else     this.set(key, value)
+		
 	// Add 1 to item of the map
 	inline js T incrementItem: TKey key
 		this.set(key, this.get(key)+1)
@@ -1579,6 +1611,10 @@ class Map<TKey, TValue>
 	// Remove the item assosiated with the given key
 	inline js void remove: TKey key  // The key of the item to remove from the map
 		this.delete(key)
+		
+	// Does the map have an item with a specific key?
+	inline js bool has: TKey key // The key of the item to check
+		this.has(key)
 		
 	// Remove all items from the map
 	inline js void clear
@@ -1596,6 +1632,9 @@ class Map<TKey, TValue>
 // A data container that stores unique values of a given type
 js Set
 class Set<T>
+	inline js Set() new Set()
+	inline js Set(T[] list) new Set(list)
+	
 	// Return a boolean indicating whether an element with the specified value exists in this set
 	inline js bool get: T value // The value to check
 		this.has(value)
@@ -1607,6 +1646,11 @@ class Set<T>
 	// Remove a value from the set
 	inline js void remove: T value // The value to remove
 		this.delete(value)
+		
+	// Is a certain value in the set?
+	inline js bool has: T value // The value to check
+		this.has(value)
+	inline js T[] toList() [...this]
 		
 	// Remove all items from the set
 	inline js void clear
@@ -1756,6 +1800,9 @@ global transient priority unit System
 		                      nocolon implicit bool while // The condition to check
 		@do do() 
 		@while(while)
+		
+	global inline js Promise<T> promise: void(void(T a) resolve) resolve
+		new Promise(resolve)
 		
 	inline js void doNotSerialize: any object
 		_constCache.push(object)
@@ -2176,15 +2223,15 @@ global skipInit unit math
 	Angle atan2: float y, float x
 		float r
 		Angle angle
-		float abs_y = math.abs(y) + .00000000001
-		if x < 0.0
-			r = (x + abs_y) / (abs_y - x);
+		float abs_x = math.abs(x) + .00000000001
+		if y > 0.0
+			r = (abs_x - y) / (abs_x + y);
 			angle = .375;
 		else
-			r = (x - abs_y) / (x + abs_y);
+			r = (-abs_x - y) / (abs_x - y);
 			angle = .125;
 		angle += (.03124211533 * r * r - .1562424076) * r;
-		if y < 0.0: return -angle
+		if x < 0.0: return -angle
 		else        return angle
 		
 	// ------------------------------------------------------- log, pow, exp -------------------------------------------------------
@@ -2291,7 +2338,7 @@ struct RollingList
 		if values.length == 0: return 0.0
 		float total
 		for values: total += .
-		return total / (values.length max length)
+		return total / (values.length atMost length)
 	
 	max
 		if values.length == 0: return 0.0
@@ -2320,15 +2367,27 @@ immutable Range
 	
 	inline js bool containsInclusively: int value
 		(value >= this.from && value <= this.from)
+		
+class File
+	Time lastModified
+	string lastModifiedDate
+	string name
+	string path
+	int size
+	string type
+	
+	inline js string objectUrl() URL.createObjectURL(this)
 
-enum Language: English, German, Spanish, Frensh, Italian, Portuguese, Japanese, Chinese, Korean, Dutch, Turkish, Polish, Russian, Hindi, Arabic, Bengali, Urdu, Indonesian, Invariant = 1000
+enum Language: English, German, Spanish, French, Italian, Portuguese, Japanese, Chinese, Korean, Dutch, Turkish, Polish, Russian, Hindi, Arabic, Bengali, Urdu, Indonesian, Invariant = 1000
 
 unit Loca
 	private const string[] defaultLocaleForLanguage = ["en-001", "de-DE", "es-ES", "fr-FR", "it-IT", "pt-PT", "ja-JP", "zh-Hans-CN", "ko-KR", "nl-NL", "tr-TR", "pl-PL", "ru-RU", "hi-IN", "ar-001", "bn-BD", "ur-IN", "id-ID"]
+	private const string[] languageNames = ["English", "German", "Spanish", "French", "Italian", "Portuguese", "Japanese", "Chinese", "Korean", "Dutch", "Turkish", "Polish", "Russian", "Hindi", "Arabic", "Bengali", "Urdu", "Indonesian", "Invariant"]
 	
 	visible Language[] supportedLanguages = [English, German]
 	visible Language language = English
 	visible string locale = defaultLocaleForLanguage[language]
+	string languageName := languageNames[language]
 	
 	init
 		setLanguage English

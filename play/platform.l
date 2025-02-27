@@ -40,6 +40,7 @@ transient skipInit unit Platform
 		$Image.init?.();
 		Font.init?.();
 		Sound.init?.();
+		Time.timezoneOffset = new Date().getTimezoneOffset() * 60000
 		
 	private js void initPlatform
 		statistics.init();
@@ -53,6 +54,7 @@ transient skipInit unit Platform
 		Loca.init();
 		ServerNetwork.init();
 		PeerNetwork.init();
+		if(typeof(pocketBase) != "undefined") pocketBase.init();
 		core.log("Loading...")
 		Platform.isMobile = false;
 		Platform.isBrowser = !window.require;
@@ -67,10 +69,13 @@ transient skipInit unit Platform
 		if(!Platform.isMobile) 
 			window.onresize = e => { 
 				graphics.onResize();
-				if(Platform.mode < 3/*Pause,Manipulator,Slide*/ && Platform.engineStarted) core.tick(/*draw*/true);
+				if(Platform.mode < 3/*Pause,Manipulator,Slide*/ && Platform.engineStarted) Platform.goToCurrentFrame();
 			}
 		if(app.init) app.init();
-		
+			
+	private async inline js void initDatabase
+		if(typeof(pocketBase) != "undefined") await pocketBase.connect2()
+
 	// This is called when the application starts for the first time	
 	private start: bool isDebug, float referenceSizeX, float referenceSizeY, int userCount, bool simulateConnection
 		try
@@ -80,10 +85,11 @@ transient skipInit unit Platform
 			
 			initMedia
 			initPlatform
-			statistics.startTime = now
 			this.engineStarted = false
 			this.isDebug = isDebug
 			this.userCount = userCount
+			initDatabase
+			statistics.startTime = now
 			core.simulateConnection = simulateConnection
 			showDebugInfo = getLocalStorageObject("showDebugInfo") == "true"
 		
@@ -135,10 +141,11 @@ transient skipInit unit Platform
 		
 	// This is called after every code change to replay all inputs with the new code
 	// Since the const cache is cleared when the code changes, we reinitialize the media
-	private replay
+	private async replay
 		try
 			heartbeat "replay"
 			initMedia
+			initDatabase
 			openMedia
 				goToCurrentFrame
 		catch

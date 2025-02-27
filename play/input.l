@@ -122,16 +122,24 @@ priority class Player
 	// The current player instance, equivalent to "this"
 	inline js Player me() this
 	
-	internal clearEvents
+	// Called in core.step at the end of each step
+	// onTouchMove is commonly used to check what the pointer is hovering over and highlight it.
+	// Since on touch screens we often don't get a touchMove event when the user touches something, we can set 
+	// triggeredOnTouchDown to "true" to ensure we always get a touchMove event right before the touchDown.
+	// This is why isDown is only set to true *after* the events are handled in tick.
+	// This way, onTouchMove can check isDown, determine what we are hovering over and onTouchDown can then act on it.
+	internal postprocessEvents
 		bool hasTouch = touches.any.type == Touch
 		for touches backwards
-			if .phase == Up
-				if .type >= Touch or (hasTouch and .type != Touch): touches.removeAt i
-				else                                                .phase = Still
-				downTouches.remove .
-			else
-			if .phase == Down
-				.phase = Still
+			switch .phase
+				Down
+					.phase = Still
+					.isDown = true
+				Up
+					if .type >= Touch or (hasTouch and .type != Touch): touches.removeAt i
+					else                                                .phase = Still
+					downTouches.remove .
+					.isDown = false
 				
 UserAccount
 	string _id
@@ -185,6 +193,7 @@ enum Key
 	Enter        =  13
 	Shift        =  16
 	Ctrl         =  17
+	CmdOrCtrl    =  17
 	Alt          =  18
 	Pause        =  19
 	CapsLock     =  20
@@ -588,7 +597,7 @@ skipInit global unit input
 				e.preventDefault();
 				e.stopPropagation();
 				if(e.button == 0 && Platform.mode == 0) Platform.record();
-				input.handleWheelEvent(e.pageX, e.pageY, -e.deltaX, -e.deltaY, e.ctrlKey)
+				input.handleWheelEvent(e.pageX, e.pageY, e.deltaX, e.deltaY, e.ctrlKey)
 				return false;			
 			}, {passive: false})
 		}
@@ -819,14 +828,13 @@ skipInit global unit input
 							touch.referencePosition = referencePos
 							touch.referenceStartPosition = referencePos
 							touch.type = type
-							touch.isDown = true
 							// When we touch down, we start a new touch and reset the "handled" flag
 							// This flag is preserved throughout "TouchMove" and "TouchUp", so if we mark the touch
 							// as handled at any point, the flags stays set to "true" until we touch down again
 							touch.handled = false
 							if isSmoothPosition: touch.smoothPosition = referencePos
 						else
-							touch = {id, player, cast inputType, type, referencePos, referencePos, referencePos, isDown:true}
+							touch = {id, player, cast inputType, type, referencePos, referencePos, referencePos}
 							player.touches.add touch
 								
 						player.downTouches.ensure touch
@@ -857,7 +865,6 @@ skipInit global unit input
 							touch.phase = cast inputType
 							touch.referencePosition = referencePos
 							touch.type = type
-							touch.isDown = false
 							if isSmoothPosition: touch.smoothPosition = referencePos
 						else
 							touch = {id, player, cast inputType, type, referencePos, referenceStartPosition:Vector2.none, referencePos, isDown:false}
@@ -934,14 +941,14 @@ skipInit global unit input
 				if inputType == Json
 					int id = inputs.readInt
 					string valueString = inputs.readString
-					dynamic object = valueString ? valueString.toJson : null
+					dynamic object = valueString ? valueString.parseJson : null
 					networkData.call id, object
 					if Platform.waitingForInitialData > 0: Platform.waitingForInitialData--
 				else
 				if inputType == Object
 					int id = inputs.readInt
 					string valueString = inputs.readString
-					dynamic object = valueString ? valueString.toJson : null
+					dynamic object = valueString ? valueString.parseJson : null
 					networkData.call id, object
 					if Platform.waitingForInitialData > 0: Platform.waitingForInitialData--
 				else
@@ -1100,8 +1107,10 @@ skipInit global unit input
 		
 	// ---------------------------------------------- Touch Down ----------------------------------------------
 	
-	// Do something when the player touches or clicks within a given area
+	// Do something when the player touches or clicks within a given area.
+	//
 	// Example: Draw an OK button and print "Clicked OK" when the user touches it.
+	// ```
 	//     app
 	//         tick
 	//             drawText "OK", position:{0,0}, size:40, color:White
@@ -1109,6 +1118,7 @@ skipInit global unit input
 	//             
 	//             onTouchDown position:{0,0}, size:{300,100}
 	//                 print "Clicked OK"
+	// ```
 	// Image: onTouchDown1.png
 	global onTouchDown: Vector2 position                    // The center of the touch area
 		                Vector2 size                        // The size of the rectangular touch area
@@ -1145,8 +1155,10 @@ skipInit global unit input
 				
 		if showClickableArea: drawRectangle position, size, color:{"#ff000080"}, align, valign, layer:10000000
 
-	// Do something when the player touches or clicks within a given rotated rectangle
+	// Do something when the player touches or clicks within a given rotated rectangle.
+	//
 	// Example: Draw a the image "Character" rotated by 45 degrees and print "Clicked character" when the player touches within its rotated rectangle.
+	// ```
 	//     app
 	//         tick
 	//             let pos = {0,0}
@@ -1156,6 +1168,7 @@ skipInit global unit input
 	//             drawImage Character, pos, size, angle
 	//             onTouchDown pos, size, angle
 	//                 print "Clicked character"
+	// ```
 	// Image: onTouchDown2.png
 	global onTouchDown: Vector2 position                    // The center of the touch area
 		                Vector2 size                        // The size of the rectangular touch area
@@ -1193,14 +1206,17 @@ skipInit global unit input
 				
 		if showClickableArea: drawPolygon poly, color:{"#ff000080"}, layer:10000000
 
-	// Do something when the player touches or clicks within a given circle
+	// Do something when the player touches or clicks within a given circle.
+	//
 	// Example: Draw the image "Ball" and print "Clicked ball" when the player touches it.
+	// ```
 	//     Ball
 	//         Vector2 pos
 	//         tick
 	//             drawImage Ball, pos, size:100
 	//             onTouchDown pos, radius:50
 	//                 print "Clicked ball"
+	// ```
 	// Image: onTouchDown3.png
 	global onTouchDown: Vector2 position                    // The center of the circle
 		                float radius                        // The radius of the circle
@@ -1210,24 +1226,26 @@ skipInit global unit input
 		                bool markAsHandled = true           // Mark the touch as handled so it won't trigger more touch events
 		                void(Touch touch) do                // Do this for each touch or click
 		if not active: return
-		let referencePosition = position.getTransformed(graphics.localMatrix)
+		let referencePosition = position.transformed(graphics.localMatrix)
 		let referenceRadius = radius * graphics.localMatrix.scaleVector.x
-		for getTargetedPlayers(by) -> player
-			for internalUsers[player.id].downTouches -> touch
+		for getTargetedPlayers(by) as player
+			for internalUsers[player.id].downTouches as touch
 				if !touch.handled and (player.enableTouch or touch.type != Touch)
 				and (touch.referencePosition distanceTo referencePosition) <= referenceRadius
 					do touch
 					if markAsHandled: touch.handled = true
 						
 			if cursor != Auto
-				for localUser.movingTouches -> touch
+				for localUser.movingTouches as touch
 					if !touch.handled && (touch.referencePosition distanceTo position) <= radius
 						this.cursor = cursor
 				
 		if showClickableArea: drawCircle position, radius*2, color:{"#ff0000b0"}, layer:10000000
 
-	// Do something when the player touches or clicks within a given polygon
+	// Do something when the player touches or clicks within a given polygon.
+	//
 	// Example: Draw a polygon and print "Clicked OK" when the player touches it.
+	// ```
 	//     app
 	//         tick
 	//             let polygon = [{-200,-50}, {-250,50}, {200,50}, {250,-50}]
@@ -1237,6 +1255,7 @@ skipInit global unit input
 	//             
 	//             onTouchDown polygon
 	//                 print "Clicked OK"
+	// ```
 	// Image: onTouchDown4.png
 	global onTouchDown: Vector2[] points                    // The points that define the clickable polygon
 		                Vector2 position = {0,0}            // The position all polygon points are relative to
@@ -1263,12 +1282,15 @@ skipInit global unit input
 				
 		if showClickableArea: drawPolygon position, points, color:{"#ff0000b0"}, layer:10000000
 			
-	// Do something when the player touches or clicks anywhere on the screen
+	// Do something when the player touches or clicks anywhere on the screen.
+	//
 	// Example: When the current player instance touches the screen, we print out the exact touch position.
+	// ```
 	//     Player
 	//         tick
 	//             onTouchDown by me
 	//                 print "Click at {touch.position}"
+	// ```
 	// Image: onTouchDown0.png
 	global onTouchDown: implicit nocolon Player[] by = null // Only consider touches or clicks by this player or list of players
 		                bool markAsHandled = true           // Mark the touch as handled so it won't trigger more touch events
@@ -1279,7 +1301,9 @@ skipInit global unit input
 					do touch
 					if markAsHandled: touch.handled = true
 
-	// Do something when the player touches or clicks, even if the event is already handled
+	// Do something when the player touches or clicks, even if the event is already handled.
+	//
+	// Image: onTouchDown0.png
 	global onTouchDownAny: implicit nocolon Player[] by = null // Only consider touches or clicks by this player or list of players
 		                   void(Touch touch) do                // Do this for each touch or click, even those that are already marked as handled
 		if not active: return
@@ -1290,8 +1314,10 @@ skipInit global unit input
 
 	// ---------------------------------------------- Touch Over ----------------------------------------------
 	
-	// Do something when the mouse moves over a given area
+	// Do something when the mouse moves over a given area.
+	//
 	// Example: Draw a blue rectangle. When the current player instance hovers over the rectangle with the mouse, we draw a black outline around it.
+	// ```
 	//     Player
 	//         tick
 	//             let pos = {0,0}
@@ -1300,6 +1326,7 @@ skipInit global unit input
 	//             drawRectangle pos, size, color:Blue
 	//             onTouchOver pos, size, by:me
 	//                 drawRectangle pos, size+{32,32}, outlineColor:Black, outlineWidth:8
+	// ```
 	// Image: onTouchOver.png
 	global onTouchOver: Vector2 position                    // The center of the touch area
 		                Vector2 size                        // The size of the rectangular touch area
@@ -1307,13 +1334,21 @@ skipInit global unit input
 		                Cursor cursor = Auto                // Change the mouse cursor image when hovering over this area
 		                bool showClickableArea = false      // Highlight the area for debugging
 		                bool markAsHandled = true           // Mark the touch as handled so it won't trigger more touch events
+		                HorizontalAlignment align = Center  // The horizontal alignment of the touch area
+		                VerticalAlignment valign = Middle   // The vertical alignment of the touch area
 		                void(Touch touch) do                // Do this for each mouse that is hovering over the given area
+		if not active: return
+		let sizeX = size.x
+		let sizeY = size.y || size.x
+		let x = align == Left ? position.x : align  == Center ? position.x-sizeX/2 : position.x-sizeX
+		let y = valign == Top ? position.y : valign == Middle ? position.y-sizeY/2 : position.y-sizeY
 		Vector2[] poly = [
-			{ position.x-size.x/2, position.y-size.y/2 }.transform(graphics.localMatrix),
-			{ position.x+size.x/2, position.y-size.y/2 }.transform(graphics.localMatrix),
-			{ position.x+size.x/2, position.y+size.y/2 }.transform(graphics.localMatrix),
-			{ position.x-size.x/2, position.y+size.y/2 }.transform(graphics.localMatrix),
+			{ x,         y         }.transform(graphics.localMatrix),
+			{ x + sizeX, y         }.transform(graphics.localMatrix),
+			{ x + sizeX, y + sizeY }.transform(graphics.localMatrix),
+			{ x,         y + sizeY }.transform(graphics.localMatrix),
 		]
+		
 		for getTargetedPlayers(by) -> player
 			for player.touches -> touch
 				if touch.referencePosition.isInsidePolygon(poly)
@@ -1329,8 +1364,13 @@ skipInit global unit input
 			
 	// ---------------------------------------------- Touch Move ----------------------------------------------
 	
-	// Do something when a touch or click moves
+	// Do something when a touch or click moves.
+	//
+	// onTouchMove is commonly used to check what the pointer is hovering over and highlight it.
+	// Since on touch screens we often don't get a touchMove event when the user touches something, we can set 
+	// triggeredOnTouchDown to "true" to ensure we always get a touchMove event right before the touchDown.
 	// Example: The players can drag PuzzlePieces around with support for multi-touch and multiple players
+	// ```
 	//     PuzzlePiece
 	//         private Vector2 pos
 	//         private Vector2 moveOffset
@@ -1346,8 +1386,10 @@ skipInit global unit input
 	//             	
 	//             onTouchUp moveTouch
 	//                 moveTouch = null
+	// ```
+	// Image: onTouchDown0.png
 	global onTouchMove: Touch touch                 // Only consider this particular touch or click
-		                triggeredOnTouchDown = true // Also trigger this event right after the player touches or clicks before moving
+		                triggeredOnTouchDown = true // Ensure we also get a touchMove before the touchDown event on touch screens
 		                void(Touch touch) do        // Do this for each touch or click
 		if not touch or not active: return
 		let touchId = touch.id
@@ -1360,23 +1402,34 @@ skipInit global unit input
 				if .id == touchId
 					do .
 	
-	// Do something when a touch or click of the given player moves
+	// Do something when a touch or click of the given player moves.
+	//
 	// Example: Print the touch or mouse position of the current player instance everytime it moves
+	// ```
 	//     Player
 	//         trick
 	//             onTouchMove by me
 	//                 print "Touch moved to {touch.position}"
+	// ```
+	// Image: onTouchDown0.png
 	global onTouchMove: implicit nocolon Player[] by = null // Only consider touches or clicks by this player or list of players
+		                triggeredOnTouchDown = true         // Ensure we also get a touchMove before the touchDown event on touch screens
 		                void(Touch touch) do                // Do this for each touch or click
 		if not active: return
 		for getTargetedPlayers(by)
-			for internalUsers[.id].movingTouches
-				do .
+			let user = internalUsers[.id]
+				if triggeredOnTouchDown
+					for user.downTouches
+						do .
+				for user.movingTouches
+					do .
 					
 	// ---------------------------------------------- Touch Up ----------------------------------------------
 	
-	// Do something when a touch or click ends
+	// Do something when a touch or click ends.
+	//
 	// Example: The players can drag PuzzlePieces around with support for multi-touch and multiple players
+	// ```
 	//     PuzzlePiece
 	//         private Vector2 pos
 	//         private Vector2 moveOffset
@@ -1392,6 +1445,8 @@ skipInit global unit input
 	//             	
 	//             onTouchUp moveTouch
 	//                 moveTouch = null
+	// ```
+	// Image: onTouchDown0.png
 	global onTouchUp: Touch touch          // Only consider this particular touch or click
 		              markAsHandled = true // Mark the touch as handled so it won't trigger more touch events
 		              void(Touch touch) do // Do this for each touch or click
@@ -1404,12 +1459,16 @@ skipInit global unit input
 					Snapshot.autoSave
 					if markAsHandled: .handled = true
 				
-	// Do something when a given player ends a touch or click
+	// Do something when a given player ends a touch or click.
+	//
 	// Example: Print the touch or mouse position of the current player instance when the touch ends or the mouse button is released
+	// ```
 	//     Player
 	//         trick
 	//             onTouchUp by me
 	//                 print "Touch ended at {touch.position}"
+	// ```
+	// Image: onTouchDown0.png
 	global onTouchUp: implicit nocolon Player[] by = null // Only consider touches or clicks by this player or list of players
 		              bool markAsHandled = true           // Mark the touch as handled so it won't trigger more touch events
 		              void(Touch touch) do                // Do this for each touch or click
@@ -1421,7 +1480,9 @@ skipInit global unit input
 					Snapshot.autoSave
 					
 	// Do something when the player ends a touch or click within a given area
+	//
 	// Example: Draw an OK button and print "Clicked OK" when the player ends a touch or releases the mouse button over this button
+	// ```
 	//     app
 	//         tick
 	//             drawText "OK", position:{0,0}, size:40, color:White
@@ -1429,6 +1490,7 @@ skipInit global unit input
 	//             
 	//             onTouchUp position:{0,0}, size:{300,100}
 	//                 print "Clicked OK"
+	// ```
 	// Image: onTouchDown1.png
 	global onTouchUp: Vector2 position                    // The center of the touch area
 		              Vector2 size                        // The size of the rectangular touch area
@@ -1452,14 +1514,17 @@ skipInit global unit input
 						
 		if showClickableArea: drawRectangle position, size, color:{"#ff000080"}
 
-	// Do something when the player ends a touch or click within a given circle
+	// Do something when the player ends a touch or click within a given circle.
+	//
 	// Example: Draw the image "Ball" and print "Clicked ball" when the player ends a touch or releases the mouse button over this button
+	// ```
 	//     Ball
 	//         Vector2 pos
 	//         tick
 	//             drawImage Ball, pos, size:100
 	//             onTouchUp pos, radius:50
 	//                 print "Clicked ball"
+	// ```
 	// Image: onTouchDown3.png
 	global onTouchUp: Vector2 position                    // The center of the circle
 		              float radius                        // The radius of the circle
@@ -1580,28 +1645,60 @@ skipInit global unit input
 	global onKeyDown: Key modifier 
 		              Key key                             // The key that will trigger the event
 		              implicit nocolon Player[] by = null // Only consider keys pressed by this player or list of players
-		              void(Key key, Player pressedBy) do  // Do this for each key that is pressed
-		for getTargetedPlayers(by) -> player
-			if player.keysCurrentlyDown.contains modifier
-				for internalUsers[.id].downKeys
-					if . == key
-						do key, player
+		              void(Key key, Player pressedBy, bool cmdOrCtrl, bool alt, bool shift) do  // Do this for each key that is pressed
+		for getTargetedPlayers(by) as player
+			for internalUsers[.id].downKeys
+				if . == key
+					bool actualCmdOrCtrl, actualShift, actualAlt
+					for player.keysCurrentlyDown
+						switch .
+							LeftMetaKey:  actualCmdOrCtrl = true
+							RightMetaKey: actualCmdOrCtrl = true
+							Ctrl:         actualCmdOrCtrl = true
+							Alt:          actualAlt = true
+							Shift:        actualShift = true
+								
+					if (modifier == CmdOrCtrl and actualCmdOrCtrl and !actualShift and !actualAlt)  
+					or (modifier == Shift     and actualShift and !actualCmdOrCtrl and !actualAlt)
+					or (modifier == Alt       and actualAlt and !actualCmdOrCtrl and !actualShift)
+						do key, player, actualCmdOrCtrl, actualAlt, actualShift
 				
 	// Do something when a player presses a key
 	global onKeyDown: Key key                             // The key that will trigger the event
+		              bool cmdOrCtrl = false
+		              bool alt = false
+		              bool shift = false
 		              implicit nocolon Player[] by = null // Only consider keys pressed by this player or list of players
-		              void(Key key, Player pressedBy) do  // Do this for each key that is pressed
-		for getTargetedPlayers(by) -> player
+		              void(Key key, Player pressedBy, bool cmdOrCtrl, bool alt, bool shift) do  // Do this for each key that is pressed
+		for getTargetedPlayers(by) as player
 			for internalUsers[.id].downKeys
 				if . == key
-					do key, player
+					bool actualCmdOrCtrl, actualShift, actualAlt
+					for player.keysCurrentlyDown
+						switch .
+							LeftMetaKey:  actualCmdOrCtrl = true
+							RightMetaKey: actualCmdOrCtrl = true
+							Ctrl:         actualCmdOrCtrl = true
+							Alt:          actualAlt = true
+							Shift:        actualShift = true
+								
+					if actualCmdOrCtrl == cmdOrCtrl and actualShift == shift and actualAlt == alt
+						do key, player, actualCmdOrCtrl, actualAlt, actualShift
 				
 	// Do something when a player presses a key
 	global onKeyDown: implicit nocolon Player[] by = null // Only consider keys pressed by this player or list of players
-		              void(Key key, Player pressedBy) do  // Do this for each key that is pressed
-		for getTargetedPlayers(by) -> player
-			for internalUsers[.id].downKeys -> key
-					do key, player
+		              void(Key key, Player pressedBy, bool cmdOrCtrl, bool alt, bool shift) do  // Do this for each key that is pressed
+		for getTargetedPlayers(by) as player
+			for internalUsers[.id].downKeys as key
+				bool actualCmdOrCtrl, actualShift, actualAlt
+				for player.keysCurrentlyDown
+					switch .
+						LeftMetaKey:  actualCmdOrCtrl = true
+						RightMetaKey: actualCmdOrCtrl = true
+						Ctrl:         actualCmdOrCtrl = true
+						Alt:          actualAlt = true
+						Shift:        actualShift = true
+				do key, player, actualCmdOrCtrl, actualAlt, actualShift
 				
 	// Do something when a player releases a key
 	global onKeyUp: implicit nocolon Player[] by = null // Only consider keys released by this player or list of players

@@ -24,6 +24,11 @@ global unit fx
 		          stored void() do
 		add DelayAnimation startTime:Time.now+time, do
 		
+	global js async void delay: Time time
+		return new Promise((resolve, reject) => {
+			setTimeout(resolve, time);
+		})
+		
 	// Animate a variable to a target value over a given period of time
 	global inline animate: float variable = 0   // The variable to animate
 		                   float to = 1         // The target value to animate to
