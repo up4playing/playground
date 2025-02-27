@@ -5,7 +5,7 @@ transient skipInit unit Platform
 	public inline js int userAgent := navigator.userAgent.replace(/,/g," ")
 	public inline js float usedMemory := (performance.memory ? performance.memory.usedJSHeapSize : 0)
 	
-	public inline js string getAbsoluteUrl: string relativeUrl
+	js string getAbsoluteUrl: string relativeUrl
 		return relativeUrl.startsWith("http") || relativeUrl.startsWith("data:") ? relativeUrl : _basePath+relativeUrl
 
 	js void setTitle: string title
