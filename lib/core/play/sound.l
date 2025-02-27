@@ -14,7 +14,7 @@ skipInit immutable Sound
 			this.nextAudioElement = new Audio();
 			this.nextAudioElement.oncanplaythrough = () => resolve();
 			this.nextAudioElement.onerror = () => reject();
-			this.nextAudioElement.src = _basePath+this.file;			
+			this.nextAudioElement.src = Platform.getAbsoluteUrl(this.file);			
 		})
 		
 	js void volume: float value
