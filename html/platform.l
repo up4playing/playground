@@ -822,6 +822,7 @@ global unit Html
 			if attributes.title and attributes.title != node.title:  node.title = attributes.title
 			
 			if attributes.onClick != null:      node.onclick = attributes.onClick
+			if attributes.onLeftClick != null:  node.onclick = attributes.onLeftClick
 			if attributes.onRightClick != null: node.oncontextmenu = attributes.onRightClick
 			if attributes.onKeyDown != null:    node.onkeydown = attributes.onKeyDown
 			if attributes.onKeyUp != null:      node.onkeyup = attributes.onKeyUp
