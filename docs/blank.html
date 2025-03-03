@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+		<html>
+		<head>
+			<meta charset="utf-8" />
+			<title>Playground</title>
+			<style type="text/css">
+				body {margin: 0; padding: 0; border: 0; overflow: hidden; touch-action:none; background-color: #000000;}
+				* {box-sizing: border-box;}
+			</style>
+			
+		</head>
+		<body>
+		<script type="text/javascript">
+			const sendPingEvery = 2000
+			const __tbudget = undefined;
+			var _socket, __s = 0
+			var livetime = {}, __tdurations = {}, __tactive = false, _startTime = new Date().toISOString()
+			function _connect() {
+				var pingInterval = 0
+				var _disposing = false
+				_socket = new WebSocket("ws://localhost:45000");
+				_socket.onopen = function() {
+					pingInterval = setInterval(() => _socket.send("~"), sendPingEvery)
+				}
+				_socket.onmessage = function(event) {
+					try {
+						var data = event.data
+						if(data == "×")
+						{
+							_disposing = true
+							_socket.close()
+							_socket = null
+						}
+						else
+							window.eval(data);
+					}
+					catch(e) {
+						console.log(_startTime, event.data)
+						_sendErrorToEditor(e);
+					}
+				}
+				_socket.onclose = function() {
+					console.log("LiveTime connection closed.")
+					if(pingInterval) { clearInterval(pingInterval); pingInterval = 0; }
+					//if(!_disposing) _connect()
+				}
+			}
+			function log(value, location, file, frame) {
+				try {
+					var stringValue = typeof value === "string" ? value : JSON.stringify(value);
+					if(stringValue) _sendToEditor({type:"log", value:stringValue, location, file, frame});
+					console.log(value);
+				}
+				catch(e) {
+					if(stringValue) _sendToEditor({type:"log", value:"Tried to log a value that can't be serialized."});
+				}
+			}
+			function _sendErrorToEditor(value) {
+				try {
+					var stringValue = value  && value.stack ? value.stack : value.message ? value.message : typeof value === "string" ? value : JSON.stringify(value);
+					if(stringValue) _sendToEditor({type:"error", startTime:_startTime, value:stringValue});
+					console.error(value);
+				}
+				catch(e) {
+					if(stringValue) _sendToEditor({type:"error", startTime:_startTime, value:"Runtime error."});
+				}
+			}
+			function _setStyle(id, content) {
+				let el = document.getElementById(id)
+				if(!el) {
+					el = document.createElement("style")
+					el.id = id
+					el.type = "text/css"
+					document.getElementsByTagName("head")[0].appendChild(el)
+				}
+				el.innerHTML = content
+			}
+			function stringify(subject, depth) 
+			{
+				switch(typeof subject)
+				{
+					case "object":
+						if(subject === null) return "null"
+						let result = '{"_type":"' + subject.constructor.name + '"'
+						if(depth > 0)
+							for(let name in subject)
+							{
+								let item = stringify(subject[name], depth-1)
+								if(item != "") result += ',"' + name +'":' + item
+							}
+						return result + '}'
+					case "string":
+						return '"' + subject.replace(/\"/g, '\\"').replace(/\n/g, '\\n').replace(/\t/g, '\\t') + '"'
+					case "undefined":
+						return '"undefined"'
+					case "function":
+						return ""
+					default:
+						return subject.toString()
+				}
+			}	
+			function __t(msg, value, name) {
+				if(!__tactive) return value
+				let duration = __tdurations[msg] || 0
+				if(duration == -1) return value
+				let startTime = performance.now()
+				if(duration < __tbudget/2) {
+					var valueString, value
+					msg += __s++
+					if(value !== undefined) {
+						if(typeof value !== "function") {
+							try {
+								valueString = stringify(value, 3)
+							}
+							catch(e) {
+								valueString = e.toString()
+							}
+							if(name !== undefined) msg += "," + name + "," + valueString
+							else                   msg += ",," + valueString
+						}
+					}
+					else
+					if(name !== undefined)
+						msg += "," + name + ",undefined"
+					_socket.send(msg)
+					__tdurations[msg] = duration + (performance.now() - startTime)
+				}
+				else if(duration < __tbudget) {
+					_socket.send(msg)
+					__tdurations[msg] = duration + (performance.now() - startTime)
+				}
+				else {
+					_socket.send("°"+msg.substring(1))
+					__tdurations[msg] = -1
+				}
+				return value
+			}
+			function _clearTrace() {
+				__tdurations = {}
+			}
+			function _sendToEditor(msg) {
+				_socket.send(JSON.stringify(msg))
+			}
+			function _sendStringToEditor(msg) {
+				_socket.send(msg, "*")
+			}
+			function _runTests(codeDict) {
+				let results = {}
+				for(let name in codeDict) {
+					let code = codeDict[name]
+					try {
+						let result = eval(code)
+						results[name] = typeof(result) == "string" ? {output:result} : (result ? result : true)
+					}
+					catch(e) {
+						results[name] = e && e.stack ? {message:e.message} : typeof(e) == "string" ? {message:e} : e
+					}
+				}
+				return results
+			}
+			function _setErrorHandlers() {
+				window.onerror = function(msg, source, lineno, colno, e) { _sendErrorToEditor(e) }
+				window.onunhandledrejection = function(e) { _sendErrorToEditor(e.reason) }
+			}
+			_connect();
+		</script><canvas id="canvas" style="width:320px;height:480px;"></canvas></body></html>
