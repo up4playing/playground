@@ -4,6 +4,7 @@ Common
 	Technology: Web
 	Rendering: 2D
 	UserCount: 4
+	OutputPath: docs
 	
 Editor
 	Debug: Yes

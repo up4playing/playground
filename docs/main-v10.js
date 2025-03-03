@@ -1,6 +1,6 @@
 var _basePath = "";
 function log(value) {console.log(value);}
-var _appName = "Playground", _buildVersion = 8;
+var _appName = "Playground", _buildVersion = 10;
 
 var int; if(!int) int = {};
 int.maxValue = 2147483647;
@@ -1067,7 +1067,7 @@ function Player(_id, language, email, name, colorPreferences, id, index, color, 
 	this.showSettingsInLobby = showSettingsInLobby;
 }
 Player.prototype.tick = function() {
-	graphics.drawText("Player", new Vector2(0.0, 0.0, null), new Vector2(0.0, 0.0, null), null, 1/*Center*/, 1/*Middle*/, 0/*Normal*/, null, null, 0, 0, 1.0, 0.0, null, null, new Vector2(16, 16, null), false, 0/*None*/, 2/*Scale*/, 0, 0, null, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/src/app.l", 403, 420, null, null));
+	graphics.drawText("Player", new Vector2(0.0, 0.0, null), new Vector2(0.0, 0.0, null), null, 1/*Center*/, 1/*Middle*/, 0/*Normal*/, null, null, 0, 0, 1.0, 0.0, null, null, new Vector2(16, 16, null), false, 0/*None*/, 2/*Scale*/, 0, 0, null, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/src/app.l", 436, 453, null, null));
 }
 Player.prototype.cloneBaseData = function() {
 	return new Player(this._id, this.language, this.email, this.name, this.colorPreferences, this.id, this.index, null, null, 0, new Vector2(0.0, 0.0, null), false);
@@ -28773,10 +28773,11 @@ var app; if(!app) app = {};
 app.init = function() {
 	app.birdPos = new Vector2(10, 0, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/src/app.l", 23, 29, null, null));
 	app.birdSpeed = new Vector2(10, 0, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/src/app.l", 43, 50, null, null));
+	Platform.isLocal = true;
 }
 app.tick = function() {
-	graphics.drawImage($Image.Bird, app.birdPos, new Vector2(0.0, 0.0, null), null, 0, 0, 1.0, Color.White, 1/*Center*/, 1/*Middle*/, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/src/app.l", 60, 83, null, null));
-	graphics.drawImage($Image.Background, new Vector2(0.0, 0.0, null), new Vector2(0.0, 0.0, null), null, 0, 0, 1.0, Color.White, 1/*Center*/, 1/*Middle*/, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/src/app.l", 86, 106, null, null));
+	graphics.drawImage($Image.Bird, app.birdPos, new Vector2(0.0, 0.0, null), null, 0, 0, 1.0, Color.White, 1/*Center*/, 1/*Middle*/, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/src/app.l", 93, 116, null, null));
+	graphics.drawImage($Image.Background, new Vector2(0.0, 0.0, null), new Vector2(0.0, 0.0, null), null, 0, 0, 1.0, Color.White, 1/*Center*/, 1/*Middle*/, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/src/app.l", 119, 139, null, null));
 	app.birdPos.plusAssign(app.birdSpeed);
 	app.birdSpeed.y += 2;
 	input.onTouchDown5(null, true, touch => {
@@ -28784,25 +28785,25 @@ app.tick = function() {
 	});
 }
 app.main01 = function() {
-	System.print("main01", new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/src/app.l", 194, 208, null, null));
+	System.print("main01", new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/src/app.l", 227, 241, null, null));
 }
 app.main02 = function() {
-	System.print("main02", new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/src/app.l", 220, 234, null, null));
+	System.print("main02", new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/src/app.l", 253, 267, null, null));
 }
 app.main03 = function() {
-	System.print("main03", new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/src/app.l", 246, 260, null, null));
+	System.print("main03", new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/src/app.l", 279, 293, null, null));
 }
 app.gameOver = function() {
-	System.print("gameOver", new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/src/app.l", 274, 290, null, null));
+	System.print("gameOver", new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/src/app.l", 307, 323, null, null));
 }
 app.flyOver01 = function() {
-	System.print("flyOver01", new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/src/app.l", 305, 322, null, null));
+	System.print("flyOver01", new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/src/app.l", 338, 355, null, null));
 }
 app.flyOver02 = function() {
-	System.print("flyOver02", new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/src/app.l", 337, 354, null, null));
+	System.print("flyOver02", new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/src/app.l", 370, 387, null, null));
 }
 app.flyOver03 = function() {
-	System.print("flyOver03", new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/src/app.l", 369, 386, null, null));
+	System.print("flyOver03", new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/src/app.l", 402, 419, null, null));
 }
 function app_serialize_internal(buffer) {
 	(app.birdPos || new _Vector2()).serialize_internal(buffer);
