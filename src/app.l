@@ -5,6 +5,7 @@ app
 		Platform.isLocal = true
 
 	tick
+		drawText "Hello World", {0,100}
 		drawImage Bird, birdPos
 		drawImage Background
 
