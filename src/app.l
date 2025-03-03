@@ -1,7 +1,6 @@
 app
-	Vector2 birdPos = {100,0}, birdSpeed = {10, 0}	
+	Vector2 birdPos = {10,0}, birdSpeed = {10, 0}	
 	tick
-		drawText "Hello World", {100, 100}, font:ShadowedSerif
 		drawImage Bird, birdPos
 		drawImage Background
 
@@ -9,3 +8,27 @@ app
 		birdSpeed.y += 2
 		onTouchDown: birdSpeed.y = -10
 
+	main01
+		print "main01"
+
+	main02
+		print "main02"
+
+	main03
+		print "main03"
+
+	gameOver
+		print "gameOver"
+
+	flyOver01
+		print "flyOver01"
+
+	flyOver02
+		print "flyOver02"
+
+	flyOver03
+		print "flyOver03"
+
+Player
+	tick
+		drawText "Player"
