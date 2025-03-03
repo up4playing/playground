@@ -175,22 +175,13 @@ struct Vector2
 		return this
 		
 	// Round each coordinate to the closest integer value
-	round 
-		x = math.round(x)
-		y = math.round(y)
-		return this
+	round := IntVector2(math.round(x), math.round(y))
 	
 	// Round each coordinate down to an integer value
-	floor
-		x = math.floor(x)
-		y = math.floor(y)
-		return this
+	floor := IntVector2(math.floor(x), math.floor(y))
 		
 	// Round each coordinate up to an integer value
-	ceil
-		x = math.ceil(x)
-		y = math.ceil(y)
-		return this
+	ceil := IntVector2(math.ceil(x), math.ceil(y))
 		
 	// Make each coordinate positive
 	abs
