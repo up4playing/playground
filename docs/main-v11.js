@@ -1,6 +1,6 @@
 var _basePath = "";
 function log(value) {console.log(value);}
-var _appName = "Playground", _buildVersion = 10;
+var _appName = "Playground", _buildVersion = 11;
 
 var int; if(!int) int = {};
 int.maxValue = 2147483647;
@@ -135,7 +135,7 @@ String.prototype.isLetter = function() {
 }
 String.prototype.toVector2 = function() {
 	let mid = this.indexOf(" ");
-	return new Vector2(parseFloat(this.substring(0, mid)), parseFloat(this.substring(mid + 1)), new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/geometry.l", 15615, 15660, null, null));
+	return new Vector2(parseFloat(this.substring(0, mid)), parseFloat(this.substring(mid + 1)), new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/geometry.l", 15615, 15660, null, null));
 }
 Array.init = function() {
 	Array.temporaryCopy = null;
@@ -500,7 +500,7 @@ Array.prototype.except = function(item) {
 	return result;
 }
 Array.prototype.total = function(selector) {
-	let sum = new Vector2(0, 0, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/geometry.l", 29836, 29841, null, null));
+	let sum = new Vector2(0, 0, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/geometry.l", 29836, 29841, null, null));
 	for(let i=0, _subject=this, _len=_subject.length; i<_len; ++i) { let it = _subject[i]; {
 		sum.plusAssign(selector(it));
 	}}
@@ -537,7 +537,7 @@ Array.prototype.sum = function() {
 }
 Array.prototype.average = function(selector) {
 	let count = 0;
-	let sum = new Vector2(0, 0, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/geometry.l", 29959, 29964, null, null));
+	let sum = new Vector2(0, 0, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/geometry.l", 29959, 29964, null, null));
 	for(let i=0, _subject=this, _len=_subject.length; i<_len; ++i) { let it = _subject[i]; {
 		sum.plusAssign(selector(it));
 		count++;
@@ -546,7 +546,7 @@ Array.prototype.average = function(selector) {
 }
 Array.prototype.average2 = function(selector, where) {
 	let count = 0;
-	let sum = new Vector2(0, 0, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/geometry.l", 30132, 30137, null, null));
+	let sum = new Vector2(0, 0, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/geometry.l", 30132, 30137, null, null));
 	for(let i=0, _subject=this, _len=_subject.length; i<_len; ++i) { let it = _subject[i]; {
 		if(where(it)) {
 			sum.plusAssign(selector(it));
@@ -1067,7 +1067,7 @@ function Player(_id, language, email, name, colorPreferences, id, index, color, 
 	this.showSettingsInLobby = showSettingsInLobby;
 }
 Player.prototype.tick = function() {
-	graphics.drawText("Player", new Vector2(0.0, 0.0, null), new Vector2(0.0, 0.0, null), null, 1/*Center*/, 1/*Middle*/, 0/*Normal*/, null, null, 0, 0, 1.0, 0.0, null, null, new Vector2(16, 16, null), false, 0/*None*/, 2/*Scale*/, 0, 0, null, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/src/app.l", 436, 453, null, null));
+	graphics.drawText("Player", new Vector2(0.0, 0.0, null), new Vector2(0.0, 0.0, null), null, 1/*Center*/, 1/*Middle*/, 0/*Normal*/, null, null, 0, 0, 1.0, 0.0, null, null, new Vector2(16, 16, null), false, 0/*None*/, 2/*Scale*/, 0, 0, null, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/src/app.l", 470, 487, null, null));
 }
 Player.prototype.cloneBaseData = function() {
 	return new Player(this._id, this.language, this.email, this.name, this.colorPreferences, this.id, this.index, null, null, 0, new Vector2(0.0, 0.0, null), false);
@@ -1863,68 +1863,68 @@ function $Image(file, texture, size, frames) {
 	this.frames = frames;
 }
 $Image.init = function() {
-	$Image.atlas = new Texture("atlas-v1.png", new Vector2(4096, 4096, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/src/media.l", 57, 68, null, null)), null, null);
+	$Image.atlas = new Texture("atlas-v1.png", new Vector2(4096, 4096, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/src/media.l", 57, 68, null, null)), null, null);
 	_constCache.push($Image.atlas);
-	$Image.Background = new $Image("media/Background.png", $Image.atlas, new Vector2(2604, 1924, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/src/media.l", 135, 146, null, null)), [new ImageFrame(2, 2, 2602, 1922, 2600, 1920)]);
+	$Image.Background = new $Image("media/Background.png", $Image.atlas, new Vector2(2604, 1924, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/src/media.l", 135, 146, null, null)), [new ImageFrame(2, 2, 2602, 1922, 2600, 1920)]);
 	_constCache.push($Image.Background);
-	$Image.TopPipe = new $Image("media/TopPipe.png", $Image.atlas, new Vector2(212, 1084, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/src/media.l", 252, 262, null, null)), [new ImageFrame(2606, 2, 2814, 1082, 208, 1080)]);
+	$Image.TopPipe = new $Image("media/TopPipe.png", $Image.atlas, new Vector2(212, 1084, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/src/media.l", 252, 262, null, null)), [new ImageFrame(2606, 2, 2814, 1082, 208, 1080)]);
 	_constCache.push($Image.TopPipe);
-	$Image.BottomPipe = new $Image("media/BottomPipe.png", $Image.atlas, new Vector2(212, 972, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/src/media.l", 376, 385, null, null)), [new ImageFrame(2818, 2, 3026, 970, 208, 968)]);
+	$Image.BottomPipe = new $Image("media/BottomPipe.png", $Image.atlas, new Vector2(212, 972, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/src/media.l", 376, 385, null, null)), [new ImageFrame(2818, 2, 3026, 970, 208, 968)]);
 	_constCache.push($Image.BottomPipe);
-	$Image.VideoScreen = new $Image("lib/core/play/media/VideoScreen0.png", $Image.atlas, new Vector2(444, 444, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/src/media.l", 514, 523, null, null)), [new ImageFrame(2, 1926, 442, 2256, 440, 330), new ImageFrame(2, 2260, 442, 2700, 440, 440)]);
+	$Image.VideoScreen = new $Image("lib/core/play/media/VideoScreen0.png", $Image.atlas, new Vector2(444, 444, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/src/media.l", 514, 523, null, null)), [new ImageFrame(2, 1926, 442, 2256, 440, 330), new ImageFrame(2, 2260, 442, 2700, 440, 440)]);
 	_constCache.push($Image.VideoScreen);
-	$Image.LargeButton = new $Image("lib/core/play/media/LargeButton.png", $Image.atlas, new Vector2(427, 65, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/src/media.l", 693, 701, null, null)), [new ImageFrame(446, 1926, 869, 1987, 423, 61)]);
+	$Image.LargeButton = new $Image("lib/core/play/media/LargeButton.png", $Image.atlas, new Vector2(427, 65, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/src/media.l", 693, 701, null, null)), [new ImageFrame(446, 1926, 869, 1987, 423, 61)]);
 	_constCache.push($Image.LargeButton);
-	$Image.LargeButtonAccent = new $Image("lib/core/play/media/LargeButtonAccent1.png", $Image.atlas, new Vector2(427, 65, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/src/media.l", 843, 851, null, null)), [new ImageFrame(1300, 1926, 1722, 1987, 422, 61), new ImageFrame(873, 1926, 1296, 1987, 423, 61)]);
+	$Image.LargeButtonAccent = new $Image("lib/core/play/media/LargeButtonAccent1.png", $Image.atlas, new Vector2(427, 65, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/src/media.l", 843, 851, null, null)), [new ImageFrame(1300, 1926, 1722, 1987, 422, 61), new ImageFrame(873, 1926, 1296, 1987, 423, 61)]);
 	_constCache.push($Image.LargeButtonAccent);
-	$Image.Button = new $Image("lib/core/play/media/Button.png", $Image.atlas, new Vector2(305, 65, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/src/media.l", 1016, 1024, null, null)), [new ImageFrame(1726, 1926, 2027, 1987, 301, 61)]);
+	$Image.Button = new $Image("lib/core/play/media/Button.png", $Image.atlas, new Vector2(305, 65, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/src/media.l", 1016, 1024, null, null)), [new ImageFrame(1726, 1926, 2027, 1987, 301, 61)]);
 	_constCache.push($Image.Button);
-	$Image.ButtonAccent = new $Image("lib/core/play/media/ButtonAccent1.png", $Image.atlas, new Vector2(305, 65, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/src/media.l", 1158, 1166, null, null)), [new ImageFrame(2336, 1926, 2636, 1987, 300, 61), new ImageFrame(2031, 1926, 2332, 1987, 301, 61)]);
+	$Image.ButtonAccent = new $Image("lib/core/play/media/ButtonAccent1.png", $Image.atlas, new Vector2(305, 65, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/src/media.l", 1158, 1166, null, null)), [new ImageFrame(2336, 1926, 2636, 1987, 300, 61), new ImageFrame(2031, 1926, 2332, 1987, 301, 61)]);
 	_constCache.push($Image.ButtonAccent);
-	$Image.Nuke = new $Image("lib/core/play/media/Nuke0.png", $Image.atlas, new Vector2(260, 260, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/src/media.l", 1329, 1338, null, null)), [new ImageFrame(446, 1991, 702, 2247, 256, 256), new ImageFrame(706, 1991, 962, 2247, 256, 256), new ImageFrame(1226, 2260, 1482, 2516, 256, 256), new ImageFrame(1746, 2260, 2002, 2516, 256, 256), new ImageFrame(2006, 2260, 2262, 2516, 256, 256), new ImageFrame(2266, 2260, 2522, 2516, 256, 256), new ImageFrame(2526, 2260, 2782, 2516, 256, 256), new ImageFrame(2, 2704, 258, 2960, 256, 256), new ImageFrame(262, 2704, 518, 2960, 256, 256), new ImageFrame(522, 2704, 778, 2960, 256, 256), new ImageFrame(966, 1991, 1222, 2247, 256, 256), new ImageFrame(1226, 1991, 1482, 2247, 256, 256), new ImageFrame(1486, 1991, 1742, 2247, 256, 256), new ImageFrame(1746, 1991, 2002, 2247, 256, 256), new ImageFrame(2006, 1991, 2262, 2247, 256, 256), new ImageFrame(2266, 1991, 2522, 2247, 256, 256), new ImageFrame(2526, 1991, 2782, 2247, 256, 256), new ImageFrame(446, 2260, 702, 2516, 256, 256), new ImageFrame(706, 2260, 962, 2516, 256, 256), new ImageFrame(966, 2260, 1222, 2516, 256, 256), new ImageFrame(1486, 2260, 1742, 2516, 256, 256)]);
+	$Image.Nuke = new $Image("lib/core/play/media/Nuke0.png", $Image.atlas, new Vector2(260, 260, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/src/media.l", 1329, 1338, null, null)), [new ImageFrame(446, 1991, 702, 2247, 256, 256), new ImageFrame(706, 1991, 962, 2247, 256, 256), new ImageFrame(1226, 2260, 1482, 2516, 256, 256), new ImageFrame(1746, 2260, 2002, 2516, 256, 256), new ImageFrame(2006, 2260, 2262, 2516, 256, 256), new ImageFrame(2266, 2260, 2522, 2516, 256, 256), new ImageFrame(2526, 2260, 2782, 2516, 256, 256), new ImageFrame(2, 2704, 258, 2960, 256, 256), new ImageFrame(262, 2704, 518, 2960, 256, 256), new ImageFrame(522, 2704, 778, 2960, 256, 256), new ImageFrame(966, 1991, 1222, 2247, 256, 256), new ImageFrame(1226, 1991, 1482, 2247, 256, 256), new ImageFrame(1486, 1991, 1742, 2247, 256, 256), new ImageFrame(1746, 1991, 2002, 2247, 256, 256), new ImageFrame(2006, 1991, 2262, 2247, 256, 256), new ImageFrame(2266, 1991, 2522, 2247, 256, 256), new ImageFrame(2526, 1991, 2782, 2247, 256, 256), new ImageFrame(446, 2260, 702, 2516, 256, 256), new ImageFrame(706, 2260, 962, 2516, 256, 256), new ImageFrame(966, 2260, 1222, 2516, 256, 256), new ImageFrame(1486, 2260, 1742, 2516, 256, 256)]);
 	_constCache.push($Image.Nuke);
-	$Image.SmallButton = new $Image("lib/core/play/media/SmallButton.png", $Image.atlas, new Vector2(172, 45, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/src/media.l", 2372, 2380, null, null)), [new ImageFrame(2818, 974, 2986, 1015, 168, 41)]);
+	$Image.SmallButton = new $Image("lib/core/play/media/SmallButton.png", $Image.atlas, new Vector2(172, 45, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/src/media.l", 2372, 2380, null, null)), [new ImageFrame(2818, 974, 2986, 1015, 168, 41)]);
 	_constCache.push($Image.SmallButton);
-	$Image.SmallButtonAccent = new $Image("lib/core/play/media/SmallButtonAccent1.png", $Image.atlas, new Vector2(172, 45, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/src/media.l", 2523, 2531, null, null)), [new ImageFrame(2818, 1064, 2985, 1105, 167, 41), new ImageFrame(2818, 1019, 2986, 1060, 168, 41)]);
+	$Image.SmallButtonAccent = new $Image("lib/core/play/media/SmallButtonAccent1.png", $Image.atlas, new Vector2(172, 45, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/src/media.l", 2523, 2531, null, null)), [new ImageFrame(2818, 1064, 2985, 1105, 167, 41), new ImageFrame(2818, 1019, 2986, 1060, 168, 41)]);
 	_constCache.push($Image.SmallButtonAccent);
-	$Image.Bird = new $Image("media/Bird01.png", $Image.atlas, new Vector2(148, 116, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/src/media.l", 2681, 2690, null, null)), [new ImageFrame(2818, 1109, 2962, 1221, 144, 112), new ImageFrame(2818, 1225, 2962, 1337, 144, 112), new ImageFrame(2818, 1341, 2962, 1453, 144, 112)]);
+	$Image.Bird = new $Image("media/Bird01.png", $Image.atlas, new Vector2(148, 116, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/src/media.l", 2681, 2690, null, null)), [new ImageFrame(2818, 1109, 2962, 1221, 144, 112), new ImageFrame(2818, 1225, 2962, 1337, 144, 112), new ImageFrame(2818, 1341, 2962, 1453, 144, 112)]);
 	_constCache.push($Image.Bird);
-	$Image.finger = new $Image("lib/core/play/media/finger0.png", $Image.atlas, new Vector2(57, 80, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/src/media.l", 2905, 2912, null, null)), [new ImageFrame(2966, 1109, 3019, 1185, 53, 76), new ImageFrame(2966, 1225, 3019, 1301, 53, 76)]);
+	$Image.finger = new $Image("lib/core/play/media/finger0.png", $Image.atlas, new Vector2(57, 80, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/src/media.l", 2905, 2912, null, null)), [new ImageFrame(2966, 1109, 3019, 1185, 53, 76), new ImageFrame(2966, 1225, 3019, 1301, 53, 76)]);
 	_constCache.push($Image.finger);
-	$Image.Next = new $Image("lib/core/play/media/Next.png", $Image.atlas, new Vector2(68, 68, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/src/media.l", 3072, 3079, null, null)), [new ImageFrame(2818, 1457, 2882, 1521, 64, 64)]);
+	$Image.Next = new $Image("lib/core/play/media/Next.png", $Image.atlas, new Vector2(68, 68, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/src/media.l", 3072, 3079, null, null)), [new ImageFrame(2818, 1457, 2882, 1521, 64, 64)]);
 	_constCache.push($Image.Next);
-	$Image.ThumbsUp = new $Image("lib/core/play/media/ThumbsUp.png", $Image.atlas, new Vector2(68, 68, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/src/media.l", 3203, 3210, null, null)), [new ImageFrame(2886, 1457, 2950, 1521, 64, 64)]);
+	$Image.ThumbsUp = new $Image("lib/core/play/media/ThumbsUp.png", $Image.atlas, new Vector2(68, 68, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/src/media.l", 3203, 3210, null, null)), [new ImageFrame(2886, 1457, 2950, 1521, 64, 64)]);
 	_constCache.push($Image.ThumbsUp);
-	$Image.Spark = new $Image("lib/core/play/media/Spark0.png", $Image.atlas, new Vector2(62, 62, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/src/media.l", 3329, 3336, null, null)), [new ImageFrame(2966, 1341, 3024, 1399, 58, 58), new ImageFrame(2922, 1629, 2970, 1677, 48, 48), new ImageFrame(2870, 1681, 2908, 1719, 38, 38)]);
+	$Image.Spark = new $Image("lib/core/play/media/Spark0.png", $Image.atlas, new Vector2(62, 62, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/src/media.l", 3329, 3336, null, null)), [new ImageFrame(2966, 1341, 3024, 1399, 58, 58), new ImageFrame(2922, 1629, 2970, 1677, 48, 48), new ImageFrame(2870, 1681, 2908, 1719, 38, 38)]);
 	_constCache.push($Image.Spark);
-	$Image.Back = new $Image("lib/core/play/media/Back.png", $Image.atlas, new Vector2(52, 52, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/src/media.l", 3540, 3547, null, null)), [new ImageFrame(2966, 1403, 3014, 1451, 48, 48)]);
+	$Image.Back = new $Image("lib/core/play/media/Back.png", $Image.atlas, new Vector2(52, 52, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/src/media.l", 3540, 3547, null, null)), [new ImageFrame(2966, 1403, 3014, 1451, 48, 48)]);
 	_constCache.push($Image.Back);
-	$Image.cameraIcon = new $Image("lib/core/play/media/cameraIcon.png", $Image.atlas, new Vector2(52, 52, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/src/media.l", 3675, 3682, null, null)), [new ImageFrame(2954, 1457, 3002, 1505, 48, 48)]);
+	$Image.cameraIcon = new $Image("lib/core/play/media/cameraIcon.png", $Image.atlas, new Vector2(52, 52, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/src/media.l", 3675, 3682, null, null)), [new ImageFrame(2954, 1457, 3002, 1505, 48, 48)]);
 	_constCache.push($Image.cameraIcon);
-	$Image.Checkbox = new $Image("lib/core/play/media/Checkbox0.png", $Image.atlas, new Vector2(52, 52, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/src/media.l", 3807, 3814, null, null)), [new ImageFrame(2818, 1525, 2866, 1573, 48, 48), new ImageFrame(2870, 1525, 2918, 1573, 48, 48)]);
+	$Image.Checkbox = new $Image("lib/core/play/media/Checkbox0.png", $Image.atlas, new Vector2(52, 52, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/src/media.l", 3807, 3814, null, null)), [new ImageFrame(2818, 1525, 2866, 1573, 48, 48), new ImageFrame(2870, 1525, 2918, 1573, 48, 48)]);
 	_constCache.push($Image.Checkbox);
-	$Image.Help = new $Image("lib/core/play/media/Help0.png", $Image.atlas, new Vector2(52, 52, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/src/media.l", 3975, 3982, null, null)), [new ImageFrame(2922, 1525, 2970, 1573, 48, 48), new ImageFrame(2974, 1525, 3022, 1573, 48, 48)]);
+	$Image.Help = new $Image("lib/core/play/media/Help0.png", $Image.atlas, new Vector2(52, 52, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/src/media.l", 3975, 3982, null, null)), [new ImageFrame(2922, 1525, 2970, 1573, 48, 48), new ImageFrame(2974, 1525, 3022, 1573, 48, 48)]);
 	_constCache.push($Image.Help);
-	$Image.Menu = new $Image("lib/core/play/media/Menu.png", $Image.atlas, new Vector2(52, 52, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/src/media.l", 4142, 4149, null, null)), [new ImageFrame(2818, 1577, 2866, 1625, 48, 48)]);
+	$Image.Menu = new $Image("lib/core/play/media/Menu.png", $Image.atlas, new Vector2(52, 52, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/src/media.l", 4142, 4149, null, null)), [new ImageFrame(2818, 1577, 2866, 1625, 48, 48)]);
 	_constCache.push($Image.Menu);
-	$Image.microphoneIcon = new $Image("lib/core/play/media/microphoneIcon.png", $Image.atlas, new Vector2(52, 52, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/src/media.l", 4285, 4292, null, null)), [new ImageFrame(2870, 1577, 2918, 1625, 48, 48)]);
+	$Image.microphoneIcon = new $Image("lib/core/play/media/microphoneIcon.png", $Image.atlas, new Vector2(52, 52, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/src/media.l", 4285, 4292, null, null)), [new ImageFrame(2870, 1577, 2918, 1625, 48, 48)]);
 	_constCache.push($Image.microphoneIcon);
-	$Image.New = new $Image("lib/core/play/media/New.png", $Image.atlas, new Vector2(52, 52, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/src/media.l", 4406, 4413, null, null)), [new ImageFrame(2922, 1577, 2970, 1625, 48, 48)]);
+	$Image.New = new $Image("lib/core/play/media/New.png", $Image.atlas, new Vector2(52, 52, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/src/media.l", 4406, 4413, null, null)), [new ImageFrame(2922, 1577, 2970, 1625, 48, 48)]);
 	_constCache.push($Image.New);
-	$Image.Quit = new $Image("lib/core/play/media/Quit.png", $Image.atlas, new Vector2(52, 52, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/src/media.l", 4529, 4536, null, null)), [new ImageFrame(2974, 1577, 3022, 1625, 48, 48)]);
+	$Image.Quit = new $Image("lib/core/play/media/Quit.png", $Image.atlas, new Vector2(52, 52, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/src/media.l", 4529, 4536, null, null)), [new ImageFrame(2974, 1577, 3022, 1625, 48, 48)]);
 	_constCache.push($Image.Quit);
-	$Image.Save = new $Image("lib/core/play/media/Save.png", $Image.atlas, new Vector2(52, 52, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/src/media.l", 4652, 4659, null, null)), [new ImageFrame(2818, 1629, 2866, 1677, 48, 48)]);
+	$Image.Save = new $Image("lib/core/play/media/Save.png", $Image.atlas, new Vector2(52, 52, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/src/media.l", 4652, 4659, null, null)), [new ImageFrame(2818, 1629, 2866, 1677, 48, 48)]);
 	_constCache.push($Image.Save);
-	$Image.settingsIcon = new $Image("lib/core/play/media/settingsIcon.png", $Image.atlas, new Vector2(52, 52, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/src/media.l", 4791, 4798, null, null)), [new ImageFrame(2870, 1629, 2918, 1677, 48, 48)]);
+	$Image.settingsIcon = new $Image("lib/core/play/media/settingsIcon.png", $Image.atlas, new Vector2(52, 52, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/src/media.l", 4791, 4798, null, null)), [new ImageFrame(2870, 1629, 2918, 1677, 48, 48)]);
 	_constCache.push($Image.settingsIcon);
-	$Image.speakerIcon = new $Image("lib/core/play/media/speakerIcon.png", $Image.atlas, new Vector2(52, 52, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/src/media.l", 4928, 4935, null, null)), [new ImageFrame(2974, 1629, 3022, 1677, 48, 48)]);
+	$Image.speakerIcon = new $Image("lib/core/play/media/speakerIcon.png", $Image.atlas, new Vector2(52, 52, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/src/media.l", 4928, 4935, null, null)), [new ImageFrame(2974, 1629, 3022, 1677, 48, 48)]);
 	_constCache.push($Image.speakerIcon);
-	$Image.starParticle = new $Image("lib/core/play/media/starParticle2.png", $Image.atlas, new Vector2(52, 48, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/src/media.l", 5068, 5075, null, null)), [new ImageFrame(2912, 1681, 2938, 1705, 26, 24), new ImageFrame(2990, 999, 3000, 1009, 10, 10), new ImageFrame(2818, 1681, 2866, 1725, 48, 44)]);
+	$Image.starParticle = new $Image("lib/core/play/media/starParticle2.png", $Image.atlas, new Vector2(52, 48, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/src/media.l", 5068, 5075, null, null)), [new ImageFrame(2912, 1681, 2938, 1705, 26, 24), new ImageFrame(2990, 999, 3000, 1009, 10, 10), new ImageFrame(2818, 1681, 2866, 1725, 48, 44)]);
 	_constCache.push($Image.starParticle);
-	$Image.Tutorial = new $Image("lib/core/play/media/Tutorial.png", $Image.atlas, new Vector2(52, 52, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/src/media.l", 5286, 5293, null, null)), [new ImageFrame(2818, 1729, 2866, 1777, 48, 48)]);
+	$Image.Tutorial = new $Image("lib/core/play/media/Tutorial.png", $Image.atlas, new Vector2(52, 52, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/src/media.l", 5286, 5293, null, null)), [new ImageFrame(2818, 1729, 2866, 1777, 48, 48)]);
 	_constCache.push($Image.Tutorial);
-	$Image.Flag = [new $Image("lib/core/play/media/Flag-Language1-State0.png", $Image.atlas, new Vector2(37, 25, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/src/media.l", 5429, 5436, null, null)), [new ImageFrame(2989, 1064, 3021, 1085, 32, 21), new ImageFrame(2966, 1189, 2998, 1210, 32, 21)]), new $Image("lib/core/play/media/Flag-Language1-State0.png", $Image.atlas, new Vector2(37, 25, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/src/media.l", 5586, 5593, null, null)), [new ImageFrame(2990, 974, 3023, 995, 33, 21), new ImageFrame(2990, 1019, 3023, 1040, 33, 21)])];
-	$Image.ResizeHandle = new $Image("lib/core/play/media/ResizeHandle.png", $Image.atlas, new Vector2(36, 36, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/src/media.l", 5768, 5775, null, null)), [new ImageFrame(2966, 1305, 2998, 1337, 32, 32)]);
+	$Image.Flag = [new $Image("lib/core/play/media/Flag-Language1-State0.png", $Image.atlas, new Vector2(37, 25, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/src/media.l", 5429, 5436, null, null)), [new ImageFrame(2989, 1064, 3021, 1085, 32, 21), new ImageFrame(2966, 1189, 2998, 1210, 32, 21)]), new $Image("lib/core/play/media/Flag-Language1-State0.png", $Image.atlas, new Vector2(37, 25, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/src/media.l", 5586, 5593, null, null)), [new ImageFrame(2990, 974, 3023, 995, 33, 21), new ImageFrame(2990, 1019, 3023, 1040, 33, 21)])];
+	$Image.ResizeHandle = new $Image("lib/core/play/media/ResizeHandle.png", $Image.atlas, new Vector2(36, 36, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/src/media.l", 5768, 5775, null, null)), [new ImageFrame(2966, 1305, 2998, 1337, 32, 32)]);
 	_constCache.push($Image.ResizeHandle);
 }
 $Image.prototype.clone = function() {
@@ -2124,7 +2124,7 @@ function Image_deserialize_external(buffer) {
 				if(_memberName.charCodeAt(0)==0) throw new Error("Serialization Error: Invalid member name");
 				break;
 			case "":
-				if(!Flag_is_set) $Image.Flag = [new $Image("lib/core/play/media/Flag-Language1-State0.png", $Image.atlas, new Vector2(37, 25, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/src/media.l", 5429, 5436, null, null)), [new ImageFrame(2989, 1064, 3021, 1085, 32, 21), new ImageFrame(2966, 1189, 2998, 1210, 32, 21)]), new $Image("lib/core/play/media/Flag-Language1-State0.png", $Image.atlas, new Vector2(37, 25, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/src/media.l", 5586, 5593, null, null)), [new ImageFrame(2990, 974, 3023, 995, 33, 21), new ImageFrame(2990, 1019, 3023, 1040, 33, 21)])];
+				if(!Flag_is_set) $Image.Flag = [new $Image("lib/core/play/media/Flag-Language1-State0.png", $Image.atlas, new Vector2(37, 25, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/src/media.l", 5429, 5436, null, null)), [new ImageFrame(2989, 1064, 3021, 1085, 32, 21), new ImageFrame(2966, 1189, 2998, 1210, 32, 21)]), new $Image("lib/core/play/media/Flag-Language1-State0.png", $Image.atlas, new Vector2(37, 25, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/src/media.l", 5586, 5593, null, null)), [new ImageFrame(2990, 974, 3023, 995, 33, 21), new ImageFrame(2990, 1019, 3023, 1040, 33, 21)])];
 				return;
 		}
 	}
@@ -2516,7 +2516,7 @@ Platform.start = async function(isDebug, referenceSizeX, referenceSizeY, userCou
 		statistics.startTime = now;
 		core.simulateConnection = simulateConnection;
 		Platform.showDebugInfo = Platform.getLocalStorageObject("showDebugInfo") == "true";
-		await graphics.setup(new Vector2(referenceSizeX, referenceSizeY, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/play/platform.l", 4719, 4751, null, null)));
+		await graphics.setup(new Vector2(referenceSizeX, referenceSizeY, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/play/platform.l", 4719, 4751, null, null)));
 		graphics.onResize();
 		if(Platform.mode >= 3/*Play*/) {
 			Platform.mode = 0/*Pause*/;
@@ -2706,7 +2706,7 @@ Platform.toggleDebugInfo = function() {
 }
 Platform.toggleSmallScreen = function() {
 	Platform.isSmallScreen = !Platform.isSmallScreen;
-	System.print("isSmallScreen: "+Platform.isSmallScreen, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/play/platform.l", 10038, 10057, null, null));
+	System.print("isSmallScreen: "+Platform.isSmallScreen, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/play/platform.l", 10038, 10057, null, null));
 	Platform.setLocalStorageObject("smallScreen", (Platform.isSmallScreen ? "true" : "false"), null, null);
 }
 Platform.generateObjectId = function() {
@@ -2751,7 +2751,7 @@ System.watch = function(text, sourceCodeLocation) {
 	}
 }
 System.visualize = function(position, color, text, location) {
-	new VisualizeObject(position, new Vector2(0.0, 0.0, null), 0.0, 1, null, 0, false, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/objects.l", 7115, 7176, null, null), color, core.watchIndex, text);
+	new VisualizeObject(position, new Vector2(0.0, 0.0, null), 0.0, 1, null, 0, false, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/objects.l", 7115, 7176, null, null), color, core.watchIndex, text);
 	if(Platform.isDebug && core.frame >= core.frameWithNewWatches && (location != null)) {
 		Platform.sendWatch(core.frame, text || position.toString(), location.start, location.file);
 	}
@@ -2873,7 +2873,7 @@ math.getAngleForVector = function(vector) {
 	return math.atan2(vector.y, vector.x);
 }
 math.getVectorForAngle = function(angle, radius) {
-	return new Vector2(math.sin(angle) * radius, -math.cos(angle) * radius, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/geometry.l", 34509, 34565, null, null));
+	return new Vector2(math.sin(angle) * radius, -math.cos(angle) * radius, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/geometry.l", 34509, 34565, null, null));
 }
 math.intersectLines = function(startA, endA, startB, endB, typeA, typeB) {
 	let x1 = startA.x, y1 = startA.y;
@@ -2892,7 +2892,7 @@ math.intersectLines = function(startA, endA, startB, endB, typeA, typeB) {
 	if((typeA >= 1/*Ray*/ && ua < 0) || (typeA == 2/*Segment*/ && ua > 1) || (typeB >= 1/*Ray*/ && ub < 0) || (typeB == 2/*Segment*/ && ub > 1)) {
 		return new Vector2(Number.POSITIVE_INFINITY, Number.POSITIVE_INFINITY, null);
 	}
-	return new Vector2(x1 + ua * (x2 - x1), y1 + ua * (y2 - y1), new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/geometry.l", 35669, 35718, null, null));
+	return new Vector2(x1 + ua * (x2 - x1), y1 + ua * (y2 - y1), new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/geometry.l", 35669, 35718, null, null));
 }
 math.projectPointOnLine = function(from, to, type, point) {
 	let lineVector = to.minus(from);
@@ -5764,7 +5764,7 @@ Vector2.prototype.length = function() {
 	return Math.sqrt(this.x * this.x + this.y * this.y);
 }
 Vector2.prototype.sign = function() {
-	return new Vector2(Math.sign(this.x), Math.sign(this.y), new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/geometry.l", 9332, 9367, null, null));
+	return new Vector2(Math.sign(this.x), Math.sign(this.y), new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/geometry.l", 9332, 9367, null, null));
 }
 Vector2.prototype.lengthSquared = function() {
 	return this.x * this.x + this.y * this.y;
@@ -5780,13 +5780,13 @@ Vector2.prototype.invert = function() {
 	return this;
 }
 Vector2.prototype.round = function() {
-	return new IntVector2(Math.round(this.x), Math.round(this.y), new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/geometry.l", 9694, 9734, null, null));
+	return new IntVector2(Math.round(this.x), Math.round(this.y), new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/geometry.l", 9694, 9734, null, null));
 }
 Vector2.prototype.floor = function() {
-	return new IntVector2(Math.floor(this.x), Math.floor(this.y), new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/geometry.l", 9798, 9838, null, null));
+	return new IntVector2(Math.floor(this.x), Math.floor(this.y), new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/geometry.l", 9798, 9838, null, null));
 }
 Vector2.prototype.ceil = function() {
-	return new IntVector2(Math.ceil(this.x), Math.ceil(this.y), new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/geometry.l", 9900, 9938, null, null));
+	return new IntVector2(Math.ceil(this.x), Math.ceil(this.y), new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/geometry.l", 9900, 9938, null, null));
 }
 Vector2.prototype.abs = function() {
 	this.x = Math.abs(this.x);
@@ -5872,10 +5872,10 @@ Vector2.prototype.getRelativeTo = function(matrix) {
 	let aa = matrix.m0, ab = matrix.m1, ac = matrix.m2, ad = matrix.m3, atx = matrix.m4, aty = matrix.m5;
 	let det = aa * ad - ab * ac;
 	if(det == 0) {
-		return new Vector2(0.0, 0.0, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/geometry.l", 12841, 12850, null, null));
+		return new Vector2(0.0, 0.0, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/geometry.l", 12841, 12850, null, null));
 	}
 	det = 1.0 / det;
-	return new Vector2((ad * det) * this.x + (-ac * det) * this.y + ((ac * aty - ad * atx) * det), (-ab * det) * this.x + (aa * det) * this.y + ((ab * atx - aa * aty) * det), new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/geometry.l", 12881, 13032, null, null));
+	return new Vector2((ad * det) * this.x + (-ac * det) * this.y + ((ac * aty - ad * atx) * det), (-ab * det) * this.x + (aa * det) * this.y + ((ab * atx - aa * aty) * det), new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/geometry.l", 12881, 13032, null, null));
 }
 Vector2.prototype.isInsideRectangle = function(center, size) {
 	let halfSizeX = size.x / 2, halfSizeY = size.y / 2;
@@ -5946,7 +5946,7 @@ Vector2.prototype.interpolateTo = function(target, progress) {
 		return target;
 	}
 	let iprogress = 1 - progress;
-	return new Vector2(this.x * iprogress + target.x * progress, this.y * iprogress + target.y * progress, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/interpolate.l", 3618, 3699, null, null));
+	return new Vector2(this.x * iprogress + target.x * progress, this.y * iprogress + target.y * progress, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/interpolate.l", 3618, 3699, null, null));
 }
 Vector2.prototype.interpolateTo2 = function(target, startTime, duration) {
 	let progress = (Time.now - startTime) / duration;
@@ -5957,7 +5957,7 @@ Vector2.prototype.interpolateTo2 = function(target, startTime, duration) {
 		return target;
 	}
 	let iprogress = 1 - progress;
-	return new Vector2(this.x * iprogress + target.x * progress, this.y * iprogress + target.y * progress, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/interpolate.l", 4031, 4112, null, null));
+	return new Vector2(this.x * iprogress + target.x * progress, this.y * iprogress + target.y * progress, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/interpolate.l", 4031, 4112, null, null));
 }
 Vector2.prototype.interpolateTo3 = function(target, progress, ease) {
 	if(progress <= 0) {
@@ -5968,7 +5968,7 @@ Vector2.prototype.interpolateTo3 = function(target, progress, ease) {
 	}
 	progress = ease.function?.invoke(progress);
 	let iprogress = 1 - progress;
-	return new Vector2(this.x * iprogress + target.x * progress, this.y * iprogress + target.y * progress, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/interpolate.l", 4525, 4606, null, null));
+	return new Vector2(this.x * iprogress + target.x * progress, this.y * iprogress + target.y * progress, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/interpolate.l", 4525, 4606, null, null));
 }
 Vector2.prototype.interpolateTo4 = function(target, startTime, duration, ease) {
 	let progress = (Time.now - startTime) / duration;
@@ -5980,7 +5980,7 @@ Vector2.prototype.interpolateTo4 = function(target, startTime, duration, ease) {
 	}
 	progress = ease.function?.invoke(progress);
 	let iprogress = 1 - progress;
-	return new Vector2(this.x * iprogress + target.x * progress, this.y * iprogress + target.y * progress, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/interpolate.l", 5006, 5087, null, null));
+	return new Vector2(this.x * iprogress + target.x * progress, this.y * iprogress + target.y * progress, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/interpolate.l", 5006, 5087, null, null));
 }
 Vector2.prototype.interpolateTo5 = function(target, progress, from, to) {
 	if(progress <= from) {
@@ -5990,7 +5990,7 @@ Vector2.prototype.interpolateTo5 = function(target, progress, from, to) {
 		return target;
 	}
 	let factor = (progress - from) / (to - from);
-	return new Vector2(this.x + (target.x - this.x) * factor, this.y + (target.y - this.y) * factor, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/interpolate.l", 5689, 5746, null, null));
+	return new Vector2(this.x + (target.x - this.x) * factor, this.y + (target.y - this.y) * factor, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/interpolate.l", 5689, 5746, null, null));
 }
 Vector2.prototype.interpolateTo6 = function(target, progress, from, to, ease) {
 	if(progress <= from) {
@@ -6000,7 +6000,7 @@ Vector2.prototype.interpolateTo6 = function(target, progress, from, to, ease) {
 		return target;
 	}
 	let factor = ease.function?.invoke((progress - from) / (to - from));
-	return new Vector2(this.x + (target.x - this.x) * factor, this.y + (target.y - this.y) * factor, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/interpolate.l", 6438, 6495, null, null));
+	return new Vector2(this.x + (target.x - this.x) * factor, this.y + (target.y - this.y) * factor, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/interpolate.l", 6438, 6495, null, null));
 }
 function _Vector2() {};
 _Vector2.prototype = Vector2.prototype;
@@ -6481,7 +6481,7 @@ Path.prototype.getPosition = function(distance) {
 		let travelledAfterSegment = travelledSoFar + segmentLength;
 		if(travelledAfterSegment >= distance) {
 			let factor = (distance - travelledSoFar) / segmentLength;
-			return new Vector2(it.x + (next.x - it.x) * factor, it.y + (next.y - it.y) * factor, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/geometry.l", 16505, 16559, null, null));
+			return new Vector2(it.x + (next.x - it.x) * factor, it.y + (next.y - it.y) * factor, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/geometry.l", 16505, 16559, null, null));
 		}
 		travelledSoFar = travelledAfterSegment;
 	}}
@@ -6500,7 +6500,7 @@ Path.prototype.getPositionAndVector = function(distance) {
 		let travelledAfterSegment = travelledSoFar + segmentLength;
 		if(travelledAfterSegment >= distance) {
 			let factor = (distance - travelledSoFar) / segmentLength;
-			return new PositionAndVector(new Vector2(it.x + (next.x - it.x) * factor, it.y + (next.y - it.y) * factor, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/geometry.l", 17157, 17211, null, null)), next.minus(it));
+			return new PositionAndVector(new Vector2(it.x + (next.x - it.x) * factor, it.y + (next.y - it.y) * factor, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/geometry.l", 17157, 17211, null, null)), next.minus(it));
 		}
 		travelledSoFar = travelledAfterSegment;
 	}}
@@ -6817,13 +6817,13 @@ IntVector2.prototype.length = function() {
 	return Math.sqrt(this.x * this.x + this.y * this.y);
 }
 IntVector2.prototype.orthogonal = function() {
-	return new IntVector2(-this.y, this.x, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/geometry.l", 24245, 24266, null, null));
+	return new IntVector2(-this.y, this.x, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/geometry.l", 24245, 24266, null, null));
 }
 IntVector2.prototype.inverse = function() {
-	return new IntVector2(-this.x, -this.y, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/geometry.l", 24336, 24354, null, null));
+	return new IntVector2(-this.x, -this.y, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/geometry.l", 24336, 24354, null, null));
 }
 IntVector2.prototype.abs = function() {
-	return new IntVector2(Math.abs(this.x), Math.abs(this.y), new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/geometry.l", 24422, 24458, null, null));
+	return new IntVector2(Math.abs(this.x), Math.abs(this.y), new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/geometry.l", 24422, 24458, null, null));
 }
 IntVector2.prototype.max = function() {
 	return (this.x > this.y ? this.x : this.y);
@@ -6832,13 +6832,13 @@ IntVector2.prototype.min = function() {
 	return (this.x < this.y ? this.x : this.y);
 }
 IntVector2.prototype.limit = function(min, max) {
-	return new IntVector2(math.limit(this.x, min.x, max.x), math.limit(this.y, min.y, max.y), new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/geometry.l", 24639, 24730, null, null));
+	return new IntVector2(math.limit(this.x, min.x, max.x), math.limit(this.y, min.y, max.y), new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/geometry.l", 24639, 24730, null, null));
 }
 IntVector2.prototype.limit2 = function(max) {
-	return new IntVector2(math.limit2(this.x, max.x), math.limit2(this.y, max.y), new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/geometry.l", 24766, 24835, null, null));
+	return new IntVector2(math.limit2(this.x, max.x), math.limit2(this.y, max.y), new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/geometry.l", 24766, 24835, null, null));
 }
 IntVector2.prototype.limit3 = function(min) {
-	return new IntVector2(math.limit3(this.x, min.x), math.limit3(this.y, min.y), new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/geometry.l", 24871, 24940, null, null));
+	return new IntVector2(math.limit3(this.x, min.x), math.limit3(this.y, min.y), new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/geometry.l", 24871, 24940, null, null));
 }
 IntVector2.prototype.distanceTo = function(value) {
 	let x = this.x - value.x;
@@ -6861,7 +6861,7 @@ IntVector2.prototype.angleTo = function(value) {
 }
 IntVector2.prototype.normalized = function() {
 	let len = Math.sqrt(this.x * this.x + this.y * this.y);
-	return (len != 0 ? new Vector2(this.x / len, this.y / len, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/geometry.l", 26072, 26097, null, null)) : new Vector2(0, 0, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/geometry.l", 26100, 26113, null, null)));
+	return (len != 0 ? new Vector2(this.x / len, this.y / len, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/geometry.l", 26072, 26097, null, null)) : new Vector2(0, 0, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/geometry.l", 26100, 26113, null, null)));
 }
 IntVector2.enumerate = function(from, to, selector) {
 	let result = []
@@ -6959,10 +6959,10 @@ Matrix2D.prototype.multiplyAssign = function(other) {
 	return Matrix2D.multiply(this, other, this);
 }
 Matrix2D.prototype.translationVector = function() {
-	return new Vector2(this.m4, this.m5, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/geometry.l", 27565, 27573, null, null));
+	return new Vector2(this.m4, this.m5, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/geometry.l", 27565, 27573, null, null));
 }
 Matrix2D.prototype.scaleVector = function() {
-	return new Vector2(this.m0, this.m3, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/geometry.l", 27645, 27653, null, null));
+	return new Vector2(this.m0, this.m3, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/geometry.l", 27645, 27653, null, null));
 }
 Matrix2D.prototype.toString = function() {
 	return "(" + this.m0.toLocaleString("en-US", {maximumFractionDigits:1, minimumFractionDigits:1, minimumIntegerDigits:1, useGrouping:false}) + " " + this.m1.toLocaleString("en-US", {maximumFractionDigits:1, minimumFractionDigits:1, minimumIntegerDigits:1, useGrouping:false}) + " " + this.m2.toLocaleString("en-US", {maximumFractionDigits:1, minimumFractionDigits:1, minimumIntegerDigits:1, useGrouping:false}) + " " + this.m3.toLocaleString("en-US", {maximumFractionDigits:1, minimumFractionDigits:1, minimumIntegerDigits:1, useGrouping:false}) + " " + this.m4.toLocaleString("en-US", {maximumFractionDigits:1, minimumFractionDigits:1, minimumIntegerDigits:1, useGrouping:false}) + " " + this.m5.toLocaleString("en-US", {maximumFractionDigits:1, minimumFractionDigits:1, minimumIntegerDigits:1, useGrouping:false}) + ")";
@@ -7123,8 +7123,8 @@ function IsometicGrid(size, cellSize, topFaceOffset) {
 	this.cellSize = cellSize?.clone();
 	this.topFaceOffset = topFaceOffset?.clone();
 	this.xOffset = this.cellSize.divide2(2)?.clone();
-	this.yOffset = new Vector2(-this.xOffset.x, this.xOffset.y, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/geometry.l", 47937, 47960, null, null));
-	this.basePos = new Vector2(0, -this.yOffset.y * (this.size.y - 1), new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/geometry.l", 47988, 48013, null, null));
+	this.yOffset = new Vector2(-this.xOffset.x, this.xOffset.y, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/geometry.l", 47937, 47960, null, null));
+	this.basePos = new Vector2(0, -this.yOffset.y * (this.size.y - 1), new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/geometry.l", 47988, 48013, null, null));
 }
 IsometicGrid.prototype.getScreenPosition = function(worldPos) {
 	return this.basePos.plus(this.xOffset.multiply2(worldPos.x)).plus(this.yOffset.multiply2(worldPos.y));
@@ -7134,7 +7134,7 @@ IsometicGrid.prototype.getWorldPosition = function(screenPos, allowOutside) {
 	let x = (this.xOffset.x * t.y + this.xOffset.y * t.x) / (2 * this.xOffset.x * this.xOffset.y);
 	let y = (this.xOffset.x * t.y - this.xOffset.y * t.x) / (2 * this.xOffset.x * this.xOffset.y);
 	if(allowOutside || (x >= 0 && x < this.size.x && y >= 0 && y < this.size.y)) {
-		return new Vector2(x, y, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/geometry.l", 48660, 48672, null, null));
+		return new Vector2(x, y, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/geometry.l", 48660, 48672, null, null));
 	} else {
 		return new Vector2(Number.POSITIVE_INFINITY, Number.POSITIVE_INFINITY, null);
 	}
@@ -7144,16 +7144,16 @@ IsometicGrid.prototype.getGridPosition = function(screenPos, allowOutside) {
 	let x = Math.round((this.xOffset.x * t.y + this.xOffset.y * t.x) / (2 * this.xOffset.x * this.xOffset.y));
 	let y = Math.round((this.xOffset.x * t.y - this.xOffset.y * t.x) / (2 * this.xOffset.x * this.xOffset.y));
 	if(allowOutside || (x >= 0 && x < this.size.x && y >= 0 && y < this.size.y)) {
-		return new IntVector2(x, y, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/geometry.l", 49233, 49248, null, null));
+		return new IntVector2(x, y, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/geometry.l", 49233, 49248, null, null));
 	} else {
 		return new IntVector2(int.minValue, int.minValue, null);
 	}
 }
 IsometicGrid.prototype.isValid = function(pos) {
-	return pos.greaterOrEqual(new IntVector2(0, 0, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/geometry.l", 49388, 49393, null, null))) && pos.less(this.size);
+	return pos.greaterOrEqual(new IntVector2(0, 0, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/geometry.l", 49388, 49393, null, null))) && pos.less(this.size);
 }
 IsometicGrid.prototype.limitToInside = function(position) {
-	return new IntVector2(math.limit(position.x, 0, this.size.x - 1), math.limit(position.y, 0, this.size.y - 1), new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/geometry.l", 49457, 49564, null, null));
+	return new IntVector2(math.limit(position.x, 0, this.size.x - 1), math.limit(position.y, 0, this.size.y - 1), new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/geometry.l", 49457, 49564, null, null));
 }
 IsometicGrid.prototype.getScreenVector = function(worldVector) {
 	return this.xOffset.multiply2(worldVector.x).plus(this.yOffset.multiply2(worldVector.y));
@@ -7257,8 +7257,8 @@ IsometicGrid.prototype.deserialize_external = function(buffer) {
 				if(!cellSize_is_set) this.cellSize = new Vector2(0.0, 0.0, null);
 				if(!topFaceOffset_is_set) this.topFaceOffset = new Vector2(0.0, 0.0, null);
 				if(!xOffset_is_set) this.xOffset = this.cellSize.divide2(2);
-				if(!yOffset_is_set) this.yOffset = new Vector2(-this.xOffset.x, this.xOffset.y, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/geometry.l", 47937, 47960, null, null));
-				if(!basePos_is_set) this.basePos = new Vector2(0, -this.yOffset.y * (this.size.y - 1), new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/geometry.l", 47988, 48013, null, null));
+				if(!yOffset_is_set) this.yOffset = new Vector2(-this.xOffset.x, this.xOffset.y, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/geometry.l", 47937, 47960, null, null));
+				if(!basePos_is_set) this.basePos = new Vector2(0, -this.yOffset.y * (this.size.y - 1), new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/geometry.l", 47988, 48013, null, null));
 				return;
 		}
 	}
@@ -8663,7 +8663,7 @@ Line.prototype.intersectionWith = function(other) {
 	if((typeA >= 1/*Ray*/ && ua < 0) || (typeA == 2/*Segment*/ && ua > 1) || (typeB >= 1/*Ray*/ && ub < 0) || (typeB == 2/*Segment*/ && ub > 1)) {
 		return new Vector2(Number.POSITIVE_INFINITY, Number.POSITIVE_INFINITY, null);
 	}
-	return new Vector2(x1 + ua * (x2 - x1), y1 + ua * (y2 - y1), new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/geometry.l", 54334, 54383, null, null));
+	return new Vector2(x1 + ua * (x2 - x1), y1 + ua * (y2 - y1), new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/geometry.l", 54334, 54383, null, null));
 }
 Line.prototype.toString = function() {
 	return ""+this.start.x.toLocaleString("en-US", {maximumFractionDigits:2, minimumFractionDigits:2, minimumIntegerDigits:1, useGrouping:false})+" "+this.start.y.toLocaleString("en-US", {maximumFractionDigits:2, minimumFractionDigits:2, minimumIntegerDigits:1, useGrouping:false})+" -> "+this.end.x.toLocaleString("en-US", {maximumFractionDigits:2, minimumFractionDigits:2, minimumIntegerDigits:1, useGrouping:false})+" "+this.end.y.toLocaleString("en-US", {maximumFractionDigits:2, minimumFractionDigits:2, minimumIntegerDigits:1, useGrouping:false});
@@ -9432,7 +9432,7 @@ graphics.init = function() {
 	graphics.localMatrix = new Matrix2D(1.0, 0.0, 0.0, 1.0, 0.0, 0.0);
 	graphics.items = [];
 	graphics.alignmentFactor = [0, .5, 1];
-	graphics.referenceSize = new Vector2(1920, 1080, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/graphics.l", 8165, 8177, null, null));
+	graphics.referenceSize = new Vector2(1920, 1080, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/graphics.l", 8165, 8177, null, null));
 	graphics.drawingOrder = 0/*ItemsDrawnFirstWillBeInFront*/;
 	graphics.scaleMode = 0/*Auto*/;
 	graphics.effectiveScaleMode = 0/*Auto*/;
@@ -9476,9 +9476,9 @@ graphics.onResize = function() {
 	graphics.updateBaseMatrix()
 }
 graphics.updateBaseMatrix = function() {
-	let statisticsMargin = (Platform.showDebugInfo ? statistics.margin : new Vector2(0.0, 0.0, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/graphics.l", 9731, 9733, null, null)))?.clone();
+	let statisticsMargin = (Platform.showDebugInfo ? statistics.margin : new Vector2(0.0, 0.0, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/graphics.l", 9731, 9733, null, null)))?.clone();
 	let referenceSizeWithMargin = graphics.referenceSize.plus(statisticsMargin);
-	let ratio = new Vector2(graphics.pixelSize.x / referenceSizeWithMargin.x, graphics.pixelSize.y / referenceSizeWithMargin.y, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/graphics.l", 9817, 9899, null, null));
+	let ratio = new Vector2(graphics.pixelSize.x / referenceSizeWithMargin.x, graphics.pixelSize.y / referenceSizeWithMargin.y, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/graphics.l", 9817, 9899, null, null));
 	let scale = 0.0;
 	if(graphics.scaleMode == 0/*Auto*/) {
 		if(ratio.x < ratio.y) {
@@ -9493,11 +9493,11 @@ graphics.updateBaseMatrix = function() {
 	}
 	if(graphics.effectiveScaleMode == 1/*FixedWidth*/) {
 		scale = ratio.x;
-		graphics.size.assign(new Vector2(graphics.referenceSize.x, graphics.pixelSize.y / scale, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/graphics.l", 10199, 10235, null, null)));
+		graphics.size.assign(new Vector2(graphics.referenceSize.x, graphics.pixelSize.y / scale, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/graphics.l", 10199, 10235, null, null)));
 	} else {
 		if(graphics.effectiveScaleMode == 2/*FixedHeight*/) {
 			scale = ratio.y;
-			graphics.size.assign(new Vector2(graphics.pixelSize.x / scale, graphics.referenceSize.y, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/graphics.l", 10313, 10349, null, null)));
+			graphics.size.assign(new Vector2(graphics.pixelSize.x / scale, graphics.referenceSize.y, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/graphics.l", 10313, 10349, null, null)));
 		}
 	}
 	let offsetX = (graphics.anchor > 0/*TopLeft*/ ? graphics.pixelSize.x / 2 : 0);
@@ -9708,12 +9708,12 @@ graphics.drawText = function(text, position, size, color, align, valign, style, 
 		if(word) {
 			words.push(word);
 		}
-		let spaceWidth = graphics.getTextWidth(" ", new Vector2(fontSize, 0.0, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/graphics.l", 29757, 29769, null, null)), effectiveFont, style);
+		let spaceWidth = graphics.getTextWidth(" ", new Vector2(fontSize, 0.0, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/graphics.l", 29757, 29769, null, null)), effectiveFont, style);
 		lines = [];
 		let totalWidth = 0.0;
 		let line = "";
 		for(let i=0, _subject=words, _len=_subject.length; i<_len; ++i) { let word = _subject[i]; {
-			let wordWidth = graphics.getTextWidth(word, new Vector2(fontSize, 0.0, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/graphics.l", 29904, 29916, null, null)), effectiveFont, style);
+			let wordWidth = graphics.getTextWidth(word, new Vector2(fontSize, 0.0, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/graphics.l", 29904, 29916, null, null)), effectiveFont, style);
 			if(totalWidth + wordWidth > maxWidth) {
 				if(line) {
 					lines.push(line);
@@ -9742,7 +9742,7 @@ graphics.drawText = function(text, position, size, color, align, valign, style, 
 		lineOffsets = [];
 		let factor = -graphics.alignmentFactor[align];
 		for(let i=0, _subject=lines, _len=_subject.length; i<_len; ++i) { let it = _subject[i]; {
-			let lineSizeX = graphics.getTextWidth(it, new Vector2(fontSize, 0, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/graphics.l", 30752, 30760, null, null)), null, 0/*Normal*/);
+			let lineSizeX = graphics.getTextWidth(it, new Vector2(fontSize, 0, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/graphics.l", 30752, 30760, null, null)), null, 0/*Normal*/);
 			lineOffsets.push(lineSizeX * factor);
 			if(lineSizeX > sizeX) {
 				sizeX = lineSizeX;
@@ -9751,25 +9751,25 @@ graphics.drawText = function(text, position, size, color, align, valign, style, 
 		}}
 		if(overflow == 3/*WrapAndScale*/ && sizeX > maxWidth) {
 			fontSize = Math.floor(fontSize * maxWidth / sizeX);
-			sizeX = graphics.getTextWidth(widestLine, new Vector2(fontSize, 0.0, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/graphics.l", 31030, 31042, null, null)), effectiveFont, style);
+			sizeX = graphics.getTextWidth(widestLine, new Vector2(fontSize, 0.0, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/graphics.l", 31030, 31042, null, null)), effectiveFont, style);
 			while(sizeX > maxWidth) {
-				sizeX = graphics.getTextWidth(widestLine, new Vector2(--fontSize, 0.0, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/graphics.l", 31131, 31145, null, null)), effectiveFont, style);
+				sizeX = graphics.getTextWidth(widestLine, new Vector2(--fontSize, 0.0, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/graphics.l", 31131, 31145, null, null)), effectiveFont, style);
 			}
 			for(let i=0, _subject=lines, _len=_subject.length; i<_len; ++i) { let it = _subject[i]; {
-				lineOffsets[i] = graphics.getTextWidth(it, new Vector2(fontSize, 0, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/graphics.l", 31231, 31239, null, null)), null, 0/*Normal*/) * factor;
+				lineOffsets[i] = graphics.getTextWidth(it, new Vector2(fontSize, 0, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/graphics.l", 31231, 31239, null, null)), null, 0/*Normal*/) * factor;
 			}}
 		}
 		effectiveLineHeight = lineHeight || fontSize * 1.3;
 		sizeY = lines.length * effectiveLineHeight - (effectiveLineHeight - fontSize * effectiveFont.actualHeightFactor);
 	} else {
 		if(isVisible || onClick != null) {
-			sizeX = graphics.getTextWidth(text, new Vector2(fontSize, 0.0, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/graphics.l", 31502, 31514, null, null)), effectiveFont, style);
+			sizeX = graphics.getTextWidth(text, new Vector2(fontSize, 0.0, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/graphics.l", 31502, 31514, null, null)), effectiveFont, style);
 			if(overflow == 2/*Scale*/ && maxWidth) {
 				if(sizeX > maxWidth) {
 					fontSize = Math.floor(fontSize * maxWidth / sizeX);
-					sizeX = graphics.getTextWidth(text, new Vector2(fontSize, 0.0, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/graphics.l", 31708, 31720, null, null)), effectiveFont, style);
+					sizeX = graphics.getTextWidth(text, new Vector2(fontSize, 0.0, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/graphics.l", 31708, 31720, null, null)), effectiveFont, style);
 					while(sizeX > maxWidth) {
-						sizeX = graphics.getTextWidth(text, new Vector2(--fontSize, 0.0, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/graphics.l", 31807, 31821, null, null)), effectiveFont, style);
+						sizeX = graphics.getTextWidth(text, new Vector2(--fontSize, 0.0, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/graphics.l", 31807, 31821, null, null)), effectiveFont, style);
 					}
 				}
 			}
@@ -9796,7 +9796,7 @@ graphics.drawText = function(text, position, size, color, align, valign, style, 
 	if(onClick != null) {
 		let effectiveClickableBy = graphics.getClickableBy(visibleFor, clickableBy);
 		if((effectiveClickableBy != null && effectiveClickableBy.length != 0) ) {
-			let effectiveSize = new Vector2(sizeX + clickableMargin.x, sizeY + clickableMargin.y, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/graphics.l", 32924, 32978, null, null));
+			let effectiveSize = new Vector2(sizeX + clickableMargin.x, sizeY + clickableMargin.y, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/graphics.l", 32924, 32978, null, null));
 			input.onTouchDown(position, effectiveSize, effectiveClickableBy, "auto", showClickableArea, true, 1/*Center*/, 1/*Middle*/, onClick);
 			if(hotkey) {
 				input.onKeyDown2(hotkey, false, false, false, effectiveClickableBy, (key,pressedBy,cmdOrCtrl,alt,shift) => {
@@ -9835,7 +9835,7 @@ graphics.drawTextWithHighlight = function(text, position, highlights, size, colo
 	if(word) {
 		words.push(word);
 	}
-	let spaceWidth = graphics.getTextWidth(" ", new Vector2(fontSize, 0.0, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/graphics.l", 37316, 37328, null, null)), effectiveFont, style);
+	let spaceWidth = graphics.getTextWidth(" ", new Vector2(fontSize, 0.0, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/graphics.l", 37316, 37328, null, null)), effectiveFont, style);
 	let segment = new TextSegment("", null, new Vector2(0.0, 0.0, null), new Vector2(0.0, 0.0, null));
 	let segments = [segment];
 	let highlight = null;
@@ -9852,7 +9852,7 @@ graphics.drawTextWithHighlight = function(text, position, highlights, size, colo
 					startHighlight = it;
 					if(startIndex > 0) {
 						prefix = word.substring(0, startIndex);
-						prefixWidth = graphics.getTextWidth(prefix, new Vector2(fontSize, 0, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/graphics.l", 37910, 37918, null, null)), effectiveFont, style);
+						prefixWidth = graphics.getTextWidth(prefix, new Vector2(fontSize, 0, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/graphics.l", 37910, 37918, null, null)), effectiveFont, style);
 						expectedSegmentWidth += prefixWidth;
 					}
 					word = word.substring(startIndex + 1);
@@ -9868,7 +9868,7 @@ graphics.drawTextWithHighlight = function(text, position, highlights, size, colo
 					endHighlight = it;
 					if(endIndex < word.length - 1) {
 						suffix = word.substring(endIndex + 1);
-						suffixWidth = graphics.getTextWidth(suffix, new Vector2(fontSize, 0, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/graphics.l", 38394, 38402, null, null)), effectiveFont, style);
+						suffixWidth = graphics.getTextWidth(suffix, new Vector2(fontSize, 0, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/graphics.l", 38394, 38402, null, null)), effectiveFont, style);
 						expectedSegmentWidth += suffixWidth;
 					}
 					word = word.substring(0, endIndex);
@@ -9876,7 +9876,7 @@ graphics.drawTextWithHighlight = function(text, position, highlights, size, colo
 				}
 			}}
 		}
-		let wordWidth = graphics.getTextWidth(word, new Vector2(fontSize, 0, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/graphics.l", 38586, 38594, null, null)), effectiveFont, style);
+		let wordWidth = graphics.getTextWidth(word, new Vector2(fontSize, 0, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/graphics.l", 38586, 38594, null, null)), effectiveFont, style);
 		if(segment.text || segment.position.x > 0) {
 			expectedSegmentWidth += spaceWidth;
 			if((highlight != null)) {
@@ -9884,7 +9884,7 @@ graphics.drawTextWithHighlight = function(text, position, highlights, size, colo
 			}
 			if(segment.position.x + expectedSegmentWidth + wordWidth > maxWidth) {
 				if(highlight == null || highlight.wrap) {
-					segments.push(segment = new TextSegment("", highlight, new Vector2(0, segment.position.y, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/graphics.l", 39029, 39052, null, null)), ((highlight != null) ? highlight.padding.multiply2(2) : new Vector2(0.0, 0.0, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/graphics.l", 39104, 39106, null, null)))));
+					segments.push(segment = new TextSegment("", highlight, new Vector2(0, segment.position.y, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/graphics.l", 39029, 39052, null, null)), ((highlight != null) ? highlight.padding.multiply2(2) : new Vector2(0.0, 0.0, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/graphics.l", 39104, 39106, null, null)))));
 				}
 				segment.position.x = 0;
 				segment.position.y += effectiveLineHeight;
@@ -9900,12 +9900,12 @@ graphics.drawTextWithHighlight = function(text, position, highlights, size, colo
 				segment.size.x += prefixWidth;
 			}
 			highlight = startHighlight;
-			segments.push(segment = new TextSegment("", highlight, new Vector2(segment.position.x + segment.size.x + highlight.margin.x, segment.position.y, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/graphics.l", 39507, 39585, null, null)), highlight.padding.multiply2(2)));
+			segments.push(segment = new TextSegment("", highlight, new Vector2(segment.position.x + segment.size.x + highlight.margin.x, segment.position.y, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/graphics.l", 39507, 39585, null, null)), highlight.padding.multiply2(2)));
 		}
 		segment.text += word;
 		segment.size.x += wordWidth;
 		if((endHighlight != null)) {
-			segments.push(segment = new TextSegment("", null, new Vector2(segment.position.x + segment.size.x + highlight.margin.x, segment.position.y, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/graphics.l", 39782, 39860, null, null)), new Vector2(0.0, 0.0, null)));
+			segments.push(segment = new TextSegment("", null, new Vector2(segment.position.x + segment.size.x + highlight.margin.x, segment.position.y, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/graphics.l", 39782, 39860, null, null)), new Vector2(0.0, 0.0, null)));
 			highlight = null;
 			if(suffix) {
 				segment.text += suffix;
@@ -9913,7 +9913,7 @@ graphics.drawTextWithHighlight = function(text, position, highlights, size, colo
 			}
 		}
 		if(segment.text[segment.text.length - 1] == "\n") {
-			segments.push(segment = new TextSegment("", highlight, new Vector2(0, segment.position.y + effectiveLineHeight, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/graphics.l", 40054, 40099, null, null)), ((highlight != null) ? highlight.padding.multiply2(2) : new Vector2(0.0, 0.0, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/graphics.l", 40151, 40153, null, null)))));
+			segments.push(segment = new TextSegment("", highlight, new Vector2(0, segment.position.y + effectiveLineHeight, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/graphics.l", 40054, 40099, null, null)), ((highlight != null) ? highlight.padding.multiply2(2) : new Vector2(0.0, 0.0, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/graphics.l", 40151, 40153, null, null)))));
 		}
 	}}
 	let factor = graphics.alignmentFactor[align];
@@ -9953,7 +9953,7 @@ graphics.drawTextWithHighlight = function(text, position, highlights, size, colo
 	if(onClick != null) {
 		let effectiveClickableBy = graphics.getClickableBy(visibleFor, clickableBy);
 		if((effectiveClickableBy != null && effectiveClickableBy.length != 0) ) {
-			let effectiveSize = new Vector2(sizeX + clickableMargin.x, sizeY + clickableMargin.y, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/graphics.l", 41499, 41553, null, null));
+			let effectiveSize = new Vector2(sizeX + clickableMargin.x, sizeY + clickableMargin.y, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/graphics.l", 41499, 41553, null, null));
 			input.onTouchDown(position, effectiveSize, effectiveClickableBy, "auto", showClickableArea, true, 1/*Center*/, 1/*Middle*/, onClick);
 			if(hotkey) {
 				input.onKeyDown2(hotkey, false, false, false, effectiveClickableBy, (key,pressedBy,cmdOrCtrl,alt,shift) => {
@@ -9967,20 +9967,20 @@ graphics.drawTextWithHighlight = function(text, position, highlights, size, colo
 graphics.drawCircularText = function(text, position, size, color, font, layer, radius, angle, spacing, visibleFor, location) {
 	let effectiveFont = font || graphics.currentFont;
 	let fontSize = Math.floor(size || graphics.currentFontSize);
-	let totalWidth = graphics.getTextWidth(text, new Vector2(fontSize, 0, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/graphics.l", 43452, 43460, null, null)), effectiveFont, 0/*Normal*/);
+	let totalWidth = graphics.getTextWidth(text, new Vector2(fontSize, 0, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/graphics.l", 43452, 43460, null, null)), effectiveFont, 0/*Normal*/);
 	let startAngle = angle - (totalWidth / 2 * spacing / radius);
 	let prevWidth = 0.0;
 	for(let i=0, _subject=text, _len=_subject.length; i<_len; ++i) { let letter = _subject[i]; {
-		let width = graphics.getTextWidth(text.substring(0, i + 1), new Vector2(fontSize, 0, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/graphics.l", 43624, 43632, null, null)), effectiveFont, 0/*Normal*/);
+		let width = graphics.getTextWidth(text.substring(0, i + 1), new Vector2(fontSize, 0, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/graphics.l", 43624, 43632, null, null)), effectiveFont, 0/*Normal*/);
 		let centerOfLetter = (width + prevWidth) / 2;
 		prevWidth = width;
 		let angleOfLetter = startAngle + (centerOfLetter * spacing / radius);
-		graphics.drawText(letter, position.plus(math.getVectorForAngle(angleOfLetter, radius)), new Vector2(fontSize, 0, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/graphics.l", 43864, 43872, null, null)), color, 1/*Center*/, 1/*Middle*/, 0/*Normal*/, effectiveFont, null, 0, layer, 1.0, angleOfLetter, visibleFor, null, new Vector2(16, 16, null), false, 0/*None*/, 2/*Scale*/, 0, 0, null, location);
+		graphics.drawText(letter, position.plus(math.getVectorForAngle(angleOfLetter, radius)), new Vector2(fontSize, 0, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/graphics.l", 43864, 43872, null, null)), color, 1/*Center*/, 1/*Middle*/, 0/*Normal*/, effectiveFont, null, 0, layer, 1.0, angleOfLetter, visibleFor, null, new Vector2(16, 16, null), false, 0/*None*/, 2/*Scale*/, 0, 0, null, location);
 	}}
 }
 graphics.drawButton = function(image, text, position, size, frame, textColor, textSize, textOffset, clickableMargin, showClickableArea, scaleOnHover, frameOnHover, textColorOnHover, accentImage, accentColor, visibleFor, clickableBy, hotkey, layer, alpha, enabled, alphaWhenDisabled, onClick, location) {
 	let scale = 1.0;
-	let effectiveSize = ((image != null) ? graphics.getEffectiveSize(image.size, size) : new Vector2(graphics.getTextWidth(text, new Vector2(textSize, 0, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/graphics.l", 47652, 47660, null, null)), null, 0/*Normal*/), textSize, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/graphics.l", 47627, 47672, null, null)))?.clone();
+	let effectiveSize = ((image != null) ? graphics.getEffectiveSize(image.size, size) : new Vector2(graphics.getTextWidth(text, new Vector2(textSize, 0, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/graphics.l", 47652, 47660, null, null)), null, 0/*Normal*/), textSize, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/graphics.l", 47627, 47672, null, null)))?.clone();
 	let effectiveClickableBy = graphics.getClickableBy(visibleFor, clickableBy);
 	if(enabled && (effectiveClickableBy != null && effectiveClickableBy.length != 0)  && onClick != null) {
 		let sizeWithMargin = effectiveSize.plus(clickableMargin);
@@ -10015,7 +10015,7 @@ graphics.drawButton = function(image, text, position, size, frame, textColor, te
 		}
 		let effectiveAlpha = (enabled ? alpha : alpha * alphaWhenDisabled);
 		if(text) {
-			graphics.drawText(text, position.plus(textOffset), new Vector2(textSize, 0, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/graphics.l", 48816, 48824, null, null)), textColor, 1/*Center*/, 1/*Middle*/, 0/*Normal*/, null, null, 0, layer, effectiveAlpha, 0.0, visibleFor, null, new Vector2(16, 16, null), false, 0/*None*/, 2/*Scale*/, 0, 0, null, location);
+			graphics.drawText(text, position.plus(textOffset), new Vector2(textSize, 0, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/graphics.l", 48816, 48824, null, null)), textColor, 1/*Center*/, 1/*Middle*/, 0/*Normal*/, null, null, 0, layer, effectiveAlpha, 0.0, visibleFor, null, new Vector2(16, 16, null), false, 0/*None*/, 2/*Scale*/, 0, 0, null, location);
 		}
 		if((accentImage != null)) {
 			if(!(accentColor != null)) {
@@ -10139,7 +10139,7 @@ graphics.drawVideo = function(player, position, size, shape, visibleFor, locatio
 		if(core.mode == 2/*Local*/ || !PeerNetwork.enableVideo) {
 			graphics.drawImage($Image.VideoScreen, position, size, null, (shape == 2/*Circle*/ ? 1 : 0), 1000000, 1.0, Color.White, 1/*Center*/, 1/*Middle*/, location);
 		} else {
-			graphics.items.push(new DisplayVideo(graphics.totalMatrix, position.x, position.y, size.x, size.y, 1000000, 1.0, graphics.currentClippingPath, "Video", new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/graphics.l", 63621, 63804, null, null), new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/graphics.l", 63621, 63804, null, null), new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/graphics.l", 63621, 63804, null, null), player.id, shape));
+			graphics.items.push(new DisplayVideo(graphics.totalMatrix, position.x, position.y, size.x, size.y, 1000000, 1.0, graphics.currentClippingPath, "Video", new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/graphics.l", 63621, 63804, null, null), new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/graphics.l", 63621, 63804, null, null), new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/graphics.l", 63621, 63804, null, null), player.id, shape));
 		}
 	}
 }
@@ -10149,12 +10149,12 @@ graphics.drawPointer = function(player, mode, color) {
 			color = player.color;
 		}
 		for(let i=0, _subject=player.touches, _len=_subject.length; i<_len; ++i) { let it = _subject[i]; {
-			graphics.drawImage($Image.finger, it.smoothPosition.plus(new Vector2(11, 32, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/graphics.l", 64798, 64805, null, null))), new Vector2(0.0, 0.0, null), null, (it.isDown ? 1 : 0), int.maxValue, 1.0, Color.White, 1/*Center*/, 1/*Middle*/, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/graphics.l", 64764, 64848, null, null));
+			graphics.drawImage($Image.finger, it.smoothPosition.plus(new Vector2(11, 32, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/graphics.l", 64798, 64805, null, null))), new Vector2(0.0, 0.0, null), null, (it.isDown ? 1 : 0), int.maxValue, 1.0, Color.White, 1/*Center*/, 1/*Middle*/, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/graphics.l", 64764, 64848, null, null));
 			if((color != null)) {
 				if(color?.hex == Color.Black?.hex) {
-					graphics.drawRectangle(it.smoothPosition.plus(new Vector2(16, 80, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/graphics.l", 64921, 64928, null, null))), new Vector2(26, 10, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/graphics.l", 64935, 64942, null, null)), color, new Color("#a0a0a0", ""), 2, null, int.maxValue, 1.0, 1/*Center*/, 1/*Middle*/, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/graphics.l", 64891, 65011, null, null));
+					graphics.drawRectangle(it.smoothPosition.plus(new Vector2(16, 80, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/graphics.l", 64921, 64928, null, null))), new Vector2(26, 10, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/graphics.l", 64935, 64942, null, null)), color, new Color("#a0a0a0", ""), 2, null, int.maxValue, 1.0, 1/*Center*/, 1/*Middle*/, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/graphics.l", 64891, 65011, null, null));
 				} else {
-					graphics.drawRectangle(it.smoothPosition.plus(new Vector2(16, 78, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/graphics.l", 65058, 65065, null, null))), new Vector2(26, 10, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/graphics.l", 65072, 65079, null, null)), color, null, 0, null, int.maxValue, 1.0, 1/*Center*/, 1/*Middle*/, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/graphics.l", 65028, 65106, null, null));
+					graphics.drawRectangle(it.smoothPosition.plus(new Vector2(16, 78, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/graphics.l", 65058, 65065, null, null))), new Vector2(26, 10, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/graphics.l", 65072, 65079, null, null)), color, null, 0, null, int.maxValue, 1.0, 1/*Center*/, 1/*Middle*/, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/graphics.l", 65028, 65106, null, null));
 				}
 			}
 		}}
@@ -10263,8 +10263,8 @@ graphics.scale = function(factor, code) {
 	}
 	let a0 = graphics.localMatrix.m0, a1 = graphics.localMatrix.m1, a2 = graphics.localMatrix.m2, a3 = graphics.localMatrix.m3, a4 = graphics.localMatrix.m4, a5 = graphics.localMatrix.m5;
 	let b0 = graphics.totalMatrix.m0, b1 = graphics.totalMatrix.m1, b2 = graphics.totalMatrix.m2, b3 = graphics.totalMatrix.m3, b4 = graphics.totalMatrix.m4, b5 = graphics.totalMatrix.m5;
-	graphics.localMatrix.scale(new Vector2(factor, factor, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/graphics.l", 73904, 73920, null, null)));
-	graphics.totalMatrix.scale(new Vector2(factor, factor, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/graphics.l", 73941, 73957, null, null)));
+	graphics.localMatrix.scale(new Vector2(factor, factor, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/graphics.l", 73904, 73920, null, null)));
+	graphics.totalMatrix.scale(new Vector2(factor, factor, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/graphics.l", 73941, 73957, null, null)));
 	code();
 	graphics.localMatrix.m0 = a0;
 	graphics.localMatrix.m1 = a1;
@@ -10287,8 +10287,8 @@ graphics.transform = function(move, rotate, scale, code) {
 		graphics.totalMatrix.move(move);
 	}
 	if(scale != 1) {
-		graphics.localMatrix.scale(new Vector2(scale, scale, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/graphics.l", 75357, 75371, null, null)));
-		graphics.totalMatrix.scale(new Vector2(scale, scale, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/graphics.l", 75393, 75407, null, null)));
+		graphics.localMatrix.scale(new Vector2(scale, scale, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/graphics.l", 75357, 75371, null, null)));
+		graphics.totalMatrix.scale(new Vector2(scale, scale, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/graphics.l", 75393, 75407, null, null)));
 	}
 	if(rotate) {
 		graphics.localMatrix.rotate(rotate);
@@ -10431,12 +10431,12 @@ graphics.getPixelPosition = function(position) {
 	return position.transformed(graphics.totalMatrix).divide2(graphics.pixelRatio);
 }
 graphics.getPixelSize = function(size) {
-	return size.multiply(new Vector2(graphics.totalMatrix.m0, graphics.totalMatrix.m3, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/graphics.l", 83250, 83282, null, null))).divide2(graphics.pixelRatio);
+	return size.multiply(new Vector2(graphics.totalMatrix.m0, graphics.totalMatrix.m3, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/graphics.l", 83250, 83282, null, null))).divide2(graphics.pixelRatio);
 }
 graphics.getEffectiveSize = function(imageSize, size) {
 	let sizeX = size.x || imageSize.x;
 	let sizeY = size.y || (sizeX / imageSize.x) * imageSize.y;
-	return new Vector2(sizeX, sizeY, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/graphics.l", 83467, 83481, null, null));
+	return new Vector2(sizeX, sizeY, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/graphics.l", 83467, 83481, null, null));
 }
 graphics.scaleImagesAsPointerGetsCloser = function(by, factor, radius, $do) {
 	let prevBy = graphics.scaleAsPointerGetsCloserBy;
@@ -10504,11 +10504,11 @@ graphics.drawTimer = function(startTime, duration, completionSound, timeBeforeCo
 	let margin2 = margin1 - width / 2;
 	let completion = (Time.now - startTime) / duration;
 	let time = (1 - completion) * 6000;
-	graphics.drawLine(new Vector2(0, -540 + margin1, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/graphics.l", 87828, 87856, null, null)), new Vector2(math.map(time, 0, 960, 0, -960 + margin2), -540 + margin1, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/graphics.l", 87860, 87915, null, null)), null, width, null, 0, 1.0);
-	graphics.drawLine(new Vector2(-960 + margin1, -540 + margin2, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/graphics.l", 87934, 87962, null, null)), new Vector2(-960 + margin1, math.map(time, 960, 960 + 1080, -540 + margin2, 540 - margin2), new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/graphics.l", 87966, 88038, null, null)), null, width, null, 0, 1.0);
-	graphics.drawLine(new Vector2(-960 + margin2, 540 - margin1, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/graphics.l", 88057, 88085, null, null)), new Vector2(math.map(time, 960 + 1080, 960 + 1080 + 1920, -960 + margin2, 960 - margin2), 540 - margin1, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/graphics.l", 88089, 88170, null, null)), null, width, null, 0, 1.0);
-	graphics.drawLine(new Vector2(960 - margin1, 540 - margin2, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/graphics.l", 88189, 88217, null, null)), new Vector2(960 - margin1, math.map(time, 960 + 1080 + 1920, 960 + 1080 + 1920 + 1080, 540 - margin2, -540 + margin2), new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/graphics.l", 88221, 88313, null, null)), null, width, null, 0, 1.0);
-	graphics.drawLine(new Vector2(960 - margin2, -540 + margin1, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/graphics.l", 88332, 88360, null, null)), new Vector2(math.map(time, 960 + 1080 + 1920 + 1080, 960 + 1080 + 1920 + 1080 + 960, 960 - margin2, 0), -540 + margin1, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/graphics.l", 88364, 88454, null, null)), null, width, null, 0, 1.0);
+	graphics.drawLine(new Vector2(0, -540 + margin1, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/graphics.l", 87828, 87856, null, null)), new Vector2(math.map(time, 0, 960, 0, -960 + margin2), -540 + margin1, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/graphics.l", 87860, 87915, null, null)), null, width, null, 0, 1.0);
+	graphics.drawLine(new Vector2(-960 + margin1, -540 + margin2, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/graphics.l", 87934, 87962, null, null)), new Vector2(-960 + margin1, math.map(time, 960, 960 + 1080, -540 + margin2, 540 - margin2), new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/graphics.l", 87966, 88038, null, null)), null, width, null, 0, 1.0);
+	graphics.drawLine(new Vector2(-960 + margin2, 540 - margin1, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/graphics.l", 88057, 88085, null, null)), new Vector2(math.map(time, 960 + 1080, 960 + 1080 + 1920, -960 + margin2, 960 - margin2), 540 - margin1, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/graphics.l", 88089, 88170, null, null)), null, width, null, 0, 1.0);
+	graphics.drawLine(new Vector2(960 - margin1, 540 - margin2, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/graphics.l", 88189, 88217, null, null)), new Vector2(960 - margin1, math.map(time, 960 + 1080 + 1920, 960 + 1080 + 1920 + 1080, 540 - margin2, -540 + margin2), new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/graphics.l", 88221, 88313, null, null)), null, width, null, 0, 1.0);
+	graphics.drawLine(new Vector2(960 - margin2, -540 + margin1, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/graphics.l", 88332, 88360, null, null)), new Vector2(math.map(time, 960 + 1080 + 1920 + 1080, 960 + 1080 + 1920 + 1080 + 960, 960 - margin2, 0), -540 + margin1, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/graphics.l", 88364, 88454, null, null)), null, width, null, 0, 1.0);
 	if((completionSound != null) && Time.now > startTime + duration - timeBeforeCompletionToPlaySound && !completionSound.isPlaying()) {
 		audio.playSound(completionSound, 0, false);
 	}
@@ -10519,7 +10519,7 @@ graphics.drawTimer = function(startTime, duration, completionSound, timeBeforeCo
 graphics.setPlayerVideo = function(player, pos, size, shape) {
 	let videoObject = graphics.getVideoObject(player);
 	if(!(videoObject != null)) {
-		videoObject = new VideoObject(new Vector2(0.0, 0.0, null), new Vector2(0.0, 0.0, null), 0.0, 1, null, 0, false, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/objects.l", 1581, 1600, null, null), player, 0/*Rectangle*/);
+		videoObject = new VideoObject(new Vector2(0.0, 0.0, null), new Vector2(0.0, 0.0, null), 0.0, 1, null, 0, false, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/objects.l", 1581, 1600, null, null), player, 0/*Rectangle*/);
 	}
 	videoObject.position.assign(pos);
 	videoObject.size.assign(size);
@@ -10797,7 +10797,7 @@ gizmo.init = function() {
 	gizmo.cursorItem = null;
 	gizmo.handleSize = 0.0;
 	gizmo.overHandleDirection = null;
-	gizmo.touchDownPos = new Vector2(Number.POSITIVE_INFINITY, Number.POSITIVE_INFINITY, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/graphics.l", 91092, 91124, null, null));
+	gizmo.touchDownPos = new Vector2(Number.POSITIVE_INFINITY, Number.POSITIVE_INFINITY, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/graphics.l", 91092, 91124, null, null));
 	gizmo.touchDownInsideGizmo = false;
 	gizmo.locationIndex = 0;
 	gizmo.waitingForCodeId = 0;
@@ -10855,7 +10855,7 @@ gizmo.tick = function() {
 		let size = gizmo.max.minus(gizmo.min);
 		let center = (gizmo.max.plus(gizmo.min)).divide2(2);
 		for(let i=0, _subject=Direction.allDirections, _len=_subject.length; i<_len; ++i) { let it = _subject[i]; {
-			graphics.drawImage($Image.ResizeHandle, center.plus(size.divide2(2).multiply(it.vector?.toVector2())), new Vector2(gizmo.handleSize, 0, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/graphics.l", 90830, 90840, null, null)), null, 0, int.maxValue, 1.0, Color.White, 1/*Center*/, 1/*Middle*/, null);
+			graphics.drawImage($Image.ResizeHandle, center.plus(size.divide2(2).multiply(it.vector?.toVector2())), new Vector2(gizmo.handleSize, 0, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/graphics.l", 90830, 90840, null, null)), null, 0, int.maxValue, 1.0, Color.White, 1/*Center*/, 1/*Middle*/, null);
 		}}
 		graphics.drawRectangle(center, gizmo.max.minus(gizmo.min), null, new Color("#437FDF", ""), 4, null, int.maxValue, 1.0, 1/*Center*/, 1/*Middle*/, null);
 	}
@@ -10895,22 +10895,22 @@ gizmo.onTouch = function(InputType, id, pixelPos, referencePos, shift, alt, cmdO
 			if(referencePos.manhattanDistanceTo(gizmo.min) < gizmo.handleSize) {
 				gizmo.overHandleDirection = Direction.UpLeft;
 			} else {
-				if(referencePos.manhattanDistanceTo(new Vector2(gizmo.max.x, gizmo.min.y, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/graphics.l", 92394, 92408, null, null))) < gizmo.handleSize) {
+				if(referencePos.manhattanDistanceTo(new Vector2(gizmo.max.x, gizmo.min.y, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/graphics.l", 92394, 92408, null, null))) < gizmo.handleSize) {
 					gizmo.overHandleDirection = Direction.UpRight;
 				} else {
-					if(referencePos.manhattanDistanceTo(new Vector2(gizmo.min.x, gizmo.max.y, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/graphics.l", 92511, 92525, null, null))) < gizmo.handleSize) {
+					if(referencePos.manhattanDistanceTo(new Vector2(gizmo.min.x, gizmo.max.y, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/graphics.l", 92511, 92525, null, null))) < gizmo.handleSize) {
 						gizmo.overHandleDirection = Direction.DownLeft;
 					} else {
-						if(referencePos.manhattanDistanceTo(new Vector2(gizmo.max.x, center.y, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/graphics.l", 92629, 92646, null, null))) < gizmo.handleSize) {
+						if(referencePos.manhattanDistanceTo(new Vector2(gizmo.max.x, center.y, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/graphics.l", 92629, 92646, null, null))) < gizmo.handleSize) {
 							gizmo.overHandleDirection = Direction.Right;
 						} else {
-							if(referencePos.manhattanDistanceTo(new Vector2(gizmo.min.x, center.y, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/graphics.l", 92744, 92761, null, null))) < gizmo.handleSize) {
+							if(referencePos.manhattanDistanceTo(new Vector2(gizmo.min.x, center.y, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/graphics.l", 92744, 92761, null, null))) < gizmo.handleSize) {
 								gizmo.overHandleDirection = Direction.Left;
 							} else {
-								if(referencePos.manhattanDistanceTo(new Vector2(center.x, gizmo.min.y, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/graphics.l", 92858, 92875, null, null))) < gizmo.handleSize) {
+								if(referencePos.manhattanDistanceTo(new Vector2(center.x, gizmo.min.y, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/graphics.l", 92858, 92875, null, null))) < gizmo.handleSize) {
 									gizmo.overHandleDirection = Direction.Up;
 								} else {
-									if(referencePos.manhattanDistanceTo(new Vector2(center.x, gizmo.max.y, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/graphics.l", 92970, 92987, null, null))) < gizmo.handleSize) {
+									if(referencePos.manhattanDistanceTo(new Vector2(center.x, gizmo.max.y, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/graphics.l", 92970, 92987, null, null))) < gizmo.handleSize) {
 										gizmo.overHandleDirection = Direction.Down;
 									} else {
 										gizmo.overHandleDirection = null;
@@ -11024,9 +11024,9 @@ awardScreen.tick = function() {
 	});
 	if(awardScreen.active) {
 		let size = new Vector2(720, 540);
-		for(let i=0, _subject=input.players, _center = new Vector2(0, 0, null), _delta = size, _grid=new IntVector2(2, 2, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/graphics.l", 97707, 97712, null, null)), _y=0, _yPos=_center.y-(_grid.y-1)*_delta.y/2; _y<_grid.y; ++_y, _yPos += _delta.y) for(let _x=0, _xPos = _center.x-(_grid.x-1)*_delta.x/2; _x < _grid.x && i < _subject.length; ++_x, _xPos += _delta.x, i++) {{ let it = _subject[i], pos = new Vector2(_xPos, _yPos, _center.location || _delta.location ? new SourceCodeLocation(null, 0, 0, _center.location, _delta.location) : null); {
-			graphics.drawVideo(it, pos, size, 0/*Rectangle*/, null, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/graphics.l", 97729, 97759, null, null));
-			graphics.drawText(it.score?.toString(), pos.multiply(new Vector2(2.13, 1.8, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/graphics.l", 97787, 97798, null, null))), new Vector2(0.0, 0.0, null), null, 1/*Center*/, 1/*Middle*/, 0/*Normal*/, Font.ByTheWay, null, 0, 0, 1.0, 0.0, null, null, new Vector2(16, 16, null), false, 0/*None*/, 2/*Scale*/, 0, 0, null, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/graphics.l", 97764, 97813, null, null));
+		for(let i=0, _subject=input.players, _center = new Vector2(0, 0, null), _delta = size, _grid=new IntVector2(2, 2, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/graphics.l", 97707, 97712, null, null)), _y=0, _yPos=_center.y-(_grid.y-1)*_delta.y/2; _y<_grid.y; ++_y, _yPos += _delta.y) for(let _x=0, _xPos = _center.x-(_grid.x-1)*_delta.x/2; _x < _grid.x && i < _subject.length; ++_x, _xPos += _delta.x, i++) {{ let it = _subject[i], pos = new Vector2(_xPos, _yPos, _center.location || _delta.location ? new SourceCodeLocation(null, 0, 0, _center.location, _delta.location) : null); {
+			graphics.drawVideo(it, pos, size, 0/*Rectangle*/, null, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/graphics.l", 97729, 97759, null, null));
+			graphics.drawText(it.score?.toString(), pos.multiply(new Vector2(2.13, 1.8, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/graphics.l", 97787, 97798, null, null))), new Vector2(0.0, 0.0, null), null, 1/*Center*/, 1/*Middle*/, 0/*Normal*/, Font.ByTheWay, null, 0, 0, 1.0, 0.0, null, null, new Vector2(16, 16, null), false, 0/*None*/, 2/*Scale*/, 0, 0, null, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/graphics.l", 97764, 97813, null, null));
 		}}}
 	}
 }
@@ -11089,7 +11089,7 @@ function DisplayItem(m, x, y, w, h, layer, alpha, clippingPath, name, location, 
 	this.m4 = m.m4;
 	this.m5 = m.m5;
 	if(Platform.isDebug && (this.w || this.h)) {
-		this.poly = [new Vector2(this.x, this.y, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/graphics.l", 98358, 98370, null, null)).transform(m), new Vector2(this.x + this.w, this.y, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/graphics.l", 98389, 98401, null, null)).transform(m), new Vector2(this.x + this.w, this.y + this.h, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/graphics.l", 98420, 98432, null, null)).transform(m), new Vector2(this.x, this.y + this.h, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/graphics.l", 98451, 98463, null, null)).transform(m)];
+		this.poly = [new Vector2(this.x, this.y, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/graphics.l", 98358, 98370, null, null)).transform(m), new Vector2(this.x + this.w, this.y, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/graphics.l", 98389, 98401, null, null)).transform(m), new Vector2(this.x + this.w, this.y + this.h, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/graphics.l", 98420, 98432, null, null)).transform(m), new Vector2(this.x, this.y + this.h, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/graphics.l", 98451, 98463, null, null)).transform(m)];
 	}
 }
 function new_DisplayItem_of_type(type) {
@@ -11900,11 +11900,11 @@ lobby.tick = function() {
 	var _value, _value2;
 	lobby.tickSettings();
 	if(Platform.isStaging) {
-		graphics.drawText("Version:"+_buildVersion?.toString(), new Vector2(-940, 520, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/lobby.l", 812, 823, null, null)), new Vector2(20, 0, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/lobby.l", 799, 801, null, null)), null, 0/*Left*/, 1/*Middle*/, 0/*Normal*/, null, null, 0, 0, 1.0, 0.0, null, null, new Vector2(16, 16, null), false, 0/*None*/, 2/*Scale*/, 0, 0, null, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/lobby.l", 750, 835, null, null));
+		graphics.drawText("Version:"+_buildVersion?.toString(), new Vector2(-940, 520, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/lobby.l", 812, 823, null, null)), new Vector2(20, 0, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/lobby.l", 799, 801, null, null)), null, 0/*Left*/, 1/*Middle*/, 0/*Normal*/, null, null, 0, 0, 1.0, 0.0, null, null, new Vector2(16, 16, null), false, 0/*None*/, 2/*Scale*/, 0, 0, null, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/lobby.l", 750, 835, null, null));
 	}
 	if((PeerNetwork.error || core.errorMessage) && Platform.isStaging) {
-		graphics.drawText(PeerNetwork.error, new Vector2(0.0, 0.0, null), new Vector2(40, 0, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/lobby.l", 941, 943, null, null)), null, 1/*Center*/, 1/*Middle*/, 0/*Normal*/, null, null, 0, 0, 1.0, 0.0, null, null, new Vector2(16, 16, null), false, 0/*None*/, 2/*Scale*/, 0, 0, null, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/lobby.l", 908, 943, null, null));
-		graphics.drawText(core.errorMessage, new Vector2(0, 40, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/lobby.l", 993, 999, null, null)), new Vector2(14, 0, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/lobby.l", 980, 982, null, null)), null, 1/*Center*/, 1/*Middle*/, 0/*Normal*/, null, null, 0, 0, 1.0, 0.0, null, null, new Vector2(16, 16, null), false, 0/*None*/, 2/*Scale*/, 0, 0, null, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/lobby.l", 947, 999, null, null));
+		graphics.drawText(PeerNetwork.error, new Vector2(0.0, 0.0, null), new Vector2(40, 0, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/lobby.l", 941, 943, null, null)), null, 1/*Center*/, 1/*Middle*/, 0/*Normal*/, null, null, 0, 0, 1.0, 0.0, null, null, new Vector2(16, 16, null), false, 0/*None*/, 2/*Scale*/, 0, 0, null, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/lobby.l", 908, 943, null, null));
+		graphics.drawText(core.errorMessage, new Vector2(0, 40, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/lobby.l", 993, 999, null, null)), new Vector2(14, 0, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/lobby.l", 980, 982, null, null)), null, 1/*Center*/, 1/*Middle*/, 0/*Normal*/, null, null, 0, 0, 1.0, 0.0, null, null, new Vector2(16, 16, null), false, 0/*None*/, 2/*Scale*/, 0, 0, null, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/lobby.l", 947, 999, null, null));
 		return;
 	}
 	input.onKeyDown3([input.host], (key,pressedBy,cmdOrCtrl,alt,shift) => {
@@ -11937,54 +11937,54 @@ lobby.tick = function() {
 		let offset = -videoWidth * (count - 1) / 2;
 		let halfVideoHeight = videoWidth * 3 / 8;
 		for(let i=0, _subject=input.players, _len=_subject.length; i<_len; ++i) { let player = _subject[i], playerIndex = i; {
-			let pos = new Vector2(offset + videoWidth * player.index, 0, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/lobby.l", 1724, 1753, null, null));
-			input.onTouchDown(pos, new Vector2(videoWidth, videoWidth * 3 / 4, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/lobby.l", 1788, 1816, null, null)), null, "auto", false, true, 1/*Center*/, 1/*Middle*/, touch => {
+			let pos = new Vector2(offset + videoWidth * player.index, 0, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/lobby.l", 1724, 1753, null, null));
+			input.onTouchDown(pos, new Vector2(videoWidth, videoWidth * 3 / 4, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/lobby.l", 1788, 1816, null, null)), null, "auto", false, true, 1/*Center*/, 1/*Middle*/, touch => {
 				lobby.cyclePlayer(player);
 			});
 		}}
 		for(let i=0, _subject=input.players, _len=_subject.length; i<_len; ++i) { let player = _subject[i], playerIndex = i; {
-			let pos = new Vector2(offset + videoWidth * player.index, 0, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/lobby.l", 1903, 1932, null, null));
-			graphics.drawVideo(player, pos, new Vector2(videoWidth, 0, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/lobby.l", 1955, 1965, null, null)), 0/*Rectangle*/, null, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/lobby.l", 1937, 1965, null, null));
+			let pos = new Vector2(offset + videoWidth * player.index, 0, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/lobby.l", 1903, 1932, null, null));
+			graphics.drawVideo(player, pos, new Vector2(videoWidth, 0, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/lobby.l", 1955, 1965, null, null)), 0/*Rectangle*/, null, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/lobby.l", 1937, 1965, null, null));
 			let text = (!player.isReadyInLobby ? "START" : (Loca.language == 1/*German*/ ? "Ich bin bereit" : "I'm ready"));
-			graphics.drawStandardButton(text, pos.plus(new Vector2(0, halfVideoHeight + 90, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/lobby.l", 2128, 2150, null, null))), player.color, null, [player], 0/*None*/, 0, 1.0, !player.isReadyInLobby, touch => {
+			graphics.drawStandardButton(text, pos.plus(new Vector2(0, halfVideoHeight + 90, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/lobby.l", 2128, 2150, null, null))), player.color, null, [player], 0/*None*/, 0, 1.0, !player.isReadyInLobby, touch => {
 				if(lobby.enableFullscreen) {
 					Platform.setFullscreen(true, touch.by);
 				}
 				touch.by.isReadyInLobby = true;
-			}, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/lobby.l", 2099, 2386, null, null));
+			}, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/lobby.l", 2099, 2386, null, null));
 			if((input.players.length >= Platform.supportedUserCount.from && input.players.length <= Platform.supportedUserCount.to) && input.players.every(a => a.isReadyInLobby)) {
 				lobby.fields.length = 0;
 				{
 					core.restart();
 				}
 			}
-			let closePos = pos.plus(new Vector2(videoWidth / 2 - 15, -halfVideoHeight - 25, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/lobby.l", 2560, 2597, null, null)));
+			let closePos = pos.plus(new Vector2(videoWidth / 2 - 15, -halfVideoHeight - 25, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/lobby.l", 2560, 2597, null, null)));
 			let state = input.internalUsers[player.id]?.connectionState;
 			if(state && state != "connected") {
-				graphics.drawText(state, pos.plus(new Vector2(0, -halfVideoHeight - 40, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/lobby.l", 2782, 2806, null, null))), new Vector2(80, 0, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/lobby.l", 2725, 2727, null, null)), (state == "failed" ? Color.Red : Color.Yellow), 1/*Center*/, 1/*Middle*/, 0/*Normal*/, null, null, 0, 0, 1.0, 0.0, null, null, new Vector2(16, 16, null), false, 0/*None*/, 2/*Scale*/, 0, 0, null, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/lobby.l", 2704, 2806, null, null));
-				graphics.drawText("x", closePos, new Vector2(50, 0, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/lobby.l", 2831, 2833, null, null)), new Color("#808080ff"), 1/*Center*/, 1/*Middle*/, 0/*Normal*/, null, null, 0, 0, 1.0, 0.0, null, null, new Vector2(16, 16, null), false, 0/*None*/, 2/*Scale*/, 0, 0, null, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/lobby.l", 2812, 2867, null, null));
+				graphics.drawText(state, pos.plus(new Vector2(0, -halfVideoHeight - 40, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/lobby.l", 2782, 2806, null, null))), new Vector2(80, 0, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/lobby.l", 2725, 2727, null, null)), (state == "failed" ? Color.Red : Color.Yellow), 1/*Center*/, 1/*Middle*/, 0/*Normal*/, null, null, 0, 0, 1.0, 0.0, null, null, new Vector2(16, 16, null), false, 0/*None*/, 2/*Scale*/, 0, 0, null, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/lobby.l", 2704, 2806, null, null));
+				graphics.drawText("x", closePos, new Vector2(50, 0, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/lobby.l", 2831, 2833, null, null)), new Color("#808080ff"), 1/*Center*/, 1/*Middle*/, 0/*Normal*/, null, null, 0, 0, 1.0, 0.0, null, null, new Vector2(16, 16, null), false, 0/*None*/, 2/*Scale*/, 0, 0, null, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/lobby.l", 2812, 2867, null, null));
 			}
-			input.onTouchDown(closePos, new Vector2(32, 32, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/lobby.l", 2899, 2906, null, null)), null, "auto", false, true, 1/*Center*/, 1/*Middle*/, touch => {
+			input.onTouchDown(closePos, new Vector2(32, 32, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/lobby.l", 2899, 2906, null, null)), null, "auto", false, true, 1/*Center*/, 1/*Middle*/, touch => {
 				input.removePlayer(player);
 			});
 			let field = lobby.fields.find(a => a.player == player);
 			if((field != null)) {
-				field.position.assign(pos.plus(new Vector2(0, -halfVideoHeight - ((input.players.length <= 2 ? 85 : 120)), new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/lobby.l", 3043, 3095, null, null))));
+				field.position.assign(pos.plus(new Vector2(0, -halfVideoHeight - ((input.players.length <= 2 ? 85 : 120)), new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/lobby.l", 3043, 3095, null, null))));
 				if((field.effect != null)) {
-					field.effect.position.assign(field.position.plus(new Vector2(0, -190, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/lobby.l", 3159, 3167, null, null))));
+					field.effect.position.assign(field.position.plus(new Vector2(0, -190, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/lobby.l", 3159, 3167, null, null))));
 				}
 				if((field.particleSystem != null)) {
 					field.particleSystem.position.assign(field.position);
 				}
 				if(lobby.editNames) {
 					for(let i=0, _subject=lobby.nameSuggestions, _len=_subject.length; i<_len; ++i) { let name = _subject[i]; {
-						graphics.drawButton(null, name, pos.plus(new Vector2(-150 + 100 * ((((i % 4) + 4) % 4)), halfVideoHeight + 150 + 20 * Math.floor(i / 4), new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/lobby.l", 3362, 3417, null, null))), new Vector2(0.0, 0.0, null), -1, new Color("#808080ff"), 14, new Vector2(0, 0, null), new Vector2(16, 16, null), false, 1.0, 1, Color.White, null, null, [input.host], null, 0/*None*/, 0, 1.0, true, .5, touch => {
+						graphics.drawButton(null, name, pos.plus(new Vector2(-150 + 100 * ((((i % 4) + 4) % 4)), halfVideoHeight + 150 + 20 * Math.floor(i / 4), new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/lobby.l", 3362, 3417, null, null))), new Vector2(0.0, 0.0, null), -1, new Color("#808080ff"), 14, new Vector2(0, 0, null), new Vector2(16, 16, null), false, 1.0, 1, Color.White, null, null, [input.host], null, 0/*None*/, 0, 1.0, true, .5, touch => {
 							lobby.fields[playerIndex].text = name;
 							lobby.setPlayerName(player, name);
-						}, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/lobby.l", 3332, 3565, null, null));
+						}, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/lobby.l", 3332, 3565, null, null));
 					}}
 					if(lobby.showNameIndex == playerIndex) {
-						graphics.drawCircle(field.position.plus(new Vector2(0, 60, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/lobby.l", 3703, 3709, null, null))), new Vector2(20, 0, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/lobby.l", 3716, 3718, null, null)), null, null, 0, 0, 1.0, 0/*Clockwise*/, [input.host], 0, 1.0, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/lobby.l", 3677, 3735, null, null));
+						graphics.drawCircle(field.position.plus(new Vector2(0, 60, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/lobby.l", 3703, 3709, null, null))), new Vector2(20, 0, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/lobby.l", 3716, 3718, null, null)), null, null, 0, 0, 1.0, 0/*Clockwise*/, [input.host], 0, 1.0, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/lobby.l", 3677, 3735, null, null));
 					}
 				}
 			}
@@ -11995,16 +11995,16 @@ lobby.tick = function() {
 			lobby.points.push(touch.position().clone());
 		});
 		for(let i=0, _subject=lobby.points, _len=_subject.length; i<_len; ++i) { let it = _subject[i]; {
-			graphics.drawText(it?.toString(), it, new Vector2(30, 0, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/lobby.l", 3924, 3926, null, null)), null, 1/*Center*/, 1/*Middle*/, 0/*Normal*/, null, null, 0, 0, 1.0, 0.0, null, null, new Vector2(16, 16, null), false, 0/*None*/, 2/*Scale*/, 0, 0, null, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/lobby.l", 3892, 3926, null, null));
-			graphics.drawCircle(it, new Vector2(200, 0, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/lobby.l", 3965, 3968, null, null)), null, Color.White, 0, 0, 1.0, 0/*Clockwise*/, null, 0, 1.0, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/lobby.l", 3928, 3968, null, null));
+			graphics.drawText(it?.toString(), it, new Vector2(30, 0, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/lobby.l", 3924, 3926, null, null)), null, 1/*Center*/, 1/*Middle*/, 0/*Normal*/, null, null, 0, 0, 1.0, 0.0, null, null, new Vector2(16, 16, null), false, 0/*None*/, 2/*Scale*/, 0, 0, null, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/lobby.l", 3892, 3926, null, null));
+			graphics.drawCircle(it, new Vector2(200, 0, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/lobby.l", 3965, 3968, null, null)), null, Color.White, 0, 0, 1.0, 0/*Clockwise*/, null, 0, 1.0, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/lobby.l", 3928, 3968, null, null));
 		}}
-		graphics.drawText((++lobby.counter)?.toString(), new Vector2(0, -480, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/lobby.l", 3992, 4001, null, null)), new Vector2(100, 0, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/lobby.l", 4008, 4011, null, null)), null, 1/*Center*/, 1/*Middle*/, 0/*Normal*/, null, null, 0, 0, 1.0, 0.0, null, null, new Vector2(16, 16, null), false, 0/*None*/, 2/*Scale*/, 0, 0, null, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/lobby.l", 3972, 4011, null, null));
+		graphics.drawText((++lobby.counter)?.toString(), new Vector2(0, -480, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/lobby.l", 3992, 4001, null, null)), new Vector2(100, 0, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/lobby.l", 4008, 4011, null, null)), null, 1/*Center*/, 1/*Middle*/, 0/*Normal*/, null, null, 0, 0, 1.0, 0.0, null, null, new Vector2(16, 16, null), false, 0/*None*/, 2/*Scale*/, 0, 0, null, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/lobby.l", 3972, 4011, null, null));
 	}
 	if(Loca.supportedLanguages.length > 1) {
-		for(let i=0, _subject=Loca.supportedLanguages, _end = new Vector2(930, -510, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/lobby.l", 4121, 4131, null, null)), _delta = new Vector2(40, 0.0, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/lobby.l", 4139, 4143, null, null)), _len=_subject.length, _x = _end.x-(_len-1)*_delta.x, _y=_end.y-(_len-1)*_delta.y; i<_len; ++i, _x += _delta.x, _y += _delta.y) { let it = _subject[i], pos = new Vector2(_x, _y, _end.location || _delta.location ? new SourceCodeLocation(null, 0, 0, _end.location, _delta.location) : null); {
+		for(let i=0, _subject=Loca.supportedLanguages, _end = new Vector2(930, -510, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/lobby.l", 4121, 4131, null, null)), _delta = new Vector2(40, 0.0, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/lobby.l", 4139, 4143, null, null)), _len=_subject.length, _x = _end.x-(_len-1)*_delta.x, _y=_end.y-(_len-1)*_delta.y; i<_len; ++i, _x += _delta.x, _y += _delta.y) { let it = _subject[i], pos = new Vector2(_x, _y, _end.location || _delta.location ? new SourceCodeLocation(null, 0, 0, _end.location, _delta.location) : null); {
 			graphics.drawImage5($Image.Flag[i], pos, new Vector2(0.0, 0.0, null), null, null, (Loca.language == i ? 1 : 0), 0, 1.0, Color.White, 0.0, false, false, new Vector2(16, 16, null), false, 0/*None*/, touch => {
 				Loca.setLanguage(i, null);
-			}, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/lobby.l", 4148, 4240, null, null));
+			}, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/lobby.l", 4148, 4240, null, null));
 		}}
 	}
 }
@@ -12037,8 +12037,8 @@ lobby.switchFieldFocus = function(delta) {
 lobby.showName = function(player) {
 	let field = lobby.createField(player, null);
 	field = field.fadeScaleAndRotateIn(5, (-.08), (-.01), 200, 0);
-	field.effect = new Effect(new Vector2(0.0, 0.0, null), new Vector2(1000, 0, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/lobby.l", 5196, 5200, null, null)), 0.0, 1, null, 0, false, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/lobby.l", 5172, 5201, null, null), $Image.Nuke, 15);
-	field.particleSystem = new ParticleSystem(new Vector2(0.0, 0.0, null), new Vector2(0.0, 0.0, null), 0.0, 1, null, 0, false, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/lobby.l", 5227, 5317, null, null), $Image.Spark, 10, 20, 30, 500, (-1), 1, .5, .05, 0/*Burst*/, .5);
+	field.effect = new Effect(new Vector2(0.0, 0.0, null), new Vector2(1000, 0, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/lobby.l", 5196, 5200, null, null)), 0.0, 1, null, 0, false, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/lobby.l", 5172, 5201, null, null), $Image.Nuke, 15);
+	field.particleSystem = new ParticleSystem(new Vector2(0.0, 0.0, null), new Vector2(0.0, 0.0, null), 0.0, 1, null, 0, false, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/lobby.l", 5227, 5317, null, null), $Image.Spark, 10, 20, 30, 500, (-1), 1, .5, .05, 0/*Burst*/, .5);
 }
 function Lambda21(player) {
 	this._id = 21;
@@ -12127,7 +12127,7 @@ function _Lambda21() {
 };
 _Lambda21.prototype = Lambda21.prototype;
 lobby.createField = function(player, visibleFor) {
-	let field = new LobbyTextField(new Vector2(0.0, 0.0, null), new Vector2(100, 0, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/lobby.l", 5515, 5518, null, null)), (-.01), 1, visibleFor, 0, false, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/lobby.l", 5427, 5581, null, null), player.name, Font.ByTheWay, Color.White, player, null, null, input.host, 600, new Lambda21(player));
+	let field = new LobbyTextField(new Vector2(0.0, 0.0, null), new Vector2(100, 0, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/lobby.l", 5515, 5518, null, null)), (-.01), 1, visibleFor, 0, false, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/lobby.l", 5427, 5581, null, null), player.name, Font.ByTheWay, Color.White, player, null, null, input.host, 600, new Lambda21(player));
 	lobby.fields.push(field);
 	return field;
 }
@@ -12143,7 +12143,7 @@ lobby.setPlayerName = function(player, name) {
 	}
 }
 lobby.cyclePlayer = function(player) {
-	System.watch(("Cycle color "+player.index?.toString()), new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/lobby.l", 5930, 5964, null, null));
+	System.watch(("Cycle color "+player.index?.toString()), new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/lobby.l", 5930, 5964, null, null));
 	input.players.moveToBack(player);
 	input.updatePlayers();
 	player.colorPreferences = [player.index];
@@ -12151,42 +12151,42 @@ lobby.cyclePlayer = function(player) {
 lobby.tickSettings = function() {
 	for(let i=0, _subject=input.players, _len=_subject.length; i<_len; ++i) { let player = _subject[i]; {
 		graphics.visibleFor([player], () => {
-			graphics.drawImage5($Image.settingsIcon, new Vector2(-920, -500, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/lobby.l", 6156, 6167, null, null)), new Vector2(32, 0, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/lobby.l", 6174, 6176, null, null)), null, null, 0, 0, 1.0, Color.White, 0.0, false, false, new Vector2(16, 16, null), false, 0/*None*/, touch => {
+			graphics.drawImage5($Image.settingsIcon, new Vector2(-920, -500, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/lobby.l", 6156, 6167, null, null)), new Vector2(32, 0, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/lobby.l", 6174, 6176, null, null)), null, null, 0, 0, 1.0, Color.White, 0.0, false, false, new Vector2(16, 16, null), false, 0/*None*/, touch => {
 				player.showSettingsInLobby = !player.showSettingsInLobby;
-			}, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/lobby.l", 6132, 6238, null, null));
+			}, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/lobby.l", 6132, 6238, null, null));
 			if(player.showSettingsInLobby) {
-				let pos = new Vector2(-650, -500, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/lobby.l", 6298, 6309, null, null));
-				graphics.drawImage($Image.cameraIcon, pos, new Vector2(0.0, 0.0, null), null, 0, 0, 1.0, Color.White, 1/*Center*/, 1/*Middle*/, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/lobby.l", 6321, 6346, null, null));
-				for(let i=0, _start = pos.plus(new Vector2(36, 0.0, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/lobby.l", 6378, 6382, null, null))), _delta = new Vector2(0, 26, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/lobby.l", 6389, 6395, null, null)), _len=10, _x = _start.x, _y= _start.y; i<_len; ++i, _x += _delta.x, _y += _delta.y) { let pos = new Vector2(_x, _y, _start.location || _delta.location ? new SourceCodeLocation(null, 0, 0, _start.location, _delta.location) : null); {
+				let pos = new Vector2(-650, -500, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/lobby.l", 6298, 6309, null, null));
+				graphics.drawImage($Image.cameraIcon, pos, new Vector2(0.0, 0.0, null), null, 0, 0, 1.0, Color.White, 1/*Center*/, 1/*Middle*/, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/lobby.l", 6321, 6346, null, null));
+				for(let i=0, _start = pos.plus(new Vector2(36, 0.0, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/lobby.l", 6378, 6382, null, null))), _delta = new Vector2(0, 26, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/lobby.l", 6389, 6395, null, null)), _len=10, _x = _start.x, _y= _start.y; i<_len; ++i, _x += _delta.x, _y += _delta.y) { let pos = new Vector2(_x, _y, _start.location || _delta.location ? new SourceCodeLocation(null, 0, 0, _start.location, _delta.location) : null); {
 					let device = PeerNetwork.devices.videoInput[i];
 					if((device != null)) {
-						graphics.drawText(device.label, pos, new Vector2(18, 0, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/lobby.l", 6489, 6491, null, null)), (PeerNetwork.videoInputId == device.deviceId ? player.color : Color.White), 0/*Left*/, 1/*Middle*/, 0/*Normal*/, null, null, 0, 0, 1.0, 0.0, null, null, new Vector2(16, 16, null), false, 0/*None*/, 2/*Scale*/, 0, 0, null, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/lobby.l", 6456, 6577, null, null));
+						graphics.drawText(device.label, pos, new Vector2(18, 0, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/lobby.l", 6489, 6491, null, null)), (PeerNetwork.videoInputId == device.deviceId ? player.color : Color.White), 0/*Left*/, 1/*Middle*/, 0/*Normal*/, null, null, 0, 0, 1.0, 0.0, null, null, new Vector2(16, 16, null), false, 0/*None*/, 2/*Scale*/, 0, 0, null, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/lobby.l", 6456, 6577, null, null));
 					}
-					input.onTouchDown(pos.plus(new Vector2(200, 0, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/lobby.l", 6600, 6607, null, null))), new Vector2(400, 30, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/lobby.l", 6614, 6622, null, null)), [player], "auto", false, true, 1/*Center*/, 1/*Middle*/, touch => {
+					input.onTouchDown(pos.plus(new Vector2(200, 0, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/lobby.l", 6600, 6607, null, null))), new Vector2(400, 30, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/lobby.l", 6614, 6622, null, null)), [player], "auto", false, true, 1/*Center*/, 1/*Middle*/, touch => {
 						PeerNetwork.setVideoInput(device?.deviceId, player);
 					});
 				}}
-				pos.plusAssign(new Vector2(450, 0.0, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/lobby.l", 6703, 6708, null, null)));
-				graphics.drawImage($Image.microphoneIcon, pos, new Vector2(0.0, 0.0, null), null, 0, 0, 1.0, Color.White, 1/*Center*/, 1/*Middle*/, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/lobby.l", 6720, 6749, null, null));
-				for(let i=0, _start = pos.plus(new Vector2(36, 0.0, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/lobby.l", 6781, 6785, null, null))), _delta = new Vector2(0, 26, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/lobby.l", 6792, 6798, null, null)), _len=10, _x = _start.x, _y= _start.y; i<_len; ++i, _x += _delta.x, _y += _delta.y) { let pos = new Vector2(_x, _y, _start.location || _delta.location ? new SourceCodeLocation(null, 0, 0, _start.location, _delta.location) : null); {
+				pos.plusAssign(new Vector2(450, 0.0, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/lobby.l", 6703, 6708, null, null)));
+				graphics.drawImage($Image.microphoneIcon, pos, new Vector2(0.0, 0.0, null), null, 0, 0, 1.0, Color.White, 1/*Center*/, 1/*Middle*/, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/lobby.l", 6720, 6749, null, null));
+				for(let i=0, _start = pos.plus(new Vector2(36, 0.0, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/lobby.l", 6781, 6785, null, null))), _delta = new Vector2(0, 26, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/lobby.l", 6792, 6798, null, null)), _len=10, _x = _start.x, _y= _start.y; i<_len; ++i, _x += _delta.x, _y += _delta.y) { let pos = new Vector2(_x, _y, _start.location || _delta.location ? new SourceCodeLocation(null, 0, 0, _start.location, _delta.location) : null); {
 					let device = PeerNetwork.devices.audioInput[i];
 					if((device != null)) {
-						graphics.drawText(device.label, pos, new Vector2(18, 0, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/lobby.l", 6892, 6894, null, null)), (PeerNetwork.audioInputId == device.deviceId ? player.color : Color.White), 0/*Left*/, 1/*Middle*/, 0/*Normal*/, null, null, 0, 0, 1.0, 0.0, null, null, new Vector2(16, 16, null), false, 0/*None*/, 2/*Scale*/, 0, 0, null, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/lobby.l", 6859, 6980, null, null));
+						graphics.drawText(device.label, pos, new Vector2(18, 0, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/lobby.l", 6892, 6894, null, null)), (PeerNetwork.audioInputId == device.deviceId ? player.color : Color.White), 0/*Left*/, 1/*Middle*/, 0/*Normal*/, null, null, 0, 0, 1.0, 0.0, null, null, new Vector2(16, 16, null), false, 0/*None*/, 2/*Scale*/, 0, 0, null, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/lobby.l", 6859, 6980, null, null));
 					}
-					input.onTouchDown(pos.plus(new Vector2(200, 0, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/lobby.l", 7003, 7010, null, null))), new Vector2(400, 30, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/lobby.l", 7017, 7025, null, null)), [player], "auto", false, true, 1/*Center*/, 1/*Middle*/, touch => {
+					input.onTouchDown(pos.plus(new Vector2(200, 0, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/lobby.l", 7003, 7010, null, null))), new Vector2(400, 30, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/lobby.l", 7017, 7025, null, null)), [player], "auto", false, true, 1/*Center*/, 1/*Middle*/, touch => {
 						PeerNetwork.setAudioInput(device?.deviceId, player);
 					});
 				}}
-				pos.plusAssign(new Vector2(550, 0.0, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/lobby.l", 7106, 7111, null, null)));
+				pos.plusAssign(new Vector2(550, 0.0, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/lobby.l", 7106, 7111, null, null)));
 				if((PeerNetwork.devices.audioOutput != null && PeerNetwork.devices.audioOutput.length != 0) ) {
-					graphics.drawImage($Image.speakerIcon, pos, new Vector2(0.0, 0.0, null), null, 0, 0, 1.0, Color.White, 1/*Center*/, 1/*Middle*/, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/lobby.l", 7166, 7192, null, null));
+					graphics.drawImage($Image.speakerIcon, pos, new Vector2(0.0, 0.0, null), null, 0, 0, 1.0, Color.White, 1/*Center*/, 1/*Middle*/, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/lobby.l", 7166, 7192, null, null));
 				}
-				for(let i=0, _start = pos.plus(new Vector2(36, 0.0, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/lobby.l", 7224, 7228, null, null))), _delta = new Vector2(0, 26, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/lobby.l", 7235, 7241, null, null)), _len=10, _x = _start.x, _y= _start.y; i<_len; ++i, _x += _delta.x, _y += _delta.y) { let pos = new Vector2(_x, _y, _start.location || _delta.location ? new SourceCodeLocation(null, 0, 0, _start.location, _delta.location) : null); {
+				for(let i=0, _start = pos.plus(new Vector2(36, 0.0, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/lobby.l", 7224, 7228, null, null))), _delta = new Vector2(0, 26, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/lobby.l", 7235, 7241, null, null)), _len=10, _x = _start.x, _y= _start.y; i<_len; ++i, _x += _delta.x, _y += _delta.y) { let pos = new Vector2(_x, _y, _start.location || _delta.location ? new SourceCodeLocation(null, 0, 0, _start.location, _delta.location) : null); {
 					let device = PeerNetwork.devices.audioOutput[i];
 					if((device != null)) {
-						graphics.drawText(device.label, pos, new Vector2(18, 0, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/lobby.l", 7336, 7338, null, null)), (PeerNetwork.audioOutputId == device.deviceId ? player.color : Color.White), 0/*Left*/, 1/*Middle*/, 0/*Normal*/, null, null, 0, 0, 1.0, 0.0, null, null, new Vector2(16, 16, null), false, 0/*None*/, 2/*Scale*/, 0, 0, null, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/lobby.l", 7303, 7425, null, null));
+						graphics.drawText(device.label, pos, new Vector2(18, 0, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/lobby.l", 7336, 7338, null, null)), (PeerNetwork.audioOutputId == device.deviceId ? player.color : Color.White), 0/*Left*/, 1/*Middle*/, 0/*Normal*/, null, null, 0, 0, 1.0, 0.0, null, null, new Vector2(16, 16, null), false, 0/*None*/, 2/*Scale*/, 0, 0, null, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/lobby.l", 7303, 7425, null, null));
 					}
-					input.onTouchDown(pos.plus(new Vector2(200, 0, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/lobby.l", 7448, 7455, null, null))), new Vector2(400, 30, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/lobby.l", 7462, 7470, null, null)), [player], "auto", false, true, 1/*Center*/, 1/*Middle*/, touch => {
+					input.onTouchDown(pos.plus(new Vector2(200, 0, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/lobby.l", 7448, 7455, null, null))), new Vector2(400, 30, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/lobby.l", 7462, 7470, null, null)), [player], "auto", false, true, 1/*Center*/, 1/*Middle*/, touch => {
 						PeerNetwork.setAudioOutput(device?.deviceId, player);
 					});
 				}}
@@ -13016,7 +13016,7 @@ $Object.prototype.moveTo2 = function(pos, speed, delay) {
 $Object.prototype.moveAndScaleTo = function(position, size, duration, delay) {
 	let startPosition = this.position?.clone();
 	let startSize = this.size?.clone();
-	let endSize = (size.y ? size : new Vector2(size.x, size.x * startSize.y / startSize.x, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/objects.l", 3364, 3406, null, null)))?.clone();
+	let endSize = (size.y ? size : new Vector2(size.x, size.x * startSize.y / startSize.x, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/objects.l", 3364, 3406, null, null)))?.clone();
 	let moveAnimation = fx.animations.findLast(a => a.type == "MoveAnimation" && a.object == this);
 	if((moveAnimation != null)) {
 		startPosition.assign(moveAnimation.startValue.plus(moveAnimation.delta));
@@ -13562,9 +13562,9 @@ statistics.framesPerValue = 15;
 statistics.init = function() {
 	statistics.backgroundColor = new Color("#202020", "");
 	_constCache.push(statistics.backgroundColor);
-	statistics.margin = new Vector2(224, 126, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/play/core.l", 28605, 28614, null, null));
-	statistics.position = new Vector2(-960, 540, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/play/core.l", 28641, 28652, null, null));
-	statistics.size = new Vector2(1920 + statistics.margin.x, statistics.margin.y, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/play/core.l", 28675, 28700, null, null));
+	statistics.margin = new Vector2(224, 126, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/play/core.l", 28605, 28614, null, null));
+	statistics.position = new Vector2(-960, 540, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/play/core.l", 28641, 28652, null, null));
+	statistics.size = new Vector2(1920 + statistics.margin.x, statistics.margin.y, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/play/core.l", 28675, 28700, null, null));
 	statistics.serverPings = [];
 	statistics.successfullySentServerPings = 0;
 	statistics.graphs = [];
@@ -13588,7 +13588,7 @@ statistics.init = function() {
 }
 statistics.draw = function() {
 	let startPos = statistics.position.plus(statistics.size);
-	let labelPos = statistics.position.plus(new Vector2(statistics.size.x / 2, -12, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/statistics.l", 162, 177, null, null)));
+	let labelPos = statistics.position.plus(new Vector2(statistics.size.x / 2, -12, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/statistics.l", 162, 177, null, null)));
 	let height = statistics.size.y - 20;
 	let graphIndex = 0;
 	for(let i=0, _subject=statistics.graphs, _len=_subject.length; i<_len; ++i) { let s = _subject[i]; {
@@ -13596,16 +13596,16 @@ statistics.draw = function() {
 			continue;
 		}
 		let text = ""+s.label+": "+s.lastValue().toLocaleString("en-US", {maximumFractionDigits:1, minimumFractionDigits:1, minimumIntegerDigits:1, useGrouping:false});
-		graphics.drawRectangle(labelPos, new Vector2(8, 8, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/statistics.l", 375, 380, null, null)), s.color, null, 0, null, 0, 1.0, 0/*Left*/, 1/*Middle*/, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/statistics.l", 351, 406, null, null));
-		graphics.drawText(text, labelPos.plus(new Vector2(11, -2, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/statistics.l", 434, 442, null, null))), new Vector2(12, 0, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/statistics.l", 461, 463, null, null)), null, 0/*Left*/, 1/*Middle*/, 0/*Normal*/, null, null, 0, 0, 1.0, 0.0, null, null, new Vector2(16, 16, null), false, 0/*None*/, 2/*Scale*/, 0, 0, null, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/statistics.l", 410, 463, null, null));
-		labelPos.x += graphics.getTextWidth(text, new Vector2(12, 0, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/statistics.l", 514, 516, null, null)), null, 0/*Normal*/) + 50;
+		graphics.drawRectangle(labelPos, new Vector2(8, 8, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/statistics.l", 375, 380, null, null)), s.color, null, 0, null, 0, 1.0, 0/*Left*/, 1/*Middle*/, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/statistics.l", 351, 406, null, null));
+		graphics.drawText(text, labelPos.plus(new Vector2(11, -2, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/statistics.l", 434, 442, null, null))), new Vector2(12, 0, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/statistics.l", 461, 463, null, null)), null, 0/*Left*/, 1/*Middle*/, 0/*Normal*/, null, null, 0, 0, 1.0, 0.0, null, null, new Vector2(16, 16, null), false, 0/*None*/, 2/*Scale*/, 0, 0, null, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/statistics.l", 410, 463, null, null));
+		labelPos.x += graphics.getTextWidth(text, new Vector2(12, 0, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/statistics.l", 514, 516, null, null)), null, 0/*Normal*/) + 50;
 		let len = Math.min(s.values.length, Math.round(statistics.size.x));
 		let prevY = 0;
 		for(let i=0; i<len; ++i) {
 			let value = s.values[s.values.length - 1 - i];
-			let pos = new Vector2(startPos.x - i, startPos.y - ((value / statistics.maxValue) > 1 ? 1 : (value / statistics.maxValue)) * height + graphIndex, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/statistics.l", 673, 750, null, null));
+			let pos = new Vector2(startPos.x - i, startPos.y - ((value / statistics.maxValue) > 1 ? 1 : (value / statistics.maxValue)) * height + graphIndex, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/statistics.l", 673, 750, null, null));
 			if(i) {
-				graphics.drawRectangle(pos, new Vector2(4, prevY - pos.y + 4, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/statistics.l", 785, 803, null, null)), s.color, null, 0, null, 0, 1.0, 1/*Center*/, 0/*Top*/, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/statistics.l", 761, 830, null, null));
+				graphics.drawRectangle(pos, new Vector2(4, prevY - pos.y + 4, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/statistics.l", 785, 803, null, null)), s.color, null, 0, null, 0, 1.0, 1/*Center*/, 0/*Top*/, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/statistics.l", 761, 830, null, null));
 			}
 			prevY = pos.y;
 		}
@@ -13616,13 +13616,13 @@ statistics.draw = function() {
 		if(x > statistics.size.x) {
 			break;
 		}
-		graphics.drawText(it.value.toString(), new Vector2(statistics.position.x + statistics.size.x - x, statistics.position.y + 10 * it.index, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/statistics.l", 998, 1047, null, null)), new Vector2(8, 0, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/statistics.l", 1054, 1055, null, null)), null, 1/*Center*/, 0/*Top*/, 0/*Normal*/, null, null, 0, 0, 1.0, 0.0, null, null, new Vector2(16, 16, null), false, 0/*None*/, 2/*Scale*/, 0, 0, null, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/statistics.l", 976, 1067, null, null));
+		graphics.drawText(it.value.toString(), new Vector2(statistics.position.x + statistics.size.x - x, statistics.position.y + 10 * it.index, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/statistics.l", 998, 1047, null, null)), new Vector2(8, 0, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/statistics.l", 1054, 1055, null, null)), null, 1/*Center*/, 0/*Top*/, 0/*Normal*/, null, null, 0, 0, 1.0, 0.0, null, null, new Vector2(16, 16, null), false, 0/*None*/, 2/*Scale*/, 0, 0, null, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/statistics.l", 976, 1067, null, null));
 	}}
 	if(core.errorMessage) {
-		graphics.drawText(core.errorMessage, statistics.position, new Vector2(12, 0, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/statistics.l", 1152, 1154, null, null)), new Color("#ffff00", ""), 0/*Left*/, 1/*Middle*/, 0/*Normal*/, null, null, 0, 0, 1.0, 0.0, null, null, new Vector2(16, 16, null), false, 0/*None*/, 2/*Scale*/, 0, 0, null, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/statistics.l", 1097, 1173, null, null));
+		graphics.drawText(core.errorMessage, statistics.position, new Vector2(12, 0, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/statistics.l", 1152, 1154, null, null)), new Color("#ffff00", ""), 0/*Left*/, 1/*Middle*/, 0/*Normal*/, null, null, 0, 0, 1.0, 0.0, null, null, new Vector2(16, 16, null), false, 0/*None*/, 2/*Scale*/, 0, 0, null, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/statistics.l", 1097, 1173, null, null));
 	}
-	graphics.drawText("#"+core.frame?.toString()+" "+statistics.maxValue.toString(), new Vector2(statistics.position.x + statistics.size.x - 8, labelPos.y, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/statistics.l", 1213, 1246, null, null)), new Vector2(12, 0, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/statistics.l", 1266, 1268, null, null)), null, 2/*Right*/, 1/*Middle*/, 0/*Normal*/, null, null, 0, 0, 1.0, 0.0, null, null, new Vector2(16, 16, null), false, 0/*None*/, 2/*Scale*/, 0, 0, null, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/statistics.l", 1176, 1268, null, null));
-	graphics.drawRectangle(statistics.position, statistics.size, statistics.backgroundColor, null, 0, null, 0, 1.0, 0/*Left*/, 0/*Top*/, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/statistics.l", 1271, 1346, null, null));
+	graphics.drawText("#"+core.frame?.toString()+" "+statistics.maxValue.toString(), new Vector2(statistics.position.x + statistics.size.x - 8, labelPos.y, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/statistics.l", 1213, 1246, null, null)), new Vector2(12, 0, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/statistics.l", 1266, 1268, null, null)), null, 2/*Right*/, 1/*Middle*/, 0/*Normal*/, null, null, 0, 0, 1.0, 0.0, null, null, new Vector2(16, 16, null), false, 0/*None*/, 2/*Scale*/, 0, 0, null, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/statistics.l", 1176, 1268, null, null));
+	graphics.drawRectangle(statistics.position, statistics.size, statistics.backgroundColor, null, 0, null, 0, 1.0, 0/*Left*/, 0/*Top*/, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/statistics.l", 1271, 1346, null, null));
 }
 statistics.scheduleSendIn = function(delay) {
 	statistics.nextSendTime = Math.min(statistics.nextSendTime, Date.now() + delay);
@@ -13740,22 +13740,22 @@ networkVisualizer.init = function() {
 networkVisualizer.draw = function() {
 	if(core.simulateInputsForTesting) {
 		for(let i=0, _subject=input.players, _len=_subject.length; i<_len; ++i) { let player = _subject[i]; {
-			graphics.drawCircle(new Vector2(1110 + player.index * 20, -540 + networkVisualizer.posForPlayer[player.index], new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/statistics.l", 1472, 1527, null, null)), new Vector2(20, 0, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/statistics.l", 1534, 1536, null, null)), player.color, null, 0, 0, 1.0, 0/*Clockwise*/, null, 0, 1.0, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/statistics.l", 1461, 1550, null, null));
+			graphics.drawCircle(new Vector2(1110 + player.index * 20, -540 + networkVisualizer.posForPlayer[player.index], new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/statistics.l", 1472, 1527, null, null)), new Vector2(20, 0, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/statistics.l", 1534, 1536, null, null)), player.color, null, 0, 0, 1.0, 0/*Clockwise*/, null, 0, 1.0, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/statistics.l", 1461, 1550, null, null));
 		}}
 	}
 	for(let i=0, _subject=input.players, _len=_subject.length; i<_len; ++i) { let player = _subject[i]; {
 		let internaluser = input.internalUsers[player.id];
 		if((internaluser != null)) {
 			let bufferY = 510 - networkVisualizer.getHeightForFrame(core.frame - internaluser.bufferFrames + 1);
-			graphics.drawLine(new Vector2(960, bufferY, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/statistics.l", 2020, 2033, null, null)), new Vector2(1100, bufferY, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/statistics.l", 2037, 2051, null, null)), player.color, 3, null, 0, 1.0);
-			graphics.drawText(internaluser.bufferFrames?.toString(), new Vector2(1110, bufferY, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/statistics.l", 2119, 2134, null, null)), new Vector2(20, 0, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/statistics.l", 2141, 2143, null, null)), player.color, 0/*Left*/, 1/*Middle*/, 0/*Normal*/, null, null, 0, 0, 1.0, 0.0, null, null, new Vector2(16, 16, null), false, 0/*None*/, 2/*Scale*/, 0, 0, null, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/statistics.l", 2078, 2169, null, null));
-			graphics.drawRectangle(new Vector2(984 + player.index * 32, 510, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/statistics.l", 2191, 2217, null, null)), new Vector2(24, networkVisualizer.getHeightForFrame(internaluser.inputFrame), new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/statistics.l", 2223, 2271, null, null)), player.color, null, 0, null, 0, 1.0, 1/*Center*/, 2/*Bottom*/, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/statistics.l", 2177, 2300, null, null));
+			graphics.drawLine(new Vector2(960, bufferY, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/statistics.l", 2020, 2033, null, null)), new Vector2(1100, bufferY, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/statistics.l", 2037, 2051, null, null)), player.color, 3, null, 0, 1.0);
+			graphics.drawText(internaluser.bufferFrames?.toString(), new Vector2(1110, bufferY, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/statistics.l", 2119, 2134, null, null)), new Vector2(20, 0, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/statistics.l", 2141, 2143, null, null)), player.color, 0/*Left*/, 1/*Middle*/, 0/*Normal*/, null, null, 0, 0, 1.0, 0.0, null, null, new Vector2(16, 16, null), false, 0/*None*/, 2/*Scale*/, 0, 0, null, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/statistics.l", 2078, 2169, null, null));
+			graphics.drawRectangle(new Vector2(984 + player.index * 32, 510, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/statistics.l", 2191, 2217, null, null)), new Vector2(24, networkVisualizer.getHeightForFrame(internaluser.inputFrame), new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/statistics.l", 2223, 2271, null, null)), player.color, null, 0, null, 0, 1.0, 1/*Center*/, 2/*Bottom*/, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/statistics.l", 2177, 2300, null, null));
 		}
 	}}
 	if(core.replayFrom != -1) {
 		let bufferY = 510 - networkVisualizer.getHeightForFrame(core.replayFrom);
-		graphics.drawLine(new Vector2(960, bufferY, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/statistics.l", 2418, 2431, null, null)), new Vector2(1100, bufferY, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/statistics.l", 2435, 2449, null, null)), Color.White, 3, null, 0, 1.0);
-		graphics.drawText((core.frame - core.replayFrom)?.toString(), new Vector2(1110, bufferY, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/statistics.l", 2519, 2534, null, null)), new Vector2(20, 0, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/statistics.l", 2541, 2543, null, null)), Color.White, 0/*Left*/, 1/*Middle*/, 0/*Normal*/, null, null, 0, 0, 1.0, 0.0, null, null, new Vector2(16, 16, null), false, 0/*None*/, 2/*Scale*/, 0, 0, null, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/statistics.l", 2474, 2568, null, null));
+		graphics.drawLine(new Vector2(960, bufferY, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/statistics.l", 2418, 2431, null, null)), new Vector2(1100, bufferY, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/statistics.l", 2435, 2449, null, null)), Color.White, 3, null, 0, 1.0);
+		graphics.drawText((core.frame - core.replayFrom)?.toString(), new Vector2(1110, bufferY, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/statistics.l", 2519, 2534, null, null)), new Vector2(20, 0, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/statistics.l", 2541, 2543, null, null)), Color.White, 0/*Left*/, 1/*Middle*/, 0/*Normal*/, null, null, 0, 0, 1.0, 0.0, null, null, new Vector2(16, 16, null), false, 0/*None*/, 2/*Scale*/, 0, 0, null, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/statistics.l", 2474, 2568, null, null));
 	}
 }
 networkVisualizer.tick = function() {
@@ -14191,7 +14191,7 @@ HTMLElement.prototype.deserialize_external = function(buffer) {
 				break;
 			case "":
 				if(!position_is_set) this.position = new Vector2(0.0, 0.0, null);
-				if(!size_is_set) this.size = new Vector2(1920, 100, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/play/browser.l", 4758, 4768, null, null));
+				if(!size_is_set) this.size = new Vector2(1920, 100, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/play/browser.l", 4758, 4768, null, null));
 				if(!color_is_set) this.color = null;
 				return;
 		}
@@ -14314,7 +14314,7 @@ function IndexedDBStore(name, indices, keyPath, autoIncrement) {
 	this.keyPath = keyPath;
 	this.autoIncrement = autoIncrement;
 	IndexedDB.stores.push(this);
-	System.print(("Adding store "+this.name+" "+IndexedDB.stores.length?.toString()), new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/play/browser.l", 7173, 7226, null, null));
+	System.print(("Adding store "+this.name+" "+IndexedDB.stores.length?.toString()), new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/play/browser.l", 7173, 7226, null, null));
 }
 IndexedDBStore.prototype.put = function(data, then, $else) {
 	try {
@@ -15258,7 +15258,7 @@ core.checkSaveState = function() {
 		core.saveState(buffer);
 		let milestoneIndex = Math.floor(core.frame / core.milestoneInterval) - 1;
 		core.milestones[milestoneIndex] = buffer;
-		System.watch(("Milestone "+milestoneIndex?.toString()), new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/play/core.l", 18285, 18319, null, null));
+		System.watch(("Milestone "+milestoneIndex?.toString()), new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/play/core.l", 18285, 18319, null, null));
 	}
 	if((core.mode == 3/*Connected*/ || core.simulateRollback) && core.snapshotFrame == -1 && core.frame >= core.nextSnapshotFrame) {
 		core.snapshotFrame = core.frame;
@@ -15358,11 +15358,11 @@ core.storeInputsToDB = function(user) {
 	if(inputs.writePos > user.storedInputsUpTo) {
 		let start = inputs.writePos - ((((inputs.writePos % core.chunkSize) + core.chunkSize) % core.chunkSize));
 		let id = ""+core.roomId?.toString()+"-"+user.id?.toString()+"-"+start?.toString();
-		System.print(("["+core.frame?.toString()+"] <"+user.id?.toString()+"> Storing inputs "+id+" ("+start?.toString()+" to "+inputs.writePos?.toString()+")"), new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/play/core.l", 21667, 21747, null, null));
+		System.print(("["+core.frame?.toString()+"] <"+user.id?.toString()+"> Storing inputs "+id+" ("+start?.toString()+" to "+inputs.writePos?.toString()+")"), new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/play/core.l", 21667, 21747, null, null));
 		core.inputStore.put(({id:id, roomId:core.roomId, userId:user.id, start:start, inputs:inputs.buffer.slice(start, inputs.writePos)}), () => {
-			System.print(("["+core.frame?.toString()+"] <"+user.id?.toString()+"> Storing inputs successful"), new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/play/core.l", 21862, 21917, null, null));
+			System.print(("["+core.frame?.toString()+"] <"+user.id?.toString()+"> Storing inputs successful"), new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/play/core.l", 21862, 21917, null, null));
 		}, error => {
-			System.print(("["+core.frame?.toString()+"] <"+user.id?.toString()+"> Storing inputs failed"), new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/play/core.l", 21930, 21981, null, null));
+			System.print(("["+core.frame?.toString()+"] <"+user.id?.toString()+"> Storing inputs failed"), new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/play/core.l", 21930, 21981, null, null));
 		});
 		user.storedInputsUpTo = inputs.writePos;
 	}
@@ -15376,7 +15376,7 @@ core.openFromDB = async function() {
 	core.startInLobby = room.startInLobby;
 	Platform.isStaging = room.isStaging;
 	core.localUserId = room.localUserId;
-	System.print(("#database opening from db "+JSON.stringify(room)), new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/play/core.l", 22386, 22440, null, null));
+	System.print(("#database opening from db "+JSON.stringify(room)), new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/play/core.l", 22386, 22440, null, null));
 	let result = await core.inputStore.getAllFromIndex("roomId", core.roomId);
 	result.orderBy(a => a.start);
 	for(let i=0, _subject=result, _len=_subject.length; i<_len; ++i) { let it = _subject[i]; {
@@ -15388,9 +15388,9 @@ core.openFromDB = async function() {
 			input.localUser = user;
 		}
 		user.inputs.insertArrayBuffer(it.inputs);
-		System.print("#database"+", userId: "+userId?.toString()+", start: "+start?.toString()+", inputs.toString(): "+inputs.toString(), new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/play/core.l", 22809, 22860, null, null));
+		System.print("#database"+", userId: "+userId?.toString()+", start: "+start?.toString()+", inputs.toString(): "+inputs.toString(), new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/play/core.l", 22809, 22860, null, null));
 	}}
-	System.print("#database"+", input.localUser.inputs.toString: "+input.localUser.inputs.toString(), new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/play/core.l", 22863, 22913, null, null));
+	System.print("#database"+", input.localUser.inputs.toString: "+input.localUser.inputs.toString(), new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/play/core.l", 22863, 22913, null, null));
 	for(let i=0, _subject=input.internalUsers, _len=_subject.length; i<_len; ++i) { let it = _subject[i]; {
 		if((it != null)) {
 			it.startInputFrame(core.frames);
@@ -16387,16 +16387,16 @@ function BoxCollider(position, size, radius, right, bottom, left, top, rightLine
 	this.topLeft = topLeft;
 	this.topRight = topRight;
 	if(left) {
-		this.leftLine = new Line(position.plus(new Vector2(-(size.x / 2 + radius), -(size.y / 2 + ((this.topLeft ? radius : 0))), new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/play/game.l", 3339, 3398, null, null))), position.plus(new Vector2(-(size.x / 2 + radius), (size.y / 2 + ((this.bottomLeft ? radius : 0))), new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/play/game.l", 3420, 3479, null, null))), 2/*Segment*/);
+		this.leftLine = new Line(position.plus(new Vector2(-(size.x / 2 + radius), -(size.y / 2 + ((this.topLeft ? radius : 0))), new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/play/game.l", 3339, 3398, null, null))), position.plus(new Vector2(-(size.x / 2 + radius), (size.y / 2 + ((this.bottomLeft ? radius : 0))), new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/play/game.l", 3420, 3479, null, null))), 2/*Segment*/);
 	}
 	if(right) {
-		this.rightLine = new Line(position.plus(new Vector2((size.x / 2 + radius), -(size.y / 2 + ((this.topRight ? radius : 0))), new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/play/game.l", 3546, 3605, null, null))), position.plus(new Vector2((size.x / 2 + radius), (size.y / 2 + ((this.bottomRight ? radius : 0))), new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/play/game.l", 3627, 3686, null, null))), 2/*Segment*/);
+		this.rightLine = new Line(position.plus(new Vector2((size.x / 2 + radius), -(size.y / 2 + ((this.topRight ? radius : 0))), new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/play/game.l", 3546, 3605, null, null))), position.plus(new Vector2((size.x / 2 + radius), (size.y / 2 + ((this.bottomRight ? radius : 0))), new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/play/game.l", 3627, 3686, null, null))), 2/*Segment*/);
 	}
 	if(top) {
-		this.topLine = new Line(position.plus(new Vector2(-(size.x / 2 + ((this.topLeft ? radius : 0))), -(size.y / 2 + radius), new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/play/game.l", 3749, 3806, null, null))), position.plus(new Vector2((size.x / 2 + ((this.topRight ? radius : 0))), -(size.y / 2 + radius), new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/play/game.l", 3828, 3885, null, null))), 2/*Segment*/);
+		this.topLine = new Line(position.plus(new Vector2(-(size.x / 2 + ((this.topLeft ? radius : 0))), -(size.y / 2 + radius), new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/play/game.l", 3749, 3806, null, null))), position.plus(new Vector2((size.x / 2 + ((this.topRight ? radius : 0))), -(size.y / 2 + radius), new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/play/game.l", 3828, 3885, null, null))), 2/*Segment*/);
 	}
 	if(bottom) {
-		this.bottomLine = new Line(position.plus(new Vector2(-(size.x / 2 + ((this.bottomLeft ? radius : 0))), (size.y / 2 + radius), new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/play/game.l", 3954, 4013, null, null))), position.plus(new Vector2((size.x / 2 + ((this.bottomRight ? radius : 0))), (size.y / 2 + radius), new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/play/game.l", 4035, 4094, null, null))), 2/*Segment*/);
+		this.bottomLine = new Line(position.plus(new Vector2(-(size.x / 2 + ((this.bottomLeft ? radius : 0))), (size.y / 2 + radius), new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/play/game.l", 3954, 4013, null, null))), position.plus(new Vector2((size.x / 2 + ((this.bottomRight ? radius : 0))), (size.y / 2 + radius), new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/play/game.l", 4035, 4094, null, null))), 2/*Segment*/);
 	}
 }
 BoxCollider.prototype.clone = function() {
@@ -16738,7 +16738,7 @@ algorithms.findPath = function(startPos, endPos, size, getNeighbors, heuristic) 
 	for(let i=0; i<size.x; ++i) { let x = i; {
 		grid[x] = [];
 		for(let i=0; i<size.y; ++i) { let y = i; {
-			grid[x][y] = new AStarNode(new IntVector2(x, y, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/play/game.l", 4563, 4568, null, null)), 0, 0, 0, 1, false, false, null);
+			grid[x][y] = new AStarNode(new IntVector2(x, y, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/play/game.l", 4563, 4568, null, null)), 0, 0, 0, 1, false, false, null);
 		}}
 	}}
 	let diagonal = false;
@@ -16796,7 +16796,7 @@ algorithms.resolveCollision = function(sourcePosition, targetPosition, colliders
 				hasCollided = true;
 				if(c.topLeft && (p.y - line.start.y) <= threshold) {
 					if(algorithms.log) {
-						System.watch("Move Right, Hit TopLeft Corner", new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/play/game.l", 7961, 7999, null, null));
+						System.watch("Move Right, Hit TopLeft Corner", new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/play/game.l", 7961, 7999, null, null));
 					}
 					if(primarilyX) {
 						targetPosition.y = Math.min(targetPosition.y, line.start.y - 1);
@@ -16806,7 +16806,7 @@ algorithms.resolveCollision = function(sourcePosition, targetPosition, colliders
 				} else {
 					if(c.bottomLeft && (line.end.y - p.y) <= threshold) {
 						if(algorithms.log) {
-							System.watch("Move Right, Hit BottomLeft Corner", new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/play/game.l", 8524, 8565, null, null));
+							System.watch("Move Right, Hit BottomLeft Corner", new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/play/game.l", 8524, 8565, null, null));
 						}
 						if(primarilyX) {
 							targetPosition.y = Math.max(targetPosition.y, line.end.y + 1);
@@ -16815,7 +16815,7 @@ algorithms.resolveCollision = function(sourcePosition, targetPosition, colliders
 						}
 					} else {
 						if(algorithms.log) {
-							System.watch("Move Right, Hit Left Side", new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/play/game.l", 9033, 9066, null, null));
+							System.watch("Move Right, Hit Left Side", new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/play/game.l", 9033, 9066, null, null));
 						}
 						targetPosition.x = Math.min(targetPosition.x, line.end.x - 1);
 					}
@@ -16829,7 +16829,7 @@ algorithms.resolveCollision = function(sourcePosition, targetPosition, colliders
 					hasCollided = true;
 					if(c.topRight && (p.y - line.start.y) <= threshold) {
 						if(algorithms.log) {
-							System.watch("Move Left, Hit TopRight Corner", new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/play/game.l", 9531, 9569, null, null));
+							System.watch("Move Left, Hit TopRight Corner", new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/play/game.l", 9531, 9569, null, null));
 						}
 						if(primarilyX) {
 							targetPosition.y = Math.min(targetPosition.y, line.start.y - 1);
@@ -16839,7 +16839,7 @@ algorithms.resolveCollision = function(sourcePosition, targetPosition, colliders
 					} else {
 						if(c.bottomRight && (line.end.y - p.y) <= threshold) {
 							if(algorithms.log) {
-								System.watch("Move Left, Hit BottomRight Corner", new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/play/game.l", 10200, 10241, null, null));
+								System.watch("Move Left, Hit BottomRight Corner", new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/play/game.l", 10200, 10241, null, null));
 							}
 							if(primarilyX) {
 								targetPosition.y = Math.max(targetPosition.y, line.end.y + 1);
@@ -16848,7 +16848,7 @@ algorithms.resolveCollision = function(sourcePosition, targetPosition, colliders
 							}
 						} else {
 							if(algorithms.log) {
-								System.watch("Move Left, Hit Right Side", new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/play/game.l", 10811, 10844, null, null));
+								System.watch("Move Left, Hit Right Side", new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/play/game.l", 10811, 10844, null, null));
 							}
 							targetPosition.x = Math.max(targetPosition.x, line.end.x + 1);
 						}
@@ -16863,7 +16863,7 @@ algorithms.resolveCollision = function(sourcePosition, targetPosition, colliders
 				hasCollided = true;
 				if(c.topLeft && (p.x - line.start.x) <= threshold) {
 					if(algorithms.log) {
-						System.watch("Move Down, Hit TopLeft Corner", new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/play/game.l", 11317, 11354, null, null));
+						System.watch("Move Down, Hit TopLeft Corner", new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/play/game.l", 11317, 11354, null, null));
 					}
 					if(primarilyX) {
 						targetPosition.y = Math.min(targetPosition.y, line.start.y - 1);
@@ -16873,7 +16873,7 @@ algorithms.resolveCollision = function(sourcePosition, targetPosition, colliders
 				} else {
 					if(c.topRight && (line.end.x - p.x) <= threshold) {
 						if(algorithms.log) {
-							System.watch("Move Down, Hit TopRight Corner", new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/play/game.l", 11877, 11915, null, null));
+							System.watch("Move Down, Hit TopRight Corner", new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/play/game.l", 11877, 11915, null, null));
 						}
 						if(primarilyX) {
 							targetPosition.y = Math.min(targetPosition.y, line.end.y - 1);
@@ -16882,7 +16882,7 @@ algorithms.resolveCollision = function(sourcePosition, targetPosition, colliders
 						}
 					} else {
 						if(algorithms.log) {
-							System.watch("Move Down, Hit Top Side", new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/play/game.l", 12484, 12515, null, null));
+							System.watch("Move Down, Hit Top Side", new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/play/game.l", 12484, 12515, null, null));
 						}
 						targetPosition.y = Math.min(targetPosition.y, line.end.y - 1);
 					}
@@ -16896,7 +16896,7 @@ algorithms.resolveCollision = function(sourcePosition, targetPosition, colliders
 					hasCollided = true;
 					if(c.bottomLeft && (p.x - line.start.x) <= threshold) {
 						if(algorithms.log) {
-							System.watch("Move Up, Hit BottomLeft Corner", new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/play/game.l", 13082, 13120, null, null));
+							System.watch("Move Up, Hit BottomLeft Corner", new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/play/game.l", 13082, 13120, null, null));
 						}
 						if(primarilyX) {
 							targetPosition.y = Math.max(targetPosition.y, line.start.y + 1);
@@ -16906,7 +16906,7 @@ algorithms.resolveCollision = function(sourcePosition, targetPosition, colliders
 					} else {
 						if(c.bottomRight && (line.end.x - p.x) <= threshold) {
 							if(algorithms.log) {
-								System.watch("Move Up, Hit BottomRight Corner", new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/play/game.l", 13650, 13689, null, null));
+								System.watch("Move Up, Hit BottomRight Corner", new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/play/game.l", 13650, 13689, null, null));
 							}
 							if(primarilyX) {
 								targetPosition.y = Math.max(targetPosition.y, line.end.y + 1);
@@ -16915,7 +16915,7 @@ algorithms.resolveCollision = function(sourcePosition, targetPosition, colliders
 							}
 						} else {
 							if(algorithms.log) {
-								System.watch("Move Up, Hit Bottom Side", new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/play/game.l", 14259, 14291, null, null));
+								System.watch("Move Up, Hit Bottom Side", new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/play/game.l", 14259, 14291, null, null));
 							}
 							targetPosition.y = Math.max(targetPosition.y, line.end.y + 1);
 						}
@@ -16939,7 +16939,7 @@ algorithms.resolveCollision = function(sourcePosition, targetPosition, colliders
 				if(p?.toBool()) {
 					hasCollided = true;
 					if(algorithms.log) {
-						System.watch("Check after collision, Hit Left Side", new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/play/game.l", 15397, 15441, null, null));
+						System.watch("Check after collision, Hit Left Side", new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/play/game.l", 15397, 15441, null, null));
 					}
 					targetPosition.x = Math.min(targetPosition.x, line.end.x - 1);
 				}
@@ -16950,7 +16950,7 @@ algorithms.resolveCollision = function(sourcePosition, targetPosition, colliders
 					if(p?.toBool()) {
 						hasCollided = true;
 						if(algorithms.log) {
-							System.watch("Check after collision, Hit Right Side", new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/play/game.l", 15855, 15900, null, null));
+							System.watch("Check after collision, Hit Right Side", new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/play/game.l", 15855, 15900, null, null));
 						}
 						targetPosition.x = Math.max(targetPosition.x, line.end.x + 1);
 					}
@@ -16962,7 +16962,7 @@ algorithms.resolveCollision = function(sourcePosition, targetPosition, colliders
 				if(p?.toBool()) {
 					hasCollided = true;
 					if(algorithms.log) {
-						System.watch("Check after collision, Hit Top Side", new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/play/game.l", 16323, 16366, null, null));
+						System.watch("Check after collision, Hit Top Side", new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/play/game.l", 16323, 16366, null, null));
 					}
 					targetPosition.y = Math.min(targetPosition.y, line.end.y - 1);
 				}
@@ -16973,7 +16973,7 @@ algorithms.resolveCollision = function(sourcePosition, targetPosition, colliders
 					if(p?.toBool()) {
 						hasCollided = true;
 						if(algorithms.log) {
-							System.watch("Check after collision, Hit Bottom Side", new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/play/game.l", 16822, 16868, null, null));
+							System.watch("Check after collision, Hit Bottom Side", new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/play/game.l", 16822, 16868, null, null));
 						}
 						targetPosition.y = Math.max(targetPosition.y, line.end.y + 1);
 					}
@@ -19245,7 +19245,7 @@ InternetGamePad.prototype.deserialize_external = function(buffer) {
 }
 var input; if(!input) input = {};
 input.switchPerspectiveTo = function(player) {
-	System.watch(("Switching to "+player?.toString()), new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/play/input.l", 14146, 14175, null, null));
+	System.watch(("Switching to "+player?.toString()), new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/play/input.l", 14146, 14175, null, null));
 	input.showPerspectiveOf = player;
 	if(Platform.mode == 3/*Play*/ || Platform.mode == 0/*Pause*/) {
 		core.switchToPlayer(player);
@@ -19457,7 +19457,7 @@ input.handleTouchEvent = function(inputType, x, y, pointerType, pointerId, butto
 			touchType = 4;
 		}
 	}
-	let pixelPos = new Vector2(x * graphics.pixelRatio, y * graphics.pixelRatio, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/play/input.l", 21528, 21574, null, null));
+	let pixelPos = new Vector2(x * graphics.pixelRatio, y * graphics.pixelRatio, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/play/input.l", 21528, 21574, null, null));
 	let referencePos = pixelPos.getRelativeTo(graphics.baseMatrix);
 	gizmo.onTouch(inputType, id, pixelPos, referencePos, shift, alt, cmdOrCtrl);
 	if(core.mode == 0/*None*/ || Platform.mode != 4/*Record*/ || !(input.localUser != null) || !input.localUser.collectInputs) {
@@ -19494,7 +19494,7 @@ input.handleWheelEvent = function(x, y, deltaX, deltaY, isPinch) {
 	}
 	let inputs = input.localUser.inputs;
 	let composite = 4/*Scroll*/ + ((isPinch ? 1 : 0) << 5);
-	let referencePos = new Vector2(x * graphics.pixelRatio, y * graphics.pixelRatio, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/play/input.l", 23671, 23717, null, null)).getRelativeTo(graphics.baseMatrix);
+	let referencePos = new Vector2(x * graphics.pixelRatio, y * graphics.pixelRatio, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/play/input.l", 23671, 23717, null, null)).getRelativeTo(graphics.baseMatrix);
 	inputs.writeInt32(input.localUser.inputFrame);
 	inputs.writeUnsignedInt16(composite);
 	inputs.writeInt16(Math.round(referencePos.x));
@@ -19607,7 +19607,7 @@ input.parseInputs = function(frame) {
 					}
 					let type = (((((value >> 5)) % 8) + 8) % 8);
 					let id = (((((value >> 8)) % 128) + 128) % 128);
-					let referencePos = new Vector2(inputs.readInt16(), inputs.readInt16(), new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/play/input.l", 28634, 28670, null, null));
+					let referencePos = new Vector2(inputs.readInt16(), inputs.readInt16(), new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/play/input.l", 28634, 28670, null, null));
 					let isSmoothPosition = !core.smoothTouchPosition || internalUser.local || frame <= internalUser.smoothFrame;
 					if(inputType == 1/*TouchDown*/) {
 						let touch = player.touches.find(a => a.id == id);
@@ -19667,7 +19667,7 @@ input.parseInputs = function(frame) {
 								internalUser.upTouches.push(touch);
 							} else {
 								if(inputType == 4/*Scroll*/) {
-									let delta = new Vector2(inputs.readInt16(), inputs.readInt16(), new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/play/input.l", 31113, 31149, null, null));
+									let delta = new Vector2(inputs.readInt16(), inputs.readInt16(), new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/play/input.l", 31113, 31149, null, null));
 									let isPinch = ((value >> 5)) == 1;
 									internalUser.wheelEvents.push(new ScrollEvent(player.id, delta, isPinch, referencePos, false));
 								}
@@ -19924,7 +19924,7 @@ input.onTouchDown = function(position, size, by, cursor, showClickableArea, mark
 	let sizeY = size.y || size.x;
 	let x = (align == 0/*Left*/ ? position.x : (align == 1/*Center*/ ? position.x - sizeX / 2 : position.x - sizeX));
 	let y = (valign == 0/*Top*/ ? position.y : (valign == 1/*Middle*/ ? position.y - sizeY / 2 : position.y - sizeY));
-	let poly = [new Vector2(x, y, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/play/input.l", 41068, 41092, null, null)).transform(graphics.localMatrix), new Vector2(x + sizeX, y, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/play/input.l", 41129, 41153, null, null)).transform(graphics.localMatrix), new Vector2(x + sizeX, y + sizeY, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/play/input.l", 41190, 41214, null, null)).transform(graphics.localMatrix), new Vector2(x, y + sizeY, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/play/input.l", 41251, 41275, null, null)).transform(graphics.localMatrix)];
+	let poly = [new Vector2(x, y, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/play/input.l", 41068, 41092, null, null)).transform(graphics.localMatrix), new Vector2(x + sizeX, y, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/play/input.l", 41129, 41153, null, null)).transform(graphics.localMatrix), new Vector2(x + sizeX, y + sizeY, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/play/input.l", 41190, 41214, null, null)).transform(graphics.localMatrix), new Vector2(x, y + sizeY, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/play/input.l", 41251, 41275, null, null)).transform(graphics.localMatrix)];
 	for(let i=0, _subject=input.getTargetedPlayers(by), _len=_subject.length; i<_len; ++i) { let player = _subject[i]; {
 		for(let i=0, _subject=input.internalUsers[player.id].downTouches, _len=_subject.length; i<_len; ++i) { let touch = _subject[i]; {
 			if(!touch.handled && (player.enableTouch || touch.type != 3/*Touch*/) && touch.referencePosition.isInsidePolygon(poly)) {
@@ -19943,7 +19943,7 @@ input.onTouchDown = function(position, size, by, cursor, showClickableArea, mark
 		}}
 	}
 	if(showClickableArea) {
-		graphics.drawRectangle(position, size, new Color("#ff000080", ""), null, 0, null, 10000000, 1.0, align, valign, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/play/input.l", 41783, 41863, null, null));
+		graphics.drawRectangle(position, size, new Color("#ff000080", ""), null, 0, null, 10000000, 1.0, align, valign, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/play/input.l", 41783, 41863, null, null));
 	}
 }
 input.onTouchDown2 = function(position, size, angle, by, cursor, showClickableArea, markAsHandled, align, valign, $do) {
@@ -19954,7 +19954,7 @@ input.onTouchDown2 = function(position, size, angle, by, cursor, showClickableAr
 	let halfSizeY = (size.y || size.x) / 2;
 	let x = (align == 0/*Left*/ ? position.x + halfSizeX : (align == 1/*Center*/ ? position.x : position.x - halfSizeX));
 	let y = (valign == 0/*Top*/ ? position.y + halfSizeY : (valign == 1/*Middle*/ ? position.y : position.y - halfSizeY));
-	let poly = [new Vector2(-halfSizeX, -halfSizeY, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/play/input.l", 43781, 43807, null, null)).rotate(angle).move2(x, y).transform(graphics.localMatrix), new Vector2(+halfSizeX, -halfSizeY, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/play/input.l", 43868, 43894, null, null)).rotate(angle).move2(x, y).transform(graphics.localMatrix), new Vector2(+halfSizeX, +halfSizeY, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/play/input.l", 43955, 43981, null, null)).rotate(angle).move2(x, y).transform(graphics.localMatrix), new Vector2(-halfSizeX, +halfSizeY, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/play/input.l", 44042, 44068, null, null)).rotate(angle).move2(x, y).transform(graphics.localMatrix)];
+	let poly = [new Vector2(-halfSizeX, -halfSizeY, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/play/input.l", 43781, 43807, null, null)).rotate(angle).move2(x, y).transform(graphics.localMatrix), new Vector2(+halfSizeX, -halfSizeY, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/play/input.l", 43868, 43894, null, null)).rotate(angle).move2(x, y).transform(graphics.localMatrix), new Vector2(+halfSizeX, +halfSizeY, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/play/input.l", 43955, 43981, null, null)).rotate(angle).move2(x, y).transform(graphics.localMatrix), new Vector2(-halfSizeX, +halfSizeY, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/play/input.l", 44042, 44068, null, null)).rotate(angle).move2(x, y).transform(graphics.localMatrix)];
 	for(let i=0, _subject=input.getTargetedPlayers(by), _len=_subject.length; i<_len; ++i) { let player = _subject[i]; {
 		for(let i=0, _subject=input.internalUsers[player.id].downTouches, _len=_subject.length; i<_len; ++i) { let touch = _subject[i]; {
 			if(!touch.handled && (player.enableTouch || touch.type != 3/*Touch*/) && touch.referencePosition.isInsidePolygon(poly)) {
@@ -20000,7 +20000,7 @@ input.onTouchDown3 = function(position, radius, by, cursor, showClickableArea, m
 		}
 	}}
 	if(showClickableArea) {
-		graphics.drawCircle(position, new Vector2(radius * 2, 0, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/play/input.l", 46464, 46472, null, null)), new Color("#ff0000b0", ""), null, 0, 0, 1.0, 0/*Clockwise*/, null, 10000000, 1.0, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/play/input.l", 46443, 46509, null, null));
+		graphics.drawCircle(position, new Vector2(radius * 2, 0, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/play/input.l", 46464, 46472, null, null)), new Color("#ff0000b0", ""), null, 0, 0, 1.0, 0/*Clockwise*/, null, 10000000, 1.0, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/play/input.l", 46443, 46509, null, null));
 	}
 }
 input.onTouchDown4 = function(points, position, by, cursor, showClickableArea, markAsHandled, $do) {
@@ -20064,7 +20064,7 @@ input.onTouchOver = function(position, size, by, cursor, showClickableArea, mark
 	let sizeY = size.y || size.x;
 	let x = (align == 0/*Left*/ ? position.x : (align == 1/*Center*/ ? position.x - sizeX / 2 : position.x - sizeX));
 	let y = (valign == 0/*Top*/ ? position.y : (valign == 1/*Middle*/ ? position.y - sizeY / 2 : position.y - sizeY));
-	let poly = [new Vector2(x, y, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/play/input.l", 51791, 51815, null, null)).transform(graphics.localMatrix), new Vector2(x + sizeX, y, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/play/input.l", 51852, 51876, null, null)).transform(graphics.localMatrix), new Vector2(x + sizeX, y + sizeY, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/play/input.l", 51913, 51937, null, null)).transform(graphics.localMatrix), new Vector2(x, y + sizeY, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/play/input.l", 51974, 51998, null, null)).transform(graphics.localMatrix)];
+	let poly = [new Vector2(x, y, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/play/input.l", 51791, 51815, null, null)).transform(graphics.localMatrix), new Vector2(x + sizeX, y, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/play/input.l", 51852, 51876, null, null)).transform(graphics.localMatrix), new Vector2(x + sizeX, y + sizeY, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/play/input.l", 51913, 51937, null, null)).transform(graphics.localMatrix), new Vector2(x, y + sizeY, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/play/input.l", 51974, 51998, null, null)).transform(graphics.localMatrix)];
 	for(let i=0, _subject=input.getTargetedPlayers(by), _len=_subject.length; i<_len; ++i) { let player = _subject[i]; {
 		for(let i=0, _subject=player.touches, _len=_subject.length; i<_len; ++i) { let touch = _subject[i]; {
 			if(touch.referencePosition.isInsidePolygon(poly)) {
@@ -20080,7 +20080,7 @@ input.onTouchOver = function(position, size, by, cursor, showClickableArea, mark
 		}
 	}}
 	if(showClickableArea) {
-		graphics.drawRectangle(position, size, new Color("#ff000080", ""), null, 0, null, 0, 1.0, 1/*Center*/, 1/*Middle*/, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/play/input.l", 52372, 52421, null, null));
+		graphics.drawRectangle(position, size, new Color("#ff000080", ""), null, 0, null, 0, 1.0, 1/*Center*/, 1/*Middle*/, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/play/input.l", 52372, 52421, null, null));
 	}
 }
 input.onTouchMove = function(touch, triggeredOnTouchDown, $do) {
@@ -20157,7 +20157,7 @@ input.onTouchUp3 = function(position, size, by, showClickableArea, markAsHandled
 	if(!input.active) {
 		return;
 	}
-	let poly = [new Vector2(position.x - size.x / 2, position.y - size.y / 2, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/play/input.l", 58286, 58330, null, null)).transform(graphics.localMatrix), new Vector2(position.x + size.x / 2, position.y - size.y / 2, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/play/input.l", 58367, 58411, null, null)).transform(graphics.localMatrix), new Vector2(position.x + size.x / 2, position.y + size.y / 2, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/play/input.l", 58448, 58492, null, null)).transform(graphics.localMatrix), new Vector2(position.x - size.x / 2, position.y + size.y / 2, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/play/input.l", 58529, 58573, null, null)).transform(graphics.localMatrix)];
+	let poly = [new Vector2(position.x - size.x / 2, position.y - size.y / 2, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/play/input.l", 58286, 58330, null, null)).transform(graphics.localMatrix), new Vector2(position.x + size.x / 2, position.y - size.y / 2, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/play/input.l", 58367, 58411, null, null)).transform(graphics.localMatrix), new Vector2(position.x + size.x / 2, position.y + size.y / 2, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/play/input.l", 58448, 58492, null, null)).transform(graphics.localMatrix), new Vector2(position.x - size.x / 2, position.y + size.y / 2, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/play/input.l", 58529, 58573, null, null)).transform(graphics.localMatrix)];
 	for(let i=0, _subject=input.getTargetedPlayers(by), _len=_subject.length; i<_len; ++i) { let player = _subject[i]; {
 		for(let i=0, _subject=input.internalUsers[player.id].upTouches, _len=_subject.length; i<_len; ++i) { let touch = _subject[i]; {
 			if(!touch.handled && touch.referencePosition.isInsidePolygon(poly)) {
@@ -20170,7 +20170,7 @@ input.onTouchUp3 = function(position, size, by, showClickableArea, markAsHandled
 		}}
 	}}
 	if(showClickableArea) {
-		graphics.drawRectangle(position, size, new Color("#ff000080", ""), null, 0, null, 0, 1.0, 1/*Center*/, 1/*Middle*/, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/play/input.l", 58884, 58933, null, null));
+		graphics.drawRectangle(position, size, new Color("#ff000080", ""), null, 0, null, 0, 1.0, 1/*Center*/, 1/*Middle*/, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/play/input.l", 58884, 58933, null, null));
 	}
 }
 input.onTouchUp4 = function(position, radius, by, cursor, showClickableArea, markAsHandled, $do) {
@@ -20198,7 +20198,7 @@ input.onTouchUp4 = function(position, radius, by, cursor, showClickableArea, mar
 		}
 	}}
 	if(showClickableArea) {
-		graphics.drawCircle(position, new Vector2(radius * 2, 0, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/play/input.l", 60738, 60746, null, null)), new Color("#ff000080", ""), null, 0, 0, 1.0, 0/*Clockwise*/, null, 0, 1.0, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/play/input.l", 60717, 60767, null, null));
+		graphics.drawCircle(position, new Vector2(radius * 2, 0, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/play/input.l", 60738, 60746, null, null)), new Color("#ff000080", ""), null, 0, 0, 1.0, 0/*Clockwise*/, null, 0, 1.0, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/play/input.l", 60717, 60767, null, null));
 	}
 }
 input.onScroll = function(by, $do) {
@@ -20215,7 +20215,7 @@ input.onScrolllWithin = function(position, size, by, showClickableArea, markAsHa
 	if(!input.active) {
 		return;
 	}
-	let poly = [new Vector2(position.x - size.x / 2, position.y - size.y / 2, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/play/input.l", 61981, 62025, null, null)).transform(graphics.localMatrix), new Vector2(position.x + size.x / 2, position.y - size.y / 2, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/play/input.l", 62062, 62106, null, null)).transform(graphics.localMatrix), new Vector2(position.x + size.x / 2, position.y + size.y / 2, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/play/input.l", 62143, 62187, null, null)).transform(graphics.localMatrix), new Vector2(position.x - size.x / 2, position.y + size.y / 2, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/play/input.l", 62224, 62268, null, null)).transform(graphics.localMatrix)];
+	let poly = [new Vector2(position.x - size.x / 2, position.y - size.y / 2, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/play/input.l", 61981, 62025, null, null)).transform(graphics.localMatrix), new Vector2(position.x + size.x / 2, position.y - size.y / 2, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/play/input.l", 62062, 62106, null, null)).transform(graphics.localMatrix), new Vector2(position.x + size.x / 2, position.y + size.y / 2, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/play/input.l", 62143, 62187, null, null)).transform(graphics.localMatrix), new Vector2(position.x - size.x / 2, position.y + size.y / 2, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/play/input.l", 62224, 62268, null, null)).transform(graphics.localMatrix)];
 	for(let i=0, _subject=input.getTargetedPlayers(by), _len=_subject.length; i<_len; ++i) { let it = _subject[i]; {
 		for(let i=0, _subject=input.internalUsers[it.id].wheelEvents, _len=_subject.length; i<_len; ++i) { let it = _subject[i]; {
 			if(!it.handled && it.referencePosition.isInsidePolygon(poly)) {
@@ -20227,7 +20227,7 @@ input.onScrolllWithin = function(position, size, by, showClickableArea, markAsHa
 		}}
 	}}
 	if(showClickableArea) {
-		graphics.drawRectangle(position, size, Color.Red, null, 0, null, 0, 1.0, 1/*Center*/, 1/*Middle*/, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/play/input.l", 62513, 62546, null, null));
+		graphics.drawRectangle(position, size, Color.Red, null, 0, null, 0, 1.0, 1/*Center*/, 1/*Middle*/, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/play/input.l", 62513, 62546, null, null));
 	}
 }
 input.getOrCreateInputField = function() {
@@ -25079,7 +25079,7 @@ LobbyTextField.prototype.tick = function() {
 	input.onTouchDownAny([this.editableBy], touch => {
 		this.focus(false);
 	});
-	input.onTouchDown(this.position.plus(new Vector2(0, this.size.x / 2, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/lobby.l", 8154, 8166, null, null))), new Vector2(this.width, this.size.x * 2, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/lobby.l", 8168, 8184, null, null)), [this.editableBy], "auto", false, true, 1/*Center*/, 1/*Middle*/, touch => {
+	input.onTouchDown(this.position.plus(new Vector2(0, this.size.x / 2, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/lobby.l", 8154, 8166, null, null))), new Vector2(this.width, this.size.x * 2, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/lobby.l", 8168, 8184, null, null)), [this.editableBy], "auto", false, true, 1/*Center*/, 1/*Middle*/, touch => {
 		this.focus(true);
 	});
 	if(this.isFocused) {
@@ -25100,10 +25100,10 @@ LobbyTextField.prototype.tick = function() {
 			}
 		});
 	}
-	graphics.drawText(this.text, this.position.plus(new Vector2(0, 0, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/lobby.l", 8524, 8530, null, null))), this.size, null, 1/*Center*/, 1/*Middle*/, 0/*Normal*/, Font.ByTheWay, null, 0, 0, this.alpha, this.angle, this.visibleFor, null, new Vector2(16, 16, null), false, 0/*None*/, 2/*Scale*/, 0, 0, null, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/lobby.l", 8500, 8591, null, null));
+	graphics.drawText(this.text, this.position.plus(new Vector2(0, 0, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/lobby.l", 8524, 8530, null, null))), this.size, null, 1/*Center*/, 1/*Middle*/, 0/*Normal*/, Font.ByTheWay, null, 0, 0, this.alpha, this.angle, this.visibleFor, null, new Vector2(16, 16, null), false, 0/*None*/, 2/*Scale*/, 0, 0, null, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/lobby.l", 8500, 8591, null, null));
 	if(this.isFocused && (((_value2 = 1500, ((Time.now - this.lastTypeTime) % _value2) + _value2) % _value2) < 750)) {
 		let textWidth = graphics.getTextWidth(this.text, this.size, Font.ByTheWay, 0/*Normal*/);
-		graphics.drawText("|", this.position.plus(new Vector2(textWidth / 2, 0, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/lobby.l", 8748, 8764, null, null))), this.size, null, 1/*Center*/, 1/*Middle*/, 0/*Normal*/, Font.ByTheWay, null, 0, 0, this.alpha, this.angle, [this.editableBy], null, new Vector2(16, 16, null), false, 0/*None*/, 2/*Scale*/, 0, 0, null, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/lobby.l", 8725, 8836, null, null));
+		graphics.drawText("|", this.position.plus(new Vector2(textWidth / 2, 0, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/lobby.l", 8748, 8764, null, null))), this.size, null, 1/*Center*/, 1/*Middle*/, 0/*Normal*/, Font.ByTheWay, null, 0, 0, this.alpha, this.angle, [this.editableBy], null, new Vector2(16, 16, null), false, 0/*None*/, 2/*Scale*/, 0, 0, null, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/lobby.l", 8725, 8836, null, null));
 	}
 }
 
@@ -25620,7 +25620,7 @@ __RectangleObjectPrototype.prototype = $Object.prototype;
 RectangleObject.prototype = new __RectangleObjectPrototype();
 RectangleObject.prototype.tick = function() {
 	if(this.alpha) {
-		graphics.drawRectangle(this.position, this.size, this.color, null, 0, this.visibleFor, this.layer, this.alpha, 1/*Center*/, 1/*Middle*/, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/objects.l", 6728, 6789, null, null));
+		graphics.drawRectangle(this.position, this.size, this.color, null, 0, this.visibleFor, this.layer, this.alpha, 1/*Center*/, 1/*Middle*/, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/objects.l", 6728, 6789, null, null));
 	}
 }
 RectangleObject.prototype.clone = function() {
@@ -25730,7 +25730,7 @@ __CircleObjectPrototype.prototype = $Object.prototype;
 CircleObject.prototype = new __CircleObjectPrototype();
 CircleObject.prototype.tick = function() {
 	if(this.alpha) {
-		graphics.drawCircle(this.position, this.size, this.color, null, 0, 0, 1.0, 0/*Clockwise*/, this.visibleFor, this.layer, 1.0, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/objects.l", 6868, 6925, null, null));
+		graphics.drawCircle(this.position, this.size, this.color, null, 0, 0, 1.0, 0/*Clockwise*/, this.visibleFor, this.layer, 1.0, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/objects.l", 6868, 6925, null, null));
 	}
 }
 CircleObject.prototype.clone = function() {
@@ -25841,9 +25841,9 @@ function __VisualizeObjectPrototype() { this.constructor = VisualizeObject; }
 __VisualizeObjectPrototype.prototype = $Object.prototype;
 VisualizeObject.prototype = new __VisualizeObjectPrototype();
 VisualizeObject.prototype.tick = function() {
-	graphics.drawText(this.index?.toString(), this.position, new Vector2(30, 0, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/objects.l", 7532, 7534, null, null)), Color.Black, 1/*Center*/, 1/*Middle*/, 0/*Normal*/, null, null, 0, int.maxValue, 1.0, 0.0, null, null, new Vector2(16, 16, null), false, 0/*None*/, 2/*Scale*/, 0, 0, null, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/objects.l", 7468, 7534, null, null));
-	graphics.drawText(this.text, this.position.plus(new Vector2(0, 32, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/objects.l", 7561, 7567, null, null))), new Vector2(14, 0, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/objects.l", 7601, 7603, null, null)), this.color, 1/*Center*/, 1/*Middle*/, 0/*Normal*/, null, null, 0, int.maxValue, 1.0, 0.0, null, null, new Vector2(16, 16, null), false, 0/*None*/, 2/*Scale*/, 0, 0, null, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/objects.l", 7537, 7603, null, null));
-	graphics.drawCircle(this.position, this.size, this.color, null, 0, 0, 1.0, 0/*Clockwise*/, null, int.maxValue, 1.0, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/objects.l", 7606, 7658, null, null));
+	graphics.drawText(this.index?.toString(), this.position, new Vector2(30, 0, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/objects.l", 7532, 7534, null, null)), Color.Black, 1/*Center*/, 1/*Middle*/, 0/*Normal*/, null, null, 0, int.maxValue, 1.0, 0.0, null, null, new Vector2(16, 16, null), false, 0/*None*/, 2/*Scale*/, 0, 0, null, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/objects.l", 7468, 7534, null, null));
+	graphics.drawText(this.text, this.position.plus(new Vector2(0, 32, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/objects.l", 7561, 7567, null, null))), new Vector2(14, 0, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/objects.l", 7601, 7603, null, null)), this.color, 1/*Center*/, 1/*Middle*/, 0/*Normal*/, null, null, 0, int.maxValue, 1.0, 0.0, null, null, new Vector2(16, 16, null), false, 0/*None*/, 2/*Scale*/, 0, 0, null, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/objects.l", 7537, 7603, null, null));
+	graphics.drawCircle(this.position, this.size, this.color, null, 0, 0, 1.0, 0/*Clockwise*/, null, int.maxValue, 1.0, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/objects.l", 7606, 7658, null, null));
 }
 VisualizeObject.prototype.clone = function() {
 	let clone = new _VisualizeObject();
@@ -25979,7 +25979,7 @@ __TextObjectPrototype.prototype = $Object.prototype;
 TextObject.prototype = new __TextObjectPrototype();
 TextObject.prototype.tick = function() {
 	if(this.alpha) {
-		graphics.drawText(this.text, this.position, this.size, this.color, this.align, this.valign, 0/*Normal*/, this.font, null, 0, this.layer, this.alpha, this.angle, this.visibleFor, null, new Vector2(16, 16, null), false, 0/*None*/, 2/*Scale*/, this.maxWidth, 0, null, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/objects.l", 7927, 8027, null, null));
+		graphics.drawText(this.text, this.position, this.size, this.color, this.align, this.valign, 0/*Normal*/, this.font, null, 0, this.layer, this.alpha, this.angle, this.visibleFor, null, new Vector2(16, 16, null), false, 0/*None*/, 2/*Scale*/, this.maxWidth, 0, null, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/objects.l", 7927, 8027, null, null));
 	}
 }
 TextObject.prototype.clone = function() {
@@ -26196,7 +26196,7 @@ __CircularTextObjectPrototype.prototype = $Object.prototype;
 CircularTextObject.prototype = new __CircularTextObjectPrototype();
 CircularTextObject.prototype.tick = function() {
 	if(this.alpha) {
-		graphics.drawCircularText(this.text, this.position, this.size.x, this.color, this.font, this.layer, this.radius, this.angle, this.spacing, this.visibleFor, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/objects.l", 8597, 8692, null, null));
+		graphics.drawCircularText(this.text, this.position, this.size.x, this.color, this.font, this.layer, this.radius, this.angle, this.spacing, this.visibleFor, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/objects.l", 8597, 8692, null, null));
 	}
 }
 CircularTextObject.prototype.clone = function() {
@@ -26400,7 +26400,7 @@ __ImageObjectPrototype.prototype = $Object.prototype;
 ImageObject.prototype = new __ImageObjectPrototype();
 ImageObject.prototype.tick = function() {
 	if(this.alpha) {
-		graphics.drawImage2(this.image, this.position, this.size, this.visibleFor, 0, this.layer, this.alpha, Color.White, this.angle, false, false, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/objects.l", 8833, 8897, null, null));
+		graphics.drawImage2(this.image, this.position, this.size, this.visibleFor, 0, this.layer, this.alpha, Color.White, this.angle, false, false, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/objects.l", 8833, 8897, null, null));
 	}
 }
 ImageObject.prototype.clone = function() {
@@ -26653,7 +26653,7 @@ __VideoObjectPrototype.prototype = $Object.prototype;
 VideoObject.prototype = new __VideoObjectPrototype();
 VideoObject.prototype.tick = function() {
 	if(this.alpha && (this.player != null)) {
-		graphics.drawVideo(this.player, this.position, this.size, this.shape, null, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/objects.l", 9439, 9478, null, null));
+		graphics.drawVideo(this.player, this.position, this.size, this.shape, null, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/objects.l", 9439, 9478, null, null));
 	}
 }
 VideoObject.prototype.clone = function() {
@@ -26795,7 +26795,7 @@ Button.prototype.tick = function() {
 				this.removeAtEndOfFrame();
 			}
 			this.onClick?.invoke(touch);
-		}, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/objects.l", 10836, 11130, null, null));
+		}, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/objects.l", 10836, 11130, null, null));
 	}
 }
 Button.prototype.clone = function() {
@@ -27290,7 +27290,7 @@ StandardButton.prototype.tick = function() {
 				this.removeAtEndOfFrame();
 			}
 			this.onClick?.invoke(touch);
-		}, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/objects.l", 11715, 11874, null, null));
+		}, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/objects.l", 11715, 11874, null, null));
 	}
 }
 StandardButton.prototype.clone = function() {
@@ -27598,7 +27598,7 @@ ParticleSystem.prototype.tick = function() {
 	for(let _subject=this.particles, i=_subject.length-1; i>=0; --i) { let it = _subject[i]; {
 		graphics.move(it.pos, () => {
 			graphics.rotate(it.angle, () => {
-				graphics.drawImage(this.image, new Vector2(0.0, 0.0, null), new Vector2(0.0, 0.0, null), this.visibleFor, it.frame, 0, 1.0, Color.White, 1/*Center*/, 1/*Middle*/, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/objects.l", 13393, 13434, null, null));
+				graphics.drawImage(this.image, new Vector2(0.0, 0.0, null), new Vector2(0.0, 0.0, null), this.visibleFor, it.frame, 0, 1.0, Color.White, 1/*Center*/, 1/*Middle*/, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/objects.l", 13393, 13434, null, null));
 			});
 		});
 		it.pos.plusAssign(it.speed);
@@ -28041,19 +28041,19 @@ Menu.prototype = new __MenuPrototype();
 Menu.prototype.tick = function() {
 	let doNotClose = false;
 	if(this.active) {
-		for(let i=0, _subject=this.items, _center = this.popupPosition, _delta = new Vector2(0, 60, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/objects.l", 14442, 14448, null, null)), _len=_subject.length, _x = _center.x-(_len-1)*_delta.x/2, _y=_center.y-(_len-1)*_delta.y/2; i<_len; ++i, _x += _delta.x, _y += _delta.y) { let item = _subject[i], pos = new Vector2(_x, _y, _center.location || _delta.location ? new SourceCodeLocation(null, 0, 0, _center.location, _delta.location) : null); {
-			graphics.drawText(item.label, pos.plus(new Vector2(-60, 0.0, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/objects.l", 14482, 14487, null, null))), new Vector2(30, 0, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/objects.l", 14494, 14496, null, null)), null, 0/*Left*/, 1/*Middle*/, 0/*Normal*/, null, null, 0, int.maxValue, 1.0, 0.0, null, null, new Vector2(16, 16, null), false, 0/*None*/, 2/*Scale*/, 0, 0, null, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/objects.l", 14461, 14528, null, null));
+		for(let i=0, _subject=this.items, _center = this.popupPosition, _delta = new Vector2(0, 60, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/objects.l", 14442, 14448, null, null)), _len=_subject.length, _x = _center.x-(_len-1)*_delta.x/2, _y=_center.y-(_len-1)*_delta.y/2; i<_len; ++i, _x += _delta.x, _y += _delta.y) { let item = _subject[i], pos = new Vector2(_x, _y, _center.location || _delta.location ? new SourceCodeLocation(null, 0, 0, _center.location, _delta.location) : null); {
+			graphics.drawText(item.label, pos.plus(new Vector2(-60, 0.0, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/objects.l", 14482, 14487, null, null))), new Vector2(30, 0, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/objects.l", 14494, 14496, null, null)), null, 0/*Left*/, 1/*Middle*/, 0/*Normal*/, null, null, 0, int.maxValue, 1.0, 0.0, null, null, new Vector2(16, 16, null), false, 0/*None*/, 2/*Scale*/, 0, 0, null, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/objects.l", 14461, 14528, null, null));
 			if(item.type == 0/*Button*/) {
 				if((item.image != null)) {
-					graphics.drawImage(item.image, pos.plus(new Vector2(-120, 0.0, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/objects.l", 14594, 14600, null, null))), new Vector2(0.0, 0.0, null), null, 0, int.maxValue, 1.0, Color.White, 1/*Center*/, 1/*Middle*/, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/objects.l", 14572, 14620, null, null));
+					graphics.drawImage(item.image, pos.plus(new Vector2(-120, 0.0, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/objects.l", 14594, 14600, null, null))), new Vector2(0.0, 0.0, null), null, 0, int.maxValue, 1.0, Color.White, 1/*Center*/, 1/*Middle*/, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/objects.l", 14572, 14620, null, null));
 				}
-				input.onTouchDown(pos, new Vector2(500, 60, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/objects.l", 14648, 14656, null, null)), null, "auto", false, true, 1/*Center*/, 1/*Middle*/, touch => {
+				input.onTouchDown(pos, new Vector2(500, 60, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/objects.l", 14648, 14656, null, null)), null, "auto", false, true, 1/*Center*/, 1/*Middle*/, touch => {
 					item.onClick?.invoke(true, touch);
 				});
 			} else {
 				if(item.type == 1/*Check*/) {
-					graphics.drawImage(item.image || $Image.Checkbox, pos.plus(new Vector2(-120, 0.0, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/objects.l", 14761, 14767, null, null))), new Vector2(0.0, 0.0, null), null, (item.value ? 1 : 0), int.maxValue, 1.0, Color.White, 1/*Center*/, 1/*Middle*/, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/objects.l", 14727, 14813, null, null));
-					input.onTouchDown(pos, new Vector2(500, 60, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/objects.l", 14841, 14849, null, null)), null, "auto", false, true, 1/*Center*/, 1/*Middle*/, touch => {
+					graphics.drawImage(item.image || $Image.Checkbox, pos.plus(new Vector2(-120, 0.0, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/objects.l", 14761, 14767, null, null))), new Vector2(0.0, 0.0, null), null, (item.value ? 1 : 0), int.maxValue, 1.0, Color.White, 1/*Center*/, 1/*Middle*/, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/objects.l", 14727, 14813, null, null));
+					input.onTouchDown(pos, new Vector2(500, 60, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/objects.l", 14841, 14849, null, null)), null, "auto", false, true, 1/*Center*/, 1/*Middle*/, touch => {
 						item.value = !item.value;
 						item.onClick?.invoke(item.value, touch);
 						doNotClose = true;
@@ -28061,8 +28061,8 @@ Menu.prototype.tick = function() {
 				}
 			}
 		}}
-		graphics.drawRectangle(this.popupPosition, new Vector2(500, 60 + this.items.length * 60, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/objects.l", 15019, 15043, null, null)), Color.Black, Color.White, 3, null, int.maxValue, 1.0, 1/*Center*/, 1/*Middle*/, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/objects.l", 14952, 15079, null, null));
-		graphics.drawRectangle(new Vector2(0.0, 0.0, null), new Vector2(1920, 1080, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/objects.l", 15102, 15113, null, null)), this.overlayColor, null, 0, null, int.maxValue, 1.0, 1/*Center*/, 1/*Middle*/, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/lib/core/2D/objects.l", 15083, 15153, null, null));
+		graphics.drawRectangle(this.popupPosition, new Vector2(500, 60 + this.items.length * 60, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/objects.l", 15019, 15043, null, null)), Color.Black, Color.White, 3, null, int.maxValue, 1.0, 1/*Center*/, 1/*Middle*/, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/objects.l", 14952, 15079, null, null));
+		graphics.drawRectangle(new Vector2(0.0, 0.0, null), new Vector2(1920, 1080, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/objects.l", 15102, 15113, null, null)), this.overlayColor, null, 0, null, int.maxValue, 1.0, 1/*Center*/, 1/*Middle*/, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/lib/core/2D/objects.l", 15083, 15153, null, null));
 		if(!doNotClose) {
 			input.onTouchDownAny(null, touch => {
 				this.active = false;
@@ -28771,13 +28771,14 @@ HTMLInput.prototype.deserialize_external = function(buffer) {
 }
 var app; if(!app) app = {};
 app.init = function() {
-	app.birdPos = new Vector2(10, 0, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/src/app.l", 23, 29, null, null));
-	app.birdSpeed = new Vector2(10, 0, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/src/app.l", 43, 50, null, null));
+	app.birdPos = new Vector2(10, 0, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/src/app.l", 23, 29, null, null));
+	app.birdSpeed = new Vector2(10, 0, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/src/app.l", 43, 50, null, null));
 	Platform.isLocal = true;
 }
 app.tick = function() {
-	graphics.drawImage($Image.Bird, app.birdPos, new Vector2(0.0, 0.0, null), null, 0, 0, 1.0, Color.White, 1/*Center*/, 1/*Middle*/, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/src/app.l", 93, 116, null, null));
-	graphics.drawImage($Image.Background, new Vector2(0.0, 0.0, null), new Vector2(0.0, 0.0, null), null, 0, 0, 1.0, Color.White, 1/*Center*/, 1/*Middle*/, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/src/app.l", 119, 139, null, null));
+	graphics.drawText("Hello World", new Vector2(0, 100, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/src/app.l", 117, 124, null, null)), new Vector2(0.0, 0.0, null), null, 1/*Center*/, 1/*Middle*/, 0/*Normal*/, null, null, 0, 0, 1.0, 0.0, null, null, new Vector2(16, 16, null), false, 0/*None*/, 2/*Scale*/, 0, 0, null, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/src/app.l", 93, 124, null, null));
+	graphics.drawImage($Image.Bird, app.birdPos, new Vector2(0.0, 0.0, null), null, 0, 0, 1.0, Color.White, 1/*Center*/, 1/*Middle*/, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/src/app.l", 127, 150, null, null));
+	graphics.drawImage($Image.Background, new Vector2(0.0, 0.0, null), new Vector2(0.0, 0.0, null), null, 0, 0, 1.0, Color.White, 1/*Center*/, 1/*Middle*/, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/src/app.l", 153, 173, null, null));
 	app.birdPos.plusAssign(app.birdSpeed);
 	app.birdSpeed.y += 2;
 	input.onTouchDown5(null, true, touch => {
@@ -28785,25 +28786,25 @@ app.tick = function() {
 	});
 }
 app.main01 = function() {
-	System.print("main01", new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/src/app.l", 227, 241, null, null));
+	System.print("main01", new SourceCodeLocation("vscode-vfs://github/up4playing/playground/src/app.l", 261, 275, null, null));
 }
 app.main02 = function() {
-	System.print("main02", new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/src/app.l", 253, 267, null, null));
+	System.print("main02", new SourceCodeLocation("vscode-vfs://github/up4playing/playground/src/app.l", 287, 301, null, null));
 }
 app.main03 = function() {
-	System.print("main03", new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/src/app.l", 279, 293, null, null));
+	System.print("main03", new SourceCodeLocation("vscode-vfs://github/up4playing/playground/src/app.l", 313, 327, null, null));
 }
 app.gameOver = function() {
-	System.print("gameOver", new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/src/app.l", 307, 323, null, null));
+	System.print("gameOver", new SourceCodeLocation("vscode-vfs://github/up4playing/playground/src/app.l", 341, 357, null, null));
 }
 app.flyOver01 = function() {
-	System.print("flyOver01", new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/src/app.l", 338, 355, null, null));
+	System.print("flyOver01", new SourceCodeLocation("vscode-vfs://github/up4playing/playground/src/app.l", 372, 389, null, null));
 }
 app.flyOver02 = function() {
-	System.print("flyOver02", new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/src/app.l", 370, 387, null, null));
+	System.print("flyOver02", new SourceCodeLocation("vscode-vfs://github/up4playing/playground/src/app.l", 404, 421, null, null));
 }
 app.flyOver03 = function() {
-	System.print("flyOver03", new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/src/app.l", 402, 419, null, null));
+	System.print("flyOver03", new SourceCodeLocation("vscode-vfs://github/up4playing/playground/src/app.l", 436, 453, null, null));
 }
 function app_serialize_internal(buffer) {
 	(app.birdPos || new _Vector2()).serialize_internal(buffer);
@@ -28844,8 +28845,8 @@ function app_deserialize_external(buffer) {
 				if(_memberName.charCodeAt(0)==0) throw new Error("Serialization Error: Invalid member name");
 				break;
 			case "":
-				if(!birdPos_is_set) app.birdPos = new Vector2(10, 0, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/src/app.l", 23, 29, null, null));
-				if(!birdSpeed_is_set) app.birdSpeed = new Vector2(10, 0, new SourceCodeLocation("file:///Users/Heiko/Projects/LiveTime/vscode/playground/src/app.l", 43, 50, null, null));
+				if(!birdPos_is_set) app.birdPos = new Vector2(10, 0, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/src/app.l", 23, 29, null, null));
+				if(!birdSpeed_is_set) app.birdSpeed = new Vector2(10, 0, new SourceCodeLocation("vscode-vfs://github/up4playing/playground/src/app.l", 43, 50, null, null));
 				return;
 		}
 	}
