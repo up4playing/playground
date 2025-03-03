@@ -2052,7 +2052,7 @@ internal transient immutable DisplayItem
 		if(this.clippingPath.points.length >= 2)
 			graphics.context.restore()
 			
-internal transient DisplayItem DisplayImage
+internal transient immutable DisplayItem DisplayImage
 	object htmlImage
 	float sx, sy, sw, sh
 	Color color
@@ -2091,7 +2091,7 @@ internal transient DisplayItem DisplayImage
 		
 		if(this.clippingPath) this.endClipping()
 
-internal transient DisplayItem DisplayText
+internal transient immutable DisplayItem DisplayText
 	string fillStyle, outlineColor
 	float outlineWidth
 	float offsetY
@@ -2140,7 +2140,7 @@ internal TextSegment
 	Vector2 position
 	Vector2 size
 		
-internal transient DisplayItem DisplayTextWithHighlights
+internal transient immutable DisplayItem DisplayTextWithHighlights
 	string fillStyle, outlineColor
 	float outlineWidth
 	float offsetY
@@ -2203,7 +2203,7 @@ internal transient DisplayItem DisplayTextWithHighlights
 		
 		if(this.clippingPath) this.endClipping()
 
-internal transient DisplayItem DisplayRectangle
+internal transient immutable DisplayItem DisplayRectangle
 	string color, outlineColor
 	float outlineWidth
 	js void draw
@@ -2227,7 +2227,7 @@ internal transient DisplayItem DisplayRectangle
 		}
 		if(this.clippingPath) this.endClipping()
 		
-internal transient DisplayItem DisplayRoundedRectangle
+internal transient immutable DisplayItem DisplayRoundedRectangle
 	float radius
 	string color, outlineColor
 	float outlineWidth
@@ -2275,7 +2275,7 @@ internal transient DisplayItem DisplayRoundedRectangle
 		}
 		if(this.clippingPath) this.endClipping()
 		
-internal transient DisplayItem DisplayPolygon
+internal transient immutable DisplayItem DisplayPolygon
 	Vector2[] points
 	string color, outlineColor
 	float outlineWidth
@@ -2321,7 +2321,7 @@ internal transient DisplayItem DisplayPolygon
 		}
 		if(this.clippingPath) this.endClipping()
 		
-internal transient DisplayItem DisplayCircle
+internal transient immutable DisplayItem DisplayCircle
 	float startAngle, angle
 	RotationDirection direction
 	string color, outlineColor
@@ -2357,7 +2357,7 @@ internal transient DisplayItem DisplayCircle
 		}
 		if(this.clippingPath) this.endClipping()
 		
-internal transient DisplayItem DisplayLine
+internal transient immutable DisplayItem DisplayLine
 	Vector2 end
 	string outlineColor
 	float outlineWidth
@@ -2376,7 +2376,7 @@ internal transient DisplayItem DisplayLine
 		
 		if(this.clippingPath) this.endClipping()
 			
-internal transient DisplayItem DisplayVideo
+internal transient immutable DisplayItem DisplayVideo
 	int userId
 	VideoShape shape
 	draw
