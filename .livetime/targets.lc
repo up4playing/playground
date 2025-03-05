@@ -6,5 +6,8 @@ Common
 	UserCount: 4
 	OutputPath: docs
 
+	Upload: Yes
+	RemotePath: /srv/play/{id}
+
 Web
 	Platform: Web

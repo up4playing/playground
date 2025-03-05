@@ -2,10 +2,9 @@
 *.eventstream
 /.livetime/state.json
 /.livetime/navigation.json
-/assets/index.html
-/assets/blank.html
-/assets/*.js
-/doc/
-/logs/
+/.cursor/rules/
+/.github/copilot-instructions.md
+/docs/index.html
+/docs/blank.html
+/docs/*.js
 /backup/
-/video/
