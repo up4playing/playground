@@ -12,5 +12,3 @@ app
 		birdPos += birdSpeed
 		birdSpeed.y += 2
 		onTouchDown: birdSpeed.y = -10
-
-		drawText position:"Hello"
