@@ -1,5 +1,5 @@
 class Image
-	const Texture atlas = {"atlas-v1.png", size:{4096,4096}}
+	const Texture atlas = {"atlas-v6.png", size:{4096,4096}}
 	global const Image Background = {"media/Background.png", atlas, {2604,1924}, [{x1:2,y1:2,x2:2602,y2:1922,w:2600,h:1920}]}
 	global const Image TopPipe = {"media/TopPipe.png", atlas, {212,1084}, [{x1:2606,y1:2,x2:2814,y2:1082,w:208,h:1080}]}
 	global const Image BottomPipe = {"media/BottomPipe.png", atlas, {212,972}, [{x1:2818,y1:2,x2:3026,y2:970,w:208,h:968}]}
@@ -32,6 +32,7 @@ class Image
 	global const Image[] Flag = [{"lib/core/play/media/Flag-Language1-State0.png", atlas, {37,25}, [{x1:2989,y1:1064,x2:3021,y2:1085,w:32,h:21},{x1:2966,y1:1189,x2:2998,y2:1210,w:32,h:21}]},{"lib/core/play/media/Flag-Language1-State0.png", atlas, {37,25}, [{x1:2990,y1:974,x2:3023,y2:995,w:33,h:21},{x1:2990,y1:1019,x2:3023,y2:1040,w:33,h:21}]}]
 	global const Image ResizeHandle = {"lib/core/play/media/ResizeHandle.png", atlas, {36,36}, [{x1:2966,y1:1305,x2:2998,y2:1337,w:32,h:32}]}
 
+
 class Font
 	global const Font ByTheWay = {"ByTheWay", "ByTheWay.woff2"}
 	global const Font OpenSans = {"OpenSans", "OpenSans.woff2"}
@@ -45,4 +46,3 @@ transient unit Platform
 		Font::ByTheWay->open();
 		Font::OpenSans->open();
 		Font::ShadowedSerif->open();
-		Sound::LobbyImpact->open();

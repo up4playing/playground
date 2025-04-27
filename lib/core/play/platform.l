@@ -1,4 +1,6 @@
 CompilerSettings
+	serializeInternal = false
+	serializeExternal = false
 	logSerialize = false
 	
 enum PlatformMode: Pause, Manipulator, Slide, Play, Record

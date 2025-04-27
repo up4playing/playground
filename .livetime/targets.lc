@@ -5,6 +5,7 @@ Common
 	Rendering: 2D
 	UserCount: 4
 	OutputPath: docs
+	SourceMap: Application
 
 	Upload: Yes
 	RemotePath: /srv/play/{id}
