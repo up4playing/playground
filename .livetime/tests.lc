@@ -1,3 +1,7 @@
+Minimal 2 Players
+	open window:0 https://up4playing.com/{id}/1234x0
+	open window:1 https://up4playing.com/{id}/1234x1
+	
 Connect 1 player
 	position rows
 	open https://up4playing.com/{id}/{time}x0
@@ -159,8 +163,8 @@ Play Test (2 players)
 	waitUntil delay:2500 tries:50 lobby.points.length is 4
 
 Play Test (3 players)
-	open https://up4playing.com/{id}/{time}x0
-	open https://up4playing.com/{id}/{time}x1
+	open window:0 https://up4playing.com/{id}/{time}x0
+	open window:0 https://up4playing.com/{id}/{time}x1
 	open https://up4playing.com/{id}/{time}x2
 	assert delay:10000 input.players.length == 3
 	
