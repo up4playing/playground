@@ -1,6 +1,6 @@
 Minimal 2 Players
-	open window:0 https://up4playing.com/{id}/1234x0
-	open window:1 https://up4playing.com/{id}/1234x1
+	open https://up4playing.com/{id}/1234x0
+	open https://up4playing.com/{id}/1234x1
 	
 Connect 1 player
 	position rows
