@@ -3,6 +3,9 @@ Minimal 2 Players
 	open https://up4playing.com/you-bet/{time}x1
 	
 	waitUntil delay:2500 tries:50 input.players.length is 2
+	
+	log label:connectTime statistics.connectTime.toFixed(0)
+	log label:retries     PeerNetwork.retries
 
 	repeat	
 	
