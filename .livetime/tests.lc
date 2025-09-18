@@ -1,6 +1,10 @@
 Minimal 2 Players
-	open https://up4playing.com/playground2/1234x0
-	open https://up4playing.com/playground2/1234x1
+	open https://up4playing.com/you-bet/{time}x0
+	open https://up4playing.com/you-bet/{time}x1
+	
+	waitUntil delay:2500 tries:50 input.players.length is 2
+
+	repeat	
 	
 Connect 1 player
 	position rows
