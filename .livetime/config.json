@@ -56,7 +56,7 @@
 	},
 	"startupConfig": {
 		"simulateConnection": true,
-		"userCount": 3,
+		"userCount": 4,
 		"showSafeArea": true,
 		"referenceSize": {
 			"x": 1920,

@@ -1,3 +1,14 @@
+Connect 1 player
+	position rows
+	open https://up4playing.com/{id}/{time}x0
+	
+	click delay:100 window:0 x:-800 y:-400
+	
+	waitUntil delay:500 tries:10 lobby.points.length is 1
+	
+	log label:connectTime statistics.connectTime.toFixed(0)
+	log label:retries     PeerNetwork.retries
+	
 Connect 3 players one after another
 	position rows
 	open https://up4playing.com/{id}/{time}x0
@@ -27,6 +38,27 @@ Connect 3 players at the same time
 	open https://up4playing.com/{id}/{time}x1
 	open https://up4playing.com/{id}/{time}x2
 	waitUntil delay:2500 tries:50 input.players.length is 3
+	
+	click delay:100 window:0 x:-800 y:-400
+	click delay:100 window:0 x:-600 y:-400
+	click delay:100 window:0 x:-400 y:-400
+	click delay:100 window:0 x:-200 y:-400
+	click delay:100 window:0 x:   0 y:-400
+	click delay:100 window:0 x: 200 y:-400
+	click delay:100 window:0 x: 400 y:-400
+	click delay:100 window:0 x: 600 y:-400
+	click delay:100 window:0 x: 800 y:-400
+	
+	waitUntil delay:500 tries:10 lobby.points.length is 9
+	
+	log label:connectTime statistics.connectTime.toFixed(0)
+	log label:retries     PeerNetwork.retries
+	repeat
+
+Connect with another player from another location
+	position rows
+	open https://up4playing.com/{id}/{time}x0
+	waitUntil delay:2500 tries:50 input.players.length is 2
 	
 	click delay:100 window:0 x:-800 y:-400
 	click delay:100 window:0 x:-600 y:-400
