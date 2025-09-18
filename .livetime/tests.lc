@@ -1,6 +1,6 @@
 Minimal 2 Players
-	open https://up4playing.com/{id}/1234x0
-	open https://up4playing.com/{id}/1234x1
+	open https://up4playing.com/playground2/1234x0
+	open https://up4playing.com/playground2/1234x1
 	
 Connect 1 player
 	position rows
