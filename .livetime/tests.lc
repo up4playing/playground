@@ -44,9 +44,11 @@ Connect 3 players at the same time
 	log label:retries     PeerNetwork.retries
 	repeat
 	
-Reload test
+Open 3 windows
 	open https://up4playing.com/{id}/{time}x0
 	open delay:1000 https://up4playing.com/{id}/{time}x1
+	open delay:1000 https://up4playing.com/{id}/{time}x2
+	waitUntil delay:2500 tries:50 input.players.length is 3
 	
 Reload test
 	open https://up4playing.com/{id}/{time}x0
